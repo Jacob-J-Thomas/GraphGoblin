@@ -1,0 +1,26 @@
+
+
+  it(
+    'reports an ordinary case failure once, after the same settlement',
+    lifecycleTest(async (lifecycle) => {
+      const failure = new Error('Ordinary case failure');
+      const seen: Seen = { root: '', commands: [], children: [] };
+      let bodySettled = false;
+      const run = probeCase('gg-codex-failing-', async (probe) => {
+        const { harness, commands } = fixture(probe);
+        Object.assign(seen, { root: probe.root, commands, children: probe.children });
+        useTempRoot(probe.root);
+        expect(await harness.preflight()).toMatchObject({ state: 'ready', ok: true });
+        throw failure;
+      })(lifecycle.context).finally(() => {
+        bodySettled = true;
+      });
+      const [outcome] = await Promise.allSettled([run]);
+      const [finished] = await Promise.allSettled([lifecycle.finish()]);
+
+      expect(await leftAtFinish(seen, bodySettled)).toEqual(settledCase(seen));
+      expect(seen.children).toHaveLength(4);
+      expect(outcome).toEqual({ status: 'rejected', reason: failure });
+      expect(finished).toEqual({ status: 'fulfilled', value: undefined });
+    }),
+  );

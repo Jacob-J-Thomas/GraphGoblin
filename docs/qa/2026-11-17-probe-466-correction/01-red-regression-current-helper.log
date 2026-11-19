@@ -1,0 +1,59 @@
+utc=2026-11-18T05:14:01Z state=original helper (c952e3b4 lines 47-69 unchanged) + new regression
+test_file_sha256=56cdc811b304d4b1942d0cc71002c610c89af7d7762df6f3159b899c00685e5f
+command=pnpm --filter @graphgoblin/adapter-codex test src/probe-directory.test.ts --reporter=verbose  (TEMP/TMP/TMPDIR=C:\Users\98jak\AppData\Local\Temp\gg466corr-dVoVcU)
+$ vitest run src/probe-directory.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+
+ ✓ src/probe-directory.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 358ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries 360ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries 17ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe directory > fails a real directory creation fault before starting the fake CLI or removing anything 9ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes 6ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes 305ms
+ ✓ src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports an ordinary case failure once, after the same settlement 355ms
+ × src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports a body failure after its abort once, and a failed case-root removal, after the same settlement 284ms
+   → expected [ …(1) ] to deeply equal [ …(2) ]
+ ✓ src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports a body failure without an abort once, and a failed case-root removal, after the same settlement 348ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports a body failure after its abort once, and a failed case-root removal, after the same settlement
+AssertionError: expected [ …(1) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    Error {
+-     "message": "Body failure after its abort",
+-   },
+-   Error {
+      "message": "Case root removal failure",
+      "code": "EBUSY",
+    },
+  ]
+
+ ❯ src/probe-directory.test.ts:377:38
+    375|         // The case itself reports its timeout after an abort, otherwi…
+    376|         // adds a body failure only if it came after the abort, then t…
+    377|         expect(reportedBy(finished)).toEqual(
+       |                                      ^
+    378|           abandoned ? [failure, removalFailure] : [removalFailure],
+    379|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  23:14:02
+   Duration  4.90s (tests 44%, import 33%, transform 23%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466\GraphGoblin\packages\adapter-codex
+
+exit=1

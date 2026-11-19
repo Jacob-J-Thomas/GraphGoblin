@@ -1,0 +1,1375 @@
+{
+  "kind": "derived compact author results; exact raw receipts take precedence",
+  "authorSourceSealSha256": "1b242979d4445214d203f70a61c2d5c5e6e46177723755635f65c750d06dce06",
+  "cases": [
+    {
+      "mode": "cancel-before-head-lifecycle-final",
+      "role": "Held baseline: four post-cancel launches; maintained task passes, observer fails.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "pending": 9,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        27672,
+        60092,
+        60564,
+        47068
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [
+        "fake CLI processes launched after the case was aborted: expected [ 27672, 60092, 60564, 47068 ] to deeply equal []"
+      ],
+      "taskErrors": [],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:34:10.450Z",
+          "ms": 3194.5327,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:34:10.468Z",
+          "ms": 3212.4071,
+          "pid": 27672,
+          "caseAbortedAtLaunch": true,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:34:10.678Z",
+          "ms": 3422.3773,
+          "pid": 27672,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:34:10.689Z",
+          "ms": 3433.3855,
+          "pid": 60092,
+          "caseAbortedAtLaunch": true,
+          "args": [
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:34:10.767Z",
+          "ms": 3511.1876,
+          "pid": 60092,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:34:10.778Z",
+          "ms": 3522.3681,
+          "pid": 60564,
+          "caseAbortedAtLaunch": true,
+          "args": [
+            "resume",
+            "--help"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:34:10.860Z",
+          "ms": 3604.4087,
+          "pid": 60564,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:34:10.868Z",
+          "ms": 3612.6508,
+          "pid": 47068,
+          "caseAbortedAtLaunch": true,
+          "args": [
+            "login",
+            "status"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:34:10.940Z",
+          "ms": 3684.7994,
+          "pid": 47068,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:34:10.948Z",
+          "ms": 3692.2015,
+          "launched": [
+            27672,
+            60092,
+            60564,
+            47068
+          ],
+          "launchedAfterAbort": [
+            27672,
+            60092,
+            60564,
+            47068
+          ],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-before-head-lifecycle-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-before-head-lifecycle-final/events.jsonl",
+      "vitestSourceSha256": "099159698fd7200a9e203347cbfcf8404261726e41a19d8b6760ace14d9d918c",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "cancel-before-head-direct-final",
+      "role": "Held baseline: no launch; readiness assertion duplicated.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 8,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }",
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "fullMessageSha256": [
+            "1a41fbeb177bb19422e74540f812fb7a52fa85c54e46fb040affb2d1e54a0d83",
+            "1a41fbeb177bb19422e74540f812fb7a52fa85c54e46fb040affb2d1e54a0d83"
+          ],
+          "allFullMessagesIdentical": true
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:34:18.547Z",
+          "ms": 2571.3622,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:34:18.581Z",
+          "ms": 2604.8936,
+          "launched": [],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-before-head-direct-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-before-head-direct-final/events.jsonl",
+      "vitestSourceSha256": "1257a4f44aaa8970629d9805a010aefab9757d548c98779a6d4e4a3469ca1dcc",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "cancel-before-repaired-lifecycle-final",
+      "role": "Repaired lifecycle entry: no launch, original user-cancelled skip.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "pending": 12,
+        "failedSuites": 0,
+        "success": true
+      },
+      "observerEnabled": true,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:34:14.738Z",
+          "ms": 2546.5295,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:34:14.741Z",
+          "ms": 2549.9667,
+          "launched": [],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-before-repaired-lifecycle-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-before-repaired-lifecycle-final/events.jsonl",
+      "vitestSourceSha256": "83af8143e3b965c9068a149a61dd4a734b694ce0403590405f4e5602d8051132",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "cancel-before-repaired-direct-final",
+      "role": "Repaired direct entry: no launch, original user-cancelled skip.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "pending": 12,
+        "failedSuites": 0,
+        "success": true
+      },
+      "observerEnabled": true,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:34:22.956Z",
+          "ms": 3096.6654,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:34:22.960Z",
+          "ms": 3100.5764,
+          "launched": [],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-before-repaired-direct-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-before-repaired-direct-final/events.jsonl",
+      "vitestSourceSha256": "e8c9e86b875e9bd8c0288e86746ae2002a420252bcd065a7d6c5d8d8495a9da5",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "cancel-inflight-head-lifecycle-final",
+      "role": "Held in-flight cancellation, lifecycle.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 8,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        36840
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "reports an ordinary case failure once, after the same settlement",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: expected [ ChildProcess{ …(17), …(2) } ] to have a length of 4 but got 1"
+          ],
+          "fullMessageSha256": [
+            "d42183b5c2fa30d4bd9ce045cb44ac924bf46938a8761c4660488e5baacb59fc"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:33:44.821Z",
+          "ms": 2580.9141,
+          "pid": 36840,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:33:44.838Z",
+          "ms": 2598.1648,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:33:44.848Z",
+          "ms": 2607.7337,
+          "pid": 36840,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:33:44.860Z",
+          "ms": 2620.1123,
+          "launched": [
+            36840
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-inflight-head-lifecycle-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-inflight-head-lifecycle-final/events.jsonl",
+      "vitestSourceSha256": "0e707dee5c14f029efe8f8ce4952a8c04647fa1575aba68b67235377d2fcfbd7",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "cancel-inflight-repaired-lifecycle-final",
+      "role": "Repaired in-flight cancellation, lifecycle.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 11,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        58080
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "reports an ordinary case failure once, after the same settlement",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: expected [ ChildProcess{ …(17), …(2) } ] to have a length of 4 but got 1"
+          ],
+          "fullMessageSha256": [
+            "592e7881f1a708fa22b73b3fbe0656bc50d5b471eb67ba957a7d520e3ab85716"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:33:48.484Z",
+          "ms": 2501.4754,
+          "pid": 58080,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:33:48.495Z",
+          "ms": 2512.4845,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:33:48.500Z",
+          "ms": 2517.2261,
+          "pid": 58080,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:33:48.514Z",
+          "ms": 2531.3199,
+          "launched": [
+            58080
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-inflight-repaired-lifecycle-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-inflight-repaired-lifecycle-final/events.jsonl",
+      "vitestSourceSha256": "4f1846584535aa6ae77b58f6cff3ad210ed9f8bb0b9a339a5b52afc0afc75e96",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "cancel-inflight-head-direct-final",
+      "role": "Held in-flight cancellation, direct.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 8,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        58492
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "fullMessageSha256": [
+            "a9e2a8befadf54d682a73a0ed9423636a4d1d4d8443bcc85bd7090ad6104c22d"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:33:52.064Z",
+          "ms": 2403.1302,
+          "pid": 58492,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:33:52.078Z",
+          "ms": 2417.0042,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:33:52.082Z",
+          "ms": 2421.2031,
+          "pid": 58492,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:33:52.102Z",
+          "ms": 2440.531,
+          "launched": [
+            58492
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-inflight-head-direct-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-inflight-head-direct-final/events.jsonl",
+      "vitestSourceSha256": "d26ce945620af3e670cb5a840b66d09a0b374e83bec509eb5ef3f7e5a9cb0807",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "cancel-inflight-repaired-direct-final",
+      "role": "Repaired in-flight cancellation, direct.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 11,
+        "failedSuites": 1,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        35660
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "fullMessageSha256": [
+            "c60659eefbd04b15d2a2d7a6c60656f7dcbe75b5d9dc317fdbfdd4e4a21b4cbc"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:33:55.734Z",
+          "ms": 2594.3505,
+          "pid": 35660,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:33:55.743Z",
+          "ms": 2603.622,
+          "reason": "TestRunAbortError: The test run was aborted by the user."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:33:55.748Z",
+          "ms": 2608.5041,
+          "pid": 35660,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:33:55.767Z",
+          "ms": 2627.0722,
+          "launched": [
+            35660
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/cancel-inflight-repaired-direct-final/receipt.json",
+      "rawEvents": "raw/runs/cancel-inflight-repaired-direct-final/events.jsonl",
+      "vitestSourceSha256": "c5bd82e67a8c509904e2c5a5c66d36fece93d0d6cbf62277d15b5d02f8cc91ba",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "timeout-head-lifecycle",
+      "role": "Held disposable 150 ms timeout, lifecycle.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 8,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        51812,
+        52460
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "reports an ordinary case failure once, after the same settlement",
+          "status": "failed",
+          "firstLines": [
+            "Error: Test timed out in 150ms.",
+            "AssertionError: expected [ ChildProcess{ …(17), …(2) }, …(1) ] to have a length of 4 but got 2"
+          ],
+          "fullMessageSha256": [
+            "b160de9b3e8dbc92834aa939cc3081ca2fbe928159a00554b88b8ea57ce3e6f9",
+            "40304b0c3296e92b282390f2657b2ad755691cdd9ff438595e734a6af21382ed"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:41.798Z",
+          "ms": 2386.2706,
+          "pid": 51812,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:41.871Z",
+          "ms": 2458.5566,
+          "pid": 51812,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:41.880Z",
+          "ms": 2468.3798,
+          "pid": 52460,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:36:41.946Z",
+          "ms": 2533.7807,
+          "reason": "Error: Test timed out in 150ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:41.950Z",
+          "ms": 2538.3212,
+          "pid": 52460,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:36:41.963Z",
+          "ms": 2550.883,
+          "launched": [
+            51812,
+            52460
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/timeout-head-lifecycle/receipt.json",
+      "rawEvents": "raw/runs/timeout-head-lifecycle/events.jsonl",
+      "vitestSourceSha256": "583e8bff2a827da7e1d94581d96cd459d472e72b2c0cc21647cf60bde3822ce6",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "timeout-repaired-lifecycle",
+      "role": "Repaired disposable 150 ms timeout, lifecycle.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 11,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        49448,
+        59768
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "reports an ordinary case failure once, after the same settlement",
+          "status": "failed",
+          "firstLines": [
+            "Error: Test timed out in 150ms.",
+            "AssertionError: expected [ ChildProcess{ …(17), …(2) }, …(1) ] to have a length of 4 but got 2"
+          ],
+          "fullMessageSha256": [
+            "acfe4e5c0b9303db4fb138199ee663a9878933fc43d01f0b6eb108d428b00d61",
+            "185f3712a95cd98361d2a1b708ec74411001e8ecaa2063134dec9daeda2b4f3b"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:45.969Z",
+          "ms": 2902.4059,
+          "pid": 49448,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:46.052Z",
+          "ms": 2984.9378,
+          "pid": 49448,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:46.063Z",
+          "ms": 2996.4833,
+          "pid": 59768,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:36:46.123Z",
+          "ms": 3055.7843,
+          "reason": "Error: Test timed out in 150ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:46.134Z",
+          "ms": 3067.1224,
+          "pid": 59768,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:36:46.146Z",
+          "ms": 3079.0455,
+          "launched": [
+            49448,
+            59768
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/timeout-repaired-lifecycle/receipt.json",
+      "rawEvents": "raw/runs/timeout-repaired-lifecycle/events.jsonl",
+      "vitestSourceSha256": "6536e534d962c805156294f4f6b1bab3636a42990f874f401ea52e2c61f5047c",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "timeout-head-direct",
+      "role": "Held disposable 150 ms timeout, direct.",
+      "sourceSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedSha256": "15a5d7c3203b58e3f74289db5201a6f5ca1dc75c7ba50d75a70a5ba9c7e6aa2a",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 8,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        58212,
+        57696
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "firstLines": [
+            "Error: Test timed out in 150ms.",
+            "AssertionError: expected { state: 'unknown', ok: false, …(2) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "fullMessageSha256": [
+            "d9d0d7c6dd791c86504dada8f54ec9b5def67e37e6e05acb8bc239ea680241ef",
+            "5c9efb32350e54adaf0ece737bf8142f85357acc95130c7a68c6fd2e5197554f"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:49.689Z",
+          "ms": 2422.1575,
+          "pid": 58212,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:49.763Z",
+          "ms": 2495.7443,
+          "pid": 58212,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:49.775Z",
+          "ms": 2508.6562,
+          "pid": 57696,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:36:49.831Z",
+          "ms": 2564.3953,
+          "reason": "Error: Test timed out in 150ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:49.841Z",
+          "ms": 2574.5261,
+          "pid": 57696,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:36:49.857Z",
+          "ms": 2590.091,
+          "launched": [
+            58212,
+            57696
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/timeout-head-direct/receipt.json",
+      "rawEvents": "raw/runs/timeout-head-direct/events.jsonl",
+      "vitestSourceSha256": "fc721f486861f4b6931c6741b53e1c81748e9af1a28849a99e0025df52529bb9",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "timeout-repaired-direct",
+      "role": "Repaired disposable 150 ms timeout, direct.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "0c3cb82022c497fbe7d1bb7391bead44b7130fb4044f11ab0416620a9f861245",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "pending": 11,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": true,
+      "launchedPids": [
+        54844,
+        57520
+      ],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "firstLines": [
+            "Error: Test timed out in 150ms.",
+            "AssertionError: expected { state: 'unknown', ok: false, …(2) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "fullMessageSha256": [
+            "654f99fe7ba7c30b9736b31b548386ed8a53afffae4dc6bf519a78259696e0c0",
+            "101e27c8f39f0eef7672b2d91e596b82728166c3780bb69b0938413ab8219341"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:53.754Z",
+          "ms": 2723.0978,
+          "pid": 54844,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:53.833Z",
+          "ms": 2802.1301,
+          "pid": 54844,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "event": "fake-cli-launch",
+          "utc": "2026-11-18T23:36:53.846Z",
+          "ms": 2814.505,
+          "pid": 57520,
+          "caseAbortedAtLaunch": false,
+          "args": [
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "event": "case-signal-abort",
+          "utc": "2026-11-18T23:36:53.893Z",
+          "ms": 2861.894,
+          "reason": "Error: Test timed out in 150ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "fake-cli-exit",
+          "utc": "2026-11-18T23:36:53.907Z",
+          "ms": 2875.1999,
+          "pid": 57520,
+          "code": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "event": "afterAll",
+          "utc": "2026-11-18T23:36:53.924Z",
+          "ms": 2893.1534,
+          "launched": [
+            54844,
+            57520
+          ],
+          "launchedAfterAbort": [],
+          "survivors": [],
+          "envRestored": true,
+          "caseRoots": [],
+          "caseAborted": true
+        }
+      ],
+      "rawReceipt": "raw/runs/timeout-repaired-direct/receipt.json",
+      "rawEvents": "raw/runs/timeout-repaired-direct/events.jsonl",
+      "vitestSourceSha256": "6b218d97aca875d792a73caf3a731339c4bde70d661551bc7390e982e904413b",
+      "rawVitestIncluded": false
+    },
+    {
+      "mode": "regression-repaired-final",
+      "role": "Unmutated repaired maintained 12-case suite.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "59b8f49d4441b6e87094a1a1aef35efe316235a64091d9b713dd429ec96fbb2b",
+      "processExitCode": 0,
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "failedSuites": 0,
+        "success": true
+      },
+      "observerEnabled": false,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [],
+      "nativeLaunchAndExitEvents": [],
+      "rawReceipt": "raw/runs/regression-repaired-final/receipt.json",
+      "rawEvents": "raw/runs/regression-repaired-final/events.jsonl",
+      "vitestSourceSha256": "f58349137ced8f0d7f8ef1e42c6f800c8e4c769c6aa3d382dacf021b93adaded",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "regression-unrepaired-helpers-final",
+      "role": "Both entry checks removed; new regression sensitivity.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "a826bc871ce0a2768cb9bcb17816e77a92a06921f29a4f90326ce60525ec26b7",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 10,
+        "failed": 2,
+        "pending": 0,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": false,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "starts nothing in a probe case entered after its Vitest case was aborted, and rejects with that reason",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: case directories created: expected \"vi.fn()\" to not be called at all, but actually been called 1 times"
+          ],
+          "fullMessageSha256": [
+            "34e14a1cc34f29f3d1af8c3fe24e2f4f8ed1e1677ec81f441719f8ba058af9a6"
+          ],
+          "allFullMessagesIdentical": false
+        },
+        {
+          "task": "starts nothing in a lifecycle test entered after its Vitest case was aborted, and rejects with that reason",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: fake CLI processes started: expected \"vi.fn()\" to not be called at all, but actually been called 4 times"
+          ],
+          "fullMessageSha256": [
+            "a8e82279b01baac4269fb102250ba00c1434b5c6a258f62e00a456a657b23f2d"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [],
+      "rawReceipt": "raw/runs/regression-unrepaired-helpers-final/receipt.json",
+      "rawEvents": "raw/runs/regression-unrepaired-helpers-final/events.jsonl",
+      "vitestSourceSha256": "df57fe1a89efb9a38b096c7bd3fb3b4bb06b278434334c6f0eeaf1d561902c56",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "regression-forward-only-final",
+      "role": "Both checks removed, immediate forwarding added; rejected alternative.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "9c9b2fcd2f1b5df4f1390f72e9682dcbb4d533ac21e8daddb66090d08dd264e8",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 10,
+        "failed": 2,
+        "pending": 0,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": false,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "starts nothing in a probe case entered after its Vitest case was aborted, and rejects with that reason",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: case directories created: expected \"vi.fn()\" to not be called at all, but actually been called 1 times"
+          ],
+          "fullMessageSha256": [
+            "f1a2f054bd05bc3ad0852c1be6e3c04ae73c34d09f9db3da51723b3b344d5686"
+          ],
+          "allFullMessagesIdentical": false
+        },
+        {
+          "task": "starts nothing in a lifecycle test entered after its Vitest case was aborted, and rejects with that reason",
+          "status": "failed",
+          "firstLines": [
+            "AssertionError: case directories created: expected \"vi.fn()\" to not be called at all, but actually been called 1 times"
+          ],
+          "fullMessageSha256": [
+            "f1a2f054bd05bc3ad0852c1be6e3c04ae73c34d09f9db3da51723b3b344d5686"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [],
+      "rawReceipt": "raw/runs/regression-forward-only-final/receipt.json",
+      "rawEvents": "raw/runs/regression-forward-only-final/events.jsonl",
+      "vitestSourceSha256": "e440af35bd92139e6e0c66763cc63a6d23a817cb9e69b5b28cfd142f8c6fd369",
+      "rawVitestIncluded": true
+    },
+    {
+      "mode": "regression-no-listener-final",
+      "role": "Entry checks retained, later-abort listener removed; in-flight regression sensitivity.",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "fcb3c2515661ee957306b752f9d5af228d53ce142732024e20fcfc5ee5d70da2",
+      "processExitCode": 1,
+      "counts": {
+        "passed": 11,
+        "failed": 1,
+        "pending": 0,
+        "failedSuites": 2,
+        "success": false
+      },
+      "observerEnabled": false,
+      "launchedPids": [],
+      "aliveAfterRunPids": [],
+      "ownedScratchEntries": [
+        "gg-codex-enclosed-5LDSpn"
+      ],
+      "suiteMessages": [],
+      "taskErrors": [
+        {
+          "task": "abandons the probe case of a lifecycle test whose Vitest case is aborted while a fake CLI runs",
+          "status": "failed",
+          "firstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Hook timed out in 10000ms."
+          ],
+          "fullMessageSha256": [
+            "c00049dd1c4c634395fc6970e339336e587791095bf88ef8e76e6aa1d87dfc5e",
+            "3b9ac8a50dd0ac7102e0172428d37aa225553e24e2c8d059f5c9a24e76ed4772"
+          ],
+          "allFullMessagesIdentical": false
+        }
+      ],
+      "nativeLaunchAndExitEvents": [],
+      "rawReceipt": "raw/runs/regression-no-listener-final/receipt.json",
+      "rawEvents": "raw/runs/regression-no-listener-final/events.jsonl",
+      "vitestSourceSha256": "74f54a6973f83490544d8ea4495754228c3defc5422ec017f49128bbd4a1ef11",
+      "rawVitestIncluded": true
+    }
+  ],
+  "gates": [
+    {
+      "name": "01-baseline-head-focused",
+      "argvTail": [
+        "exec",
+        "vitest",
+        "run",
+        "src/probe-directory.test.ts"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:23:08.688Z",
+      "endUtc": "2026-11-18T23:23:14.331Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/01-baseline-head-focused.json",
+      "stdoutSha256": "8cded14393a500fb4f337477da77ffc3e6f6a52c9ce7f3adc5b7e139a029d539",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "10-cancel-before-head-lifecycle",
+      "argvTail": [
+        "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr505-preaborted-author-evidence/harness/run-mode.mjs",
+        "cancel-before-head-lifecycle"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:27:17.533Z",
+      "endUtc": "2026-11-18T23:28:51.635Z",
+      "exitCode": 1,
+      "rawReceipt": "raw/receipts/10-cancel-before-head-lifecycle.json",
+      "stdoutSha256": "c92de8ba7248138081336a78b010de3401af624c1cef9f76488fefcd07a20727",
+      "stderrSha256": "6ca3c5ece0d225d72da2ca436d77515d27f3516c4ff83a5a101fd09a836b5e1f"
+    },
+    {
+      "name": "21-regression-unrepaired-helpers",
+      "argvTail": [
+        "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr505-preaborted-author-evidence/harness/run-mode.mjs",
+        "regression-unrepaired-helpers"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:30:37.958Z",
+      "endUtc": "2026-11-18T23:30:38.097Z",
+      "exitCode": 1,
+      "rawReceipt": "raw/receipts/21-regression-unrepaired-helpers.json",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "6105f43119ca0fa6d18636eaaa1efc17131828b4e2cb3400b560a8c12899dc0a"
+    },
+    {
+      "name": "22-regression-forward-only",
+      "argvTail": [
+        "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr505-preaborted-author-evidence/harness/run-mode.mjs",
+        "regression-forward-only"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:30:38.404Z",
+      "endUtc": "2026-11-18T23:30:38.532Z",
+      "exitCode": 1,
+      "rawReceipt": "raw/receipts/22-regression-forward-only.json",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "88c923ebd7f6061fcfffa2f1d896a8a6403f11e489ef828450df7869cdaad3c1"
+    },
+    {
+      "name": "30-prettier-check",
+      "argvTail": [
+        "exec",
+        "prettier",
+        "--check",
+        "packages/adapter-codex/src/probe-directory.test.ts",
+        "docs/10-testing-and-quality.md"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:33:00.460Z",
+      "endUtc": "2026-11-18T23:33:01.438Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/30-prettier-check.json",
+      "stdoutSha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "31-adapter-lint",
+      "argvTail": [
+        "run",
+        "lint"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:33:01.675Z",
+      "endUtc": "2026-11-18T23:33:13.396Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/31-adapter-lint.json",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1"
+    },
+    {
+      "name": "32-adapter-typecheck",
+      "argvTail": [
+        "run",
+        "typecheck"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:33:13.641Z",
+      "endUtc": "2026-11-18T23:33:26.023Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/32-adapter-typecheck.json",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1"
+    },
+    {
+      "name": "66-sweep-after-mutants",
+      "argvTail": [
+        "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr505-preaborted-author-evidence/tools/sweep.sh"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:35:25.879Z",
+      "endUtc": "2026-11-18T23:35:26.602Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/66-sweep-after-mutants.json",
+      "stdoutSha256": "08008d570c617baffaef22a698a58231c8425cf04a31f4ed8d5f3b8cf40d0fc5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "70-focused-final",
+      "argvTail": [
+        "exec",
+        "vitest",
+        "run",
+        "src/probe-directory.test.ts",
+        "--reporter=verbose"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:35:34.398Z",
+      "endUtc": "2026-11-18T23:35:40.415Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/70-focused-final.json",
+      "stdoutSha256": "9a5343cc5d6d67ff3eb9d9e17ae81ea3bc692075f9a68c1c0a4722254daff9b6",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "71-adapter-suite",
+      "argvTail": [
+        "run",
+        "test"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:35:40.613Z",
+      "endUtc": "2026-11-18T23:35:53.724Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/71-adapter-suite.json",
+      "stdoutSha256": "bb55cb49cd8c1e80f74d1e90c1c99633ce558f1383532eab279e4fdb7ad80071",
+      "stderrSha256": "cb7efe2ed065b3202856f854f1645179984b659249d4ea99dde8467ed4a4b173"
+    },
+    {
+      "name": "72-adapter-coverage",
+      "argvTail": [
+        "run",
+        "test:coverage"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:35:53.936Z",
+      "endUtc": "2026-11-18T23:36:06.922Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/72-adapter-coverage.json",
+      "stdoutSha256": "bff021419c6e35354ba41348b40828e14c1595e0d9a0fffd122c87adf570983a",
+      "stderrSha256": "481744528dc289523db0f7755871497f372ebe0de6dccb161057f9149afb1b84"
+    },
+    {
+      "name": "84-sweep-after-timeouts",
+      "argvTail": [
+        "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr505-preaborted-author-evidence/tools/sweep.sh"
+      ],
+      "node": "v22.23.4",
+      "startUtc": "2026-11-18T23:36:54.571Z",
+      "endUtc": "2026-11-18T23:36:55.475Z",
+      "exitCode": 0,
+      "rawReceipt": "raw/receipts/84-sweep-after-timeouts.json",
+      "stdoutSha256": "e28f83671d1a3887cf09cdd2d7bb5a3574bc36e180ad047a2221f6d358362722",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "coverage": {
+    "statements": {
+      "percent": 98.3,
+      "covered": 579,
+      "total": 589
+    },
+    "branches": {
+      "percent": 95.61,
+      "covered": 480,
+      "total": 502
+    },
+    "functions": {
+      "percent": 99.32,
+      "covered": 148,
+      "total": 149
+    },
+    "lines": {
+      "percent": 99.42,
+      "covered": 521,
+      "total": 524
+    }
+  },
+  "suiteTotals": {
+    "focusedHeldTestsPassed": 9,
+    "focusedRepairedTestsPassed": 12,
+    "adapterPassed": 650,
+    "existingLiveSkipped": 4,
+    "filesPassed": 16,
+    "existingLiveFilesSkipped": 1,
+    "sources": [
+      "raw/logs/01-baseline-head-focused.stdout.txt",
+      "raw/logs/70-focused-final.stdout.txt",
+      "raw/logs/71-adapter-suite.stdout.txt",
+      "raw/logs/72-adapter-coverage.stdout.txt"
+    ]
+  }
+}

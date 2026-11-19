@@ -1,0 +1,75 @@
+
+// ---- pr505-preaborted-author-evidence observer: appended to a generated copy only ----
+// It observes every fake CLI process the maintained cases start through the dependency spawn
+// (still the native spawn) and, in `before` mode, holds the case's beforeEach until Vitest
+// cancels the run, so the case is entered with its signal already aborted.
+import { afterAll as observerAfterAll, beforeEach as observerBeforeEach } from 'vitest';
+import { appendFileSync as observerAppend, readdirSync as observerReaddir } from 'node:fs';
+
+const observerLog = process.env.GG_PREABORT_EVENTS ?? '';
+const observerMode = process.env.GG_PREABORT_MODE ?? 'none';
+const observerTemp = process.env.TEMP ?? '';
+const observerSavedEnv = ['TEMP', 'TMP', 'TMPDIR'].map((name) => process.env[name]);
+const observerChildren: ChildProcess[] = [];
+const observerLaunchedAfterAbort: number[] = [];
+let observerSignal: AbortSignal | undefined;
+const observerNote = (event: string, data: Record<string, unknown> = {}) =>
+  observerAppend(
+    observerLog,
+    JSON.stringify({ event, utc: new Date().toISOString(), ms: performance.now(), ...data }) + '\n',
+  );
+
+observerBeforeEach(async (context) => {
+  observerSignal = context.signal;
+  const native = await vi.importActual<typeof import('node:child_process')>('node:child_process');
+  vi.mocked(spawn).mockImplementation(((...args: Parameters<typeof native.spawn>) => {
+    const caseAborted = observerSignal?.aborted ?? false;
+    const child = native.spawn(...args);
+    observerChildren.push(child);
+    if (caseAborted && child.pid !== undefined) observerLaunchedAfterAbort.push(child.pid);
+    observerNote('fake-cli-launch', {
+      pid: child.pid,
+      caseAbortedAtLaunch: caseAborted,
+      args: child.spawnargs.slice(-2),
+    });
+    child.once('exit', (code, signal) =>
+      observerNote('fake-cli-exit', { pid: child.pid, code, signal }),
+    );
+    return child;
+  }) as typeof spawn);
+  observerNote('beforeEach-enter', { test: context.task.name, aborted: context.signal.aborted });
+  context.signal.addEventListener(
+    'abort',
+    () => observerNote('case-signal-abort', { reason: String(context.signal.reason) }),
+    { once: true },
+  );
+  if (observerMode !== 'before') return;
+  const cancelled = new Promise<void>((resolve) =>
+    context.signal.addEventListener('abort', () => resolve(), { once: true }),
+  );
+  observerNote('rendezvous', { aborted: context.signal.aborted });
+  await cancelled;
+  observerNote('beforeEach-return', { aborted: context.signal.aborted });
+});
+
+observerAfterAll(() => {
+  const survivors = observerChildren
+    .filter((child) => child.pid !== undefined && child.exitCode === null && child.signalCode === null)
+    .map((child) => child.pid);
+  const envRestored = ['TEMP', 'TMP', 'TMPDIR'].every(
+    (name, index) => process.env[name] === observerSavedEnv[index],
+  );
+  const caseRoots = observerReaddir(observerTemp).filter((name) => name.startsWith('gg-codex-'));
+  observerNote('afterAll', {
+    launched: observerChildren.map((child) => child.pid),
+    launchedAfterAbort: observerLaunchedAfterAbort,
+    survivors,
+    envRestored,
+    caseRoots,
+    caseAborted: observerSignal?.aborted ?? null,
+  });
+  expect(survivors).toEqual([]);
+  expect(envRestored).toBe(true);
+  expect(caseRoots).toEqual([]);
+  expect(observerLaunchedAfterAbort, 'fake CLI processes launched after the case was aborted').toEqual([]);
+});

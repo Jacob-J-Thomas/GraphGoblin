@@ -1,0 +1,111 @@
+
+// ---- #466 evidence only (appended to a scratch copy; never part of the repository suite) ----
+// A really times out under the Vitest runner while its `login status` fake CLI hangs. B then sets up
+// the same spies and TEMP stubs as the collision case and, as a controlled deferred operation, lets
+// every remaining piece of A's work run inside B before probing. B fails if it sees any of it.
+import { writeFileSync } from 'node:fs';
+
+const predecessor = {
+  work: Promise.resolve() as Promise<unknown>,
+  settled: false,
+  root: '',
+  probeDirectory: '',
+  probeDirectoryLeftByProduct: 'unknown',
+  result: 'unknown',
+  children: [] as ChildProcess[],
+};
+
+describe('466 real Vitest lifecycle evidence', () => {
+  it(
+    'A: a probe case abandoned by a real Vitest timeout',
+    (context) =>
+      (predecessor.work = probeCase('gg-codex-466-a-', async (probe) => {
+        predecessor.root = probe.root;
+        predecessor.children = probe.children;
+        useTempRoot(probe.root);
+        const { harness, commands } = fixture(probe, 'hang');
+        const result = await harness.preflight();
+        predecessor.result = result.state;
+        predecessor.probeDirectory = commands[0]?.cwd ?? '';
+        predecessor.probeDirectoryLeftByProduct = await probeFs
+          .access(predecessor.probeDirectory)
+          .then(() => 'present', (error: NodeJS.ErrnoException) => String(error.code));
+        expect(result).toMatchObject({ state: 'ready', ok: true });
+      })(context).finally(() => {
+        predecessor.settled = true;
+      })),
+    1000,
+  );
+
+  it(
+    'B: the next case observes no late call from A',
+    (context) =>
+      probeCase('gg-codex-466-b-', async (probe) => {
+        const atStart = {
+          predecessorSettled: predecessor.settled,
+          predecessorRunningFakeClis: predecessor.children.filter(isRunning).length,
+          predecessorChildren: predecessor.children.map((child) => ({
+            pid: child.pid,
+            exitCode: child.exitCode,
+            signalCode: child.signalCode,
+          })),
+        };
+        const create = vi.spyOn(probeFs, 'mkdir');
+        const remove = vi.spyOn(probeFs, 'rm');
+        useTempRoot(probe.root);
+        // Controlled deferred operation: all of A's remaining work runs inside this case.
+        const waitStarted = Date.now();
+        await Promise.allSettled([predecessor.work]);
+        const waitedMs = Date.now() - waitStarted;
+        const { harness, commands } = fixture(probe);
+        const result = await harness.preflight();
+        const own = commands[0]?.cwd ?? '';
+        const observation = {
+          variant: process.env.GG_466_VARIANT,
+          platform: process.platform,
+          node: process.version,
+          atStart,
+          waitedForPredecessorMs: waitedMs,
+          predecessor: {
+            result: predecessor.result,
+            probeDirectoryLeftByProduct: predecessor.probeDirectoryLeftByProduct,
+            rootAfter: await probeFs
+              .access(predecessor.root)
+              .then(() => 'present', (error: NodeJS.ErrnoException) => String(error.code)),
+            children: predecessor.children.map((child) => ({
+              exitCode: child.exitCode,
+              signalCode: child.signalCode,
+            })),
+          },
+          successor: {
+            result: result.state,
+            ownProbeDirectory: own,
+            createdOutsideOwnRoot: create.mock.calls
+              .map(([path]) => String(path))
+              .filter((path) => dirname(path) !== probe.root),
+            removed: remove.mock.calls.map(([path]) => String(path)),
+            lateCallsFromPredecessor: remove.mock.calls
+              .map(([path]) => String(path))
+              .filter((path) => predecessor.root !== '' && path.startsWith(predecessor.root)),
+            tempStillOwnRoot: TEMP_NAMES.map((name) => process.env[name] === probe.root),
+          },
+        };
+        writeFileSync(String(process.env.GG_466_OBSERVATION), JSON.stringify(observation, null, 2));
+        create.mockRestore();
+        remove.mockRestore();
+        expect(observation.atStart).toMatchObject({
+          predecessorSettled: true,
+          predecessorRunningFakeClis: 0,
+        });
+        expect(observation.successor).toEqual({
+          result: 'ready',
+          ownProbeDirectory: expect.stringContaining(probe.root),
+          createdOutsideOwnRoot: [],
+          removed: [own],
+          lateCallsFromPredecessor: [],
+          tempStillOwnRoot: [true, true, true],
+        });
+      })(context),
+    30_000,
+  );
+});

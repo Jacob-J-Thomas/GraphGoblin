@@ -1,0 +1,41 @@
+# negative control (old lifecycle substituted into corrected test); head 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1 + uncommitted candidate; node v22.23.4; started 2026-11-18T04:47:49Z
+# command: pnpm exec vitest run src/probe-lifecycle-old-control.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 488ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries 547ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries 27ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > fails a real directory creation fault before starting the fake CLI or removing anything 8ms
+ × src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes 5020ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes 5009ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > reports an ordinary case failure once, after the same settlement 430ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes
+ FAIL  src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-lifecycle-old-control.test.ts:214:81
+    212|   }
+    213|
+    214|   it.for(['before its first fake CLI starts', 'while a fake CLI runs']…
+       |                                                                                 ^
+    215|     'settles a case abandoned %s before the case finishes',
+    216|     async (moment) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  22:47:50
+   Duration  14.96s (tests 79%, import 12%, transform 9%)
+
+exit=1
+# finished 2026-11-18T04:48:05Z

@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
+  times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
+  cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and
+  retry settings are unchanged; no product behaviour changes. (#466)
+
 - Direct Node invocations of the generated-document, migration and performance-summary
   commands execute when the checkout is reached through a directory alias (#495).
   Importing those modules remains inert. The supported pnpm checks already rejected invalid

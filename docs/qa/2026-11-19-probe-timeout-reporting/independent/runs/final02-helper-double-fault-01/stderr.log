@@ -1,0 +1,44 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  case.test.ts > A genuinely times out in Vitest
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ case.test.ts:257:1
+    255| });
+    256|
+    257| it('A genuinely times out in Vitest', timed);
+       | ^
+    258|
+    259| it('B checks ownership the moment the next case runs', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  case.test.ts > A genuinely times out in Vitest
+Error: QA466_LATE_BODY_FAILURE
+ ❯ case.test.ts:246:11
+    244|     record('preflight-result', { state: result.state, ok: result.ok, o…
+    245|     expect(result).toMatchObject({ state: 'unknown', ok: false });
+    246|     throw new Error(scenario === 'double-fault' ? 'QA466_LATE_BODY_FAI…
+       |           ^
+    247|   } finally {
+    248|     bodySettled = true;
+ ❯ case.test.ts:57:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  case.test.ts > A genuinely times out in Vitest
+Error: QA466_ROOT_REMOVE_FAILURE
+ ❯ Module.<anonymous> case.test.ts:197:29
+    195|       if (scenario === 'double-fault') {
+    196|         record('case-root-fault-injected', { target, error: 'QA466_ROO…
+    197|         throw Object.assign(new Error('QA466_ROOT_REMOVE_FAILURE'), { …
+       |                             ^
+    198|       }
+    199|       await realFs.rm(path, options);
+ ❯ case.test.ts:71:47
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EBUSY' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

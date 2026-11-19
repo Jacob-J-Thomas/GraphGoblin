@@ -1,0 +1,61 @@
+# Independent behavior QA: #505 outer Vitest lifecycle correction
+
+**PASS for the exact frozen final source.** The original 5000 ms outer timeout remains a failure. In all three maintained-case witnesses, the successor passed after the complete owned body and cleanup, with no prior root, TEMP stub, active injected mock or living owned fake CLI. The full frozen maintained suite passed all nine cases. This is behavior QA, not a formal source review or final integration approval.
+
+## Revision and isolation
+
+- Parent commit: `eb54ce9acab70f75b6ee84e2c5813920be7a2ce9`; original target/base in the retained review packet: `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`.
+- Original maintained test SHA-256: `9d952d1cd6d731e223cc47ac53ec5e40b89db3ddf90f8f4ca983ac1f30b8ec5a`.
+- Tested final maintained test SHA-256: `e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75`.
+- Numbered testing document SHA-256: `13be1376095cc55c132514b0e5cce403206447afee2b42a0afa8477a84751111`.
+- Root supplied the immutable [snapshot-02 binding](../pr505-correction-root-snapshot-02/binding.json), authorizing QA against its copied source while the author completed evidence. The initial snapshot `b418c220...` has prepared input folders here but **was never executed**. Only `final-*-input` folders were run.
+- The [raw final source](final-maintained-input/raw-frozen-probe-directory.test.ts.txt) is retained. The full-suite generator reverses its two import relocations and fixture URL relocation and verifies exact equality with that source. No assertion or behavior-bearing body changed.
+- Windows `10.0.26300`, PowerShell `7.6.9`, project Node `22.23.4`, pnpm `12.8.1`, installed Vitest `5.0.3`. Existing dependencies were reused; no installation, provider dispatch, source/index write, publication or Git mutation occurred.
+- [Runtime dependency hashes](runtime-dependencies.json) confirm unchanged production CLI/harness/index, fake CLI bytes, package/shared Vitest configuration, package metadata and lockfile. The author checkout still had the exact tested source and document hashes at completion; see [final provenance](final-provenance-and-cleanup.json).
+
+## Behavior and reporting results
+
+Each timeout run had one deliberately failed first test and one passed successor; each process exited **1**, as required. The full maintained suite exited **0**, with nine passes and no failures. [Machine-checked summary](result-summary.json) retains the assertions and raw error-message heads.
+
+| Check | Observed result | Evidence |
+| --- | --- | --- |
+| Maintained ordinary-failure case under real outer timeout | Actual abort at 5019 ms; delayed real `readdir` released at 5684 ms; inner body settled at 5692 ms; outer owned body finished at 5696 ms; successor at 5703 ms saw root absent, exact original TEMP/TMP/TMPDIR, restored `rm`/`readdir`, no owned live/native children. | [Events](outer-ordinary/events.jsonl), [complete output](outer-ordinary/vitest.log), [JSON report](outer-ordinary/vitest.json), [receipt](outer-ordinary/receipt.json) |
+| Maintained combined failure, early assertion after real outer abort | Abort at 5019 ms; local `rm` mock restored at 5677 ms; complete body at 5678 ms; successor at 5683 ms clean. Vitest separately reported timeout, assertion, `Body failure without an abort`, and `Case root removal failure`. No late body or cleanup failure disappeared behind the early assertion. | [Events](outer-combined-early/events.jsonl), [complete output](outer-combined-early/vitest.log), [JSON report](outer-combined-early/vitest.json), [receipt](outer-combined-early/receipt.json) |
+| Maintained combined failure, simulated-abort row under real outer timeout | Abort at 5028 ms; local mock restored at 5740 ms; complete body at 5742 ms; successor at 5769 ms clean. Timeout and the retained child-count assertion remained failures. The controlled finish's intentionally captured errors retain their original assertions in the unperturbed suite. | [Events](outer-combined-aborted/events.jsonl), [complete output](outer-combined-aborted/vitest.log), [JSON report](outer-combined-aborted/vitest.json), [receipt](outer-combined-aborted/receipt.json) |
+| Prior independent helper witness with a native hanging fake CLI | Native PID 20572 was alive at real abort (5026 ms), exited with SIGTERM at 5038 ms, before delayed native probe removal at 5692 ms. Body settled at 5694 ms; environment was restored before root removal; successor at 5698 ms saw four observed children, none alive, no probe or root. Timeout and `QA466_TIMED_BODY_FAILURE` were separately reported. | [Events](helper-live/events.jsonl), [complete output](helper-live/vitest.log), [JSON report](helper-live/vitest.json), [receipt](helper-live/receipt.json) |
+| Prior independent helper double-fault witness | Actual 5000 ms timeout, `QA466_LATE_BODY_FAILURE` and `QA466_ROOT_REMOVE_FAILURE` appeared as three separate errors. Successor at 5693 ms saw settled body, removed probe, original environment, no child and precisely the deliberately retained empty case root. The external runner removed only that verified disposable root after observation. | [Events](helper-double-fault/events.jsonl), [complete output](helper-double-fault/vitest.log), [JSON report](helper-double-fault/vitest.json), [receipt](helper-double-fault/receipt.json) |
+| Complete frozen maintained suite | Nine passes: 226-character TEMP path/250-character probe path, one/four native directory collisions with preserved contents, real creation fault with no fake CLI, abandonment before/while spawning, ordinary failure, and both combined-failure rows. | [Complete output](maintained-frozen/vitest.log), [JSON report](maintained-frozen/vitest.json), [receipt](maintained-frozen/receipt.json), [round-trip generation receipt](final-maintained-input/generation.json) |
+
+The three outer witnesses retain the corrected maintained `lifecycleTest`, `controlledLifecycle`, helper/fixture definitions and actual-context wiring. Their only body changes are observation bookkeeping. Both combined witnesses select one original parameter row. The first real read waits for the actual Vitest abort, waits another 650 ms, then calls the real filesystem. Configurations retain node, development exports, clear/restore mocks, fork/gc settings and the default deadlines; no timeout, hook-timeout or retry override exists. The successor snapshots all facts synchronously before any await. The original witness's final `afterAll` observation wait remains after that snapshot and cannot repair the successor's result.
+
+Abort propagation now prevents any child from starting after the delayed read in the outer witnesses. The retained maintained expectations of four children consequently report an additional assertion in these deliberately timed-out cases. That is an expected changed terminal error, rather than a weakened assertion or swallowed timeout. The ordinary unperturbed maintained cases still pass, and the separate helper live witness establishes native child cancellation and exit ordering.
+
+## Exact commands
+
+All native invocations ran from `C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin`; the runner selected project Node 22.23.4 before every pnpm call and created a unique short disposable TEMP root. Every [run receipt](outer-ordinary/receipt.json) records its exact argument array, paths, timestamps, expected/actual exit, pre-cleanup filesystem contents and native-process observations.
+
+Generator input: `e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75`, the raw source under `pr505-correction-root-snapshot-02`, and tag `final-`. The outer generator was invoked once per mode `ordinary`, `combined-early`, `combined-aborted`. [Outer generator](generate-outer-qa.mjs), [original generator](original-generate-outer-timeout-witness.mjs) and [retained delta](generator-vs-original.diff) show the extraction. The previous independent helper body remains byte-for-byte at SHA-256 `646e5861c25efdc1783f9b0f00c4f313106f95f83acdc0a23116fb7a20c4c98f`; [helper generation receipt](final-helper-timeout-input/generation.json) binds it to the frozen helper.
+
+For each external input config, the exact pnpm form was:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run --config <absolute final input config> --reporter=verbose --reporter=json --outputFile=<absolute run vitest.json>
+```
+
+[run-native-qa.ps1](run-native-qa.ps1) captures merged stdout/stderr to each `vitest.log`. It ran names `outer-ordinary`, `outer-combined-early`, `outer-combined-aborted`, `helper-live`, `helper-double-fault`, and `maintained-frozen`. The two helper runs supplied `GG_466_QA_SCENARIO=live` and `double-fault`, respectively. [summarize-results.mjs](summarize-results.mjs) checked exits, error heads, test counts, ordering, resources, unchanged deadlines and dependencies; it completed successfully and wrote `result-summary.json`.
+
+## QA checklist, rationale and alternatives
+
+- [x] Real default outer timeout remains an actual reported failure; no larger deadline or retry conceals it.
+- [x] The complete maintained outer body, including local `finally`, settles before the successor. Awaiting only the inner preflight/probe would miss the original defect and the local fault-mock cleanup path.
+- [x] Original TEMP values remain owned during delayed probe cleanup and return exactly before the next case. Early environment restoration would invalidate the still-running body's assumptions.
+- [x] Early assertions do not strand controlled work, local mocks or roots, and unseen body/removal errors remain separately reported.
+- [x] Ordinary controlled outcomes and both combined-error assertions remain meaningful; all nine original maintained cases pass without perturbation.
+- [x] Native CLI cancellation, process exit, probe removal and root cleanup preserve their required order; only the deliberately injected root-removal fault requires external disposal.
+- [x] Successor facts precede any QA draining/repair. Adding an independent outer-context finish hook or awaiting completion inside the successor would invalidate this witness; neither was done.
+- [x] Original failed evidence remains failed and byte-for-byte preserved: all **33 files** match their before/after SHA-256 and byte counts; the original generator copy also matches. See [before](original-evidence-preservation-before.json), [after](original-evidence-preservation-after.json) and [verification](final-provenance-and-cleanup.json).
+
+No owned fake CLI survived any invocation. All disposable run roots were absent after the recorded external disposal step. Normal and outer-witness runs had no remaining owned entries even before external disposal; the double-fault helper run had exactly the injected empty case root.
+
+Limits: QA used the final immutable snapshot and existing Windows dependencies. No full-monorepo rerun, coverage rerun, Linux execution, direct user-cancelled run, real provider call, formal code scan, CI acceptance, publication or merge was performed in this lane. Author checks, independent targeted review, current-head/current-target CI and the reserved final audit remain distinct gates owned by the parent task.

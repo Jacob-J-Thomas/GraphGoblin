@@ -1,0 +1,66 @@
+$ vitest run src/probe-directory.independent-qa.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466-qa/GraphGoblin/packages/adapter-codex
+
+ × src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest 5689ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → QA466_LATE_BODY_FAILURE
+   → QA466_ROOT_REMOVE_FAILURE
+ ✓ src/probe-directory.independent-qa.test.ts > B checks ownership the moment the next case runs 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.independent-qa.test.ts:253:1
+    251| });
+    252|
+    253| it('A genuinely times out in Vitest', timed);
+       | ^
+    254|
+    255| it('B checks ownership the moment the next case runs', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: QA466_LATE_BODY_FAILURE
+ ❯ src/probe-directory.independent-qa.test.ts:242:11
+    240|     record('preflight-result', { state: result.state, ok: result.ok, o…
+    241|     expect(result).toMatchObject({ state: 'unknown', ok: false });
+    242|     throw new Error(scenario === 'double-fault' ? 'QA466_LATE_BODY_FAI…
+       |           ^
+    243|   } finally {
+    244|     bodySettled = true;
+ ❯ src/probe-directory.independent-qa.test.ts:53:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: QA466_ROOT_REMOVE_FAILURE
+ ❯ Module.<anonymous> src/probe-directory.independent-qa.test.ts:193:29
+    191|       if (scenario === 'double-fault') {
+    192|         record('case-root-fault-injected', { target, error: 'QA466_ROO…
+    193|         throw Object.assign(new Error('QA466_ROOT_REMOVE_FAILURE'), { …
+       |                             ^
+    194|       }
+    195|       await realFs.rm(path, options);
+ ❯ src/probe-directory.independent-qa.test.ts:67:47
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EBUSY' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:20:09
+   Duration  8.56s (tests 69%, import 17%, transform 14%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466-qa\GraphGoblin\packages\adapter-codex
+

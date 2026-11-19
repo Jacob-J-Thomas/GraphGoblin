@@ -1,0 +1,69 @@
+utc=2026-11-18T05:14:50Z purpose=runner semantics: AggregateError from onTestFinished after default timeout (expected exit 1)
+scratch_sha256=655c78f8b44b0fe421bd73c3a3e18e4434a35255cd77a7d592c5030a5ab1ae6e
+command=pnpm --filter @graphgoblin/adapter-codex test src/qa466-aggregate-report.scratch.test.ts --reporter=verbose  (TEMP/TMP/TMPDIR=C:\Users\98jak\AppData\Local\Temp\gg466corr-dVoVcU)
+$ vitest run src/qa466-aggregate-report.scratch.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+
+ × src/qa466-aggregate-report.scratch.test.ts > times out, then its finish hook throws two errors 5016ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → SCRATCH_LATE_BODY_FAILURE
+   → SCRATCH_ROOT_REMOVE_FAILURE
+ ✓ src/qa466-aggregate-report.scratch.test.ts > the next case runs 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/qa466-aggregate-report.scratch.test.ts > times out, then its finish hook throws two errors
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/qa466-aggregate-report.scratch.test.ts:5:1
+      3| // Runner-semantics check for #466 correction 01, not part of the cand…
+      4| // AggregateError thrown by an onTestFinished hook after the default 5…
+      5| it('times out, then its finish hook throws two errors', async ({ signa…
+       | ^
+      6|   onTestFinished(() => {
+      7|     throw new AggregateError(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/qa466-aggregate-report.scratch.test.ts > times out, then its finish hook throws two errors
+Error: SCRATCH_LATE_BODY_FAILURE
+ ❯ src/qa466-aggregate-report.scratch.test.ts:9:9
+      7|     throw new AggregateError(
+      8|       [
+      9|         new Error('SCRATCH_LATE_BODY_FAILURE'),
+       |         ^
+     10|         Object.assign(new Error('SCRATCH_ROOT_REMOVE_FAILURE'), { code…
+     11|       ],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/qa466-aggregate-report.scratch.test.ts > times out, then its finish hook throws two errors
+Error: SCRATCH_ROOT_REMOVE_FAILURE
+ ❯ src/qa466-aggregate-report.scratch.test.ts:10:23
+      8|       [
+      9|         new Error('SCRATCH_LATE_BODY_FAILURE'),
+     10|         Object.assign(new Error('SCRATCH_ROOT_REMOVE_FAILURE'), { code…
+       |                       ^
+     11|       ],
+     12|       'SCRATCH_AGGREGATE_MESSAGE',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EBUSY' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:14:51
+   Duration  5.40s (tests 99%, import 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466\GraphGoblin\packages\adapter-codex
+
+exit=1
+scratch_removed=yes

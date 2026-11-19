@@ -1,0 +1,24 @@
+# typecheck, first attempt. node v22.23.4; started 2026-11-18T04:55:37Z
+# cwd: repo root; command: pnpm typecheck --filter=@graphgoblin/adapter-codex
+$ turbo run typecheck --filter=@graphgoblin/adapter-codex
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex
+   • Running typecheck in 1 package
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs 13001c9b05ca016f
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs 43a3eff091c8035b
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache hit, replaying logs b7229bb9ca399824
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 074724fdcd8ea923
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    4 successful, 4 total
+Cached:    3 cached, 4 total
+  Time:    8.407s 
+
+exit=0
+# finished 2026-11-18T04:55:46Z
