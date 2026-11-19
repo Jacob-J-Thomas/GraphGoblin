@@ -4,43 +4,63 @@ Design, run, and observe agent loops. A progressive web application plus a gatew
 
 Status: 1.0.0 released 2026-10-03. What changed is in [CHANGELOG.md](CHANGELOG.md); the [user guide](docs/guide/README.md) explains how to use it.
 
-## Quick start
+## Install GraphGoblin
 
-You need Git, Node 22 LTS (22.22.2 or later), pnpm, and the Codex CLI logged in (`codex login`) as the user who runs GraphGoblin. GraphGoblin stores no Codex credentials.
+Use the checkout installer for Windows, macOS or Linux. On Windows you can also add a desktop and taskbar launcher after the first start. For a container, go to [Docker Compose](#docker-compose).
 
-### Install script
+### Install from a checkout
 
-From a clone of this repository, in PowerShell:
+Install Git, **Node.js 22.22.2 or newer in the 22.x series**, **pnpm 12.8.1**, and the Codex CLI. Run `codex login` as the user who will start GraphGoblin, then confirm `codex login status` reports that you’re signed in. [Prerequisites](docs/guide/01-install-and-first-run.md#check-prerequisites)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1
-pnpm.cmd start
+Clone the repository and enter its directory in PowerShell or Bash.
+
+```sh
+git clone https://github.com/Jacob-J-Thomas/GraphGoblin.git
+cd GraphGoblin
 ```
 
-Or in bash (Linux, macOS, or Git Bash on Windows):
+**Windows PowerShell**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+
+**Bash on macOS, Linux or Windows (Git Bash)**
 
 ```bash
 bash scripts/install.sh
-pnpm start
 ```
 
-The script checks prerequisites, installs, builds, creates the data directory (`~/.graphgoblin`, or `GG_DATA_DIR`), and runs the first-run preflight. Then open <http://127.0.0.1:4747/app/>.
+The script installs the pinned dependencies, builds GraphGoblin, creates its data directory (by default `~/.graphgoblin`), and checks readiness. If preflight reports `FAIL`, correct the named check and rerun the same script. When it prints `Install complete.`, start GraphGoblin from the same checkout with **`pnpm.cmd start`** in PowerShell or **`pnpm start`** in Bash. Keep that terminal open.
 
-### Container
+### Make a first run
 
-```bash
+1. Open <http://127.0.0.1:4747/app/>. In **Loops**, enter a **New loop name** and select **Create**.
+2. Select **Publish**, then **Open in Runs** and **Start run**. The starter connects a manual trigger directly to an exit. The run inspector should show **succeeded**.
+
+To add an inference node or enable API keys, see [Build a loop](docs/guide/02-build-a-loop.md) and [Create API keys](docs/guide/06-settings-and-secrets.md#create-api-keys).
+
+### Optional Windows desktop and taskbar launcher
+
+With GraphGoblin running, open the app URL in Chrome and install it as a Chrome app. Keep Chrome’s original GraphGoblin shortcut. If that shortcut is only on the Desktop, or you use a custom port or data directory, use the [launcher options](docs/guide/01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher). For a default setup, open a second PowerShell window in the same checkout, with the same Node 22 runtime on PATH.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-windows-launcher.ps1
+```
+
+The installer finds the Chrome app shortcut and creates Desktop and Start menu shortcuts for the launcher.
+
+Stop the foreground gateway with **Ctrl+C** and wait for it to exit. Open the new **GraphGoblin** Desktop shortcut. To use the taskbar, remove any old direct Chrome pin and pin the running GraphGoblin window. The launcher starts or reuses the matching gateway on a cold launch. If the window is already open, a taskbar click focuses it. To start a stopped gateway again, use the Desktop shortcut or the taskbar’s **Open new window** action. [Launcher troubleshooting](docs/guide/07-troubleshooting.md#windows-launcher)
+
+### Docker Compose
+
+With Git, Docker Compose and a host Codex login, clone the repository as shown above. From its root, start the service.
+
+```sh
 docker compose up -d --build
 ```
 
-The compose file keeps data in a volume, publishes the port on the host's loopback only, and mounts your `~/.codex` login. The image is meant for one user on a trusted network.
-
-### First run
-
-1. Open **Loops**, create a loop, then **Publish** and **Run** the starter graph.
-2. Follow [Build a loop](docs/guide/02-build-a-loop.md) to add a Codex inference node.
-3. To require API keys, set `GG_REQUIRE_API_KEY=true`, stop the API, and create the first key with `node apps/api/dist/main.js --create-api-key <name>`, then restart. In the container, run `docker compose stop graphgoblin`, then `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>`, then `docker compose up -d graphgoblin`.
-
-See [Install and make a first run](docs/guide/01-install-and-first-run.md) for every option and setting.
+Compose builds the image, keeps data in the `graphgoblin-data` volume, and mounts the host’s Codex login. Open <http://127.0.0.1:4747/app/> and follow [Make a first run](#make-a-first-run). [Container setup and API keys](docs/guide/01-install-and-first-run.md#run-the-container-image)
 
 ## Repository layout
 
