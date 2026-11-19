@@ -192,3 +192,77 @@ it('rejects names the native text driver cannot preserve and retains valid Unico
     draft: original.draft,
   });
 });
+
+it('releases a deleted loop name for its owner while preserving name and owner isolation', async () => {
+  const original = await created('X');
+  const retained = await created('Kept Name');
+  const unrelatedOwner = await t.container.repos.apiKeys.create('unrelated-owner', 'owner', ['*']);
+  const unrelatedHeaders = { authorization: `Bearer ${unrelatedOwner.token}` };
+
+  const foreignCreate = await t.app.inject({
+    method: 'POST',
+    url: '/loops',
+    headers: unrelatedHeaders,
+    payload: { definition: definition('x') },
+  });
+  expect(foreignCreate.statusCode, foreignCreate.body).toBe(201);
+  const foreignPayload = foreignCreate.json<{ loop: unknown; draft: unknown }>();
+  const foreignLoop = LoopRecordSchema.parse(foreignPayload.loop);
+  const foreignDraft = LoopVersionRecordSchema.parse(foreignPayload.draft);
+  expect(foreignLoop.name).toBe('x');
+  expect(foreignDraft.definition.name).toBe('x');
+  expect(foreignLoop.id).not.toBe(original.loop.id);
+
+  const hiddenForeignLoop = await t.app.inject(`/loops/${foreignLoop.id}`);
+  expect(hiddenForeignLoop.statusCode, hiddenForeignLoop.body).toBe(404);
+  expect(hiddenForeignLoop.json()).toMatchObject({ code: 'LOOP_NOT_FOUND' });
+  const hiddenLocalLoop = await t.app.inject({
+    method: 'GET',
+    url: `/loops/${original.loop.id}`,
+    headers: unrelatedHeaders,
+  });
+  expect(hiddenLocalLoop.statusCode, hiddenLocalLoop.body).toBe(404);
+  expect(hiddenLocalLoop.json()).toMatchObject({ code: 'LOOP_NOT_FOUND' });
+
+  const deleted = await t.app.inject({ method: 'DELETE', url: `/loops/${original.loop.id}` });
+  expect(deleted.statusCode, deleted.body).toBe(204);
+  const absent = await t.app.inject(`/loops/${original.loop.id}`);
+  expect(absent.statusCode, absent.body).toBe(404);
+  expect(absent.json()).toMatchObject({ code: 'LOOP_NOT_FOUND' });
+
+  const reused = await created(' x ');
+  expect(reused.loop.id).not.toBe(original.loop.id);
+  expect(reused.loop.id).not.toBe(foreignLoop.id);
+  expect(reused.loop.name).toBe(' x ');
+  expect(reused.draft.definition.name).toBe(' x ');
+
+  const retainedConflict = await create(' kept  NAME ');
+  expect(retainedConflict.statusCode, retainedConflict.body).toBe(409);
+  expect(retainedConflict.json()).toMatchObject({ code: 'LOOP_NAME_CONFLICT' });
+
+  const retainedRead = await t.app.inject(`/loops/${retained.loop.id}`);
+  expect(retainedRead.statusCode, retainedRead.body).toBe(200);
+  expect(retainedRead.json()).toMatchObject({ loop: retained.loop, draft: retained.draft });
+
+  const activeRead = await t.app.inject(`/loops/${reused.loop.id}`);
+  expect(activeRead.statusCode, activeRead.body).toBe(200);
+  const activePayload = activeRead.json<{ loop: unknown; draft: unknown }>();
+  expect(LoopRecordSchema.parse(activePayload.loop)).toMatchObject({
+    id: reused.loop.id,
+    name: ' x ',
+  });
+  expect(LoopVersionRecordSchema.parse(activePayload.draft)).toMatchObject({
+    id: reused.draft.id,
+    definition: { name: ' x ' },
+  });
+
+  const foreignRead = await t.app.inject({
+    method: 'GET',
+    url: `/loops/${foreignLoop.id}`,
+    headers: unrelatedHeaders,
+  });
+  expect(foreignRead.statusCode, foreignRead.body).toBe(200);
+  const foreignReadPayload = foreignRead.json<{ loop: unknown; draft: unknown }>();
+  expect(LoopRecordSchema.parse(foreignReadPayload.loop)).toMatchObject(foreignLoop);
+  expect(LoopVersionRecordSchema.parse(foreignReadPayload.draft)).toMatchObject(foreignDraft);
+});

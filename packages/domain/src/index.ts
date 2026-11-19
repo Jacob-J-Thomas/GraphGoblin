@@ -24,6 +24,7 @@ export { findAuthoredSources, syntaxIssues } from './syntax.js';
 export { renameLoopNode, type NodeRenameResult } from './node-references.js';
 export * from './state-machine.js';
 export * from './loop-io.js';
+export * from './loop-names.js';
 export * from './replay.js';
 export * from './regex-safety.js';
 export * from './model-resolution.js';
