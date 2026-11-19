@@ -1,0 +1,26 @@
+{
+  "purpose": "All fixtures log harmless login/status arguments and refuse other commands; no actual Codex binary, authentication or provider is invoked.",
+  "files": [
+    {
+      "path": "npm-shims/codex.ps1",
+      "sha256": "1c404fbb83a6ce58a4e79524d1313a6dff52338f33e9083066e013bdb559aa27",
+      "source": "if (($args -join ' ') -notin @('login','login status')) { throw 'Inert QA stub refuses this command' }\nAdd-Content -LiteralPath $env:QA_CLI_LOG -Value ('{\"kind\":\"npm-ps1\",\"command\":\"' + ($args -join ' ') + '\"}')\nWrite-Output ('INERT PS1 ' + ($args -join ' '))\r\n"
+    },
+    {
+      "path": "npm-shims/codex.cmd",
+      "sha256": "ccd530b5936841e4c7040b71e34ad36ef82c00109323e5cbfc015b52c995af90",
+      "source": "@echo off\n\"%QA_NODE%\" \"%~dp0record-args.cjs\" %*\r\n"
+    },
+    {
+      "path": "npm-shims/record-args.cjs",
+      "sha256": "7bcedebda2e9f7fa4c3a82feafbf893e8a453a41a76adf191168e704dbb52195",
+      "source": "const fs=require('node:fs');\nconst args=process.argv.slice(2);\nif(!['login','login status'].includes(args.join(' '))){console.error('Inert QA stub refuses this command');process.exit(94);}\nfs.appendFileSync(process.env.QA_CLI_LOG,JSON.stringify({kind:'npm-cmd',args})+'\\n');\nconsole.log('INERT CMD '+args.join(' '));\r\n"
+    },
+    {
+      "path": "InertCodex.cs",
+      "sha256": "cb5542c5b5d6c2410052906a240f87d58cb708d6ac2095176743917ffed13e44",
+      "source": "using System;\nusing System.IO;\npublic class InertCodex {\n  public static int Main(string[] args) {\n    string command=String.Join(\" \",args);\n    if(command!=\"login\" && command!=\"login status\"){Console.Error.WriteLine(\"Inert QA stub refuses this command\");return 94;}\n    File.AppendAllText(Environment.GetEnvironmentVariable(\"QA_CLI_LOG\"),\"{\\\"kind\\\":\\\"native-exe\\\",\\\"command\\\":\\\"\"+command+\"\\\"}\\n\");\n    Console.WriteLine(\"INERT EXE \"+command);return 0;\n  }\n}\r\n"
+    }
+  ],
+  "nativeExeSha256": "9678e7d04d7a446ad57402150d2036b0c8918316021e23513f7faa55409a36ff"
+}

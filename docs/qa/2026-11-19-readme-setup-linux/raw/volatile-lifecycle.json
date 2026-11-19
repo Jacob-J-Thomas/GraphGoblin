@@ -1,0 +1,14 @@
+{
+  "originalRoot": "/tmp",
+  "laterObservation": "The complete task-owned root was absent on a later Ubuntu entry, including tools, checkout, fixture stores and logs.",
+  "tmpfilesRule": "D /tmp 1777 root root 30d",
+  "startupCommand": "systemd-tmpfiles --create --remove --boot --exclude-prefix=/dev",
+  "installedManualSemantics": "The D rule removes directory contents when systemd-tmpfiles runs with --remove.",
+  "observedServiceStartUtc": [
+    "2026-11-19T04:50:41Z",
+    "2026-11-19T04:51:13Z",
+    "2026-11-19T04:52:11Z",
+    "2026-11-19T04:54:20Z"
+  ],
+  "attribution": "Boot cleanup is a matching explanation for the original disposable root loss. Per-file syscall attribution for the original five missing entries is unavailable. The continuous /var/tmp repeat records the actual installer and export boundary independently."
+}

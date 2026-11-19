@@ -1,0 +1,165 @@
+### Page
+- Page URL: http://127.0.0.1:58471/app/loops/01M7RZ3N294C71099YYBG9KBA3/edit
+- Page Title: GraphGoblin
+### Snapshot
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Chat" [ref=e23] [cursor=pointer]:
+        - /url: /app/chat
+      - link "Loops" [ref=e25] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e27] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e29] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e31] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e144]:
+    - banner [ref=e145]:
+      - generic [ref=e146]:
+        - button "Undo" [disabled] [ref=e147]
+        - button "Redo" [disabled] [ref=e151]
+      - generic [ref=e155]:
+        - link "Loops" [ref=e156] [cursor=pointer]:
+          - /url: /app/loops
+        - generic [ref=e157]: /
+        - heading "README setup starter" [level=1] [ref=e158]
+        - generic [ref=e159]: draft only
+        - generic [ref=e161]: All changes saved
+        - generic [ref=e165]:
+          - link "Open in Runs" [disabled] [ref=e166]
+          - generic [ref=e169]: "Publish the loop first: runs start from a published version."
+          - generic [ref=e170]: Ready to publish
+          - button "Publish" [ref=e174] [cursor=pointer]
+    - generic [ref=e179]:
+      - complementary "Palette" [ref=e180]:
+        - generic [ref=e181]:
+          - button "Hide palette" [expanded] [ref=e182] [cursor=pointer]
+          - heading "Palette" [level=2] [ref=e185]
+        - navigation "Node palette" [ref=e187]:
+          - button "Add Trigger node" [ref=e188]:
+            - generic [ref=e192]: Trigger
+            - generic [ref=e193]: Starts a run
+          - button "Add Decision node" [ref=e194]:
+            - generic [ref=e199]: Decision
+            - generic [ref=e200]: Chooses a route and can limit repeats
+          - button "Add Inference node" [ref=e201]:
+            - generic [ref=e206]: Inference
+            - generic [ref=e207]: Hands work to a harness
+          - button "Add Script node" [ref=e208]:
+            - generic [ref=e212]: Script
+            - generic [ref=e213]: Runs a program
+          - button "Add Mutate node" [ref=e214]:
+            - generic [ref=e219]: Mutate
+            - generic [ref=e220]: Changes the context thread
+          - button "Add Subloop node" [ref=e221]:
+            - generic [ref=e226]: Subloop
+            - generic [ref=e227]: Runs another loop
+          - button "Add Wait node" [ref=e228]:
+            - generic [ref=e232]: Wait
+            - generic [ref=e233]: Parks until input, time, or a signal
+          - button "Add Heartbeat node" [ref=e234]:
+            - generic [ref=e238]: Heartbeat
+            - generic [ref=e239]: Polls on an interval
+          - button "Add Exit node" [ref=e240]:
+            - generic [ref=e244]: Exit
+            - generic [ref=e245]: Finishes with an outcome and return value
+      - main [ref=e246]:
+        - application [ref=e248]:
+          - generic [ref=e250]:
+            - generic:
+              - generic:
+                - img:
+                  - group "start out to done" [ref=e251] [cursor=pointer]
+              - generic:
+                - group "Trigger Start (start)" [ref=e254]:
+                  - generic [ref=e255]:
+                    - generic [ref=e256]: Trigger
+                    - generic [ref=e261]:
+                      - generic [ref=e262]: Start
+                      - generic [ref=e263]: start
+                      - generic [ref=e265]:
+                        - text: out
+                        - generic "start output out (out)" [ref=e266]
+                - group "Exit Done (done)" [ref=e267]:
+                  - generic [ref=e268]:
+                    - generic "done input" [ref=e269]
+                    - generic [ref=e270]: Exit
+                    - generic [ref=e275]:
+                      - generic [ref=e276]: Done
+                      - generic [ref=e277]: done
+          - generic "Control Panel" [ref=e278]:
+            - button "Zoom In" [ref=e279] [cursor=pointer]
+            - button "Zoom Out" [ref=e282] [cursor=pointer]
+            - button "Fit View" [ref=e285] [cursor=pointer]
+            - button "Toggle Interactivity" [ref=e288] [cursor=pointer]
+          - link "React Flow attribution" [ref=e292] [cursor=pointer]:
+            - /url: https://reactflow.dev?utm_source=attribution
+            - text: React Flow
+      - complementary "Loop settings" [ref=e295]:
+        - generic [ref=e296]:
+          - heading "Loop settings" [level=2] [ref=e297]
+          - button "Hide loop settings" [expanded] [ref=e298] [cursor=pointer]
+        - region "Loop settings" [ref=e302]:
+          - paragraph [aria-hidden] [ref=e303]: Required fields are marked *
+          - generic [ref=e304]:
+            - generic [ref=e305]:
+              - generic [ref=e306]: Name
+              - generic [aria-hidden] [ref=e307]: "*"
+            - textbox "Name" [ref=e308]: README setup starter
+          - generic [ref=e309]:
+            - generic [ref=e310]: Description
+            - textbox "Description" [ref=e311]
+          - heading "Settings" [level=3] [ref=e312]
+          - paragraph [ref=e313]: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision evaluation or output-transform repair through the structured port when Limited; it defaults to Unlimited. Same-session inference schema repairs follow the node timeout. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.
+          - form "Loop settings form" [ref=e314]:
+            - generic [ref=e316]:
+              - group "Working directory" [ref=e317]:
+                - generic [ref=e319]:
+                  - generic [ref=e320]: Kind
+                  - combobox "Kind" [ref=e322] [cursor=pointer]:
+                    - option "fixed"
+                    - option "template"
+                    - option "temp" [selected]
+              - group "Defaults" [ref=e323]:
+                - group "By harness" [ref=e325]:
+                  - paragraph [ref=e327]: Defaults keyed by their harness; omitted fields inherit only within that harness.
+                  - button "Add entry" [ref=e329] [cursor=pointer]
+                  - status [ref=e333]
+              - generic [ref=e334]:
+                - generic [ref=e335]: Maximum node visits
+                - generic [ref=e337]:
+                  - spinbutton "Maximum node visits" [ref=e338]: "10"
+                  - combobox "Maximum node visits mode" [ref=e340] [cursor=pointer]:
+                    - option "Limited" [selected]
+                    - option "Unlimited"
+                - paragraph [ref=e341]: Fresh entries per node. Default 10; unlimited removes this cutoff.
+              - generic [ref=e342]:
+                - generic [ref=e343]: Run deadline seconds
+                - combobox "Run deadline seconds mode" [ref=e347] [cursor=pointer]:
+                  - option "Limited"
+                  - option "No run deadline" [selected]
+                - paragraph [ref=e348]: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+                - paragraph [ref=e349]: No deadline; set one to stop a forgotten run.
+              - generic [ref=e350]:
+                - generic [ref=e351]: Structured completion milliseconds
+                - combobox "Structured completion milliseconds mode" [ref=e355] [cursor=pointer]:
+                  - option "Limited"
+                  - option "Unlimited" [selected]
+                - paragraph [ref=e356]: Milliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.
+                - paragraph [ref=e357]: No completion deadline; LLM decisions and repairs remain cancellable.
+              - generic [ref=e358]:
+                - generic [ref=e359]: Subloop depth limit
+                - spinbutton "Subloop depth limit" [ref=e361]: "8"
+          - generic [ref=e362]:
+            - heading "Variables" [level=3] [ref=e363]
+            - paragraph [ref=e364]: Each variable maps a name to a JSON Schema.
+          - form "Variables form" [ref=e365]:
+            - group "Variables" [ref=e368]:
+              - generic [ref=e369]: Variables *
+              - button "Add entry" [ref=e371] [cursor=pointer]
+              - status [ref=e375]
+```
