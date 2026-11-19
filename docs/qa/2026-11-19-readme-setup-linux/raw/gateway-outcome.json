@@ -1,0 +1,112 @@
+{
+  "method": "pnpm start, public loopback API, managed drain",
+  "platform": "Linux x86_64, Ubuntu 24.04.3 LTS under WSL2",
+  "providerReadiness": "synthetic; no provider turns",
+  "attempt": "continuous repeat with checkout snapshots before and after",
+  "checks": [
+    {
+      "check": "built gateway announced a kernel-assigned IPv4 loopback port",
+      "pass": true
+    },
+    {
+      "check": "real public health returns HTTP 200 and ok",
+      "pass": true
+    },
+    {
+      "check": "health PID is a descendant of the owned pnpm launcher",
+      "pass": true
+    },
+    {
+      "check": "shipped instance identity equals actual health header",
+      "pass": true
+    },
+    {
+      "check": "listener check matches gateway PID and is only IPv4 loopback",
+      "pass": true
+    },
+    {
+      "check": "both writer lock PIDs equal health and listener PIDs",
+      "pass": true
+    },
+    {
+      "check": "real gateway serves compiled web shell",
+      "pass": true
+    },
+    {
+      "check": "web shell references the compiled app entry",
+      "pass": true
+    },
+    {
+      "check": "compiled web asset returns HTTP 200",
+      "pass": true
+    },
+    {
+      "check": "starter creation returned 201",
+      "pass": true
+    },
+    {
+      "check": "starter published through public API",
+      "pass": true
+    },
+    {
+      "check": "published starter run admitted",
+      "pass": true
+    },
+    {
+      "check": "starter run reached finalized succeeded/success",
+      "pass": true
+    },
+    {
+      "check": "eight correlated finalized events, trigger/exit only",
+      "pass": true
+    },
+    {
+      "check": "managed drain acknowledged HTTP 202",
+      "pass": true
+    },
+    {
+      "check": "all owned Linux process, listener and writer-lock cleanup observed",
+      "pass": true
+    }
+  ],
+  "starter": {
+    "createStatus": 201,
+    "createdBy": "public HTTP API",
+    "publishStatus": 200,
+    "startStatus": 202,
+    "status": "succeeded",
+    "outcome": "success",
+    "fullyFinalized": true,
+    "eventTypes": [
+      "run.queued",
+      "run.started",
+      "node.started",
+      "node.finished",
+      "node.started",
+      "exit.evaluated",
+      "node.finished",
+      "run.finished"
+    ],
+    "nodeKinds": [
+      "trigger",
+      "exit"
+    ],
+    "eventCount": 8,
+    "noInference": true,
+    "runReadbackStatus": 200,
+    "eventReadbackStatus": 200
+  },
+  "managedDrain": {
+    "status": 202,
+    "phase": "draining"
+  },
+  "cleanup": {
+    "pnpmExit": 0,
+    "wrapperPidAbsent": true,
+    "gatewayPidAbsent": true,
+    "listenerAbsent": true,
+    "dataLockAbsent": true,
+    "databaseLockAbsent": true
+  },
+  "complete": true
+}
