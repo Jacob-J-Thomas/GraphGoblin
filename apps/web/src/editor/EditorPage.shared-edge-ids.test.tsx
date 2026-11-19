@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
+import { pasteInto } from '../__fixtures__/user.js';
 import { loadLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
@@ -48,16 +49,70 @@ function sharedAcrossSources(): LoopDefinitionInput {
   return definition;
 }
 
+/**
+ * Within one Decision: `pick`'s `yes` and `no` routes each own a connection called `e1`, to
+ * different cards with different manual routes; `stop` owns its own.
+ */
+function sharedWithinDecision(): LoopDefinitionInput {
+  const definition = newLoopDefinition('Shared edge id');
+  definition.nodes.push(
+    {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          { id: 'yes', label: 'Yes' },
+          { id: 'no', label: 'No' },
+          { id: 'stop', label: 'Stop' },
+        ],
+      },
+    },
+    { id: 'other', kind: 'exit', label: 'Other', config: {} },
+  );
+  definition.edges = [
+    { id: 's1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+    {
+      id: 'e1',
+      from: { node: 'pick', port: 'yes' },
+      to: { node: 'done' },
+      ui: { route: [400, 200, 500] },
+    },
+    { id: 'e1', from: { node: 'pick', port: 'no' }, to: { node: 'other' }, ui: { route: [650] } },
+    { id: 'stop-edge', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
+  ];
+  return definition;
+}
+
 async function open(definition: LoopDefinitionInput) {
   const api = new FakeApi();
   const loop = api.addLoop(definition);
-  renderApp(`/loops/${loop.id}/edit`, api);
+  const rendered = renderApp(`/loops/${loop.id}/edit`, api);
   await screen.findByRole('heading', { name: 'Shared edge id' });
   const saves = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
   const sent = (index: number) =>
     (saves()[index]!.body as { definition: LoopDefinitionInput }).definition;
-  return { api, loop, saves, sent };
+  return { api, loop, rendered, saves, sent };
 }
+
+/** The second route's ID field in `pick`'s editor, opening it first. */
+async function secondRouteId() {
+  act(() => store().openNode('pick'));
+  const dialog = await screen.findByRole('dialog', { name: 'Edit decision pick' });
+  return {
+    dialog,
+    id: dialog.querySelector<HTMLInputElement>('[data-field="routes.1.id"] input')!,
+  };
+}
+
+/** Select the whole field and type `text` over it, one keystroke at a time. */
+const typeOver = (
+  user: ReturnType<typeof userEvent.setup>,
+  field: HTMLInputElement,
+  text: string,
+) => user.type(field, text, { initialSelectionStart: 0, initialSelectionEnd: field.value.length });
 
 describe('a draft whose edges share an id, in the editor (#481)', () => {
   it('saves an unrelated edit with the other records exact, and keeps reporting the shared id', async () => {
@@ -100,5 +155,106 @@ describe('a draft whose edges share an id, in the editor (#481)', () => {
     // One Undo brings the route and its connection back, with the other record as it was.
     act(() => store().undo());
     expect(store().definition!.edges).toEqual(loaded.edges);
+  });
+});
+
+describe('a route ID typed to collide with another route’s, in the editor (#481)', () => {
+  it('renames only the typed route’s own connection, and saves it', async () => {
+    const user = userEvent.setup();
+    const { saves, sent } = await open(sharedWithinDecision());
+    const loaded = store().definition!;
+    const [start, yes, no, stop] = loaded.edges;
+    const { id } = await secondRouteId();
+    // `no` becomes `yes` for a moment: two routes read `yes`, so no connection moves.
+    await user.clear(id);
+    await pasteInto(user, id, 'yes');
+    expect(store().definition!.edges).toEqual(loaded.edges);
+    await typeOver(user, id, 'affirm');
+    expect(store().definition!.edges).toEqual([
+      start,
+      yes,
+      { ...no, from: { node: 'pick', port: 'affirm' } },
+      stop,
+    ]);
+    expect(store().definition!.edges[1]).toBe(yes);
+    const renamed = store().definition!.edges;
+    await waitFor(() => {
+      expect(saves().length).toBeGreaterThan(0);
+      expect(sent(saves().length - 1).edges).toEqual(renamed);
+    }, SAVE_WAIT);
+    // The typing is one step: one Undo restores every record.
+    act(() => store().undo());
+    expect(store().definition!.edges).toEqual(loaded.edges);
+  });
+
+  it('lists and removes only the typed route’s own connection', async () => {
+    const user = userEvent.setup();
+    const { saves, sent } = await open(sharedWithinDecision());
+    const loaded = store().definition!;
+    const [start, yes, , stop] = loaded.edges;
+    const { dialog, id } = await secondRouteId();
+    await user.clear(id);
+    await pasteInto(user, id, 'yes');
+    await user.click(within(dialog).getByRole('button', { name: 'Remove routes 2' }));
+    const review = within(dialog).getByRole('region', { name: 'Remove connected route?' });
+    expect(review).toHaveTextContent('Connection no → other (e1)');
+    expect(review).not.toHaveTextContent('Connection yes → done (e1)');
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
+    expect(store().definition!.edges).toEqual([start, yes, stop]);
+    expect(store().definition!.edges[1]).toBe(yes);
+    expect(codes(store().definition!)).not.toContain('DUPLICATE_EDGE_ID');
+    await waitFor(() => expect(saves()).toHaveLength(1), SAVE_WAIT);
+    expect(sent(0).edges).toEqual([start, yes, stop]);
+    act(() => store().undo());
+    expect(store().definition!.edges).toEqual(loaded.edges);
+  });
+
+  it('keeps which connection the route owns through a reload of the device copy', async () => {
+    const user = userEvent.setup();
+    const { api, loop, rendered, saves } = await open(sharedWithinDecision());
+    const loaded = store().definition!;
+    const [start, yes, no, stop] = loaded.edges;
+    const { id } = await secondRouteId();
+    await user.clear(id);
+    await pasteInto(user, id, 'yes');
+    // Two routes read `yes`, so the draft stays on this device, with the row still on `no`.
+    const copy = await waitFor(async () => {
+      const local = await loadLocalDraft(loop.id);
+      expect(local?.definition.nodes.find((node) => node.id === 'pick')).toHaveProperty(
+        'config.routes.1.id',
+        'yes',
+      );
+      return local!;
+    });
+    expect(copy.synced).toBe(false);
+    expect(copy.definition.edges).toEqual(loaded.edges);
+    expect(copy.decisionRoutes?.['pick']?.rows.map((row) => [row.id, row.edgeIds])).toEqual([
+      ['yes', ['e1']],
+      ['no', ['e1']],
+      ['stop', ['stop-edge']],
+    ]);
+    expect(saves()).toEqual([]);
+    rendered.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'Shared edge id' });
+    await waitFor(() =>
+      expect(store().definition!.nodes.find((node) => node.id === 'pick')).toHaveProperty(
+        'config.routes.1.id',
+        'yes',
+      ),
+    );
+    const reopened = await secondRouteId();
+    await typeOver(user, reopened.id, 'affirm');
+    expect(store().definition!.edges).toEqual([
+      start,
+      yes,
+      { ...no, from: { node: 'pick', port: 'affirm' } },
+      stop,
+    ]);
+    const renamed = store().definition!.edges;
+    await waitFor(
+      () => expect(api.loops.get(loop.id)!.draft!.definition.edges).toEqual(renamed),
+      SAVE_WAIT,
+    );
   });
 });

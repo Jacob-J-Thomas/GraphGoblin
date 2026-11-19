@@ -4,6 +4,12 @@ import type { FormChange } from '../forms/changes.js';
 
 interface RouteRow {
   key: number;
+  /**
+   * The port this row's records are on: its authored ID as of its last edit that left the ID valid
+   * (unique in its Decision and a valid route ID), since only such an edit moves them. While the ID
+   * is blank, a duplicate or otherwise invalid the records stay where they are, and so does this; the
+   * typed text is no evidence of which records the row owns (#481).
+   */
   id: string | undefined;
   edgeIds: readonly string[];
 }
@@ -30,11 +36,11 @@ function routeConnections(definition: LoopDefinitionInput, nodeId: string): Stor
 
 /**
  * The one stored record a row names by `edgeId` among its Decision's own connections (`outgoing`),
- * for a row whose ID was `port` before this edit (#481). A current-format draft can give two edges
- * one id (`DUPLICATE_EDGE_ID`), so an id alone may name more than one record: it names the
- * Decision's only connection with that id, or, when more of them share it, the only one of those
- * still on `port`. Otherwise it names none, and no record is rewritten or removed for it. An edge
- * of another node is never one of them, whatever its id.
+ * for a row whose records were on `port` before this edit (`RouteRow.id`, #481). A current-format
+ * draft can give two edges one id (`DUPLICATE_EDGE_ID`), so an id alone may name more than one
+ * record: it names the Decision's only connection with that id, or, when more of them share it, the
+ * only one of those still on `port`. Otherwise it names none, and no record is rewritten or removed
+ * for it. An edge of another node is never one of them, whatever its id.
  */
 function ownedRecord(
   outgoing: readonly StoredEdge[],
@@ -118,6 +124,20 @@ function answerRows(config: unknown): AnswerRows | undefined {
   return undefined;
 }
 
+/**
+ * Whether the authored ID at `index` of a Decision's `ids` carries its row's records to its port:
+ * unique among them and a valid route ID. Any other (blank, a duplicate, invalid) names neither the
+ * row nor where its records are.
+ */
+function validAt(ids: readonly (string | undefined)[], index: number): boolean {
+  const id = ids[index];
+  return (
+    id !== undefined &&
+    ids.filter((other) => other === id).length === 1 &&
+    ChoiceOptionIdSchema.safeParse(id).success
+  );
+}
+
 /** The edited stable-ID row, including the fixed true/false slots of Noul. */
 function editedIndex(path: string | undefined): number | undefined {
   const collection = /^(?:answer\.(?:options|bands)|routes)\.(\d+)\.id$/.exec(path ?? '');
@@ -186,13 +206,13 @@ export function decisionRouteEdges(
     const after = answer?.rows.map((row) => row.id);
     let nextKey = before.nextKey;
     let rows = before.rows;
+    const collection = nodeChange?.collection;
+    const jsonReplacement =
+      nodeChange !== undefined &&
+      collection?.type === 'replace' &&
+      (nodeChange.path === 'answer' || nodeChange.path === answer?.collectionPath);
     if (after) {
       let retained: (RouteRow | undefined)[] = [...before.rows];
-      const collection = nodeChange?.collection;
-      const jsonReplacement =
-        nodeChange !== undefined &&
-        collection?.type === 'replace' &&
-        (nodeChange.path === 'answer' || nodeChange.path === answer?.collectionPath);
       if (
         answer !== undefined &&
         nodeChange !== undefined &&
@@ -213,18 +233,13 @@ export function decisionRouteEdges(
       } else {
         const available = [...before.rows];
         retained = after.map((id, index) => {
-          const match = available.findIndex((row) => row.id === id && id !== undefined);
-          if (match >= 0) return available.splice(match, 1)[0];
-          // A duplicate makes ID matching ambiguous. Preserve the still-unclaimed row at this
-          // position until the user repairs the duplicate; invalid text never transfers or drops
-          // the row's connected edge while the editor is showing an error.
-          const duplicates =
-            id !== undefined && after.filter((candidate) => candidate === id).length > 1;
-          if (duplicates) {
-            const positional = available.indexOf(before.rows[index]!);
-            if (positional >= 0) return available.splice(positional, 1)[0];
-          }
-          return undefined;
+          // A valid ID names the row on its port. Any other names no row: preserve the
+          // still-unclaimed row at this position until the user repairs it, so invalid text never
+          // transfers or drops the row's connected edge while the editor is showing an error.
+          const match = validAt(after, index)
+            ? available.findIndex((row) => row.id === id)
+            : available.indexOf(before.rows[index]!);
+          return match >= 0 ? available.splice(match, 1)[0] : undefined;
         });
       }
       rows = after.map((id, index) => ({
@@ -253,7 +268,7 @@ export function decisionRouteEdges(
       }
     }
     const claimed = new Set(before.rows.flatMap((row) => row.edgeIds));
-    // A row's record is on the port of the row's ID before this edit.
+    // A kept row's records are on its port before this edit (`RouteRow.id`).
     const previousIds = new Map(before.rows.map((row) => [row.key, row.id]));
     rows = rows.map((row) => {
       const unique =
@@ -266,13 +281,16 @@ export function decisionRouteEdges(
             (unique && !claimed.has(edge.id) && edge.from.port === row.id),
         ),
       );
-      const port = previousIds.has(row.key) ? previousIds.get(row.key) : row.id;
+      const existing = previousIds.has(row.key);
+      const port = existing ? previousIds.get(row.key) : row.id;
       if (valid)
         for (const edgeId of edgeIds) {
           const edge = ownedRecord(outgoing, edgeId, port);
           if (edge) ports.set(edge, row.id!);
         }
-      return { ...row, edgeIds };
+      // Only a valid ID moves the row's records, so only it moves the row's port. Section JSON
+      // names each row's records by the port of its ID, valid or not.
+      return { ...row, id: valid || !existing || jsonReplacement ? row.id : port, edgeIds };
     });
     const next = { nextKey, rows };
     decisionRoutes[node.id] = sameRows(before, next) ? before : next;

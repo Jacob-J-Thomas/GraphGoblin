@@ -524,3 +524,98 @@ test('removing the Decision route repairs a shared id: its review names only its
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await expect(page.getByText(/Published version 1\./)).toBeVisible();
 });
+
+/**
+ * Within one Decision: `pick`'s `ship` and `review` routes each own a connection called `e1`, to
+ * different cards with different manual routes, beside the unique `stop-edge`.
+ */
+function sharedWithinDecision(): LoopDefinitionInput {
+  const definition = sharedIdLoop();
+  definition.edges = [
+    { id: 's1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+    definition.edges[1]!,
+    {
+      id: 'e1',
+      from: { node: 'pick', port: 'review' },
+      to: { node: 'later' },
+      ui: { route: [500] },
+    },
+    definition.edges[3]!,
+  ];
+  return definition;
+}
+
+const routeIds = (definition: LoopDefinitionInput | undefined) =>
+  (
+    definition?.nodes.find((node) => node.id === 'pick')?.config as
+      { routes: { id: string }[] } | undefined
+  )?.routes.map((route) => route.id);
+
+test('a route ID typed to collide with another route’s keeps naming its own connection through a reload, its review, rename and removal (#481)', async ({
+  page,
+  request,
+}) => {
+  const definition = sharedWithinDecision();
+  const [start, ship, review, stop] = definition.edges as [
+    LoopDefinitionInput['edges'][number],
+    LoopDefinitionInput['edges'][number],
+    LoopDefinitionInput['edges'][number],
+    LoopDefinitionInput['edges'][number],
+  ];
+  const loopId = await openLoop(page, request, definition);
+  const saved = await serverDraft(request, loopId);
+  const puts = draftPuts(page, loopId);
+
+  // `review` becomes `ship`: two routes read `ship`, so no connection moves and the draft stays on
+  // this device, where the second row still owns its own `e1` on `review`.
+  let dialog = await openNode(page, 'pick');
+  await dialog.locator('[data-field="routes.1.id"] input').fill('ship');
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  await expect
+    .poll(async () => routeIds((await deviceCopy(page, loopId))?.definition))
+    .toEqual(['ship', 'ship', 'stop']);
+  const held = (await deviceCopy(page, loopId))!;
+  expect(held.synced).toBe(false);
+  expect(topology(held.definition.edges)).toEqual(topology(saved.definition.edges));
+  expect(held.decisionRoutes?.['pick']?.rows.map((row) => [row.id, row.edgeIds])).toEqual([
+    ['ship', ['e1']],
+    ['review', ['e1']],
+    ['stop', ['stop-edge']],
+  ]);
+  // Its removal review names its own connection, never the other route's.
+  await dialog.getByRole('button', { name: 'Remove routes 2', exact: true }).click();
+  const removal = dialog.getByRole('region', { name: 'Remove connected route?' });
+  await expect(removal).toContainText('Connection review → later (e1)');
+  await expect(removal).not.toContainText('Connection ship → done (e1)');
+  await dialog.getByRole('button', { name: 'Cancel change', exact: true }).click();
+  await closeNode(page);
+
+  // After a reload of the device copy, typing on renames only the second route's own connection.
+  await page.reload();
+  dialog = await openNode(page, 'pick');
+  await expect(dialog.locator('[data-field="routes.1.id"] input')).toHaveValue('ship');
+  await dialog.locator('[data-field="routes.1.id"] input').fill('affirm');
+  await closeNode(page);
+  const renamed = await savedDraft(page, request, loopId);
+  expect(topology(renamed.edges)).toEqual(
+    topology([start, ship, { ...review, from: { node: 'pick', port: 'affirm' } }, stop]),
+  );
+
+  // Colliding again and removing the route takes exactly its own connection.
+  dialog = await openNode(page, 'pick');
+  await dialog.locator('[data-field="routes.1.id"] input').fill('ship');
+  await dialog.getByRole('button', { name: 'Remove routes 2', exact: true }).click();
+  await expect(removal).toContainText('Connection affirm → later (e1)');
+  await expect(removal).not.toContainText('Connection ship → done (e1)');
+  await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
+  await closeNode(page);
+  const removed = await savedDraft(page, request, loopId);
+  expect(topology(removed.edges)).toEqual(topology([start, ship, stop]));
+  expect(await issueCodes(request, loopId)).not.toContain('DUPLICATE_EDGE_ID');
+  // No save ever sent the other route's connection changed.
+  expect(puts.length).toBeGreaterThan(0);
+  for (const put of puts)
+    expect(
+      topology(put.edges.filter((item) => item.to.node === 'done' && item.id === 'e1')),
+    ).toEqual(topology([ship]));
+});

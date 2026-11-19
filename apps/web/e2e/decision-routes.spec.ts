@@ -222,7 +222,7 @@ const topology = (edges: LoopDefinitionInput['edges']) =>
 /**
  * The device copy while the third route's ID is blank: invalid, so it stays on this device with the
  * saved token as its base. It keeps the saved topology exactly, `edgeId` included on its last valid
- * port, and the blank third row still owns that edge.
+ * port, and the blank third row still owns that edge, on that port.
  */
 function expectHeldBlank(
   copy: DeviceCopy,
@@ -242,7 +242,7 @@ function expectHeldBlank(
     to: { node: 'branch' },
   });
   const rows = copy.decisionRoutes?.['pick']?.rows ?? [];
-  expect(rows.map((row) => row.id)).toEqual(['yes', 'no', '']);
+  expect(rows.map((row) => row.id)).toEqual(['yes', 'no', 'route-3']);
   expect(rows.map((row) => row.edgeIds.includes(edgeId))).toEqual([false, false, true]);
   expect(rows[2]!.edgeIds).toEqual([edgeId]);
 }

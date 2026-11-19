@@ -376,17 +376,6 @@ describe('records a shared id cannot tell apart within a Decision (#481)', () =>
     expect(store().definition).toBe(definition);
   });
 
-  it('leaves a record on its last port when its row’s ID was blank in between', () => {
-    // Known limit: while the ID is blank the record stays on `yes`; the next ID cannot be matched
-    // to one of the two `e1` records, so neither follows. Typing `yes` back draws it again.
-    const definition = withinDecision();
-    store().load('L1', definition);
-    for (const id of ['', 'affirm'])
-      store().updateNode('pick', { config: routes(id, 'no', 'maybe') }, typing('routes.0.id'));
-    untouched(definition);
-    expect(store().past).toHaveLength(1);
-  });
-
   it('lists in the removal review exactly the record the removal takes', () => {
     const across = acrossSources();
     store().load('L1', across);
@@ -398,6 +387,166 @@ describe('records a shared id cannot tell apart within a Decision (#481)', () =>
     store().load('L1', within);
     expect(rowConnections(within, store().decisionRoutes, 'pick', 0)).toEqual([within.edges[1]]);
     expect(rowConnections(within, store().decisionRoutes, 'pick', 1)).toEqual([within.edges[2]]);
+  });
+});
+
+describe('a route ID typed through another row’s or a blank one (#481)', () => {
+  /**
+   * The within-Decision draft with its `no` record given a manual route of its own: the two `e1`
+   * records differ in port, target and geometry.
+   */
+  function bothRouted(): LoopDefinitionInput {
+    const definition = withinDecision();
+    definition.edges[2] = { ...definition.edges[2]!, ui: { route: [650] } };
+    return definition;
+  }
+  type Edge = LoopDefinitionInput['edges'][number];
+  /** The fixture's records in stored order: `start → pick`, `yes → done`, `no → other`, `maybe`. */
+  const records = (definition: LoopDefinitionInput) => definition.edges as [Edge, Edge, Edge, Edge];
+  /** `edge` as stored on `port` of its Decision, everything else (ends, id, route) the same. */
+  const on = (edge: Edge, port: string) => ({ ...edge, from: { ...edge.from, port } });
+  const pickConnections = (index: number) =>
+    rowConnections(store().definition!, store().decisionRoutes, 'pick', index);
+
+  it.each([
+    ['the second row, into the first', 1, ['yes', 'yes', 'maybe'], ['yes', 'affirm', 'maybe'], 2],
+    ['the first row, into the second', 0, ['no', 'no', 'maybe'], ['nope', 'no', 'maybe'], 1],
+  ])(
+    'renames only its own record when %s’s ID collides and is typed on',
+    (_, row, collided, renamed, own) => {
+      const definition = bothRouted();
+      store().load('L1', definition);
+      store().updateNode('pick', { config: routes(...collided) }, typing(`routes.${row}.id`));
+      // Two rows read the same ID: nothing moves, and the row still names its own record.
+      untouched(definition);
+      expect(pickConnections(row)).toEqual([definition.edges[own]]);
+      expect(pickConnections(1 - row)).toEqual([definition.edges[3 - own]]);
+      store().updateNode('pick', { config: routes(...renamed) }, typing(`routes.${row}.id`));
+      const after = store().definition!;
+      expect(edges()[own]).toEqual(on(definition.edges[own]!, renamed[row]!));
+      untouched(definition, [own]);
+      // The typing is one step: Undo and Redo give back each draft exactly.
+      expect(store().past).toHaveLength(1);
+      store().undo();
+      expect(store().definition).toBe(definition);
+      store().redo();
+      expect(store().definition).toBe(after);
+    },
+  );
+
+  it.each([
+    ['the row typed to collide', 1, 2],
+    ['the row it collides with', 0, 1],
+  ])(
+    'removes only %s’s own record, as its review lists, while two IDs collide',
+    (_, index, own) => {
+      const definition = bothRouted();
+      store().load('L1', definition);
+      store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, typing('routes.1.id'));
+      const collided = store().definition!;
+      expect(pickConnections(index)).toEqual([definition.edges[own]]);
+      pause();
+      store().updateNode('pick', { config: routes('yes', 'maybe') }, removal(index));
+      const after = store().definition!;
+      // The record the review listed goes; the remaining row's ID is unique again, so its own record
+      // follows it to `yes` (where it already is when the first row stays).
+      const [start, yes, no, maybe] = records(definition);
+      expect(after.edges).toEqual(own === 2 ? [start, yes, maybe] : [start, on(no, 'yes'), maybe]);
+      untouched(definition, own === 2 ? [2] : [1, 2]);
+      expect(validateDraft(after).issues.map((issue) => issue.code)).not.toContain(
+        'DUPLICATE_EDGE_ID',
+      );
+      store().undo();
+      expect(store().definition).toBe(collided);
+      store().undo();
+      expect(store().definition).toBe(definition);
+      store().redo();
+      store().redo();
+      expect(store().definition).toBe(after);
+    },
+  );
+
+  it('swaps two rows’ IDs through the collision, each record following its own row', () => {
+    const definition = bothRouted();
+    store().load('L1', definition);
+    store().updateNode('pick', { config: routes('no', 'no', 'maybe') }, typing('routes.0.id'));
+    untouched(definition);
+    pause();
+    store().updateNode('pick', { config: routes('no', 'yes', 'maybe') }, typing('routes.1.id'));
+    const [start, yes, no, maybe] = records(definition);
+    expect(edges()).toEqual([start, on(yes, 'no'), on(no, 'yes'), maybe]);
+    expect(pickConnections(0)).toEqual([edges()[1]]);
+    expect(pickConnections(1)).toEqual([edges()[2]]);
+    store().undo();
+    store().undo();
+    expect(store().definition).toBe(definition);
+  });
+
+  it('keeps following its record through a blank ID', () => {
+    const definition = withinDecision();
+    store().load('L1', definition);
+    for (const id of ['', 'affirm'])
+      store().updateNode('pick', { config: routes(id, 'no', 'maybe') }, typing('routes.0.id'));
+    expect(edges()[1]).toEqual(on(definition.edges[1]!, 'affirm'));
+    untouched(definition, [1]);
+    expect(store().past).toHaveLength(1);
+  });
+
+  it('keeps the collision’s ownership in the device table, and names nothing rebuilt without it', () => {
+    const definition = bothRouted();
+    store().load('L1', definition);
+    store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, typing('routes.1.id'));
+    const collided = store().definition!;
+    // As this device keeps it with its copy: the second row still on `no`, where its record is.
+    const table = store().decisionRoutes;
+    expect(table['pick']!.rows.map((row) => [row.id, row.edgeIds])).toEqual([
+      ['yes', ['e1']],
+      ['no', ['e1']],
+      ['maybe', ['m1']],
+    ]);
+    store().load('L1', collided, { dirty: true, deviceSaved: true, decisionRoutes: table });
+    expect(store().decisionRoutes).toEqual(table);
+    store().updateNode('pick', { config: routes('yes', 'affirm', 'maybe') }, typing('routes.1.id'));
+    expect(edges()[2]).toEqual(on(definition.edges[2]!, 'affirm'));
+    untouched(definition, [2]);
+    // The server copy alone cannot say which `e1` either row had: neither row names one, and the
+    // rename or the removal of the second row moves and removes no record.
+    store().load('L1', collided);
+    expect(pickConnections(0)).toEqual([]);
+    expect(pickConnections(1)).toEqual([]);
+    store().updateNode('pick', { config: routes('yes', 'affirm', 'maybe') }, typing('routes.1.id'));
+    untouched(definition);
+    store().load('L1', collided);
+    store().updateNode('pick', { config: routes('yes', 'maybe') }, removal(1));
+    untouched(definition);
+  });
+
+  it('replaces section JSON during the collision by port, never touching the other record', () => {
+    const definition = bothRouted();
+    store().load('L1', definition);
+    store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, typing('routes.1.id'));
+    pause();
+    store().updateNode('pick', { config: routes('yes', 'affirm', 'maybe') }, replacement);
+    // JSON names routes by ID: `no` is no longer declared, so its record goes; `yes` keeps its own.
+    expect(edges()).toEqual([definition.edges[0], definition.edges[1], definition.edges[3]]);
+    untouched(definition, [2]);
+  });
+
+  it('renames and removes a unique-id row’s own connection through the collision as before', () => {
+    const definition = bothRouted();
+    definition.edges[2] = { ...definition.edges[2]!, id: 'e2' };
+    store().load('L1', definition);
+    store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, typing('routes.1.id'));
+    store().updateNode('pick', { config: routes('yes', 'affirm', 'maybe') }, typing('routes.1.id'));
+    expect(edges()[2]).toEqual(on(definition.edges[2], 'affirm'));
+    untouched(definition, [2]);
+    store().undo();
+    store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, typing('routes.1.id'));
+    expect(pickConnections(1)).toEqual([definition.edges[2]]);
+    pause();
+    store().updateNode('pick', { config: routes('yes', 'maybe') }, removal(1));
+    expect(edges()).toEqual([definition.edges[0], definition.edges[1], definition.edges[3]]);
+    untouched(definition, [2]);
   });
 });
 
