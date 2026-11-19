@@ -1,7 +1,11 @@
-import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
+import {
+  invalidCodexConfigKeyPath,
+  type Effort,
+  type HarnessOptions,
+} from '@graphgoblin/contracts';
 import type { CodexOptions, ModelReasoningEffort, ThreadOptions } from '@openai/codex-sdk';
 import { codexEffortName } from './effort-names.js';
-import { isolationDefaults, layerConfig, overrideRefusal, table, unplainKey } from './isolation.js';
+import { isolationDefaults, layerConfig, overrideRefusal, table } from './isolation.js';
 
 /**
  * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
@@ -90,8 +94,8 @@ export function clientOptions(
   env: Record<string, string> | undefined,
 ): CodexOptions {
   // A key the loop cannot pass as plain `--config` segments refuses the turn (review round 1).
-  const unplain = unplainKey(options.configOverrides ?? {});
-  if (unplain !== undefined) throw overrideRefusal(unplain);
+  const unplain = invalidCodexConfigKeyPath(options.configOverrides);
+  if (unplain !== undefined) throw overrideRefusal(unplain.join('.'));
   const overrides = sanitizeConfig(options.configOverrides ?? {}) as NonNullable<
     CodexOptions['config']
   >;

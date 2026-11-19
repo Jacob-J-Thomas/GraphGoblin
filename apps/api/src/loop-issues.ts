@@ -18,6 +18,11 @@ export async function loopPublicationIssues(
   selfId?: string,
   readiness: ReadinessOperation | false = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
+  const structuralIssues = validateLoop(definition);
+  // Refuse authored keys before readiness/catalog work. A retained input may still omit its
+  // defaulted harness; an invalid override never needs those downstream assumptions or probes.
+  if (structuralIssues.some((issue) => issue.code === 'CODEX_CONFIG_KEY_INVALID'))
+    return structuralIssues;
   const { loops } = container.repos;
   const self = selfId ? await loops.getLoop(selfId) : undefined;
   const issues: ValidationIssue[] = [];
@@ -59,7 +64,7 @@ export async function loopPublicationIssues(
       });
   }
   return [
-    ...validateLoop(definition),
+    ...structuralIssues,
     ...(self?.ownerId === ownerId && self.system ? systemChatIssues(definition) : []),
     ...container.triggers.checkDefinition(definition),
     ...issues,

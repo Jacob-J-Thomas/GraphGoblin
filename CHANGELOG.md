@@ -4,6 +4,62 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
+  validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
+  and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
+  discarded by the contract. Previously stored invalid-key drafts cannot be published; the check
+  leaves their data intact. Existing HTTP guards and adapter refusal remain in place.
+  **Upgrade (ADR-0062):** no stored content is rewritten. The existing startup guard refuses any
+  invalid definition in `loop_versions.definition`, including drafts, published versions and
+  draft-run snapshots. Before upgrading, stop the gateway and back up the database. Inspect the
+  typed inference-node override keys with this read-only query; it ignores scalar values and
+  authored JSON outside those fields:
+
+  ```sql
+  SELECT v.id, v.loop_id, v.status, json_extract(n.value, '$.id') AS node_id,
+         '$.nodes[' || n.key || '].config.harnessOptions.configOverrides'
+           || substr(k.fullkey, 2) AS key_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n,
+       json_tree(json_extract(n.value, '$.config.harnessOptions.configOverrides')) AS k
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND (json_extract(n.value, '$.config.harness') = 'codex'
+      OR json_type(n.value, '$.config.harness') IS NULL)
+    AND typeof(k.key) = 'text'
+    AND (k.key = '' OR k.key GLOB '*[^A-Za-z0-9_.-]*'
+      OR k.key GLOB '.*' OR k.key GLOB '*.' OR instr(k.key, '..') > 0
+      OR instr('.' || k.key || '.', '.__proto__.') > 0
+      OR instr('.' || k.key || '.', '.constructor.') > 0
+      OR instr('.' || k.key || '.', '.prototype.') > 0);
+  ```
+
+  Correct each reported member's spelling in the stored definition, or deliberately remove just
+  that member. For a draft or published version, bind its reported `key_path` and `id` to:
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_remove(definition, ?)
+  WHERE id = ? AND status IN ('draft', 'published');
+  ```
+
+  Re-run discovery and verify the affected definition before starting the new build. A reported
+  path containing quotation marks may not address the member through SQLite JSON1. In that case,
+  parse the complete definition as structured JSON, correct/remove that exact object member,
+  serialize the JSON and bind the replacement and row ID to
+  `UPDATE loop_versions SET definition = ? WHERE id = ? AND status IN ('draft', 'published')`.
+  Read back and validate the complete result; do not construct a path by interpolating a key.
+
+  Snapshot rows are immutable: do not update them or disable their triggers. Keep the original
+  database backup with its previous build first. To preserve authored work in a fresh current
+  store, export the affected loop with that build (`GET /loops/{loop_id}/export?draft=true` for
+  its draft, omit the query for its published definition), correct the exported keys as structured
+  JSON, and import it through `POST /loops/import` into a separate fresh store. The original
+  backup retains its history; the new store carries the imported definition only, without the
+  original runs, events or snapshots. Alternatively, deliberately finish/cancel the old build's
+  runs and delete the enclosing loop through `DELETE /loops/{loop_id}` (which removes its runs
+  and snapshots), or explicitly reset the store. Exported definitions and saved device/recovery draft copies carry the same
+  `nodes[].config.harnessOptions.configOverrides` fields; correct or remove their offending keys
+  before importing or recovering them. The definition format is unchanged.
+
 - The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
   times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
   cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and

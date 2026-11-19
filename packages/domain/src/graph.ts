@@ -1,4 +1,5 @@
 import {
+  CodexConfigOverridesSchema,
   LIMIT_REACHED_PORT_ID,
   type Edge,
   type LoopDefinition,
@@ -106,6 +107,25 @@ function repeatCycleNodes(def: LoopDefinition, gate: string, target: string): st
 export function validateLoop(def: LoopDefinition): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const ids = new Map<string, Node>();
+
+  // Publication also meets previously stored drafts. Check just this contract here without
+  // rewriting the draft or revalidating unrelated schema fields.
+  for (const node of nodesOfKind(def, 'inference')) {
+    // The contract defaults an omitted harness to Codex; a stored input need not materialize it.
+    const harness = node.config.harness;
+    const overrides = node.config.harnessOptions?.configOverrides;
+    if ((harness !== 'codex' && harness !== undefined) || overrides === undefined) continue;
+    const parsed = CodexConfigOverridesSchema.safeParse(overrides);
+    if (!parsed.success)
+      for (const issue of parsed.error.issues)
+        issues.push({
+          code: 'CODEX_CONFIG_KEY_INVALID',
+          severity: 'error',
+          nodeId: node.id,
+          path: ['config', 'harnessOptions', 'configOverrides', ...issue.path].join('.'),
+          message: issue.message,
+        });
+  }
 
   for (const node of def.nodes) {
     if (ids.has(node.id)) {

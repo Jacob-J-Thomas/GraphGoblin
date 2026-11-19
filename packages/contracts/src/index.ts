@@ -7,6 +7,7 @@
 export { CURRENT_DEFINITION_FORMAT as CONTRACTS_SCHEMA_VERSION } from './loop.js';
 
 export * from './common.js';
+export * from './codex-config.js';
 export * from './chat.js';
 export * from './meta.js';
 export * from './api-keys.js';
