@@ -22,6 +22,10 @@ import {
   hasZodFastifySchemaValidationErrors,
   isResponseSerializationError,
 } from 'fastify-type-provider-zod';
+import { hasRequestSchemaValidationErrors } from './request-validation.js';
+
+const pointerSegment = (segment: PropertyKey) =>
+  String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
 
 /** RFC 9457 Problem Details with a stable machine-readable `code`. */
 export interface ProblemDetails {
@@ -119,7 +123,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.code,
           error.message,
         );
-      if (hasZodFastifySchemaValidationErrors(error)) {
+      if (hasRequestSchemaValidationErrors(error) || hasZodFastifySchemaValidationErrors(error)) {
         return problem(
           reply,
           400,
@@ -132,7 +136,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
               return keys
                 .filter((key): key is string => typeof key === 'string')
                 .map((key) => ({
-                  path: `${base}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`,
+                  path: `${base}/${pointerSegment(key)}`,
                   message: `Unrecognized key ${JSON.stringify(key)}`,
                 }));
             }

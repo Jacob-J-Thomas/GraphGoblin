@@ -513,6 +513,17 @@ Every listed server name and every segment of a node's override key must be one 
 
 A listed server name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). The adapter independently checks overrides with the same key rule and refuses them with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted. Existing HTTP reserved-key guards continue to apply before contract validation.
 
+API request-schema paths preserve literal authored member names with RFC 6901 escaping, including
+`/` and `~` and nested array positions ([API error responses](07-api-and-streaming.md#error-responses-decided)).
+Recovery of a manually edited stored row needs more than removing its bad override key: if its
+defaulted harness was omitted, explicitly store `harness: "codex"` in the node configuration as
+part of the operator correction. Normal API writes already materialize that value. Startup and
+input-schema validation do not rewrite a stored omission; key-only repair can allow startup while
+GET and publication still fail. The CHANGELOG recipe verifies actual authenticated reads,
+publication and restart, and requires discovery plus exact stored-text readback because SQLite's
+affected-row count alone does not prove a quoted member changed. No runtime converter or backfill
+is provided (ADR-0062).
+
 A loop turn still inherits from the machine:
 
 - the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;

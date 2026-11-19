@@ -9,6 +9,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
   discarded by the contract. Previously stored invalid-key drafts cannot be published; the check
   leaves their data intact. Existing HTTP guards and adapter refusal remain in place.
+  HTTP request-schema paths preserve literal `/` and `~` in member names with RFC 6901 escaping,
+  including nested tables and array positions; ordinary and unknown-field diagnostics retain
+  their existing messages and root-path convention.
   **Upgrade (ADR-0062):** no stored content is rewritten. The existing startup guard refuses any
   invalid definition in `loop_versions.definition`, including drafts, published versions and
   draft-run snapshots. Before upgrading, stop the gateway and back up the database. Inspect the
@@ -17,6 +20,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
   ```sql
   SELECT v.id, v.loop_id, v.status, json_extract(n.value, '$.id') AS node_id,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path,
+         json_type(n.value, '$.config.harness') IS NULL AS harness_omitted,
          '$.nodes[' || n.key || '].config.harnessOptions.configOverrides'
            || substr(k.fullkey, 2) AS key_path
   FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n,
@@ -32,8 +37,34 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
       OR instr('.' || k.key || '.', '.prototype.') > 0);
   ```
 
-  Correct each reported member's spelling in the stored definition, or deliberately remove just
-  that member. For a draft or published version, bind its reported `key_path` and `id` to:
+  Retain the discovery output before editing. On a copy already repaired with the earlier
+  key-only instructions, this separate read-only query still finds omitted harnesses even when
+  invalid-key discovery returns zero rows:
+
+  ```sql
+  SELECT n.key AS node_index, v.id, v.loop_id, v.status,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND json_type(n.value, '$.config.harness') IS NULL;
+  ```
+
+  Public API writes in both builds materialize an omitted Codex harness; an externally authored
+  or hand-edited row can still omit it. For each reported draft or published version with
+  `harness_omitted = 1` (or found by the omission query), explicitly materialize its effective
+  `codex` value on the stopped disposable copy. Bind `harness_path`, `id`, then the same
+  `harness_path` to this operator-only statement (explicit JSON null is not an omitted harness):
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_set(definition, ?, 'codex')
+  WHERE id = ? AND status IN ('draft', 'published')
+    AND json_type(definition, ?) IS NULL;
+  ```
+
+  This is an explicit hand correction, not a product backfill. Correct each reported member's
+  spelling in the stored definition, or deliberately remove just that member. For a draft or
+  published version, bind its reported `key_path` and `id` to:
 
   ```sql
   UPDATE loop_versions
@@ -41,12 +72,21 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   WHERE id = ? AND status IN ('draft', 'published');
   ```
 
-  Re-run discovery and verify the affected definition before starting the new build. A reported
+  An affected-row count of 1 is not proof that the member was removed: the product's libsql
+  driver can report that count while leaving a quoted member and the stored bytes unchanged.
+  Re-run discovery and read the complete stored text back, comparing it with the exact intended
+  structured JSON correction. A zero-key discovery result or successful startup also does not
+  materialize omitted defaults: without the explicit harness correction, GET and publication of
+  such a manually authored row can still fail. Verify authenticated GET, publication of the
+  corrected draft and another restart, with unrelated fields/history unchanged. A reported
   path containing quotation marks may not address the member through SQLite JSON1. In that case,
   parse the complete definition as structured JSON, correct/remove that exact object member,
   serialize the JSON and bind the replacement and row ID to
   `UPDATE loop_versions SET definition = ? WHERE id = ? AND status IN ('draft', 'published')`.
-  Read back and validate the complete result; do not construct a path by interpolating a key.
+  Include `harness: "codex"` in that node's configuration when it was omitted. Read back the exact
+  complete replacement, re-run discovery and validate it; do not construct a path by interpolating
+  a key. The same explicit node-field correction applies to exported or recovery JSON when its
+  harness was omitted.
 
   Snapshot rows are immutable: do not update them or disable their triggers. Keep the original
   database backup with its previous build first. To preserve authored work in a fresh current

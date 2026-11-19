@@ -84,8 +84,14 @@ describe('Codex override keys through ordinary authoring routes (#429)', () => {
     // Execute the exact SQL shipped in the upgrade note, rather than a test-only approximation.
     const changelog = await readFile(new URL('../../../CHANGELOG.md', import.meta.url), 'utf8');
     const discovery = changelog.match(/```sql\s+(SELECT v\.id[\s\S]*?)```/)?.[1];
-    const correction = changelog.match(/```sql\s+(UPDATE loop_versions[\s\S]*?)```/)?.[1];
-    if (!discovery || !correction) throw new Error('Missing #429 upgrade recipe');
+    const correction = changelog.match(
+      /```sql\s+(UPDATE loop_versions\s+SET definition = json_remove[\s\S]*?)```/,
+    )?.[1];
+    const materializeHarness = changelog.match(
+      /```sql\s+(UPDATE loop_versions\s+SET definition = json_set[\s\S]*?)```/,
+    )?.[1];
+    if (!discovery || !correction || !materializeHarness)
+      throw new Error('Missing #429 upgrade recipe');
     const found = await client.execute(discovery);
     expect(found.rows).toHaveLength(16);
     expect(found.rows.some((row) => row['id'] === fakeUlid('429-omitted'))).toBe(true);
@@ -99,6 +105,11 @@ describe('Codex override keys through ordinary authoring routes (#429)', () => {
       const id = row['id'];
       if (typeof path !== 'string' || typeof id !== 'string')
         throw new Error('Invalid discovery row');
+      if (row['harness_omitted'] === 1) {
+        const harnessPath = row['harness_path'];
+        if (typeof harnessPath !== 'string') throw new Error('Invalid harness discovery path');
+        await client.execute({ sql: materializeHarness, args: [harnessPath, id, harnessPath] });
+      }
       await client.execute({ sql: correction, args: [path, id] });
     }
     for (const id of [draft.id, fakeUlid('429-published'), fakeUlid('429-omitted')]) {
