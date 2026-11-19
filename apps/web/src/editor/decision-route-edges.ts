@@ -54,9 +54,41 @@ function ownedRecord(
 }
 
 /**
+ * A Decision's `rows` without the claims that name no owner (#481). A row's claim is an edge id
+ * read on the row's port (`ownedRecord`), and a record the claims of more than one row name is
+ * owned by none of them: a device copy an earlier editor left can give two rows one port with one
+ * shared id, and section JSON can give two rows one ID. Nothing stored says which row authored
+ * such a record, so no row moves or removes it, and the claims are dropped so that none of them
+ * can later act as if it alone named it. The record is then one no row has claimed, as on a load
+ * without device metadata: a row takes it up only through its own unique ID being the record's
+ * port. Every other claim, and `rows` itself when there is no such record, stays as it is.
+ */
+function trustedRows(stored: RouteRows, outgoing: readonly StoredEdge[]): RouteRows {
+  const claimants = new Map<StoredEdge, Set<RouteRow>>();
+  for (const row of stored.rows)
+    for (const edgeId of row.edgeIds) {
+      const edge = ownedRecord(outgoing, edgeId, row.id);
+      if (edge) claimants.set(edge, (claimants.get(edge) ?? new Set()).add(row));
+    }
+  const contested = (row: RouteRow, edgeId: string) => {
+    const edge = ownedRecord(outgoing, edgeId, row.id);
+    return edge !== undefined && claimants.get(edge)!.size > 1;
+  };
+  if (!stored.rows.some((row) => row.edgeIds.some((edgeId) => contested(row, edgeId))))
+    return stored;
+  return {
+    nextKey: stored.nextKey,
+    rows: stored.rows.map((row) => ({
+      ...row,
+      edgeIds: row.edgeIds.filter((edgeId) => !contested(row, edgeId)),
+    })),
+  };
+}
+
+/**
  * The stored connections that removing row `index` of Decision `nodeId` takes with it, in stored
- * order: each record the row owns that it names alone (`ownedRecord`), as `decisionRouteEdges`
- * removes them. The removal review lists exactly these.
+ * order: each record the row alone owns (`trustedRows`) that it names alone (`ownedRecord`), as
+ * `decisionRouteEdges` removes them. The removal review lists exactly these.
  */
 export function rowConnections(
   definition: LoopDefinitionInput,
@@ -64,11 +96,10 @@ export function rowConnections(
   nodeId: string,
   index: number,
 ): StoredEdge[] {
-  const row = (Object.hasOwn(decisionRoutes, nodeId) ? decisionRoutes[nodeId] : undefined)?.rows[
-    index
-  ];
-  if (!row) return [];
+  const stored = Object.hasOwn(decisionRoutes, nodeId) ? decisionRoutes[nodeId] : undefined;
+  if (!stored?.rows[index]) return [];
   const outgoing = routeConnections(definition, nodeId);
+  const row = trustedRows(stored, outgoing).rows[index]!;
   const owned = new Set(row.edgeIds.map((edgeId) => ownedRecord(outgoing, edgeId, row.id)));
   return outgoing.filter((edge) => owned.has(edge));
 }
@@ -181,7 +212,7 @@ function sameRows(a: RouteRows, b: RouteRows): boolean {
 /**
  * Keep an edge attached to its option ID through label edits and explicit ID renames. Rows own
  * edges by id, but each port change and removal applies to a stored record the row names alone
- * (`ownedRecord`), never to every edge with that id (#481).
+ * (`ownedRecord`) and no other row names (`trustedRows`), never to every edge with that id (#481).
  */
 export function decisionRouteEdges(
   definition: LoopDefinitionInput,
@@ -197,11 +228,12 @@ export function decisionRouteEdges(
     if (node.kind !== 'decision') continue;
     const nodeChange = node.id === editedNodeId ? change : undefined;
     const oldId = renamed?.to === node.id ? renamed.from : node.id;
-    const before = (Object.hasOwn(previous, oldId) ? previous[oldId] : undefined) ?? {
+    const stored = (Object.hasOwn(previous, oldId) ? previous[oldId] : undefined) ?? {
       nextKey: 0,
       rows: [],
     };
     const outgoing = routeConnections(definition, node.id);
+    const before = trustedRows(stored, outgoing);
     const answer = answerRows(node.config);
     const after = answer?.rows.map((row) => row.id);
     let nextKey = before.nextKey;
@@ -283,8 +315,11 @@ export function decisionRouteEdges(
       );
       const existing = previousIds.has(row.key);
       const port = existing ? previousIds.get(row.key) : row.id;
-      if (valid)
-        for (const edgeId of edgeIds) {
+      // Only the records the row owned before this edit move with it. One it takes up now through
+      // its ID is on that port already, and read on its old port, its id could name another
+      // record; section JSON names every row's records by the port of its ID.
+      if (valid && existing && !jsonReplacement)
+        for (const edgeId of row.edgeIds) {
           const edge = ownedRecord(outgoing, edgeId, port);
           if (edge) ports.set(edge, row.id!);
         }
@@ -293,7 +328,7 @@ export function decisionRouteEdges(
       return { ...row, id: valid || !existing || jsonReplacement ? row.id : port, edgeIds };
     });
     const next = { nextKey, rows };
-    decisionRoutes[node.id] = sameRows(before, next) ? before : next;
+    decisionRoutes[node.id] = sameRows(stored, next) ? stored : next;
   }
   const edges = definition.edges.flatMap((edge) => {
     if (removed.has(edge)) return [];
