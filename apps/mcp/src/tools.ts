@@ -15,6 +15,7 @@ import {
   type LoopVersionRecord,
   type RunRecord,
 } from '@graphgoblin/contracts';
+import { loopNameKey } from '@graphgoblin/domain';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { describeLoop, summarizeLoop, summarizeRun } from './describe.js';
@@ -34,12 +35,14 @@ const runId = z.string().min(1).describe('The run id (a ULID) returned by start_
 const loopRef = z
   .string()
   .min(1)
-  .describe('The loop id from list_loops, or the exact loop name (case-insensitive).');
+  .describe(
+    'The loop id from list_loops, or the loop name (trimmed, whitespace runs collapsed, case-insensitive; no Unicode normalization or full case folding). An exact id takes priority.',
+  );
 const json = z
   .unknown()
   .describe('Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec.');
 
-/** Find a loop by id, or by exact name when no loop has that id. */
+/** Find a visible loop by exact id, then by the owner's loop-name equivalence rule. */
 export async function resolveLoop(client: GraphGoblinClient, ref: string) {
   // Loop ids are ULIDs (the API rejects anything else with a 400), so other refs are names.
   if (UlidSchema.safeParse(ref).success) {
@@ -49,18 +52,18 @@ export async function resolveLoop(client: GraphGoblinClient, ref: string) {
       if (!(error instanceof GraphGoblinApiError) || error.code !== 'LOOP_NOT_FOUND') throw error;
     }
   }
-  const wanted = ref.trim().toLowerCase();
-  const matches = (await loops.list(client)).filter((l) => l.name.toLowerCase() === wanted);
+  const wanted = loopNameKey(ref);
+  const matches = (await loops.list(client)).filter((l) => loopNameKey(l.name) === wanted);
   if (matches.length === 0) {
     throw new McpToolError(
       'LOOP_NOT_FOUND',
-      `no loop has the id or name "${ref}"; call list_loops to see the available loops`,
+      `no available loop has the id or equivalent name "${ref}"; call list_loops to see the available loops`,
     );
   }
   if (matches.length > 1) {
     throw new McpToolError(
       'AMBIGUOUS_LOOP_NAME',
-      `${matches.length} loops are named "${ref}" (${matches.map((m) => m.id).join(', ')}); pass the loop id instead`,
+      `${matches.length} loops have a name equivalent to "${ref}" (${matches.map((m) => m.id).join(', ')}); pass the loop id instead`,
     );
   }
   return loops.get(client, (matches[0] as { id: string }).id);
@@ -96,7 +99,7 @@ export function registerTools(
     {
       title: 'List loops',
       description:
-        'List the GraphGoblin loops you can run. Call this first when the user names a loop or asks what is available. Returns id, name, description, and whether each loop is published (only published loops can be started without allowDraft). Pass a loop id or exact name to describe_loop before starting it.',
+        'List the GraphGoblin loops you can run. Call this first when the user names a loop or asks what is available. Returns id, name, description, and whether each loop is published (only published loops can be started without allowDraft). Pass a loop id or equivalent name to describe_loop before starting it.',
       inputSchema: {
         query: z
           .string()
@@ -125,7 +128,7 @@ export function registerTools(
     {
       title: 'Describe a loop',
       description:
-        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run. Triggers have no payload filters; use downstream decisions for payload checks.',
+        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or equivalent name. Use the trigger inputSchema to build the input for start_run. Triggers have no payload filters; use downstream decisions for payload checks.',
       inputSchema: { loopId: loopRef },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

@@ -1,0 +1,1530 @@
+{
+  "provenance": "Derived from retained first native stdio results. All loops, names, owners and IDs are self-seeded disposable test data. Summaries whitelist result fields; selected original MCP content blocks are unchanged. Process IDs, local URLs, keys, filesystem paths and raw API fixture metadata are excluded.",
+  "limits": "Actual shipped Codex and Claude plugin manifests launched through the MCP SDK; isolated real API and SQLite; trigger/exit execution only. No provider call, personal plugin install or live CLI/provider acceptance is claimed.",
+  "counts": {
+    "baseline": 56,
+    "candidate": 56
+  },
+  "summaries": [
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "padded display by ID",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "stored internal spelling control",
+      "tool": "describe_loop",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEF",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "ULID name after missing ID",
+      "tool": "describe_loop",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NES",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "foreign ID invisible",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEN",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"01M3Y7RKG0BFEDDRGK8P8S0NEN\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "composed Unicode",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEV",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "decomposed Unicode distinct",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEX",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "sharp s distinct",
+      "tool": "describe_loop",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEZ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "full fold distinct",
+      "tool": "describe_loop",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NF1",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "start_run",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "padded display by ID",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "start_run",
+      "reference": " REPEATED words ",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "stored internal spelling control",
+      "tool": "start_run",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEF",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "ULID name after missing ID",
+      "tool": "start_run",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NES",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "start_run",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "foreign ID invisible",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEN",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"01M3Y7RKG0BFEDDRGK8P8S0NEN\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "start_run",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "composed Unicode",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEV",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "decomposed Unicode distinct",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEX",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "sharp s distinct",
+      "tool": "start_run",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEZ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "full fold distinct",
+      "tool": "start_run",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NF1",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "padded display by ID",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "stored internal spelling control",
+      "tool": "describe_loop",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEF",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "ULID name after missing ID",
+      "tool": "describe_loop",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NES",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "foreign ID invisible",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEN",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"01M3Y7RKG0BFEDDRGK8P8S0NEN\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "composed Unicode",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEV",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "decomposed Unicode distinct",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEX",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "sharp s distinct",
+      "tool": "describe_loop",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEZ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "full fold distinct",
+      "tool": "describe_loop",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NF1",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "start_run",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "padded display by ID",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NED",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "start_run",
+      "reference": " REPEATED words ",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "stored internal spelling control",
+      "tool": "start_run",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEF",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "ULID name after missing ID",
+      "tool": "start_run",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NES",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "start_run",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "foreign ID invisible",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEN",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"01M3Y7RKG0BFEDDRGK8P8S0NEN\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "start_run",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "composed Unicode",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEV",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "decomposed Unicode distinct",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEX",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "sharp s distinct",
+      "tool": "start_run",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NEZ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "full fold distinct",
+      "tool": "start_run",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0BFEDDRGK8P8S0NF1",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "padded display by ID",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "stored internal spelling control",
+      "tool": "describe_loop",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "ULID name after missing ID",
+      "tool": "describe_loop",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJC",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "foreign ID invisible",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ8",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"01M3Y7RKG0T59SM5TWB4YT0RJ8\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "composed Unicode",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJE",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "decomposed Unicode distinct",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJG",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "sharp s distinct",
+      "tool": "describe_loop",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJJ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "full fold distinct",
+      "tool": "describe_loop",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJM",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "start_run",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "padded display by ID",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "start_run",
+      "reference": " REPEATED words ",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "stored internal spelling control",
+      "tool": "start_run",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "ULID name after missing ID",
+      "tool": "start_run",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJC",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "start_run",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "foreign ID invisible",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ8",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"01M3Y7RKG0T59SM5TWB4YT0RJ8\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "start_run",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "composed Unicode",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJE",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "decomposed Unicode distinct",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJG",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "sharp s distinct",
+      "tool": "start_run",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJJ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "full fold distinct",
+      "tool": "start_run",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJM",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "padded display by ID",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "stored internal spelling control",
+      "tool": "describe_loop",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "ULID name after missing ID",
+      "tool": "describe_loop",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJC",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "foreign ID invisible",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ8",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"01M3Y7RKG0T59SM5TWB4YT0RJ8\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "composed Unicode",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJE",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "decomposed Unicode distinct",
+      "tool": "describe_loop",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJG",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "sharp s distinct",
+      "tool": "describe_loop",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJJ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "full fold distinct",
+      "tool": "describe_loop",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJM",
+      "displayName": "STRASSE"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "start_run",
+      "reference": "Ordinary",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "displayName": "Ordinary"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "padded display by ID",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ0",
+      "displayName": "  Padded Loop  "
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "start_run",
+      "reference": " REPEATED words ",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "stored internal spelling control",
+      "tool": "start_run",
+      "reference": "Repeated \t  Words",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJ2",
+      "displayName": "Repeated \t  Words"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "ULID name after missing ID",
+      "tool": "start_run",
+      "reference": "01J00000000000000000000009",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJC",
+      "displayName": "01J00000000000000000000009"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "start_run",
+      "reference": "Foreign only",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "foreign ID invisible",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ8",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"01M3Y7RKG0T59SM5TWB4YT0RJ8\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "start_run",
+      "reference": "not here",
+      "isError": true,
+      "error": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "composed Unicode",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJE",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "decomposed Unicode distinct",
+      "tool": "start_run",
+      "reference": "éCHO",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJG",
+      "displayName": "Écho"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "sharp s distinct",
+      "tool": "start_run",
+      "reference": "straße",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJJ",
+      "displayName": "Straße"
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "full fold distinct",
+      "tool": "start_run",
+      "reference": "strasse",
+      "isError": false,
+      "resolvedLoopId": "01M3Y7RKG0T59SM5TWB4YT0RJM",
+      "displayName": "STRASSE"
+    }
+  ],
+  "originalOutputs": [
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0BFEDDRGK8P8S0NF5\",\n  \"loopId\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n  \"versionId\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n  \"definition\": \"Ordinary v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Ordinary\",\n    \"label\": \"Ordinary v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \" REPEATED words \"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"Foreign only\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"not here\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0BFEDDRGK8P8S0NEH",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0BFEDDRGK8P8S0NFQ\",\n  \"loopId\": \"01M3Y7RKG0BFEDDRGK8P8S0NEH\",\n  \"versionId\": \"01M3Y7RKG0BFEDDRGK8P8S0NEJ\",\n  \"definition\": \"Ordinary v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Ordinary\",\n    \"label\": \"Ordinary v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    },
+    {
+      "phase": "baseline",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no loop has the id or name \"padded loop\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ0\",\n    \"name\": \"  Padded Loop  \",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ1\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"  Padded Loop  \",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ2\",\n    \"name\": \"Repeated \\t  Words\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ3\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Repeated \\t  Words\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0T59SM5TWB4YT0RJR\",\n  \"loopId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n  \"versionId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n  \"definition\": \"Ordinary v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Ordinary\",\n    \"label\": \"Ordinary v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "codex",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0T59SM5TWB4YT0RJW\",\n  \"loopId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ0\",\n  \"versionId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ1\",\n  \"definition\": \"  Padded Loop   v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"  Padded Loop  \",\n    \"label\": \"  Padded Loop   v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "ordinary exact name",
+      "tool": "describe_loop",
+      "reference": "Ordinary",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "describe_loop",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n    \"name\": \"Ordinary\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Ordinary\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "describe_loop",
+      "reference": "padded loop",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ0\",\n    \"name\": \"  Padded Loop  \",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ1\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"  Padded Loop  \",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "repeated internal whitespace",
+      "tool": "describe_loop",
+      "reference": " REPEATED words ",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ2\",\n    \"name\": \"Repeated \\t  Words\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0T59SM5TWB4YT0RJ3\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Repeated \\t  Words\",\n  \"nodeCount\": 2,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "foreign name invisible",
+      "tool": "describe_loop",
+      "reference": "Foreign only",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"Foreign only\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "absent name guidance",
+      "tool": "describe_loop",
+      "reference": "not here",
+      "originalIsError": true,
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "LOOP_NOT_FOUND: no available loop has the id or equivalent name \"not here\"; call list_loops to see the available loops"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "exact ID beats another loop name",
+      "tool": "start_run",
+      "reference": "01M3Y7RKG0T59SM5TWB4YT0RJ4",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0T59SM5TWB4YT0RKE\",\n  \"loopId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ4\",\n  \"versionId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ5\",\n  \"definition\": \"Ordinary v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"Ordinary\",\n    \"label\": \"Ordinary v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    },
+    {
+      "phase": "candidate",
+      "profile": "claude",
+      "case": "leading and trailing whitespace",
+      "tool": "start_run",
+      "reference": "padded loop",
+      "originalContent": [
+        {
+          "type": "text",
+          "text": "{\n  \"runId\": \"01M3Y7RKG0T59SM5TWB4YT0RKJ\",\n  \"loopId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ0\",\n  \"versionId\": \"01M3Y7RKG0T59SM5TWB4YT0RJ1\",\n  \"definition\": \"  Padded Loop   v1\",\n  \"pinned\": {\n    \"source\": \"published\",\n    \"version\": 1,\n    \"name\": \"  Padded Loop  \",\n    \"label\": \"  Padded Loop   v1\",\n    \"defaults\": {\n      \"owner\": {\n        \"byHarness\": {}\n      },\n      \"process\": {\n        \"byHarness\": {\n          \"codex\": {\n            \"model\": \"gpt-6-luna\",\n            \"effort\": \"low\"\n          }\n        }\n      }\n    },\n    \"limits\": {\n      \"maxNodeVisits\": 10,\n      \"runDeadlineSeconds\": null,\n      \"structuredTimeoutMs\": null\n    },\n    \"classifiers\": {}\n  },\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+        }
+      ]
+    }
+  ]
+}

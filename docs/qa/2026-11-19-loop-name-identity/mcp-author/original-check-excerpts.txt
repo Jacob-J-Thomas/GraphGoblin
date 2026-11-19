@@ -1,0 +1,173 @@
+--- baseline-build.log ---
+ Tasks:    11 successful, 11 total
+Cached:    0 cached, 11 total
+  Time:    3m25.856s 
+
+--- baseline-regression.log ---
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: false > describe_loop uses the owner naming rule while keeping exact ID priority
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: true > describe_loop uses the owner naming rule while keeping exact ID priority
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: false > start_run uses the owner naming rule while keeping exact ID priority
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: true > start_run uses the owner naming rule while keeping exact ID priority
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: false > advertises the name policy and exact ID precedence to both tool callers
+ FAIL  src/loop-names.test.ts > loop lookup against the real API > draft tools enabled: true > advertises the name policy and exact ID precedence to both tool callers
+ FAIL  src/loop-names.test.ts > controlled inconsistent upstream and failure defenses > describe_loop refuses equivalent ambiguous names
+ FAIL  src/loop-names.test.ts > controlled inconsistent upstream and failure defenses > start_run refuses equivalent ambiguous names
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed (12)
+   Duration  27.89s (import 40%, transform 35%, tests 25%)
+
+--- baseline-public.log ---
+(No compact terminal summary yet; original retained externally.)
+
+--- candidate-build.log ---
+ Tasks:    11 successful, 11 total
+Cached:    1 cached, 11 total
+  Time:    50.079s 
+
+--- candidate-regression.log ---
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Duration  16.94s (import 41%, tests 38%, transform 22%)
+
+--- candidate-public.log ---
+(No compact terminal summary yet; original retained externally.)
+
+--- candidate-typecheck.log ---
+ Tasks:    15 successful, 15 total
+Cached:    8 cached, 15 total
+  Time:    1m10.902s 
+
+--- candidate-lint.log ---
+@graphgoblin/mcp:lint:   144:7  error  Async method 'fetch' has no 'await' expression  @typescript-eslint/require-await
+@graphgoblin/mcp:lint:   171:7  error  Async method 'fetch' has no 'await' expression  @typescript-eslint/require-await
+ Tasks:    3 successful, 6 total
+Cached:    0 cached, 6 total
+  Time:    56.637s 
+
+--- candidate-lint-corrected.log ---
+ Tasks:    6 successful, 6 total
+Cached:    1 cached, 6 total
+  Time:    2m50.346s 
+
+--- candidate-format.log ---
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+
+--- candidate-format-corrected.log ---
+All matched files use Prettier code style!
+
+--- candidate-layers.log ---
+Layer rules: OK
+
+--- candidate-deps.log ---
+x 4 dependency violations (0 errors, 4 warnings). 1319 modules, 5696 dependencies cruised.
+
+--- candidate-coverage.log ---
+@graphgoblin/domain:test:coverage:  Test Files  30 passed (30)
+@graphgoblin/domain:test:coverage:       Tests  467 passed (467)
+@graphgoblin/domain:test:coverage:    Duration  24.11s (import 36%, tests 34%, transform 28%, worker 2%)
+@graphgoblin/domain:test:coverage: Statements   : 97.87% ( 1845/1885 )
+@graphgoblin/domain:test:coverage: Branches     : 95.98% ( 1650/1719 )
+@graphgoblin/domain:test:coverage: Functions    : 98.3% ( 348/354 )
+@graphgoblin/domain:test:coverage: Lines        : 98.74% ( 1572/1592 )
+@graphgoblin/infrastructure:test:coverage: ⎯⎯⎯⎯⎯⎯ Failed Tests 52 ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: symlink
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > requires a matching operator record and all current dependency hashes
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > invalidates changed runtime binary and symlink target identities
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-public
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-public
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-link
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-link
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: bad-json
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: too-large
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: empty
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: directory
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 0
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 1
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 2
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 3
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 4
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 5
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 6
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 7
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 8
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 9
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 10
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 11
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 12
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 13
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 14
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 15
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 16
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects selection of a different binary, nonexecutables and invalid paths
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: added
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: removed
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: type
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: duplicate
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: target
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: hash
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: directory-path
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 0
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 1
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 2
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 3
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 4
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 5
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams tiny.en into an exclusively created private file and atomically commits verified bytes
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams base.en into an exclusively created private file and atomically commits verified bytes
+@graphgoblin/infrastructure:test:coverage: AssertionError: expected 438 to be 384 // Object.is equality
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private voice directories
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private models directories
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/sqlite/chat.test.ts > durable chat identities > returns an acknowledged admission after closing/reopening the store and does not repeat seeds or pair claims
+@graphgoblin/infrastructure:test:coverage:  FAIL  src/sqlite/history-cleanup.test.ts > large retained stores > does not let 61 budget-protected artifact jobs hide removable workspaces in a later window
+@graphgoblin/infrastructure:test:coverage: Error: Test timed out in 20000ms.
+@graphgoblin/infrastructure:test:coverage:  Test Files  4 failed | 70 passed (74)
+@graphgoblin/infrastructure:test:coverage:       Tests  52 failed | 1106 passed (1158)
+@graphgoblin/infrastructure:test:coverage:    Duration  121.85s (tests 63%, import 30%, transform 6%, worker 1%)
+ Tasks:    1 successful, 4 total
+Cached:    0 cached, 4 total
+  Time:    2m4.941s 
+
+--- candidate-coverage-continuation.log ---
+@graphgoblin/mcp:test:coverage: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/mcp:test:coverage:  FAIL  src/thread-history.test.ts > MCP reads agree through persisted failure and resume with stale snapshots
+@graphgoblin/mcp:test:coverage: Error: Test timed out in 5000ms.
+@graphgoblin/mcp:test:coverage:  Test Files  1 failed | 12 passed (13)
+@graphgoblin/mcp:test:coverage:       Tests  1 failed | 71 passed | 2 skipped (74)
+@graphgoblin/mcp:test:coverage:    Duration  33.71s (import 40%, tests 39%, transform 21%)
+ Tasks:    0 successful, 4 total
+Cached:    0 cached, 4 total
+  Time:    38.442s 
+
+--- candidate-codex-coverage.log ---
+ Test Files  1 passed | 1 skipped (2)
+      Tests  9 passed | 1 skipped (10)
+   Duration  12.47s (import 39%, tests 33%, transform 28%)
+Statements   : 95.89% ( 70/73 )
+Branches     : 91.66% ( 22/24 )
+Functions    : 100% ( 14/14 )
+Lines        : 95.58% ( 65/68 )
+
+--- candidate-claude-coverage.log ---
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Duration  8.84s (tests 81%, import 10%, transform 9%)
+Statements   : 95.23% ( 40/42 )
+Branches     : 95.23% ( 20/21 )
+Functions    : 100% ( 6/6 )
+Lines        : 95% ( 38/40 )
+
+--- candidate-web-coverage.log ---
+     × keeps held section JSON exactly when a rename makes the applied section equal to it 21542ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected [ { method: 'PUT', …(5) }, …(1) ] to have a length of 1 but got 2
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > keeps held section JSON exactly when a rename makes the applied section equal to it
+Error: Test timed out in 20000ms.
+ Test Files  2 failed | 222 passed (224)
+      Tests  2 failed | 2909 passed (2911)
+   Duration  2078.55s (tests 56%, environment 23%, import 9%, setup 7%, transform 4%)
