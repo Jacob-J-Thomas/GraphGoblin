@@ -6,11 +6,11 @@ Status: 1.0.0 released 2026-10-03. What changed is in [CHANGELOG.md](CHANGELOG.m
 
 ## Install GraphGoblin
 
-Use the checkout installer for Windows, macOS or Linux. On Windows you can also add a desktop and taskbar launcher after the first start. For a container, go to [Docker Compose](#docker-compose).
+Use the checkout installer on the default `main` branch for Windows, macOS or Linux. It includes changes made since v1.0.0, including the optional Windows desktop launcher. The [v1.0.0 release](https://github.com/Jacob-J-Thomas/GraphGoblin/releases/tag/v1.0.0) provides source archives. The downloadable Windows installer is tracked in [#36](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/36). For a container, go to [Docker Compose](#docker-compose).
 
 ### Install from a checkout
 
-Install Git, **Node.js 22.22.2 or newer in the 22.x series**, **pnpm 12.8.1**, and the Codex CLI. Run `codex login` as the user who will start GraphGoblin, then confirm `codex login status` reports that you’re signed in. [Prerequisites](docs/guide/01-install-and-first-run.md#check-prerequisites)
+Install Git, **Node.js 22.22.2 or newer in the 22.x series**, **pnpm 12.8.1**, and the Codex CLI. Run `codex login` as the user who will start GraphGoblin, then confirm `codex login status` reports that you’re signed in. If Windows PowerShell blocks the npm-installed `codex.ps1`, use `codex.cmd login` and `codex.cmd login status`. [Prerequisites](docs/guide/01-install-and-first-run.md#check-prerequisites)
 
 Clone the repository and enter its directory in PowerShell or Bash.
 
@@ -42,15 +42,21 @@ To add an inference node or enable API keys, see [Build a loop](docs/guide/02-bu
 
 ### Optional Windows desktop and taskbar launcher
 
-With GraphGoblin running, open the app URL in Chrome and install it as a Chrome app. Keep Chrome’s original GraphGoblin shortcut. If that shortcut is only on the Desktop, or you use a custom port or data directory, use the [launcher options](docs/guide/01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher). For a default setup, open a second PowerShell window in the same checkout, with the same Node 22 runtime on PATH.
+With GraphGoblin running, open the app URL in Chrome and install it as a Chrome app. The launcher installer looks first under **Start menu → Chrome Apps** for Chrome’s GraphGoblin shortcut. Keep that shortcut for the installer. If the only Chrome shortcut is on the Desktop, choose a separate launcher destination with `-DesktopShortcut`. The [launcher options](docs/guide/01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher) also cover custom ports and data directories.
+
+For the default setup, open a second PowerShell window in the same checkout with the same Node 22 runtime on PATH.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install-windows-launcher.ps1
 ```
 
-The installer finds the Chrome app shortcut and creates Desktop and Start menu shortcuts for the launcher.
+The installer creates its own **GraphGoblin** shortcuts on the Desktop and in the Start menu. With a separate Chrome source shortcut, it replaces an existing `GraphGoblin.lnk` at the Desktop destination. Open GraphGoblin from one of the launcher’s shortcuts.
 
-Stop the foreground gateway with **Ctrl+C** and wait for it to exit. Open the new **GraphGoblin** Desktop shortcut. To use the taskbar, remove any old direct Chrome pin and pin the running GraphGoblin window. The launcher starts or reuses the matching gateway on a cold launch. If the window is already open, a taskbar click focuses it. To start a stopped gateway again, use the Desktop shortcut or the taskbar’s **Open new window** action. [Launcher troubleshooting](docs/guide/07-troubleshooting.md#windows-launcher)
+1. Stop the foreground gateway with **Ctrl+C** and wait for it to exit.
+2. Open the new **GraphGoblin** Desktop shortcut. The launcher starts or reuses the matching gateway.
+3. To use the taskbar, remove any old direct Chrome pin and pin the running GraphGoblin window.
+
+If the window is already open, a taskbar click focuses it. To start a stopped gateway again, use the Desktop shortcut or the taskbar’s **Open new window** action. [Launcher troubleshooting](docs/guide/07-troubleshooting.md#windows-launcher)
 
 ### Docker Compose
 
