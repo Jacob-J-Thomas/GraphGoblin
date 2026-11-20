@@ -3,6 +3,7 @@ import type { DestinationStream } from 'pino';
 import { buildApp } from './app.js';
 import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
 import { createContainer } from './container.js';
+import { StoreOwnershipRefusedError } from './data-dir-lock.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
 import { StoreRefusedError } from './store-refusal.js';
@@ -175,8 +176,13 @@ export function startupFailureCause(stage: StartupStage, error: unknown): Startu
   }
 }
 
-/** A store or GG_DEFAULTS refusal is a complete operator explanation; a stack would bury it. */
+/** Store, ownership and GG_DEFAULTS refusals carry complete operator explanations. */
 export function shellFailureOutput(error: unknown): unknown {
+  if (error instanceof StoreOwnershipRefusedError)
+    return error.message.replace(
+      /[\p{Cc}\p{Zl}\p{Zp}]/gu,
+      (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+    );
   return error instanceof StoreRefusedError || error instanceof ProcessDefaultsRefusedError
     ? error.message
     : error;
