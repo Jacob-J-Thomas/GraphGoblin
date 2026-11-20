@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API startup now prints one stack-free line for held or unverifiable data-directory,
+  SQLite-file and reclamation ownership, with exit code 1 (#409). It keeps the lock path and
+  verification reason, gives guidance for live and unknown owners, and escapes control characters
+  and line separators in the explanation. Lock records, acquisition rules, managed startup
+  categories and unrelated diagnostics are unchanged.
+
 - The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
   overrides, including case variants and empty values, before writing staged or installed JSON
   (#437). The native launcher refuses the same keys in manually edited configuration, without
