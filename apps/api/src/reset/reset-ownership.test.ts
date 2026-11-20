@@ -281,42 +281,58 @@ describe('reset manifests classify both locks and both reclamation guards', () =
     expect(await snapshotTree(dataDir)).toEqual(only(before, UNRELATED));
   });
 
-  it('keeps a guard another process publishes while the reset holds the locks', async () => {
-    const { dataDir } = await fixture(false);
-    const guard = join(dataDir, 'graphgoblin.db.graphgoblin.lock.reclaim');
-    const token = randomUUID();
-    let reads = 0;
-    const result = await reset(dataDir, CONFIRM, {
-      readStore: async () => {
-        // The locked plan's read: a contender has just published its guard and will fail.
-        if (++reads === 2) {
-          await mkdir(guard);
-          await writeFile(
-            join(guard, `${token}.json`),
-            JSON.stringify({ pid: process.pid, token }),
-          );
-        }
-        return oldStore;
-      },
-    });
-    expect(result.code).toBe(0);
-    expect(result.out).toContain(
-      [
-        "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
-        '',
-        'Keeps:',
-        '  graphgoblin.db.graphgoblin.lock.bak    not part of the store',
-        "  graphgoblin.db.graphgoblin.lock.reclaim another process's lock guard; the reset leaves it",
-        `  ${STAGING} not part of the store`,
-      ].join('\n'),
-    );
-    expect(result.out).not.toContain('stale lock guard');
-    expect(result.out).toContain(removing(dataDir, RELEASED_BOTH));
-    expect(JSON.parse(await readFile(join(guard, `${token}.json`), 'utf8'))).toEqual({
-      pid: process.pid,
-      token,
-    });
-  });
+  // The listing shows only that a guard is present, never who published it, so each row says only that.
+  it.each([
+    {
+      role: 'database lock',
+      name: 'graphgoblin.db.graphgoblin.lock.reclaim',
+      kept: '  graphgoblin.db.graphgoblin.lock.reclaim database lock guard, present now; the reset leaves it',
+    },
+    {
+      role: 'data-directory lock',
+      name: 'graphgoblin.lock.reclaim',
+      kept: '  graphgoblin.lock.reclaim               data-directory lock guard, present now; the reset leaves it',
+    },
+  ])(
+    'keeps a $role guard published while the reset holds the locks and says only that it is present',
+    async ({ name, kept }) => {
+      const { dataDir } = await fixture(false);
+      const guard = join(dataDir, name);
+      const token = randomUUID();
+      let reads = 0;
+      const result = await reset(dataDir, CONFIRM, {
+        readStore: async () => {
+          // The locked plan's read: a guard is published meanwhile; the listing cannot show by whom.
+          if (++reads === 2) {
+            await mkdir(guard);
+            await writeFile(
+              join(guard, `${token}.json`),
+              JSON.stringify({ pid: process.pid, token }),
+            );
+          }
+          return oldStore;
+        },
+      });
+      expect(result.code).toBe(0);
+      expect(result.out).toContain(
+        [
+          "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
+          '',
+          'Keeps:',
+          '  graphgoblin.db.graphgoblin.lock.bak    not part of the store',
+          kept,
+          `  ${STAGING} not part of the store`,
+        ].join('\n'),
+      );
+      expect(result.out).not.toContain('stale lock guard');
+      expect(result.out).not.toContain('another process');
+      expect(result.out).toContain(removing(dataDir, RELEASED_BOTH));
+      expect(JSON.parse(await readFile(join(guard, `${token}.json`), 'utf8'))).toEqual({
+        pid: process.pid,
+        token,
+      });
+    },
+  );
 
   it('classifies the locks of a database in a subdirectory where the lock module keeps them', async () => {
     const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-i3-reset-ownership-')));

@@ -346,8 +346,9 @@ export interface PlanResetOptions {
   database: string;
   readStore: (databaseFile: string) => Promise<StoreFacts>;
   /**
-   * The caller holds both locks, so a reclamation guard present now belongs to another process
-   * trying to take one: it is kept. Otherwise a present lock or guard is one the reset would reclaim.
+   * The caller holds both locks: a reclamation guard present now is listed under Keeps as present,
+   * and the reset leaves it. The listing cannot show who published it, so the row never says.
+   * Otherwise a present lock or guard is one the reset would reclaim.
    */
   locked?: boolean;
 }
@@ -493,7 +494,7 @@ export async function planReset({
       if (entry && guard && locked)
         kept.push({
           path,
-          why: "another process's lock guard; the reset leaves it",
+          why: `${role} guard, present now; the reset leaves it`,
           identity: entry.identity,
         });
     }
