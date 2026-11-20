@@ -31,6 +31,7 @@ import { promisify } from 'node:util';
 import {
   aliasStage,
   errorCodeOf,
+  isExpectedOwnershipRefusal,
   openWindowsLauncherEvidence,
 } from './windows-launcher-evidence.mjs';
 
@@ -1708,9 +1709,9 @@ test(
         for (const result of results) {
           if (result.status === 'acquired') continue;
           assert.equal(result.status, 'refused');
-          assert.match(
-            result.error,
-            /another GraphGoblin process holds|Store ownership could not be verified/,
+          assert.ok(
+            isExpectedOwnershipRefusal(result),
+            'Expected an ownership refusal without filesystem or cleanup failures.',
           );
         }
       } finally {

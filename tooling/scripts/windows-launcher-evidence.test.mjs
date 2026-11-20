@@ -37,6 +37,7 @@ import {
   finalizeEvidence,
   fixtureId,
   initializeEvidence,
+  isExpectedOwnershipRefusal,
   main,
   missingRequirements,
   observeCheckout,
@@ -111,6 +112,46 @@ const context = () => ({
   test: (_name, body) => Promise.resolve(body?.(context())).catch(() => undefined),
 });
 
+/** Ordinary synthetic receipts with the same fields as the native contention trial. */
+function passingContention(trial) {
+  const seededToken = '00000000-0000-4000-8000-000000000001';
+  const ownerToken = '00000000-0000-4000-8000-000000000002';
+  const pid = 100 + trial * 10;
+  return [
+    ...Array.from({ length: 5 }, (_, index) => ({
+      type: 'ownership-result',
+      trial,
+      pid: pid + index,
+      status: index === 0 ? 'acquired' : 'refused',
+      seededToken,
+      ownerToken: index === 0 ? ownerToken : null,
+      markerToken: null,
+      operation: null,
+      errorCode: null,
+      diagnostic: index === 0 ? 'acquired' : index === 1 ? 'store-unverified' : 'store-held',
+    })),
+    { type: 'contention', trial, contenders: 5, acquired: 1, refused: 4, other: 0 },
+    {
+      type: 'ownership-check',
+      trial,
+      liveOwners: 1,
+      recordedPid: pid,
+      recordedToken: ownerToken,
+      recordedOwnerMatched: true,
+      seededMarker: 'absent',
+    },
+    {
+      type: 'ownership-cleanup',
+      trial,
+      released: 1,
+      main: 'absent',
+      guard: 'absent',
+      staging: 0,
+      unrelatedIntact: true,
+    },
+  ];
+}
+
 /**
  * Every required observation of a passing native run, produced through the public API. Like the
  * real suite, lock contention spawns its contenders directly and has no observed `execFile` child.
@@ -118,7 +159,7 @@ const context = () => ({
 async function passingSuite(
   recorder,
   fixture,
-  { trials = [1, 2, 3], spellings = ['alias', 'direct'] } = {},
+  { trials = [1, 2, 3], spellings = ['alias', 'direct'], receipts = passingContention } = {},
 ) {
   const run = recorder.observeExecFile(() => Promise.resolve({ stdout: '', stderr: '' }));
   for (const name of CASES)
@@ -152,13 +193,7 @@ async function passingSuite(
           });
       if (name === 'lock-contention')
         for (const trial of trials)
-          recorder.record('contention', {
-            trial,
-            contenders: 5,
-            acquired: 1,
-            refused: 4,
-            other: 0,
-          });
+          for (const { type, ...fields } of receipts(trial)) recorder.record(type, fields);
     })(context());
 }
 
@@ -175,6 +210,44 @@ const lines = (path) =>
     .trimEnd()
     .split('\n')
     .map((line) => JSON.parse(line));
+
+test('expected ownership wording never accepts a structured filesystem or cleanup failure', () => {
+  for (const error of [
+    'another GraphGoblin process holds this store',
+    'Store ownership could not be verified (malformed owner record)',
+  ]) {
+    const refusal = {
+      status: 'refused',
+      pid: 123,
+      error,
+      code: null,
+      operation: null,
+      markerToken: null,
+      failures: [],
+    };
+    assert.equal(isExpectedOwnershipRefusal(refusal), true);
+    for (const operation of ['recovery-marker-unlink', 'staging-marker-unlink']) {
+      const compound = {
+        ...refusal,
+        error: `${error}; cleanup also failed`,
+        failures: [{ code: 'EPERM', operation, markerToken: randomUUID() }],
+      };
+      const original = structuredClone(compound);
+      assert.equal(isExpectedOwnershipRefusal(compound), false);
+      assert.deepEqual(compound, original, 'the primary refusal and failure details survive');
+    }
+    for (const extra of [
+      { status: 'acquired' },
+      { error: null },
+      { error: 'unexpected refusal' },
+      { code: 'EPERM' },
+      { operation: 'stale-marker-unlink' },
+      { markerToken: randomUUID() },
+      { failures: null },
+    ])
+      assert.equal(isExpectedOwnershipRefusal({ ...refusal, ...extra }), false);
+  }
+});
 
 test('bounds keep the three flat files within 256 KiB', () => {
   assert.ok(
@@ -1051,6 +1124,92 @@ test('finalize distinguishes complete, incomplete, failed and not-run evidence',
   ]);
 });
 
+test('complete contention evidence needs every contender, live owner match and final cleanup', async () => {
+  const change = (type, fields) => (rows) =>
+    rows.map((row) => (row.type === type ? { ...row, ...fields } : row));
+  const scenarios = [
+    ['totals only', (rows) => rows.filter((row) => row.type === 'contention')],
+    ['missing contender', (rows) => rows.slice(1)],
+    ['duplicate contender', change('ownership-result', { pid: 123 })],
+    ['different seed', (rows) => [{ ...rows[0], seededToken: randomUUID() }, ...rows.slice(1)]],
+    ['missing owner token', change('ownership-result', { ownerToken: null })],
+    ['filesystem code', change('ownership-result', { errorCode: 'EPERM' })],
+    ['filesystem operation', change('ownership-result', { operation: 'stale-marker-unlink' })],
+    ['marker failure', change('ownership-result', { markerToken: randomUUID() })],
+    ['unexpected diagnostic', change('ownership-result', { diagnostic: 'other' })],
+    ['missing owner check', (rows) => rows.filter((row) => row.type !== 'ownership-check')],
+    [
+      'duplicate owner check',
+      (rows) => [...rows, rows.find((row) => row.type === 'ownership-check')],
+    ],
+    ['wrong case', change('ownership-check', { case: 'launcher', subtest: 0 })],
+    ['wrong subtest', change('ownership-check', { subtest: 1 })],
+    ['wrong trial', change('ownership-check', { trial: 4 })],
+    ['owner not live', change('ownership-check', { liveOwners: 0 })],
+    ['owner not matched', change('ownership-check', { recordedOwnerMatched: false })],
+    ['different owner PID', change('ownership-check', { recordedPid: 999 })],
+    ['different owner token', change('ownership-check', { recordedToken: randomUUID() })],
+    ['seeded marker remains', change('ownership-check', { seededMarker: 'present' })],
+    ['missing cleanup', (rows) => rows.filter((row) => row.type !== 'ownership-cleanup')],
+    ['not released', change('ownership-cleanup', { released: 0 })],
+    ['main remains', change('ownership-cleanup', { main: 'present' })],
+    ['guard remains', change('ownership-cleanup', { guard: 'present' })],
+    ['staging remains', change('ownership-cleanup', { staging: 1 })],
+    ['unrelated file changed', change('ownership-cleanup', { unrelatedIntact: false })],
+  ];
+  for (const [name, alter] of scenarios) {
+    const setup = initialized();
+    const { recorder, close } = recorderFor(setup);
+    await passingSuite(recorder, temporary(), {
+      receipts: (trial) =>
+        trial === 1 ? alter(passingContention(trial)) : passingContention(trial),
+    });
+    close();
+    const outcome = finalizeEvidence({ env: finalizeEnv(setup) });
+    assert.deepEqual(
+      [outcome.status, outcome.exitCode, outcome.result.observations.state, outcome.result.missing],
+      ['incomplete', 1, 'valid', ['contention-trials']],
+      name,
+    );
+    assert.equal(outcome.upload.length, 3, name);
+  }
+});
+
+test('structured cleanup failures remain readable and downloadable with the native failure', async () => {
+  for (const native of ['success', 'failure']) {
+    const setup = initialized();
+    const { recorder, close } = recorderFor(setup);
+    await passingSuite(recorder, temporary(), {
+      receipts: (trial) => [
+        ...passingContention(trial),
+        {
+          type: 'ownership-error',
+          trial,
+          pid: 100 + trial * 10 + 1,
+          index: 0,
+          operation: 'recovery-marker-unlink',
+          code: 'EPERM',
+          markerToken: randomUUID(),
+        },
+      ],
+    });
+    close();
+    const original = readFileSync(join(setup.directory, FILES.observations));
+    const outcome = finalizeEvidence({ env: finalizeEnv(setup, native) });
+    assert.deepEqual(
+      [outcome.status, outcome.exitCode, outcome.result.observations.state, outcome.result.missing],
+      [
+        native === 'success' ? 'incomplete' : 'native-failed',
+        native === 'success' ? 1 : 0,
+        'valid',
+        ['contention-trials'],
+      ],
+    );
+    assert.equal(outcome.upload.length, 3);
+    assert.deepEqual(readFileSync(join(setup.directory, FILES.observations)), original);
+  }
+});
+
 test('required observations name every missing case, alias, contention and fixture state', () => {
   const missing = missingRequirements(
     summarize([
@@ -1806,25 +1965,21 @@ test('repeated contention trials and alias spellings never stand in for distinct
   }
   // Only single-owner trials of the contention case and verified, drained rounds of the
   // checkout-alias case count, each once.
-  const trial = (number, extra = {}) => ({
-    type: 'contention',
-    case: 'lock-contention',
-    subtest: 0,
-    trial: number,
-    contenders: 5,
-    acquired: 1,
-    refused: 4,
-    other: 0,
-    ...extra,
-  });
+  const trial = (number, extra = {}) =>
+    passingContention(number).map((record) => ({
+      ...record,
+      case: 'lock-contention',
+      subtest: 0,
+      ...(record.type === 'contention' ? extra : {}),
+    }));
   assert.deepEqual(
     summarize([
-      trial(1),
-      trial(2, { case: 'installer' }),
-      trial(3, { acquired: 2, refused: 3 }),
-      trial(3, { refused: 3, other: 1 }),
-      trial(3, { contenders: 1, refused: 0 }),
-      trial(4),
+      ...trial(1),
+      ...trial(2, { case: 'installer' }),
+      ...trial(3, { acquired: 2, refused: 3 }),
+      ...trial(3, { refused: 3, other: 1 }),
+      ...trial(3, { contenders: 1, refused: 0 }),
+      ...trial(4),
     ]).contention,
     [1, 4],
   );
