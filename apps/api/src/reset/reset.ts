@@ -1,4 +1,4 @@
-import { readdir, realpath, stat } from 'node:fs/promises';
+import { lstat, readdir, realpath, stat } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
@@ -17,7 +17,7 @@ import {
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
 import { cleanupStaleStoreCopies } from './store-copy.js';
-import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
+import { hasCode, identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
@@ -131,15 +131,34 @@ export interface ResetPlan {
 }
 
 /**
- * Refused before any store data was removed. `ownershipChanges` lists the lock files and guards
- * that a refusal after taking the locks changed; empty means nothing in the data directory changed.
+ * What a refused reset did to the data directory. Nothing before removal changes store data or any
+ * entry other than the reset's lock files and guards, so only those can differ.
  */
+export type OwnershipEffect =
+  /**
+   * Nothing in the data directory changed: refused before taking a lock, or every lock taken was
+   * removed on release and taking them reclaimed nothing.
+   */
+  | { kind: 'unchanged' }
+  /** The locks were taken: the stale entries taking them reclaimed, and what each release did. */
+  | { kind: 'changed'; lines: readonly string[] }
+  /**
+   * Taking `failed` threw. The lock module reports no more than the error, and the attempt can
+   * create or reclaim that lock's file, guard or guard staging directory and leave any of them, so
+   * the lines give that lock file and guard as found now and just before the attempt (never who
+   * changed them), then the rest as for `changed`.
+   */
+  | { kind: 'uncertain'; failed: LockRole; lines: readonly string[] };
+
+const UNCHANGED: OwnershipEffect = { kind: 'unchanged' };
+
+/** Refused before any store data was removed; `ownership` says what happened to the lock files. */
 export class ResetRefusedError extends Error {
-  readonly ownershipChanges: readonly string[];
-  constructor(message: string, ownershipChanges: readonly string[] = []) {
+  readonly ownership: OwnershipEffect;
+  constructor(message: string, ownership: OwnershipEffect = UNCHANGED) {
     super(message);
     this.name = 'ResetRefusedError';
-    this.ownershipChanges = ownershipChanges;
+    this.ownership = ownership;
   }
 }
 
@@ -744,22 +763,69 @@ async function releaseLocks(held: readonly HeldLock[], ownership: readonly Owner
 }
 
 /**
- * The stale lock files and guards the preview listed for the locks the reset tried to take, which
- * are gone now: taking a lock reclaims them. An entry that cannot be inspected is not claimed.
+ * The stale lock files and guards the preview listed for the locks the reset took, which are gone
+ * now: taking a lock reclaims them. An entry that cannot be inspected is not claimed.
  */
-async function reclaimedLines(
-  preview: ResetPlan,
-  attempted: ReadonlySet<LockRole>,
-): Promise<string[]> {
+async function reclaimedLines(preview: ResetPlan, taken: ReadonlySet<LockRole>): Promise<string[]> {
   const lines: string[] = [];
   for (const entry of preview.ownership) {
-    if (!entry.present || !attempted.has(entry.role)) continue;
+    if (!entry.present || !taken.has(entry.role)) continue;
     const now = await identityOf(resolve(preview.dataDir, ...entry.path.split('/'))).catch(
       () => 'uninspectable',
     );
     if (now === undefined) lines.push(`reclaimed stale ${describeOwnership(entry)}`);
   }
   return lines;
+}
+
+/** Whether an entry exists, or why it could not be inspected. */
+type Presence = 'present' | 'absent' | { uninspectable: string };
+
+interface ObservedEntry {
+  entry: OwnershipEntry;
+  presence: Presence;
+}
+
+/**
+ * The guard and lock file of `role` where the preview names them, as they are now. Read-only. An
+ * inspection failure is reported by its own message, with no advice to move or remove the entry.
+ */
+async function observeLock(preview: ResetPlan, role: LockRole): Promise<ObservedEntry[]> {
+  const observed: ObservedEntry[] = [];
+  for (const entry of preview.ownership.filter((candidate) => candidate.role === role)) {
+    let presence: Presence;
+    try {
+      await lstat(resolve(preview.dataDir, ...entry.path.split('/')));
+      presence = 'present';
+    } catch (error) {
+      presence =
+        hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')
+          ? 'absent'
+          : { uninspectable: message(error) };
+    }
+    observed.push({ entry, presence });
+  }
+  return observed;
+}
+
+const presenceText = (presence: Presence, when: string): string =>
+  typeof presence === 'string'
+    ? `${presence} ${when}`
+    : `could not be inspected ${when} (${presence.uninspectable})`;
+
+/**
+ * After taking a lock failed: its guard and lock file as found now and just before the attempt.
+ * Presence only; no line says who created or removed an entry, or that it is the same entry.
+ */
+function attemptLines(before: readonly ObservedEntry[], after: readonly ObservedEntry[]): string[] {
+  return after.map(({ entry, presence: now }, index) => {
+    const then = before[index]!.presence;
+    return `${describeOwnership(entry)}: ${
+      typeof now === 'string' && now === then
+        ? `${now} now and before the attempt`
+        : `${presenceText(now, 'now')}, ${presenceText(then, 'before the attempt')}`
+    }`;
+  });
 }
 
 /** Plan (and, confirmed, perform) the reset of the configured data directory. Returns the exit code. */
@@ -833,19 +899,28 @@ export async function resetDataDirectory(
   }
   // Taking a lock reclaims a stale lock file or guard the preview listed. From here a refusal says
   // which of them are gone and how each held lock was released, instead of that nothing changed.
+  // An attempt that throws may itself have created, reclaimed or left that lock's entries, so its
+  // guard and lock file are observed just before each attempt and again after a failure.
   const held: HeldLock[] = [];
-  const attempted = new Set<LockRole>();
+  let attempt: { role: LockRole; before: ObservedEntry[] } | undefined;
   let plan: ResetPlan | undefined;
   let failure: unknown;
   try {
-    attempted.add('data-directory lock');
-    try {
-      held.push({ role: 'data-directory lock', lock: await acquireDataDirLock(dataDir) });
-    } catch (error) {
-      throw new ResetRefusedError(`${message(error)}; stop it before resetting`);
+    for (const role of ['data-directory lock', 'database lock'] as const) {
+      attempt = { role, before: await observeLock(preview, role) };
+      try {
+        held.push({
+          role,
+          lock:
+            role === 'data-directory lock'
+              ? await acquireDataDirLock(dataDir)
+              : await acquireDatabaseLock(databaseFile),
+        });
+      } catch (error) {
+        throw new ResetRefusedError(`could not take the ${role}: ${message(error)}`);
+      }
+      attempt = undefined;
     }
-    attempted.add('database lock');
-    held.push({ role: 'database lock', lock: await acquireDatabaseLock(databaseFile) });
     // Plan again under the locks, so GraphGoblin cannot change the manifest concurrently. External
     // processes do not obey them; removeEntry rechecks the planned filesystem identities.
     const lockedPlan = await planReset({
@@ -881,13 +956,20 @@ export async function resetDataDirectory(
       failure = error;
     }
   } catch (error) {
-    // Refused before any store data was removed: the store changed after the preview, or a lock
-    // could not be taken.
+    // Refused before any store data was removed: a lock could not be taken, or the store changed
+    // after the preview. The failed lock's entries are observed before any held lock is released.
+    const observed =
+      attempt && attemptLines(attempt.before, await observeLock(preview, attempt.role));
     const released = await releaseLocks(held, (plan ?? preview).ownership);
-    const reclaimed = await reclaimedLines(preview, attempted);
+    const reclaimed = await reclaimedLines(preview, new Set(held.map(({ role }) => role)));
+    const lines = [...(observed ?? []), ...reclaimed, ...released.lines];
     throw new ResetRefusedError(
       message(error),
-      reclaimed.length || !released.allRemoved ? [...reclaimed, ...released.lines] : [],
+      attempt
+        ? { kind: 'uncertain', failed: attempt.role, lines }
+        : reclaimed.length || !released.allRemoved
+          ? { kind: 'changed', lines }
+          : UNCHANGED,
     );
   }
   const released = await releaseLocks(held, plan.ownership);
@@ -951,14 +1033,19 @@ export async function runResetCli(options: ResetCliOptions = {}): Promise<number
       writeError(`${error.message}\n`);
       return 1;
     }
-    const changes = error instanceof ResetRefusedError ? error.ownershipChanges : [];
     writeError(
-      `reset refused: ${message(error)}\n${
-        changes.length
-          ? `No store data was removed. Lock files and guards:\n${changes.map((line) => `  ${line}\n`).join('')}`
-          : 'Nothing in the data directory was changed.\n'
-      }`,
+      `reset refused: ${message(error)}\n${effectText(error instanceof ResetRefusedError ? error.ownership : UNCHANGED)}`,
     );
     return 1;
   }
+}
+
+/** What a refusal says about the data directory: store data first, then the lock metadata. */
+function effectText(effect: OwnershipEffect): string {
+  if (effect.kind === 'unchanged') return 'Nothing in the data directory was changed.\n';
+  const head =
+    effect.kind === 'changed'
+      ? 'No store data was removed. Lock files and guards:'
+      : `No store data was removed. Taking the ${effect.failed} failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:`;
+  return [head, ...effect.lines.map((line) => `  ${line}`), ''].join('\n');
 }

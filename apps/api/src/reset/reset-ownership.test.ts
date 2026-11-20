@@ -507,7 +507,9 @@ describe('a refusal after taking the locks says what changed', () => {
     expect(await snapshotTree(dataDir)).toEqual(only(before, [...UNRELATED, ...STORE_DATA]));
   });
 
-  it('reports only the data-directory metadata when that lock cannot be taken', async () => {
+  // A failed acquisition reports only the state of that lock's entries: it never claims that it, or
+  // anyone else, removed them (#434; see reset-acquisition.test.ts).
+  it('reports only the data-directory metadata, as found, when that lock cannot be taken', async () => {
     const { dataDir } = await fixture(true);
     const before = await snapshotTree(dataDir);
     const acquire = ownership.acquireDataDirLock;
@@ -521,10 +523,10 @@ describe('a refusal after taking the locks says what changed', () => {
       code: 1,
       out: '',
       err: [
-        'reset refused: simulated contender holds the data-directory lock; stop it before resetting',
-        'No store data was removed. Lock files and guards:',
-        '  reclaimed stale graphgoblin.lock.reclaim (data-directory lock guard)',
-        '  reclaimed stale graphgoblin.lock (data-directory lock)',
+        'reset refused: could not take the data-directory lock: simulated contender holds the data-directory lock',
+        "No store data was removed. Taking the data-directory lock failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:",
+        '  graphgoblin.lock.reclaim (data-directory lock guard): absent now, present before the attempt',
+        '  graphgoblin.lock (data-directory lock): absent now, present before the attempt',
         '',
       ].join('\n'),
     });
@@ -552,21 +554,26 @@ describe('a refusal after taking the locks says what changed', () => {
         throw new Error('simulated contender holds the database lock');
       });
       const result = await reset(dataDir, CONFIRM);
+      // Even when its entries are as they were, a failed attempt is not reported as no change: the
+      // reset cannot tell an attempt that changed nothing from one that failed part of the way.
+      const found = stale
+        ? 'absent now, present before the attempt'
+        : 'absent now and before the attempt';
       expect(result).toEqual({
         code: 1,
         out: '',
         err: [
-          'reset refused: simulated contender holds the database lock',
+          'reset refused: could not take the database lock: simulated contender holds the database lock',
+          "No store data was removed. Taking the database lock failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:",
+          `  graphgoblin.db.graphgoblin.lock.reclaim (database lock guard): ${found}`,
+          `  graphgoblin.db.graphgoblin.lock (database lock): ${found}`,
           ...(stale
             ? [
-                'No store data was removed. Lock files and guards:',
-                '  reclaimed stale graphgoblin.db.graphgoblin.lock.reclaim (database lock guard)',
-                '  reclaimed stale graphgoblin.db.graphgoblin.lock (database lock)',
                 '  reclaimed stale graphgoblin.lock.reclaim (data-directory lock guard)',
                 '  reclaimed stale graphgoblin.lock (data-directory lock)',
-                '  removed graphgoblin.lock (data-directory lock)',
               ]
-            : ['Nothing in the data directory was changed.']),
+            : []),
+          '  removed graphgoblin.lock (data-directory lock)',
           '',
         ].join('\n'),
       });

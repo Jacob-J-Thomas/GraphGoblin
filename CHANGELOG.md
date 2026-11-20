@@ -16,12 +16,19 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
   lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
   its locks names any stale lock file or guard they reclaimed instead of saying nothing
-  changed. A lock path that is not a regular file, or a guard path that is not a directory, is
-  refused before anything changes.
+  changed. A failed attempt to take either lock is no longer reported as
+  `Nothing in the data directory was changed.`: taking a lock can itself create or reclaim that
+  lock's file and guard and leave them (for example when removing the guard's owner marker
+  fails, which can leave both the lock file and the guard behind). The refusal now names the stage
+  (`could not take the data-directory lock:` or `could not take the database lock:`, replacing
+  the `; stop it before resetting` suffix), says `No store data was removed.`, lists that lock
+  file and guard as found now and just before the attempt, without saying who changed them, and
+  says what releasing the data-directory lock did. A lock path that is not a regular file, or a
+  guard path that is not a directory, is refused before anything changes.
   **Upgrade:** no stored data, schema or format change, and no reset. Rebuild the API. Scripts
   that parse reset output must expect the new lock rows and release lines in place of
   `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
-  `Released graphgoblin.lock.`
+  `Released graphgoblin.lock.`, and the `could not take the <lock>:` refusal prefix.
 
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
