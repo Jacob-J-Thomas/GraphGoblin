@@ -89,7 +89,11 @@ Only supplied overrides are persisted; shell `GG_*` variables are not copied. Th
 inherited `GG_*`, supplies its configured host/port/store/web directory and prepends the selected
 Node directory to PATH. Preserve required overrides when reconfiguring. The JSON next to the
 executable is per-user configuration; keep credentials in GraphGoblin's existing credential/secret
-stores rather than adding them to shortcuts.
+stores rather than adding them to shortcuts. The installer refuses `GG_MASTER_KEY` and
+`GG_JEV_API_KEY` overrides, including case variants and empty values, before writing any JSON.
+The launcher also refuses those keys in manually edited configuration. Use the existing
+data-directory `master.key` for encryption and set Jev's key through
+[Store secrets](06-settings-and-secrets.md#store-secrets). No acknowledgement bypass is offered.
 
 Use the new desktop shortcut. Once its PWA window opens, remove the old direct Chrome taskbar pin
 and pin the new running GraphGoblin button. Both routes now go through readiness before opening
