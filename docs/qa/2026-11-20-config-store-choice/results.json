@@ -1,0 +1,898 @@
+{
+  "verdict": "PASS",
+  "issue": "#429",
+  "candidate": {
+    "head": "fe07ec84c015f02f7224ef56b202e6e115bde282",
+    "tree": "5423612f7ee427cd9a35907150148930a6824901",
+    "parent": "325e9bb4ecffb76ecc7dc22e1426009b168a1a2c",
+    "documents": {
+      "CHANGELOG.md": {
+        "main": "8aab811c4730f67f1cce701303802879a4053180",
+        "priorQa": "2cb47d11137b8cbd4a06bd0d4aeadde412d32a8b",
+        "parent": "2cb47d11137b8cbd4a06bd0d4aeadde412d32a8b",
+        "candidate": "b614a866ff712bcf98bf7b13c0f1453460b6ba46"
+      },
+      "docs/06-harness-integration.md": {
+        "main": "aa7deba1d4e0a901f642052584fba7c731d9c702",
+        "priorQa": "1d1707ff2269623cda8de394dfd55f42c3b071af",
+        "parent": "1d1707ff2269623cda8de394dfd55f42c3b071af",
+        "candidate": "47bd8470928055e2d8316da14294bea176690782"
+      }
+    }
+  },
+  "source": {
+    "nonQaFiles": 1733,
+    "nonQaManifestSha256": "7539656cbea97f3583d7188b2591afee09c2023e342c281e9fc408e9a7c08a1b",
+    "workingBytesEqualHeadBlobsBeforeAndAfter": true,
+    "statusCleanBeforeAndAfter": true,
+    "manifestUnchangedThroughout": true
+  },
+  "priorEvidenceApplicability": {
+    "prior": "41/41 operator predicates and 11/11 shipped tests on 024724753ee335760e894954b80b570cad9ac305",
+    "priorManifestRecomputed": {
+      "head": "024724753ee335760e894954b80b570cad9ac305",
+      "fileCount": 1733,
+      "sha256": "57434e0b14dac4a41d17b8e8706566e62729e615568d0440d3758f2ba73da291"
+    },
+    "candidateManifest": {
+      "head": "fe07ec84c015f02f7224ef56b202e6e115bde282",
+      "fileCount": 1733,
+      "sha256": "7539656cbea97f3583d7188b2591afee09c2023e342c281e9fc408e9a7c08a1b"
+    },
+    "nonQaFilesDiffering": [
+      "CHANGELOG.md",
+      "docs/06-harness-integration.md"
+    ],
+    "sqlRecipes": {
+      "executedSha256": [
+        "275280dfd41d03c785a3ce0d66bb075d11dbb884df883f9246291215797c3105",
+        "22731d8bfa1ccbcae4496b608dd5bf5c3fb65533bf7fb19369f986cfa3ce9885",
+        "eaec7adda559775c86d5a24ba402d505c4bafff4b79c2f4c0a7fd014c0ca906b",
+        "8edea155a99d090795e9c2aa35137659415e429f7b87e94df22de11f2bfda67d"
+      ],
+      "rawFencedSha256": [
+        "885ba63dde46978ba9c0aa766fc86aeba0cdda49d4d2c749b9b9592d6e7188db",
+        "3e80ddecdef066fcc5b03ffbea7ff8e19ec0b365548a77feca2e6ebee3623121",
+        "5d74fd96c0fe6768a217374fdc7b72174ba5f7f7cf2d72346451f4eafdc10233",
+        "a005ea90ecfe046fc33a378a5ab1d1126d49bc1f9b373b1b3126c940eb6e9ce8"
+      ],
+      "identicalAt": [
+        "baseline",
+        "priorQa",
+        "parent",
+        "candidate"
+      ],
+      "shippedFenceAnchoredExtractionIdentical": true
+    },
+    "rerun": "not repeated; applicability rests on the byte identities above"
+  },
+  "runtimes": {
+    "oldMain": {
+      "main": "491f089a0922557f8884629e953546c0187be63a",
+      "method": "main blob bytes for every runtime source file that differs from the candidate, resolved in place of the candidate files; all other source and dependencies byte-identical to main",
+      "overlaid": [
+        {
+          "path": "apps/api/src/app.ts",
+          "mainBlob": "f995686f9294d17f62f5db1837b0d6521fe669e3",
+          "candidateBlob": "ace4aaf7051d12f70c4cb4bd2ff50d2c3089f780"
+        },
+        {
+          "path": "apps/api/src/loop-issues.ts",
+          "mainBlob": "5fbd38ef6c529efee6564e4a84d21f223abd2765",
+          "candidateBlob": "c9d3dd72b6242f1816b1e43d85ff6210cabaa772"
+        },
+        {
+          "path": "apps/api/src/plugins/errors.ts",
+          "mainBlob": "8a0ea90adbcca96197aaac5f82d01bafd853499a",
+          "candidateBlob": "34f939b8ee2991782d5eb321656124348bd563ce"
+        },
+        {
+          "path": "packages/adapter-codex/src/isolation.ts",
+          "mainBlob": "4a6640162a77bcfb0de3fce13eb9d3bd00fc63ab",
+          "candidateBlob": "bf97db6f19a663173ef398188c093d37b75e1890"
+        },
+        {
+          "path": "packages/adapter-codex/src/options.ts",
+          "mainBlob": "48bf2781c9cca8a9df7bd1facf2cb19935942ba7",
+          "candidateBlob": "702999145036196161ab4ab28b285000e08d2eda"
+        },
+        {
+          "path": "packages/api-client/src/generated/schema.ts",
+          "mainBlob": "4f7120eeb8af4e666b7679c6f155efef21a4725d",
+          "candidateBlob": "c377eab08d36fb436c046ad16e812642982e3541"
+        },
+        {
+          "path": "packages/contracts/src/index.ts",
+          "mainBlob": "fc2338aee88d2a8d29f4b8ac4baf1cc159273db7",
+          "candidateBlob": "021a78ac496c1302e4051cafbe6a9c7c214e376a"
+        },
+        {
+          "path": "packages/contracts/src/nodes.ts",
+          "mainBlob": "8f1adfae1a735e73c0c0a242949d9202b9f65b70",
+          "candidateBlob": "89ef3441c926015f0eae661daeafc70d6fe71eba"
+        },
+        {
+          "path": "packages/domain/src/graph.ts",
+          "mainBlob": "5fd925ed7b608436a44b1a7a24d852b9336be960",
+          "candidateBlob": "62053d588d1d741edcc57737666bfab992e88d22"
+        }
+      ],
+      "loaded": [
+        "apps/api/src/app.ts",
+        "apps/api/src/loop-issues.ts",
+        "apps/api/src/plugins/errors.ts",
+        "packages/adapter-codex/src/isolation.ts",
+        "packages/adapter-codex/src/options.ts",
+        "packages/contracts/src/index.ts",
+        "packages/contracts/src/nodes.ts",
+        "packages/domain/src/graph.ts"
+      ],
+      "candidateOnlyRefused": [
+        "apps/api/src/plugins/request-validation.ts",
+        "packages/contracts/src/codex-config.ts"
+      ],
+      "candidateOnlyRequested": 0,
+      "builtOutputLoaded": 0,
+      "fingerprint": {
+        "codexConfigSchemaExported": false,
+        "plainKeyRuleAcceptsBadKey": true
+      }
+    },
+    "target": {
+      "source": "fe07ec84c015f02f7224ef56b202e6e115bde282",
+      "overlay": "none",
+      "fingerprint": {
+        "codexConfigSchemaExported": true,
+        "plainKeyRuleAcceptsBadKey": false
+      }
+    },
+    "common": "Node v22.23.4, in-process createTestApp (fake harness, fake clock, timers disabled, API keys required) on file-backed disposable stores, real HTTP over 127.0.0.1 ephemeral listeners"
+  },
+  "phases": [
+    {
+      "mode": "old-seed",
+      "runtime": "old-main",
+      "verdict": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "old-main runtime: contract has no plain-key schema and accepts a non-plain override key",
+          "pass": true
+        },
+        {
+          "name": "original data directory is new",
+          "pass": true
+        },
+        {
+          "name": "original gateway refuses an unauthenticated read",
+          "pass": true
+        },
+        {
+          "name": "old build creates a draft holding a non-plain override key",
+          "pass": true
+        },
+        {
+          "name": "old build stores the bad key and materializes the codex harness",
+          "pass": true
+        },
+        {
+          "name": "old build admits a draft run of that draft",
+          "pass": true
+        },
+        {
+          "name": "draft run retains exactly one immutable snapshot",
+          "pass": true
+        },
+        {
+          "name": "retained snapshot carries the non-plain key",
+          "pass": true
+        },
+        {
+          "name": "seed run finished with the fake harness only and armed nothing",
+          "pass": true
+        },
+        {
+          "name": "old build serves the invalid-key draft",
+          "pass": true
+        },
+        {
+          "name": "original gateway listener closed",
+          "pass": true
+        },
+        {
+          "name": "original locks released",
+          "pass": true
+        }
+      ],
+      "observations": [
+        {
+          "phase": "old-main seed",
+          "runStatus": "succeeded",
+          "runEvents": 15,
+          "fakeHarnessTurns": 1,
+          "schedules": 0,
+          "webhookEndpoints": 0,
+          "timers": 0
+        },
+        {
+          "phase": "old-main seed GET",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "mode": "target-refusal",
+      "runtime": "target",
+      "verdict": "PASS",
+      "passed": 12,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "target runtime: contract exports the plain-key schema and refuses a non-plain key",
+          "pass": true
+        },
+        {
+          "name": "pristine original database bytes equal the stopped backup",
+          "pass": true
+        },
+        {
+          "name": "target gateway construction refuses the original before listening",
+          "pass": true
+        },
+        {
+          "name": "original locks released after refusal",
+          "pass": true
+        },
+        {
+          "name": "target refusal leaves the original database bytes unchanged (other changes only empty-WAL/SHM sidecars)",
+          "pass": true
+        },
+        {
+          "name": "shipped invalid-key discovery reports the draft and the snapshot",
+          "pass": true
+        },
+        {
+          "name": "shipped omission discovery is clear (old API materialized the harness)",
+          "pass": true
+        },
+        {
+          "name": "standalone updated guard refuses the original",
+          "pass": true
+        },
+        {
+          "name": "standalone inspection leaves the original database bytes unchanged (other changes only empty-WAL/SHM sidecars)",
+          "pass": true
+        },
+        {
+          "name": "documented editable-row correction clears the draft",
+          "pass": true
+        },
+        {
+          "name": "documented recipe does not touch the snapshot and its trigger refuses a direct update",
+          "pass": true
+        },
+        {
+          "name": "after editable correction only the snapshot remains and still blocks the updated guard",
+          "pass": true
+        }
+      ],
+      "observations": [
+        {
+          "phase": "target container start on original",
+          "refused": true,
+          "code": "STORE_UNSUPPORTED",
+          "namesDraft": true,
+          "namesSnapshot": false
+        },
+        {
+          "phase": "original files after target container refusal",
+          "added": [
+            {
+              "path": "graphgoblin.db-shm",
+              "bytes": 32768
+            },
+            {
+              "path": "graphgoblin.db-wal",
+              "bytes": 0
+            }
+          ],
+          "removed": [],
+          "changed": []
+        },
+        {
+          "phase": "standalone guard on original",
+          "refused": true,
+          "code": "STORE_UNSUPPORTED",
+          "namesDraft": true,
+          "namesSnapshot": false
+        },
+        {
+          "phase": "original files after standalone read-only inspection",
+          "added": [],
+          "removed": [],
+          "changed": []
+        },
+        {
+          "phase": "offline snapshot-only control",
+          "draftRowsAffected": 1,
+          "draftRoute": "json_remove recipe",
+          "snapshotRowsAffected": 0,
+          "snapshotBytesUnchanged": true,
+          "directSnapshotUpdateRefused": true,
+          "remainingFindings": [
+            "snapshot"
+          ],
+          "guardCode": "STORE_UNSUPPORTED",
+          "guardNamesSnapshot": true
+        }
+      ]
+    },
+    {
+      "mode": "old-export",
+      "runtime": "old-main",
+      "verdict": "PASS",
+      "passed": 10,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "old-main runtime fingerprint",
+          "pass": true
+        },
+        {
+          "name": "previous build starts on the original holding the incompatible snapshot",
+          "pass": true
+        },
+        {
+          "name": "original gateway still refuses an unauthenticated read",
+          "pass": true
+        },
+        {
+          "name": "original credential reads the loop on the original gateway",
+          "pass": true
+        },
+        {
+          "name": "previous build exports the retained draft with its bad key",
+          "pass": true
+        },
+        {
+          "name": "this start executes no provider turn",
+          "pass": true
+        },
+        {
+          "name": "original gateway listener closed",
+          "pass": true
+        },
+        {
+          "name": "original locks released",
+          "pass": true
+        },
+        {
+          "name": "read/export start leaves original product tables unchanged",
+          "pass": true
+        },
+        {
+          "name": "read/export start leaves original credential identities unchanged",
+          "pass": true
+        }
+      ],
+      "observations": [
+        {
+          "phase": "old-main operational start",
+          "getStatus": 200,
+          "exportDraftStatus": 200,
+          "exportPublishedStatus": 404,
+          "exportPublishedCode": "VERSION_NOT_FOUND",
+          "fakeHarnessTurns": 0
+        }
+      ]
+    },
+    {
+      "mode": "target-fresh",
+      "runtime": "target",
+      "verdict": "PASS",
+      "passed": 24,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "target runtime fingerprint",
+          "pass": true
+        },
+        {
+          "name": "structured JSON correction removes only the bad member and keeps the explicit harness",
+          "pass": true
+        },
+        {
+          "name": "fresh data directory is new and separate",
+          "pass": true
+        },
+        {
+          "name": "fresh credential differs from the original credential",
+          "pass": true
+        },
+        {
+          "name": "first-key command initialized a current, empty fresh store with one credential",
+          "pass": true
+        },
+        {
+          "name": "fresh store refuses missing and original credentials for reads and import",
+          "pass": true
+        },
+        {
+          "name": "original loop identity does not resolve on the fresh store",
+          "pass": true
+        },
+        {
+          "name": "uncorrected export is refused by the normal import route",
+          "pass": true
+        },
+        {
+          "name": "refused imports leave fresh product tables unchanged",
+          "pass": true
+        },
+        {
+          "name": "corrected export imports through the normal route",
+          "pass": true
+        },
+        {
+          "name": "import returns a new loop identifier with a draft only",
+          "pass": true
+        },
+        {
+          "name": "fresh credential and returned ID read the imported draft",
+          "pass": true
+        },
+        {
+          "name": "no publish, run, snapshot or trigger arming was needed or occurred",
+          "pass": true
+        },
+        {
+          "name": "fresh store carries none of the original history",
+          "pass": true
+        },
+        {
+          "name": "fresh gateway listener closed",
+          "pass": true
+        },
+        {
+          "name": "adopted fresh store has no invalid-key or omitted-harness findings and passes the updated guard",
+          "pass": true
+        },
+        {
+          "name": "stored text of the imported draft equals the intended structured correction with an explicit codex harness",
+          "pass": true
+        },
+        {
+          "name": "adopted fresh store restarts and serves the same draft by the returned ID",
+          "pass": true
+        },
+        {
+          "name": "restart and GET leave fresh product tables unchanged",
+          "pass": true
+        },
+        {
+          "name": "fresh gateway listener closed after restart",
+          "pass": true
+        },
+        {
+          "name": "fresh locks released",
+          "pass": true
+        },
+        {
+          "name": "adopting the fresh store leaves every original data-directory byte unchanged",
+          "pass": true
+        },
+        {
+          "name": "original refusal remains after fresh adoption",
+          "pass": true
+        },
+        {
+          "name": "repeated refusal leaves the original database bytes unchanged (other changes only empty-WAL/SHM sidecars) and unlocked",
+          "pass": true
+        }
+      ],
+      "observations": [
+        {
+          "phase": "fresh store after first-key initialization",
+          "guard": "current",
+          "loops": 0,
+          "versions": 0,
+          "keys": 1
+        },
+        {
+          "phase": "original credential on fresh store",
+          "unauthenticated": 401,
+          "list": 401,
+          "listCode": "UNAUTHORIZED",
+          "readOriginalId": 401,
+          "import": 401
+        },
+        {
+          "phase": "original loop identity on fresh store",
+          "status": 404,
+          "code": "LOOP_NOT_FOUND"
+        },
+        {
+          "phase": "uncorrected export import",
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "errorsShape": "object"
+        },
+        {
+          "phase": "corrected import",
+          "status": 201,
+          "newLoopIdDiffers": true,
+          "draftStatus": "draft",
+          "currentVersionId": null,
+          "issues": []
+        },
+        {
+          "phase": "fresh store after import and GET",
+          "loops": 2,
+          "newLoopVersions": [
+            "draft"
+          ],
+          "runs": 0,
+          "runEvents": 0,
+          "schedules": 0,
+          "webhookEndpoints": 0,
+          "timers": 0,
+          "inboundEvents": 0,
+          "fakeHarnessTurns": 0,
+          "snapshotIdPresent": false
+        },
+        {
+          "phase": "adopted fresh store check before resuming service",
+          "discoveryRows": 0,
+          "omissionRows": 0,
+          "guard": "current",
+          "storedStatus": "draft"
+        },
+        {
+          "phase": "adopted fresh store restart",
+          "get": 200,
+          "originalCredential": 401,
+          "fakeHarnessTurns": 0
+        },
+        {
+          "phase": "original files across fresh adoption",
+          "added": [],
+          "removed": [],
+          "changed": []
+        },
+        {
+          "phase": "original after fresh adoption",
+          "startCode": "STORE_UNSUPPORTED",
+          "guardCode": "STORE_UNSUPPORTED",
+          "filesAfterRefusal": {
+            "added": [],
+            "removed": [],
+            "changed": []
+          },
+          "filesAfterInspection": {
+            "added": [],
+            "removed": [],
+            "changed": []
+          }
+        }
+      ]
+    }
+  ],
+  "orchestratorChecks": [
+    {
+      "name": "checkout is the exact candidate commit and tree",
+      "pass": true
+    },
+    {
+      "name": "tracked working bytes equal HEAD blobs and status is clean",
+      "pass": true
+    },
+    {
+      "name": "candidate parent is the two-doc parent",
+      "pass": true
+    },
+    {
+      "name": "candidate changes only CHANGELOG.md and docs/06 from its parent",
+      "pass": true
+    },
+    {
+      "name": "non-QA source differs from the 41/11 source only in the two documents",
+      "pass": true
+    },
+    {
+      "name": "recomputed 41/11 source manifest reproduces the recorded digest",
+      "pass": true
+    },
+    {
+      "name": "candidate manifest equals working bytes and differs from 41/11 only in the two documents",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at baseline match executed digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at baseline match raw fenced digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at priorQa match executed digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at priorQa match raw fenced digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at parent match executed digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at parent match raw fenced digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at candidate match executed digests",
+      "pass": true
+    },
+    {
+      "name": "four SQL recipes at candidate match raw fenced digests",
+      "pass": true
+    },
+    {
+      "name": "working CHANGELOG SQL equals committed candidate SQL",
+      "pass": true
+    },
+    {
+      "name": "shipped tests contain each of the four fence-anchored extraction expressions verbatim",
+      "pass": true
+    },
+    {
+      "name": "shipped extraction expressions select identical text at 41/11 source and candidate",
+      "pass": true
+    },
+    {
+      "name": "no runtime source was deleted between main and candidate",
+      "pass": true
+    },
+    {
+      "name": "apps/api/package.json is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "packages/adapter-codex/package.json is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "packages/api-client/package.json is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "packages/contracts/package.json is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "packages/domain/package.json is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "dependency lock and root manifest are identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "infrastructure (store, guard, migrations) source is identical at main and candidate",
+      "pass": true
+    },
+    {
+      "name": "phase old-seed passed under the old-main runtime",
+      "pass": true
+    },
+    {
+      "name": "original credential was received over IPC only",
+      "pass": true
+    },
+    {
+      "name": "full stopped backup equals the original data directory",
+      "pass": true
+    },
+    {
+      "name": "phase target-refusal passed under the target runtime",
+      "pass": true
+    },
+    {
+      "name": "original database bytes equal the backup after target refusal (other changes only empty-WAL/SHM sidecars)",
+      "pass": true
+    },
+    {
+      "name": "phase old-export passed under the old-main runtime",
+      "pass": true
+    },
+    {
+      "name": "phase target-fresh passed under the target runtime",
+      "pass": true
+    },
+    {
+      "name": "fresh credential was received over IPC only and differs",
+      "pass": true
+    },
+    {
+      "name": "original database bytes after the whole fresh phase equal those after its previous-build export start (other changes only empty-WAL/SHM sidecars)",
+      "pass": true
+    },
+    {
+      "name": "stopped backup remains byte-identical",
+      "pass": true
+    },
+    {
+      "name": "old-main runtime loaded main bytes for the changed contract, domain and API modules and no candidate-only or built module",
+      "pass": true
+    },
+    {
+      "name": "tracked source is unchanged throughout and status remains clean",
+      "pass": true
+    }
+  ],
+  "totals": {
+    "orchestratorPredicates": 34,
+    "phasePredicates": 58,
+    "failed": 0
+  },
+  "originalDataDirectory": {
+    "afterTargetRefusal": {
+      "added": [
+        {
+          "path": "graphgoblin.db-shm",
+          "bytes": 32768
+        },
+        {
+          "path": "graphgoblin.db-wal",
+          "bytes": 0
+        }
+      ],
+      "removed": [],
+      "changed": []
+    },
+    "afterPreviousBuildStart": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "acrossFreshPhase": {
+      "added": [],
+      "removed": [],
+      "changed": []
+    },
+    "refusalReason": "The format-4 store is damaged: stored loop version <original-draft> is not a valid definition",
+    "refusalNamesFirstInvalidRow": "draft"
+  },
+  "uncorrectedImportResponse": {
+    "type": "https://graphgoblin.dev/problems/loop-import-error",
+    "title": "loop import error",
+    "status": 400,
+    "code": "LOOP_IMPORT_ERROR",
+    "detail": "document is neither a loop export nor a loop definition",
+    "errors": {
+      "errors": [
+        "loop.nodes.1.config.harnessOptions.configOverrides.bad key: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+      ]
+    }
+  },
+  "firstFailures": [
+    {
+      "attempt": "attempt-01",
+      "orchestratorPassedBeforeFailure": 26,
+      "phase": "old-seed",
+      "phaseChecksPassed": 3,
+      "firstFailure": null,
+      "error": "missing original credential"
+    },
+    {
+      "attempt": "attempt-02",
+      "orchestratorPassedBeforeFailure": 29,
+      "phase": "target-refusal",
+      "phaseChecksPassed": 6,
+      "firstFailure": "refusal leaves every original data-directory byte unchanged",
+      "error": "check failed: refusal leaves every original data-directory byte unchanged"
+    },
+    {
+      "attempt": "attempt-03",
+      "orchestratorPassedBeforeFailure": 32,
+      "phase": "target-fresh",
+      "phaseChecksPassed": 7,
+      "firstFailure": null,
+      "error": "((intermediate value) ?? []).map is not a function"
+    }
+  ],
+  "attempt04": {
+    "verdict": "PASS",
+    "note": "PASS before the adopted-store pre-service check was added; attempt-05 adds that check"
+  },
+  "teardown": {
+    "disposable": {
+      "entriesBeforeRemoval": 25,
+      "removed": true
+    },
+    "temp": {
+      "entriesBeforeRemoval": 2,
+      "removed": true
+    },
+    "profile": {
+      "entriesBeforeRemoval": 4,
+      "removed": true
+    }
+  },
+  "secretScan": {
+    "files": 29,
+    "tokenValue": false,
+    "tokenShape": false
+  },
+  "privateReceipts": {
+    "attempt": "attempt-05",
+    "files": [
+      {
+        "name": "export-document.json",
+        "sha256": "d57fe6c7b9cd905a21cb686d67aa59099a8c2421f9a19b8574a55ae7f4c45a57"
+      },
+      {
+        "name": "hook-old-main.ndjson",
+        "sha256": "c3334edc36b74c5cd53311982138cbd3880050b469be9f95777a4126dae08dc5"
+      },
+      {
+        "name": "hook-spec-old-main.json",
+        "sha256": "116c5d8af73e2c21d1f827e7221d03cd1ef5fac256f3199f5cd3d99ff37fd0b5"
+      },
+      {
+        "name": "hook-spec-target.json",
+        "sha256": "6bc7302fdaa4d68479db2670d871a4035412fc84ccd0ef399d5ee613dd169add"
+      },
+      {
+        "name": "hook-target.ndjson",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "orchestrator.json",
+        "sha256": "d150b0064c20b1b54dd8129a5da869f73a7119fa7cb8afb44602ac258c95ec66"
+      },
+      {
+        "name": "phase-old-export-process.json",
+        "sha256": "e1dd8cf386c82f3ff8b144a66b0723b4397a5a462933f52ad1a0d3bf7da125fd"
+      },
+      {
+        "name": "phase-old-export.json",
+        "sha256": "3f0fcd76a399185310e0f6df124a902c8deee062f03bc6da9df49a93346616a8"
+      },
+      {
+        "name": "phase-old-seed-process.json",
+        "sha256": "3627cb9b3caf114236a0226128dd30168c5ee6549e69c2c5e8622505bd0db9f6"
+      },
+      {
+        "name": "phase-old-seed.json",
+        "sha256": "c3763f1106543bb9496a51dae644e05dae85ac3585209db6465ef88ff1bb4701"
+      },
+      {
+        "name": "phase-target-fresh-process.json",
+        "sha256": "0113729f09885d858b47149c4693cf1d7368f8f065f0b1f0447c91224ca9d76a"
+      },
+      {
+        "name": "phase-target-fresh.json",
+        "sha256": "c99847716123085f27949835e74f4a3f75de6dbeacc78193fa4866fe197993b6"
+      },
+      {
+        "name": "phase-target-refusal-process.json",
+        "sha256": "1bc093dc58722d1c93aad50c86424a34c20d48e94959d1122f9d1f6c4e9bacd0"
+      },
+      {
+        "name": "phase-target-refusal.json",
+        "sha256": "7efcc84ab3e2a9c4c7be19c56a99b879483d774f66ab7583b26c05ecdae5d123"
+      },
+      {
+        "name": "secret-scan.json",
+        "sha256": "568ab7f1868e49e63f0d373179d750853f184a8f503ae7e8572f0b48bc5847f6"
+      },
+      {
+        "name": "source-manifest-before.json",
+        "sha256": "334cd45b49e99342506c73f00894be34642c868c9b1b536ea8e1650780d7345a"
+      }
+    ]
+  }
+}

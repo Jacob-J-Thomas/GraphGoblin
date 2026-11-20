@@ -1,0 +1,151 @@
+{
+  "purpose": "Portable #429 fresh-target fixture: an export from the previous build whose draft and draft-run snapshot hold a non-plain Codex override key",
+  "previousBuildExport": {
+    "format": "graphgoblin-loop",
+    "formatVersion": 4,
+    "exportedAt": "2026-10-02T12:00:00.000Z",
+    "loop": {
+      "schemaVersion": 4,
+      "name": "Synthetic incompatible snapshot source",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Manual",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "work",
+          "label": "Inert work",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "inference",
+          "config": {
+            "harness": "codex",
+            "session": {
+              "policy": "fresh"
+            },
+            "prompt": {
+              "template": "Inert synthetic fixture; only the fake harness answers."
+            },
+            "input": [],
+            "harnessOptions": {
+              "sandbox": "workspace-write",
+              "approval": "never",
+              "configOverrides": {
+                "bad key": true,
+                "service_tier": "fast"
+              }
+            },
+            "output": {
+              "captureTranscript": "artifact",
+              "toMessages": "final",
+              "transforms": []
+            }
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "work",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "work",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  },
+  "structuredCorrection": {
+    "remove": [
+      "loop",
+      "nodes",
+      1,
+      "config",
+      "harnessOptions",
+      "configOverrides",
+      "bad key"
+    ],
+    "keepExplicit": {
+      "path": [
+        "loop",
+        "nodes",
+        1,
+        "config",
+        "harness"
+      ],
+      "value": "codex"
+    }
+  },
+  "expectedOnCandidate": {
+    "uncorrectedImport": {
+      "status": 400,
+      "code": "LOOP_IMPORT_ERROR"
+    },
+    "correctedImport": {
+      "status": 201,
+      "draftOnly": true,
+      "newLoopId": true
+    },
+    "getByReturnedId": 200
+  }
+}
