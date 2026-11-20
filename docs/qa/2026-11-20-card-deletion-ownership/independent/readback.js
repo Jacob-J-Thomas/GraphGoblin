@@ -1,0 +1,7 @@
+async page => await page.evaluate(async()=>{
+  const loopId=location.pathname.split('/')[3];let server;
+  try{const response=await fetch(`/loops/${loopId}`,{headers:{authorization:`Bearer ${localStorage.getItem('graphgoblin-api-key')}`}}),body=await response.json();server={status:response.status,definition:body.draft?.definition??body.current?.definition,definitionSource:body.draft?'draft':body.current?'current':'none',issues:body.draft?.issues,updatedAt:body.loop?.updatedAt};}catch(error){server={status:0,error:String(error)};}
+  const stored=await new Promise((resolve,reject)=>{const open=indexedDB.open('graphgoblin',2);open.onerror=()=>reject(open.error);open.onsuccess=()=>{const db=open.result,request=db.transaction('drafts','readonly').objectStore('drafts').get(loopId);request.onerror=()=>{db.close();reject(request.error);};request.onsuccess=()=>{db.close();resolve(request.result??null);};};});
+  const device=stored?{definition:stored.definition,synced:stored.synced,...(Object.hasOwn(stored,'decisionRoutes')?{decisionRoutes:stored.decisionRoutes}:{})}:null;
+  return{loopId,server,device,deviceOwnDecisionRoutes:Boolean(device&&Object.hasOwn(device,'decisionRoutes')),dialogText:document.querySelector('dialog[open]')?.innerText??null,renderedEdges:[...document.querySelectorAll('.react-flow__edge')].map(element=>({id:element.dataset.id,label:element.getAttribute('aria-label')}))};
+});

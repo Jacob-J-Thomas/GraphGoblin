@@ -1,0 +1,589 @@
+{
+  "pr": 514,
+  "head": "afc96e2350daa6ff8d3b6d733150218e3675a2aa",
+  "base": "491f089a0922557f8884629e953546c0187be63a",
+  "tree": "8d97749cea46adbede42bceef99589c9a4f87e0c",
+  "buildAssetSha256": "c70c88d602c5fa1cc2ef009bcd5b0cd986c255f9dce766d61593579c540229ee",
+  "captureSha256": "40fd7ee7b96e0f5f78f50442ece0f1230d489c93d8be1747019c87531dd63974",
+  "browserUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "fixtureReadback": {
+    "sameDefinition": true,
+    "sameMap": true,
+    "portMap": [
+      {
+        "key": 0,
+        "edgeIds": [
+          "e1"
+        ],
+        "id": "yes"
+      },
+      {
+        "key": 1,
+        "edgeIds": [
+          "e1"
+        ],
+        "id": "yes"
+      },
+      {
+        "key": 2,
+        "edgeIds": [
+          "m1"
+        ],
+        "id": "maybe"
+      }
+    ],
+    "synced": false
+  },
+  "restoredDefinitionLoadedExactly": true,
+  "firstRepairFullDefinitionDelta": [
+    [
+      "/nodes/1/config/routes/1/id",
+      "yes",
+      "affirm"
+    ]
+  ],
+  "clickSequence": [
+    "Edit exit done",
+    "Delete node",
+    "Undo delete done",
+    "Redo delete done",
+    "document reload"
+  ],
+  "observations": [
+    {
+      "fixture": "restored",
+      "phases": {
+        "after-delete": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        },
+        "after-undo": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "done",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "after-redo": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        },
+        "after-reload": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "shared",
+      "phases": {
+        "after-delete": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        },
+        "after-undo": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "done",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "after-redo": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        },
+        "after-reload": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [
+            [
+              "/edges/1/from/port",
+              "no",
+              "yes"
+            ]
+          ],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fixture": "unique",
+      "phases": {
+        "after-delete": {
+          "visibleCards": [
+            "start",
+            "pick",
+            "other"
+          ],
+          "serverStatus": 200,
+          "save": "All changes saved",
+          "syncedDeviceEqualsServer": true,
+          "fullDefinitionDifferenceFromExpected": [],
+          "physicalEdges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "testBrowserClosed": true,
+    "isolatedServerExit": 0,
+    "listenersClosed": true
+  }
+}
