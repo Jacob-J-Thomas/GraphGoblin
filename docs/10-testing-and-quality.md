@@ -15,6 +15,12 @@ an actual inaccessible SYSTEM PID with a queryable creation identity and confirm
 without stopping it. Matching identities and PID-only records (including a protected PID) remain
 refused with unchanged lock bytes and no gateway startup. The read-only helper names the refused
 path and distinguishes live ownership from unverifiable identity with the probe's failure cause.
+Contention receipts also retain each contender's PID and acquisition token, the seeded marker
+token, bounded filesystem operation/code and marker identity when a removal fails, the live-owner
+and final PID/token readback before refusal assertions, and final release/guard/staging checks.
+The unchanged ownership/refusal assertions additionally require clean release and preservation
+of an unrelated fixture file. CI's existing typed recorder and exact-file uploader retain these
+receipts without exporting stores, paths, raw stacks, command lines or environment values.
 Eight repeated silent-TCP trials require refusal without a gateway log write or store acquisition.
 Bounded log cases (#438, ADR-0081) use explicitly private fixture folders: a stale built entry
 beside a current guard module and a missing guard refuse before spawning, in the launcher and the

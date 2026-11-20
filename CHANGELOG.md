@@ -4,6 +4,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Concurrent Windows store recovery accepts `EPERM` deletion only after independently verifying
+  that the exact observed stale marker or empty guard directory is absent (#471). It never retries
+  deletion or removes a successor marker. Genuine filesystem refusals keep their operation and
+  error code. Recovery cleanup failures roll back a newly acquired main lock, explicitly report
+  retained ownership if rollback fails, and preserve the original acquisition failure. Native CI
+  retains bounded contender identities, record readback and cleanup receipts.
+
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently

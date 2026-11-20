@@ -187,6 +187,72 @@ test('bounds keep the three flat files within 256 KiB', () => {
   ]);
 });
 
+test('ownership failure and cleanup receipts retain only bounded identities and closed diagnostics', () => {
+  const common = {
+    seq: 2,
+    at: '2026-11-20T06:00:00.000Z',
+    case: 'lock-contention',
+    subtest: 0,
+    trial: 1,
+  };
+  const token = randomUUID();
+  const records = [
+    {
+      ...common,
+      type: 'ownership-result',
+      pid: 123,
+      status: 'refused',
+      seededToken: token,
+      ownerToken: null,
+      markerToken: token,
+      operation: 'stale-marker-unlink',
+      errorCode: 'EPERM',
+      diagnostic: 'filesystem',
+    },
+    {
+      ...common,
+      type: 'ownership-error',
+      pid: 123,
+      index: 0,
+      operation: 'recovery-marker-unlink',
+      code: 'EBUSY',
+      markerToken: token,
+    },
+    {
+      ...common,
+      type: 'ownership-check',
+      liveOwners: 1,
+      recordedPid: 123,
+      recordedToken: token,
+      recordedOwnerMatched: true,
+      seededMarker: 'absent',
+    },
+    {
+      ...common,
+      type: 'ownership-cleanup',
+      released: 1,
+      main: 'absent',
+      guard: 'absent',
+      staging: 0,
+      unrelatedIntact: true,
+    },
+  ];
+  for (const record of records) {
+    assert.equal(validateRecord(record), true);
+    assert.equal(validateRecord({ ...record, path: CANARY }), false);
+  }
+  assert.equal(validateRecord({ ...records[0], markerToken: CANARY }), false);
+  assert.equal(validateRecord({ ...records[1], operation: CANARY }), false);
+  assert.equal(validateRecord({ ...records[1], index: 8 }), false);
+  const setup = initialized();
+  const { recorder, close } = recorderFor(setup);
+  for (const { seq: _seq, at: _at, type, ...fields } of records) recorder.record(type, fields);
+  close();
+  const retained = lines(join(setup.directory, FILES.observations));
+  for (const record of records) assert.ok(retained.some((value) => value.type === record.type));
+  assert.ok(!JSON.stringify(retained).includes(CANARY));
+});
+
 test('records validate only known types with exactly their typed fields', () => {
   const child = {
     seq: 4,

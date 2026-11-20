@@ -91,6 +91,15 @@ verified live ownership from unverifiable ownership and retain the probe failure
 prove reuse and need independent inspection if their PID now belongs to another process.
 See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
 
+Concurrent Windows deletion can report `EPERM` after another contender has removed the same
+stale UUID marker or empty guard directory. The API accepts that outcome only when a separate
+`lstat` establishes that exact path is absent; it never retries the deletion. A marker or directory
+that remains present, or whose absence cannot be verified, retains a filesystem error naming the
+operation and code. Successor markers are preserved. If releasing the recovery guard fails after
+the main lock was acquired, acquisition rolls back the main lock and reports the cleanup failure.
+A failed rollback explicitly reports retained ownership. Failed releases keep their in-process
+holds, and additional cleanup failures retain the original refusal rather than replacing it.
+
 `scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 
 `pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
