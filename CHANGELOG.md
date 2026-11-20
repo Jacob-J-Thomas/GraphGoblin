@@ -99,26 +99,29 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
   Snapshot rows are immutable: do not update them or disable their triggers. The omission query
   also reports snapshots, but an omitted harness alone is accepted by definition parsing with
-  its effective `codex` default. That omission alone does not justify rewriting, deleting or
-  resetting history. Use the following options only for an actually incompatible snapshot, such
-  as one with an invalid override key. Keep the original database backup with its previous build
-  first. To preserve authored work in a fresh current store, export the affected loop with that
-  build (`GET /loops/{loop_id}/export?draft=true` for
-  its draft, omit the query for its published definition), correct the exported keys as structured
-  JSON, and import it through `POST /loops/import` into a separate fresh store. The original
+  its effective `codex` default. An explicit version read can still return `500 RESPONSE_INVALID`
+  for that manually authored snapshot. Preserve its history. Use the following options only for
+  an actually incompatible snapshot, such as one with an invalid override key. Keep the original
+  database backup with its previous build. To preserve authored work in a fresh store, export
+  the affected loop from the original gateway using its previous build. If it needs starting,
+  this is an owner-directed operational start. Use `GET /loops/{loop_id}/export?draft=true`
+  for its draft or omit the query for its published definition. Correct the exported keys as
+  structured JSON and import through `POST /loops/import` into a separate fresh store. The original
   backup retains its history; the new store carries the imported definition only, without the
-  original runs, events or snapshots. Alternatively, deliberately finish/cancel the old build's
+  original runs, events or snapshots. To adopt the fresh store, select its data directory,
+  database configuration and credentials. Use the loop ID returned by import for verification.
+  The original database still holds the incompatible snapshot. To keep using that database
+  with the updated gateway, deliberately finish/cancel the old build's
   runs and delete the enclosing loop through `DELETE /loops/{loop_id}` (which removes its runs
   and snapshots), or explicitly reset the store. Exported definitions and saved device/recovery draft copies carry the same
   `nodes[].config.harnessOptions.configOverrides` fields; correct or remove their offending keys
   before importing or recovering them. The definition format is unchanged.
 
-  Once no invalid-key discovery result remains unresolved, applicable editable target rows have
-  their key and explicit-harness corrections verified by stored-text checks, and any actually
-  incompatible snapshots have been handled through a deliberate option above, the operator can
-  resume normal service. An omission-only result for an immutable snapshot need not be cleared.
-  Restart the repaired target with the new build using its usual configuration. This is an
-  operational restart: boot recovers runs and re-arms published triggers, as described in the
+  Before resuming service, check the store you will use for unresolved invalid keys and
+  incompatible snapshots. Verify key and explicit-harness corrections on applicable editable
+  rows against the stored text. An omission-only result for an immutable snapshot need not be
+  cleared. Start the new build with the configuration for the repaired original or the adopted
+  fresh store. Startup recovers runs and re-arms published triggers, as described in the
   [restart guide](docs/guide/01-install-and-first-run.md#stop-and-restart-safely). After that restart,
   verify authenticated `GET /loops/{loop_id}` returns 200 for each corrected loop and compare its
   returned draft/current definitions with the intended corrections. Other retained versions are

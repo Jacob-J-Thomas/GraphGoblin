@@ -525,9 +525,11 @@ offline checks without a gateway, and requires both discovery queries plus exact
 readback because SQLite's affected-row count alone does not prove a quoted member changed. Before
 restart, correct applicable editable rows, resolve invalid-key discovery results and choose a
 deliberate disposition for any actually incompatible snapshots. An omitted harness alone in an
-immutable snapshot is accepted by definition parsing and does not justify rewriting, deleting or
-resetting history.
-After the operator's normal restart of the repaired target, authenticated read-only GET verifies
+immutable snapshot is accepted by definition parsing. An explicit version read of that manually
+authored snapshot can still return `500 RESPONSE_INVALID`. Preserve its history.
+If recovery uses a fresh store, adopt that store's configuration and credentials and use the loop
+ID returned by import. An incompatible snapshot still blocks the original database. After the
+operator starts the chosen store for normal service, authenticated read-only GET verifies
 its served draft/current definitions; offline checks cover other retained versions. Verification
 does not publish owner drafts or start runs. Publication and restart tests use separate synthetic
 fixtures with fake harnesses and timers disabled, not a copy of the owner's store. No runtime
