@@ -66,11 +66,16 @@ function pidState(pid: number): { state: 'alive' | 'dead' } | { state: 'unknown'
   }
 }
 
-const held = (path: string, detail?: string): Error =>
-  new Error(
+/** A held or unverifiable store owner: a complete operator explanation. */
+export class StoreOwnershipRefusedError extends Error {
+  override readonly name = 'StoreOwnershipRefusedError';
+}
+
+const held = (path: string, detail?: string): StoreOwnershipRefusedError =>
+  new StoreOwnershipRefusedError(
     detail && !detail.startsWith('another GraphGoblin process')
-      ? `${detail}: ${path}`
-      : `another GraphGoblin process holds ${path}; check its port/configuration or let startup/shutdown finish`,
+      ? `${detail}: ${path}; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying`
+      : `another GraphGoblin process holds ${path}; check its port/configuration; wait for the owning process to finish or stop it before retrying`,
   );
 type OwnerState = { state: 'absent' | 'stale' } | { state: 'held'; detail: string };
 const unknown = (detail: string): OwnerState => ({

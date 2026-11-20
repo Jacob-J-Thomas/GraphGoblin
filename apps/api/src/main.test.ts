@@ -19,6 +19,17 @@ afterEach(async () => {
 }, 60_000);
 const noLock = (path: string) => expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
 
+function expectOwnershipRefusal(stderr: string): void {
+  const lines = stderr.split(/\r?\n/u);
+  expect(lines).toHaveLength(2);
+  expect(lines[1]).toBe('');
+  expect(lines[0]).toMatch(
+    /^(?:another GraphGoblin process holds |Store ownership could not be verified \()/u,
+  );
+  expect(lines[0]).not.toMatch(/[\p{Cc}\p{Zl}\p{Zp}]/u);
+  expect(lines[0]).toContain('before retrying');
+}
+
 // Node force-kills children on Windows for SIGINT/SIGTERM; JS handlers never run there.
 // Linux CI supplies the native signal evidence. No captured callbacks or stubbed process.exit.
 const nativeSignals = describe.skipIf(process.platform !== 'linux');
@@ -154,11 +165,127 @@ describe('built API entry and startup failures', () => {
       const contender = f.run();
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
       expect(contender.stderr).toContain('another GraphGoblin process holds');
+      expectOwnershipRefusal(contender.stderr);
+      expect(contender.stderr).toContain(f.lockPath);
+      expect(contender.stderr).toContain(
+        'wait for the owning process to finish or stop it before retrying',
+      );
+      expect(contender.stdout).toBe('');
       expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+      const response = await fetch(`http://127.0.0.1:${f.port}/loops`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.status).toBe(200);
     } finally {
       // Cross-platform forced fixture cleanup; graceful shutdown is asserted only below on POSIX.
       await child.dispose();
     }
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it('refuses a shared database in one line and leaves its existing owner serving', async () => {
+    const f = await fixture();
+    const other = await fixture();
+    const database = join(f.dataDir, 'shared.db');
+    const env = { GG_DB_URL: `file:${database.replaceAll('\\', '/')}` };
+    const key = f.run(['--create-api-key', 'database owner'], env);
+    expect(await key.waitForExit()).toEqual({ code: 0, signal: null });
+    const token = /gg_[A-Za-z0-9_-]+/.exec(key.stdout)?.[0] ?? '';
+    expect(token).toMatch(/^gg_/);
+    const child = f.run([], env);
+    try {
+      await f.ready(child, token);
+      const directoryRecord = await readFile(f.lockPath, 'utf8');
+      const databaseLock = `${database}.graphgoblin.lock`;
+      const databaseRecord = await readFile(databaseLock, 'utf8');
+      const contender = other.run([], env);
+      expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
+      expectOwnershipRefusal(contender.stderr);
+      expect(contender.stderr).toContain(`another GraphGoblin process holds ${databaseLock}`);
+      expect(contender.stdout).toBe('');
+      expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
+      expect(await readFile(databaseLock, 'utf8')).toBe(databaseRecord);
+      await noLock(other.lockPath);
+      const response = await fetch(`http://127.0.0.1:${f.port}/loops`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.status).toBe(200);
+    } finally {
+      await child.dispose();
+    }
+  }, 60_000);
+
+  it.each(['data-directory', 'database', 'reclamation'] as const)(
+    'explains uncertain %s ownership in one line and preserves the owner record',
+    async (kind) => {
+      const f = await fixture();
+      const database = join(f.dataDir, 'uncertain.db');
+      const guard = `${f.lockPath}.reclaim`;
+      const marker = '00000000-0000-4000-8000-000000000000.json';
+      const path =
+        kind === 'database'
+          ? `${database}.graphgoblin.lock`
+          : kind === 'reclamation'
+            ? join(guard, marker)
+            : f.lockPath;
+      if (kind === 'reclamation') await mkdir(guard);
+      const record = '{"pid":';
+      await writeFile(path, record);
+      const child = f.run(
+        [],
+        kind === 'database' ? { GG_DB_URL: `file:${database.replaceAll('\\', '/')}` } : {},
+      );
+      expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+      expectOwnershipRefusal(child.stderr);
+      expect(child.stderr).toContain(
+        'Store ownership could not be verified (malformed or incomplete owner record)',
+      );
+      expect(child.stderr).toContain(kind === 'reclamation' ? guard : path);
+      expect(child.stderr).toContain('inspect the owner record and running GraphGoblin processes');
+      expect(child.stdout).toBe('');
+      expect(await readFile(path, 'utf8')).toBe(record);
+      if (kind === 'reclamation') expect(await readdir(guard)).toEqual([marker]);
+      if (kind !== 'data-directory') await noLock(f.lockPath);
+      expect(await listening(f.port)).toBe(false);
+    },
+    60_000,
+  );
+
+  it('escapes controls in a configured ownership path without changing its record', async () => {
+    const f = await fixture();
+    // Win32 rejects C0 filename controls; C1 and Unicode line separators are valid there.
+    const controls =
+      process.platform === 'win32' ? '\u0085\u2028\u2029' : '\n\r\t\u001b\u0085\u2028\u2029';
+    const escapedControls =
+      process.platform === 'win32'
+        ? '\\u0085\\u2028\\u2029'
+        : '\\u000a\\u000d\\u0009\\u001b\\u0085\\u2028\\u2029';
+    const dataDir = join(f.dataDir, `uncertain${controls}store`);
+    await mkdir(dataDir);
+    const lockPath = join(dataDir, 'graphgoblin.lock');
+    const record = '{"pid":';
+    await writeFile(lockPath, record);
+    const child = f.run([], { GG_DATA_DIR: dataDir });
+    expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+    expectOwnershipRefusal(child.stderr);
+    expect(child.stderr).toContain(`uncertain${escapedControls}store`);
+    expect(child.stderr).not.toContain(dataDir);
+    expect(child.stdout).toBe('');
+    expect(await readFile(lockPath, 'utf8')).toBe(record);
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it('retains diagnostics for a real data-directory filesystem failure', async () => {
+    const f = await fixture();
+    const dataDir = join(f.dataDir, 'not-a-directory');
+    await writeFile(dataDir, 'keep');
+    const child = f.run([], { GG_DATA_DIR: dataDir });
+    expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+    expect(child.stderr).toMatch(/EEXIST|ENOTDIR/);
+    expect(child.stderr).toMatch(/^\s+at /m);
+    expect(child.stdout).not.toContain('GraphGoblin API listening');
+    expect(await readFile(dataDir, 'utf8')).toBe('keep');
+    await noLock(f.lockPath);
     expect(await listening(f.port)).toBe(false);
   }, 60_000);
 
@@ -191,6 +318,7 @@ describe('built API entry and startup failures', () => {
     const child = f.run([], { GG_DB_URL: `file:${corrupt.replaceAll('\\', '/')}` });
     expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
     expect(child.stderr).toMatch(/not a database|SQLITE_NOTADB/i);
+    expect(child.stderr).toMatch(/^\s+at /m);
     expect(child.stdout).not.toContain('GraphGoblin API listening');
     await noLock(f.lockPath);
     expect(await listening(f.port)).toBe(false);
@@ -205,6 +333,7 @@ describe('built API entry and startup failures', () => {
       const child = f.run();
       expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
       expect(child.stderr).toContain('EADDRINUSE');
+      expect(child.stderr).toMatch(/^\s+at /m);
       await noLock(f.lockPath);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -226,6 +355,7 @@ describe('built API entry and startup failures', () => {
       const child = f.run([], { GG_WEB_DIST: web });
       expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
       expect(child.stderr).toMatch(/FST_ERR_DUPLICATED_ROUTE|already declared/);
+      expect(child.stderr).toMatch(/^\s+at /m);
       expect(child.stdout).not.toContain('GraphGoblin API listening');
       await noLock(f.lockPath);
       expect(await listening(f.port)).toBe(false);

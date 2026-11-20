@@ -275,7 +275,7 @@ describe('ordinary refusals', () => {
         code: 1,
         out: '',
         err: [
-          `reset refused: could not take the ${role}: another GraphGoblin process holds ${join(dataDir, LOCK[role])}; check its port/configuration or let startup/shutdown finish`,
+          `reset refused: could not take the ${role}: another GraphGoblin process holds ${join(dataDir, LOCK[role])}; check its port/configuration; wait for the owning process to finish or stop it before retrying`,
           uncertain(role),
           `  ${LOCK[role]}.reclaim (${role} guard): absent now and before the attempt`,
           `  ${LOCK[role]} (${role}): present now, absent before the attempt`,
@@ -286,6 +286,38 @@ describe('ordinary refusals', () => {
       // The reset never removed or rewrote the other owner's record.
       expect(await contender!.release()).toBe('removed');
       expect(await snapshotTree(dataDir)).toEqual(before);
+    },
+  );
+
+  it.each(['data-directory lock', 'database lock'] as const)(
+    'gives one actionable refusal when the %s becomes unverifiable after preview',
+    async (role) => {
+      const { dataDir } = await fixture(false);
+      const before = await snapshotTree(dataDir);
+      const lockPath = join(dataDir, LOCK[role]);
+      const incomplete = '{"pid":';
+      const method = role === 'database lock' ? 'acquireDatabaseLock' : 'acquireDataDirLock';
+      const acquire = ownership[method];
+      vi.spyOn(ownership, method).mockImplementationOnce(async (path: string) => {
+        await writeFile(lockPath, incomplete, { flag: 'wx' });
+        return acquire(path);
+      });
+
+      expect(await reset(dataDir, CONFIRM)).toEqual({
+        code: 1,
+        out: '',
+        err: [
+          `reset refused: could not take the ${role}: Store ownership could not be verified (malformed or incomplete owner record): ${lockPath}; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying`,
+          uncertain(role),
+          `  ${LOCK[role]}.reclaim (${role} guard): absent now and before the attempt`,
+          `  ${LOCK[role]} (${role}): present now, absent before the attempt`,
+          ...(role === 'database lock' ? ['  removed graphgoblin.lock (data-directory lock)'] : []),
+          '',
+        ].join('\n'),
+      });
+      expect(await fs.readFile(lockPath, 'utf8')).toBe(incomplete);
+      const after = await snapshotTree(dataDir);
+      expect(after.filter((entry) => entry.path !== LOCK[role])).toEqual(before);
     },
   );
 

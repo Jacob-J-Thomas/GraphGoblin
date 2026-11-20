@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API startup now prints one stack-free line for held or unverifiable data-directory,
+  SQLite-file and reclamation ownership, with exit code 1 (#409). It keeps the lock path and
+  verification reason, gives guidance for live and unknown owners, and escapes control characters
+  and line separators in the explanation. Lock records, acquisition rules, managed startup
+  categories and unrelated diagnostics are unchanged.
+
 - `--reset` manifests and output account for both writer locks and their `.reclaim` guards
   (#434). The dry run and the confirmed manifest list `<database-file>.graphgoblin.lock` and
   `graphgoblin.lock` as the reset's own locks, removed on release, where the confirmed manifest
