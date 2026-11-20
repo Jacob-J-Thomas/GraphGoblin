@@ -1,0 +1,28 @@
+# Independent behavior QA: #510 prerequisite for #529
+
+The narrow candidate passed the Windows behavior criteria. No genuine source finding was identified. This is independent QA, not a formal PR scan.
+
+- Candidate: `e5e665fd83753af4e684a969083711883466ce55`; tree `6d164ac27cfc4d526c232be1f24b03fcdffaa912`.
+- Baseline: `be78e222daaef8d2f03bed428d995873b5bc846c`; target: `8181f350028e284529c76b51927f32890afcb68a`.
+- Changed source: `apps/api/src/subloop-restart.test.ts`; SHA-256 `4c88d6c9f53248bc21ce68188d09243c279800f73970eb84e278585cc6191004`. The checkout remained clean. Node `v22.23.4`, pnpm `12.8.1`.
+
+| Case | Result |
+| --- | --- |
+| Baseline ordinary subprocess file | 3/3 passed, including eight hard-kill delays and both constructed cuts. |
+| Baseline actual leaf transition delayed 1600 ms | Expected old-harness failure: `queued` versus `waiting`, then a 60 s cleanup-hook timeout. Read-only inspection after worker exit found all three actual runs waiting. |
+| Candidate ordinary subprocess file | 3/3 passed; all eight real hard-kill delays exercised. |
+| Candidate same 1600 ms actual leaf delay | 2/2 passed; readiness settled in 1851/1757 ms, with each intended cut reached. |
+| Strictly wrong readiness status | 2/2 rejected `running` versus `waiting`, preserving the strict assertion. |
+| Missed cut callback | 2/2 rejected `false` versus `true`; an uncut fixture was not accepted. |
+| Deliberate assertion-site failure after each cut | 2/2 retained the exact deliberate primary error, with no secondary failure or hook timeout. |
+| Durable recovery and two additional API starts | 2/2 passed; complete public run records and all 102 events across two three-run chains were equal in all three snapshots. |
+
+The two durable cuts were read before closing the construction store. Each had top/middle `waiting` on a child and an unfinalized `succeeded` leaf. The middle held zero durable wakes for child-finished-before-finalization, and one durable wake for interrupted waiting-to-running. After recovery, each parent had exactly one child start, wake, child completion, `after` completion, and run finish. The leaf had one accepted input, wake and finish, with the exact expected result.
+
+Every one of the ten final controlled cases stopped its manager, closed its store once, disposed its fixture, and removed the actual directory. The six deliberate negative tests are expected failures, not passing Vitest tests. The final matrix is four passing controlled tests and six expected rejections, in addition to the three passing unmodified candidate tests. Forced API build passed all seven tasks with zero cache hits; API typechecking and changed-file ESLint passed.
+
+First diagnostic negatives remain preserved: the initial external-config import error executed zero tests; an initial delayed mid-wake control recursed because its transition spy was captured by the candidate's cut spy. The private wrapper was corrected and both delayed cases rerun on unchanged candidate source. The raw attempt ledger and artifact SHA-256 values are in `case-summary.json`.
+
+Limits: Windows local execution establishes this test-harness behavior only. Constructed cuts use real SQLite with fake engine ports; recovery uses the built API. Ubuntu/hosted CI, whole-repository coverage, formal review, providers, permissions and human acceptance are separate evidence.
+
+Automatic approval review rejected recursive removal of the baseline's disposable leaked fixture. It remains retained in private scratch with the original failure evidence.

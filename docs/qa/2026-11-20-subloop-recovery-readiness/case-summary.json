@@ -1,0 +1,303 @@
+{
+  "cutoff": "2026-11-20T10:07:53.423Z",
+  "status": "complete bounded evidence packet; independent Windows QA passed",
+  "publicationReady": true,
+  "base": "8181f350028e284529c76b51927f32890afcb68a",
+  "parent": "be78e222daaef8d2f03bed428d995873b5bc846c",
+  "source": "e5e665fd83753af4e684a969083711883466ce55",
+  "historical": {
+    "linux": {
+      "run": 44710532715,
+      "head": "be78e222daaef8d2f03bed428d995873b5bc846c",
+      "target": "8181f350028e284529c76b51927f32890afcb68a",
+      "merge": "1f3c278e11546544c83e36e18e30ff27b53a37d3",
+      "tree": "572178381933a698fbc12413758590045fa6ff2b",
+      "jobs": {
+        "Template image": {
+          "job": 136200770125,
+          "conclusion": "success",
+          "failedOrCancelledSteps": []
+        },
+        "Browser": {
+          "job": 136200770600,
+          "conclusion": "success",
+          "failedOrCancelledSteps": []
+        },
+        "Windows launcher": {
+          "job": 136200770779,
+          "conclusion": "success",
+          "failedOrCancelledSteps": []
+        },
+        "Coverage": {
+          "job": 136200770787,
+          "conclusion": "failure",
+          "failedOrCancelledSteps": ["Unit tests with coverage thresholds"]
+        },
+        "Repository checks": {
+          "job": 136200770811,
+          "conclusion": "success",
+          "failedOrCancelledSteps": []
+        },
+        "Gates": {
+          "job": 136205971422,
+          "conclusion": "failure",
+          "failedOrCancelledSteps": ["Require Repository checks and Coverage to succeed"]
+        }
+      },
+      "qaOnlyPaths": 53,
+      "unchangedReadinessPaths": [
+        "apps/api/src/subloop-restart.test.ts",
+        "packages/engine/src",
+        "packages/infrastructure/src/sqlite"
+      ],
+      "apiTest": {
+        "passed": 2107,
+        "skipped": 28,
+        "failed": 1,
+        "file": "apps/api/src/subloop-restart.test.ts:220",
+        "actual": "queued",
+        "expected": "waiting",
+        "stage": "fixture readiness before API start and constructed interruption"
+      },
+      "coverageLogSha256": "bf349bb6e041a32b1f774a4565190a6949326b2190281e82bbeae997d7225a26",
+      "browserPassed": 488,
+      "windowsPassed": 25,
+      "windowsArtifact": 14617671553,
+      "nativeRecords": 255,
+      "wholeCi": "failure",
+      "originalRetained": true,
+      "original": {
+        "file": "verified-failure.json",
+        "bytes": 1786,
+        "sha256": "f8e04120456483f91b8c8aaa766c33eeaa3273abbb2afc9e5e3ff24003a4bb69"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44710532715/job/136200770787"
+    },
+    "originalObservations": {
+      "public_head": "be78e222daaef8d2f03bed428d995873b5bc846c",
+      "target": "8181f350028e284529c76b51927f32890afcb68a",
+      "linux": {
+        "run_id": 44710532715,
+        "job_id": 136200770787,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44710532715/job/136200770787",
+        "api_passed": 2107,
+        "api_skipped": 28,
+        "api_failed": 1,
+        "observed": "queued",
+        "expected": "waiting",
+        "line": 220,
+        "phase": "before built API start",
+        "original_log_sha256": "bf349bb6e041a32b1f774a4565190a6949326b2190281e82bbeae997d7225a26",
+        "source_log_unchanged": true
+      },
+      "windows_issue": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/510",
+        "api_passed": 2085,
+        "api_skipped": 16,
+        "api_failed": 1,
+        "observed": "running",
+        "expected": "waiting",
+        "phase": "before built API start",
+        "failed_teardown_recorded": true,
+        "source": "live issue body; historical original run not rerun"
+      },
+      "original": {
+        "file": "observations/original-failures.json",
+        "bytes": 992,
+        "sha256": "c3946870989bf9706918bc44858065edaaec84e611f075070b3d936839fdc025"
+      }
+    },
+    "windows": {
+      "issue": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/510",
+      "snapshotReadAt": "2026-11-20T09:56:17.743Z",
+      "original": {
+        "file": "observations/issue-510-snapshot.json",
+        "bytes": 1997,
+        "sha256": "55abf07bce6249c3b20f325dc0efd4bd5739b56e3945655df930d7939b796637"
+      },
+      "apiPassed": 2085,
+      "apiSkipped": 16,
+      "apiFailed": 1,
+      "actual": "running",
+      "expected": "waiting",
+      "beforeApiStart": true,
+      "teardownTimeout": true,
+      "ownedDisposableStoreLeft": true,
+      "isolatedRerun": "3/3 passed; original failure remains open",
+      "qualification": "Historical issue observation, not rerun by this curator."
+    }
+  },
+  "author": {
+    "original": {
+      "file": "result.json",
+      "bytes": 1468,
+      "sha256": "464459309e8f373e60ed67eb9923086cf4916438e140a03f18b4963110e1b7c0"
+    },
+    "result": {
+      "candidate_commit": "e5e665fd83753af4e684a969083711883466ce55",
+      "base": "be78e222daaef8d2f03bed428d995873b5bc846c",
+      "branch": "codex/gg-i3-subloop-510",
+      "node": "v22.23.4",
+      "pnpm": "12.8.1",
+      "candidate_blob": "15f6f95297f9f9a5172399f114490608489680dc",
+      "changed_paths": ["apps/api/src/subloop-restart.test.ts"],
+      "working_tree_clean": true,
+      "ordinary_baseline": {
+        "passed": 3,
+        "skipped": 0,
+        "duration_s": 48.93
+      },
+      "ordinary_terminal_candidate": {
+        "passed": 3,
+        "skipped": 0,
+        "duration_s": 46.81
+      },
+      "checks": {
+        "api_build_forced": true,
+        "api_typecheck": true,
+        "api_lint": true,
+        "changed_file_prettier": true,
+        "git_diff_check": true
+      },
+      "controls": {
+        "original_delayed_valid_default_wait": {
+          "exit": 1,
+          "expected_failure": true,
+          "cases": 1
+        },
+        "terminal_positive": {
+          "exit": 0,
+          "cases_passed": 4,
+          "filtered_cases": 2
+        },
+        "terminal_negative": {
+          "exit": 1,
+          "expected_cases_failed": 8,
+          "filtered_cases": 4
+        }
+      },
+      "no_public_mutations": true,
+      "product_files_changed": false,
+      "full_coverage_rerun": false,
+      "fresh_hosted_ci_run": false,
+      "scope": "bounded test-readiness blocker diagnostic and local repair candidate; parked issue not picked up or completed"
+    },
+    "terminal": {
+      "completed": true,
+      "source": "e5e665fd83753af4e684a969083711883466ce55",
+      "report": {
+        "file": "report.md",
+        "bytes": 6902,
+        "sha256": "9994911d0afd77c881cf8d7f24e9813495bba3a186b086b4660d4ed9d2ad5b37"
+      },
+      "manifest": {
+        "file": "manifest.json",
+        "bytes": 7849,
+        "sha256": "c76e282997fce18e322619b4a06b0e181921476735df6423c17316dcc1e1c5c6"
+      },
+      "manifestEntries": 49,
+      "allManifestHashesVerified": true,
+      "qualification": "Genuine author completion confirmed by coordinator; no provider or process exit invented."
+    },
+    "qualification": "Original result scope includes its historical parked-issue wording; actual coordinator admission is recorded separately. No fresh hosted CI or whole-coverage result is claimed.",
+    "sourceScopeCorrection": "The original report uses its earlier issue snapshot to say backlog/no delivery gate. Actual coordinator admission is recorded in source-binding.json. That historical author statement is not the current admission status.",
+    "completedOutcomes": {
+      "ordinaryPass": 3,
+      "controlledPositivePass": 4,
+      "requiredDeliberateNegativeFail": 8,
+      "fixturesCleaned": 12,
+      "durableSnapshotsVerified": 4,
+      "twoRealRestartChecks": 4
+    },
+    "retainedDiagnosticNegatives": [
+      "Early delay spy recursed when reused by the crash spy; corrected probe restores it before the crash spy.",
+      "Initial cleanup-only probe shortened readiness too and hit its artificial deadline in one case; corrected probe shortens cleanup alone.",
+      "Initial error-propagation form failed three lint rules; final form propagates after finally and passes API lint."
+    ],
+    "replayLimit": "Saved PowerShell wrapper was syntax-checked; generators reproduce byte-identical executed controls and receipt verifier ran. Complete wrapper was not rerun."
+  },
+  "independent": {
+    "terminal": {
+      "completed": true,
+      "source": "e5e665fd83753af4e684a969083711883466ce55",
+      "tree": "6d164ac27cfc4d526c232be1f24b03fcdffaa912",
+      "verdict": "Narrow Windows behavior criteria passed; no genuine source finding identified.",
+      "report": {
+        "path": "independent/report.original.txt",
+        "file": "report.md",
+        "bytes": 3577,
+        "sha256": "b4d6668b6d05cc820dc7113a3e0081f159eee7d82d830a0381ecd80dac0f5303"
+      },
+      "cases": {
+        "path": "independent/case-summary.original.json",
+        "file": "case-summary.json",
+        "bytes": 17507,
+        "sha256": "5e916f11f9fb760f46bce24f88284c1831dca9d944e2a11c7d34e603d583852f"
+      },
+      "qualification": "Actual independent terminal source/summary; no formal review or provider/permission/human acceptance claim."
+    },
+    "baseline": {
+      "original": {
+        "file": "baseline-summary.json",
+        "bytes": 2768,
+        "sha256": "a80404c187a6f01090e20a6aaa0f03767ed237ba005917f0399fbc1a3d9b0346"
+      },
+      "ordinary": {
+        "passed": 3,
+        "failed": 0,
+        "eightHardKillDelays": true
+      },
+      "controlledDelay": {
+        "passed": 0,
+        "failed": 1,
+        "skipped": 2,
+        "delayMs": 1600,
+        "primaryFailure": "queued != waiting",
+        "cleanupHookTimedOutMs": 60000,
+        "eventualActualStatuses": ["waiting", "waiting", "waiting"],
+        "disposableFixtureRemoval": "automatically rejected; retained"
+      },
+      "diagnosticSetupFirstAttempt": {
+        "executedTests": 0,
+        "failure": "missing contracts/testing alias; corrected in second private-config attempt"
+      }
+    },
+    "candidateOrdinary": {
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "controlledCounts": {
+      "executed": 10,
+      "positivePasses": 4,
+      "expectedNegativeFailures": 6,
+      "unexpectedFailures": 0
+    },
+    "cleanup": {
+      "finalCases": 10,
+      "allClosedStoppedDisposedRemoved": true,
+      "allObservedExecutionsIncludingSupersededDelay": 12,
+      "allObservedClean": true,
+      "remainingCandidatePrefixedFixtureDirectories": 0
+    },
+    "durability": {
+      "stores": 2,
+      "records": 6,
+      "events": 102,
+      "snapshotsPerStore": 3,
+      "allEqual": true
+    },
+    "rawOriginalHashesVerified": 35,
+    "attemptLedgerReference": "independent/case-summary.original.json",
+    "limits": [
+      "Local Windows behavior evidence; Ubuntu and hosted CI remain separate gates.",
+      "Constructed cuts use real SQLite plus fake engine ports; recovery uses the built API.",
+      "Delayed readiness, wrong statuses, missed callbacks and assertion failures are controlled diagnostic changes outside the checkout.",
+      "This report does not establish whole-repository coverage, formal review, provider behavior, permission behavior, or owner acceptance."
+    ]
+  },
+  "pending": [],
+  "boundaries": "Evidence-only curation. No test, permission-error reproduction, provider request, real checkout/Git/publication/master edit.",
+  "externalGates": "This evidence packet does not establish a new hosted CI pass, whole-workspace coverage, formal review, publication or owner acceptance. The separate local serial API coverage run is outside this seal."
+}
