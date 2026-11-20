@@ -7,7 +7,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
-  discarded by the contract. Previously stored invalid-key drafts cannot be published; the check
+  discarded by the contract. In the structured editor, an override entry's JSON Value with a member
+  named `__proto__` at any depth, which the form's object copies cannot keep, is held as typed with
+  the member's path and the key rule instead of being autosaved without it; correcting the member
+  saves the whole value. Previously stored invalid-key drafts cannot be published; the check
   leaves their data intact. Existing HTTP guards and adapter refusal remain in place.
   HTTP request-schema paths preserve literal `/` and `~` in member names with RFC 6901 escaping,
   including nested tables and array positions; ordinary and unknown-field diagnostics retain

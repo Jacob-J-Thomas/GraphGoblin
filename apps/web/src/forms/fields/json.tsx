@@ -187,6 +187,10 @@ export function JsonText({
   );
   useEffect(() => {
     if (!validateValue) return;
+    // A live editor reported its held text as it was typed (`fail`); later renders only refresh
+    // that entry's message. A record key's rename moves the entry within its event, and an effect
+    // of a render from before it must not report it again at the path it left.
+    if (!explicit && parseErrors.get(path) === undefined) return;
     parseErrors.report(
       path,
       error === undefined
@@ -197,7 +201,7 @@ export function JsonText({
             input: error === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
           },
     );
-  }, [validationVersion, text, validateValue, parseErrors, path, error]);
+  }, [validationVersion, text, validateValue, parseErrors, path, error, explicit]);
   const focusEditor = () =>
     editorRootRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')?.focus();
   const apply = (confirmed = false) => {

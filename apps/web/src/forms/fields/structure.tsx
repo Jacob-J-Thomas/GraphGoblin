@@ -817,15 +817,17 @@ function RecordValue({
 
 /**
  * Why a record entry's value, parsed from its JSON, is held rather than taken (#429): the form
- * would not keep it as authored, and the record's schema refuses the entry. The form keeps values
- * by assignment (react-hook-form's copies, `stripUnset`), which loses a member named `__proto__`
- * that JSON parses as an own member. Taken, such a value would be reported narrowed: the schema
- * would never see the member it refuses, and a save would drop it unseen. Held, its text stays as
- * typed with the schema's messages for this entry alone, so other entries cannot mask them: a
- * member inside the value by its path from the value, an issue about the entry's key as its Key
- * shows it (it hides what the schema says about the value until the key is corrected). Any other
+ * would not keep it as authored, and its schema refuses it. The form keeps values by assignment
+ * (react-hook-form's copies, `stripUnset`), which loses a member named `__proto__` that JSON parses
+ * as an own member. Taken, such a value would be reported narrowed: the schema would never see the
+ * member it refuses, and a save would drop it unseen. Held, its text stays as typed with the
+ * messages for this entry alone, so other entries cannot mask them: a member inside the value by
+ * its path from the value, an issue about the entry's key as its Key shows it (a check of the
+ * record's keys, such as the Codex override keys', stops at the key before the value; once the key
+ * is corrected, the held value's message names its member). A key the record's key schema refuses
+ * leaves its value unchecked (Zod's `invalid_key`), so the value schema decides then. Any other
  * value is taken as before, its issues shown through the form's own validation: one the form keeps
- * as authored, and one the record's schema accepts.
+ * as authored, and one its schema accepts.
  */
 function entryValueRefusal(
   schema: Schema,
@@ -834,16 +836,21 @@ function entryValueRefusal(
   value: unknown,
 ): string | undefined {
   if (sameJson(stripUnset(value), value)) return undefined;
-  const result = schema.safeParse({ [key]: value });
-  if (result.success) return undefined;
-  return result.error.issues
-    .map(({ path, message }) => {
-      const inside = path.slice(1).map(String).join('.');
-      if (inside) return `${inside}: ${message}`;
-      return entryKeyIssue(shape, key, value, message) === undefined
-        ? message
-        : `Key "${key}": ${message}`;
-    })
+  const inside = (path: readonly PropertyKey[], message: string) =>
+    path.length > 0 ? `${path.map(String).join('.')}: ${message}` : message;
+  if (!shape.key.safeParse(key).success)
+    return shape.value
+      .safeParse(value)
+      .error?.issues.map(({ path, message }) => inside(path, message))
+      .join('; ');
+  // Every issue is at the entry's key, or below it in the value.
+  return schema
+    .safeParse({ [key]: value })
+    .error?.issues.map(({ path, message }) =>
+      path.length === 1 && entryKeyIssue(shape, key, value, message) !== undefined
+        ? `Key "${key}": ${message}`
+        : inside(path.slice(1), message),
+    )
     .join('; ');
 }
 
