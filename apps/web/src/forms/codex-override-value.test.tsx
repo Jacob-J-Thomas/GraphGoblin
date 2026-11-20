@@ -48,77 +48,87 @@ async function openOverrides(api: FakeApi, loopId: string, definition: LoopDefin
 }
 
 describe('Codex config override values in the node editor (#429)', () => {
-  it('holds a Value with a member "__proto__" without saving it narrowed, then saves the whole corrected value', async () => {
-    const user = userEvent.setup();
-    const api = new FakeApi();
-    const definition = loopWith({
-      prompt: { template: 'Summarise the notes.' },
-      harnessOptions: { webSearch: true, configOverrides: COMMITTED },
-    });
-    const loop = api.addLoop(definition);
-    const dialog = await openOverrides(api, loop.id, definition);
-    const saved = () => harnessOptionsOf(api.loops.get(loop.id)!.draft!.definition);
-    const puts = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
-    const before = {
-      revision: store().revision,
-      saveState: store().saveState,
-      puts: puts().length,
-    };
+  // The final audit's two inputs, and a member two objects down.
+  it.each([
+    ['{"marker":"reserved-changed","__proto__":false,"survivor":true}', '__proto__'],
+    ['{"marker":"array-changed","rows":[{"__proto__":false,"enabled":true}]}', 'rows.0.__proto__'],
+    [
+      '{"marker":"held","outer":{"inner":{"__proto__":false}},"rows":[{"enabled":true}]}',
+      'outer.inner.__proto__',
+    ],
+  ])(
+    'holds the Value %s without saving it narrowed, then saves it whole once corrected',
+    async (text, path) => {
+      const user = userEvent.setup();
+      const api = new FakeApi();
+      const definition = loopWith({
+        prompt: { template: 'Summarise the notes.' },
+        harnessOptions: { webSearch: true, configOverrides: COMMITTED },
+      });
+      const loop = api.addLoop(definition);
+      const dialog = await openOverrides(api, loop.id, definition);
+      const saved = () => harnessOptionsOf(api.loops.get(loop.id)!.draft!.definition);
+      const puts = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
+      const before = {
+        revision: store().revision,
+        saveState: store().saveState,
+        puts: puts().length,
+      };
 
-    const text =
-      '{"marker":"held","outer":{"inner":{"__proto__":false}},"rows":[{"enabled":true}]}';
-    const message = `outer.inner.__proto__: ${CODEX_CONFIG_KEY_MESSAGE}`;
-    setCode('Config overrides value 1', text);
-    const value = screen.getByLabelText('Config overrides value 1');
-    expect(getCode('Config overrides value 1')).toBe(text);
-    expect(value).toHaveAttribute('aria-invalid', 'true');
-    expect(value).toHaveAccessibleDescription(expect.stringContaining(message));
-    // The editor holds the text as blocking input; its draft and saved state do not change.
-    expect(store().fieldErrors['node:infer']?.[VALUE_PATH]).toEqual({
-      message,
-      text,
-      input: 'unparsed text',
-    });
-    expect(within(dialog).getByRole('tab', { name: /^Settings/ })).toHaveAccessibleName(
-      /\b1 error\b/,
-    );
-    await act(() => new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_MS * 2)));
-    expect(puts()).toHaveLength(before.puts);
-    expect(store().revision).toBe(before.revision);
-    expect(store().saveState).toBe(before.saveState);
-    expect(harnessOptionsOf(store().definition)?.configOverrides).toEqual(COMMITTED);
-    expect(saved()?.configOverrides).toEqual(COMMITTED);
-    expect(getCode('Config overrides value 1')).toBe(text);
+      const message = `${path}: ${CODEX_CONFIG_KEY_MESSAGE}`;
+      setCode('Config overrides value 1', text);
+      const value = screen.getByLabelText('Config overrides value 1');
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      expect(value).toHaveAccessibleDescription(expect.stringContaining(message));
+      // The editor holds the text as blocking input; its draft and saved state do not change.
+      expect(store().fieldErrors['node:infer']?.[VALUE_PATH]).toEqual({
+        message,
+        text,
+        input: 'unparsed text',
+      });
+      expect(within(dialog).getByRole('tab', { name: /^Settings/ })).toHaveAccessibleName(
+        /\b1 error\b/,
+      );
+      await act(() => new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_MS * 2)));
+      expect(puts()).toHaveLength(before.puts);
+      expect(store().revision).toBe(before.revision);
+      expect(store().saveState).toBe(before.saveState);
+      expect(harnessOptionsOf(store().definition)?.configOverrides).toEqual(COMMITTED);
+      expect(saved()?.configOverrides).toEqual(COMMITTED);
+      expect(getCode('Config overrides value 1')).toBe(text);
 
-    // Another field cleared meanwhile saves without it, and with the entry's committed value.
-    await user.click(
-      within(within(dialog).getByRole('radiogroup', { name: 'Web search' })).getByRole('radio', {
-        name: 'Not set',
-      }),
-    );
-    await waitFor(() => expect(saved()).not.toHaveProperty('webSearch'), { timeout: 5000 });
-    expect(saved()?.configOverrides).toEqual(COMMITTED);
-    expect(JSON.stringify(puts().at(-1)!.body)).not.toContain('graphgoblin:unset');
-    expect(getCode('Config overrides value 1')).toBe(text);
-    expect(value).toHaveAttribute('aria-invalid', 'true');
+      // Another field cleared meanwhile saves without it, and with the entry's committed value.
+      await user.click(
+        within(within(dialog).getByRole('radiogroup', { name: 'Web search' })).getByRole('radio', {
+          name: 'Not set',
+        }),
+      );
+      await waitFor(() => expect(saved()).not.toHaveProperty('webSearch'), { timeout: 5000 });
+      expect(saved()?.configOverrides).toEqual(COMMITTED);
+      expect(JSON.stringify(puts().at(-1)!.body)).not.toContain('graphgoblin:unset');
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
 
-    // Corrected, the whole value is saved as typed and the held input ends.
-    const corrected = text.replace('"__proto__"', '"proto_flag"');
-    const whole = JSON.parse(corrected) as unknown;
-    setCode('Config overrides value 1', corrected);
-    expect(value).not.toHaveAttribute('aria-invalid');
-    expect(store().fieldErrors['node:infer']?.[VALUE_PATH]).toBeUndefined();
-    await waitFor(
-      () => expect(saved()?.configOverrides).toEqual({ ...COMMITTED, example: whole }),
-      { timeout: 5000 },
-    );
-    await waitFor(() => expect(store().saveState).toBe('saved'));
+      // Corrected, the whole value is saved as typed and the held input ends.
+      const corrected = text.replace('"__proto__"', '"proto_flag"');
+      const whole = JSON.parse(corrected) as unknown;
+      setCode('Config overrides value 1', corrected);
+      expect(value).not.toHaveAttribute('aria-invalid');
+      expect(store().fieldErrors['node:infer']?.[VALUE_PATH]).toBeUndefined();
+      await waitFor(
+        () => expect(saved()?.configOverrides).toEqual({ ...COMMITTED, example: whole }),
+        { timeout: 5000 },
+      );
+      await waitFor(() => expect(store().saveState).toBe('saved'));
 
-    // Reopened from the server's draft, the editor shows the whole saved value.
-    cleanup();
-    const reloaded = api.loops.get(loop.id)!.draft!.definition;
-    await openOverrides(api, loop.id, reloaded);
-    expect(JSON.parse(getCode('Config overrides value 1'))).toEqual(whole);
-    expect(screen.getByLabelText('Config overrides value 1')).not.toHaveAttribute('aria-invalid');
-  }, 30_000);
+      // Reopened from the server's draft, the editor shows the whole saved value.
+      cleanup();
+      const reloaded = api.loops.get(loop.id)!.draft!.definition;
+      await openOverrides(api, loop.id, reloaded);
+      expect(JSON.parse(getCode('Config overrides value 1'))).toEqual(whole);
+      expect(screen.getByLabelText('Config overrides value 1')).not.toHaveAttribute('aria-invalid');
+    },
+    30_000,
+  );
 });

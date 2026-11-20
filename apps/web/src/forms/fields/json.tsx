@@ -187,10 +187,11 @@ export function JsonText({
   );
   useEffect(() => {
     if (!validateValue) return;
-    // A live editor reported its held text as it was typed (`fail`); later renders only refresh
-    // that entry's message. A record key's rename moves the entry within its event, and an effect
-    // of a render from before it must not report it again at the path it left.
-    if (!explicit && parseErrors.get(path) === undefined) return;
+    // A live editor reports and clears its held text in the event that changes it (`fail`, a
+    // discard, a row's removal or key rename); its renders only refresh the message of the entry
+    // still holding this text. An effect of an earlier render can run after such an event: it must
+    // not report its older path or text again, or clear the entry that event reported.
+    if (!explicit && (error === undefined || parseErrors.get(path)?.text !== text)) return;
     parseErrors.report(
       path,
       error === undefined
