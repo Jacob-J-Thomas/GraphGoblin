@@ -1,0 +1,39 @@
+# #471 author findings and candidate evidence
+
+Candidate: `52bbab677117e8c7ded9953da1fa9c4bdba651dd`, based on
+`8181f350028e284529c76b51927f32890afcb68a`. This is author evidence. Independent native QA,
+cross-family review, hosted current-head/current-target CI and the final audit remain open.
+
+Five native Windows processes deleting one synthetic stale UUID marker reproduced `EPERM`
+from `unlink` after concurrent removal: 310 such errors in 400 trials, each followed by
+independent `lstat: ENOENT` for that exact marker. A scheduling barrier immediately before
+the unchanged baseline's real stale-marker unlink then reproduced eight `EPERM` errors across
+five product trials: four matching seeded-marker unlinks and four guard-directory removals.
+Each trial still had exactly one live writer acquisition,
+matching final PID/token, clean release and an intact unrelated sentinel. This establishes a
+native concurrent-deletion cause; it does not retroactively establish the exact syscall or
+Windows kernel status of the historical CI failures, or prove a sharing violation.
+
+The intermediate marker fix exposed three `rmdir` `EPERM` errors with independently observed
+guard absence. The candidate therefore accepts Windows `EPERM` only after proving the exact
+removed path absent. It never retries deletion, preserves successor markers and retains genuine
+filesystem errors with operation/code. It rolls back the main lock if recovery cleanup fails,
+reports retained ownership if rollback also fails, retains in-process holds on failed release,
+and preserves original acquisition errors alongside cleanup failures. Native CI receipts now
+retain bounded identities, final PID/token readback before refusal assertions, and cleanup checks.
+
+| Source exercised | Observation |
+| --- | --- |
+| Unchanged baseline `8181f350` | Five controlled trials: eight `EPERM` refusals (four seeded-marker unlinks, four guard rmdir); one live matching owner and clean release in every trial. Seven focused regressions fail. |
+| Uncommitted intermediate fix, compiled hash `7abef775…` | Three observed empty-guard rmdir `EPERM` errors; each independent state read found the guard absent. |
+| First candidate `8d831192`, compiled hash `2db50c08…` | Ten controlled trials: zero filesystem refusals, one live matching owner, clean release and unrelated preservation in every trial. Ordinary three-trial contention also passes, with 33 validated local receipts. |
+| Final candidate `52bbab67`, compiled hash `446fcae9…` | Five controlled trials: zero filesystem refusals, all owner/readback/release checks pass. An earlier attempt stopped before any trial because the Windows identity prerequisite was unavailable; that stop remains recorded. Focused tests: 57 pass; recorder tests: 37 pass. |
+| Final candidate, actual native sharing controls | Denied recovery-marker deletion returns `EBUSY`: main rollback succeeds and is explicit. Denying main rollback too retains a matching live acquisition and explicitly reports ownership held. Both refuse same-process reacquisition, preserve unrelated bytes and recover after owner exit. |
+| Final candidate, full repository check | Precoverage gates pass. Coverage stops at an unchanged plugin assembly 20-second timeout; five adapter probe timing failures were also observed. Later gates did not run. No gate is waived. |
+| Final candidate, additional author checks | The later template, licence, generated-doc and contrast gates pass when run separately. Full tooling coverage: 218/219 tests pass; an unchanged browser measurement CLI exceeds its existing 180-second command deadline. No threshold pass is established. |
+| Full native suite, mixed candidate runtime | 16/25 pass, nine failures including failed parents. Ownership contention passes. Six leaf failures remain: two cold-start timeouts, two shell relaunch length bounds, directory-symlink creation `EPERM`, and a bounded-log byte inequality whose cause is unestablished. This run cannot establish an exact-head native gate because the runtime was rebuilt during it. |
+
+`public-outcomes.json` contains the full source/module bindings, raw-derived counts and private
+receipt hashes. Only this report and that JSON are designated publication-safe author artifacts:
+they contain no arbitrary host paths, external directories, owner data or raw command lines.
+Private raw receipts and reproduction scripts are intentionally outside that publication subset.

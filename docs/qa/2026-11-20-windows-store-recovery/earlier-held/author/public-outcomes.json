@@ -1,0 +1,276 @@
+{
+  "schema": "graphgoblin.issue471.author-outcomes/1",
+  "issue": 471,
+  "candidateSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+  "runtime": {
+    "node": "v22.23.4",
+    "platform": "win32"
+  },
+  "scope": [
+    "apps/api/src/data-dir-lock.ts",
+    "apps/api/src/data-dir-lock-failures.test.ts",
+    "tooling/scripts/windows-launcher.acceptance.mjs",
+    "tooling/scripts/windows-launcher-evidence.mjs",
+    "tooling/scripts/windows-launcher-evidence.test.mjs",
+    "docs/10-testing-and-quality.md",
+    "docs/11-security-and-distribution.md",
+    "CHANGELOG.md"
+  ],
+  "primitive": {
+    "trials": 400,
+    "contenders": 5,
+    "counts": {
+      "success": 1629,
+      "ENOENT": 61,
+      "EPERM": 310
+    },
+    "epermFollowedByExactMarkerAbsence": 310
+  },
+  "controlledBaseline": {
+    "sourceSha": "8181f350028e284529c76b51927f32890afcb68a",
+    "compiledModuleSha256": "c8da8e336acf9d66957cf6ea365869013ccbac3331c889d9fa002cfd0770c794",
+    "sourceBinding": "unchanged built baseline plus scheduling barrier before real stale-marker unlink",
+    "trials": 5,
+    "contendersPerTrial": 5,
+    "epermRefusals": 8,
+    "epermSeededMarkerUnlinks": 4,
+    "epermDirectoryRemovals": 4,
+    "liveOwnerCounts": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "matchingFinalRecords": true,
+    "seededMarkersAbsent": true,
+    "cleanReleaseAndUnrelatedPreserved": true
+  },
+  "intermediate": {
+    "sourceSha": null,
+    "compiledModuleSha256": "7abef775634f4dd63fda76dc2425ededbc297d8ec3f508719bfbabd0c7cb24b3",
+    "sourceBinding": "uncommitted marker-only fix based on baseline; directory fix absent",
+    "trials": 5,
+    "contendersPerTrial": 5,
+    "epermRefusals": 3,
+    "epermSeededMarkerUnlinks": 0,
+    "epermDirectoryRemovals": 3,
+    "liveOwnerCounts": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "matchingFinalRecords": true,
+    "seededMarkersAbsent": true,
+    "cleanReleaseAndUnrelatedPreserved": true,
+    "directoryEpermWithIndependentAbsentState": 3
+  },
+  "firstCandidate": {
+    "sourceSha": "8d8311923cebe191fc68acc2a924fc2ffb38d31d",
+    "compiledModuleSha256": "2db50c08d3a3ee2f4bb3192130e63f9da3c6e0c4a11dfe7476cfd39e706b1b6a",
+    "sourceBinding": "committed first candidate; precedes lint-only catch correction",
+    "trials": 10,
+    "contendersPerTrial": 5,
+    "epermRefusals": 0,
+    "epermSeededMarkerUnlinks": 0,
+    "epermDirectoryRemovals": 0,
+    "liveOwnerCounts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "matchingFinalRecords": true,
+    "seededMarkersAbsent": true,
+    "cleanReleaseAndUnrelatedPreserved": true
+  },
+  "finalPrerequisiteStop": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "compiledModuleSha256": "446fcae990d1c1ed6f17929fbadc29a659aefeb7e1995ff4b7a85b2b42dab704",
+    "diagnostic": "Windows identity prerequisite unavailable; cause unobserved",
+    "trialsStarted": 0
+  },
+  "finalCandidate": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "compiledModuleSha256": "446fcae990d1c1ed6f17929fbadc29a659aefeb7e1995ff4b7a85b2b42dab704",
+    "sourceBinding": "exact final compiled module read and hashed by experiment",
+    "trials": 5,
+    "contendersPerTrial": 5,
+    "epermRefusals": 0,
+    "epermSeededMarkerUnlinks": 0,
+    "epermDirectoryRemovals": 0,
+    "liveOwnerCounts": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "matchingFinalRecords": true,
+    "seededMarkersAbsent": true,
+    "cleanReleaseAndUnrelatedPreserved": true
+  },
+  "genuineSharingRefusal": {
+    "sourceSha": "8d8311923cebe191fc68acc2a924fc2ffb38d31d",
+    "operation": "stale-marker-unlink",
+    "code": "EBUSY",
+    "markerRetained": true,
+    "mainAbsent": true,
+    "afterHandleClosedCleanRecovery": true,
+    "unrelatedPreserved": true
+  },
+  "successfulRollbackControl": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "compiledModuleSha256": "446fcae990d1c1ed6f17929fbadc29a659aefeb7e1995ff4b7a85b2b42dab704",
+    "operation": "recovery-marker-unlink",
+    "observedCode": "EBUSY",
+    "blockedMainRollback": false,
+    "mainPresent": false,
+    "mainPidMatchesLiveChild": false,
+    "guardMarkerRetained": true,
+    "sameProcessRetryRefused": true,
+    "explicitExpectedDiagnostic": true,
+    "afterOwnerExitCleanRecovery": true,
+    "unrelatedPreserved": true
+  },
+  "retainedAcquisitionControl": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "compiledModuleSha256": "446fcae990d1c1ed6f17929fbadc29a659aefeb7e1995ff4b7a85b2b42dab704",
+    "operation": "recovery-marker-unlink",
+    "observedCode": "EBUSY",
+    "blockedMainRollback": true,
+    "mainPresent": true,
+    "mainPidMatchesLiveChild": true,
+    "guardMarkerRetained": true,
+    "sameProcessRetryRefused": true,
+    "explicitExpectedDiagnostic": true,
+    "afterOwnerExitCleanRecovery": true,
+    "unrelatedPreserved": true
+  },
+  "focusedTests": {
+    "baselineRed": 7,
+    "finalGreen": 57,
+    "evidenceRecorderGreen": 37,
+    "finalSourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd"
+  },
+  "ordinaryNativeReceipts": {
+    "sourceSha": "8d8311923cebe191fc68acc2a924fc2ffb38d31d",
+    "trialCount": 3,
+    "contenders": 15,
+    "liveAndRecordedOwnersMatch": true,
+    "cleanupChecks": 3,
+    "cleanupsPassed": true,
+    "exportedRecords": 33,
+    "rejected": 0,
+    "omitted": 0,
+    "localExportStatus": "incomplete",
+    "hostedIdentityBound": false
+  },
+  "fullCheck": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "result": "failed",
+    "completedBeforeCoverage": [
+      "typecheck",
+      "lint",
+      "layers",
+      "migrations",
+      "tokens",
+      "deps"
+    ],
+    "observedBlockingFailure": "plugin-codex assembly test 20-second timeout",
+    "additionalObservedFailures": "five adapter-codex probe timing failures before Turbo stopped",
+    "notRunAfterCoverage": [
+      "templates",
+      "licenses",
+      "generated-docs",
+      "contrast"
+    ]
+  },
+  "additionalStandaloneGates": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "results": [
+      {
+        "gate": "check:templates",
+        "exitCode": 0
+      },
+      {
+        "gate": "check:licenses",
+        "exitCode": 0
+      },
+      {
+        "gate": "check:docs",
+        "exitCode": 0
+      },
+      {
+        "gate": "check:contrast",
+        "exitCode": 0
+      }
+    ]
+  },
+  "toolingCoverage": {
+    "sourceSha": "52bbab677117e8c7ded9953da1fa9c4bdba651dd",
+    "concurrency": "existing two-worker configuration",
+    "testsPassed": 218,
+    "testsFailed": 1,
+    "diagnostic": "unchanged browser measurement CLI exceeded its 180-second command deadline",
+    "signal": "SIGTERM",
+    "killed": true,
+    "coverageThresholdPassEstablished": false
+  },
+  "fullNative": {
+    "sourceSha": null,
+    "sourceContext": [
+      "8d8311923cebe191fc68acc2a924fc2ffb38d31d",
+      "52bbab677117e8c7ded9953da1fa9c4bdba651dd"
+    ],
+    "binding": "tooling bytes unchanged; runtime rebuilt during run, not an exact-head gate",
+    "total": 25,
+    "passed": 16,
+    "failedIncludingParents": 9,
+    "ownershipContentionCasePassed": true,
+    "leafFailures": [
+      "cold-start 15-second timeout",
+      "native HWND relaunch command length bound",
+      "cross-process HWND relaunch command length bound",
+      "directory symlink creation EPERM",
+      "bounded-log cold-start 15-second timeout",
+      "bounded-log unsafe-name bytes inequality; cause unestablished"
+    ]
+  },
+  "gatesNotSatisfied": [
+    "independent native QA",
+    "cross-family review",
+    "hosted current-head/current-target CI",
+    "fresh final audit",
+    "merge"
+  ],
+  "historicalExactSyscallAndWindowsKernelStatus": "unobserved; native controlled reproduction does not retroactively identify original CI cause",
+  "receiptSha256": {
+    "unlink-race-result.json": "242a88f3ee397f511a2b5296230816d0b4314df946a462f6fd6fa49f28a9490e",
+    "controlled-baseline-report.json": "e06049135f42fcc5fdaebe7bfd38d382679b71a62edcd8f2f43df8db9ddd7a4a",
+    "controlled-directory-characterization-report.json": "49e214b7d96c6e914fc0ac7fc9b0f285e550400b2c630ab10cfac355f0eb0170",
+    "controlled-candidate-final-report.json": "32dd78ef0dfbcf0176ba3dc0e8787dbcb54c6cbdc83bbc775ad8d97fc1338ed2",
+    "controlled-52bbab67-retry-report.json": "c8d7afbb9ee51722a42896a6fc91d910eb5bbfb8f0370fa8bb85c7e1cfc4f617",
+    "final-head-prerequisite-stop.json": "ab922813c1a8bf336419611409d04d00d05d0d20746bb161194a99c3245e222c",
+    "release-denial-final-rollback.json": "6315e65ccd0f76407b3f35dc93f628fbeff908fd3d83ec751927b268f5bf3898",
+    "release-denial-final-retained.json": "b6913078866654a0c6534f240e83b8dc56334edf2e703306c36c81d20a89cfd8",
+    "sharing-control-result.json": "a2937e88758ebb33e717a6c64deada48f3459d92430d6f475042d7d87d5a78b9",
+    "native-contention-evidence/result.json": "8410fd7fa9263c95b17667d619e56179635fba12948bdf18d947ce2192705746",
+    "native-contention-evidence/observations.ndjson": "279ce896f79c9badc9d1e8ee4496667b073e5994d5d9505c4f6ff8feafaf10ca",
+    "unit-red.log": "f8d3a13af9ee2e685a57657d82e6813050b845e8f95f2eb6bd9e8a1f5b2c9d32",
+    "unit-green-final.log": "80849f310489d22e47e49c8ef336b11a8e32a515c0c2b3b13a22cf13ee71fba1",
+    "evidence-tests.log": "1bbb380e9ae642f6d1a71b720a1290a0e382e960dc9c34cfb44a464d18128401",
+    "check-final.log": "ce72a8ff063b9932c5d12b48fed46ce8088ebaa6a6da0febe5ee40400f3482b5",
+    "windows-launcher-full.log": "afced5d1b6212d360738c4ba4e8f1952d8ca3b258aa02e84ee3ffbff13000aa1",
+    "remaining-gates.json": "54e4755fea50843d5c35ba52d0c653ac954b41240ab43b52b728bdf16430eb23",
+    "tooling-coverage.log": "88a2a99fe4438d498d4ede0d83b67abd03020d894755133bc63097858ccee749"
+  }
+}
