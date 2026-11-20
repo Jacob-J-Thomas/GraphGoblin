@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded reset guard presence corrective operator QA",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "source", "base", "tree", "parent", "verdict", "scope", "baseline", "provider", "focused", "p2Observations", "regression", "limits", "originals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "source": {"const": "650eeee2c9d2edb7bb9484b435ae9aef906efa55"},
+    "base": {"const": "91333462642b47d3e97e9f50e96b26bf87b3bf9d"},
+    "tree": {"const": "c439cec12bf64de7c813d45308529027d58cef81"},
+    "parent": {"const": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d"},
+    "verdict": {"enum": ["PASS", "HOLD"]},
+    "scope": {"type": "string", "minLength": 20},
+    "baseline": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "tree", "oldWording", "evidenceTier", "observationsSha256", "auditorReportSha256", "runtimeCollisionReproduced"],
+      "properties": {
+        "source": {"const": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d"},
+        "tree": {"const": "a20ead87dd7da55d761997f7efddc90690630f90"},
+        "oldWording": {"const": "another process's lock guard; the reset leaves it"},
+        "evidenceTier": {"const": "Source literal and maintained public-method expected-output baseline; no runtime collision reproduction"},
+        "observationsSha256": {"$ref": "#/$defs/sha256"},
+        "auditorReportSha256": {"$ref": "#/$defs/sha256"},
+        "runtimeCollisionReproduced": {"const": false}
+      }
+    },
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "effort", "exit", "resultEnvelopes", "terminalReportSha256", "started", "finished", "independentCheckout", "initialQuotaAttempt"],
+      "properties": {
+        "model": {"const": "claude-opus-5-5"}, "effort": {"const": "xhigh"},
+        "exit": {"type": "integer"}, "resultEnvelopes": {"type": "integer", "minimum": 1},
+        "terminalReportSha256": {"$ref": "#/$defs/sha256"},
+        "started": {"type": "string"}, "finished": {"type": "string"},
+        "independentCheckout": {"const": true},
+        "initialQuotaAttempt": {
+          "type": "object", "additionalProperties": false,
+          "required": ["exit", "apiError", "executedQaChecks", "resetUtc", "receiptSha256"],
+          "properties": {"exit": {"const": 1}, "apiError": {"const": "usage_limit_reached"}, "executedQaChecks": {"const": 0}, "resetUtc": {"const": "2026-11-20T17:10:00+00:00"}, "receiptSha256": {"$ref": "#/$defs/sha256"}}
+        }
+      }
+    },
+    "focused": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceTier", "node", "exit", "files", "passed", "failed", "skipped", "originalResultSha256", "caseProjection", "cases"],
+      "properties": {
+        "evidenceTier": {"const": "Ordinary maintained controlled public-method tests; not a native peer/collision observation"},
+        "node": {"const": "v22.23.4"}, "exit": {"type": "integer"},
+        "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/relativePath"}},
+        "passed": {"type": "integer", "minimum": 0}, "failed": {"type": "integer", "minimum": 0}, "skipped": {"type": "integer", "minimum": 0},
+        "originalResultSha256": {"$ref": "#/$defs/sha256"},
+        "caseProjection": {"const": "Only the two P2 cases; complete focused results are retained privately and hashed"},
+        "cases": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["title", "status"], "properties": {"title": {"type": "string"}, "status": {"enum": ["passed", "failed", "pending", "skipped", "todo", "disabled"]}}}}
+      }
+    },
+    "p2Observations": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"type": "object", "additionalProperties": false,
+        "required": ["role", "printedRow", "publisherAttributed", "markerPreserved", "evidenceTier", "testTitle"],
+        "properties": {
+          "role": {"enum": ["database lock", "data-directory lock"]},
+          "printedRow": {"type": "string", "pattern": "guard, present now; the reset leaves it$"},
+          "publisherAttributed": {"const": false}, "markerPreserved": {"type": "boolean"},
+          "evidenceTier": {"const": "Exact row and marker preservation asserted by the passing maintained runResetCli fixture"},
+          "testTitle": {"type": "string", "minLength": 20}
+        }
+      }
+    },
+    "regression": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceTier", "driverPath", "driverSha256", "unmodified", "exit", "cases", "assertions", "passed", "failed", "harnessFailures", "conditionalSkips", "completeOriginalIdsAndOutcomesMatch", "resultsSha256", "rowsSha256", "priorResultsSha256"],
+      "properties": {
+        "evidenceTier": {"const": "Fresh ordinary built CLI and native filesystem observations on one Windows NTFS volume"},
+        "driverPath": {"const": "docs/qa/2026-11-20-reset-ownership-corrective/drivers/candidate.mjs"},
+        "driverSha256": {"const": "77406a5cce0daf509c35aec091e5ef0778e7cac552eb8f772c23d9d4ede075b8"},
+        "unmodified": {"const": true}, "exit": {"type": "integer"},
+        "cases": {"type": "integer", "minimum": 0}, "assertions": {"type": "integer", "minimum": 0}, "passed": {"type": "integer", "minimum": 0}, "failed": {"type": "integer", "minimum": 0}, "harnessFailures": {"type": "integer", "minimum": 0}, "conditionalSkips": {"type": "integer", "minimum": 0},
+        "completeOriginalIdsAndOutcomesMatch": {"type": "boolean"},
+        "resultsSha256": {"$ref": "#/$defs/sha256"}, "rowsSha256": {"$ref": "#/$defs/sha256"},
+        "priorResultsSha256": {"const": "d7c997e8b735e3d0a7ade2c599868a628608ee48e9dbba00f428829abe08808d"}
+      }
+    },
+    "limits": {"type": "array", "minItems": 4, "items": {"type": "string", "minLength": 10}},
+    "originals": {"type": "array", "minItems": 4, "items": {"type": "object", "additionalProperties": false, "required": ["id", "sha256", "bytes", "retention"], "properties": {"id": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}, "bytes": {"type": "integer", "minimum": 0}, "retention": {"const": "Private original; publication-safe projection here"}}}}
+  },
+  "$defs": {
+    "p2Original": {
+      "type": "object",
+      "required": ["schema", "source", "tree", "target", "baseline", "corrected", "roles", "rawResults", "limits", "verdict"],
+      "properties": {
+        "schema": {"const": "gg-531-p2-observations/1"},
+        "source": {"const": "650eeee2c9d2edb7bb9484b435ae9aef906efa55"},
+        "tree": {"const": "c439cec12bf64de7c813d45308529027d58cef81"},
+        "target": {"const": "91333462642b47d3e97e9f50e96b26bf87b3bf9d"},
+        "verdict": {"const": "PASS"},
+        "roles": {"type": "array", "minItems": 2, "maxItems": 2,
+          "items": {"type": "object", "required": ["role", "guard", "maintainedCase", "oldRow", "newRow", "markerPreservation", "ownershipNeutralRow", "verdict"],
+            "properties": {"role": {"enum": ["database lock", "data-directory lock"]}, "ownershipNeutralRow": {"const": true}, "verdict": {"const": "PASS"},
+              "maintainedCase": {"type": "object", "required": ["title", "status"], "properties": {"status": {"const": "passed"}}},
+              "newRow": {"type": "object", "required": ["text", "evidenceTier", "established"], "properties": {"text": {"type": "string", "pattern": "guard, present now; the reset leaves it$"}, "established": {"const": true}}}}}}
+      }
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"}
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "schema": "gg-531-p2-observations/1",
+  "pr": 531,
+  "scope": "Accepted P2 only: a reclaim guard present while the reset holds both locks is kept, and its Keeps row states role, presence and preservation without asserting a publisher.",
+  "source": "650eeee2c9d2edb7bb9484b435ae9aef906efa55",
+  "tree": "c439cec12bf64de7c813d45308529027d58cef81",
+  "parent": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d",
+  "parentTree": "a20ead87dd7da55d761997f7efddc90690630f90",
+  "target": "91333462642b47d3e97e9f50e96b26bf87b3bf9d",
+  "baseline": {
+    "evidenceTier": "bounded source baseline (Git blobs at the parent); not re-executed",
+    "baselineSourceObservationsSha256": "181e987c95a33c2d036f9e8d54b6377a9940d82ada0b63a7226589fbb9b70c46",
+    "auditorReportSha256": "efb523ffac7858c658df5b5f4e41ee734e7d8c69306a71cd4c03422d344624aa",
+    "auditorReportNature": "source reasoning for the unsupported attribution; not a reproduced native reserved-path collision (not reproduced here)",
+    "sourceLiteral": {
+      "path": "apps/api/src/reset/reset.ts",
+      "blob": "65696172f0e7604e94b4a4b1e5bcb6b7adaa427b",
+      "sha256": "ca2270dc6fb958163ee01f27748a1378a86f5a08dba09c0a77225c9392aed23e",
+      "occurrences": [
+        {
+          "line": 496,
+          "text": "why: \"another process's lock guard; the reset leaves it\","
+        }
+      ]
+    },
+    "maintainedExpectation": {
+      "path": "apps/api/src/reset/reset-ownership.test.ts",
+      "blob": "0ed915fae25491e93982c671d049c98cfdd6cead",
+      "sha256": "e3be175c5b99efb1a13ea5cc8820097a9be7863d21776ba72cfa4dc6b9f5bc86",
+      "occurrences": [
+        {
+          "line": 309,
+          "text": "\"  graphgoblin.db.graphgoblin.lock.reclaim another process's lock guard; the reset leaves it\","
+        }
+      ]
+    }
+  },
+  "corrected": {
+    "sourceLiteral": {
+      "path": "apps/api/src/reset/reset.ts",
+      "blob": "c7ffc938122bdd7f5c45815799f74663b0ccc882",
+      "sha256": "7d6e4117997503fe4307cd712fa7cf23a0de2f819e9155f62f1852320b752dbe",
+      "occurrences": [
+        {
+          "line": 497,
+          "text": "why: `${role} guard, present now; the reset leaves it`,"
+        }
+      ]
+    },
+    "columnFormat": [
+      {
+        "line": 595,
+        "text": "return `  ${left.padEnd(38)} ${middle.padEnd(24)} ${right}`.trimEnd();"
+      }
+    ],
+    "oldWordingRemainingInSourceOrTest": [],
+    "maintainedTest": {
+      "path": "apps/api/src/reset/reset-ownership.test.ts",
+      "blob": "918400f486f14d87c638a24bfdb3eafc9908a3d3",
+      "sha256": "4f4d5c41e610bc6beebf10e1054dd5881e85ef215f0ff59d0e652e67d5fa834f",
+      "titleTemplate": [
+        {
+          "line": 297,
+          "text": "'keeps a $role guard published while the reset holds the locks and says only that it is present',"
+        }
+      ],
+      "parameterRows": [
+        {
+          "role": "database lock",
+          "name": "graphgoblin.db.graphgoblin.lock.reclaim",
+          "line": 286
+        },
+        {
+          "role": "data-directory lock",
+          "name": "graphgoblin.lock.reclaim",
+          "line": 291
+        }
+      ],
+      "assertionLines": [
+        {
+          "line": 316,
+          "text": "expect(result.code).toBe(0);"
+        },
+        {
+          "line": 317,
+          "text": "expect(result.out).toContain("
+        },
+        {
+          "line": 327,
+          "text": "expect(result.out).not.toContain('stale lock guard');"
+        },
+        {
+          "line": 328,
+          "text": "expect(result.out).not.toContain('another process');"
+        },
+        {
+          "line": 329,
+          "text": "expect(result.out).toContain(removing(dataDir, RELEASED_BOTH));"
+        },
+        {
+          "line": 330,
+          "text": "expect(JSON.parse(await readFile(join(guard, `${token}.json`), 'utf8'))).toEqual({"
+        }
+      ]
+    }
+  },
+  "roles": [
+    {
+      "role": "database lock",
+      "guard": "graphgoblin.db.graphgoblin.lock.reclaim",
+      "maintainedCase": {
+        "file": "apps/api/src/reset/reset-ownership.test.ts",
+        "line": 286,
+        "title": "reset manifests classify both locks and both reclamation guards keeps a database lock guard published while the reset holds the locks and says only that it is present",
+        "status": "passed",
+        "durationMs": 63
+      },
+      "oldRow": {
+        "text": "  graphgoblin.db.graphgoblin.lock.reclaim another process's lock guard; the reset leaves it",
+        "evidenceTier": "baseline maintained public runResetCli expected-output row (retained before correction); not re-executed here",
+        "sourceLine": 309,
+        "at": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d"
+      },
+      "newRow": {
+        "text": "  graphgoblin.db.graphgoblin.lock.reclaim database lock guard, present now; the reset leaves it",
+        "evidenceTier": "controlled public-method: exact substring of runResetCli output established by the passed maintained toContain assertion",
+        "established": true
+      },
+      "renderingOnlyCrossCheck": {
+        "label": "rendering-only (source literal through the source column format); not planner/native evidence",
+        "equalsAssertedRow": true
+      },
+      "assertionsEstablishedByPass": [
+        "exit code 0 (result.code toBe 0)",
+        "output contains, contiguously: the data-directory lock Removes row, blank line, \"Keeps:\", the .bak row, the guard row above, the staging-directory row (the guard is listed under Keeps)",
+        "output does not contain \"stale lock guard\" (the present guard is not claimed as reclaimed)",
+        "output does not contain \"another process\" (no publisher attribution anywhere in stdout)",
+        "output contains the Removing block ending with both lock releases and \"Reset complete.\" (the reset finished normally)",
+        "the guard's marker file still exists and parses equal to the marker published in the readStore callback (marker preserved)"
+      ],
+      "markerPreservation": "retained: marker JSON parsed equal to the published marker after the confirmed reset",
+      "ownershipNeutralRow": true,
+      "verdict": "PASS"
+    },
+    {
+      "role": "data-directory lock",
+      "guard": "graphgoblin.lock.reclaim",
+      "maintainedCase": {
+        "file": "apps/api/src/reset/reset-ownership.test.ts",
+        "line": 291,
+        "title": "reset manifests classify both locks and both reclamation guards keeps a data-directory lock guard published while the reset holds the locks and says only that it is present",
+        "status": "passed",
+        "durationMs": 62
+      },
+      "oldRow": {
+        "text": "  graphgoblin.lock.reclaim               another process's lock guard; the reset leaves it",
+        "evidenceTier": "rendering-only: baseline source literal is role-independent; this role was not exercised by the baseline maintained test and was not executed here",
+        "at": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d"
+      },
+      "newRow": {
+        "text": "  graphgoblin.lock.reclaim               data-directory lock guard, present now; the reset leaves it",
+        "evidenceTier": "controlled public-method: exact substring of runResetCli output established by the passed maintained toContain assertion",
+        "established": true
+      },
+      "renderingOnlyCrossCheck": {
+        "label": "rendering-only (source literal through the source column format); not planner/native evidence",
+        "equalsAssertedRow": true
+      },
+      "assertionsEstablishedByPass": [
+        "exit code 0 (result.code toBe 0)",
+        "output contains, contiguously: the data-directory lock Removes row, blank line, \"Keeps:\", the .bak row, the guard row above, the staging-directory row (the guard is listed under Keeps)",
+        "output does not contain \"stale lock guard\" (the present guard is not claimed as reclaimed)",
+        "output does not contain \"another process\" (no publisher attribution anywhere in stdout)",
+        "output contains the Removing block ending with both lock releases and \"Reset complete.\" (the reset finished normally)",
+        "the guard's marker file still exists and parses equal to the marker published in the readStore callback (marker preserved)"
+      ],
+      "markerPreservation": "retained: marker JSON parsed equal to the published marker after the confirmed reset",
+      "ownershipNeutralRow": true,
+      "verdict": "PASS"
+    }
+  ],
+  "rawResults": {
+    "vitestJson": {
+      "file": "raw-private/focused-tests/vitest-results.json",
+      "sha256": "91038683afc0d1774609601583eb20129381bdd9b6039821c673bc83150f03ac",
+      "success": true,
+      "numTotalTests": 102,
+      "numPassedTests": 100,
+      "numFailedTests": 0,
+      "numPendingTests": 2
+    }
+  },
+  "limits": [
+    "The P2 rows and marker retention come from the established maintained readStore-callback fixture: an ordinary deterministic public-method control, not native evidence of a real peer and not the auditor’s reserved-path scenario.",
+    "The full runResetCli stdout of these cases was not separately captured; the row text is established by the passed exact toContain assertion, and absence of \"another process\" by the passed not.toContain assertion.",
+    "The native 15-case driver does not exercise this P2 path.",
+    "No reserved-path collision, race, fault, timing or permission diagnostic was attempted."
+  ],
+  "verdict": "PASS"
+}

@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "source": "650eeee2c9d2edb7bb9484b435ae9aef906efa55",
+  "base": "91333462642b47d3e97e9f50e96b26bf87b3bf9d",
+  "tree": "c439cec12bf64de7c813d45308529027d58cef81",
+  "parent": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d",
+  "verdict": "PASS",
+  "scope": "Independent bounded P2 presence/preservation printing qualification, original F1/F2 ordinary native regression and normal CLI controls; no general scan.",
+  "baseline": {
+    "source": "67f6f0e130b99af436241c0bd43c1a6b1d3e620d",
+    "tree": "a20ead87dd7da55d761997f7efddc90690630f90",
+    "oldWording": "another process's lock guard; the reset leaves it",
+    "evidenceTier": "Source literal and maintained public-method expected-output baseline; no runtime collision reproduction",
+    "observationsSha256": "181e987c95a33c2d036f9e8d54b6377a9940d82ada0b63a7226589fbb9b70c46",
+    "auditorReportSha256": "efb523ffac7858c658df5b5f4e41ee734e7d8c69306a71cd4c03422d344624aa",
+    "runtimeCollisionReproduced": false
+  },
+  "provider": {
+    "model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "exit": 0,
+    "resultEnvelopes": 1,
+    "terminalReportSha256": "be3e2cc3b107270fa50df3587b141b37f62f9569ba80c39448b41cc7c0178c50",
+    "started": "2026-11-20T17:10:00.421Z",
+    "finished": "2026-11-20T17:19:33.323Z",
+    "independentCheckout": true,
+    "initialQuotaAttempt": {
+      "exit": 1,
+      "apiError": "usage_limit_reached",
+      "executedQaChecks": 0,
+      "resetUtc": "2026-11-20T17:10:00+00:00",
+      "receiptSha256": "14488e53e6f727253a823fe4626d55da57bd654aaa3c2b560061a38b8efdc08b"
+    }
+  },
+  "focused": {
+    "evidenceTier": "Ordinary maintained controlled public-method tests; not a native peer/collision observation",
+    "node": "v22.23.4",
+    "exit": 0,
+    "files": [
+      "apps/api/src/reset/reset-ownership.test.ts",
+      "apps/api/src/reset/reset.test.ts"
+    ],
+    "passed": 100,
+    "failed": 0,
+    "skipped": 2,
+    "originalResultSha256": "91038683afc0d1774609601583eb20129381bdd9b6039821c673bc83150f03ac",
+    "caseProjection": "Only the two P2 cases; complete focused results are retained privately and hashed",
+    "cases": [
+      {
+        "title": "reset manifests classify both locks and both reclamation guards keeps a database lock guard published while the reset holds the locks and says only that it is present",
+        "status": "passed"
+      },
+      {
+        "title": "reset manifests classify both locks and both reclamation guards keeps a data-directory lock guard published while the reset holds the locks and says only that it is present",
+        "status": "passed"
+      }
+    ]
+  },
+  "p2Observations": [
+    {
+      "role": "database lock",
+      "printedRow": "  graphgoblin.db.graphgoblin.lock.reclaim database lock guard, present now; the reset leaves it",
+      "publisherAttributed": false,
+      "markerPreserved": true,
+      "evidenceTier": "Exact row and marker preservation asserted by the passing maintained runResetCli fixture",
+      "testTitle": "reset manifests classify both locks and both reclamation guards keeps a database lock guard published while the reset holds the locks and says only that it is present"
+    },
+    {
+      "role": "data-directory lock",
+      "printedRow": "  graphgoblin.lock.reclaim               data-directory lock guard, present now; the reset leaves it",
+      "publisherAttributed": false,
+      "markerPreserved": true,
+      "evidenceTier": "Exact row and marker preservation asserted by the passing maintained runResetCli fixture",
+      "testTitle": "reset manifests classify both locks and both reclamation guards keeps a data-directory lock guard published while the reset holds the locks and says only that it is present"
+    }
+  ],
+  "regression": {
+    "evidenceTier": "Fresh ordinary built CLI and native filesystem observations on one Windows NTFS volume",
+    "driverPath": "docs/qa/2026-11-20-reset-ownership-corrective/drivers/candidate.mjs",
+    "driverSha256": "77406a5cce0daf509c35aec091e5ef0778e7cac552eb8f772c23d9d4ede075b8",
+    "unmodified": true,
+    "exit": 0,
+    "cases": 15,
+    "assertions": 238,
+    "passed": 238,
+    "failed": 0,
+    "harnessFailures": 0,
+    "conditionalSkips": 1,
+    "completeOriginalIdsAndOutcomesMatch": true,
+    "resultsSha256": "5346c6d2e427ce2bbe9ac50273a2ff51a0afefa7c7d1b0e494ff29e9727753cb",
+    "rowsSha256": "25909434ef7ffa8963d39d0c1822e7736117771eef2d2e541f24d81884984358",
+    "priorResultsSha256": "d7c997e8b735e3d0a7ade2c599868a628608ee48e9dbba00f428829abe08808d"
+  },
+  "limits": [
+    "The P2 baseline is a source literal and maintained expected-output baseline; no new native reserved-path collision was reproduced.",
+    "Both new P2 role rows and retained marker bytes are established by existing deterministic public runResetCli fixtures; these do not observe a real independent peer or prove guard origin.",
+    "The native 15-case replay covers original physical-name F1, ordinary F2-compatible reclamation/refusal behavior and CLI regressions; it does not exercise the new P2 source-auditor overlap path.",
+    "A live peer clearing stale metadata between preview and acquisition and already-gone branches remain unobserved natively. Conservative missing/kept/replaced/exceptional/repeated release outcomes remain controlled-test/source evidence.",
+    "The conditional case-sensitive ASCII directory case remains a platform skip; no filesystem flags or privileges were changed. Native observations cover one Windows NTFS volume.",
+    "The focused suite also skips its Windows short-name-alias case when required fixture aliases are unavailable, and skips the POSIX FIFO case on Windows; no follow-up platform diagnostic was run.",
+    "Opus corrected a suffix-based baseline-row extraction and unrelated assertion selection in a derived P2 draft; no raw test or driver outcome changed. The original provider stream retains those attempts; intermediate projection files were not separately versioned.",
+    "Earlier nonpasses, first-run baseline refusal-stage/manifest assertion mistakes, setup limits and unresolved historical Windows permission attribution remain retained in the existing archives. No new permission/race investigation was run.",
+    "An initial independent QA attempt was quota-blocked before checks. A preparation assertion compared abbreviated-index and full-index Git diffs; the matching full-index bytes verified the same frozen source, and the nonpass is retained privately.",
+    "All three general scans are consumed; the third held the parent revision. Genuine source-author confirmation and the separate bounded Sol readback accepted the correction. Exact-publication CI and bounded coordinator disposition remain; this QA is not another general scan."
+  ],
+  "originals": [
+    {
+      "id": "baseline-source-observations.json",
+      "sha256": "181e987c95a33c2d036f9e8d54b6377a9940d82ada0b63a7226589fbb9b70c46",
+      "bytes": 2018,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "candidate-source-observations.json",
+      "sha256": "351226ae06f565fe5ebbb35dcee38cea73fe694245ea284a8caa0a39c06fdf66",
+      "bytes": 1494,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "auditor-report.original.md",
+      "sha256": "efb523ffac7858c658df5b5f4e41ee734e7d8c69306a71cd4c03422d344624aa",
+      "bytes": 7345,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "frozen-source.original.json",
+      "sha256": "b339869907d4a983ef92882100c2b72d952fa0fcfa25145d4ff2a841e1f7f645",
+      "bytes": 2529,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "binding.json",
+      "sha256": "c8cd89375b8e38906edb289efb818c883501bf8f6cc86a6c3f28c85efed60e64",
+      "bytes": 1687,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "build.json",
+      "sha256": "cb5559df64ffb31ca7f7b0dfdc0a05ddfe80d7fefb7d69c58c19b5a9506a74e9",
+      "bytes": 381,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "build.log",
+      "sha256": "9cde35e0c318b7b7fd7a94ba28322541f1cc8f63e1e80c56e3a3063dea9c3837",
+      "bytes": 4968,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "quota-attempt.json",
+      "sha256": "14488e53e6f727253a823fe4626d55da57bd654aaa3c2b560061a38b8efdc08b",
+      "bytes": 1807,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "provider-retry-1710/launch.json",
+      "sha256": "deb69f11b11969b8d954ba57558d4462970b8fa3e31a6e27ae9c407e67de7bf5",
+      "bytes": 316,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "provider-retry-1710/events.jsonl",
+      "sha256": "7af8630e53514bc10b1fe44ab7e2049e6440f71a3764a1cb082693f8ba971437",
+      "bytes": 1195547,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "provider-retry-1710/exit.json",
+      "sha256": "0deefab28b571849a171cceffeb48fac2e6f02a0e684a25c1912e7e760b66096",
+      "bytes": 59,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "provider-retry-1710/provider-final-message.md",
+      "sha256": "be3e2cc3b107270fa50df3587b141b37f62f9569ba80c39448b41cc7c0178c50",
+      "bytes": 3949,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/raw-private/focused-tests/vitest-results.json",
+      "sha256": "91038683afc0d1774609601583eb20129381bdd9b6039821c673bc83150f03ac",
+      "bytes": 37218,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/raw-private/native/evidence/runs/20261120T171346Z/results.json",
+      "sha256": "5346c6d2e427ce2bbe9ac50273a2ff51a0afefa7c7d1b0e494ff29e9727753cb",
+      "bytes": 879445,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/raw-private/native/evidence/runs/20261120T171346Z/rows.jsonl",
+      "sha256": "25909434ef7ffa8963d39d0c1822e7736117771eef2d2e541f24d81884984358",
+      "bytes": 382991,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/REPORT.md",
+      "sha256": "1972b6aa7a76f74604dcba05b363c7953152e042859a8321d0fa3e410d50d7e9",
+      "bytes": 8274,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/qa-bindings.json",
+      "sha256": "806e69b81ad04f6482e38036da2084a6c7ec6d92d9e18a6b9b110bec20e318f6",
+      "bytes": 57975,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/focused-tests-summary.json",
+      "sha256": "51b770d110f4016d68ddbca98310b3ea15545c27c2e516864603ed6aa37613b5",
+      "bytes": 23019,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/native-case-results.json",
+      "sha256": "4a92941e1d4f8ef55f7a04909eca1abfcca79d51bfde47f1f58e5b28c43cba42",
+      "bytes": 104702,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "coordinator-409-verified.original.json",
+      "sha256": "ca6d543b5292f8f9297fb868f545b6cd2d45d9f61b0ae42b9a322c4e74439bb6",
+      "bytes": 799,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "author-confirmation-verified.original.json",
+      "sha256": "328c1cc5db35c5b4e831000aab4cb28fdf37d821220bbd233a27ac37bda1abfe",
+      "bytes": 608,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "case-records/p2-observations.json",
+      "sha256": "45f5a1176a74af299603bf39e7ecbd95655413ccc71c6da9d5a3fd28a008c6b0",
+      "bytes": 9379,
+      "retention": "Private original; publication-safe projection here"
+    },
+    {
+      "id": "operator-gate-receipt.json",
+      "sha256": "2df38d28e1237a2a6ee0802ffedcdd3cc4a99c624e61503e4b5f56621474ba63",
+      "bytes": 349,
+      "retention": "Private original; publication-safe projection here"
+    }
+  ]
+}
