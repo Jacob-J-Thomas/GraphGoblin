@@ -1,0 +1,75 @@
+// QA driver (#434): run the built API's confirmed `--reset` against disposable synthetic stores,
+// injecting a guard-marker unlink refusal at each ownership level, plus a fault-free control.
+// usage: node run-cli-faults.mjs <repo> <data-root> <label>
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const [repo, dataRoot, label] = process.argv.slice(2);
+const main = join(repo, 'apps', 'api', 'dist', 'main.js');
+const inject = pathToFileURL(join(import.meta.dirname, 'inject-guard-unlink-fault.mjs')).href;
+
+function tree(root, prefix = '') {
+  const out = [];
+  for (const name of readdirSync(join(root, prefix)).sort()) {
+    const path = prefix ? `${prefix}/${name}` : name;
+    const stats = lstatSync(join(root, path));
+    if (stats.isDirectory()) out.push(`${path}/`, ...tree(root, path));
+    else
+      out.push(
+        `${path} sha256:${createHash('sha256').update(readFileSync(join(root, path))).digest('hex').slice(0, 16)}`,
+      );
+  }
+  return out;
+}
+
+function fixture() {
+  const dir = mkdtempSync(join(dataRoot, 'cli-store-'));
+  for (const [path, content] of Object.entries({
+    'graphgoblin.db': 'synthetic database bytes',
+    'artifacts/text/abc': 'artifact body',
+    'master.key': 'synthetic key material',
+    'notes.txt': 'retain unrelated',
+  })) {
+    mkdirSync(dirname(join(dir, path)), { recursive: true });
+    writeFileSync(join(dir, path), content);
+  }
+  return dir;
+}
+
+const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GG_')));
+console.log(`# ${label}: node ${process.version}, main ${main}`);
+for (const [name, guard] of [
+  ['data-directory lock guard marker unlink refused', 'graphgoblin.lock.reclaim'],
+  ['database lock guard marker unlink refused', 'graphgoblin.db.graphgoblin.lock.reclaim'],
+  ['control: no fault injected', ''],
+]) {
+  const dir = fixture();
+  const before = tree(dir);
+  const result = spawnSync(
+    process.execPath,
+    ['--import', inject, main, '--reset', '--yes', '--data-dir', dir],
+    {
+      env: { ...env, GG_DATA_DIR: dir, GG_QA_FAIL_GUARD: guard },
+      encoding: 'utf8',
+      timeout: 180_000,
+      windowsHide: true,
+    },
+  );
+  const after = tree(dir);
+  const unrelated = (lines) => lines.filter((line) => /^(master\.key|notes\.txt) /.test(line));
+  console.log(`\n## ${name}`);
+  console.log(`exit: ${String(result.status)}${result.error ? ` error: ${result.error.message}` : ''}`);
+  console.log(`--- stdout ---\n${result.stdout}--- stderr ---\n${result.stderr}--- end ---`);
+  console.log(`before: ${JSON.stringify(before)}`);
+  console.log(`after:  ${JSON.stringify(after)}`);
+  console.log(
+    `claimsNothingChanged: ${result.stderr.includes('Nothing in the data directory was changed.')}`,
+  );
+  console.log(
+    `unrelatedUnchanged: ${JSON.stringify(unrelated(before)) === JSON.stringify(unrelated(after))}`,
+  );
+  rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+}

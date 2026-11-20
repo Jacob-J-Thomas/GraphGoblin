@@ -1,0 +1,146 @@
+# #434 independent touched-systems QA: correction `dc65a24`
+
+**Verdict: PASS with stated limits.** No product defect was found in the touched systems (reset manifest, completion and failure output, lock acquisition and release reporting, unrelated-file preservation). All 15 nonpassing assertions are retained below. Each one was investigated against the actual output and the actual files: one is a wording-specific predicate in the reused driver, one is an out-of-scope observation that is unchanged from baseline, and 12 come from a wrong QA expectation in this continuation's first controls run.
+
+- **Checkout.** `<checkout>`. HEAD is `dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa`, and it was unchanged throughout. `git status --porcelain` showed 0 lines at the start and the end.
+- **Built files.** They have the same hashes as in run1:
+  - `apps/api/dist/main.js` `3160ac2a…`
+  - `dist/reset/reset.js` `703dc824…`
+  - `dist/data-dir-lock.js` `a0849965…`
+- **Runtime.** Node v22.23.4 on win32. Every child process got a minimal environment with a fixture-local TEMP and home. No owner store, secret, server, network endpoint or external service was used.
+
+## Evidence sources, kept apart
+
+| Source | What | Files (SHA-256) |
+| --- | --- | --- |
+| **A. Original run1** (previous attempt, 2026-11-20T09:02:48Z to 09:04:49Z; preserved, not re-executed) | The unchanged 13-case baseline driver against the built candidate | `results/candidate-dc65a24-run1-results.json` `763770cfb734ed23b4c7dd2c85efb7fd470c5f88aece8093243e2ecdb650a779`; `results/candidate-dc65a24-run1-console.log` `47b2f5d0…a3bf3d4` |
+| Reused driver (byte-identical to the baseline copy) | | `driver/qa-434-reset-locks.mjs` `a05ba3cd…cab1`, `driver/holder.mjs` `8dea3641…dc10`, `driver/seed-store.mjs` `0e02e239…27cd` |
+| **B. Baseline QA** (another session; read only) | Same driver at `8181f35` | `<baseline-qa>/results/baseline-8181f35-results.json` `bc602e7c…e9ff`, `SUMMARY.md` |
+| **C. This continuation, real execution** | Native acquisition-stage controls through the real CLI | `continuation/results/continuation-dc65a24-controls-run1-results.json` `78233160…c974` (driver bytes archived as `continuation/archive/qa-434-acquisition-controls.controls-run1.mjs` `b9a86d90…9160`); `continuation/results/continuation-dc65a24-controls-run2-C1b-results.json` `45b4b564…26f6` (driver `continuation/qa-434-acquisition-controls.mjs` `441a90c8…2427`); helper `continuation/spin-exlock.mjs` `e11b20ab…1a96`; consoles beside the results |
+| **C. This continuation, repository tests** | Scoped acquisition regression, wider touched suites, and the physical before/after comparison | `continuation/scoped-test/`: `vitest-reset-acquisition.{json,log}` (`a67d7631…`, `e635a4a7…`), `vitest-touched-lock-reset.{json,log}` (`05cb7abe…`, `fd27a5a5…`), `before.json`, `after.json`, `after-touched.json`, `final.json`, three `*-compare.json` files, `git-status-{before,after}.txt` (both empty), `tree-snapshot.mjs` `a71f0dcb…` |
+| **D. Code inspection** (continuation) | `reset.ts` acquisition and release flow, the `data-dir-lock.ts` diff, test contents | No files. Used to design fixtures and expectations; no finding rests on inspection alone. |
+| **E. Historical disposition** | Issue text, `docs/delivery/2026-11-17-five-intents-register.md` (U3.2 #471, U3.5 #409), `2026-11-13-four-intents-register.md` | Not re-verified |
+
+The previous attempt's prior-control path `terminal-provider-message.md` does not exist. The same folder holds `provider-final-message.md`, `latest.md` and `exit.json`, which reports code 0. `latest.md` matches the baseline SUMMARY.
+
+## A. Original run1, read from its preserved bytes: 282 assertions, 280 pass, 2 fail, 0 not-run
+
+| Case | Baseline `8181f35` (asserts/fail) | Candidate `dc65a24` run1 (asserts/fail) | Exit codes (both) |
+| --- | --- | --- | --- |
+| S01 default database, dry run then confirmed | 23/6 | 23/0 | 0, 0 |
+| S02 stale directory lock and database sidecar | 23/7 | 23/0 | 0, 0 |
+| S03 stale database `.reclaim` guard | 26/10 | 26/0 | 0, 0 |
+| S04 stale directory `.reclaim` guard | 26/9 | 26/0 | 0, 0 |
+| S05 live database-lock owner (refused) | 16/0 | 16/0 | 1, 1 |
+| S06 live directory-lock owner (refused) | 14/0 | 14/0 | 1, 1 |
+| S07 live database guard marker (refused) | 14/0 | 14/0 | 1, 1 |
+| S08 held artifact; stop part way; rerun | 33/7 | **33/1** | 0, 1, 0 |
+| S09 own sidecar held, so release fails; rerun | 21/8 | 21/0 | 1, 0 |
+| S10 external database (refused) | 16/0 | 16/0 | 1, 1 |
+| S11 nested `db/store.db` with stale sidecar | 24/5 | **24/1** | 0, 0 |
+| S12 `custom.db` with a foreign `graphgoblin.db.graphgoblin.lock` | 23/6 | 23/0 | 0, 0 |
+| S13 no database file | 23/6 | 23/0 | 0, 0 |
+| **Total** | 282: 218 pass, 64 fail | 282: 280 pass, 2 fail | |
+
+By kind, candidate (baseline): acceptance 69/69 (15/69); safety 66/66 (66/66); positive 133/134 (134/134); interpretive, non-gating, 10/10 (1/10); precondition 1/1, so the S09 race was won; observation 1/2 (1/2).
+
+Changed outcomes between baseline and candidate: 63 assertions went from fail to pass, and 1 went from pass to fail.
+
+**Disputed: `S08.confirmed.dirLockReleasedAndReported` (positive/AC2), FAIL on the candidate.**
+- The predicate is `/Released graphgoblin\.lock|graphgoblin\.lock.*released/i`.
+- The candidate prints `  removed graphgoblin.lock (data-directory lock)` and `  removed graphgoblin.db.graphgoblin.lock (database lock)`.
+- Against the files: `graphgoblin.lock` is absent from the after-tree. It was also absent before the run, because the reset created it and released it. No unrelated byte changed.
+- The CHANGELOG states that `Released graphgoblin.lock.` was replaced on purpose.
+- Conclusion: this is a driver wording dependency, not a product defect. It also contradicts the baseline SUMMARY's statement that the checks are semantic. The paired acceptance assertion `dbLockReleasedAndReported` passes.
+
+**Unchanged out-of-scope observation: `S11.confirmed.nestedUnrelatedListedAsKept`, FAIL on both baseline and candidate.**
+- `db/readme.txt` is preserved byte for byte but is not listed under Keeps, because Keeps covers top-level entries only.
+- The #434 part of S11 now passes: the confirmed run lists `db/store.db.graphgoblin.lock  database lock  the reset's own, replacing a stale one`.
+
+## C. This continuation: independent real execution
+
+### Native acquisition-stage controls (real built CLI, disposable fixtures)
+
+The run1 refusals S05 to S07 are refused by the read-only preview (`refuseHeld`), before any lock is taken. "Nothing in the data directory was changed." is correct there, and the fs diff is empty. The correction's new path runs only when acquisition itself fails after a clean preview, so I reached that path natively. No fault was injected into the product process. Stale records come from the unchanged `driver/holder.mjs`.
+
+Mechanism probe (`continuation/probe/share-probe.mjs`): a file held with .NET `FileShare.Read` can still be read, but an exclusive open and `unlink` both fail with `EBUSY`; after release, `unlink` succeeds.
+
+**controls-run1: 274 assertions, 262 pass, 12 fail, 0 not-run.** The preconditions held 6/6, including both races, won on the first attempt.
+
+| Case | Native fault | Outcome |
+| --- | --- | --- |
+| C0 | none (positive control) | 19/19. Dry run byte-identical. The confirmed run reports `removed graphgoblin.db.graphgoblin.lock (database lock)` and `removed graphgoblin.lock (data-directory lock)`, then `Reset complete.` Only owned content was removed. |
+| C1 | database hard-linked to `outside/linked.db` | 25/25. Dry run exit 0. Confirmed run exit 1: `could not take the database lock: database …\graphgoblin.db has multiple hard links…`. Both database-lock entries are "absent now and before the attempt", followed by `removed graphgoblin.lock (data-directory lock)`. The fs diff is empty and nlink is still 2. |
+| C1b | database hard-linked to `data/linked-copy.db` | **25 asserts, 12 FAIL (QA expectation error).** The preview refuses read-only before any lock is taken: `the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db)…`, followed by `Nothing in the data directory was changed.`. That is true: both fs diffs are empty. My driver wrongly expected a database-stage refusal. Retained as is. |
+| C2 | stale `graphgoblin.lock` held FileShare.Read | 42/42. Dry run lists it as `stale; replaced by the reset's own`. Confirmed run: `could not take the data-directory lock: EBUSY … unlink '…\graphgoblin.lock'`; guard "absent now and before"; lock file "present now and before"; no release lines and no database-lock lines. The diff is empty. The rerun completes and reports `the reset's own, replacing a stale one`. |
+| C3 | stale `graphgoblin.db.graphgoblin.lock` held FileShare.Read | 42/42. `could not take the database lock: EBUSY … unlink …graphgoblin.db.graphgoblin.lock`, followed by `removed graphgoblin.lock (data-directory lock)`. The diff is empty, and the rerun completes. |
+| C4 | stale database guard marker held FileShare.Read | 42/42. `could not take the database lock: EBUSY … unlink '…\graphgoblin.db.graphgoblin.lock.reclaim\<uuid>.json'`. Guard "present now and before"; database lock "absent now and before"; `removed graphgoblin.lock`. No `.reclaim.<uuid>.tmp` staging directory was left, and the diff is empty. The rerun reports the guard as `reclaimed when the reset took the database lock`. |
+| C5 | C3 fault plus the reset's own `graphgoblin.lock` grabbed exclusively once created (primary refusal and cleanup failure) | 48/48. The race was won: held about 25 ms before the reset exited. Primary refusal: `could not take the database lock: EBUSY … unlink`. Cleanup failure, reported separately: `could not remove graphgoblin.lock (data-directory lock): EBUSY … open '…\graphgoblin.lock'`. The output never says `removed graphgoblin.lock`. The only fs change is the added `data/graphgoblin.lock`, which holds the reset's own record (PID matches). The rerun reclaims both stale locks and completes. |
+| C6 | `graphgoblin.lock` grabbed exclusively after a complete removal | 31/31. `Reset stopped: every listed item was removed, but not every lock file was released:`, then `removed graphgoblin.db.graphgoblin.lock (database lock)` (absent) and `could not remove graphgoblin.lock (data-directory lock): EBUSY…` (present). No "Reset complete". The rerun completes. |
+
+By kind (controls-run1):
+- correction: 50 total, 43 pass, 7 fail (C1b)
+- acceptance: 29/29 pass
+- safety: 85/85 pass
+- positive: 102 total, 98 pass, 4 fail (C1b)
+- precondition: 6/6 pass
+- observation: 2 total, 1 pass, 1 fail (C1b)
+
+**controls-run2-C1b:** after the expectation was corrected in a new driver version (run1 bytes are archived), 22/22 pass. Both runs exit 1 with the same refusal, stdout is empty, there are no lock-stage lines, the "Nothing … changed" claim is true, and nlink stays 2.
+
+Across C0 to C6, no unrelated byte changed (`master.key`, `notes.txt`, the lock look-alikes, `workspaces/my-notes`, `outside/*`). No gg-reset-store copy was left in TEMP, and no stack trace was printed.
+
+### Scoped regression and physical before/after comparison
+
+- `pnpm exec vitest run src/reset/reset-acquisition.test.ts` (`apps/api`; minimal environment; TEMP, TMP and home inside `continuation/scoped-test`): **11/11 passed**, exit 0.
+  - **Simulated, not native:**
+    - The "cleanup failure following acquisition" cases inject a synthetic `EPERM` into `fs.unlink` of a guard's owner marker, and, in one test, a synthetic `EACCES` into `fs.lstat`.
+    - The "another owner takes the lock first" contender is an in-process `vi.spyOn` double acquisition.
+  - **Native in that file:** only the hard-link refusal (a real `fs.link`).
+  - The shape "the attempt created and left a guard or lock" (present now, absent before) is covered only by these simulations. My native controls produced the "unchanged" shape, plus a release failure (C5).
+- **Wider touched suites:** `vitest run src/data-dir-lock.test.ts src/reset/`: 12 files, 205 passed, 2 skipped, 0 failed. The skips are the Windows short-name alias test and the FIFO test in `reset.test.ts`.
+- **Physical comparison of the checkout** (all files outside `node_modules` and `.git`, by size and SHA-256):
+
+  | Point | Entries | Differences from before |
+  | --- | --- | --- |
+  | Before | 3,233 | n/a |
+  | After the scoped run | 3,233 | 0 |
+  | After the wider run | 3,233 | 0 |
+  | Final | 3,233 | 0 |
+
+  - Git status: 0 lines before and after.
+  - Vitest itself created `apps/api/node_modules/.vite/vitest/<hash>/results.json` and an empty `.vite-temp/`. Neither existed before. I removed exactly those two directories, and the final snapshot shows no caches.
+- **Isolated TEMP after the scoped test:** empty. All test fixtures and global-setup roots were cleaned up.
+- **Isolated TEMP after the wider run:** 191 entries were left behind.
+  - 47 empty `gg-lock-*` directories from `data-dir-lock.test.ts`. The fixture line is unchanged since baseline; I did not execute baseline.
+  - Two `gg-store-facts-{copy,odd}-*` directories with database copies, from `store-facts.test.ts`, which is unchanged since baseline.
+  - tsx compile cache.
+  - This is a test-hygiene observation unrelated to #434. Everything was in scratch, and I deleted it afterwards.
+
+## Integrated behaviour limit: #409 and #471
+
+- **#409** (open; a startup refused by a held lock prints a stack trace).
+  - Only `--reset` was exercised. All reset refusals observed were stack-free: preview-stage refusals in run1 S05 to S07 and S10, and acquisition-stage refusals in C1 to C5.
+  - The API startup path, where #409 lives, was not started. `main.test.ts` and its startup contender tests were not run, because they start API server processes.
+  - By inspection only: the candidate changes `data-dir-lock.ts` only so that `release()` returns `'removed' | 'missing' | 'kept'`, and adds name constants. Acquisition, `held()` messages and startup callers are unchanged.
+  - Therefore this QA neither establishes a fix for #409 nor detects a regression of it.
+- **#471** (open; the site and cause of a Windows CI contention failure, with a retained reclaim-marker EPERM).
+  - No concurrent multi-process acquisition was executed natively.
+  - The in-process test `admits only one simultaneous contender` passed once. A single local pass says nothing about an intermittent CI failure.
+  - The correction's report for a reclaim-marker removal failure was verified two ways: with the synthetic `EPERM` in the scoped test, and natively with a sharing-violation `EBUSY` from a held stale marker (C4). Neither is the #471 mechanism.
+- **Integration caveat:** `dc65a24` was tested alone, not integrated with any #409 or #471 change, and the PR #460 hold is untouched. A later change to `held()` text, to `acquireRecovery` error handling, or to release semantics changes the reset's refusal and `uncertain` output, and would need this QA rerun.
+
+## Non-gating observations (no defect claimed)
+
+- **C1:** a hard link outside the data directory passes the dry run (exit 0, with the "run … --yes" instruction), while the confirmed reset refuses. Only acquisition checks nlink. This behaviour predates the correction.
+- **C2/C3/C5:** the dry run says a stale lock will be "replaced by the reset's own", but the confirmed reset cannot replace a file another process holds open. This is an expected dry-run/confirmed difference: the preview reads records but does not test whether they can be deleted.
+- **C5:** an acquisition-stage refusal that leaves the reset's own `graphgoblin.lock` does not add "run the reset again" advice. The rerun reclaims it as stale.
+
+## Limitations
+
+- Windows only, on one machine.
+- The native faults are induced: a deliberate FileShare.Read holder, a spinning exclusive opener, and hard links. They are real Windows errors, not product-originated contention.
+- C5 and C6 depend on timing. Both races were won on the first attempt and their preconditions are recorded.
+- I did not run `pnpm test`, `pnpm test:coverage`, `pnpm check`, or the repository's `reset.acceptance.mjs`.
+- Junctions or symlinks, case variants and containers were not covered.
+- run1 was not re-executed. Its S08 and S11 results were investigated read-only from its preserved JSON, including the before and after trees.

@@ -1,0 +1,64 @@
+# CORRECTED build: HEAD a8191dd97aacfe9709d2369afd60497214bf00a7 + working tree (reset.ts sha256 9fb9d5cd49c36133): node v22.23.4, main <corrective-checkout>\apps\api\dist\main.js
+
+## data-directory lock guard marker unlink refused
+exit: 1
+--- stdout ---
+--- stderr ---
+reset refused: could not take the data-directory lock: EPERM: injected refusal, unlink '<corrective-author-evidence>\cli-data\cli-store-4hAT3h\graphgoblin.lock.reclaim\ae188fa2-6307-4347-9f18-4b34f5860b0d.json'
+No store data was removed. Taking the data-directory lock failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:
+  graphgoblin.lock.reclaim (data-directory lock guard): present now, absent before the attempt
+  graphgoblin.lock (data-directory lock): present now, absent before the attempt
+--- end ---
+before: ["artifacts/","artifacts/text/","artifacts/text/abc sha256:9938be87d35f2a7a","graphgoblin.db sha256:806a4e52d9f822f9","master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+after:  ["artifacts/","artifacts/text/","artifacts/text/abc sha256:9938be87d35f2a7a","graphgoblin.db sha256:806a4e52d9f822f9","graphgoblin.lock sha256:d594961b33f8c88c","graphgoblin.lock.reclaim/","graphgoblin.lock.reclaim/ae188fa2-6307-4347-9f18-4b34f5860b0d.json sha256:d594961b33f8c88c","master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+claimsNothingChanged: false
+unrelatedUnchanged: true
+
+## database lock guard marker unlink refused
+exit: 1
+--- stdout ---
+--- stderr ---
+reset refused: could not take the database lock: EPERM: injected refusal, unlink '<corrective-author-evidence>\cli-data\cli-store-EImfUC\graphgoblin.db.graphgoblin.lock.reclaim\eb0c79db-df4e-4ee3-83d8-b79c09dd1540.json'
+No store data was removed. Taking the database lock failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:
+  graphgoblin.db.graphgoblin.lock.reclaim (database lock guard): present now, absent before the attempt
+  graphgoblin.db.graphgoblin.lock (database lock): present now, absent before the attempt
+  removed graphgoblin.lock (data-directory lock)
+--- end ---
+before: ["artifacts/","artifacts/text/","artifacts/text/abc sha256:9938be87d35f2a7a","graphgoblin.db sha256:806a4e52d9f822f9","master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+after:  ["artifacts/","artifacts/text/","artifacts/text/abc sha256:9938be87d35f2a7a","graphgoblin.db sha256:806a4e52d9f822f9","graphgoblin.db.graphgoblin.lock sha256:00c3581d74e8268f","graphgoblin.db.graphgoblin.lock.reclaim/","graphgoblin.db.graphgoblin.lock.reclaim/eb0c79db-df4e-4ee3-83d8-b79c09dd1540.json sha256:00c3581d74e8268f","master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+claimsNothingChanged: false
+unrelatedUnchanged: true
+
+## control: no fault injected
+exit: 0
+--- stdout ---
+GraphGoblin reset
+
+Data directory: <corrective-author-evidence>\cli-data\cli-store-LcUBod
+Database:       <corrective-author-evidence>\cli-data\cli-store-LcUBod\graphgoblin.db (unreadable: SQLITE_NOTADB: file is not a database)
+
+Removes:
+  artifacts                              artifacts                1 file, 2 directories, 13 B
+  graphgoblin.db                         database                 1 file, 24 B
+  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release
+  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release
+
+Keeps:
+  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+  notes.txt                              not part of the store
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 2 files, 2 directories, 37 B in 2 items.
+
+Removing:
+  removed artifacts (1 file, 2 directories, 13 B)
+  removed graphgoblin.db (1 file, 24 B)
+  removed graphgoblin.db.graphgoblin.lock (database lock)
+  removed graphgoblin.lock (data-directory lock)
+Reset complete. The next start creates a new, empty format-4 store in <corrective-author-evidence>\cli-data\cli-store-LcUBod.
+--- stderr ---
+--- end ---
+before: ["artifacts/","artifacts/text/","artifacts/text/abc sha256:9938be87d35f2a7a","graphgoblin.db sha256:806a4e52d9f822f9","master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+after:  ["master.key sha256:5161f876ba7978f4","notes.txt sha256:f4256baa5fc628b5"]
+claimsNothingChanged: false
+unrelatedUnchanged: true

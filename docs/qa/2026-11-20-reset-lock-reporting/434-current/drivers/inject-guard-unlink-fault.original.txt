@@ -1,0 +1,19 @@
+// QA-only preload (#434): refuse `unlink` of an owner marker directly inside the guard directory
+// named by GG_QA_FAIL_GUARD, as a filesystem that will not delete it would. Nothing else changes.
+import fsp from 'node:fs/promises';
+import { syncBuiltinESMExports } from 'node:module';
+import { basename, dirname } from 'node:path';
+
+const guard = process.env.GG_QA_FAIL_GUARD;
+if (guard) {
+  const original = fsp.unlink;
+  fsp.unlink = async (path) => {
+    if (basename(dirname(String(path))) === guard)
+      throw Object.assign(new Error(`EPERM: injected refusal, unlink '${String(path)}'`), {
+        code: 'EPERM',
+      });
+    return original(path);
+  };
+  // Rebind `import { unlink } from 'node:fs/promises'` in modules loaded after this preload.
+  syncBuiltinESMExports();
+}

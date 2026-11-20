@@ -1,0 +1,47 @@
+## #434 corrective report: reset output when a lock can't be taken (candidate `a8191dd9`)
+
+The fix is done and the regression is confirmed both ways. On the held source the new tests fail and the real CLI prints the false "Nothing in the data directory was changed."; on the corrected code everything passes. Nothing is committed, HEAD is still `a8191dd9`, and no Git, owner-store, secret or other-worktree state was touched.
+
+**The defect:** the lock module throws a plain error when taking a lock fails, and doesn't say what it left on disk. `reset.ts` decided "something changed" only from locks it was holding and stale entries that had disappeared since the preview. So when an attempt *created* a lock file and guard and then failed to clean up, the CLI said "Nothing in the data directory was changed." I reproduced this with the real built CLI at both levels: the data-directory lock and the database lock each left the lock file, the `.reclaim` guard and its marker. Store data and unrelated files were untouched.
+
+### What changed (`apps/api/src/reset/reset.ts` only; the lock module is left to #471)
+- **Typed result:** `ResetRefusedError` now carries one of three outcomes: `unchanged`, `changed` (with lines), or `uncertain` (which lock failed, with lines). Previously an empty list of strings meant both "verified unchanged" and "unknown".
+- **Failed attempt to take a lock:** the reset checks that lock's file and guard just before each attempt and again after a failure. The refusal then:
+  - starts `could not take the data-directory lock:` or `could not take the database lock:`, replacing the old `; stop it before resetting` suffix;
+  - says `No store data was removed.` and that the attempt may have created, reclaimed or left the lock's file, guard or guard staging directory;
+  - lists the file and guard as, for example, `present now, absent before the attempt`;
+  - for a database-lock failure, also says what releasing the data-directory lock did.
+- **What it never says:** it never claims who changed an entry, never claims a removal it didn't verify, and never tells the operator to delete a lock. If an entry can't be inspected, it shows only the raw error, not tree.ts's "move or remove that entry yourself" advice.
+- **Unchanged behaviour:** read-only refusals before any lock is taken, dry runs, refusals after both locks are held, partial-removal failures and successful resets behave as before. The fault-free CLI output is byte-identical to the held build's.
+- **Deliberate trade-off:** any failed attempt is now reported as uncertain, even an ordinary one that changed nothing (another process holding the lock, or a database with a hard link outside the data directory). Previously these said "Nothing changed". The reset can't tell such a refusal from a partial failure, so it lists the lock file and guard as found, e.g. `absent now and before the attempt`.
+
+### Files
+- `apps/api/src/reset/reset.ts`
+- `apps/api/src/reset/reset-acquisition.test.ts` (new, 11 tests):
+  - injected guard-marker removal failures at both lock levels, with and without stale locks (4 cases);
+  - a guard that can't be inspected after the failure;
+  - a fault-free confirmed reset that still completes;
+  - another owner taking each lock first (2 cases);
+  - a database with a hard link outside the data directory;
+  - read-only refusals in a dry run and a confirmed run that still say "Nothing changed" (2 cases).
+
+  The lock-file line is checked against what is actually on disk, so these tests should still hold once #471's rollback is merged.
+- `apps/api/src/reset/reset-ownership.test.ts`: three expectations for failed lock attempts updated to the new output.
+- `CHANGELOG.md`, `docs/guide/08-offline-upgrade.md`, `docs/11-security-and-distribution.md`, `docs/decisions/ADR-0042-explicit-resets-replace-conversion.md`: the new refusal text and prefix (scripts that parse reset output need to expect it).
+
+### Evidence and checks (in `<corrective-author-evidence>/`, indexed in `README.md`)
+
+| Check | Held source | Corrected |
+|---|---|---|
+| New tests plus `reset-ownership` tests | 11 failed / 19 passed | 30 / 30 passed |
+| Real built CLI with injected fault, both lock levels | "Nothing … was changed" with lock and guard left on disk | Honest refusal; database, `master.key` and `notes.txt` hashes unchanged |
+| Typecheck, lint, Prettier (API package) | — | pass |
+| `pnpm test:reset` (built-app acceptance) | — | 1 / 1 pass |
+
+- **Coverage gate:** not yet a single clean exit. The full API suite at 4 workers passed every counted test (2133 passed, 17 skipped). Coverage is 93.81% statements, 90.96% branches and 95.19% lines, with no threshold error. The run still exited 1 because a vitest worker crashed with an access violation (0xC0000005) while running `cron-preview.test.ts`. That matches the native libsql crash noted in the package's vitest config, and the file passes alone (13 / 13).
+- **Earlier full gate run:** 15 tests failed while the machine was heavily loaded (52 `node.exe` on 12 cores), all timeouts. One was a `reset-locked-plan` check that ran after its own timeout, once cleanup had already deleted the store. All 10 affected files pass when re-run alone (120 passed, 5 skipped).
+
+### Residuals for review
+- On this source the lock module still leaves the lock file and guard behind, and keeps its in-memory hold on the lock file after the failure. That rollback belongs to #471; the new output stays truthful either way.
+- When the configured database's directory doesn't exist, taking the database lock creates it, and even a successful reset doesn't mention it. This predates the candidate and I left it alone to keep the success output unchanged.
+- A guard staging directory left by a failed attempt is mentioned in the uncertainty line but not listed by name. A later dry run lists it under Keeps.
