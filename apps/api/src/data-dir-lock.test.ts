@@ -115,6 +115,7 @@ describe('data-directory ownership', () => {
     const record = JSON.parse(await readFile(path, 'utf8')) as { pid: number; startedAt: string };
     expect(record.pid).toBe(process.pid);
     expect(Number.isNaN(Date.parse(record.startedAt))).toBe(false);
+    expect(lock.reclaimed).toEqual({ file: false, guard: false });
     expect(await lock.release()).toBe('removed');
     await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
   });
@@ -247,7 +248,20 @@ describe('data-directory ownership', () => {
     const lock = await acquireDataDirLock(dataDir);
     expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
     await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
+    // The acquisition reports what it removed itself.
+    expect(lock.reclaimed).toEqual({ file: mainExists, guard: true });
     await lock.release();
+  });
+
+  it('reports nothing reclaimed when another acquisition reclaimed the stale entries first', async () => {
+    await writeFile(path, JSON.stringify({ pid: process.pid, token: 'previous-process' }));
+    await guardRecord({ pid: process.pid });
+    const first = await acquireDataDirLock(dataDir);
+    expect(first.reclaimed).toEqual({ file: true, guard: true });
+    await first.release();
+    const second = await acquireDataDirLock(dataDir);
+    expect(second.reclaimed).toEqual({ file: false, guard: false });
+    await second.release();
   });
 
   it('refuses a reclamation guard owned by another live PID', async () => {
@@ -305,7 +319,9 @@ describe('data-directory ownership', () => {
 
   it('reclaims an empty guard, but refuses malformed or mismatched marker directories', async () => {
     await mkdir(`${path}.reclaim`);
-    await (await acquireDataDirLock(dataDir)).release();
+    const lock = await acquireDataDirLock(dataDir);
+    expect(lock.reclaimed).toEqual({ file: false, guard: true });
+    await lock.release();
     const marker = await guardRecord({ pid: process.pid });
     await writeFile(marker, JSON.stringify({ pid: process.pid, token: randomUUID() }));
     await expect(acquireDataDirLock(dataDir)).rejects.toThrow('could not be verified');

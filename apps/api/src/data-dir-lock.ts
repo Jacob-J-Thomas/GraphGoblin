@@ -32,12 +32,22 @@ export const databaseLockFileName = (databaseFileName: string): string =>
  */
 export type ReleaseOutcome = 'removed' | 'missing' | 'kept';
 
-export interface DataDirLock {
+/** One held lock file or guard: releasing it removes only this acquisition's own record. */
+interface Hold {
   /**
    * Release only this acquisition's file. Safe to call more than once; every call resolves to the
    * first call's outcome.
    */
   release(): Promise<ReleaseOutcome>;
+}
+
+export interface DataDirLock extends Hold {
+  /**
+   * The stale entries this acquisition itself removed before taking the lock: a lock file whose
+   * owner had exited (`file`), and a `.reclaim` guard's stale owner marker or empty directory
+   * (`guard`). An entry another process removed first is never counted.
+   */
+  readonly reclaimed: { readonly file: boolean; readonly guard: boolean };
 }
 
 function hasCode(error: unknown, code: string): boolean {
@@ -120,10 +130,13 @@ async function lockFileState(path: string, token?: string): Promise<OwnerState> 
     : live();
 }
 
-async function removeStale(path: string): Promise<void> {
+/** Whether this call removed a stale lock file; a held one refuses. */
+async function removeStale(path: string): Promise<boolean> {
   const state = await lockFileState(path);
   if (state.state === 'held') throw held(path, state.detail);
-  if (state.state === 'stale') await unlink(path);
+  if (state.state !== 'stale') return false;
+  await unlink(path);
+  return true;
 }
 
 const markerPattern =
@@ -152,23 +165,34 @@ async function recoveryState(path: string): Promise<OwnerState & { marker?: stri
   }
 }
 
-async function removeEmptyRecovery(path: string): Promise<void> {
+/** Whether this call removed the empty directory at `path`. */
+async function removeEmptyRecovery(path: string): Promise<boolean> {
   try {
     await rmdir(path);
+    return true;
   } catch (error) {
     // A newly published owner's marker makes its directory nonempty. Never remove it.
     if (!hasCode(error, 'ENOENT') && !hasCode(error, 'ENOTEMPTY') && !hasCode(error, 'EEXIST'))
       throw error;
+    return false;
   }
 }
 
-/** Publish a nonempty guard atomically, so stale readers cannot unlink a replacement owner. */
-async function acquireRecovery(path: string, record: string, token: string): Promise<DataDirLock> {
+/**
+ * Publish a nonempty guard atomically, so stale readers cannot unlink a replacement owner.
+ * `reclaimed` says whether this call removed a stale guard's marker or empty directory on the way.
+ */
+async function acquireRecovery(
+  path: string,
+  record: string,
+  token: string,
+): Promise<Hold & { reclaimed: boolean }> {
   const staging = `${path}.${token}.tmp`;
   const name = `${token}.json`;
   const stagedMarker = join(staging, name);
   await mkdir(staging, { mode: 0o700 });
   let published = false;
+  let reclaimed = false;
   try {
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -176,11 +200,16 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
       if (observed.state === 'held') throw held(path, observed.detail);
       if (observed.marker) {
         // The immutable UUID name belongs only to the observed acquisition, never its successor.
-        await unlink(observed.marker).catch((removeError: unknown) => {
-          if (!hasCode(removeError, 'ENOENT')) throw removeError;
-        });
+        await unlink(observed.marker).then(
+          () => {
+            reclaimed = true;
+          },
+          (removeError: unknown) => {
+            if (!hasCode(removeError, 'ENOENT')) throw removeError;
+          },
+        );
       }
-      await removeEmptyRecovery(path);
+      if (await removeEmptyRecovery(path)) reclaimed = true;
       try {
         // Both contenders publish NONEMPTY directories: rename cannot overwrite an owner.
         await rename(staging, path);
@@ -188,6 +217,7 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
         heldPaths.add(path);
         let releasing: Promise<ReleaseOutcome> | undefined;
         return {
+          reclaimed,
           release() {
             releasing ??= (async (): Promise<ReleaseOutcome> => {
               try {
@@ -250,10 +280,12 @@ export async function dataDirLockState(
   return { state: 'free' };
 }
 
-async function acquireFile(path: string, record: string): Promise<DataDirLock> {
+/** `reclaimed` says whether this call removed a stale lock file before creating its own. */
+async function acquireFile(path: string, record: string): Promise<Hold & { reclaimed: boolean }> {
+  let reclaimed = false;
   const file = await open(path, 'wx', 0o600).catch(async (error: unknown) => {
     if (!hasCode(error, 'EEXIST')) throw error;
-    await removeStale(path);
+    reclaimed = await removeStale(path);
     return open(path, 'wx', 0o600).catch((retryError: unknown) => {
       if (hasCode(retryError, 'EEXIST')) throw held(path);
       throw retryError;
@@ -272,6 +304,7 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
   }
   let releasing: Promise<ReleaseOutcome> | undefined;
   return {
+    reclaimed,
     release() {
       releasing ??= (async (): Promise<ReleaseOutcome> => {
         try {
@@ -317,7 +350,11 @@ export async function acquireDataDirLock(
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
     try {
-      return await acquireFile(path, record);
+      const file = await acquireFile(path, record);
+      return {
+        reclaimed: { file: file.reclaimed, guard: recovery.reclaimed },
+        release: () => file.release(),
+      };
     } finally {
       await recovery.release();
     }

@@ -1,12 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { link, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+  link,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as canonical from '../canonical-path.js';
 import * as ownership from '../data-dir-lock.js';
 import { CASE_INSENSITIVE_NAMES, planReset, runResetCli } from './reset.js';
 import type { StoreFacts } from './store-facts.js';
+import { identityOf } from './tree.js';
 import { snapshotTree, type TreeRecord } from './__fixtures__/stores.js';
 
 // #434: a reset's manifest and output account for the database lock, the data-directory lock and
@@ -178,6 +190,18 @@ const RELEASED_BOTH = [
   '  removed graphgoblin.db.graphgoblin.lock (database lock)',
   '  removed graphgoblin.lock (data-directory lock)',
 ];
+/** A manifest row, padded as the reset pads it. */
+const row = (path: string, what: string, detail: string) =>
+  `  ${path.padEnd(38)} ${what.padEnd(24)} ${detail}`;
+/** The paths a manifest section lists, in order. */
+function section(out: string, title: 'Removes:' | 'Keeps:'): string[] {
+  const lines = out.split('\n');
+  const start = lines.indexOf(title) + 1;
+  return lines
+    .slice(start, lines.indexOf('', start))
+    .filter((line) => !line.startsWith('  Browser device drafts'))
+    .map((line) => line.trim().split(' ')[0]!);
+}
 
 describe('reset manifests classify both locks and both reclamation guards', () => {
   it('lists the locks a dry run would take as the reset’s own and changes nothing', async () => {
@@ -391,6 +415,200 @@ describe('reset manifests classify both locks and both reclamation guards', () =
       expect(await snapshotTree(dataDir)).toEqual(only(before, UNRELATED));
     },
   );
+
+  // #531 audit: NTFS opens `οσ-1.db.graphgoblin.lock` (σ, U+03C3) as a listed
+  // `ΟΣ-1.DB.GRAPHGOBLIN.LOCK`, whose Σ JavaScript lowercases to a final ς (U+03C2). Spellings are
+  // matched by filesystem identity, never by folding, so each entry is listed once as the directory
+  // lists it, while a hard link and a look-alike JavaScript folds to the lock name stay distinct.
+  it.runIf(process.platform === 'win32')(
+    'lists aliased locks and guards of both writers once, as listed, and keeps a hard link and a look-alike',
+    async () => {
+      const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-i3-reset-ownership-')));
+      bases.push(base);
+      const dataDir = join(base, 'data');
+      const databaseLock = 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK';
+      // A Kelvin sign: JavaScript lowercases it to `k`; NTFS keeps it a distinct name.
+      const lookAlike = 'graphgoblin.locK';
+      await writeTree(dataDir, {
+        'οσ-1.db': 'database bytes',
+        [databaseLock]: JSON.stringify({ pid: DEAD_PID, token: 'stale db' }),
+        'GRAPHGOBLIN.LOCK': JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
+        [lookAlike]: 'not a lock',
+        'notes.txt': 'owner notes',
+      });
+      await mkdir(join(dataDir, `${databaseLock}.RECLAIM`));
+      await staleGuard(join(dataDir, 'GRAPHGOBLIN.LOCK.RECLAIM'));
+      await link(join(dataDir, databaseLock), join(dataDir, 'backup.lock'));
+      // The filesystem facts this case rests on.
+      const same = async (a: string, b: string) =>
+        (await identityOf(join(dataDir, a))) === (await identityOf(join(dataDir, b)));
+      expect(await same('οσ-1.db.graphgoblin.lock', databaseLock)).toBe(true);
+      expect(await same('οσ-1.db.graphgoblin.lock.reclaim', `${databaseLock}.RECLAIM`)).toBe(true);
+      expect(await same('graphgoblin.lock.reclaim', 'GRAPHGOBLIN.LOCK.RECLAIM')).toBe(true);
+      expect(await same(lookAlike, 'GRAPHGOBLIN.LOCK')).toBe(false);
+      expect(databaseLock.toLowerCase()).not.toBe('οσ-1.db.graphgoblin.lock');
+      expect(lookAlike.toLowerCase()).toBe('graphgoblin.lock');
+
+      const env = { GG_DB_URL: `file:${join(dataDir, 'οσ-1.db').replaceAll('\\', '/')}` };
+      const readStore = () => Promise.resolve<StoreFacts>({ ...oldStore, runIds: [] });
+      const before = await snapshotTree(dataDir);
+      const dry = await reset(dataDir, ['--reset'], { env, readStore });
+      expect(dry.code).toBe(0);
+      expect(await snapshotTree(dataDir)).toEqual(before);
+      const removes = section(dry.out, 'Removes:');
+      const keeps = section(dry.out, 'Keeps:');
+      expect(removes).toEqual([
+        'οσ-1.db',
+        `${databaseLock}.RECLAIM`,
+        databaseLock,
+        'GRAPHGOBLIN.LOCK.RECLAIM',
+        'GRAPHGOBLIN.LOCK',
+      ]);
+      expect(keeps).toEqual(['backup.lock', lookAlike, 'notes.txt']);
+      // Every entry the directory lists appears once, under its listed spelling.
+      expect([...removes, ...keeps].sort()).toEqual((await readdir(dataDir)).sort());
+
+      const confirmed = await reset(dataDir, CONFIRM, { env, readStore });
+      expect(confirmed.code).toBe(0);
+      expect(confirmed.err).toBe('');
+      expect(confirmed.out).toContain(
+        [
+          row('οσ-1.db', 'database', '1 file, 14 B'),
+          row(
+            `${databaseLock}.RECLAIM`,
+            'stale lock guard',
+            'reclaimed when the reset took the database lock',
+          ),
+          row(
+            'οσ-1.db.graphgoblin.lock',
+            'database lock',
+            "the reset's own, replacing a stale one; removed on release",
+          ),
+          row(
+            'GRAPHGOBLIN.LOCK.RECLAIM',
+            'stale lock guard',
+            'reclaimed when the reset took the data-directory lock',
+          ),
+          row(
+            'graphgoblin.lock',
+            'data-directory lock',
+            "the reset's own, replacing a stale one; removed last, on release",
+          ),
+          '',
+          'Keeps:',
+        ].join('\n'),
+      );
+      expect(section(confirmed.out, 'Keeps:')).toEqual(keeps);
+      expect(confirmed.out).toContain(
+        [
+          '  removed οσ-1.db.graphgoblin.lock (database lock)',
+          '  removed graphgoblin.lock (data-directory lock)',
+        ].join('\n'),
+      );
+      // The disk agrees with both sections: exactly the kept entries remain, byte for byte.
+      expect(await snapshotTree(dataDir)).toEqual(only(before, keeps));
+    },
+  );
+
+  it.runIf(process.platform === 'win32')(
+    'refuses, changing nothing, when the filesystem does not say which hard link a lock spelling opens',
+    async () => {
+      const { base, dataDir } = await fixture(false);
+      await writeFile(
+        join(dataDir, 'GraphGoblin.Lock'),
+        JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
+      );
+      await link(join(dataDir, 'GraphGoblin.Lock'), join(dataDir, 'backup.lock'));
+      // The filesystem's canonical path names the link that `graphgoblin.lock` opens.
+      const dry = await reset(dataDir, ['--reset']);
+      expect(dry.out).toContain(
+        `\n${row('GraphGoblin.Lock', 'data-directory lock', "stale; replaced by the reset's own, removed last, on release")}\n`,
+      );
+      expect(section(dry.out, 'Keeps:')).toContain('backup.lock');
+      // A canonical path that keeps the spelling it was given names neither link.
+      vi.spyOn(canonical, 'canonicalPath').mockImplementation((path) => resolve(path));
+      const before = await snapshotTree(base);
+      for (const argv of [['--reset'], CONFIRM])
+        expect(await reset(dataDir, argv)).toEqual({
+          code: 1,
+          out: '',
+          err: 'reset refused: the data directory lists graphgoblin.lock under more than one name (GraphGoblin.Lock, backup.lock), and the filesystem does not say which one the lock module opens; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n',
+        });
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
+});
+
+describe('a confirmed reset claims only the stale entries its own acquisition reclaimed', () => {
+  /**
+   * Before the reset takes `role`, another GraphGoblin operation takes and releases that lock, as
+   * `--create-api-key` does, reclaiming its stale file and guard first.
+   */
+  function anotherOperationTakesFirst(role: 'data-directory lock' | 'database lock'): void {
+    if (role === 'data-directory lock') {
+      const acquire = ownership.acquireDataDirLock;
+      vi.spyOn(ownership, 'acquireDataDirLock').mockImplementationOnce(async (dir, name) => {
+        await (await acquire(dir, name)).release();
+        return acquire(dir, name);
+      });
+    } else {
+      const acquire = ownership.acquireDatabaseLock;
+      vi.spyOn(ownership, 'acquireDatabaseLock').mockImplementationOnce(async (file) => {
+        await (await acquire(file)).release();
+        return acquire(file);
+      });
+    }
+  }
+
+  it('says which stale entries were already gone when it took a lock and which it reclaimed', async () => {
+    const { dataDir } = await fixture(true);
+    const before = await snapshotTree(dataDir);
+    anotherOperationTakesFirst('data-directory lock');
+    const result = await reset(dataDir, CONFIRM);
+    expect(result).toEqual({
+      code: 0,
+      err: '',
+      out:
+        [
+          ...head(dataDir, false),
+          '  graphgoblin.db.graphgoblin.lock.reclaim stale lock guard         reclaimed when the reset took the database lock',
+          "  graphgoblin.db.graphgoblin.lock        database lock            the reset's own, replacing a stale one; removed on release",
+          '  graphgoblin.lock.reclaim               stale lock guard         already gone when the reset took the data-directory lock',
+          "  graphgoblin.lock                       data-directory lock      the reset's own; the stale one was already gone when the reset took the data-directory lock; removed last, on release",
+          ...KEEPS,
+        ].join('\n') + removing(dataDir, RELEASED_BOTH),
+    });
+    expect(await snapshotTree(dataDir)).toEqual(only(before, UNRELATED));
+  });
+
+  it('a refusal after taking the locks never claims entries that were already gone', async () => {
+    const { dataDir } = await fixture(true);
+    const before = await snapshotTree(dataDir);
+    anotherOperationTakesFirst('database lock');
+    let reads = 0;
+    const result = await reset(dataDir, CONFIRM, {
+      readStore: () =>
+        Promise.resolve<StoreFacts>(
+          ++reads === 1 ? oldStore : { readable: false, reason: 'store reader exited with 1' },
+        ),
+    });
+    expect(result).toEqual({
+      code: 1,
+      out: '',
+      err: [
+        'reset refused: the store was readable in the preview but could not be read under the data-directory lock (store reader exited with 1); run the reset again before removing the database or run workspaces',
+        'No store data was removed. Lock files and guards:',
+        '  graphgoblin.db.graphgoblin.lock.reclaim (database lock guard): stale in the preview, already gone when the reset took that lock',
+        '  graphgoblin.db.graphgoblin.lock (database lock): stale in the preview, already gone when the reset took that lock',
+        '  reclaimed stale graphgoblin.lock.reclaim (data-directory lock guard)',
+        '  reclaimed stale graphgoblin.lock (data-directory lock)',
+        '  removed graphgoblin.db.graphgoblin.lock (database lock)',
+        '  removed graphgoblin.lock (data-directory lock)',
+        '',
+      ].join('\n'),
+    });
+    expect(await snapshotTree(dataDir)).toEqual(only(before, [...UNRELATED, ...STORE_DATA]));
+  });
 });
 
 describe('reset output says what releasing each lock did', () => {

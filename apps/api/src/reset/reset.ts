@@ -1,7 +1,8 @@
 import { lstat, readdir, realpath, stat } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
+import { basename, resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
+import { canonicalPath } from '../canonical-path.js';
 import { loadConfig, type ApiConfig } from '../config.js';
 import {
   acquireDataDirLock,
@@ -140,7 +141,10 @@ export type OwnershipEffect =
    * removed on release and taking them reclaimed nothing.
    */
   | { kind: 'unchanged' }
-  /** The locks were taken: the stale entries taking them reclaimed, and what each release did. */
+  /**
+   * The locks were taken: the stale entries taking them reclaimed, those the preview listed that
+   * were already gone when the lock was taken, and what each release did.
+   */
   | { kind: 'changed'; lines: readonly string[] }
   /**
    * Taking `failed` threw. The lock module reports no more than the error, and the attempt can
@@ -254,23 +258,35 @@ async function listedName(dir: string, name: string): Promise<string> {
 }
 
 /**
- * The directory's spelling of a lock file or guard the lock module opens as `name`: the exact name
- * when the directory lists it, else the entry with the same identity whose name differs only in
- * letter case (a volume that folds case), else `name`. A hard link under another name is never
- * taken for the lock, so it stays listed under Keeps.
+ * The directory's spelling of the lock file or guard the lock module opens as `name` in `parent`,
+ * decided by filesystem facts and never by case or Unicode folding: the exact name when the
+ * directory lists it; else the one listed entry with the same identity, whatever rule made the
+ * volume equate the spellings (NTFS opens `οσ-1.db.graphgoblin.lock` as a listed
+ * `ΟΣ-1.DB.GRAPHGOBLIN.LOCK`, whose `Σ` JavaScript lowercases to a final `ς`); else, when hard
+ * links share that identity, the one the filesystem's canonical path for `name` names. A hard link
+ * under another name is never taken for the lock, so it stays listed under Keeps. When the
+ * filesystem does not say which listed link `name` opens, the reset refuses rather than list one
+ * entry under both Removes and Keeps. Absent: `name`.
  */
-async function ownershipName(dir: string, name: string): Promise<string> {
+async function ownershipName(
+  dataDir: string,
+  parent: readonly string[],
+  name: string,
+): Promise<string> {
+  const dir = resolve(dataDir, ...parent);
   const identity = await identityOf(resolve(dir, name));
   if (identity === undefined) return name;
   const names = await readdir(dir);
   if (names.includes(name)) return name;
+  const matches: string[] = [];
   for (const entry of names)
-    if (
-      nameKey(entry, true) === nameKey(name, true) &&
-      (await identityOf(resolve(dir, entry))) === identity
-    )
-      return entry;
-  return name;
+    if ((await identityOf(resolve(dir, entry))) === identity) matches.push(entry);
+  if (matches.length < 2) return matches[0] ?? name;
+  const canonical = basename(canonicalPath(resolve(dir, name)));
+  if (matches.includes(canonical)) return canonical;
+  throw new ResetRefusedError(
+    `the data directory lists ${[...parent, name].join('/')} under more than one name (${matches.sort().join(', ')}), and the filesystem does not say which one the lock module opens; verify that no GraphGoblin process uses this store, then move the other names yourself`,
+  );
 }
 
 /**
@@ -462,7 +478,8 @@ export async function planReset({
   for (const [role, parent, lockName] of locks)
     for (const guard of [true, false]) {
       const name = await ownershipName(
-        resolve(dataDir, ...parent),
+        dataDir,
+        parent,
         guard ? lockName + RECLAIM_GUARD_SUFFIX : lockName,
       );
       const path = [...parent, name].join('/');
@@ -577,38 +594,62 @@ function columns(left: string, middle: string, right = ''): string {
   return `  ${left.padEnd(38)} ${middle.padEnd(24)} ${right}`.trimEnd();
 }
 
+/** A lock the confirmed reset took; `lock.reclaimed` is what taking it removed itself. */
+export interface HeldLock {
+  role: LockRole;
+  lock: DataDirLock;
+}
+
+/** What a manifest is printed for: a dry run, or a confirmed reset holding both locks. */
+export type ManifestStage =
+  | { dryRun: true; configured: string }
+  | { dryRun: false; configured: string; preview: ResetPlan; held: readonly HeldLock[] };
+
 /**
- * The Removes rows for the reset's locks. `before` is what was found before any lock was taken (the
- * dry run itself, or a confirmed reset's preview): a lock file or guard present then is stale, since
- * a held one refuses the reset, and taking that lock reclaims it.
+ * The Removes rows for the reset's locks. A dry run takes no lock: a lock file or guard it finds is
+ * stale (a held one refuses the reset), and taking that lock is what would reclaim it. A confirmed
+ * reset says it reclaimed an entry only when the lock module reports that taking the lock removed
+ * it. A stale entry its read-only preview found is otherwise reported as already gone when the lock
+ * was taken: the preview cannot show who removed it.
  */
-function ownershipRows(plan: ResetPlan, dryRun: boolean, before: ResetPlan | undefined): string[] {
+function ownershipRows(plan: ResetPlan, stage: ManifestStage): string[] {
   const rows: string[] = [];
-  const stale = (role: LockRole, guard: boolean) =>
-    before?.ownership.find(
-      (entry) => entry.role === role && entry.guard === guard && entry.present,
-    );
+  const before = stage.dryRun ? plan : stage.preview;
   for (const role of ['database lock', 'data-directory lock'] as const) {
-    const guard = stale(role, true);
-    if (guard)
+    const found = (guard: boolean) =>
+      before.ownership.find((entry) => entry.role === role && entry.guard === guard)!;
+    const taken = stage.dryRun
+      ? undefined
+      : stage.held.find((held) => held.role === role)!.lock.reclaimed;
+    const guard = found(true);
+    if (taken?.guard || guard.present)
       rows.push(
         columns(
           guard.path,
           'stale lock guard',
-          `reclaimed when the reset ${dryRun ? 'takes' : 'took'} the ${role}`,
+          taken === undefined
+            ? `reclaimed when the reset takes the ${role}`
+            : taken.guard
+              ? `reclaimed when the reset took the ${role}`
+              : `already gone when the reset took the ${role}`,
         ),
       );
     const release = role === 'database lock' ? 'removed on release' : 'removed last, on release';
     const lock = plan.ownership.find((entry) => entry.role === role && !entry.guard)!;
+    const stale = found(false).present;
     rows.push(
       columns(
         lock.path,
         role,
-        !stale(role, false)
-          ? `the reset's own; ${release}`
-          : dryRun
+        taken === undefined
+          ? stale
             ? `stale; replaced by the reset's own, ${release}`
-            : `the reset's own, replacing a stale one; ${release}`,
+            : `the reset's own; ${release}`
+          : taken.file
+            ? `the reset's own, replacing a stale one; ${release}`
+            : stale
+              ? `the reset's own; the stale one was already gone when the reset took the ${role}; ${release}`
+              : `the reset's own; ${release}`,
       ),
     );
   }
@@ -617,13 +658,10 @@ function ownershipRows(plan: ResetPlan, dryRun: boolean, before: ResetPlan | und
 
 /**
  * The bounded manifest: every target and kept entry up to the limit, the reset's locks, then totals.
- * A confirmed reset passes its `preview` so the manifest names the stale locks and guards that
- * taking the locks reclaimed.
+ * A confirmed reset passes its preview and held locks, so the lock rows say what taking each lock
+ * reclaimed and which stale entries the preview found were already gone.
  */
-export function formatPlan(
-  plan: ResetPlan,
-  options: { dryRun: boolean; configured: string; preview?: ResetPlan },
-) {
+export function formatPlan(plan: ResetPlan, options: ManifestStage) {
   const lines = [
     options.dryRun ? 'GraphGoblin reset (dry run: nothing is removed)' : 'GraphGoblin reset',
     '',
@@ -640,7 +678,7 @@ export function formatPlan(
       `  ... and ${String(hidden.length)} more: ${counts(hidden.flatMap((target) => target.entries))}`,
     );
   if (!plan.targets.length) lines.push('  no store data');
-  lines.push(...ownershipRows(plan, options.dryRun, options.dryRun ? plan : options.preview));
+  lines.push(...ownershipRows(plan, options));
   lines.push('', 'Keeps:');
   for (const entry of plan.kept.slice(0, MANIFEST_LIST_LIMIT))
     lines.push(columns(entry.path, entry.why));
@@ -725,11 +763,6 @@ export interface ResetIo {
   readStore: (databaseFile: string) => Promise<StoreFacts>;
 }
 
-interface HeldLock {
-  role: LockRole;
-  lock: DataDirLock;
-}
-
 const describeOwnership = (entry: OwnershipEntry): string =>
   `${entry.path} (${entry.guard ? `${entry.role} guard` : entry.role})`;
 
@@ -763,17 +796,21 @@ async function releaseLocks(held: readonly HeldLock[], ownership: readonly Owner
 }
 
 /**
- * The stale lock files and guards the preview listed for the locks the reset took, which are gone
- * now: taking a lock reclaims them. An entry that cannot be inspected is not claimed.
+ * For each lock the reset took, the stale lock file and guard that taking it removed, as the lock
+ * module reports, and those the preview found that were already gone when it was taken. Absence
+ * after a snapshot never counts as this reset's reclamation: the preview cannot show who removed it.
  */
-async function reclaimedLines(preview: ResetPlan, taken: ReadonlySet<LockRole>): Promise<string[]> {
+function reclaimedLines(preview: ResetPlan, held: readonly HeldLock[]): string[] {
   const lines: string[] = [];
   for (const entry of preview.ownership) {
-    if (!entry.present || !taken.has(entry.role)) continue;
-    const now = await identityOf(resolve(preview.dataDir, ...entry.path.split('/'))).catch(
-      () => 'uninspectable',
-    );
-    if (now === undefined) lines.push(`reclaimed stale ${describeOwnership(entry)}`);
+    const taken = held.find(({ role }) => role === entry.role)?.lock.reclaimed;
+    if (!taken) continue;
+    if (entry.guard ? taken.guard : taken.file)
+      lines.push(`reclaimed stale ${describeOwnership(entry)}`);
+    else if (entry.present)
+      lines.push(
+        `${describeOwnership(entry)}: stale in the preview, already gone when the reset took that lock`,
+      );
   }
   return lines;
 }
@@ -897,10 +934,12 @@ export async function resetDataDirectory(
     );
     return 0;
   }
-  // Taking a lock reclaims a stale lock file or guard the preview listed. From here a refusal says
-  // which of them are gone and how each held lock was released, instead of that nothing changed.
-  // An attempt that throws may itself have created, reclaimed or left that lock's entries, so its
-  // guard and lock file are observed just before each attempt and again after a failure.
+  // Taking a lock reclaims a stale lock file or guard, and the lock module reports which ones that
+  // acquisition removed itself; a stale entry the preview listed may instead have been removed by
+  // another process first. From here a refusal says which were reclaimed or already gone and how
+  // each held lock was released, instead of that nothing changed. An attempt that throws may
+  // itself have created, reclaimed or left that lock's entries, so its guard and lock file are
+  // observed just before each attempt and again after a failure.
   const held: HeldLock[] = [];
   let attempt: { role: LockRole; before: ObservedEntry[] } | undefined;
   let plan: ResetPlan | undefined;
@@ -948,7 +987,7 @@ export async function resetDataDirectory(
       throw new ResetRefusedError(
         `${newlyKept.path} was a run workspace in the preview but would be kept by the plan under the data-directory lock; run the reset again before removing its database`,
       );
-    io.write(formatPlan(lockedPlan, { dryRun: false, configured, preview }));
+    io.write(formatPlan(lockedPlan, { dryRun: false, configured, preview, held }));
     io.write('Removing:\n');
     try {
       await executeReset(lockedPlan, io.write);
@@ -961,7 +1000,7 @@ export async function resetDataDirectory(
     const observed =
       attempt && attemptLines(attempt.before, await observeLock(preview, attempt.role));
     const released = await releaseLocks(held, (plan ?? preview).ownership);
-    const reclaimed = await reclaimedLines(preview, new Set(held.map(({ role }) => role)));
+    const reclaimed = reclaimedLines(preview, held);
     const lines = [...(observed ?? []), ...reclaimed, ...released.lines];
     throw new ResetRefusedError(
       message(error),
