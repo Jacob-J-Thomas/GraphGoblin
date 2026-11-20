@@ -1,0 +1,4270 @@
+{
+  "schemaVersion": 1,
+  "originalSource": {
+    "file": "candidate-a8191dd-targeted-results.json",
+    "bytes": 228070,
+    "sha256": "9411e4877726065079d8c642a4e71b95b49e3c5c582cc9c3fe5692f9080a5d96"
+  },
+  "projection": {
+    "retained": "All scenarios, all assertions including expected/actual/outcome, all original totals, CLI stdout/stderr, manifests, filesystem diffs and temporary leftovers.",
+    "omitted": "Raw argv, GG environment values and setup metadata; complete tree snapshots except S08/S11. No assertion or failure is omitted or regraded.",
+    "substitutions": "Only the checkout and QA scratch prefixes become role aliases. Relative paths, values, ordering and all outcomes stay unchanged."
+  },
+  "originalSchema": "gg-434-reset-lock-qa-targeted/v1",
+  "issue": 434,
+  "label": "candidate-a8191dd",
+  "startedAt": "2026-11-20T08:00:51.229Z",
+  "finishedAt": "2026-11-20T08:04:28.443Z",
+  "provenance": {
+    "checkout": "<checkout>",
+    "head": "a8191dd97aacfe9709d2369afd60497214bf00a7",
+    "expectHead": "a8191dd97aacfe9709d2369afd60497214bf00a7",
+    "headMatches": true,
+    "trackedChanges": [],
+    "node": "v22.23.4",
+    "platform": "win32",
+    "fileSha256": {
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/reset/reset.js": "7e0d3780f53bfe23dc2e11a736304fcfcca7a5660ba6e994dc81d0f2cdf04da5",
+      "apps/api/dist/data-dir-lock.js": "a08499659b375cbe14a1799ec5f68b1461ee2d050a4b2a40b4829bad616b979e",
+      "apps/api/src/reset/reset.ts": "473674bd9a10d2071f1bf535dd24f2922ac3a89d43b328088381a5f89671df65",
+      "apps/api/src/data-dir-lock.ts": "7731874dd6941b1d5cea80549ebd3e5b034722485e1b555567bf7c4964fb37ca"
+    }
+  },
+  "method": {
+    "entrypoint": "node <checkout>/apps/api/dist/main.js --reset [--yes] --data-dir <fixture data dir>",
+    "supplements": "qa-434-reset-locks.mjs (13 cases, run unchanged); these controls never replace its results",
+    "isolation": "minimal child env; GG_DATA_DIR a fixture (T09: unset, with HOME/USERPROFILE inside the fixture and a dry-run gate on the printed data directory); TEMP inside the run folder",
+    "grading": "completion/failure-message checks are wording-neutral: a line naming the path as its own token plus the claimed effect, compared with the after tree",
+    "kinds": {
+      "acceptance": "#434 acceptance criterion",
+      "safety": "no unrelated or unowned change",
+      "positive": "documented behaviour / control",
+      "interpretive": "QA reading beyond the acceptance text; not gating",
+      "precondition": "fixture precondition; dependent checks skipped when it fails",
+      "observation": "recorded fact; not gating"
+    }
+  },
+  "fixtures": "deleted after the run (disposable)",
+  "totals": {
+    "all": {
+      "total": 231,
+      "pass": 224,
+      "fail": 7,
+      "notRun": 0
+    },
+    "byKind": {
+      "acceptance": {
+        "total": 52,
+        "pass": 52,
+        "fail": 0,
+        "notRun": 0
+      },
+      "safety": {
+        "total": 56,
+        "pass": 55,
+        "fail": 1,
+        "notRun": 0
+      },
+      "positive": {
+        "total": 112,
+        "pass": 108,
+        "fail": 4,
+        "notRun": 0
+      },
+      "interpretive": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "precondition": {
+        "total": 8,
+        "pass": 7,
+        "fail": 1,
+        "notRun": 0
+      },
+      "observation": {
+        "total": 3,
+        "pass": 2,
+        "fail": 1,
+        "notRun": 0
+      }
+    },
+    "byCriterion": {
+      "AC1": {
+        "total": 50,
+        "pass": 49,
+        "fail": 1,
+        "notRun": 0
+      },
+      "AC2": {
+        "total": 32,
+        "pass": 28,
+        "fail": 4,
+        "notRun": 0
+      },
+      "AC3": {
+        "total": 44,
+        "pass": 43,
+        "fail": 1,
+        "notRun": 0
+      },
+      "CTL": {
+        "total": 92,
+        "pass": 91,
+        "fail": 1,
+        "notRun": 0
+      },
+      "DIFF": {
+        "total": 13,
+        "pass": 13,
+        "fail": 0,
+        "notRun": 0
+      }
+    },
+    "failed": [
+      "T02.confirmed.removedPathsDisclosedExactCase [observation/AC1]",
+      "T04a.dry.refusalNamesPath [positive/AC2]",
+      "T04a.confirmed.refusalNamesPath [positive/AC2]",
+      "T04c.dry.refusalNamesPath [positive/AC2]",
+      "T04c.confirmed.refusalNamesPath [positive/AC2]",
+      "T07a.driver [precondition/CTL]",
+      "T09.confirmed.nothingAddedOrChanged [safety/AC3]"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "T01R",
+      "title": "Wording-neutral re-grade of the original first run's S08 confirmed output (candidate-a8191dd, head a8191dd97aacfe9709d2369afd60497214bf00a7); no re-execution",
+      "assertions": [
+        {
+          "id": "T01R.confirmed.dirLockReleasedAndReportedSemantic",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a failure-message line names it as removed or released",
+          "actual": {
+            "dirLockPresentAfter": false,
+            "linesNaming": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T01R.confirmed.dbLockReleasedAndReportedSemantic",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a failure-message line names it as removed or released",
+          "actual": {
+            "dbLockPresentAfter": false,
+            "linesNaming": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        }
+      ],
+      "runs": []
+    },
+    {
+      "id": "T01",
+      "title": "S08 re-executed with wording-neutral grading: artifact held open, confirmed reset stops part way",
+      "assertions": [
+        {
+          "id": "T01.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T01.confirmed.stopNamesHeldFile",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "names artifacts/text/held.bin",
+          "actual": "Reset stopped: could not remove artifacts/text/held.bin: EBUSY: resource busy or locked, unlink '<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T01\\fixture\\data\\artifacts\\text\\held.bin'"
+        },
+        {
+          "id": "T01.confirmed.dirLockReleasedAndReportedSemantic",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a failure-message line names it as removed or released",
+          "actual": {
+            "dirLockPresentAfter": false,
+            "linesNaming": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T01.confirmed.dbLockReleasedAndReportedSemantic",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a failure-message line names it as removed or released",
+          "actual": {
+            "dbLockPresentAfter": false,
+            "linesNaming": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T01.confirmed.failureRemovedListAccurate",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "every \"Removed\" item is absent",
+          "actual": [
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T01.confirmed.failureNotRemovedListAccurate",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "every \"Not removed\" item is present",
+          "actual": [
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal"
+          ]
+        },
+        {
+          "id": "T01.confirmed.failurePartlyAccurate",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "partly removed target present with the held file",
+          "actual": [
+            "artifacts"
+          ]
+        },
+        {
+          "id": "T01.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T01.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "removed paths are owned",
+          "actual": {
+            "notOwned": []
+          }
+        },
+        {
+          "id": "T01.confirmed.heldFileBytesIntact",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "e51abd8fae5d2af2",
+          "actual": "e51abd8fae5d2af2"
+        }
+      ],
+      "runs": [
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 18699,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T01\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T01\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                2 files, 2 directories, 32 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 7 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n",
+          "stderr": "Reset stopped: could not remove artifacts/text/held.bin: EBUSY: resource busy or locked, unlink '<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T01\\fixture\\data\\artifacts\\text\\held.bin'\n  Removed:        workspaces/01KQA434RVNAAAAAAAAAAAAAAA, workspaces/01KQA434RVNBBBBBBBBBBBBBBB\n  Partly removed: artifacts (1 of 4 entries)\n  Not removed:    chat-audio, graphgoblin.db, graphgoblin.db-wal\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nDo not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.\n",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 2 files, 2 directories, 32 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/artifacts/text/abc123",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T02",
+      "title": "Case-variant stale lock spellings (GraphGoblin.db.graphgoblin.lock, GraphGoblin.lock) on a case-insensitive volume",
+      "assertions": [
+        {
+          "id": "T02.setup.caseInsensitiveVolumeWithVariantSpellings",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "volume folds case and lists the variant spellings",
+          "actual": {
+            "caseInsensitive": true,
+            "listing": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "GraphGoblin.db.graphgoblin.lock",
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "GraphGoblin.lock",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces"
+            ]
+          }
+        },
+        {
+          "id": "T02.dry.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T02.dry.stderrEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "empty stderr",
+          "actual": ""
+        },
+        {
+          "id": "T02.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T02.dry.dryRunHeaderAndTrailer",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "dry-run header and trailer",
+          "actual": "GraphGoblin reset (dry run: nothing is removed)"
+        },
+        {
+          "id": "T02.dry.noRemovalSection",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "no \"Removing:\" section",
+          "actual": ""
+        },
+        {
+          "id": "T02.dry.unrelatedListedAsKept",
+          "kind": "positive",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "workspaces/my-notes"
+          ],
+          "actual": {
+            "missing": []
+          }
+        },
+        {
+          "id": "T02.dry.dbVariantNotKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.db.graphgoblin.lock (any case) absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T02.dry.dbVariantInRemoves",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.db.graphgoblin.lock (any case) under Removes, marked stale",
+          "actual": {
+            "path": "GraphGoblin.db.graphgoblin.lock",
+            "rest": "database lock | stale; replaced by the reset's own, removed on release"
+          }
+        },
+        {
+          "id": "T02.dry.dbVariantExactSpelling",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "Removes row spelled as the directory lists it: GraphGoblin.db.graphgoblin.lock",
+          "actual": [
+            "GraphGoblin.db.graphgoblin.lock",
+            "GraphGoblin.lock",
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T02.dry.dirVariantNotKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.lock (any case) absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T02.dry.dirVariantInRemoves",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.lock (any case) under Removes, marked stale",
+          "actual": {
+            "path": "GraphGoblin.lock",
+            "rest": "data-directory lock | stale; replaced by the reset's own, removed last, on release"
+          }
+        },
+        {
+          "id": "T02.dry.dirVariantExactSpelling",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "Removes row spelled as the directory lists it: GraphGoblin.lock",
+          "actual": [
+            "GraphGoblin.db.graphgoblin.lock",
+            "GraphGoblin.lock",
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T02.confirmed.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T02.confirmed.resetComplete",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "\"Reset complete.\"",
+          "actual": "a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data.\n"
+        },
+        {
+          "id": "T02.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T02.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "every removed path is store content or this configuration's lock metadata",
+          "actual": {
+            "notOwned": [],
+            "removed": [
+              "data/GraphGoblin.db.graphgoblin.lock",
+              "data/GraphGoblin.lock",
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/graphgoblin.db",
+              "data/graphgoblin.db-wal",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ]
+          }
+        },
+        {
+          "id": "T02.confirmed.nothingAddedOrChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no entry added or modified",
+          "actual": {
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T02.confirmed.keepsListIsTruthful",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Keeps path exists after the reset",
+          "actual": {
+            "listedAsKeptButRemoved": []
+          }
+        },
+        {
+          "id": "T02.confirmed.removesListIsTruthful",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Removes path is absent after the reset",
+          "actual": {
+            "stillPresent": []
+          }
+        },
+        {
+          "id": "T02.confirmed.noUnlistedRemoval",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every pre-existing path the reset removed is disclosed by a Removes row or \"removed\" line (case-insensitive)",
+          "actual": {
+            "removedButUnlisted": []
+          }
+        },
+        {
+          "id": "T02.confirmed.dbLockNotListedAsKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T02.confirmed.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock listed under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T02.confirmed.completionReportsDirLockRemoved",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T02.confirmed.completionReportsDbLockRemoved",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T02.confirmed.locksReleased",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no lock or guard of this configuration left",
+          "actual": {
+            "graphgoblin.lock": "absent",
+            "graphgoblin.lock.reclaim": "absent",
+            "graphgoblin.db.graphgoblin.lock": "absent",
+            "graphgoblin.db.graphgoblin.lock.reclaim": "absent"
+          }
+        },
+        {
+          "id": "T02.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "T02.confirmed.manifestParityWithDryRun",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "dry-run and confirmed Removes/Keeps path sets equal (case-insensitive)",
+          "actual": {
+            "dryRemoves": [
+              "GraphGoblin.db.graphgoblin.lock",
+              "GraphGoblin.lock",
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "confirmedRemoves": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "dryKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "confirmedKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ]
+          }
+        },
+        {
+          "id": "T02.confirmed.dbVariantNotKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.db.graphgoblin.lock (any case) absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T02.confirmed.dbVariantGone",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "GraphGoblin.db.graphgoblin.lock (any case) absent after",
+          "actual": [
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/other.db.graphgoblin.lock"
+          ]
+        },
+        {
+          "id": "T02.confirmed.dirVariantNotKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "GraphGoblin.lock (any case) absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T02.confirmed.dirVariantGone",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "GraphGoblin.lock (any case) absent after",
+          "actual": [
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/other.db.graphgoblin.lock"
+          ]
+        },
+        {
+          "id": "T02.confirmed.removedPathsDisclosedExactCase",
+          "kind": "observation",
+          "criterion": "AC1",
+          "outcome": "fail",
+          "expected": "removed pre-existing paths disclosed with their exact spelling",
+          "actual": {
+            "notExact": [
+              "GraphGoblin.db.graphgoblin.lock",
+              "GraphGoblin.lock"
+            ],
+            "removes": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ]
+          }
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 14243,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  GraphGoblin.db.graphgoblin.lock        database lock            stale; replaced by the reset's own, removed on release\n  GraphGoblin.lock                       data-directory lock      stale; replaced by the reset's own, removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data\"\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "GraphGoblin.db.graphgoblin.lock",
+                "rest": "database lock | stale; replaced by the reset's own, removed on release"
+              },
+              {
+                "path": "GraphGoblin.lock",
+                "rest": "data-directory lock | stale; replaced by the reset's own, removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 21861,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own, replacing a stale one; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own, replacing a stale one; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed chat-audio (1 file, 1 directory, 11 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 559.3 KB)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T02\\fixture\\data.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own, replacing a stale one; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own, replacing a stale one; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/GraphGoblin.db.graphgoblin.lock",
+              "data/GraphGoblin.lock",
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/graphgoblin.db",
+              "data/graphgoblin.db-wal",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "title": "Look-alikes: a hard link to the stale data-directory lock and abandoned .reclaim.<UUID>.tmp staging directories are kept",
+      "assertions": [
+        {
+          "id": "T03.setup.hardLinkCreated",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "hard link created",
+          "actual": true
+        },
+        {
+          "id": "T03.dry.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T03.dry.stderrEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "empty stderr",
+          "actual": ""
+        },
+        {
+          "id": "T03.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T03.dry.dryRunHeaderAndTrailer",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "dry-run header and trailer",
+          "actual": "GraphGoblin reset (dry run: nothing is removed)"
+        },
+        {
+          "id": "T03.dry.noRemovalSection",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "no \"Removing:\" section",
+          "actual": ""
+        },
+        {
+          "id": "T03.dry.unrelatedListedAsKept",
+          "kind": "positive",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "workspaces/my-notes",
+            "lock-hardlink.txt",
+            "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+            "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp"
+          ],
+          "actual": {
+            "missing": []
+          }
+        },
+        {
+          "id": "T03.dry.lookalikeNotRemoves:lock-hardlink.txt",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "lock-hardlink.txt not under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T03.dry.lookalikeNotRemoves:graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp not under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T03.dry.lookalikeNotRemoves:graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp not under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T03.dry.staleLocksInRemoves",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "both stale locks under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T03.confirmed.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T03.confirmed.resetComplete",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "\"Reset complete.\"",
+          "actual": "a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data.\n"
+        },
+        {
+          "id": "T03.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt",
+            "data/lock-hardlink.txt",
+            "data/graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+            "data/graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp/4448ca04-1415-4052-94d5-586805c20390.json",
+            "data/graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T03.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "every removed path is store content or this configuration's lock metadata",
+          "actual": {
+            "notOwned": [],
+            "removed": [
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/graphgoblin.db",
+              "data/graphgoblin.db-wal",
+              "data/graphgoblin.db.graphgoblin.lock",
+              "data/graphgoblin.lock",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ]
+          }
+        },
+        {
+          "id": "T03.confirmed.nothingAddedOrChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no entry added or modified",
+          "actual": {
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T03.confirmed.keepsListIsTruthful",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Keeps path exists after the reset",
+          "actual": {
+            "listedAsKeptButRemoved": []
+          }
+        },
+        {
+          "id": "T03.confirmed.removesListIsTruthful",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Removes path is absent after the reset",
+          "actual": {
+            "stillPresent": []
+          }
+        },
+        {
+          "id": "T03.confirmed.noUnlistedRemoval",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every pre-existing path the reset removed is disclosed by a Removes row or \"removed\" line",
+          "actual": {
+            "removedButUnlisted": []
+          }
+        },
+        {
+          "id": "T03.confirmed.dbLockNotListedAsKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+            "graphgoblin.lock.old",
+            "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+            "lock-hardlink.txt",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T03.confirmed.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock listed under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T03.confirmed.completionReportsDirLockRemoved",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T03.confirmed.completionReportsDbLockRemoved",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T03.confirmed.locksReleased",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no lock or guard of this configuration left",
+          "actual": {
+            "graphgoblin.lock": "absent",
+            "graphgoblin.lock.reclaim": "absent",
+            "graphgoblin.db.graphgoblin.lock": "absent",
+            "graphgoblin.db.graphgoblin.lock.reclaim": "absent"
+          }
+        },
+        {
+          "id": "T03.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "T03.confirmed.manifestParityWithDryRun",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "dry-run and confirmed Removes/Keeps path sets equal",
+          "actual": {
+            "dryRemoves": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "confirmedRemoves": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "dryKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+              "graphgoblin.lock.old",
+              "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+              "lock-hardlink.txt",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "confirmedKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+              "graphgoblin.lock.old",
+              "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+              "lock-hardlink.txt",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ]
+          }
+        },
+        {
+          "id": "T03.confirmed.lookalikeListedAndKept:lock-hardlink.txt",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "lock-hardlink.txt under Keeps and present after",
+          "actual": {
+            "keeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+              "graphgoblin.lock.old",
+              "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+              "lock-hardlink.txt",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "present": true
+          }
+        },
+        {
+          "id": "T03.confirmed.lookalikeListedAndKept:graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp under Keeps and present after",
+          "actual": {
+            "keeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+              "graphgoblin.lock.old",
+              "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+              "lock-hardlink.txt",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "present": true
+          }
+        },
+        {
+          "id": "T03.confirmed.lookalikeListedAndKept:graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp under Keeps and present after",
+          "actual": {
+            "keeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+              "graphgoblin.lock.old",
+              "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+              "lock-hardlink.txt",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "present": true
+          }
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 7900,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            stale; replaced by the reset's own, removed on release\n  graphgoblin.lock                       data-directory lock      stale; replaced by the reset's own, removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp not part of the store\n  graphgoblin.lock.old                   not part of the store\n  graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp not part of the store\n  lock-hardlink.txt                      not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data\"\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | stale; replaced by the reset's own, removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | stale; replaced by the reset's own, removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "lock-hardlink.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 14964,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own, replacing a stale one; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own, replacing a stale one; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp not part of the store\n  graphgoblin.lock.old                   not part of the store\n  graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp not part of the store\n  lock-hardlink.txt                      not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed chat-audio (1 file, 1 directory, 11 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 559.3 KB)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T03\\fixture\\data.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own, replacing a stale one; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own, replacing a stale one; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.reclaim.a1644abb-bf67-4019-bf9b-aef6258b51f0.tmp",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.reclaim.4448ca04-1415-4052-94d5-586805c20390.tmp",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "lock-hardlink.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/graphgoblin.db",
+              "data/graphgoblin.db-wal",
+              "data/graphgoblin.db.graphgoblin.lock",
+              "data/graphgoblin.lock",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T04a",
+      "title": "Malformed ownership path: the database lock path is a directory; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04a.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04a.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04a.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04a.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04a.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04a.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04a.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04a.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04a.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04a.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04a.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04a.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04a.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04a.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2800,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2578,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T04b",
+      "title": "Malformed ownership path: the database lock guard path is a regular file; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04b.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04b.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04b.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock.reclaim",
+          "actual": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04b.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04b.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04b.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04b.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04b.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04b.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04b.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock.reclaim",
+          "actual": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04b.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04b.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04b.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04b.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 3043,
+          "stdout": "",
+          "stderr": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 3772,
+          "stdout": "",
+          "stderr": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04b\\fixture\\data\\graphgoblin.db.graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T04c",
+      "title": "Malformed ownership path: the data-directory lock path is a directory; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04c.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04c.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04c.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04c.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04c.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04c.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04c.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04c.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04c.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04c.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04c.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04c.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04c.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04c.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2885,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2891,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T04d",
+      "title": "Malformed ownership path: the data-directory lock guard path is a regular file; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04d.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04d.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04d.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.lock.reclaim",
+          "actual": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04d.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04d.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04d.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04d.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04d.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04d.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04d.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.lock.reclaim",
+          "actual": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04d.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04d.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04d.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04d.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 3260,
+          "stdout": "",
+          "stderr": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2841,
+          "stdout": "",
+          "stderr": "reset refused: Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T04d\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T05",
+      "title": "Held control: live marker in the data-directory .reclaim guard refuses dry run and confirmed reset",
+      "assertions": [
+        {
+          "id": "T05.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T05.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T05.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim",
+          "actual": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T05.dry.refusalReason",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "stderr says \"verify ownership before resetting\"",
+          "actual": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T05.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T05.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T05.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T05.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T05.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T05.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T05.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim",
+          "actual": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T05.confirmed.refusalReason",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "stderr says \"verify ownership before resetting\"",
+          "actual": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T05.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T05.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T05.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T05.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 4893,
+          "stdout": "",
+          "stderr": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 5645,
+          "stdout": "",
+          "stderr": "reset refused: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T05\\fixture\\data\\graphgoblin.lock.reclaim; verify ownership before resetting\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T06",
+      "title": "Nested database (data/db/store.db) with a stale database-lock .reclaim guard beside it",
+      "assertions": [
+        {
+          "id": "T06.dry.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T06.dry.stderrEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "empty stderr",
+          "actual": ""
+        },
+        {
+          "id": "T06.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T06.dry.dryRunHeaderAndTrailer",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "dry-run header and trailer",
+          "actual": "GraphGoblin reset (dry run: nothing is removed)"
+        },
+        {
+          "id": "T06.dry.noRemovalSection",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "no \"Removing:\" section",
+          "actual": ""
+        },
+        {
+          "id": "T06.dry.unrelatedListedAsKept",
+          "kind": "positive",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "workspaces/my-notes"
+          ],
+          "actual": {
+            "missing": []
+          }
+        },
+        {
+          "id": "T06.dry.nestedGuardInRemoves",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock.reclaim under Removes as a guard",
+          "actual": {
+            "path": "db/store.db.graphgoblin.lock.reclaim",
+            "rest": "stale lock guard | reclaimed when the reset takes the database lock"
+          }
+        },
+        {
+          "id": "T06.dry.nestedGuardNotKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock.reclaim (or db/) not under Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T06.confirmed.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T06.confirmed.resetComplete",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "\"Reset complete.\"",
+          "actual": "a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data.\n"
+        },
+        {
+          "id": "T06.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt",
+            "data/db/readme.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T06.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "every removed path is store content or this configuration's lock metadata",
+          "actual": {
+            "notOwned": [],
+            "removed": [
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/db/store.db",
+              "data/db/store.db-wal",
+              "data/db/store.db.graphgoblin.lock.reclaim",
+              "data/db/store.db.graphgoblin.lock.reclaim/052e3b23-adad-4d4b-802a-849a77d72fdf.json",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ]
+          }
+        },
+        {
+          "id": "T06.confirmed.nothingAddedOrChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no entry added or modified",
+          "actual": {
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T06.confirmed.keepsListIsTruthful",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Keeps path exists after the reset",
+          "actual": {
+            "listedAsKeptButRemoved": []
+          }
+        },
+        {
+          "id": "T06.confirmed.removesListIsTruthful",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Removes path is absent after the reset",
+          "actual": {
+            "stillPresent": []
+          }
+        },
+        {
+          "id": "T06.confirmed.noUnlistedRemoval",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every pre-existing path the reset removed is disclosed by a Removes row or \"removed\" line",
+          "actual": {
+            "removedButUnlisted": []
+          }
+        },
+        {
+          "id": "T06.confirmed.dbLockNotListedAsKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T06.confirmed.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock listed under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "db/store.db",
+            "db/store.db-wal",
+            "db/store.db.graphgoblin.lock",
+            "db/store.db.graphgoblin.lock.reclaim",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T06.confirmed.completionReportsDirLockRemoved",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T06.confirmed.completionReportsDbLockRemoved",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed db/store.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T06.confirmed.locksReleased",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no lock or guard of this configuration left",
+          "actual": {
+            "graphgoblin.lock": "absent",
+            "graphgoblin.lock.reclaim": "absent",
+            "db/store.db.graphgoblin.lock": "absent",
+            "db/store.db.graphgoblin.lock.reclaim": "absent"
+          }
+        },
+        {
+          "id": "T06.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "T06.confirmed.manifestParityWithDryRun",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "dry-run and confirmed Removes/Keeps path sets equal",
+          "actual": {
+            "dryRemoves": [
+              "artifacts",
+              "chat-audio",
+              "db/store.db",
+              "db/store.db-wal",
+              "db/store.db.graphgoblin.lock",
+              "db/store.db.graphgoblin.lock.reclaim",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "confirmedRemoves": [
+              "artifacts",
+              "chat-audio",
+              "db/store.db",
+              "db/store.db-wal",
+              "db/store.db.graphgoblin.lock",
+              "db/store.db.graphgoblin.lock.reclaim",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "dryKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "confirmedKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ]
+          }
+        },
+        {
+          "id": "T06.confirmed.nestedGuardRemovedAndListed",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "db/store.db.graphgoblin.lock.reclaim gone and listed",
+          "actual": {
+            "present": false,
+            "removes": [
+              "artifacts",
+              "chat-audio",
+              "db/store.db",
+              "db/store.db-wal",
+              "db/store.db.graphgoblin.lock",
+              "db/store.db.graphgoblin.lock.reclaim",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ]
+          }
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 7736,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data\\db\\store.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  db/store.db                            database                 1 file, 4.0 KB\n  db/store.db-wal                        SQLite write-ahead log   1 file, 559.3 KB\n  db/store.db.graphgoblin.lock.reclaim   stale lock guard         reclaimed when the reset takes the database lock\n  db/store.db.graphgoblin.lock           database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data\"\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "db/store.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "db/store.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "db/store.db.graphgoblin.lock.reclaim",
+                "rest": "stale lock guard | reclaimed when the reset takes the database lock"
+              },
+              {
+                "path": "db/store.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 15768,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data\\db\\store.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  db/store.db                            database                 1 file, 4.0 KB\n  db/store.db-wal                        SQLite write-ahead log   1 file, 559.3 KB\n  db/store.db.graphgoblin.lock.reclaim   stale lock guard         reclaimed when the reset took the database lock\n  db/store.db.graphgoblin.lock           database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed chat-audio (1 file, 1 directory, 11 B)\n  removed db/store.db (1 file, 4.0 KB)\n  removed db/store.db-wal (1 file, 559.3 KB)\n  removed db/store.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T06\\fixture\\data.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "db/store.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "db/store.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "db/store.db.graphgoblin.lock.reclaim",
+                "rest": "stale lock guard | reclaimed when the reset took the database lock"
+              },
+              {
+                "path": "db/store.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/db/store.db",
+              "data/db/store.db-wal",
+              "data/db/store.db.graphgoblin.lock.reclaim",
+              "data/db/store.db.graphgoblin.lock.reclaim/052e3b23-adad-4d4b-802a-849a77d72fdf.json",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T07a",
+      "title": "Refusal after the confirmed reset takes the data-directory lock (database has a second hard link outside the data directory), with stale data-directory and database locks",
+      "assertions": [
+        {
+          "id": "T07a.setup.dbHardLinkCreated",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "second hard link of the database created outside the data directory",
+          "actual": true
+        },
+        {
+          "id": "T07a.driver",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "fail",
+          "expected": "scenario ran",
+          "actual": "Error: holder.mjs both failed: database <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07a\\fixture\\data\\graphgoblin.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\n    at startHelper (file:///<qa>/driver/qa-434-targeted-controls.mjs:195:27)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Object.run (file:///<qa>/driver/qa-434-targeted-controls.mjs:691:19)\n    at async main (file:///<qa>/driver/qa-434-targeted-controls.mjs:856:9)"
+        }
+      ],
+      "runs": []
+    },
+    {
+      "id": "T07b",
+      "title": "Refusal after the confirmed reset takes the data-directory lock (database has a second hard link outside the data directory), no stale locks",
+      "assertions": [
+        {
+          "id": "T07b.setup.dbHardLinkCreated",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "second hard link of the database created outside the data directory",
+          "actual": true
+        },
+        {
+          "id": "T07b.dry.dryExitCode",
+          "kind": "observation",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "dry run exit 0 (the preview does not check database hard links)",
+          "actual": {
+            "exit": 0,
+            "stderr": ""
+          }
+        },
+        {
+          "id": "T07b.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T07b.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T07b.confirmed.refusalReason",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "stderr names the hard-link refusal",
+          "actual": "reset refused: database <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\\graphgoblin.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T07b.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace",
+          "actual": [
+            "reset refused: database <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\\graphgoblin.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T07b.confirmed.noStoreDataChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "database, sidecars, artifacts, chat audio and run workspaces byte-identical",
+          "actual": {
+            "checked": 13,
+            "changed": []
+          }
+        },
+        {
+          "id": "T07b.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt",
+            "outside/graphgoblin-db-hardlink.db"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T07b.confirmed.nothingAdded",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no entry added",
+          "actual": []
+        },
+        {
+          "id": "T07b.confirmed.nothingChangedClaimMatchesFs",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "\"Nothing in the data directory was changed.\" printed exactly when the tree is byte-identical",
+          "actual": {
+            "claimsNothing": true,
+            "fsChanges": []
+          }
+        },
+        {
+          "id": "T07b.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T07b.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 10331,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\"\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 8773,
+          "stdout": "",
+          "stderr": "reset refused: database <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T07b\\fixture\\data\\graphgoblin.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T08",
+      "title": "Another process replaces the database lock record during the confirmed reset: the release keeps it and says so; a rerun reclaims it",
+      "assertions": [
+        {
+          "id": "T08.confirmed.replacerReplacedRecord",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "the helper replaced the reset's database lock record before release",
+          "actual": {
+            "pid": 8176,
+            "replaced": true,
+            "replacedToken": "af7a5130-66a6-49d2-80ae-d80bfc481088",
+            "sha": "fe1cdad078795ffd",
+            "at": 1795161835945
+          }
+        },
+        {
+          "id": "T08.confirmed.releaseLineSaysKept",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "a release line names graphgoblin.db.graphgoblin.lock as kept",
+          "actual": [
+            "  kept graphgoblin.db.graphgoblin.lock (database lock): it holds another process's record"
+          ]
+        },
+        {
+          "id": "T08.confirmed.noRemovedClaimForDbLock",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "no \"removed graphgoblin.db.graphgoblin.lock\" claim",
+          "actual": [
+            "  kept graphgoblin.db.graphgoblin.lock (database lock): it holds another process's record"
+          ]
+        },
+        {
+          "id": "T08.confirmed.replacedRecordPreserved",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "the other process's lock file is left with its record",
+          "actual": {
+            "after": {
+              "kind": "file",
+              "size": 141,
+              "sha": "fe1cdad078795ffd"
+            },
+            "replacerSha": "fe1cdad078795ffd"
+          }
+        },
+        {
+          "id": "T08.confirmed.dirLockRemovedAndReported",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and named as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T08.confirmed.exitAndCompletion",
+          "kind": "observation",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit code and completion when only a replaced lock was kept",
+          "actual": {
+            "exit": 0,
+            "tail": [
+              "  kept graphgoblin.db.graphgoblin.lock (database lock): it holds another process's record",
+              "  removed graphgoblin.lock (data-directory lock)",
+              "Reset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data."
+            ],
+            "stderr": ""
+          }
+        },
+        {
+          "id": "T08.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T08.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "removed paths are owned",
+          "actual": {
+            "notOwned": []
+          }
+        },
+        {
+          "id": "T08.rerun.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T08.rerun.resetComplete",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "\"Reset complete.\"",
+          "actual": "a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data.\n"
+        },
+        {
+          "id": "T08.rerun.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T08.rerun.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "every removed path is store content or this configuration's lock metadata",
+          "actual": {
+            "notOwned": [],
+            "removed": [
+              "data/graphgoblin.db.graphgoblin.lock"
+            ]
+          }
+        },
+        {
+          "id": "T08.rerun.nothingAddedOrChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no entry added or modified",
+          "actual": {
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T08.rerun.keepsListIsTruthful",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Keeps path exists after the reset",
+          "actual": {
+            "listedAsKeptButRemoved": []
+          }
+        },
+        {
+          "id": "T08.rerun.removesListIsTruthful",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Removes path is absent after the reset",
+          "actual": {
+            "stillPresent": []
+          }
+        },
+        {
+          "id": "T08.rerun.noUnlistedRemoval",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every pre-existing path the reset removed is disclosed by a Removes row or \"removed\" line",
+          "actual": {
+            "removedButUnlisted": []
+          }
+        },
+        {
+          "id": "T08.rerun.dbLockNotListedAsKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T08.rerun.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock listed under Removes",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock"
+          ]
+        },
+        {
+          "id": "T08.rerun.completionReportsDirLockRemoved",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T08.rerun.completionReportsDbLockRemoved",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T08.rerun.locksReleased",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no lock or guard of this configuration left",
+          "actual": {
+            "graphgoblin.lock": "absent",
+            "graphgoblin.lock.reclaim": "absent",
+            "graphgoblin.db.graphgoblin.lock": "absent",
+            "graphgoblin.db.graphgoblin.lock.reclaim": "absent"
+          }
+        },
+        {
+          "id": "T08.rerun.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "T08.rerun.staleReplacedLockMarkedStale",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock row says it replaces a stale lock",
+          "actual": {
+            "path": "graphgoblin.db.graphgoblin.lock",
+            "rest": "database lock | the reset's own, replacing a stale one; removed on release"
+          }
+        }
+      ],
+      "runs": [
+        {
+          "name": "confirmed",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 14679,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed chat-audio (1 file, 1 directory, 11 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 559.3 KB)\n  kept graphgoblin.db.graphgoblin.lock (database lock): it holds another process's record\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/artifacts",
+              "data/artifacts/text",
+              "data/artifacts/text/abc123",
+              "data/chat-audio",
+              "data/chat-audio/clip.webm",
+              "data/graphgoblin.db",
+              "data/graphgoblin.db-wal",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "data/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "data/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [
+              "data/graphgoblin.db.graphgoblin.lock"
+            ],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "rerun",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 4932,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data\\graphgoblin.db (no database file)\n\nRemoves:\n  no store data\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own, replacing a stale one; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    no database to match run IDs against\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 0 files, 0 B in 0 items.\n\nRemoving:\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T08\\fixture\\data.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own, replacing a stale one; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "no database to match run IDs against"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "data/graphgoblin.db.graphgoblin.lock"
+            ],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T09",
+      "title": "Default data directory: GG_DATA_DIR unset, HOME/USERPROFILE inside the fixture, so ~/.graphgoblin is a disposable directory",
+      "assertions": [
+        {
+          "id": "T09.setup.childHomedirIsFixture",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "child os.homedir() is <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home",
+          "actual": "<run>\\fixture\\home"
+        },
+        {
+          "id": "T09.dry.defaultDataDirIsFixture",
+          "kind": "precondition",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "configured default data directory is <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin",
+          "actual": "<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin"
+        },
+        {
+          "id": "T09.dry.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T09.dry.stderrEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "empty stderr",
+          "actual": ""
+        },
+        {
+          "id": "T09.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T09.dry.dryRunHeaderAndTrailer",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "dry-run header and trailer",
+          "actual": "GraphGoblin reset (dry run: nothing is removed)"
+        },
+        {
+          "id": "T09.dry.noRemovalSection",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "no \"Removing:\" section",
+          "actual": ""
+        },
+        {
+          "id": "T09.dry.unrelatedListedAsKept",
+          "kind": "positive",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "workspaces/my-notes"
+          ],
+          "actual": {
+            "missing": []
+          }
+        },
+        {
+          "id": "T09.dry.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock under Removes, not Keeps",
+          "actual": {
+            "removes": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "keeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ]
+          }
+        },
+        {
+          "id": "T09.confirmed.exit0",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 0",
+          "actual": 0
+        },
+        {
+          "id": "T09.confirmed.resetComplete",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "\"Reset complete.\"",
+          "actual": "format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin.\n"
+        },
+        {
+          "id": "T09.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "home/.graphgoblin/master.key",
+            "home/.graphgoblin/notes.txt",
+            "home/.graphgoblin/other.db.graphgoblin.lock",
+            "home/.graphgoblin/graphgoblin.db.graphgoblin.lock.bak",
+            "home/.graphgoblin/graphgoblin.lock.old",
+            "home/.graphgoblin/workspaces/my-notes",
+            "home/.graphgoblin/workspaces/my-notes/keep.txt",
+            "outside/precious.txt"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "T09.confirmed.removedOnlyOwned",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "every removed path is store content or this configuration's lock metadata",
+          "actual": {
+            "notOwned": [],
+            "removed": [
+              "home/.graphgoblin/artifacts",
+              "home/.graphgoblin/artifacts/text",
+              "home/.graphgoblin/artifacts/text/abc123",
+              "home/.graphgoblin/chat-audio",
+              "home/.graphgoblin/chat-audio/clip.webm",
+              "home/.graphgoblin/graphgoblin.db",
+              "home/.graphgoblin/graphgoblin.db-wal",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ]
+          }
+        },
+        {
+          "id": "T09.confirmed.nothingAddedOrChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "fail",
+          "expected": "no entry added or modified",
+          "actual": {
+            "added": [
+              "home/AppData/Local/Microsoft",
+              "home/AppData/Local/Microsoft/Windows",
+              "home/AppData/Local/Microsoft/Windows/PowerShell",
+              "home/AppData/Local/Microsoft/Windows/PowerShell/StartupProfileData-NonInteractive"
+            ],
+            "changed": []
+          }
+        },
+        {
+          "id": "T09.confirmed.keepsListIsTruthful",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Keeps path exists after the reset",
+          "actual": {
+            "listedAsKeptButRemoved": []
+          }
+        },
+        {
+          "id": "T09.confirmed.removesListIsTruthful",
+          "kind": "positive",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every Removes path is absent after the reset",
+          "actual": {
+            "stillPresent": []
+          }
+        },
+        {
+          "id": "T09.confirmed.noUnlistedRemoval",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "every pre-existing path the reset removed is disclosed by a Removes row or \"removed\" line",
+          "actual": {
+            "removedButUnlisted": []
+          }
+        },
+        {
+          "id": "T09.confirmed.dbLockNotListedAsKept",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent from Keeps",
+          "actual": [
+            "graphgoblin.db.graphgoblin.lock.bak",
+            "graphgoblin.lock.old",
+            "master.key",
+            "notes.txt",
+            "other.db.graphgoblin.lock",
+            "workspaces/my-notes"
+          ]
+        },
+        {
+          "id": "T09.confirmed.dbLockClassifiedAsRemoved",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock listed under Removes",
+          "actual": [
+            "artifacts",
+            "chat-audio",
+            "graphgoblin.db",
+            "graphgoblin.db-wal",
+            "graphgoblin.db.graphgoblin.lock",
+            "graphgoblin.lock",
+            "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+            "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+          ]
+        },
+        {
+          "id": "T09.confirmed.completionReportsDirLockRemoved",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.lock (data-directory lock)"
+            ]
+          }
+        },
+        {
+          "id": "T09.confirmed.completionReportsDbLockRemoved",
+          "kind": "acceptance",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "graphgoblin.db.graphgoblin.lock absent and a completion line names it as removed",
+          "actual": {
+            "pass": true,
+            "gone": true,
+            "lines": [
+              "  removed graphgoblin.db.graphgoblin.lock (database lock)"
+            ]
+          }
+        },
+        {
+          "id": "T09.confirmed.locksReleased",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no lock or guard of this configuration left",
+          "actual": {
+            "graphgoblin.lock": "absent",
+            "graphgoblin.lock.reclaim": "absent",
+            "graphgoblin.db.graphgoblin.lock": "absent",
+            "graphgoblin.db.graphgoblin.lock.reclaim": "absent"
+          }
+        },
+        {
+          "id": "T09.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "T09.confirmed.manifestParityWithDryRun",
+          "kind": "acceptance",
+          "criterion": "AC1",
+          "outcome": "pass",
+          "expected": "dry-run and confirmed Removes/Keeps path sets equal",
+          "actual": {
+            "dryRemoves": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "confirmedRemoves": [
+              "artifacts",
+              "chat-audio",
+              "graphgoblin.db",
+              "graphgoblin.db-wal",
+              "graphgoblin.db.graphgoblin.lock",
+              "graphgoblin.lock",
+              "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "workspaces/01KQA434RVNBBBBBBBBBBBBBBB"
+            ],
+            "dryKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ],
+            "confirmedKeeps": [
+              "graphgoblin.db.graphgoblin.lock.bak",
+              "graphgoblin.lock.old",
+              "master.key",
+              "notes.txt",
+              "other.db.graphgoblin.lock",
+              "workspaces/my-notes"
+            ]
+          }
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 8262,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"<qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin\"\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 0,
+          "signal": null,
+          "ms": 13694,
+          "stdout": "GraphGoblin reset\n\nData directory: <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin\nDatabase:       <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  workspaces/01KQA434RVNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 26 B\n  workspaces/01KQA434RVNBBBBBBBBBBBBBBB  run workspace            1 file, 2 directories, 26 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  chat-audio                             private chat audio       1 file, 1 directory, 11 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 559.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  graphgoblin.db.graphgoblin.lock.bak    not part of the store\n  graphgoblin.lock.old                   not part of the store\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  other.db.graphgoblin.lock              not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 6 files, 7 directories, 563.4 KB in 6 items.\n\nRemoving:\n  removed workspaces/01KQA434RVNAAAAAAAAAAAAAAA (1 file, 2 directories, 26 B)\n  removed workspaces/01KQA434RVNBBBBBBBBBBBBBBB (1 file, 2 directories, 26 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed chat-audio (1 file, 1 directory, 11 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 559.3 KB)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in <qa>\\runs\\candidate-a8191dd-targeted-2026-11-20T08-00-51-167Z\\T09\\fixture\\home\\.graphgoblin.\n",
+          "stderr": "",
+          "manifest": {
+            "removes": [
+              {
+                "path": "workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+                "rest": "run workspace | 1 file, 2 directories, 26 B"
+              },
+              {
+                "path": "artifacts",
+                "rest": "artifacts | 1 file, 2 directories, 13 B"
+              },
+              {
+                "path": "chat-audio",
+                "rest": "private chat audio | 1 file, 1 directory, 11 B"
+              },
+              {
+                "path": "graphgoblin.db",
+                "rest": "database | 1 file, 4.0 KB"
+              },
+              {
+                "path": "graphgoblin.db-wal",
+                "rest": "SQLite write-ahead log | 1 file, 559.3 KB"
+              },
+              {
+                "path": "graphgoblin.db.graphgoblin.lock",
+                "rest": "database lock | the reset's own; removed on release"
+              },
+              {
+                "path": "graphgoblin.lock",
+                "rest": "data-directory lock | the reset's own; removed last, on release"
+              }
+            ],
+            "keeps": [
+              {
+                "path": "graphgoblin.db.graphgoblin.lock.bak",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "graphgoblin.lock.old",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "master.key",
+                "rest": "secret-store key; kept so the secrets in a backup of this store stay readable"
+              },
+              {
+                "path": "notes.txt",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "other.db.graphgoblin.lock",
+                "rest": "not part of the store"
+              },
+              {
+                "path": "workspaces/my-notes",
+                "rest": "not a stored run ID"
+              }
+            ]
+          },
+          "fsDiff": {
+            "removed": [
+              "home/.graphgoblin/artifacts",
+              "home/.graphgoblin/artifacts/text",
+              "home/.graphgoblin/artifacts/text/abc123",
+              "home/.graphgoblin/chat-audio",
+              "home/.graphgoblin/chat-audio/clip.webm",
+              "home/.graphgoblin/graphgoblin.db",
+              "home/.graphgoblin/graphgoblin.db-wal",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src",
+              "home/.graphgoblin/workspaces/01KQA434RVNAAAAAAAAAAAAAAA/src/out.txt",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src",
+              "home/.graphgoblin/workspaces/01KQA434RVNBBBBBBBBBBBBBBB/src/out.txt"
+            ],
+            "added": [
+              "home/AppData/Local/Microsoft",
+              "home/AppData/Local/Microsoft/Windows",
+              "home/AppData/Local/Microsoft/Windows/PowerShell",
+              "home/AppData/Local/Microsoft/Windows/PowerShell/StartupProfileData-NonInteractive"
+            ],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    }
+  ]
+}

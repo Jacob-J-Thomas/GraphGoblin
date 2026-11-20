@@ -1,0 +1,43 @@
+**Verdict: PASS with stated limits.** The correction at `dc65a245` behaves correctly in every system it touches: reset manifests, completion and failure messages, lock acquisition and release reporting, and preservation of unrelated files. I found no product defect. All 15 nonpassing results are retained and explained below.
+
+## What the original run already showed (run1, preserved and not re-run)
+- `results/candidate-dc65a24-run1-results.json` still has SHA-256 `763770cf…a650a779`. The checkout is still at `dc65a24` with 0 git status lines, and the built files have the same hashes as when run1 ran. The reused driver files are byte-identical to the baseline copies.
+- **Totals:** 282 assertions, 280 pass, 2 fail (baseline at `8181f35`: 218 pass, 64 fail). All 69 acceptance and all 66 safety checks pass. Per case, baseline then candidate failures:
+
+  | Case | S01 | S02 | S03 | S04 | S05–S07 | S08 | S09 | S10 | S11 | S12 | S13 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|
+  | Baseline | 6 | 7 | 10 | 9 | 0 | 7 | 8 | 0 | 5 | 6 | 6 |
+  | Candidate | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
+
+- **S08 failure (disputed, not a defect):** the driver's check looks for the old wording "Released graphgoblin.lock". The candidate prints `removed graphgoblin.lock (data-directory lock)`, and the after-tree confirms the file is gone. The CHANGELOG says this wording was replaced on purpose. The baseline summary's claim that its checks don't depend on wording is wrong for this one check.
+- **S11 failure (out of scope, same on baseline):** `db/readme.txt` is kept but not listed under Keeps, because Keeps only lists top-level entries.
+
+## What this continuation observed itself
+In run1, the held-lock refusals (S05–S07) happen before any lock is taken, so they never reach the corrected code. I added a separate driver to reach it through the real CLI. The failures are real Windows errors from my helpers (another process holding a file open, a hard link); nothing was injected into the product.
+- **controls-run1:** 274 assertions, 262 pass, 12 fail. All 6 preconditions held, and both timing races were won on the first attempt.
+  - **Primary refusal:** a hard-linked database, an undeletable stale directory lock, sidecar, or guard marker. Each is refused at the right stage. The present/absent lines match the actual files, nothing changed on disk, and each rerun completes.
+  - **Primary refusal plus cleanup failure (C5):** the database-lock refusal and `could not remove graphgoblin.lock (data-directory lock): EBUSY` are reported separately. The only change on disk is the leftover lock, which holds the reset's own record.
+  - **Release failure after a complete reset (C6):** reported accurately for both locks.
+  - **12 failures (C1b) are my own expectation error:** with the hard link inside the data directory, the preview refuses both runs before taking any lock and truthfully says nothing changed (the diffs are empty). After correcting the expectation, controls-run2 passed 22 of 22. The first run's driver bytes are archived.
+- **Scoped regression:** `reset-acquisition.test.ts` passed 11 of 11. Its cleanup-failure cases are simulated (a fake `EPERM` on unlink, a fake `EACCES` on lstat, an in-process competing owner); only its hard-link case is native.
+  - The wider `data-dir-lock` plus `src/reset/` run passed 205, skipped 2 (Windows short-name alias, FIFO), failed 0.
+  - That wider run left 191 leftovers in my isolated TEMP, from two test files this correction didn't change; I deleted them.
+- **Physical before/after:** the checkout's 3,233 files outside `node_modules`/`.git` are byte-identical before, after each test run, and at the end. Git status was 0 lines throughout. Vitest created two cache folders in `apps/api/node_modules` that didn't exist before; I removed them.
+
+## Limit regarding #409 and #471
+- **#409 (stack trace when a held lock refuses startup):** only `--reset` was run. Every reset refusal I saw had no stack trace, but I never started the API server, and I didn't run `main.test.ts` because it starts servers. The lock-module change only adds a return value to `release()`. This QA neither shows #409 fixed nor shows it made worse.
+- **#471 (Windows contention failure):** I ran no real multi-process contention. The in-process contention test passed once, which says nothing about an intermittent CI failure. Failure to remove a guard marker was checked only with a fake `EPERM` and a native `EBUSY`, neither of which is the #471 cause.
+- **Not integrated:** this commit was tested on its own. Any later change from #409/#471 would change this reset output and needs this QA rerun.
+
+**Other limits:** Windows only, on one machine; the races depend on timing. I didn't run `pnpm test`, `pnpm check`, coverage, or `reset.acceptance.mjs`. Symlinks, junctions, case variants and containers were not covered.
+
+All paths are under `<qa>`, which also contains `driver/` (unchanged) and `continuation/archive/` with the controls-run1 driver bytes:
+- SUMMARY.md (SHA-256 `9eabcf27…aa6b04`)
+- results/candidate-dc65a24-run1-results.json
+- results/candidate-dc65a24-run1-console.log
+- continuation/results/continuation-dc65a24-controls-run1-results.json
+- continuation/results/continuation-dc65a24-controls-run2-C1b-results.json
+- continuation/qa-434-acquisition-controls.mjs
+- continuation/scoped-test/
+
+Nothing was committed, pushed or published.

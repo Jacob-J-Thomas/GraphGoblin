@@ -1,0 +1,126 @@
+{
+  "qualification": "Faithful selected count/coverage lines plus complete raw hashes. Terminal reports supply execution/exit caveats. These are local source-bound outcomes, not hosted CI or independent terminal QA.",
+  "checks": [
+    {
+      "file": "held-source-final-tests.log",
+      "original": {
+        "sha256": "394106eb9c984ae17139f62ae64c13c0c832c8f6e1cdde27f9f8602f7b8046ee",
+        "bytes": 16241
+      },
+      "sourceScope": "a8191dd97aacfe9709d2369afd60497214bf00a7",
+      "interpretation": "New acquisition tests against held production: 11 failed / 19 passed; expected red control.",
+      "selectedSummaryLines": [
+        "test files: final corrected-tree versions",
+        " Test Files  2 failed (2)",
+        "      Tests  11 failed | 19 passed (30)"
+      ]
+    },
+    {
+      "file": "corrected-final-tests.log",
+      "original": {
+        "sha256": "f8519df2bb2e04ba00b7df19957a6e937650b6b1f2150fb8a5b2bb8f2aa2711d",
+        "bytes": 6464
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "Corrective author working production: 30/30 focused; before final stale-PID fixture carry-over.",
+      "selectedSummaryLines": [" Test Files  2 passed (2)", "      Tests  30 passed (30)"]
+    },
+    {
+      "file": "integrated-focused.log",
+      "original": {
+        "sha256": "f480c259f08fe353ef27339b104efa2fcda1b03477979b6fcbed2fbb55c79db4",
+        "bytes": 498
+      },
+      "sourceScope": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+      "interpretation": "Final integrated test helper state: 30/30 targeted across two files.",
+      "selectedSummaryLines": [" Test Files  2 passed (2)", "      Tests  30 passed (30)"]
+    },
+    {
+      "file": "integrated-typecheck.log",
+      "original": {
+        "sha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca",
+        "bytes": 54
+      },
+      "sourceScope": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+      "interpretation": "Final source API typecheck passed, as retained coordinator result; the raw log contains only the compiler command.",
+      "selectedSummaryLines": []
+    },
+    {
+      "file": "integrated-lint.log",
+      "original": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceScope": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+      "interpretation": "Final source API lint passed, as retained coordinator result; raw successful lint output is empty.",
+      "selectedSummaryLines": []
+    },
+    {
+      "file": "integrated-format.log",
+      "original": {
+        "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+        "bytes": 68
+      },
+      "sourceScope": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+      "interpretation": "Final source format passed; retained output explicitly confirms all matched files.",
+      "selectedSummaryLines": ["All matched files use Prettier code style!"]
+    },
+    {
+      "file": "api-gates.log",
+      "original": {
+        "sha256": "ca86df4b2433ea4e8078007990d003e4c1bae407d3a32a8c303151362d667a3d",
+        "bytes": 268357
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "Earlier corrective full coverage: 15 failures under load; not waived.",
+      "selectedSummaryLines": [" Tasks:    9 successful, 10 total"]
+    },
+    {
+      "file": "api-rerun-failed-files.log",
+      "original": {
+        "sha256": "246aa68076be2048ae7394f03974346ba2d38a39a6d51d084bc76db6a00042d3",
+        "bytes": 1683
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "Affected files rerun: 120 passed / 5 skipped; narrower rerun does not replace full gate.",
+      "selectedSummaryLines": [
+        " Test Files  10 passed (10)",
+        "      Tests  120 passed | 5 skipped (125)"
+      ]
+    },
+    {
+      "file": "api-coverage-rerun.log",
+      "original": {
+        "sha256": "f0cbff1017052281d4716afa7bc344346e221ea9627e4d76d10d7a4d384ab602",
+        "bytes": 9851
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "All 2133 counted tests passed / 17 skipped; worker access violation still made exit1. No clean full gate.",
+      "selectedSummaryLines": [
+        "Caused by: Error: Worker exited unexpectedly with exit code 3221225477 during started state while running test file <corrective-checkout>/apps/api/src/cron-preview.test.ts",
+        " Test Files  138 passed | 2 skipped (141)",
+        "      Tests  2133 passed | 17 skipped (2153)"
+      ]
+    },
+    {
+      "file": "api-rerun-cron-preview.log",
+      "original": {
+        "sha256": "a3294c7f1c4cc0be6b651281a0cb68e0d71e190820d5c66292ff3443d643864b",
+        "bytes": 235
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "The worker-crash-associated file passed alone: 13/13.",
+      "selectedSummaryLines": [" Test Files  1 passed (1)", "      Tests  13 passed (13)"]
+    },
+    {
+      "file": "reset-acceptance.log",
+      "original": {
+        "sha256": "30e8155b37ef17c8d5c1b11a4f61f98934a874e01da9880d327b2fb7fdc50420",
+        "bytes": 4366
+      },
+      "sourceScope": "c781242da01bfaa2f860a58eab50996158df510e",
+      "interpretation": "Corrective author built reset acceptance: 1/1.",
+      "selectedSummaryLines": []
+    }
+  ]
+}

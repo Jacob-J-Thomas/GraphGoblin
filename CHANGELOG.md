@@ -10,6 +10,43 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   and line separators in the explanation. Lock records, acquisition rules, managed startup
   categories and unrelated diagnostics are unchanged.
 
+- `--reset` manifests and output account for both writer locks and their `.reclaim` guards
+  (#434). The dry run and the confirmed manifest list `<database-file>.graphgoblin.lock` and
+  `graphgoblin.lock` as the reset's own locks, removed on release, where the confirmed manifest
+  previously listed its own database lock under Keeps as unrelated data. A stale lock file or
+  `.reclaim` guard is listed as reclaimed when the reset takes that lock, instead of being kept
+  (the database lock and its guard) or omitted (the data-directory guard); the stale lock of
+  another database, an abandoned guard staging directory and a hard link of a lock stay under
+  Keeps and are never removed. Each lock file and guard is listed once under the name the
+  directory shows, matched by filesystem identity rather than letter case, so a spelling the
+  volume equates with the lock name (such as `ΟΣ-1.DB.GRAPHGOBLIN.LOCK` for
+  `οσ-1.db.graphgoblin.lock` on NTFS, whose `Σ` JavaScript lowercases to a final `ς`) is no
+  longer also listed under Keeps. A reset refuses when the directory lists several hard links
+  that could be a lock or guard and the filesystem does not say which one the lock module opens.
+  The confirmed manifest says a stale lock file or guard was reclaimed only when the reset's own
+  acquisition removed it, as the lock module now reports; one the preview found that another
+  process removed first is listed as `already gone when the reset took` that lock instead of as
+  reclaimed by the reset. Completion and failure output names each lock and what releasing
+  it did (removed, already gone, or kept because another process's record replaced it) instead
+  of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
+  lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
+  its locks names any stale lock file or guard they reclaimed, and any the preview found that
+  was already gone when the reset took its lock (without saying who removed it), instead of
+  saying nothing changed. A failed attempt to take either lock is no longer reported as
+  `Nothing in the data directory was changed.`: taking a lock can itself create or reclaim that
+  lock's file and guard and leave them (for example when removing the guard's owner marker
+  fails, which can leave both the lock file and the guard behind). The refusal now names the stage
+  (`could not take the data-directory lock:` or `could not take the database lock:`, replacing
+  the `; stop it before resetting` suffix), says `No store data was removed.`, lists that lock
+  file and guard as found now and just before the attempt, without saying who changed them, and
+  says what releasing the data-directory lock did. A lock path that is not a regular file, or a
+  guard path that is not a directory, is refused before anything changes.
+  **Upgrade:** no stored data, schema or format change, and no reset. Rebuild the API. Scripts
+  that parse reset output must expect the new lock rows and release lines in place of
+  `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
+  `Released graphgoblin.lock.`, the `could not take the <lock>:` refusal prefix, and the
+  `already gone when the reset took` wording for stale entries another process removed first.
+
 - The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
   overrides, including case variants and empty values, before writing staged or installed JSON
   (#437). The native launcher refuses the same keys in manually edited configuration, without

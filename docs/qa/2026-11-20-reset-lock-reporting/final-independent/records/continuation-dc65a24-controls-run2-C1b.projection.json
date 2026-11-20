@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "original": {
+    "file": "continuation-dc65a24-controls-run2-C1b-results.json",
+    "bytes": 20956,
+    "sha256": "45b4b56492e42f2f11718130953fe37554eecf47d8a994a9794d6144abb926f6"
+  },
+  "projection": {
+    "retained": "Every scenario, assertion, original outcome and total; CLI output, manifests, parsed refusal lines and filesystem diffs.",
+    "omitted": "Raw argv, environment values, helper process output and full tree snapshots. No assertion is dropped or regraded.",
+    "substitutions": "Checkout/scratch prefixes become role aliases; complete command lines are marked omitted; method entrypoint is described without argv."
+  },
+  "schema": "gg-434-acquisition-controls-qa/v1",
+  "issue": 434,
+  "label": "continuation-dc65a24-controls-run2-C1b",
+  "evidenceSource": "continuation session: independent real execution (not part of the original run1)",
+  "startedAt": "2026-11-20T12:29:50.813Z",
+  "finishedAt": "2026-11-20T12:29:54.983Z",
+  "provenanceBefore": {
+    "checkout": "<checkout>",
+    "head": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+    "expectHead": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+    "headMatches": true,
+    "statusLines": [],
+    "node": "v22.23.4",
+    "platform": "win32",
+    "fileSha256": {
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/reset/reset.js": "703dc824ee07d9674f376126303cbfe3068be0ff1fc19863dd45dcef8b1b812d",
+      "apps/api/dist/data-dir-lock.js": "a08499659b375cbe14a1799ec5f68b1461ee2d050a4b2a40b4829bad616b979e",
+      "apps/api/src/reset/reset.ts": "9fb9d5cd49c361334b62e9b5539f980156d49b1ea76927eeef56953cfa74b67a",
+      "apps/api/src/data-dir-lock.ts": "7731874dd6941b1d5cea80549ebd3e5b034722485e1b555567bf7c4964fb37ca"
+    }
+  },
+  "provenanceAfter": {
+    "checkout": "<checkout>",
+    "head": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+    "expectHead": "dc65a245a3c21a8dec6b975d9d1d2d63f8a59eaa",
+    "headMatches": true,
+    "statusLines": [],
+    "node": "v22.23.4",
+    "platform": "win32",
+    "fileSha256": {
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/reset/reset.js": "703dc824ee07d9674f376126303cbfe3068be0ff1fc19863dd45dcef8b1b812d",
+      "apps/api/dist/data-dir-lock.js": "a08499659b375cbe14a1799ec5f68b1461ee2d050a4b2a40b4829bad616b979e",
+      "apps/api/src/reset/reset.ts": "9fb9d5cd49c361334b62e9b5539f980156d49b1ea76927eeef56953cfa74b67a",
+      "apps/api/src/data-dir-lock.ts": "7731874dd6941b1d5cea80549ebd3e5b034722485e1b555567bf7c4964fb37ca"
+    }
+  },
+  "method": {
+    "entrypoint": "Real built reset CLI in a separate process, with disposable fixture arguments.",
+    "isolation": "minimal child env; GG_DATA_DIR always a fixture; USERPROFILE/HOME/TEMP/TMP/APPDATA/LOCALAPPDATA inside the run folder",
+    "nativeFaults": {
+      "hardLink": "fs.link of the fixture database; the lock module refuses nlink > 1",
+      "shareRead": "  <command line omitted; executed driver preserved>",
+      "spinExlock": "  <command line omitted; executed driver preserved>",
+      "staleRecords": "produced by ../driver/holder.mjs (unchanged) with the checkout's built lock code, then SIGKILL",
+      "injectedIntoProduct": "none"
+    },
+    "kinds": {
+      "correction": "behaviour the dc65a24 correction states for an acquisition-stage refusal (CHANGELOG, reset-acquisition.test.ts contract)",
+      "acceptance": "#434 acceptance criterion",
+      "safety": "no unrelated or unowned change",
+      "positive": "existing documented behaviour / control",
+      "precondition": "fixture precondition; dependent assertions are not-run when it fails",
+      "observation": "recorded fact outside #434 scope"
+    },
+    "criteria": {
+      "AC1": "Dry-run and confirmed manifests accurately classify the database lock and its .reclaim guard",
+      "AC2": "Completion and failure messages identify directory and database locks accurately",
+      "AC3": "Confirmed runs preserve unrelated files; only owned metadata/content is removed",
+      "ACQ": "Acquisition-stage refusal: names the stage, never claims nothing changed, reports the failed lock file/guard now vs before and the held lock release",
+      "CTL": "held/failure/refusal controls",
+      "DIFF": "expected dry-run vs confirmed differences"
+    }
+  },
+  "fixtures": "deleted after the run (disposable)",
+  "totals": {
+    "all": {
+      "total": 22,
+      "pass": 22,
+      "fail": 0,
+      "notRun": 0
+    },
+    "byKind": {
+      "correction": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "acceptance": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "safety": {
+        "total": 11,
+        "pass": 11,
+        "fail": 0,
+        "notRun": 0
+      },
+      "positive": {
+        "total": 11,
+        "pass": 11,
+        "fail": 0,
+        "notRun": 0
+      },
+      "precondition": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "observation": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      }
+    },
+    "byCriterion": {
+      "AC1": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "AC2": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "AC3": {
+        "total": 7,
+        "pass": 7,
+        "fail": 0,
+        "notRun": 0
+      },
+      "ACQ": {
+        "total": 2,
+        "pass": 2,
+        "fail": 0,
+        "notRun": 0
+      },
+      "CTL": {
+        "total": 12,
+        "pass": 12,
+        "fail": 0,
+        "notRun": 0
+      },
+      "DIFF": {
+        "total": 1,
+        "pass": 1,
+        "fail": 0,
+        "notRun": 0
+      }
+    },
+    "failed": [],
+    "notRun": []
+  },
+  "scenarios": [
+    {
+      "id": "C1b",
+      "title": "Hard-linked database (second link inside the data directory): the read-only preview refuses dry run and confirmed reset; nothing changed",
+      "assertions": [
+        {
+          "id": "C1b.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": 1,
+          "actual": 1
+        },
+        {
+          "id": "C1b.dry.noPlanPrinted",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "stdout empty",
+          "actual": ""
+        },
+        {
+          "id": "C1b.dry.namesBothNames",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal names graphgoblin.db and linked-copy.db as one database",
+          "actual": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means"
+        },
+        {
+          "id": "C1b.dry.refusedBeforeAnyLock",
+          "kind": "positive",
+          "criterion": "ACQ",
+          "outcome": "pass",
+          "expected": "no \"could not take the\" stage, no lock lines",
+          "actual": {
+            "first": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means",
+            "observed": [],
+            "releases": []
+          }
+        },
+        {
+          "id": "C1b.dry.nothingChangedClaimIsTrue",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "\"Nothing in the data directory was changed.\" and the fixture is byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "C1b.dry.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt",
+            "outside/sub",
+            "outside/sub/also.txt",
+            "data/linked-copy.db"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "C1b.dry.nothingOutsideDataChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no change outside data/",
+          "actual": []
+        },
+        {
+          "id": "C1b.dry.noGuardStagingLeft",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no <lock>.reclaim.<uuid>.tmp staging directory left",
+          "actual": []
+        },
+        {
+          "id": "C1b.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "C1b.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no JavaScript stack frames in output",
+          "actual": ""
+        },
+        {
+          "id": "C1b.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": 1,
+          "actual": 1
+        },
+        {
+          "id": "C1b.confirmed.noPlanPrinted",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "stdout empty",
+          "actual": ""
+        },
+        {
+          "id": "C1b.confirmed.namesBothNames",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal names graphgoblin.db and linked-copy.db as one database",
+          "actual": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means"
+        },
+        {
+          "id": "C1b.confirmed.refusedBeforeAnyLock",
+          "kind": "positive",
+          "criterion": "ACQ",
+          "outcome": "pass",
+          "expected": "no \"could not take the\" stage, no lock lines",
+          "actual": {
+            "first": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means",
+            "observed": [],
+            "releases": []
+          }
+        },
+        {
+          "id": "C1b.confirmed.nothingChangedClaimIsTrue",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "\"Nothing in the data directory was changed.\" and the fixture is byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "C1b.confirmed.unrelatedPreservedByteForByte",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": [
+            "data/master.key",
+            "data/notes.txt",
+            "data/other.db.graphgoblin.lock",
+            "data/graphgoblin.db.graphgoblin.lock.bak",
+            "data/graphgoblin.lock.old",
+            "data/workspaces/my-notes",
+            "data/workspaces/my-notes/keep.txt",
+            "outside/precious.txt",
+            "outside/sub",
+            "outside/sub/also.txt",
+            "data/linked-copy.db"
+          ],
+          "actual": {
+            "changedOrMissing": []
+          }
+        },
+        {
+          "id": "C1b.confirmed.nothingOutsideDataChanged",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "no change outside data/",
+          "actual": []
+        },
+        {
+          "id": "C1b.confirmed.noGuardStagingLeft",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no <lock>.reclaim.<uuid>.tmp staging directory left",
+          "actual": []
+        },
+        {
+          "id": "C1b.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left in the isolated TEMP",
+          "actual": []
+        },
+        {
+          "id": "C1b.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no JavaScript stack frames in output",
+          "actual": ""
+        },
+        {
+          "id": "C1b.confirmed.sameRefusalAsDryRun",
+          "kind": "positive",
+          "criterion": "DIFF",
+          "outcome": "pass",
+          "expected": "dry run and confirmed reset print the same refusal",
+          "actual": {
+            "dry": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means\nNothing in the data directory was changed.\n",
+            "confirmed": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means\nNothing in the data directory was changed.\n"
+          }
+        },
+        {
+          "id": "C1b.confirmed.linkStillShared",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "database still has its 2 links",
+          "actual": 2
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "startedAt": 1795177792325,
+          "endedAt": 1795177793548,
+          "ms": 1223,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "parsedStderr": {
+            "first": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means",
+            "stage": null,
+            "header": null,
+            "observed": [],
+            "releases": [],
+            "reclaimed": [],
+            "unknown": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "startedAt": 1795177793568,
+          "endedAt": 1795177794852,
+          "ms": 1284,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "parsedStderr": {
+            "first": "reset refused: the data directory lists graphgoblin.db under more than one name (graphgoblin.db, linked-copy.db); a reset cannot tell which one the configuration means",
+            "stage": null,
+            "header": null,
+            "observed": [],
+            "releases": [],
+            "reclaimed": [],
+            "unknown": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    }
+  ]
+}
