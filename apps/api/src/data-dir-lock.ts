@@ -200,7 +200,6 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
   const stagedMarker = join(staging, name);
   await mkdir(staging, { mode: 0o700 });
   let published = false;
-  let failure: unknown;
   try {
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -246,19 +245,17 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
     }
     throw held(path);
   } catch (error) {
-    failure = error;
-    throw error;
-  } finally {
     if (!published) {
       const cleanup: unknown[] = [];
-      await removeMarker(stagedMarker, 'staging-marker-unlink').catch((error: unknown) =>
-        cleanup.push(error),
+      await removeMarker(stagedMarker, 'staging-marker-unlink').catch((cleanupError: unknown) =>
+        cleanup.push(cleanupError),
       );
-      await rmdir(staging).catch((error: unknown) => {
-        cleanup.push(filesystemFailure(error, 'staging-directory-remove', staging));
+      await rmdir(staging).catch((cleanupError: unknown) => {
+        cleanup.push(filesystemFailure(cleanupError, 'staging-directory-remove', staging));
       });
-      if (cleanup.length) throw cleanupFailure(failure, cleanup, 'staging cleanup also failed');
+      if (cleanup.length) throw cleanupFailure(error, cleanup, 'staging cleanup also failed');
     }
+    throw error;
   }
 }
 
