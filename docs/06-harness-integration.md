@@ -509,7 +509,31 @@ Other extension isolation remains ([ADR-0063](decisions/ADR-0063-loop-turns-with
 
 Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded; [#442](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/442) tracks diagnostics for that limit.
 
-Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. A listed name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). An override key that breaks it is refused by the adapter with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted.
+Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. The shared contract checks raw authored keys before record parsing, including dotted keys, nested tables and tables inside arrays. The editor and API reject an invalid key with its field path instead of discarding it; publication also checks retained drafts and reports `CODEX_CONFIG_KEY_INVALID` on the inference node. Ordinary scalar values, valid tables and dotted keys keep their existing behavior. A previously stored invalid-key draft remains unchanged when publication is refused. Such stored definitions must be corrected before restarting with this contract, because the existing store guard refuses invalid definitions (see the CHANGELOG upgrade note).
+
+A listed server name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). The adapter independently checks overrides with the same key rule and refuses them with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted. Existing HTTP reserved-key guards continue to apply before contract validation.
+
+API request-schema paths preserve literal authored member names with RFC 6901 escaping, including
+`/` and `~` and nested array positions ([API error responses](07-api-and-streaming.md#error-responses-decided)).
+Recovery of a manually edited stored row needs more than removing its bad override key: if its
+defaulted harness was omitted, explicitly store `harness: "codex"` in the node configuration as
+part of the operator correction on the stopped target store, alongside the key repair. Normal
+API writes already materialize that value. Startup and input-schema validation do not rewrite a
+stored omission; key-only repair can allow startup while GET and publication still fail. The
+CHANGELOG recipe identifies the target and full backup procedure, limits any copy rehearsal to
+offline checks without a gateway, and requires both discovery queries plus exact stored-text
+readback because SQLite's affected-row count alone does not prove a quoted member changed. Before
+restart, correct applicable editable rows, resolve invalid-key discovery results and choose a
+deliberate disposition for any actually incompatible snapshots. An omitted harness alone in an
+immutable snapshot is accepted by definition parsing. An explicit version read of that manually
+authored snapshot can still return `500 RESPONSE_INVALID`. Preserve its history.
+If recovery uses a fresh store, adopt that store's configuration and credentials and use the loop
+ID returned by import. An incompatible snapshot still blocks the original database. After the
+operator starts the chosen store for normal service, authenticated read-only GET verifies
+its served draft/current definitions; offline checks cover other retained versions. Verification
+does not publish owner drafts or start runs. Publication and restart tests use separate synthetic
+fixtures with fake harnesses and timers disabled, not a copy of the owner's store. No runtime
+converter or backfill is provided (ADR-0062).
 
 A loop turn still inherits from the machine:
 

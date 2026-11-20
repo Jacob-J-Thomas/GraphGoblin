@@ -337,12 +337,18 @@ it('records a refused override key as a pinned, non-resumable run failure', asyn
           harnessOptions: {
             sandbox: 'read-only',
             approval: 'never',
-            configOverrides: { 'features.prototype': true },
+            configOverrides: {},
           },
           prompt: { template: 'The complete authored task' },
         },
       }),
     );
+    // A previously saved version can predate contract admission. Keep the adapter's final
+    // refusal covered independently of the authoring schema that now rejects this key.
+    const infer = version.definition.nodes.find((node) => node.kind === 'inference');
+    if (!infer || infer.kind !== 'inference') throw new Error('Missing fixture inference');
+    infer.config.harnessOptions.configOverrides = { 'features.prototype': true };
+    e.ports.loops.add(version);
     const run = await e.runToIdle(version.loopId);
     expect(run.failure).toMatchObject({
       code: 'HARNESS_TURN_FAILED',

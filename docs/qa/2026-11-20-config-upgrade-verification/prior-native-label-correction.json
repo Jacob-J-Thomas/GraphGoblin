@@ -1,0 +1,155 @@
+{
+  "note": "The four reused guard should refuse before listen labels actually pass when no refusal is expected. Native phase records establish four listening successes; the separate unrepaired-cold-refusal records establish the refusal. Preserve original records unchanged.",
+  "records": [
+    {
+      "name": "native-original.json",
+      "sha256": "7b3be0ac7adcc287b34dd1cb0740eacb987e69e0304fa0db12353463734be5b2",
+      "phases": [
+        {
+          "name": "seed-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "unrepaired-cold-refusal",
+          "exit": {
+            "code": 1,
+            "signal": null
+          },
+          "rowNamed": true,
+          "startupRefusalMatched": true,
+          "listenerAnnounced": false,
+          "launchError": null,
+          "privateOutputSha256": "3d990c3e6bb09f05e7f2d95ff5a3d081e0b888812295515d008f1a1dceba40f2"
+        },
+        {
+          "name": "key-only-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "fully-corrected-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "post-publish-process-restart",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "restart-authenticated-readback",
+          "get": 200,
+          "versionPreserved": true,
+          "exactDefinition": true,
+          "run": 200,
+          "events": 200,
+          "eventCount": 8,
+          "eventsMatch": true
+        },
+        {
+          "name": "restart-drain",
+          "drain": 202,
+          "phase": "draining",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "reusedMisleadingLabels": [
+        {
+          "name": "seed-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "key-only-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "fully-corrected-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "post-publish-process-restart: guard should refuse before listen",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "native-recheck.json",
+      "sha256": "fc35ad435506ddf17a1753041798f9a51b9d329b7cec296f20d0d9e91fec75e7",
+      "phases": [
+        {
+          "name": "seed-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "unrepaired-cold-refusal",
+          "exit": {
+            "code": 1,
+            "signal": null
+          },
+          "rowNamed": true,
+          "startupRefusalMatched": true,
+          "listenerAnnounced": false,
+          "launchError": null,
+          "privateOutputSha256": "8c9d5a08991718e291a5b0651c392a930d27aa1c45792eae73c57458a7430e58"
+        },
+        {
+          "name": "key-only-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "fully-corrected-cold-start",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "post-publish-process-restart",
+          "health": 200,
+          "listenerPidMatched": true
+        },
+        {
+          "name": "restart-authenticated-readback",
+          "get": 200,
+          "versionPreserved": true,
+          "exactDefinition": true,
+          "run": 200,
+          "events": 200,
+          "eventCount": 8,
+          "eventsMatch": true
+        },
+        {
+          "name": "restart-drain",
+          "drain": 202,
+          "phase": "draining",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "reusedMisleadingLabels": [
+        {
+          "name": "seed-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "key-only-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "fully-corrected-cold-start: guard should refuse before listen",
+          "pass": true
+        },
+        {
+          "name": "post-publish-process-restart: guard should refuse before listen",
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

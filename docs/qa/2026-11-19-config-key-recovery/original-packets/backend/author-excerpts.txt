@@ -1,0 +1,161 @@
+=== Original parent-tree reproduction ===
+
+ RUN  v5.0.3 <WORKTREE>/apps/api
+
+stdout | src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes slash in create, save and validate errors
+{"finding":"F1","fixture":"slash","method":"POST","code":"VALIDATION_FAILED","path":"/definition/nodes/1/config/harnessOptions/configOverrides/review/slash"}
+
+stdout | src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes literal tilde escape text in create, save and validate errors
+{"finding":"F1","fixture":"literal tilde escape text","method":"POST","code":"VALIDATION_FAILED","path":"/definition/nodes/1/config/harnessOptions/configOverrides/review~1text"}
+
+stdout | src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes nested array member in create, save and validate errors
+{"finding":"F1","fixture":"nested array member","method":"POST","code":"VALIDATION_FAILED","path":"/definition/nodes/1/config/harnessOptions/configOverrides/review/1/slash/~member"}
+
+ ❯ src/validation-paths.test.ts (3 tests | 3 failed) 2956ms
+   ❯ literal authored member paths (#429 F1) (3)
+     × encodes slash in create, save and validate errors 2449ms
+     × encodes literal tilde escape text in create, save and validate errors 280ms
+     × encodes nested array member in create, save and validate errors 225ms
+stdout | src/codex-config-recovery.test.ts > requires full explicit operator correction before authenticated GET, publish and restart (#429 F2)
+{"finding":"F2","phase":"key-only repair","get":500,"getCode":"RESPONSE_INVALID","publish":500,"publishCode":"INTERNAL_ERROR","startup":"accepted"}
+
+stdout | src/codex-config-recovery.test.ts > requires full explicit operator correction before authenticated GET, publish and restart (#429 F2)
+{"finding":"F2","phase":"complete documented recipe","materializationStepPresent":false,"get":500,"publish":500}
+
+ ❯ src/codex-config-recovery.test.ts (2 tests | 1 failed) 3645ms
+   × requires full explicit operator correction before authenticated GET, publish and restart (#429 F2) 3476ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/codex-config-recovery.test.ts > requires full explicit operator correction before authenticated GET, publish and restart (#429 F2)
+AssertionError: expected { get: 500, publish: 500 } to deeply equal { get: 200, publish: 200 }
+
+- Expected
++ Received
+
+  {
+-   "get": 200,
+-   "publish": 200,
++   "get": 500,
++   "publish": 500,
+  }
+
+ ❯ src/codex-config-recovery.test.ts:136:63
+
+    134|     const published = await call<{ version?: LoopVersionRecord }>('POS…
+    135|     console.info(JSON.stringify({ finding: 'F2', phase: 'complete docu…
+    136|     expect({ get: detail.status, publish: published.status }).toEqual(…
+       |                                                               ^
+    137|     expect(detail.body.draft?.definition).toEqual(draft.definition);
+    138|     expect(published.body.version?.id).toBe(draft.id);
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 6 passed (10)
+   Start at  21:00:11
+   Duration  14.31s (import 42%, transform 33%, tests 24%)
+
+  Transform  transforming modules took 13.53s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes slash in create, save and validate errors
+AssertionError: expected { …(6) } to match object { code: 'VALIDATION_FAILED', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "VALIDATION_FAILED",
+    "errors": [
+      {
+        "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+-       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review~1slash",
++       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review/slash",
+      },
+    ],
+  }
+
+ ❯ src/validation-paths.test.ts:46:22
+     44|       const result = response.json<{ code: string; errors: { path: str…
+     45|       console.info(JSON.stringify({ finding: 'F1', fixture: _name, met…
+     46|       expect(result).toMatchObject({ code: 'VALIDATION_FAILED', errors…
+       |                      ^
+     47|         { path: `/definition/nodes/1/config/harnessOptions/configOverr…
+     48|       ] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes literal tilde escape text in create, save and validate errors
+AssertionError: expected { …(6) } to match object { code: 'VALIDATION_FAILED', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "VALIDATION_FAILED",
+    "errors": [
+      {
+        "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+-       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review~01text",
++       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review~1text",
+      },
+    ],
+  }
+
+ ❯ src/validation-paths.test.ts:46:22
+     44|       const result = response.json<{ code: string; errors: { path: str…
+     45|       console.info(JSON.stringify({ finding: 'F1', fixture: _name, met…
+     46|       expect(result).toMatchObject({ code: 'VALIDATION_FAILED', errors…
+       |                      ^
+     47|         { path: `/definition/nodes/1/config/harnessOptions/configOverr…
+     48|       ] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/validation-paths.test.ts > literal authored member paths (#429 F1) > encodes nested array member in create, save and validate errors
+AssertionError: expected { …(6) } to match object { code: 'VALIDATION_FAILED', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "VALIDATION_FAILED",
+    "errors": [
+      {
+        "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+-       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review/1/slash~1~0member",
++       "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review/1/slash/~member",
+      },
+    ],
+  }
+
+ ❯ src/validation-paths.test.ts:46:22
+     44|       const result = response.json<{ code: string; errors: { path: str…
+     45|       console.info(JSON.stringify({ finding: 'F1', fixture: _name, met…
+     46|       expect(result).toMatchObject({ code: 'VALIDATION_FAILED', errors…
+       |                      ^
+     47|         { path: `/definition/nodes/1/config/harnessOptions/configOverr…
+     48|       ] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <WORKTREE>/<PACKAGE>
+
+
+=== Final focused source result ===
+
+ RUN  v5.0.3 <WORKTREE>/apps/api
+
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  21:17:24
+   Duration  8.27s (import 46%, tests 31%, transform 21%, setup 1%)
+

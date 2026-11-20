@@ -1,0 +1,29 @@
+{
+  "baselineValue": "{\"marker\":\"corrected-before\",\"survivor\":true}",
+  "cases": [
+    {
+      "key": "reserved-object",
+      "origin": "Exact auditor confirmation input",
+      "text": "{\"marker\":\"reserved-changed\",\"__proto__\":false,\"survivor\":true}",
+      "corrected": "{\"marker\":\"corrected-after-object\",\"allowed\":false,\"survivor\":true}"
+    },
+    {
+      "key": "reserved-array",
+      "origin": "Exact auditor confirmation input",
+      "text": "{\"marker\":\"array-changed\",\"rows\":[{\"__proto__\":false,\"enabled\":true}]}",
+      "corrected": "{\"marker\":\"corrected-after-array\",\"rows\":[{\"allowed\":false,\"enabled\":true}]}"
+    },
+    {
+      "key": "reserved-deep-object",
+      "origin": "New bounded recursive-object variant",
+      "text": "{\"marker\":\"deep-changed\",\"outer\":{\"__proto__\":false,\"enabled\":true},\"survivor\":true}",
+      "corrected": "{\"marker\":\"corrected-after-deep\",\"outer\":{\"allowed\":false,\"enabled\":true},\"survivor\":true}"
+    },
+    {
+      "key": "space-control",
+      "origin": "Exact auditor confirmation control",
+      "text": "{\"marker\":\"refused-control\",\"bad key\":false}",
+      "corrected": "{\"marker\":\"corrected-after-space\",\"valid_key\":false}"
+    }
+  ]
+}

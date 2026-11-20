@@ -32,7 +32,7 @@ import {
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
 import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
-import { formLayout } from '../layout.js';
+import { formLayout, sameJson } from '../layout.js';
 import { ContextPanelContext, LayoutFields, ProblemBadge } from '../sections.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
@@ -52,8 +52,10 @@ import { useCollectionFocus } from './collection.js';
 import { JsonControl, JsonField, JsonSection } from './json.js';
 import {
   FieldControlsContext,
+  FieldIssuesContext,
   FieldOverridesContext,
   FieldLabelsContext,
+  RecordKeyIssueContext,
   UnionPickersContext,
   FieldError,
   FieldHelp,
@@ -661,6 +663,7 @@ function RecordField({
   const commit = (next: [string, unknown][]) =>
     field.onChange(next.length === 0 && optional ? undefined : Object.fromEntries(next));
   const rename = (oldKey: string, key: string): boolean => {
+    if (key === UNHELD_RECORD_KEY) return false;
     const current = currentEntries();
     if (current.some(([existing]) => existing === key && existing !== oldKey)) return false;
     // Typing in the row's key input: the key changes with each keystroke, so the row names it.
@@ -710,39 +713,50 @@ function RecordField({
   };
   const { required, help } = fieldMeta(schema);
   const group = useGroupDescription(name, help, undefined);
+  const issues = use(FieldIssuesContext);
   return (
     <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
       <GroupLegend label={label} required={required} />
       <GroupText group={group} help={help} rule={undefined} />
-      {entries.map(([key, value], index) => (
-        <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
-          <RecordKey
-            label={`${label} key ${index + 1}`}
-            value={key}
-            rename={(next) => rename(key, next)}
-            otherKeys={entries.filter(([other]) => other !== key).map(([other]) => other)}
-            announce={(message) => focus.announce(message, undefined, false)}
-          />
-          {/* Beside the key, and before the value in the reading and Tab order. */}
-          <div className="col-start-2 row-start-1 mt-6">
-            <RemoveButton
-              aria-label={`Remove ${label.toLowerCase()} ${key}`}
-              onClick={() => remove(key)}
+      {entries.map(([key, value], index) => {
+        const path = joinPath(name, key);
+        const keyIssue = entryKeyIssue(shape, key, value, issues.get(path));
+        return (
+          <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
+            <RecordKey
+              label={`${label} key ${index + 1}`}
+              path={path}
+              value={key}
+              issue={keyIssue}
+              rename={(next) => rename(key, next)}
+              otherKeys={entries.filter(([other]) => other !== key).map(([other]) => other)}
+              announce={(message) => focus.announce(message, undefined, false)}
             />
+            {/* Beside the key, and before the value in the reading and Tab order. */}
+            <div className="col-start-2 row-start-1 mt-6">
+              <RemoveButton
+                aria-label={`Remove ${label.toLowerCase()} ${key}`}
+                onClick={() => remove(key)}
+              />
+            </div>
+            {/* The value is a field of its own at `<record>.<key>`: its marker, help, error, and
+                unparsed JSON all follow that path, so a rename or removal moves them with the row.
+                An issue there about the key is the key's, not the value's. */}
+            <div className="col-span-2 col-start-1 row-start-2 min-w-0">
+              <RecordKeyIssueContext value={keyIssue === undefined ? undefined : path}>
+                <RecordValue
+                  schema={shape.value}
+                  name={path}
+                  label={`${label} value ${index + 1}`}
+                  value={value}
+                  onChange={(next) => setValue(index, key, next)}
+                  validateValue={(next) => entryValueRefusal(schema, shape, key, next)}
+                />
+              </RecordKeyIssueContext>
+            </div>
           </div>
-          {/* The value is a field of its own at `<record>.<key>`: its marker, help, error, and
-              unparsed JSON all follow that path, so a rename or removal moves them with the row. */}
-          <div className="col-span-2 col-start-1 row-start-2 min-w-0">
-            <RecordValue
-              schema={shape.value}
-              name={joinPath(name, key)}
-              label={`${label} value ${index + 1}`}
-              value={value}
-              onChange={(next) => setValue(index, key, next)}
-            />
-          </div>
-        </div>
-      ))}
+        );
+      })}
       <div>
         <AddButton ref={focus.addRef} onClick={add}>
           Add entry
@@ -757,7 +771,8 @@ function RecordField({
 /**
  * One record entry's value, drawn by the same field renderers as any other field over the value
  * the record hands it: a string as an input or a template or expression editor, anything else as
- * JSON. Its visible caption is "Value"; its accessible name says which record and row.
+ * JSON, which holds a parsed value `validateValue` refuses (`entryValueRefusal`). Its visible
+ * caption is "Value"; its accessible name says which record and row.
  */
 function RecordValue({
   schema,
@@ -765,12 +780,14 @@ function RecordValue({
   label,
   value,
   onChange,
+  validateValue,
 }: {
   schema: Schema;
   name: string;
   label: string;
   value: unknown;
   onChange: (value: unknown) => void;
+  validateValue: (value: unknown) => string | undefined;
 }) {
   const shape = shapeOf(schema);
   return shape.kind === 'string' ? (
@@ -793,20 +810,98 @@ function RecordValue({
       caption="Value"
       value={value}
       onChange={onChange}
+      validateValue={validateValue}
     />
   );
 }
 
-/** A rejected rename keeps its draft text while the record keeps both committed values. */
+/**
+ * Why a record entry's value, parsed from its JSON, is held rather than taken (#429): the form
+ * would not keep it as authored, and its schema refuses it. The form keeps values by assignment
+ * (react-hook-form's copies, `stripUnset`), which loses a member named `__proto__` that JSON parses
+ * as an own member. Taken, such a value would be reported narrowed: the schema would never see the
+ * member it refuses, and a save would drop it unseen. Held, its text stays as typed with the
+ * messages for this entry alone, so other entries cannot mask them: a member inside the value by
+ * its path from the value, an issue about the entry's key as its Key shows it (a check of the
+ * record's keys, such as the Codex override keys', stops at the key before the value; once the key
+ * is corrected, the held value's message names its member). A key the record's key schema refuses
+ * leaves its value unchecked (Zod's `invalid_key`), so the value schema decides then. Any other
+ * value is taken as before, its issues shown through the form's own validation: one the form keeps
+ * as authored, and one its schema accepts.
+ */
+function entryValueRefusal(
+  schema: Schema,
+  shape: Extract<FieldShape, { kind: 'record' }>,
+  key: string,
+  value: unknown,
+): string | undefined {
+  if (sameJson(stripUnset(value), value)) return undefined;
+  const inside = (path: readonly PropertyKey[], message: string) =>
+    path.length > 0 ? `${path.map(String).join('.')}: ${message}` : message;
+  if (!shape.key.safeParse(key).success)
+    return shape.value
+      .safeParse(value)
+      .error?.issues.map(({ path, message }) => inside(path, message))
+      .join('; ');
+  // Every issue is at the entry's key, or below it in the value.
+  return schema
+    .safeParse({ [key]: value })
+    .error?.issues.map(({ path, message }) =>
+      path.length === 1 && entryKeyIssue(shape, key, value, message) !== undefined
+        ? `Key "${key}": ${message}`
+        : inside(path.slice(1), message),
+    )
+    .join('; ');
+}
+
+/**
+ * The message of the schema issue at a record entry's own path when it is about the entry's key
+ * rather than its value; the key shows it, and the value, at that same path, does not. Zod reports
+ * a key the record's key schema refuses there (`invalid_key`), without checking the value. An issue
+ * there that the value schema does not raise for this value comes from a check of the record's
+ * keys beside it, such as the Codex override keys' (#429): it refuses the entry for its key too.
+ * Only an issue the value schema raises is the value's.
+ */
+function entryKeyIssue(
+  shape: Extract<FieldShape, { kind: 'record' }>,
+  key: string,
+  value: unknown,
+  message: string | undefined,
+): string | undefined {
+  if (message === undefined) return undefined;
+  const keyRefused = !shape.key.safeParse(key).success;
+  return keyRefused || shape.value.safeParse(stripUnset(value)).success ? message : undefined;
+}
+
+/**
+ * The one name a record entry cannot take. Zod's record parse skips a member named `__proto__`,
+ * and the form's record value does not keep it as an entry, so renaming an entry to it would drop
+ * the entry without a word (#429). A rename to it is refused, like a duplicate's: the Key keeps the
+ * text and says so, and the entry keeps its last key and value until the Key holds another name.
+ */
+const UNHELD_RECORD_KEY = '__proto__';
+
+/**
+ * A record entry's key. A rejected rename (a key another entry has, or `UNHELD_RECORD_KEY`) keeps
+ * its draft text while the record keeps its committed entries. A schema issue about the committed
+ * key (`issue`, see `entryKeyIssue`) shows under it, naming the key, and marks it invalid; the key
+ * keeps its text as typed. Each problem is announced once as it appears, through the collection's
+ * polite status, not again while typing goes on; `data-key-issue` lets an issue's link focus the
+ * key (`focusIssuePath`).
+ */
 function RecordKey({
   label,
+  path,
   value,
+  issue,
   rename,
   otherKeys,
   announce,
 }: {
   label: string;
+  path: string;
   value: string;
+  issue: string | undefined;
   rename: (next: string) => boolean;
   otherKeys: string[];
   announce: (message: string) => void;
@@ -814,16 +909,32 @@ function RecordKey({
   const id = useId();
   const inputId = `${id}-key`;
   const [text, setText] = useState(value);
-  const error = otherKeys.includes(text)
+  const duplicate = otherKeys.includes(text);
+  const unheld = text === UNHELD_RECORD_KEY;
+  const error = duplicate
     ? `Key "${text}" already exists. Choose a unique key.`
-    : undefined;
-  const announcedErrorRef = useRef(false);
+    : unheld
+      ? `Key "${text}" can't be used. The entry keeps its key "${value}" until you choose another.`
+      : issue === undefined
+        ? undefined
+        : `Key "${value}": ${issue}`;
+  // Announced as it appears: the short collision notice, or the other messages in full.
+  const announcement = duplicate ? `Key "${text}" already exists` : error;
+  // The problem itself, without the key's text, so typing while it lasts announces nothing new.
+  const problem = duplicate
+    ? 'duplicate'
+    : unheld
+      ? 'unheld'
+      : issue === undefined
+        ? undefined
+        : `issue: ${issue}`;
+  const announcedRef = useRef(problem);
   useEffect(() => {
-    if (error && !announcedErrorRef.current) announce(`Key "${text}" already exists`);
-    announcedErrorRef.current = error !== undefined;
-  }, [error, text, announce]);
+    if (announcement !== undefined && problem !== announcedRef.current) announce(announcement);
+    announcedRef.current = problem;
+  }, [announcement, problem, announce]);
   return (
-    <FieldGroup>
+    <FieldGroup data-key-issue={issue === undefined ? undefined : path}>
       {/* A short caption over the key; the input's accessible name says which record and row. */}
       <Label htmlFor={inputId}>Key</Label>
       <Input
@@ -839,7 +950,8 @@ function RecordKey({
           rename(next);
         }}
         onBlur={() => {
-          if (error) {
+          // Only a colliding key reverts; a key the schema refuses, or `__proto__`, stays as typed.
+          if (duplicate) {
             setText(value);
             announce(`Reverted key to "${value}": "${text}" already exists`);
           } else if (text !== value) {

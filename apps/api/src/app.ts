@@ -6,13 +6,13 @@ import {
   createJsonSchemaTransform,
   createJsonSchemaTransformObject,
   serializerCompiler,
-  validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { Container } from './container.js';
 import { openApiRegistry } from './openapi-registry.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerErrorHandler } from './plugins/errors.js';
+import { requestValidatorCompiler } from './plugins/request-validation.js';
 import { registerStatic } from './plugins/static.js';
 import { registerLoopRoutes } from './routes/loops.js';
 import { registerTemplateRoutes } from './routes/templates.js';
@@ -49,7 +49,7 @@ export async function buildApp(
     bodyLimit: 8 * 1024 * 1024,
     trustProxy: false,
   });
-  base.setValidatorCompiler(validatorCompiler);
+  base.setValidatorCompiler(requestValidatorCompiler);
   base.setSerializerCompiler(serializerCompiler);
   const app = base.withTypeProvider<ZodTypeProvider>();
 

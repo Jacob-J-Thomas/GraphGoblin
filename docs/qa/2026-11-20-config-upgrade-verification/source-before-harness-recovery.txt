@@ -1,0 +1,8 @@
+Recovery of a manually edited stored row needs more than removing its bad override key: if its
+defaulted harness was omitted, explicitly store `harness: "codex"` in the node configuration as
+part of the operator correction. Normal API writes already materialize that value. Startup and
+input-schema validation do not rewrite a stored omission; key-only repair can allow startup while
+GET and publication still fail. The CHANGELOG recipe verifies actual authenticated reads,
+publication and restart, and requires discovery plus exact stored-text readback because SQLite's
+affected-row count alone does not prove a quoted member changed. No runtime converter or backfill
+is provided (ADR-0062).

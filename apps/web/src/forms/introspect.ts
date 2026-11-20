@@ -2,7 +2,8 @@
  * Zod 4 schema introspection for the schema-driven form renderer. It reads `schema._zod.def`, the
  * structural definition Zod keeps on every schema, and reduces it to the handful of field shapes the
  * renderer knows. Refinements (`superRefine`, `refine`) are not introspected; they surface as
- * validation messages through the resolver instead.
+ * validation messages through the resolver instead, as does the side of an intersection that only
+ * refines (`shapedSide`). Introspection reads definitions and never parses, so none of them runs.
  */
 import {
   ExpressionSchema,
@@ -29,6 +30,8 @@ interface Def {
   entries?: Record<string, string | number>;
   values?: unknown[];
   in?: Schema;
+  left?: Schema;
+  right?: Schema;
   checks?: { _zod: { def: CheckDef } }[];
 }
 
@@ -142,6 +145,31 @@ function checks(def: Def): CheckDef[] {
 }
 
 /**
+ * Whether a schema can only add issues: a bare `unknown` whose checks are all refinements
+ * (`refine`, `superRefine`), so it accepts any value unchanged. An `overwrite` check or a
+ * transform (a pipe) changes the value; any other type, or a wrapper, is not taken as refining.
+ */
+function onlyRefines(schema: Schema): boolean {
+  const def = defOf(schema);
+  return def.type === 'unknown' && checks(def).every((check) => check.check === 'custom');
+}
+
+/**
+ * The side that shapes an intersection whose other side only refines (`onlyRefines`). Both sides
+ * parse the same input, so contracts use one to check input as authored where the shaped side's
+ * parse would change it: the Codex override keys (#429) are checked including a `__proto__` key
+ * that the record's parse drops. Only the shape is taken from the shaped side; whether the field
+ * is optional or has a default stays with the wrappers around the intersection, since Zod cannot
+ * merge a default the shaped side fills in with the refining side's `undefined`. Any other
+ * intersection has no side to draw, so its field stays JSON.
+ */
+function shapedSide(left: Schema, right: Schema): Schema | undefined {
+  if (onlyRefines(right)) return left;
+  if (onlyRefines(left)) return right;
+  return undefined;
+}
+
+/**
  * Reduce a (base) schema to the field shape the renderer draws. Unknown shapes become JSON. The
  * shared Liquid, JSONata, and JSON Schema schemas are recognised through a field's own metadata
  * (`sameSchema`: `.meta()` copies a schema with the same definition).
@@ -208,6 +236,10 @@ export function shapeOf(schema: Schema): FieldShape {
     }
     case 'record':
       return { kind: 'record', key: def.keyType as Schema, value: def.valueType as Schema };
+    case 'intersection': {
+      const shaped = shapedSide(def.left as Schema, def.right as Schema);
+      return shaped ? shapeOf(shaped) : { kind: 'json' };
+    }
     case 'union': {
       const discriminator = def.discriminator ?? sharedLiteralDiscriminator(def.options ?? []);
       return {

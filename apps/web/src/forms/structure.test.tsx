@@ -209,6 +209,125 @@ it('refuses a colliding record key while retaining the typed key and both values
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 
+it('holds "__proto__" typed as a record key with its feedback and keeps every entry (#429)', () => {
+  const spy = vi.fn();
+  render(
+    <SchemaForm
+      schema={NodeConfigSchemas.script}
+      label="form"
+      onChange={spy}
+      value={{ command: 'node', env: { A: 'one', C: 'three' } }}
+    />,
+  );
+  const env = () => (spy.mock.calls.at(-1)?.[0] as { env?: unknown }).env;
+  const key = screen.getByLabelText('Env key 2');
+  const calls = spy.mock.calls.length;
+  fireEvent.change(key, { target: { value: '__proto__' } });
+  // The row stays with the text as typed; nothing is reported for it.
+  expect(screen.getByLabelText('Env key 2')).toBe(key);
+  expect(key).toHaveValue('__proto__');
+  expect(key).toHaveAttribute('aria-invalid', 'true');
+  expect(key).toHaveAccessibleDescription(
+    'Key "__proto__" can\'t be used. The entry keeps its key "C" until you choose another.',
+  );
+  expect(spy.mock.calls).toHaveLength(calls);
+  expect(screen.getByLabelText('Env value 1')).toHaveValue('one');
+  expect(screen.getByLabelText('Env value 2')).toHaveValue('three');
+  expect(screen.getByLabelText('Env key 1')).not.toHaveAttribute('aria-invalid');
+  // Leaving keeps it; the value is still the entry's under its kept key.
+  fireEvent.blur(key);
+  expect(key).toHaveValue('__proto__');
+  fireEvent.change(screen.getByLabelText('Env value 2'), { target: { value: 'four' } });
+  expect(env()).toEqual({ A: 'one', C: 'four' });
+  fireEvent.change(key, { target: { value: 'D' } });
+  expect(key).not.toHaveAttribute('aria-invalid');
+  expect(key).toHaveAccessibleDescription('');
+  expect(env()).toEqual({ A: 'one', D: 'four' });
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('shows a key its record refuses at the Key, and a value its schema refuses at the Value (#429)', () => {
+  const spy = vi.fn();
+  render(
+    <StoredForm
+      schema={z.object({ variables: VariableDeclarationsSchema })}
+      initial={{ variables: { first: { type: 'string' }, second: { type: 'number' } } }}
+      onValue={spy}
+    />,
+  );
+  const code = (label: string) =>
+    screen.getAllByLabelText(label).find((el) => el.classList.contains('cm-content'))!;
+  const clean = (control: HTMLElement) => {
+    expect(control).not.toHaveAttribute('aria-invalid');
+    expect(control).toHaveAccessibleDescription('');
+  };
+  // The messages come from the schema itself: its record's refusal of a key, and of an array.
+  const keyRefusal = VariableDeclarationsSchema.safeParse({ 'Bad key': {} }).error!.issues[0]!;
+  expect(keyRefusal.code).toBe('invalid_key');
+  const valueRefusal = VariableDeclarationsSchema.safeParse({ first: [] }).error!.issues[0]!;
+  const key = screen.getByLabelText('Variables key 1');
+  fireEvent.change(key, { target: { value: 'Bad key' } });
+  expect(key).toHaveAttribute('aria-invalid', 'true');
+  expect(key).toHaveAccessibleDescription(`Key "Bad key": ${keyRefusal.message}`);
+  clean(code('Variables value 1'));
+  clean(screen.getByLabelText('Variables key 2'));
+  clean(code('Variables value 2'));
+  // A refused key's value is not checked (Zod skips it), so a bad value shows once the key is right.
+  setCode('Variables value 1', '[]');
+  expect(key).toHaveAccessibleDescription(`Key "Bad key": ${keyRefusal.message}`);
+  clean(code('Variables value 1'));
+  fireEvent.change(key, { target: { value: 'renamed' } });
+  clean(key);
+  expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true');
+  expect(code('Variables value 1')).toHaveAccessibleDescription(valueRefusal.message);
+  setCode('Variables value 1', '{"type":"boolean"}');
+  clean(code('Variables value 1'));
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual({
+    variables: { renamed: { type: 'boolean' }, second: { type: 'number' } },
+  });
+});
+
+it('holds a JSON value with a member "__proto__" only when its schema refuses it (#429)', () => {
+  const spy = vi.fn();
+  render(
+    <StoredForm
+      schema={z.object({ variables: VariableDeclarationsSchema })}
+      initial={{ variables: { first: { type: 'string' }, second: { type: 'number' } } }}
+      onValue={spy}
+    />,
+  );
+  const code = (label: string) =>
+    screen.getAllByLabelText(label).find((el) => el.classList.contains('cm-content'))!;
+  const held = () => useEditorStore.getState().fieldErrors['test'] ?? {};
+  const variables = () =>
+    (spy.mock.calls.at(-1)?.[0] as { variables: Record<string, unknown> }).variables;
+  // The declarations' schema accepts a JSON Schema naming such a member: it is taken as before.
+  setCode('Variables value 1', '{"type":"object","__proto__":{"type":"string"}}');
+  expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid');
+  expect(held()).toEqual({});
+  expect(variables()['first']).toMatchObject({ type: 'object' });
+  // A value its schema refuses is held as typed with the schema's message, and nothing is reported.
+  const refusal = VariableDeclarationsSchema.safeParse({ first: [{}] }).error!.issues[0]!.message;
+  const refused = '[{"__proto__":{"type":"string"}}]';
+  const calls = spy.mock.calls.length;
+  setCode('Variables value 1', refused);
+  expect(getCode('Variables value 1')).toBe(refused);
+  expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true');
+  expect(code('Variables value 1')).toHaveAccessibleDescription(expect.stringContaining(refusal));
+  expect(held()['variables.first']).toMatchObject({ message: refusal, text: refused });
+  expect(spy.mock.calls).toHaveLength(calls);
+  // Under a key its key schema refuses, the value is unchecked by the record: its schema decides.
+  fireEvent.change(screen.getByLabelText('Variables key 2'), { target: { value: 'Bad key' } });
+  setCode('Variables value 2', refused);
+  expect(code('Variables value 2')).toHaveAccessibleDescription(expect.stringContaining(refusal));
+  expect(code('Variables value 2')).toHaveAccessibleDescription(
+    expect.not.stringContaining('Key "Bad key"'),
+  );
+  setCode('Variables value 2', '{"type":"boolean","__proto__":{"type":"string"}}');
+  expect(code('Variables value 2')).not.toHaveAttribute('aria-invalid');
+  expect(variables()['Bad key']).toMatchObject({ type: 'boolean' });
+});
+
 it('focuses and announces an added array item', async () => {
   const user = userEvent.setup();
   render(

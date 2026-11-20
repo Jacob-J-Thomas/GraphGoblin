@@ -105,7 +105,10 @@ export function JsonText({
   schema?: Schema | undefined;
   explicit?: boolean;
   onHeldChange?: ((held: boolean) => void) | undefined;
-  /** Validate a section replacement in its complete, current form before any write. */
+  /**
+   * Validate the parsed value before any write: a section replacement in its complete, current
+   * form, or a record entry's value against its record (`RecordField`). A message holds the text.
+   */
   validateValue?: ((value: unknown, recheck?: boolean) => string | undefined) | undefined;
   /** Snapshot/token for config read behind the stable validator callback. */
   validationVersion?: unknown;
@@ -134,8 +137,9 @@ export function JsonText({
   }, [text, schema, validateValue, validationVersion, ownError]);
   // Held text ends only by the author's hand: typing it back to the section's value, Apply, Cancel
   // or a discard. A valid candidate that a change elsewhere made equal to the section (a rename's
-  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step.
-  const error = candidate ? (candidate.error ?? PENDING_JSON) : ownError;
+  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step. A
+  // live editor has no Apply: its held text keeps its last message until the author types again.
+  const error = candidate ? (candidate.error ?? (explicit ? PENDING_JSON : ownError)) : ownError;
   const [confirmation, setConfirmation] = useState<{
     text: string;
     connections: readonly RemovedConnection[];
@@ -183,6 +187,11 @@ export function JsonText({
   );
   useEffect(() => {
     if (!validateValue) return;
+    // A live editor reports and clears its held text in the event that changes it (`fail`, a
+    // discard, a row's removal or key rename); its renders only refresh the message of the entry
+    // still holding this text. An effect of an earlier render can run after such an event: it must
+    // not report its older path or text again, or clear the entry that event reported.
+    if (!explicit && (error === undefined || parseErrors.get(path)?.text !== text)) return;
     parseErrors.report(
       path,
       error === undefined
@@ -193,7 +202,7 @@ export function JsonText({
             input: error === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
           },
     );
-  }, [validationVersion, text, validateValue, parseErrors, path, error]);
+  }, [validationVersion, text, validateValue, parseErrors, path, error, explicit]);
   const focusEditor = () =>
     editorRootRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')?.focus();
   const apply = (confirmed = false) => {
@@ -498,7 +507,8 @@ export function JsonSection({
 /**
  * A JSON field over a value it is handed, in the field row (label, JSON tag, required marker,
  * help, and the error at `name`, linked to the editor). `name` is also where unparsed text is kept
- * (the parse-error path). JsonField binds it to the form; a record row hands it one entry's value.
+ * (the parse-error path). JsonField binds it to the form; a record row hands it one entry's value,
+ * with the check that value passes before the record takes it (`validateValue`).
  */
 export function JsonControl({
   schema,
@@ -507,10 +517,12 @@ export function JsonControl({
   caption,
   value,
   onChange,
+  validateValue,
 }: FieldProps & {
   caption?: string | undefined;
   value: unknown;
   onChange: (value: unknown) => void;
+  validateValue?: ((value: unknown) => string | undefined) | undefined;
 }) {
   const id = useId();
   const { required, help } = fieldMeta(schema);
@@ -532,6 +544,7 @@ export function JsonControl({
           id={id}
           value={value}
           onChange={onChange}
+          validateValue={validateValue}
           describedBy={control['aria-describedby']}
           invalid={control['aria-invalid']}
           required={required}

@@ -1,25 +1,27 @@
 import {
   ClassifierAnswerConfigSchema,
+  CODEX_CONFIG_KEY_MESSAGE,
   ExpressionDecisionConfigSchema,
   LlmDecisionConfigSchema,
   InferenceConfigSchema,
   SlugSchema,
   field,
 } from '@graphgoblin/contracts';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { openAdvanced } from '../__fixtures__/advanced.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
-import { focusField } from '../editor/focus-field.js';
+import { focusField, focusIssuePath } from '../editor/focus-field.js';
 import { NODE_FIELD_CONTROLS } from '../editor/field-controls.js';
 import { newLoopDefinition } from '../editor/model.js';
 import { useEditorStore } from '../editor/store.js';
 import { createDisclosureIdentities, type DisclosureStates } from './disclosures.js';
 import { shapeOf, unwrap, type Schema } from './introspect.js';
 import type { ParseError } from './parse-errors.js';
-import { SchemaForm } from './SchemaForm.js';
+import { SchemaForm, type SchemaFormHandle } from './SchemaForm.js';
 import { VariableSuggestionsContext } from './fields/suggestions.js';
 import { JsonApplyReviewContext, JsonText } from './fields/json.js';
 
@@ -997,5 +999,489 @@ describe('typed inputs', () => {
     expect(screen.getByTestId('value')).toHaveTextContent('"enabled":false');
     await userEvent.setup().click(screen.getByRole('radio', { name: 'b' }));
     expect(screen.getByTestId('value')).toHaveTextContent('"policy":"b"');
+  });
+});
+
+describe('Codex config overrides in the structured editor (#429)', () => {
+  function config(configOverrides: Record<string, unknown>) {
+    return InferenceConfigSchema.parse({
+      prompt: { template: 'Summarise the notes.' },
+      harnessOptions: { configOverrides },
+    });
+  }
+  /** The overrides the form last reported, as the author left them. */
+  function reported(spy: ReturnType<typeof vi.fn>) {
+    return (spy.mock.calls.at(-1)![0] as { harnessOptions: { configOverrides?: unknown } })
+      .harnessOptions.configOverrides;
+  }
+  function lastIsValid(spy: ReturnType<typeof vi.fn>) {
+    return InferenceConfigSchema.safeParse(spy.mock.calls.at(-1)![0]).success;
+  }
+
+  it('edits ordinary overrides as record entries and reports them as authored', async () => {
+    const spy = vi.fn();
+    render(<Harness schema={InferenceConfigSchema} initial={config({})} spy={spy} />);
+    const user = userEvent.setup();
+    const advanced = openAdvanced();
+    // An empty table is a record without entries, not an opaque JSON value the author set.
+    expect(advanced).not.toHaveTextContent('set');
+    const overrides = screen.getByRole('group', { name: 'Config overrides' });
+    await user.click(within(overrides).getByRole('button', { name: 'Add entry' }));
+    fireEvent.change(screen.getByLabelText('Config overrides key 1'), {
+      target: { value: 'features.plugins' },
+    });
+    setCode('Config overrides value 1', 'false');
+    await user.click(within(overrides).getByRole('button', { name: 'Add entry' }));
+    fireEvent.change(screen.getByLabelText('Config overrides key 2'), {
+      target: { value: 'sandbox_workspace_write' },
+    });
+    setCode('Config overrides value 2', '{"network_access": true, "writable_roots": ["notes"]}');
+    expect(reported(spy)).toEqual({
+      'features.plugins': false,
+      sandbox_workspace_write: { network_access: true, writable_roots: ['notes'] },
+    });
+    expect(lastIsValid(spy)).toBe(true);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(advanced).toHaveTextContent('1 set');
+  });
+
+  /** The record's polite status region, where its key problems are announced. */
+  function overridesStatus() {
+    return within(screen.getByRole('group', { name: 'Config overrides' })).getByRole('status');
+  }
+  /** A control that no problem marks or describes. */
+  function expectClean(control: HTMLElement) {
+    expect(control).not.toHaveAttribute('aria-invalid');
+    expect(control).toHaveAccessibleDescription('');
+  }
+
+  it.each(['constructor', 'features.prototype', 'team docs'])(
+    'refuses the key %j at its Key input, keeps it as typed, and clears once corrected',
+    (key) => {
+      const spy = vi.fn();
+      render(
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={config({ service_tier: 'fast', 'features.plugins': false })}
+          spy={spy}
+        />,
+      );
+      const advanced = openAdvanced();
+      const input = screen.getByLabelText('Config overrides key 1');
+      const value = screen.getByLabelText('Config overrides value 1');
+      fireEvent.change(input, { target: { value: key } });
+      // The Key holds the refused text: it is invalid, and its description names it with the rule.
+      expect(input).toHaveAccessibleName('Config overrides key 1');
+      expect(input).toHaveValue(key);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAccessibleDescription(`Key "${key}": ${CODEX_CONFIG_KEY_MESSAGE}`);
+      expect(overridesStatus()).toHaveTextContent(`Key "${key}": ${CODEX_CONFIG_KEY_MESSAGE}`);
+      // The entry's value is valid: it is neither marked nor described by the key's refusal.
+      expect(value).toHaveAccessibleName('Config overrides value 1');
+      expectClean(value);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      // The neighbouring entry stays valid.
+      expectClean(screen.getByLabelText('Config overrides key 2'));
+      expectClean(screen.getByLabelText('Config overrides value 2'));
+      // Nothing is dropped: the form reports the key as typed, which the contract refuses.
+      expect(reported(spy)).toEqual({ [key]: 'fast', 'features.plugins': false });
+      expect(lastIsValid(spy)).toBe(false);
+      expect(advanced).toHaveTextContent('1 error');
+      fireEvent.change(input, { target: { value: 'service_tier' } });
+      expectClean(input);
+      expectClean(value);
+      expect(advanced).not.toHaveTextContent('error');
+      expect(reported(spy)).toEqual({ service_tier: 'fast', 'features.plugins': false });
+      expect(lastIsValid(spy)).toBe(true);
+    },
+  );
+
+  it('keeps focus and Tab order in a refused Key while typing, and announces the refusal once', async () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ team: 'notes', 'features.plugins': false })}
+        spy={spy}
+      />,
+    );
+    const user = userEvent.setup();
+    openAdvanced();
+    const input = screen.getByLabelText('Config overrides key 1');
+    await user.type(input, ' d');
+    expect(input).toHaveFocus();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription(`Key "team d": ${CODEX_CONFIG_KEY_MESSAGE}`);
+    // Announced as the key became refused ("team "), politely, once.
+    const status = overridesStatus();
+    expect(status).toHaveTextContent(`Key "team ": ${CODEX_CONFIG_KEY_MESSAGE}`);
+    const announcement = status.firstElementChild;
+    await user.keyboard('ocs');
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('team docs');
+    expect(input).toHaveAccessibleDescription(`Key "team docs": ${CODEX_CONFIG_KEY_MESSAGE}`);
+    expect(status.firstElementChild).toBe(announcement);
+    expect(reported(spy)).toEqual({ 'team docs': 'notes', 'features.plugins': false });
+    // The message is no stop of its own: Tab goes on to the row's Remove, then its value. Leaving
+    // the Key keeps the refused text (only a colliding key reverts).
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Remove config overrides team docs' })).toHaveFocus();
+    expect(input).toHaveValue('team docs');
+    expect(status).not.toHaveTextContent('Reverted');
+    expect(status.firstElementChild).toBe(announcement);
+    await user.tab();
+    expect(screen.getByLabelText('Config overrides value 1')).toHaveFocus();
+    expectClean(screen.getByLabelText('Config overrides value 1'));
+    await user.tab({ shift: true });
+    await user.tab({ shift: true });
+    expect(input).toHaveFocus();
+    // Tabbing in selected the key's text; edit from its end.
+    await user.keyboard('{End}{Backspace>5/}_docs');
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('team_docs');
+    expectClean(input);
+    expect(reported(spy)).toEqual({ team_docs: 'notes', 'features.plugins': false });
+    expect(lastIsValid(spy)).toBe(true);
+    // Refused again after a correction: announced again.
+    await user.keyboard('!');
+    expect(status).toHaveTextContent(`Key "team_docs!": ${CODEX_CONFIG_KEY_MESSAGE}`);
+    expect(status.firstElementChild).not.toBe(announcement);
+  });
+
+  it('holds the key "__proto__" typed in a Key with its feedback, keeps every entry, and saves once corrected', async () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ service_tier: 'fast', 'features.plugins': false })}
+        spy={spy}
+      />,
+    );
+    const user = userEvent.setup();
+    const advanced = openAdvanced();
+    const key = screen.getByLabelText('Config overrides key 1');
+    const held = (kept: string) =>
+      `Key "__proto__" can't be used. The entry keeps its key "${kept}" until you choose another.`;
+    // Typed key by key: the entry follows each key it can hold, and keeps the last before "__proto__".
+    await user.clear(key);
+    await user.type(key, '__proto__');
+    expect(key).toHaveFocus();
+    expect(screen.getByLabelText('Config overrides key 1')).toBe(key);
+    expect(key).toHaveValue('__proto__');
+    expect(key).toHaveAttribute('aria-invalid', 'true');
+    expect(key).toHaveAccessibleDescription(held('__proto_'));
+    expect(overridesStatus()).toHaveTextContent(held('__proto_'));
+    // Nothing is dropped or published for it: the entry, its value and its neighbour stay as saved.
+    expect(getCode('Config overrides value 1')).toBe('"fast"');
+    expectClean(screen.getByLabelText('Config overrides value 1'));
+    expectClean(screen.getByLabelText('Config overrides key 2'));
+    expectClean(screen.getByLabelText('Config overrides value 2'));
+    expect(reported(spy)).toEqual({ __proto_: 'fast', 'features.plugins': false });
+    expect(lastIsValid(spy)).toBe(true);
+    expect(advanced).not.toHaveTextContent('error');
+    // Leaving the Key keeps the text and its feedback; the entry's value stays editable.
+    await user.tab();
+    expect(key).toHaveValue('__proto__');
+    expect(key).toHaveAccessibleDescription(held('__proto_'));
+    expect(overridesStatus()).not.toHaveTextContent('Reverted');
+    setCode('Config overrides value 1', '"flex"');
+    expect(reported(spy)).toEqual({ __proto_: 'flex', 'features.plugins': false });
+    // A corrected key is an ordinary rename, and the form is valid again.
+    await user.clear(key);
+    await user.type(key, 'service_tier');
+    expect(key).toHaveFocus();
+    expectClean(key);
+    expect(reported(spy)).toEqual({ service_tier: 'flex', 'features.plugins': false });
+    expect(lastIsValid(spy)).toBe(true);
+    expect(advanced).not.toHaveTextContent('error');
+  });
+
+  it('takes an issue link about a refused key to the Key, and other entry issues to the Value', () => {
+    const { container } = render(
+      <div data-field-scope="config">
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={config({ service_tier: 'fast', features: { plugins: false } })}
+        />
+      </div>,
+    );
+    const advanced = screen.getByRole('button', { name: /^Advanced\b/ });
+    const key = screen.getByLabelText('Config overrides key 1');
+    fireEvent.change(key, { target: { value: 'team docs' } });
+    expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    const path = 'config.harnessOptions.configOverrides.team docs';
+    act(() => expect(focusIssuePath(container, path)).toBe(true));
+    expect(key).toHaveFocus();
+    expect(advanced).toHaveAttribute('aria-expanded', 'true');
+    // A refusal inside an entry's value is not its key's: the value takes the link.
+    setCode('Config overrides value 2', '{"plugins": false, "bad key": true}');
+    const nested = 'config.harnessOptions.configOverrides.features.bad key';
+    act(() => expect(focusIssuePath(container, nested)).toBe(true));
+    expect(screen.getByLabelText('Config overrides value 2')).toHaveFocus();
+    expectClean(screen.getByLabelText('Config overrides key 2'));
+    // Once the key is corrected, its entry's path leads to the value again.
+    fireEvent.change(key, { target: { value: 'service_tier' } });
+    const corrected = 'config.harnessOptions.configOverrides.service_tier';
+    act(() => expect(focusIssuePath(container, corrected)).toBe(true));
+    expect(screen.getByLabelText('Config overrides value 1')).toHaveFocus();
+  });
+
+  it('keeps a real value error on the Value, apart from a refused key', () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ service_tier: 'fast', 'features.plugins': false })}
+        spy={spy}
+      />,
+    );
+    openAdvanced();
+    const key = screen.getByLabelText('Config overrides key 1');
+    const value = screen.getByLabelText('Config overrides value 1');
+    setCode('Config overrides value 1', '{broken');
+    fireEvent.change(key, { target: { value: 'team docs' } });
+    // Each control carries its own problem, and only its own.
+    expect(key).toHaveAttribute('aria-invalid', 'true');
+    expect(key).toHaveAccessibleDescription(`Key "team docs": ${CODEX_CONFIG_KEY_MESSAGE}`);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(expect.stringMatching(/^Invalid JSON/));
+    expect(value).toHaveAccessibleDescription(
+      expect.not.stringContaining(CODEX_CONFIG_KEY_MESSAGE),
+    );
+    expect(getCode('Config overrides value 1')).toBe('{broken');
+    expect(reported(spy)).toEqual({ 'team docs': 'fast', 'features.plugins': false });
+    // Correcting the key leaves the value's own error where it is.
+    fireEvent.change(key, { target: { value: 'service_tier' } });
+    expectClean(key);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(expect.stringMatching(/^Invalid JSON/));
+    setCode('Config overrides value 1', '"flex"');
+    expectClean(value);
+    expect(reported(spy)).toEqual({ service_tier: 'flex', 'features.plugins': false });
+    expect(lastIsValid(spy)).toBe(true);
+  });
+
+  it('reports a refused key inside an entry value by its path and keeps the value as typed', async () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ features: { plugins: false } })}
+        spy={spy}
+      />,
+    );
+    const user = userEvent.setup();
+    const advanced = openAdvanced();
+    const text = '{"plugins": false, "team docs": true}';
+    setCode('Config overrides value 1', text);
+    expect(getCode('Config overrides value 1')).toBe(text);
+    expect(reported(spy)).toEqual({ features: { plugins: false, 'team docs': true } });
+    expect(advanced).toHaveTextContent('1 error');
+    // The refused key is inside the value, not the entry's own key.
+    expectClean(screen.getByLabelText('Config overrides key 1'));
+    await user.click(screen.getByRole('button', { name: /^Validation details/ }));
+    const path = screen.getByText('harnessOptions.configOverrides.features.team docs');
+    expect(path).toBeVisible();
+    expect(path.closest('li')).toHaveTextContent(CODEX_CONFIG_KEY_MESSAGE);
+    setCode('Config overrides value 1', '{"plugins": false, "team_docs": true}');
+    expect(advanced).not.toHaveTextContent('error');
+    expect(screen.queryByRole('button', { name: /^Validation details/ })).not.toBeInTheDocument();
+    expect(reported(spy)).toEqual({ features: { plugins: false, team_docs: true } });
+    expect(lastIsValid(spy)).toBe(true);
+  });
+
+  // A JSON member named "__proto__" parses as an own member, but the form keeps values by
+  // assignment and cannot hold it: it must not vanish into a narrowed value the form reports.
+  it.each([
+    [
+      'among its other members',
+      '{"marker":"held","__proto__":false,"survivor":true}',
+      '__proto__',
+      { marker: 'held', proto_flag: false, survivor: true },
+    ],
+    [
+      'two objects down',
+      '{"outer":{"inner":{"__proto__":false,"kept":1}}}',
+      'outer.inner.__proto__',
+      { outer: { inner: { proto_flag: false, kept: 1 } } },
+    ],
+    [
+      'in an object inside an array',
+      '{"rows":[{"__proto__":false,"enabled":true}]}',
+      'rows.0.__proto__',
+      { rows: [{ proto_flag: false, enabled: true }] },
+    ],
+  ])(
+    'holds a Value with a member "__proto__" %s as typed, reports nothing, and takes it whole once corrected',
+    (_where, text, path, corrected) => {
+      const spy = vi.fn();
+      const report = vi.fn();
+      const initial = config({ example: { previous: true }, neighbor: 'unchanged' });
+      const view = render(
+        <Harness schema={InferenceConfigSchema} initial={initial} spy={spy} report={report} />,
+      );
+      openAdvanced();
+      const value = screen.getByLabelText('Config overrides value 1');
+      const message = `${path}: ${CODEX_CONFIG_KEY_MESSAGE}`;
+      setCode('Config overrides value 1', text);
+      // Held exactly as typed: invalid, and described by the refused member's path and the rule.
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      expect(value).toHaveAccessibleDescription(expect.stringContaining(message));
+      expect(screen.getByText(message)).toBeVisible();
+      expect(report).toHaveBeenLastCalledWith('harnessOptions.configOverrides.example', {
+        message,
+        text,
+        input: 'unparsed text',
+      });
+      // Nothing is reported for it: the entry keeps its committed value, the rest stay valid.
+      expect(spy).not.toHaveBeenCalled();
+      expectClean(screen.getByLabelText('Config overrides key 1'));
+      expectClean(screen.getByLabelText('Config overrides key 2'));
+      expectClean(screen.getByLabelText('Config overrides value 2'));
+      // A neighbour stays editable meanwhile, beside the held entry's committed value.
+      setCode('Config overrides value 2', '"changed"');
+      expect(reported(spy)).toEqual({ example: { previous: true }, neighbor: 'changed' });
+      expect(lastIsValid(spy)).toBe(true);
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      // Renamed, the member is taken with the whole value as typed, and the hold ends.
+      const typed = text.replace('"__proto__"', '"proto_flag"');
+      setCode('Config overrides value 1', typed);
+      expectClean(value);
+      expect(getCode('Config overrides value 1')).toBe(typed);
+      expect(report).toHaveBeenLastCalledWith('harnessOptions.configOverrides.example', undefined);
+      expect(reported(spy)).toEqual({ example: corrected, neighbor: 'changed' });
+      expect(lastIsValid(spy)).toBe(true);
+      // Loaded again, the form shows the whole value it reported.
+      view.rerender(
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={initial}
+          spy={spy}
+          report={report}
+          revision={1}
+        />,
+      );
+      expect(JSON.parse(getCode('Config overrides value 1'))).toEqual(corrected);
+    },
+  );
+
+  it('holds a Value with a member "__proto__" under a refused Key, and names the member once the Key is corrected', () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ example: { previous: true } })}
+        spy={spy}
+      />,
+    );
+    openAdvanced();
+    const key = screen.getByLabelText('Config overrides key 1');
+    const value = screen.getByLabelText('Config overrides value 1');
+    fireEvent.change(key, { target: { value: 'team docs' } });
+    expect(reported(spy)).toEqual({ 'team docs': { previous: true } });
+    const calls = spy.mock.calls.length;
+    const text = '{"marker":"held","__proto__":false}';
+    setCode('Config overrides value 1', text);
+    // The contract refuses the entry for its Key first; the value is held rather than narrowed.
+    expect(getCode('Config overrides value 1')).toBe(text);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(
+      expect.stringContaining(`Key "team docs": ${CODEX_CONFIG_KEY_MESSAGE}`),
+    );
+    expect(spy).toHaveBeenCalledTimes(calls);
+    // Once the Key is corrected, the held value names its own refused member, without a keystroke.
+    fireEvent.change(key, { target: { value: 'example' } });
+    expectClean(key);
+    expect(reported(spy)).toEqual({ example: { previous: true } });
+    expect(lastIsValid(spy)).toBe(true);
+    expect(getCode('Config overrides value 1')).toBe(text);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(
+      expect.stringContaining(`__proto__: ${CODEX_CONFIG_KEY_MESSAGE}`),
+    );
+    setCode('Config overrides value 1', '{"marker":"held","proto_flag":false}');
+    expectClean(value);
+    expect(reported(spy)).toEqual({ example: { marker: 'held', proto_flag: false } });
+    expect(lastIsValid(spy)).toBe(true);
+  });
+
+  it.each([
+    ['{"__proto__":{"enabled":true}}', '__proto__'],
+    ['{"features.prototype":true}', 'features.prototype'],
+    ['{"list":[0,{"team docs":true}]}', 'list.1.team docs'],
+  ])(
+    'holds pasted JSON %s with the refused key path, then applies a corrected paste as entries',
+    async (text, path) => {
+      const spy = vi.fn();
+      render(
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={config({ service_tier: 'fast' })}
+          spy={spy}
+        />,
+      );
+      const user = userEvent.setup();
+      openAdvanced();
+      await user.click(screen.getByRole('button', { name: 'Edit as JSON: Config overrides' }));
+      setCode('Config overrides JSON', text);
+      expect(screen.getByText(`${path}: ${CODEX_CONFIG_KEY_MESSAGE}`)).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+      expect(getCode('Config overrides JSON')).toBe(text);
+      expect(spy).not.toHaveBeenCalled();
+
+      const pasted = {
+        'features.plugins': false,
+        sandbox_workspace_write: { network_access: true },
+      };
+      setCode('Config overrides JSON', JSON.stringify(pasted, null, 2));
+      await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+      expect(reported(spy)).toEqual(pasted);
+      expect(lastIsValid(spy)).toBe(true);
+      await user.click(
+        screen.getByRole('button', { name: 'Use structured editor for Config overrides' }),
+      );
+      expect(screen.getByLabelText('Config overrides key 1')).toHaveValue('features.plugins');
+      expect(getCode('Config overrides value 1')).toBe('false');
+      expect(screen.getByLabelText('Config overrides key 2')).toHaveValue(
+        'sandbox_workspace_write',
+      );
+      expect(JSON.parse(getCode('Config overrides value 2'))).toEqual({ network_access: true });
+    },
+  );
+
+  it('takes a string repair inside an entry value in place', () => {
+    const ref = createRef<SchemaFormHandle>();
+    const onChange = vi.fn();
+    const previous = config({ profile: 'work', 'features.plugins': false });
+    render(
+      <SchemaForm
+        ref={ref}
+        schema={InferenceConfigSchema}
+        value={previous}
+        label="form"
+        onChange={onChange}
+      />,
+    );
+    openAdvanced();
+    const key = screen.getByLabelText('Config overrides key 1');
+    const repaired = {
+      ...previous,
+      harnessOptions: {
+        ...previous.harnessOptions,
+        configOverrides: { profile: 'worker', 'features.plugins': false },
+      },
+    };
+    let taken: boolean | undefined;
+    act(() => {
+      taken = ref.current?.applyRepair(previous, repaired);
+    });
+    expect(taken).toBe(true);
+    expect(screen.getByLabelText('Config overrides key 1')).toBe(key);
+    expect(getCode('Config overrides value 1')).toBe('"worker"');
+    expect(getCode('Config overrides value 2')).toBe('false');
+    // The owner already holds the repair; an entry following it reports nothing else.
+    for (const [value] of onChange.mock.calls) expect(value).toEqual(repaired);
   });
 });

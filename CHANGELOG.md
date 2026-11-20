@@ -4,6 +4,135 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
+  validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
+  and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
+  discarded by the contract. In the structured editor, an override entry's JSON Value with a member
+  named `__proto__` at any depth, which the form's object copies cannot keep, is held as typed with
+  the member's path and the key rule instead of being autosaved without it; correcting the member
+  saves the whole value. Previously stored invalid-key drafts cannot be published; the check
+  leaves their data intact. Existing HTTP guards and adapter refusal remain in place.
+  HTTP request-schema paths preserve literal `/` and `~` in member names with RFC 6901 escaping,
+  including nested tables and array positions; ordinary and unknown-field diagnostics retain
+  their existing messages and root-path convention.
+  **Upgrade (ADR-0062):** no stored content is rewritten. The existing startup guard refuses any
+  invalid definition in `loop_versions.definition`, including drafts, published versions and
+  draft-run snapshots. The target store is the database used by the gateway being upgraded;
+  identify its configured `GG_DATA_DIR` and `GG_DB_URL`, including defaults. Before editing it,
+  [stop the gateway and confirm it has exited](docs/guide/01-install-and-first-run.md#stop-and-restart-safely),
+  then follow the [full backup procedure](docs/guide/06-settings-and-secrets.md#back-up-and-restore).
+  Preserve the database with any WAL/SHM files, the data directory and any external database
+  location, configuration and keys described there. Keep that backup unchanged with its previous
+  build. If rehearsing the correction on a separate copy, use offline SQL and structured-JSON
+  checks only, without starting a gateway against the copy. Apply both the key corrections and
+  any required explicit harness values below to the stopped target store itself; a repaired
+  rehearsal copy does not repair that target. On the stopped target, inspect the typed
+  inference-node override keys with this read-only query; it ignores scalar values and authored
+  JSON outside those fields:
+
+  ```sql
+  SELECT v.id, v.loop_id, v.status, json_extract(n.value, '$.id') AS node_id,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path,
+         json_type(n.value, '$.config.harness') IS NULL AS harness_omitted,
+         '$.nodes[' || n.key || '].config.harnessOptions.configOverrides'
+           || substr(k.fullkey, 2) AS key_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n,
+       json_tree(json_extract(n.value, '$.config.harnessOptions.configOverrides')) AS k
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND (json_extract(n.value, '$.config.harness') = 'codex'
+      OR json_type(n.value, '$.config.harness') IS NULL)
+    AND typeof(k.key) = 'text'
+    AND (k.key = '' OR k.key GLOB '*[^A-Za-z0-9_.-]*'
+      OR k.key GLOB '.*' OR k.key GLOB '*.' OR instr(k.key, '..') > 0
+      OR instr('.' || k.key || '.', '.__proto__.') > 0
+      OR instr('.' || k.key || '.', '.constructor.') > 0
+      OR instr('.' || k.key || '.', '.prototype.') > 0);
+  ```
+
+  Retain the target's discovery output before editing. Run this separate read-only query on the
+  same stopped target as well: it finds omitted harnesses even when invalid-key discovery returns
+  zero rows:
+
+  ```sql
+  SELECT n.key AS node_index, v.id, v.loop_id, v.status,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND json_type(n.value, '$.config.harness') IS NULL;
+  ```
+
+  Public API writes in both builds materialize an omitted Codex harness; an externally authored
+  or hand-edited row can still omit it. For each reported draft or published version with
+  `harness_omitted = 1` (or found by the omission query), explicitly materialize its effective
+  `codex` value on the stopped target store. Bind `harness_path`, `id`, then the same
+  `harness_path` to this operator-only statement (explicit JSON null is not an omitted harness):
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_set(definition, ?, 'codex')
+  WHERE id = ? AND status IN ('draft', 'published')
+    AND json_type(definition, ?) IS NULL;
+  ```
+
+  This is an explicit hand correction, not a product backfill. Correct each reported member's
+  spelling in the stopped target's stored definition, or deliberately remove just that member.
+  For a draft or published version, bind its reported `key_path` and `id` to:
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_remove(definition, ?)
+  WHERE id = ? AND status IN ('draft', 'published');
+  ```
+
+  An affected-row count of 1 is not proof that the member was removed: the product's libsql
+  driver can report that count while leaving a quoted member and the stored bytes unchanged.
+  On the stopped target, re-run both discovery queries and read the complete stored text back,
+  comparing it with the exact intended structured JSON correction and confirming unrelated
+  fields/history are unchanged. A zero-key discovery result or successful startup also does not
+  materialize omitted defaults: without the explicit harness correction, GET and publication of
+  such a manually authored row can still fail. A reported path containing quotation marks may
+  not address the member through SQLite JSON1. In that case,
+  parse the complete definition as structured JSON, correct/remove that exact object member,
+  serialize the JSON and bind the replacement and row ID to
+  `UPDATE loop_versions SET definition = ? WHERE id = ? AND status IN ('draft', 'published')`.
+  Include `harness: "codex"` in that node's configuration when it was omitted. Read back the exact
+  complete replacement, re-run discovery and validate it; do not construct a path by interpolating
+  a key. The same explicit node-field correction applies to exported or recovery JSON when its
+  harness was omitted.
+
+  Snapshot rows are immutable: do not update them or disable their triggers. The omission query
+  also reports snapshots, but an omitted harness alone is accepted by definition parsing with
+  its effective `codex` default. An explicit version read can still return `500 RESPONSE_INVALID`
+  for that manually authored snapshot. Preserve its history. Use the following options only for
+  an actually incompatible snapshot, such as one with an invalid override key. Keep the original
+  database backup with its previous build. To preserve authored work in a fresh store, export
+  the affected loop from the original gateway using its previous build. If it needs starting,
+  this is an owner-directed operational start. Use `GET /loops/{loop_id}/export?draft=true`
+  for its draft or omit the query for its published definition. Correct the exported keys as
+  structured JSON and import through `POST /loops/import` into a separate fresh store. The original
+  backup retains its history; the new store carries the imported definition only, without the
+  original runs, events or snapshots. To adopt the fresh store, select its data directory,
+  database configuration and credentials. Use the loop ID returned by import for verification.
+  The original database still holds the incompatible snapshot. To keep using that database
+  with the updated gateway, deliberately finish/cancel the old build's
+  runs and delete the enclosing loop through `DELETE /loops/{loop_id}` (which removes its runs
+  and snapshots), or explicitly reset the store. Exported definitions and saved device/recovery draft copies carry the same
+  `nodes[].config.harnessOptions.configOverrides` fields; correct or remove their offending keys
+  before importing or recovering them. The definition format is unchanged.
+
+  Before resuming service, check the store you will use for unresolved invalid keys and
+  incompatible snapshots. Verify key and explicit-harness corrections on applicable editable
+  rows against the stored text. An omission-only result for an immutable snapshot need not be
+  cleared. Start the new build with the configuration for the repaired original or the adopted
+  fresh store. Startup recovers runs and re-arms published triggers, as described in the
+  [restart guide](docs/guide/01-install-and-first-run.md#stop-and-restart-safely). After that restart,
+  verify authenticated `GET /loops/{loop_id}` returns 200 for each corrected loop and compare its
+  returned draft/current definitions with the intended corrections. Other retained versions are
+  covered by the offline discovery and exact stored-text checks. Keep this verification
+  read-only; do not publish owner drafts or start runs for a test. Synthetic QA can separately
+  exercise publication and restart with inert fixtures, fake harnesses and timers disabled; it
+  does not establish owner-store acceptance.
+
 - The editor keeps every stored edge record when a draft gives two edges one id
   (`DUPLICATE_EDGE_ID`, #481). Decision route bookkeeping changes or removes only the record a
   route row names alone among that Decision's own connections, so an unrelated edit no longer

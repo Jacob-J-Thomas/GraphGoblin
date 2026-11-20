@@ -1,0 +1,124 @@
+{
+  "runtimeSource": "8a48876e4b22dfbca7ad40a8ab591387003ee34c",
+  "head": "d5a078363212814868b642f9fd756ca057888943",
+  "target": "b9ad7a03898d8dd4b46552a5750de79ce81a91f1",
+  "tree": "861d79ce9355d34f7e62b2f94fba6bb05bcfa3d9",
+  "path": "docs/09-frontend-and-pwa.md",
+  "before": {
+    "gitBlob": "93e6ef572040c944f688828b70dbccf55366e9d8",
+    "sha256": "2288e589de72da627f7dcc8c8ed6d2488c4f77dec014c6125a2c9153b3da8db5"
+  },
+  "after": {
+    "gitBlob": "3f4b526265c1e435e5623b46068add2178b6c011",
+    "sha256": "43e907e1c02213fdf0b002025b9fbb98a9ebc671dee830c8c7cd5eef5c4416cf"
+  },
+  "diffSha256": "728fe844079abf9551b2d4f07974be8c94a7a366abe3892f11d26c6b052a76b4",
+  "observedAtUtc": "2026-11-20T06:21:32.176Z",
+  "scope": "Factual documentation readback of the two Fable clauses only; no general scan, approval or product execution.",
+  "changedPaths": [
+    "docs/09-frontend-and-pwa.md"
+  ],
+  "runtimeDelta": false,
+  "fullRecursiveTreeOutsidePathIdentical": true,
+  "originalFableFinding": {
+    "path": "pr513-value-fable-03/provider-final-message.md",
+    "sha256": "fa014152e54a70bd4cf430d09190566b82b83a03af475ffd26f57f983845955b",
+    "runtimeSourceReviewed": "8a48876e4b22dfbca7ad40a8ab591387003ee34c",
+    "classification": "Runtime fix accepted by Fable; two documentation clauses identified as non-blocking overstatements."
+  },
+  "observations": [
+    {
+      "clause": 1,
+      "originalWording": "Any other value is taken as typed, as before",
+      "replacement": "Other values follow the ordinary form validation path.",
+      "explicitLimitation": "A declared variable's JSON Schema may accept an own `__proto__` member that the form's copy can omit.",
+      "actualReadback": "The new wording no longer promises that every accepted value is retained as typed. It expressly describes the admitted declared-variable schema case that can lose the own member and points it to #527.",
+      "sourceEvidence": "entryValueRefusal returns no message when the copied value is unchanged or when the record/value schema accepts it; stripUnset copies object entries by assignment. VariableDeclarationsSchema is a SlugSchema-keyed record of JsonSchemaSchema, which is a record of unknown values.",
+      "testEvidence": "structure.test.tsx test beginning at line 290 enters an admitted declared-variable schema containing the member, expects no inline invalid/held issue, and checks only the neighboring type with toMatchObject at line 308. It does not assert preservation of the entire object.",
+      "qualification": "This source/test readback supports the stated limitation, not a complete stored Variables round trip. No new runtime proof of #527 is claimed."
+    },
+    {
+      "clause": 2,
+      "originalWording": "while the entry's own key is refused, the value is held with",
+      "codexReplacement": "When the Codex override's own key also violates its rule, the Value first names that key. Correcting it exposes the nested member error.",
+      "keySchemaReplacement": "For a record whose key schema rejects the key, the value schema determines the Value's feedback.",
+      "actualReadback": "The new prose confines the Key-prefixed priority to the Codex override record-key check and separately describes a key rejected by its key schema.",
+      "sourceEvidence": "entryValueRefusal first branches on !shape.key.safeParse(key).success and then uses shape.value.safeParse(value) feedback. Otherwise the record schema is checked and an entry-key issue may receive Key prefix. JsonText revalidates held text using the current validation callback/version.",
+      "testEvidence": "structure.test.tsx lines319-329 uses Bad key plus a refused array value, expects the value-schema refusal and explicitly excludes Key Bad key from the Value description; an accepted object value under that bad key is not marked invalid.",
+      "qualification": "No browser or tests were run for this editorial readback; these are inspected assertions and source branches, unchanged from runtimeSource."
+    }
+  ],
+  "parkedFollowup": {
+    "number": 527,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/527",
+    "title": "Preserve all admitted JSON members when editing a declared variable schema",
+    "state": "open",
+    "labels": [
+      "qa:touched-systems",
+      "impl:claude-opus-5.5",
+      "review:gpt-6.1-sol",
+      "type:bug",
+      "area:editor",
+      "backlog"
+    ],
+    "gateLabels": [],
+    "parkedEvidence": {
+      "backlogLabel": true,
+      "bodyExplicitlyParked": true
+    },
+    "bodySha256": "1c75e543613c2a578400c045426405c69d7f36bf5725ff463ce91bfc616e3d3f",
+    "readVia": "Read-only connected GitHub fetch_issue",
+    "observedIssueUpdatedAt": "2026-11-20T06:14:09Z",
+    "scope": "Whole admitted declared-variable JSON preservation, including form output, saved draft and reloaded Value. The issue explicitly notes that the current mounted assertion does not compare the whole object."
+  },
+  "evidence": [
+    {
+      "path": "apps/web/src/forms/fields/structure.tsx",
+      "gitBlob": "515ce0329ee48cf8e4ee03b427ca1da96de81101",
+      "sha256": "d95e5d740535fa9bb1c5ebec4c8c81048d6faceeba7681b7681fedfb6c99a2f7",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "apps/web/src/forms/fields/json.tsx",
+      "gitBlob": "d9f27be81d9c554039a0aa4f78415f8c6cfe9ec4",
+      "sha256": "796a5ac3172f19874e137cb572c9721c76929996b697cbcff114b61348aa3743",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "apps/web/src/forms/structure.test.tsx",
+      "gitBlob": "d96b7c7967bb8d30fcc058d5ba4806344558ea98",
+      "sha256": "7a59d86cd464b1d44f12ce2836afcdcf589e5cfe7308c0eec022b6c2624d1c6c",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "apps/web/src/forms/unset.ts",
+      "gitBlob": "e5eadebad281754271bebd3fc8cb0fcf3fb97b1a",
+      "sha256": "865359d1e8fb9f6dd525ca2e7ef26ce0b3922bb8a2eac5fce259fc3494460c0d",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "packages/contracts/src/codex-config.ts",
+      "gitBlob": "12aaf2aa97ffb062aa3a9afdee53ba8caf2838b5",
+      "sha256": "151f7ac4edd6f0465006b4b5ac2774ac643886a04b505c2543777bd0aa061c58",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "packages/contracts/src/common.ts",
+      "gitBlob": "cd73485d0d8d81e746602deefad16b95e289b65b",
+      "sha256": "28c915d9b667ccd557fd177ec9f40d75994cd9b2e765d7d969815cc974564f8f",
+      "unchangedFromRuntimeSource": true
+    },
+    {
+      "path": "packages/contracts/src/thread.ts",
+      "gitBlob": "d8a2e21bd4e6e4249f311d25a6f5c86e09a13f9b",
+      "sha256": "242a520abb7617ba5156df8aa4fef282d7481482a0c4a3d6b6dd9f44343ea47d",
+      "unchangedFromRuntimeSource": true
+    }
+  ],
+  "limitations": [
+    "Only the two requested documentation clauses and their scoped code/tests were read; no new general review or sign-off.",
+    "No product build, tests, browser, GraphGoblin API server or model-provider execution was performed, and no source/index/ref or remote data was modified. The only service read was the explicitly recorded GitHub issue lookup.",
+    "The docs-only child has no runtime/test delta. Existing runtime QA remains attributed to runtimeSource, not newly executed at this child.",
+    "Live #527 parking was verified, but its unresolved behavior was not implemented or runtime-retested."
+  ]
+}

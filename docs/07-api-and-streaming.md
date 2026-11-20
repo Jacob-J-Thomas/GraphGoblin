@@ -495,6 +495,14 @@ Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at
 
 Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path. Request errors Fastify raises itself use stable codes too: `MALFORMED_BODY` (invalid or empty JSON, 400), `BODY_TOO_LARGE` (over the 8 MB limit, 413), `UNSUPPORTED_MEDIA_TYPE` (415); other framework errors are `BAD_REQUEST`, so no `FST_ERR_*` code reaches a client.
 
+Request schema `VALIDATION_FAILED` errors encode each original issue-path segment as RFC 6901:
+`~` becomes `~0` and `/` becomes `~1`. A literal member `review/~key` is therefore one segment,
+`review~1~0key`; an array index remains its own segment. Paths come from the structured schema
+issue, never by splitting or decoding a provider's unescaped path string. Unknown fields use the
+same encoding for both their containing path and each reported member. Existing ordinary field
+paths, messages, error codes and the root-path convention `/` are unchanged. This request-body
+convention does not change the separate dotted import, editor or publication issue formats.
+
 ### Model catalog (Decided, ADR-0018)
 
 Entries include `source: 'harness' | 'litellm'`. GET requires `settings:read`; all mutations require `settings:write`. PATCH accepts only `{ enabled: boolean }` and returns the full entry with 200; repeated toggles are safe. Use `modelCatalog.setEnabled(client, harness, model, enabled)` in the client. Existing `upsert` and `remove` helpers remain for LiteLLM rows; no client helper was removed.

@@ -1,0 +1,34 @@
+
+ RUN  v5.0.3 <checkout>/apps/web
+
+ ❯ src/forms/structure.test.tsx (18 tests | 1 failed) 4769ms
+   × renames an unparsed variable without losing its text or leaving the old issue 225ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/structure.test.tsx > renames an unparsed variable without losing its text or leaving the old issue
+AssertionError: expected [ 'variables.r', 'variables.renamed' ] to deeply equal [ 'variables.renamed' ]
+
+- Expected
++ Received
+
+  [
++   "variables.r",
+    "variables.renamed",
+  ]
+
+ ❯ src/forms/structure.test.tsx:124:76
+    122|   await user.type(screen.getByLabelText('Variables key 1'), 'renamed');
+    123|   expect(getCode('Variables value 1')).toBe('{keep');
+    124|   expect(Object.keys(useEditorStore.getState().fieldErrors['test'] ?? …
+       |                                                                            ^
+    125|     'variables.renamed',
+    126|   ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 28 passed (29)
+      Tests  1 failed | 489 passed (490)
+   Start at  23:24:41
+   Duration  140.22s (tests 62%, environment 21%, import 8%, setup 7%, transform 2%)

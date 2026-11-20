@@ -1,0 +1,39 @@
+[source lines 1-15]
+$ vitest run --coverage
+
+ RUN  v5.0.3 <checkout>/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/EditorPage.rename.test.tsx (14 tests | 1 failed) 57840ms
+   ❯ renaming a node in the editor (#273) (14)
+     × remounts only the settings form, keeping unfinished variables text 5430ms
+Not implemented: navigation to another Document
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > remounts only the settings form, keeping unfinished variables text
+AssertionError: expected undefined to be defined
+
+
+[source lines 148-169]
+ ❯ src/editor/EditorPage.rename.test.tsx:463:66
+    461|     const panel = screen.getByRole('complementary', { name: 'Loop sett…
+    462|     setCode('Variables value 1', '[1, ');
+    463|     await waitFor(() => expect(store().fieldErrors['variables']).toBeD…
+       |                                                                  ^
+    464|     const variables = store().fieldErrors['variables'];
+    465|     const variablesValue = within(panel)
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 226 passed (227)
+      Tests  1 failed | 3014 passed (3015)
+   Start at  23:31:15
+   Duration  1069.43s (tests 59%, environment 24%, import 9%, setup 7%, transform 1%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+exit 1

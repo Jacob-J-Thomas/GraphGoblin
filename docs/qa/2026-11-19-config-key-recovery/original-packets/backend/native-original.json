@@ -1,0 +1,373 @@
+{
+  "node": "v22.23.4",
+  "phases": [
+    {
+      "name": "cli-key-mint",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "tokenReturnedInMemory": true
+    },
+    {
+      "name": "seed-cold-start",
+      "health": 200,
+      "listenerPidMatched": true
+    },
+    {
+      "name": "seed-http-statuses",
+      "unauthenticated": 401,
+      "historyDraft": 201,
+      "repairDraft": 201
+    },
+    {
+      "name": "api-seed",
+      "unauthenticated": 401,
+      "createHistoric": 201,
+      "createRepairDraft": 201,
+      "materializedHarness": "codex",
+      "historyRunStatus": "succeeded",
+      "historyEventCount": 8
+    },
+    {
+      "name": "seed-drain",
+      "drain": 202,
+      "phase": "draining",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "backup",
+      "dbSha256": "c627163049c3ae9b77e1f8890251eb72b0409f057512664be74c2d7e23db18f9",
+      "fileCount": 4,
+      "originalUnrelatedHistory": {
+        "runSha256": "ed38b419b30b3c75eb1978c37c79e0376164617a881d663a393161a36dae2ff8",
+        "eventsSha256": "5aa6bcd430b1fe7e9d6194189e0c750e27d8b22f897e83671c741999db206739",
+        "snapshotSha256": "ac8399f93de50e313220dda41109d85d733f93292cc00856bdfb48ba67cdbb26",
+        "eventCount": 8,
+        "snapshotStatus": "snapshot",
+        "runStatus": "succeeded"
+      }
+    },
+    {
+      "name": "unrepaired-cold-refusal",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "rowNamed": true,
+      "startupRefusalMatched": true,
+      "listenerAnnounced": false,
+      "launchError": null,
+      "privateOutputSha256": "3d990c3e6bb09f05e7f2d95ff5a3d081e0b888812295515d008f1a1dceba40f2"
+    },
+    {
+      "name": "libsql-quoted-removal",
+      "sqliteVersion": "3.45.1",
+      "affected": 1,
+      "originalTextUnchanged": true,
+      "discovered": 1,
+      "omitted": 1,
+      "keyPath": "$.nodes[1].config.harnessOptions.configOverrides.\"native_qa.\\\"review\\\"\""
+    },
+    {
+      "name": "key-only-cold-start",
+      "health": 200,
+      "listenerPidMatched": true
+    },
+    {
+      "name": "key-only-authenticated-http",
+      "get": 500,
+      "getCode": "RESPONSE_INVALID",
+      "publish": 500,
+      "publishCode": "INTERNAL_ERROR"
+    },
+    {
+      "name": "key-only-drain",
+      "drain": 202,
+      "phase": "draining",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "documented-offline-repair",
+      "materialized": 1,
+      "replaced": 1,
+      "textMatchesReplacement": true,
+      "definitionSha256": "cea27d44928cd8c0d565a412adb05237470a6a85b106affe894c82da937adb18",
+      "actualDefinitionMatchesApiSeed": true,
+      "discovered": 0,
+      "omitted": 0
+    },
+    {
+      "name": "fully-corrected-cold-start",
+      "health": 200,
+      "listenerPidMatched": true
+    },
+    {
+      "name": "corrected-authenticated-http",
+      "get": 200,
+      "publish": 200,
+      "preservesVersion": true,
+      "shape": {
+        "harness": "codex",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic, never executed."
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never",
+          "configOverrides": {
+            "features.plugins": false,
+            "features.multi_agent": false
+          }
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        },
+        "timeoutSeconds": 123
+      },
+      "definitionExact": true
+    },
+    {
+      "name": "corrected-drain",
+      "drain": 202,
+      "phase": "draining",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "post-publish-process-restart",
+      "health": 200,
+      "listenerPidMatched": true
+    },
+    {
+      "name": "restart-authenticated-readback",
+      "get": 200,
+      "versionPreserved": true,
+      "exactDefinition": true,
+      "run": 200,
+      "events": 200,
+      "eventCount": 8,
+      "eventsMatch": true
+    },
+    {
+      "name": "restart-drain",
+      "drain": 202,
+      "phase": "draining",
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "final-stopped-integrity",
+      "targetDefinitionSha256": "cea27d44928cd8c0d565a412adb05237470a6a85b106affe894c82da937adb18",
+      "finalHistory": {
+        "runSha256": "ed38b419b30b3c75eb1978c37c79e0376164617a881d663a393161a36dae2ff8",
+        "eventsSha256": "5aa6bcd430b1fe7e9d6194189e0c750e27d8b22f897e83671c741999db206739",
+        "snapshotSha256": "ac8399f93de50e313220dda41109d85d733f93292cc00856bdfb48ba67cdbb26",
+        "eventCount": 8,
+        "snapshotStatus": "snapshot",
+        "runStatus": "succeeded"
+      },
+      "unrelatedVersionRowsExact": true,
+      "backupExact": true,
+      "seedExact": true
+    },
+    {
+      "name": "complete",
+      "readinessInvocations": {
+        "--version": 1,
+        "exec --help": 1,
+        "exec resume --help": 1,
+        "login status": 1
+      },
+      "activeOwnedProcesses": 0
+    }
+  ],
+  "checklist": [
+    {
+      "name": "four exact source SQL blocks selected",
+      "pass": true
+    },
+    {
+      "name": "native built CLI mints a disposable key",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: bound ephemeral port",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: native child serves health",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: guard should refuse before listen",
+      "pass": true
+    },
+    {
+      "name": "real public creates and authentication",
+      "pass": true
+    },
+    {
+      "name": "ordinary API creation materializes omitted harness",
+      "pass": true
+    },
+    {
+      "name": "unrelated provider-free draft run admitted",
+      "pass": true
+    },
+    {
+      "name": "successful unrelated run and nonempty HTTP history",
+      "pass": true
+    },
+    {
+      "name": "seed-drain: authenticated drain and natural exit 0",
+      "pass": true
+    },
+    {
+      "name": "ordinary materialized harness is present in stored bytes",
+      "pass": true
+    },
+    {
+      "name": "independent history contains immutable snapshot and events",
+      "pass": true
+    },
+    {
+      "name": "only the stopped synthetic copy was hand-edited",
+      "pass": true
+    },
+    {
+      "name": "stopped backup bytes equal work file bytes",
+      "pass": true
+    },
+    {
+      "name": "unrepaired-cold-refusal: guard exits 1 before listening and names the fixture row",
+      "pass": true
+    },
+    {
+      "name": "discovery identifies exact omitted inference and member",
+      "pass": true
+    },
+    {
+      "name": "guard refusal preserved target and history",
+      "pass": true
+    },
+    {
+      "name": "affected-row count is insufficient for quoted key",
+      "pass": true
+    },
+    {
+      "name": "prior key-only correction leaves detectable omission",
+      "pass": true
+    },
+    {
+      "name": "key-only-cold-start: bound ephemeral port",
+      "pass": true
+    },
+    {
+      "name": "key-only-cold-start: native child serves health",
+      "pass": true
+    },
+    {
+      "name": "key-only-cold-start: guard should refuse before listen",
+      "pass": true
+    },
+    {
+      "name": "key-only repair boots yet GET and Publish retain the first failures",
+      "pass": true
+    },
+    {
+      "name": "key-only-drain: authenticated drain and natural exit 0",
+      "pass": true
+    },
+    {
+      "name": "failed GET and Publish preserve omitted draft and unrelated history",
+      "pass": true
+    },
+    {
+      "name": "documented stopped-row SQL materializes only the missing harness",
+      "pass": true
+    },
+    {
+      "name": "readback is exact and differs from malformed only by the two intended corrections",
+      "pass": true
+    },
+    {
+      "name": "repair preserves unselected rows and history",
+      "pass": true
+    },
+    {
+      "name": "fully-corrected-cold-start: bound ephemeral port",
+      "pass": true
+    },
+    {
+      "name": "fully-corrected-cold-start: native child serves health",
+      "pass": true
+    },
+    {
+      "name": "fully-corrected-cold-start: guard should refuse before listen",
+      "pass": true
+    },
+    {
+      "name": "native authenticated GET and publish return exact full definition on the same version",
+      "pass": true
+    },
+    {
+      "name": "corrected-drain: authenticated drain and natural exit 0",
+      "pass": true
+    },
+    {
+      "name": "post-publish-process-restart: bound ephemeral port",
+      "pass": true
+    },
+    {
+      "name": "post-publish-process-restart: native child serves health",
+      "pass": true
+    },
+    {
+      "name": "post-publish-process-restart: guard should refuse before listen",
+      "pass": true
+    },
+    {
+      "name": "fresh process retains published definition and unchanged unrelated HTTP events",
+      "pass": true
+    },
+    {
+      "name": "restart-drain: authenticated drain and natural exit 0",
+      "pass": true
+    },
+    {
+      "name": "published stored bytes remain exact after restart",
+      "pass": true
+    },
+    {
+      "name": "all unrelated versions, run, events, snapshot, seed and stopped backup are unchanged",
+      "pass": true
+    },
+    {
+      "name": "only inert readiness invocations reached the simulated CLI",
+      "pass": true
+    }
+  ],
+  "recipeSha256": [
+    "275280dfd41d03c785a3ce0d66bb075d11dbb884df883f9246291215797c3105",
+    "22731d8bfa1ccbcae4496b608dd5bf5c3fb65533bf7fb19369f986cfa3ce9885",
+    "eaec7adda559775c86d5a24ba402d505c4bafff4b79c2f4c0a7fd014c0ca906b",
+    "8edea155a99d090795e9c2aa35137659415e429f7b87e94df22de11f2bfda67d"
+  ]
+}
