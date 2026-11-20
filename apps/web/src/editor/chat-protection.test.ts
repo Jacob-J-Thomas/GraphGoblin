@@ -91,7 +91,7 @@ describe('voice protocol editor protection', () => {
       useEditorStore.setState({ systemChat: true });
       const before = useEditorStore.getState();
       useEditorStore.getState().removeEdge(voice.id);
-      const message = `More than one connection uses the ID "${voice.id}"; this action cannot choose just one.`;
+      const message = `More than one connection uses the ID "${voice.id}", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.`;
       // Both records stay, in either order, and the reason is the shared id, not which came first.
       expect(useEditorStore.getState()).toEqual({ ...before, connectionError: message });
       expect(useEditorStore.getState().definition).toBe(shared);

@@ -1,0 +1,356 @@
+{
+  "loop": "01M3Y7RKG09V5JYPTK34P05Y8Y",
+  "save": "All changes saved",
+  "visibleCards": [
+    "start",
+    "pick",
+    "done",
+    "other"
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "httpStatus": 200,
+  "serverDefinition": {
+    "schemaVersion": 4,
+    "name": "Astra record ownership shared",
+    "description": "Independent transient route-identity ownership QA",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 100
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "pick",
+        "label": "Pick",
+        "ui": {
+          "x": 310,
+          "y": 100
+        },
+        "kind": "decision",
+        "config": {
+          "kind": "expression",
+          "jsonata": "\"yes\"",
+          "routes": [
+            {
+              "id": "yes",
+              "label": "Yes"
+            },
+            {
+              "id": "affirm",
+              "label": "No"
+            },
+            {
+              "id": "maybe",
+              "label": "Maybe"
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 810,
+          "y": 0
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      },
+      {
+        "id": "other",
+        "label": "Other",
+        "ui": {
+          "x": 810,
+          "y": 360
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ]
+  },
+  "device": {
+    "synced": true,
+    "ownDecisionRoutes": false,
+    "definition": {
+      "schemaVersion": 4,
+      "name": "Astra record ownership shared",
+      "description": "Independent transient route-identity ownership QA",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 100
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "pick",
+          "label": "Pick",
+          "ui": {
+            "x": 310,
+            "y": 100
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"yes\"",
+            "routes": [
+              {
+                "id": "yes",
+                "label": "Yes"
+              },
+              {
+                "id": "affirm",
+                "label": "No"
+              },
+              {
+                "id": "maybe",
+                "label": "Maybe"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 810,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "other",
+          "label": "Other",
+          "ui": {
+            "x": 810,
+            "y": 360
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

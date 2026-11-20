@@ -1,0 +1,159 @@
+{
+  "originalEdges": [
+    {
+      "id": "s1",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "pick"
+      }
+    },
+    {
+      "id": "e1",
+      "from": {
+        "node": "pick",
+        "port": "yes"
+      },
+      "to": {
+        "node": "done"
+      },
+      "ui": {
+        "route": [
+          400,
+          200,
+          500
+        ]
+      }
+    },
+    {
+      "id": "e1",
+      "from": {
+        "node": "pick",
+        "port": "no"
+      },
+      "to": {
+        "node": "other"
+      },
+      "ui": {
+        "route": [
+          650
+        ]
+      }
+    },
+    {
+      "id": "m1",
+      "from": {
+        "node": "pick",
+        "port": "maybe"
+      },
+      "to": {
+        "node": "done"
+      }
+    }
+  ],
+  "collisionOwnership": {
+    "pick": {
+      "nextKey": 3,
+      "rows": [
+        {
+          "key": 0,
+          "edgeIds": [
+            "e1"
+          ],
+          "id": "yes"
+        },
+        {
+          "key": 1,
+          "edgeIds": [
+            "e1"
+          ],
+          "id": "yes"
+        },
+        {
+          "key": 2,
+          "edgeIds": [
+            "m1"
+          ],
+          "id": "maybe"
+        }
+      ]
+    }
+  },
+  "collisionRemovalPreview": [
+    {
+      "id": "e1",
+      "from": {
+        "node": "pick",
+        "port": "yes"
+      },
+      "to": {
+        "node": "done"
+      },
+      "ui": {
+        "route": [
+          400,
+          200,
+          500
+        ]
+      }
+    }
+  ],
+  "afterEdges": [
+    {
+      "id": "s1",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "pick"
+      }
+    },
+    {
+      "id": "e1",
+      "from": {
+        "node": "pick",
+        "port": "affirm"
+      },
+      "to": {
+        "node": "done"
+      },
+      "ui": {
+        "route": [
+          400,
+          200,
+          500
+        ]
+      }
+    },
+    {
+      "id": "e1",
+      "from": {
+        "node": "pick",
+        "port": "no"
+      },
+      "to": {
+        "node": "other"
+      },
+      "ui": {
+        "route": [
+          650
+        ]
+      }
+    },
+    {
+      "id": "m1",
+      "from": {
+        "node": "pick",
+        "port": "maybe"
+      },
+      "to": {
+        "node": "done"
+      }
+    }
+  ],
+  "unrelatedRecordPreserved": false,
+  "intendedRecordPort": "no"
+}

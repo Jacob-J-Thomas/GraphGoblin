@@ -1,0 +1,11 @@
+# Execution route
+
+Select the project Node 22.23.4 shell runtime. Let SOURCE name the clean exact source lane, EVIDENCE the source-specific evidence directory, RUNTIME a new disposable runtime directory, CLI the installed Playwright CLI entry point, and SESSION a new unique browser session. All source identity reads use read-only Git commands; there are no checkout/ref/index mutations in these drivers.
+
+`pnpm.cmd build` was personally run only for the original f26d source. For each source: `node bind-source.mjs SOURCE EVIDENCE before EXPECTED_HEAD`; then, from SOURCE, `node --conditions=development --import ./apps/web/node_modules/tsx/dist/loader.mjs EVIDENCE/store-controls.mjs SOURCE EVIDENCE`.
+
+Run `node start-server.mjs SOURCE RUNTIME` in an owned shell. Original source uses `node seed.mjs EVIDENCE RUNTIME` (six disposable loops). Final source uses `node seed-one.mjs EVIDENCE RUNTIME` (one loop). Open a new CLI Chromium session with a local executable configuration equivalent to headed Chromium build 1234 and 1440x1000 viewport; the original machine-specific executable path is retained privately. Authenticate through `node authenticate-browser.mjs EVIDENCE RUNTIME SESSION CLI`; the helper redacts the disposable key and does not save authentication form screenshots.
+
+Take an actual snapshot, then run `node run-case.mjs EVIDENCE RUNTIME CASE SESSION CLI`. Original CASE values were restored-delete, fresh-delete, unique-delete, both-owned-delete, description-control and target-rename. Final source ran restored-delete only. Both run `node run-yes-preview.mjs EVIDENCE RUNTIME SESSION CLI` as an added direct Yes-row acceptance probe. Drivers preserve full observations and original CLI output privately; public raw result JSON is copied without rewriting. The original six-case private retained-record replay passed 136 assertions; its source is included as private-records-verifier.mjs because it also reads the privately retained first-failure file.
+
+Cleanup uses `node cleanup-credentials.mjs RUNTIME EVIDENCE/records EVIDENCE`, closes only SESSION, and writes the owned server stop-request.json. Check the recorded owned PIDs and listener are absent. Finish with `node bind-source.mjs SOURCE EVIDENCE after EXPECTED_HEAD`. The added probe driver hash is retained in its result JSON; manifest.json seals the public bytes.

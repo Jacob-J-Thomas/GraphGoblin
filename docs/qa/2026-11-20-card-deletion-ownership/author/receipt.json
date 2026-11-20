@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "source": "i2-481-topology-author-evidence",
+  "authorBase": "afc96e2350daa6ff8d3b6d733150218e3675a2aa",
+  "finalFrozenSource": "ae4ad07b4ec6a5e587dcdf699da286295ca67b5e",
+  "scope": "Author controls and retained original failures; distinct from independent QA and formal review",
+  "terminal": {
+    "providerFinalMessageObserved": true,
+    "providerExitObserved": true,
+    "exitCode": 0,
+    "provider": "Claude Code Opus 5.5",
+    "effort": "xhigh",
+    "finalReportSha256": "b762468117c3523b301601a987eecee01935ef2ddefd6d2b4f16d7d0d63f73fc",
+    "coverageClaim": true,
+    "webTestsPassed": 2993,
+    "webFilesPassed": 226,
+    "lineCoveragePercent": 98.62,
+    "branchCoveragePercent": 94.37,
+    "originalAssemblySha256": "c9ac3294a948f66d09e16705f157f8ffa1dd19f1267de7dd13b9d98ffe467221"
+  },
+  "negativeControl": {
+    "newFileAgainstBaselineProduct": {
+      "failed": 5,
+      "passed": 59,
+      "total": 64
+    },
+    "unchangedWitnessOnCorrection": {
+      "exit": 1,
+      "reason": "Baseline witness expects the defect; correction preserves the survivor, so true !== false"
+    }
+  },
+  "mutations": [
+    {
+      "name": "A: no carry through the edit",
+      "failed": 4,
+      "passed": 61,
+      "total": 65
+    },
+    {
+      "name": "B: no check of the pass’s own removals",
+      "failed": 1,
+      "passed": 64,
+      "total": 65
+    },
+    {
+      "name": "C: rewrite accepted without same holder ports",
+      "failed": 1,
+      "passed": 64,
+      "total": 65
+    },
+    {
+      "name": "D: no rewrite clause",
+      "failed": 1,
+      "passed": 64,
+      "total": 65
+    }
+  ],
+  "correctedWitness": {
+    "record": "witness/corrected-run-all-scenarios.stdout.json",
+    "driver": "witness/ownership-challenge-corrected-expectation.mts",
+    "onlyDriverDelta": "The existing survivorsPreserved assertion on line 60 expects true in every scenario; all controls and history assertions remain.",
+    "exit": 0,
+    "sourceBinding": "Author-selected witness records; curator did not execute the driver.",
+    "executionSourceQualification": "Working author lane; the witness summary does not supply an immutable execution head. It remains author evidence, separate from the independently source-bound product QA."
+  },
+  "selections": [
+    {
+      "path": "mutation-checks.txt",
+      "originalArtifact": "mutation-checks.txt",
+      "bytes": 1586,
+      "sha256": "7cb7424106a10e1e7ad07ad9bae7be32df4b68d966833593788810443d8f42de",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "eslint-changed.txt",
+      "originalArtifact": "eslint-changed.txt",
+      "bytes": 14,
+      "sha256": "a8c7ec7b5a497c0719e091a4af46ecadb093ce17e69cfd88947169fc6ca50c19",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "prettier-changed.txt",
+      "originalArtifact": "prettier-changed.txt",
+      "bytes": 82,
+      "sha256": "87b4b294f24891a2080d123369530e37dab1870e4fc42f36216ec83dd9d0c6d1",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "typecheck-web.txt",
+      "originalArtifact": "typecheck-web.txt",
+      "bytes": 49,
+      "sha256": "d9ec604d3b74865b622985b51c196d55ffc7700ec7c502aeab2934638fa0e77d",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "witness/before-after.json",
+      "originalArtifact": "witness/before-after.json",
+      "bytes": 5278,
+      "sha256": "0634224c928c6a13e4fe9403fa775c9b790874b35dea310baeecc8a2bc6fa6f5",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "witness/corrected-run-all-scenarios.stdout.json",
+      "originalArtifact": "witness/corrected-run-all-scenarios.stdout.json",
+      "bytes": 13529,
+      "sha256": "b46b9ae66b9169555141b22f2e1dd488c57a03a0f6770da15ee68f63d3337738",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "witness/ownership-challenge-corrected-expectation.mts",
+      "originalArtifact": "witness/ownership-challenge-corrected-expectation.mts",
+      "bytes": 3704,
+      "sha256": "48971216673f09d3eaea74c7532945706062a691fd7c6b5bc3f766f7245fb436",
+      "treatment": "Exact original selected author bytes"
+    },
+    {
+      "path": "tests-new-file-against-baseline-product.txt",
+      "originalArtifact": "tests-new-file-against-baseline-product.txt",
+      "originalBytes": 5475,
+      "originalSha256": "e5422ad6434d4337fd8a65f504584efb095dc792ad84f247e060f354bbd7ce5e",
+      "publishedBytes": 5404,
+      "publishedSha256": "e4934ed1bab3af296c17a872d3da475218b0b7a36ddf96bdec3e071f12996c99",
+      "treatment": "Absolute checkout and witness paths replaced with portable placeholders. The final empty output line is omitted. Restoring the recorded terminator yields the previous privacy-copy hash.",
+      "priorPrivacyCopySha256": "85031df3235c8a2ba7037e15e1c61842a5b0568b92d90a4c4d3f3963ddc8b3d6",
+      "omittedFinalBlankLineHex": "0a"
+    },
+    {
+      "path": "witness/corrected-run.stderr.txt",
+      "originalArtifact": "witness/corrected-run.stderr.txt",
+      "originalBytes": 652,
+      "originalSha256": "31d71588721c4e0d2dc007388242de1ffa39ec3002d07dd1d5a6f82cd6364f46",
+      "publishedBytes": 499,
+      "publishedSha256": "6017961ead4cd0f89eebde6541652c6acecf99f288d41fd72eb23cfbe6e6720a",
+      "treatment": "Absolute checkout and witness paths replaced with portable placeholders. The final empty output line is omitted. Restoring the recorded terminator yields the previous privacy-copy hash.",
+      "priorPrivacyCopySha256": "8825260e3db583b1277281d038bab097a1773d22e6e3174c790f44d6b28d59a8",
+      "omittedFinalBlankLineHex": "0a"
+    }
+  ],
+  "deduplicatedOriginals": [
+    {
+      "originalArtifact": "witness/ownership-challenge.mts",
+      "publishedReference": "../baseline/ownership-challenge.mts",
+      "transform": "identity",
+      "bytes": 3755,
+      "sha256": "3252e2d9123bb2f5670c2add4b87cd996ac60cabf6f06ae6c5e9ef3fa91c3a6e"
+    },
+    {
+      "originalArtifact": "witness/baseline-run.stdout.json",
+      "publishedReference": "../baseline/ownership-challenge.json",
+      "transform": "CRLF-to-LF",
+      "bytes": 14125,
+      "sha256": "e4da3726c8047b084cb795c844d1b2a7371846f91e077ab5c39f0a5ef7804e48"
+    }
+  ],
+  "omittedEmpty": [
+    {
+      "originalArtifact": "witness/baseline-run.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Empty output; receipt retains its exact empty-byte hash"
+    },
+    {
+      "originalArtifact": "witness/corrected-run.stdout.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Empty output; receipt retains its exact empty-byte hash"
+    },
+    {
+      "originalArtifact": "witness/corrected-run-all-scenarios.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Empty output; receipt retains its exact empty-byte hash"
+    }
+  ]
+}

@@ -1,0 +1,412 @@
+{
+  "source": "10cdc55a8573e484ceb07a32fba9fe9f513a005f",
+  "tree": "529ef3f5e0b294cb7492a15bb544a22b83354d5d",
+  "clean": true,
+  "remoteMainVerified": "10cdc55a8573e484ceb07a32fba9fe9f513a005f (git ls-remote origin refs/heads/main)",
+  "before": {
+    "definition": {
+      "schemaVersion": 4,
+      "name": "Ownership shared rename-after-collision",
+      "description": "Independent transient route-identity ownership QA",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 100
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "pick",
+          "label": "Pick",
+          "ui": {
+            "x": 310,
+            "y": 100
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"yes\"",
+            "routes": [
+              {
+                "id": "yes",
+                "label": "Yes"
+              },
+              {
+                "id": "no",
+                "label": "No"
+              },
+              {
+                "id": "maybe",
+                "label": "Maybe"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 810,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "other",
+          "label": "Other",
+          "ui": {
+            "x": 810,
+            "y": 360
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ]
+    },
+    "decisionRoutes": {
+      "pick": {
+        "nextKey": 3,
+        "rows": [
+          {
+            "key": 0,
+            "edgeIds": [
+              "e1"
+            ],
+            "id": "yes"
+          },
+          {
+            "key": 1,
+            "edgeIds": [
+              "e1"
+            ],
+            "id": "no"
+          },
+          {
+            "key": 2,
+            "edgeIds": [
+              "m1"
+            ],
+            "id": "maybe"
+          }
+        ]
+      }
+    }
+  },
+  "after": {
+    "definition": {
+      "schemaVersion": 4,
+      "name": "Ownership shared rename-after-collision",
+      "description": "Independent transient route-identity ownership QA",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 100
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "pick",
+          "label": "Pick",
+          "ui": {
+            "x": 310,
+            "y": 100
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"yes\"",
+            "routes": [
+              {
+                "id": "yes",
+                "label": "Yes"
+              },
+              {
+                "id": "yes",
+                "label": "No"
+              },
+              {
+                "id": "maybe",
+                "label": "Maybe"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 810,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "other",
+          "label": "Other",
+          "ui": {
+            "x": 810,
+            "y": 360
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ]
+    },
+    "decisionRoutes": {
+      "pick": {
+        "nextKey": 3,
+        "rows": [
+          {
+            "key": 0,
+            "edgeIds": [
+              "e1",
+              "e1"
+            ],
+            "id": "yes"
+          },
+          {
+            "key": 1,
+            "edgeIds": [
+              "e1",
+              "e1"
+            ],
+            "id": "yes"
+          },
+          {
+            "key": 2,
+            "edgeIds": [
+              "m1"
+            ],
+            "id": "maybe"
+          }
+        ]
+      }
+    }
+  },
+  "emitsSameAmbiguousPair": false,
+  "storedEdgesUnchanged": true,
+  "qualification": "Unmodified exact current-main maintained store.load/updateNode experiment. No main browser/device or public-server run is claimed.",
+  "helperSha256": "f101fd6913124ce9827f8ededb734e670e5b9fc1dd60a1b1e1426067e4ce2cc7"
+}

@@ -1,0 +1,280 @@
+{
+  "witness": "pr514-final-afc96e2350/ownership-challenge.mts (unchanged copy in witness/)",
+  "baselineSource": "afc96e2350daa6ff8d3b6d733150218e3675a2aa",
+  "baselineMatchesAuditorCapture": true,
+  "baselineUnchangedWitnessExit": 0,
+  "correctedUnchangedWitnessExit": 1,
+  "correctedUnchangedWitnessFailure": "line 60: survivorsPreserved true where the witness expects the baseline defect false (restored)",
+  "correctedVariant": "witness/ownership-challenge-corrected-expectation.mts differs only on line 60 (expects survivorsPreserved true for every scenario)",
+  "correctedVariantExit": 0,
+  "baseline": {
+    "restored": {
+      "survivorsPreserved": false,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "yes",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          [
+            "e1"
+          ]
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [
+        {
+          "id": "e1",
+          "port": "yes",
+          "to": "other"
+        }
+      ],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-duplicate": {
+      "survivorsPreserved": false,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "yes",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          [
+            "e1"
+          ]
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [
+        {
+          "id": "e1",
+          "port": "yes",
+          "to": "other"
+        }
+      ],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-unique": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e2",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-both-owned": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "no",
+          [
+            "e1"
+          ]
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-duplicate-keep-target": {
+      "unrelatedDescriptionPreservedEveryEdge": true
+    }
+  },
+  "corrected": {
+    "restored": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-duplicate": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-unique": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e2",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "affirm",
+          []
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-both-owned": {
+      "survivorsPreserved": true,
+      "survivingPickEdges": [
+        {
+          "id": "e1",
+          "port": "no",
+          "to": "other",
+          "route": [
+            670
+          ]
+        }
+      ],
+      "afterOwnership": [
+        [
+          "yes",
+          []
+        ],
+        [
+          "no",
+          [
+            "e1"
+          ]
+        ],
+        [
+          "maybe",
+          []
+        ]
+      ],
+      "reviewYesAfterDelete": [],
+      "exactUndo": true,
+      "exactRedo": true
+    },
+    "fresh-duplicate-keep-target": {
+      "unrelatedDescriptionPreservedEveryEdge": true
+    }
+  }
+}

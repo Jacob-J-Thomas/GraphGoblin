@@ -1,0 +1,310 @@
+{
+  "source": "f17cddc1fca104679a2a8813ce10d2e01962be79",
+  "readOnly": true,
+  "qualification": "Correct request-body comparison on current candidate only; earlier null-body baseline requests remain schema refusals.",
+  "records": [
+    {
+      "case": "shared-direct",
+      "method": "POST",
+      "route": "/loops/<disposable-id>/validate",
+      "status": 200,
+      "input": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Ownership shared direct-rename candidate-f17cddc",
+          "description": "Independent transient route-identity ownership QA",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              },
+              "ui": {
+                "x": 0,
+                "y": 100
+              }
+            },
+            {
+              "id": "pick",
+              "kind": "decision",
+              "label": "Pick",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              },
+              "ui": {
+                "x": 310,
+                "y": 100
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {},
+              "ui": {
+                "x": 810,
+                "y": 0
+              }
+            },
+            {
+              "id": "other",
+              "kind": "exit",
+              "label": "Other",
+              "config": {},
+              "ui": {
+                "x": 810,
+                "y": 360
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "output": {
+        "issues": [
+          {
+            "code": "DUPLICATE_EDGE_ID",
+            "severity": "error",
+            "message": "duplicate edge id \"e1\"",
+            "edgeId": "e1"
+          }
+        ],
+        "publishable": false
+      }
+    },
+    {
+      "case": "unique-direct",
+      "method": "POST",
+      "route": "/loops/<disposable-id>/validate",
+      "status": 200,
+      "input": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Ownership unique direct-rename candidate-f17cddc",
+          "description": "Independent transient route-identity ownership QA",
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "config": {
+                "type": "manual"
+              },
+              "ui": {
+                "x": 0,
+                "y": 100
+              }
+            },
+            {
+              "id": "pick",
+              "kind": "decision",
+              "label": "Pick",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              },
+              "ui": {
+                "x": 310,
+                "y": 100
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "config": {},
+              "ui": {
+                "x": 810,
+                "y": 0
+              }
+            },
+            {
+              "id": "other",
+              "kind": "exit",
+              "label": "Other",
+              "config": {},
+              "ui": {
+                "x": 810,
+                "y": 360
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "output": {
+        "issues": [],
+        "publishable": true
+      }
+    }
+  ]
+}

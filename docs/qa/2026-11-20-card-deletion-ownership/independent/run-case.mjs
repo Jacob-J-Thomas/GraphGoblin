@@ -1,0 +1,8 @@
+import fs from 'node:fs/promises';import path from 'node:path';import{spawnSync}from'node:child_process';
+const[root,runtime,key,session,cli]=process.argv.slice(2),out=path.join(root,'records'),loops=JSON.parse(await fs.readFile(path.join(out,'loops.json'),'utf8')),{url}=JSON.parse(await fs.readFile(path.join(runtime,'private-session.json'),'utf8')),input=JSON.parse(await fs.readFile(path.join(root,'replay-inputs/prior-live-collision.json'),'utf8'));
+const cfg={...loops[key],key,url:url+'/app/loops/'+loops[key].id+'/edit',definition:input.definition,decisionRoutes:input.decisionRoutes,image:path.join(out,key+'.png').replaceAll('\\','/')};
+const readback=(await fs.readFile(path.join(root,'readback.js'),'utf8')).trim().replace(/;$/,''),code=(await fs.readFile(path.join(root,'journey.browser.js'),'utf8')).replace('__CONFIG__',JSON.stringify(cfg)).replace('__READBACK__',readback),file=path.join(out,'browser-'+key+'.js');
+await fs.writeFile(file,code);const run=spawnSync(process.execPath,[cli,'-s='+session,'run-code','--filename='+file],{cwd:root,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});
+await fs.writeFile(path.join(out,key+'-browser.log'),(run.stdout??'')+(run.stderr??''));let result;
+try{result=JSON.parse(run.stdout.split('### Result')[1].split('### Ran Playwright code')[0].trim());}catch{console.log(JSON.stringify({key,status:'unparsed-cli-error'}));process.exit(1);}
+await fs.writeFile(path.join(out,key+'-browser.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({key,status:result.status,error:result.error,observations:result.observations?.length,checks:result.checks}));if(result.status!=='complete')process.exitCode=1;

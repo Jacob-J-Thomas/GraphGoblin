@@ -1,0 +1,21 @@
+{
+  "command": "pnpm.cmd --filter @graphgoblin/web test:coverage",
+  "schedulerUnchanged": true,
+  "result": "Stopped incomplete by named QA after both unchanged target/candidate workloads hit the same two unrelated EditorPage.rename timeouts; not a coverage gate or ChatSurface cause result.",
+  "concurrency": "Both isolated Windows web coverage workloads ran concurrently, each retaining its configured maxWorkers=2. Targeted diagnosis overlapped. This is not a matching hosted Linux workload.",
+  "failures": [
+    "never leads a review row to another operation after the warned row moves",
+    "keeps held section JSON exactly when a rename makes the applied section equal to it"
+  ],
+  "rawLogs": [
+    {
+      "artifact": "target-normal-web-coverage.log",
+      "sha256": "80178c9465d6ceb448f25d3897fa6bb40f9821b8858f4b5e56306fe5b9e03a0c"
+    },
+    {
+      "artifact": "candidate-normal-web-coverage.log",
+      "sha256": "18d4e86152e7f016a84ff0b6da8597725f9e3f5babedb383c263cad7f18fef11"
+    }
+  ],
+  "stop": "Stopped only owned G-volume node processes58684/62720. Their pnpm wrappers ended with failure; raw logs retained externally, not copied into this packet."
+}

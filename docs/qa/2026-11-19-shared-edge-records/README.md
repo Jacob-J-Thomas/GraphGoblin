@@ -1,0 +1,37 @@
+# Shared connection IDs
+
+PR #514 addresses #481. An unrelated edit on the base changed another connection's port, and Reset cleared manual routes from all three records sharing an ID. The fix updates only the stored record that belongs to an identifiable Decision route. An ambiguous ID action preserves every holder. [Base and corrected source](source-binding.json)
+
+## First evidence and metadata qualification
+
+Independent original-source QA reproduced the corruption in the real editor. Saving a Description changed the unrelated connection from `start/out` to `start/yes` and persisted it to the server and the device. Native Reset lost three routes and changed two source ports. Against first candidate `3c2a4dfc`, the same Description save, history and reload preserved all stored edges. The first candidate passed 21/21 store cases, compared with 9/21 on base. Both passed 19 API requests and 13 unique-ID native browser checks. [Baseline and first candidate](first-editor-qa/README.md)
+
+The historical form samples did establish exact saved server and device definitions. All nine of those synced device records lacked the own `decisionRoutes` field, so their equality provides no row-map evidence. Separate offline samples had real, nonempty row maps. The first candidate also safely removed a single Decision route, redrew it with a unique ID and published while preserving unrelated manual geometry. [Metadata qualification](metadata-addendum/README.md) · [Original form readbacks](first-editor-qa/candidate/records/forms.json)
+
+A targeted Claude Code Opus design critique found that the first rejection text suggested deleting an endpoint, which could erase unrelated hand-routed edges. It also found that the disabled toolbar gave a cold pointer user no immediate explanation. The coordinator accepted both in #481 comment `6997870664`. The corrected source makes the reason visible and associated with the selected connection's controls, and routes a repair to the Decision row or an explicit draft API edit where ownership cannot be determined. [Design and correction binding](source-binding.json)
+
+## Corrected-source independent QA
+
+On corrected source `00d96d08160ddb63c5fad97dda8892f5f93bc2b3`, a cold pointer selection exposed the safe repair guidance before any refusal. Reset and Remove stayed focusable and inert, with the visible explanation as their accessible description. Tab, activation and Escape preserved the stored definition. [Cold pointer screenshot](corrected-editor-qa/images/cold-pointer-visible-guidance.png) · [Native interaction and readback record](corrected-editor-qa/records/native.json) · [Functional summary](corrected-editor-qa/records/summary.json)
+
+The Decision review listed only `Connection accepted → done (e1)`. Cancel preserved the draft, and Confirm removed only the owned record. Redrawing created `e5` from `pick/accepted` to `done/in`, preserving the other edges and their manual routes. Normal Publish stored the exact repaired definition. A separate ordinary-only draft used conditional `PUT /loops/{id}/draft` to replace one duplicate ID and reloaded the exact, publishable result. [Form and history readbacks](corrected-editor-qa/records/metadata.json) · [Full-draft API repair](corrected-editor-qa/records/api-fallback.json)
+
+Nine corrected, unsynced device records contain actual own `decisionRoutes` maps with nonempty rows and matching edge references. Undo, Redo and full offline reload preserved those maps and definitions. The first reconnect wait for **All changes saved** timed out at **15 seconds**. The first server readback was still old and the device unsynced. Later in the same journey, with no intervening edit to the loop, the server held the exact recovered definition and the device was synced. The observation provides no latency guarantee. [Reconnect record](corrected-editor-qa/records/recovery.json)
+
+A separate protected-voice draft was staged using the public voice API with actual chat system authority. Native pointer and keyboard deletion stayed refused. Reset and its Undo/Redo changed only the selected unique edge's geometry. This exercises editor protection on a staged draft. Transcription, provider execution and voice publication were outside this case. [Protected-voice setup](corrected-editor-qa/records/voice-setup.json)
+
+The independent build passed 12 tasks, the matched API run recorded 19 requests, the controlled store passed 21 cases and the unchanged unique-ID native browser journey passed 13 controls. The bounded run had 34 passing functional assertions with the initial reconnect timeout retained. The independent worker subsequently verified 47 recorded facts against its public packet and rehashed 34 originals. [Corrected identity and driver hashes](corrected-editor-qa/identity.json) · [Original independent report](corrected-editor-qa/README.original.txt) · [Recorded-fact verification](corrected-editor-qa/verification.json) · [Original seal](corrected-editor-qa/artifact-manifest.json) · [Publication selection](corrected-editor-qa/selection.json)
+
+## Author outcomes and first failures
+
+The author observations retain the original baseline failures, the first Windows coverage attempt with seven workers that did not start, and the isolated and full reruns. The later full web coverage passes are for pre-guidance source. Corrected author runs passed six shared-ID browser cases and 11 existing edge-route cases. The first correction suite's actionability and Undo failures and the existing edge suite's first Fit view timeout remain in the record. Fifteen original log hashes and selected output tokens were verified. [Author outcomes](author-outcomes/verification.json)
+
+## Source CI and separate routing artifact
+
+All six ordinary source CI jobs passed on run `44450102187`, synthetic merge `0decfec8a345b33d59891b832993fc2108466dbf` and the exact corrected source tree. The hosted results recorded 9,839 unit passes, 49 skips, 487 browser passes and 25 Windows launcher passes. All 13 coverage summaries met the thresholds. The Windows archive contained 234 records and passed canonical replay. These results apply to the source-only run. [Source CI binding](source-ci/source-binding.json) · [Hosted job and coverage receipt](source-ci/hosted-verified.json) · [Windows artifact receipt](source-ci/windows-artifact-verified.json)
+
+The separate Routing performance run `44450101962` on the same source head had median routing p95 of 4.9 ms at 100 nodes and 5.9 ms at 300 nodes, over three drags at each size. The archived results satisfy the ordinary PR routing thresholds. The strict manual benchmark is a separate scope. [Routing artifact receipt](source-ci/routing-verified.json)
+
+## Evidence integrity and scope
+
+This folder retains selected, byte-verified public artifacts from the original QA, the metadata addendum and the corrected-source QA. The corrected worker closed its browser, server and isolated port, and confirmed the revoked disposable credentials were refused. The first editor manifest's `README.md` entry resolves to `first-editor-qa/README.original.txt`, whose bytes match the original. The formatted Markdown remains beside it for reading. Other original artifacts and manifests retain their bytes. Formal review, the final audit, ordinary CI on the publication head/current target and merge remain separate. [First packet manifest](first-editor-qa/publication-manifest.json) · [Metadata manifest](metadata-addendum/artifact-manifest.json) · [Publication manifest](publication-manifest.json)

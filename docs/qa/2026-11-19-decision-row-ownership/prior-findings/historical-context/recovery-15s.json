@@ -1,0 +1,1009 @@
+{
+  "source": {
+    "artifact": "corrected-00d96d0/recovery-timing-observation.json",
+    "sha256": "951bcb7a20f66baf6d6c12649ad623e144cc16f59690b3eed577ca975ef1f970"
+  },
+  "timing": {
+    "initialWait": {
+      "condition": "All changes saved",
+      "timeoutMs": 15000,
+      "outcome": "timeout",
+      "origin": "Transcribed from original Playwright CLI output in the same unrepeated recovery journey.",
+      "message": "locator.waitFor: Timeout 15000ms exceeded."
+    },
+    "firstReadback": {
+      "artifact": "metadata-form-12-recovered-saved.json",
+      "fileWrittenAt": "2026-11-19T03:23:18.463Z",
+      "serverMatchesRecoveredDefinition": false,
+      "deviceSynced": false
+    },
+    "eventual": {
+      "artifact": "metadata-form-13-eventual-recovery.json",
+      "serverAcknowledgedUpdatedAt": "2026-11-19T03:23:31.145Z",
+      "definitionExact": true,
+      "deviceSynced": true
+    },
+    "qualification": "The first 15-second observation budget was missed. Later automatic recovery in the same journey was exact, without another edit to that loop. No recovery-latency SLO is asserted; the initial failure remains part of the result."
+  },
+  "whileBrowserOffline": {
+    "source": {
+      "artifact": "corrected-00d96d0/metadata-form-10-server-while-offline.json",
+      "sha256": "1b9e89677ca24877c541ebd3f80218faf30dee055541e5bfe0cb32b592a255b6"
+    },
+    "serverStatus": 200,
+    "definition": {
+      "schemaVersion": 4,
+      "name": "481 duplicate corrected-00d96d0",
+      "description": "Independent QA baseline",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 80
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "pick",
+          "label": "Pick",
+          "ui": {
+            "x": 310,
+            "y": 80
+          },
+          "kind": "decision",
+          "config": {
+            "kind": "expression",
+            "jsonata": "\"yes\"",
+            "routes": [
+              {
+                "id": "yes",
+                "label": "Yes"
+              },
+              {
+                "id": "no",
+                "label": "No"
+              },
+              {
+                "id": "later",
+                "label": "Later"
+              }
+            ]
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 760,
+            "y": 80
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "extra",
+          "label": "Alternate start",
+          "ui": {
+            "x": 0,
+            "y": 420
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              530,
+              200,
+              640
+            ]
+          }
+        },
+        {
+          "id": "no-edge",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              350,
+              660
+            ]
+          }
+        },
+        {
+          "id": "c1",
+          "from": {
+            "node": "extra",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              240,
+              450,
+              690
+            ]
+          }
+        },
+        {
+          "id": "later-edge",
+          "from": {
+            "node": "pick",
+            "port": "later"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              570,
+              410,
+              680
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "readbacks": [
+    {
+      "phase": "12-recovered-saved",
+      "source": {
+        "artifact": "corrected-00d96d0/metadata-form-12-recovered-saved.json",
+        "sha256": "1f66294d6735d212bae00900ec289e8367b66d3ac2ddf9ebcc648b4c544e158a"
+      },
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "481 duplicate corrected-00d96d0",
+          "description": "Independent QA baseline",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "later",
+                    "label": "Later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 760,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "extra",
+              "label": "Alternate start",
+              "ui": {
+                "x": 0,
+                "y": 420
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  530,
+                  200,
+                  640
+                ]
+              }
+            },
+            {
+              "id": "no-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  350,
+                  660
+                ]
+              }
+            },
+            {
+              "id": "c1",
+              "from": {
+                "node": "extra",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  240,
+                  450,
+                  690
+                ]
+              }
+            },
+            {
+              "id": "later-edge",
+              "from": {
+                "node": "pick",
+                "port": "later"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  570,
+                  410,
+                  680
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "definitionStatus": "draft"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "481 duplicate corrected-00d96d0",
+          "description": "Independent QA baseline",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "later",
+                    "label": "Later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 760,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "extra",
+              "label": "Alternate start",
+              "ui": {
+                "x": 0,
+                "y": 420
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "no-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  350,
+                  660
+                ]
+              }
+            },
+            {
+              "id": "c1",
+              "from": {
+                "node": "extra",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  240,
+                  450,
+                  690
+                ]
+              }
+            },
+            {
+              "id": "later-edge",
+              "from": {
+                "node": "pick",
+                "port": "later"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  570,
+                  410,
+                  680
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 1,
+                "edgeIds": [
+                  "no-edge"
+                ],
+                "id": "no"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "later-edge"
+                ],
+                "id": "later"
+              }
+            ]
+          }
+        }
+      },
+      "renderedEdges": [
+        {
+          "id": "e1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "no-edge",
+          "label": "pick No (no) to done, manual route"
+        },
+        {
+          "id": "c1",
+          "label": "extra out to done, manual route"
+        },
+        {
+          "id": "later-edge",
+          "label": "pick Later (later) to done, manual route"
+        }
+      ],
+      "textareaValues": [
+        "Independent QA baseline"
+      ]
+    },
+    {
+      "phase": "13-eventual-recovery",
+      "source": {
+        "artifact": "corrected-00d96d0/metadata-form-13-eventual-recovery.json",
+        "sha256": "d4909cf378e94af6cd7ea5f99b1ac4b3b5aa79663a8a34fa38104de6f30e890b"
+      },
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "481 duplicate corrected-00d96d0",
+          "description": "Independent QA baseline",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "later",
+                    "label": "Later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 760,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "extra",
+              "label": "Alternate start",
+              "ui": {
+                "x": 0,
+                "y": 420
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "no-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  350,
+                  660
+                ]
+              }
+            },
+            {
+              "id": "c1",
+              "from": {
+                "node": "extra",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  240,
+                  450,
+                  690
+                ]
+              }
+            },
+            {
+              "id": "later-edge",
+              "from": {
+                "node": "pick",
+                "port": "later"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  570,
+                  410,
+                  680
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "definitionStatus": "draft"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "481 duplicate corrected-00d96d0",
+          "description": "Independent QA baseline",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 80
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "no",
+                    "label": "No"
+                  },
+                  {
+                    "id": "later",
+                    "label": "Later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 760,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "extra",
+              "label": "Alternate start",
+              "ui": {
+                "x": 0,
+                "y": 420
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "no-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  350,
+                  660
+                ]
+              }
+            },
+            {
+              "id": "c1",
+              "from": {
+                "node": "extra",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  240,
+                  450,
+                  690
+                ]
+              }
+            },
+            {
+              "id": "later-edge",
+              "from": {
+                "node": "pick",
+                "port": "later"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  570,
+                  410,
+                  680
+                ]
+              }
+            }
+          ]
+        },
+        "synced": true
+      },
+      "renderedEdges": [
+        {
+          "id": "e1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "no-edge",
+          "label": "pick No (no) to done, manual route"
+        },
+        {
+          "id": "c1",
+          "label": "extra out to done, manual route"
+        },
+        {
+          "id": "later-edge",
+          "label": "pick Later (later) to done, manual route"
+        }
+      ],
+      "textareaValues": [
+        "Independent QA baseline"
+      ]
+    }
+  ]
+}

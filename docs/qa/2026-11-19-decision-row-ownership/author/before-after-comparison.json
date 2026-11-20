@@ -1,0 +1,3597 @@
+{
+  "binding": {
+    "replayOriginSha256": "4b87ddbb9081f580d669dee2e852bf3fa11fb2524a6a8b82fc934fdd20c37c11",
+    "sharedRenameSha256": "4b87ddbb9081f580d669dee2e852bf3fa11fb2524a6a8b82fc934fdd20c37c11",
+    "originMatches": true,
+    "replayEqualsCapturedBytes": true
+  },
+  "inputs": [
+    {
+      "source": "baseline/shared-rename-browser.json#collision",
+      "sha256": "4b87ddbb9081f580d669dee2e852bf3fa11fb2524a6a8b82fc934fdd20c37c11"
+    },
+    {
+      "source": "baseline/shared-remove-browser.json#collision",
+      "sha256": "58a7ce6945032add2d0e5f25d463d7b38d520fee9de8dfd9c8dbb23e8a1a909a"
+    },
+    {
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "sha256": "58a7ce6945032add2d0e5f25d463d7b38d520fee9de8dfd9c8dbb23e8a1a909a"
+    },
+    {
+      "source": "baseline/unique-rename-browser.json#collision",
+      "sha256": "bc7f718c5b4b3dd334e3cf946e35ce194455fed6dc48d7d3c573e42fb75e9d11"
+    }
+  ],
+  "totals": {
+    "before": {
+      "passed": 15,
+      "failed": [
+        "A1",
+        "A2",
+        "A3",
+        "A5",
+        "A6",
+        "A9",
+        "A13",
+        "A11",
+        "A12",
+        "B5",
+        "B13",
+        "E1"
+      ]
+    },
+    "after": {
+      "passed": 27,
+      "failed": []
+    }
+  },
+  "cases": [
+    {
+      "id": "A1",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A2",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:yes:done"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      }
+    },
+    {
+      "id": "A3",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "symmetric: array order chooses no owner",
+      "steps": [
+        {
+          "op": "remove",
+          "row": 0
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:yes:done"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      }
+    },
+    {
+      "id": "A4",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 0,
+          "text": "yes2"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            []
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A5",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "explicit repair back to the port its record is on",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "ownership": false,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:no"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "PORT_MULTIPLY_CONNECTED",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "ownership": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      }
+    },
+    {
+      "id": "A6",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "explicit repair: the review lists exactly the record removed; duplicate id cleared",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        },
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:no"
+        ],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "A7",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "stale-claim guard: once the second row is blank the first is the only yes route",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": ""
+        },
+        {
+          "op": "type",
+          "row": 0,
+          "text": "yes2"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:yes2"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:yes2"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A8",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "definition fallback: after the first edit the second row is the only yes route (limitation, observed)",
+      "steps": [
+        {
+          "op": "type",
+          "row": 0,
+          "text": "yes2"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            []
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A9",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "after reload the first row is the unique yes route and its record follows it",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "type",
+          "row": 0,
+          "text": "yes2"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:yes2"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A10",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "unrelated edits",
+      "steps": [
+        {
+          "op": "meta"
+        },
+        {
+          "op": "move"
+        },
+        {
+          "op": "label",
+          "row": 0,
+          "text": "Yes please"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "SCHEMA"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "SCHEMA"
+        ]
+      }
+    },
+    {
+      "id": "A13",
+      "group": "ambiguous-restored",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": true,
+      "note": "explicit repair typed a key at a time, then removal",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "n"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        },
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:no"
+        ],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "A11",
+      "group": "ambiguous-restored-2",
+      "source": "baseline/shared-remove-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "A12",
+      "group": "ambiguous-restored-2",
+      "source": "baseline/shared-remove-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": false
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:yes:done"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true,
+          "noMetadataEqual": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      }
+    },
+    {
+      "id": "B1",
+      "group": "ambiguous-no-metadata",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": false,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "B2",
+      "group": "ambiguous-no-metadata",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": false,
+      "steps": [
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      }
+    },
+    {
+      "id": "B5",
+      "group": "ambiguous-no-metadata",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": false,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "ownership": false,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:no"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "PORT_MULTIPLY_CONNECTED",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "ownership": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      }
+    },
+    {
+      "id": "B13",
+      "group": "ambiguous-no-metadata",
+      "source": "baseline/shared-rename-browser.json#collision",
+      "metadata": false,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "n"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        },
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [],
+        "previews": [
+          []
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID",
+          "EDGE_PORT_MISSING"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "C1",
+      "group": "readable-shared-restored",
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      }
+    },
+    {
+      "id": "C2",
+      "group": "readable-shared-restored",
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "C3",
+      "group": "readable-shared-restored",
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "metadata": true,
+      "note": "f17 fresh overlap after a restore",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "yes"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      }
+    },
+    {
+      "id": "C4",
+      "group": "readable-shared-restored",
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "metadata": true,
+      "note": "f17 fresh overlap persisted and reloaded",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "yes"
+        },
+        {
+          "op": "reload"
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "DUPLICATE_EDGE_ID"
+        ]
+      }
+    },
+    {
+      "id": "C5",
+      "group": "readable-shared-restored",
+      "source": "baseline/shared-remove-browser.json#undo-2",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "yes"
+        },
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e1:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "no",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "D1",
+      "group": "readable-unique-restored",
+      "source": "baseline/unique-rename-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": []
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => retargeted:affirm"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": []
+      }
+    },
+    {
+      "id": "D2",
+      "group": "readable-unique-restored",
+      "source": "baseline/unique-rename-browser.json#collision",
+      "metadata": true,
+      "steps": [
+        {
+          "op": "remove",
+          "row": 1
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e2:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "previewEqualsRemoved": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [
+          [
+            "e2:no:other"
+          ]
+        ],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE"
+        ]
+      }
+    },
+    {
+      "id": "D3",
+      "group": "readable-unique-restored",
+      "source": "baseline/unique-rename-browser.json#collision",
+      "metadata": true,
+      "note": "each unique claim follows its own row; the second row’s ID becomes valid",
+      "steps": [
+        {
+          "op": "type",
+          "row": 0,
+          "text": "yes2"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:yes2",
+          "[\"e2\",\"pick\",\"other\",[670]] => retargeted:yes"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": []
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:yes2",
+          "[\"e2\",\"pick\",\"other\",[670]] => retargeted:yes"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes2",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e2"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": []
+      }
+    },
+    {
+      "id": "E1",
+      "group": "json-duplicate-fresh",
+      "source": "baseline/unique-rename-browser.json#collision",
+      "metadata": false,
+      "note": "neither row can be told owner of e1",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        },
+        {
+          "op": "json",
+          "ids": [
+            "yes",
+            "yes",
+            "maybe"
+          ]
+        },
+        {
+          "op": "type",
+          "row": 1,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": false,
+        "checks": {
+          "fates": false,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e1\",\"pick\",\"done\",[500,200,650]] => retargeted:affirm",
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "affirm",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    },
+    {
+      "id": "E2",
+      "group": "json-duplicate-fresh",
+      "source": "baseline/unique-rename-browser.json#collision",
+      "metadata": false,
+      "note": "same, other row: no array-order dependence",
+      "steps": [
+        {
+          "op": "type",
+          "row": 1,
+          "text": "no"
+        },
+        {
+          "op": "json",
+          "ids": [
+            "yes",
+            "yes",
+            "maybe"
+          ]
+        },
+        {
+          "op": "type",
+          "row": 0,
+          "text": "affirm"
+        }
+      ],
+      "before": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "affirm",
+            [
+              "e1"
+            ]
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE",
+          "PORT_UNCONNECTED"
+        ]
+      },
+      "after": {
+        "pass": true,
+        "checks": {
+          "fates": true,
+          "historyExact": true
+        },
+        "changed": [
+          "[\"e2\",\"pick\",\"other\",[670]] => deleted"
+        ],
+        "previews": [],
+        "loadedRows": [
+          [
+            0,
+            "yes",
+            []
+          ],
+          [
+            1,
+            "yes",
+            []
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "finalRows": [
+          [
+            0,
+            "affirm",
+            []
+          ],
+          [
+            1,
+            "yes",
+            [
+              "e1"
+            ]
+          ],
+          [
+            2,
+            "maybe",
+            [
+              "m1"
+            ]
+          ]
+        ],
+        "issueCodes": [
+          "NODE_UNREACHABLE",
+          "PORT_UNCONNECTED"
+        ]
+      }
+    }
+  ]
+}
