@@ -258,6 +258,14 @@ $stages = [Collections.Generic.List[object]]::new()
 $retainStages = $false
 try {
     if ($env:OS -ne 'Windows_NT') { Refuse-LauncherInstall 'The desktop launcher requires Windows.' }
+    # Refuse before creating a stage or serializing any values, including empty credentials.
+    # PSBase avoids a supplied 'Keys' entry shadowing the hashtable property.
+    foreach ($key in $Environment.psbase.Keys) {
+        if ([string]::Equals($key, 'GG_MASTER_KEY', [StringComparison]::OrdinalIgnoreCase) -or
+            [string]::Equals($key, 'GG_JEV_API_KEY', [StringComparison]::OrdinalIgnoreCase)) {
+            Refuse-LauncherInstall 'Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY (case-insensitive). Keep credentials in GraphGoblin secret stores; use the data directory master.key for encryption.'
+        }
+    }
     $NodePath = Get-InstallerNode $NodePath
     $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
     $DataDir = [IO.Path]::GetFullPath($DataDir)

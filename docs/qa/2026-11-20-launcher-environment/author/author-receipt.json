@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "issue": 437,
+  "baseline": "8181f350028e284529c76b51927f32890afcb68a",
+  "candidate": "a5cb0603bfa8b3ac2c92eafd1e288c8b4c48c482",
+  "supersededAuthorSource": "8a2a2c113e781573afd5e06a0d68864117a098e2",
+  "scope": "Refuse the actual API-config secret-valued GG launcher keys before persistence and before native launcher actions; ordinary overrides and inherited behavior remain supported.",
+  "credentialKeyNames": [
+    "GG_MASTER_KEY",
+    "GG_JEV_API_KEY"
+  ],
+  "noCredentialValuesIncluded": true,
+  "runtime": {
+    "node": "22.23.4",
+    "powershell": "Windows PowerShell 5.1",
+    "nativeCompiler": ".NET Framework 4.x C#"
+  },
+  "sources": [
+    {
+      "path": "scripts/install-windows-launcher.ps1",
+      "sha256": "2a6a4d3c0c3c3a4c4b62988c1406dad5e1cfc1174034ffcebad8bb8858a564af"
+    },
+    {
+      "path": "apps/windows-launcher/Launcher.cs",
+      "sha256": "85e85388c1227eea67465d27f3c1dabb91254090b1649d44676410fc3566a485"
+    },
+    {
+      "path": "tooling/scripts/windows-launcher.acceptance.mjs",
+      "sha256": "f55a1c7c52598494ce2f9463a986ae601bdba8e5392f18f9710c0c3a36dcad52"
+    },
+    {
+      "path": "docs/11-security-and-distribution.md",
+      "sha256": "3602f6d91112b267b5588bb547b333579373e99463f930ebfed24d4fa325112e"
+    },
+    {
+      "path": "docs/guide/01-install-and-first-run.md",
+      "sha256": "983572d694c927f630b1e2d3e25e729f03eaf6a0845ea6d3fa09305b2b52dd63"
+    },
+    {
+      "path": "docs/decisions/ADR-0064-windows-desktop-launcher.md",
+      "sha256": "f1d095a68baef73e4704ef60dda643fa44e06a5c3a730718cbe568acc40b49e5"
+    },
+    {
+      "path": "docs/decisions/ADR-0085-refuse-launcher-secret-overrides.md",
+      "sha256": "9679b5298d0cbf51e056275a211f6b4a48a035af44c7bc1a4ca3ab08f9c1801e"
+    },
+    {
+      "path": "docs/decisions/README.md",
+      "sha256": "3c8f8d761f87cdf20be49378a8f52947c3e6ab3ec3de6aa4a3a830e1086d0cb7"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "c88367f812cdf822f5f0d3510f0aa89479c34287b6b81424a047f422d14386c3"
+    }
+  ],
+  "correctedNativeRegression": {
+    "source": "a5cb0603bfa8b3ac2c92eafd1e288c8b4c48c482",
+    "status": "passed",
+    "topLevelTests": 1,
+    "durationMs": 75100.047,
+    "establishes": [
+      "Uppercase, mixed-case and lowercase names refused through the real installer, including both shortcut modes.",
+      "Empty credential overrides refused.",
+      "Native --validate-install, --stage-shortcut and --ensure-gateway refuse manually edited credential configurations.",
+      "Refusal leaves prior executable, configuration and shortcut bytes unchanged and the disposable store empty; no gateway starts.",
+      "Synthetic credential values are absent from refusal output and launcher logs.",
+      "A normal hashtable installation produces observed temporary-stage events and preserves ordinary explicit overrides.",
+      "All six key variants with a companion Keys entry refuse before any observed temporary-stage creation while prior outputs are read-only and byte-preserved.",
+      "Credential refusal wins before invalid Node or repository paths are inspected.",
+      "A disposable cold gateway start succeeds with inherited invalid and synthetic credential GG variables filtered, creates its master.key and lists no seeded secrets."
+    ]
+  },
+  "shadowNegativeControl": {
+    "source": "8a2a2c113e781573afd5e06a0d68864117a098e2",
+    "status": "expected-failure-observed",
+    "assertionsUnchanged": true,
+    "instrumentation": "External replay changes module/root/installer routing and emits stage filenames when an assertion fails; the tested old installer is byte-exact.",
+    "actualFirstFailure": "Expected early credential guidance; old guard instead reaches staged-native refusal for a Keys companion entry.",
+    "transientStageObserved": true,
+    "stagedJsonEventObserved": true,
+    "stageEventCount": 14,
+    "limit": "This is an author-controlled old-source replay, not independent QA."
+  },
+  "firstCorrectionHarnessFailure": {
+    "status": "failed-before-installer",
+    "reason": "Windows PowerShell ConvertFrom-Json refuses a reserved PSBase member in the test transport.",
+    "correction": "Removed that unnecessary extra member; the required Keys companion input remains and executes through the shipped installer."
+  },
+  "otherChecks": {
+    "toolingLint": "passed at corrected source",
+    "formatting": "passed at corrected source",
+    "gitDiffCheck": "passed",
+    "build": "passed before the native changes; TypeScript sources are unchanged and native acceptance compiles the candidate C# separately",
+    "coverageThresholdsAndExclusions": "unchanged"
+  },
+  "historicalFullNativeSuite": {
+    "source": "8a2a2c113e781573afd5e06a0d68864117a098e2",
+    "status": "failed",
+    "total": 25,
+    "passed": 19,
+    "failed": 6,
+    "skipped": 0,
+    "firstLeafFailure": "HWND COM relaunch command: native launcher reports that Windows cannot store the long taskbar relaunch command.",
+    "furtherLeafFailures": [
+      "Cross-process HWND metadata hits the same long-command refusal.",
+      "Directory symlink creation returns EPERM; junction case passes.",
+      "Contention trial 3 returns EPERM during unlink of a reclaim-guard marker; expected refusal-message classification fails."
+    ],
+    "contentionChecks": {
+      "trials1and2": "One acquired and four refused; successful child liveness, refusal classifications and persisted lock PID passed.",
+      "trial3Executed": "One acquired and four refused; successful child exitCode-null and PID-signal-zero liveness checks plus exactly-one-owner assertion passed before the first refused-message classification failed.",
+      "trial3NotReached": "Remaining refusal classifications and persisted lock PID check.",
+      "cleanup": "All contender stdin-EOF exit assertions completed; no later cleanup failure replaced the reported assertion.",
+      "causeLimit": "Precise operation is EPERM unlink of a disposable reclaim-guard marker. A Windows sharing-violation cause is not established."
+    }
+  },
+  "unchangedBaselineControls": {
+    "source": "8181f350028e284529c76b51927f32890afcb68a",
+    "status": "same HWND and symlink failures reproduced",
+    "total": 16,
+    "passed": 11,
+    "failed": 5,
+    "control": "Baseline suite and byte-exact baseline Launcher.cs replayed with external root/import/compiler-path routing only; assertions unchanged.",
+    "identicalNativeAliasContentionGroupsSha256": "edccb27351d689a9f8b2ef4fcad133627cf4dda9af10e6e1ea6714eb62041c45",
+    "shellIdentityByteEqual": true,
+    "unchangedSourceBindings": [
+      {
+        "path": "apps/windows-launcher/NativeChecks.cs",
+        "baselineSha256": "038d2dfce15b63a9359859a5ee6d3c9ca90ffc37b612136721b459008bece081",
+        "candidateSha256": "038d2dfce15b63a9359859a5ee6d3c9ca90ffc37b612136721b459008bece081",
+        "equal": true
+      },
+      {
+        "path": "apps/api/src/data-dir-lock.ts",
+        "baselineSha256": "bd6da825abc58c694ff9895dfc9e9185716668925613804e0198e8b090aa4265",
+        "candidateSha256": "bd6da825abc58c694ff9895dfc9e9185716668925613804e0198e8b090aa4265",
+        "equal": true
+      },
+      {
+        "path": "apps/api/src/windows-process-identity.ts",
+        "baselineSha256": "ea44e331a9b0a3b42f2b7fc45c8456b5756afe8512e97a6da8948bd3950b237e",
+        "candidateSha256": "ea44e331a9b0a3b42f2b7fc45c8456b5756afe8512e97a6da8948bd3950b237e",
+        "equal": true
+      },
+      {
+        "path": "tooling/scripts/windows-launcher-evidence.mjs",
+        "baselineSha256": "7ad0d4f971b7197bbc65456d3a23038603846afda62308625a32f05e8c126bf5",
+        "candidateSha256": "7ad0d4f971b7197bbc65456d3a23038603846afda62308625a32f05e8c126bf5",
+        "equal": true
+      },
+      {
+        "path": "tooling/perf/runtime.test.mjs",
+        "baselineSha256": "e1cc5aff653d898572d89379fe31c367a2e7960ed6827710edd282cda7214cd7",
+        "candidateSha256": "e1cc5aff653d898572d89379fe31c367a2e7960ed6827710edd282cda7214cd7",
+        "equal": true
+      },
+      {
+        "path": "tooling/perf/browser.mjs",
+        "baselineSha256": "07c44898a0256ad7762ba4235142bd0e7f2c47445754fdfe0ba4e0a9c1ce3272",
+        "candidateSha256": "07c44898a0256ad7762ba4235142bd0e7f2c47445754fdfe0ba4e0a9c1ce3272",
+        "equal": true
+      },
+      {
+        "path": "tooling/perf/measure.mjs",
+        "baselineSha256": "385684bf2b1d2435ca795a708a7020d71c5d123a7e9a9b24b799f97a43be4236",
+        "candidateSha256": "385684bf2b1d2435ca795a708a7020d71c5d123a7e9a9b24b799f97a43be4236",
+        "equal": true
+      }
+    ]
+  },
+  "historicalToolingCoverage": {
+    "source": "8a2a2c113e781573afd5e06a0d68864117a098e2",
+    "status": "failed",
+    "totalTests": 218,
+    "passed": 217,
+    "failed": 1,
+    "firstFailure": "Maintained browser measurement CLI smoke subprocess reaches its 180-second timeout and is terminated with SIGTERM after the browser-complete marker.",
+    "limit": "Relevant performance source is byte-identical to baseline. The cause is not established and coverage did not produce a passing gate."
+  },
+  "gateStatus": "Author implementation complete; independent QA/review and required broad gates remain open. This receipt grants no sign-off.",
+  "operationalBoundary": "Disposable test stores and synthetic credentials only. No owner installation, store, personal shortcut, credential rotation, public Git mutation or issue edit was performed by this author.",
+  "privateEvidenceBindings": [
+    {
+      "name": "build.log",
+      "sha256": "ad7f320040b0ae891d01e49f67106a9bbf0fc105eeae9c135cf1ed509140209c"
+    },
+    {
+      "name": "installer-native.log",
+      "sha256": "6a5b8def43ea094072a3f89f4bc183cb1d1ece5a8636e0ea79673295c7baed1e"
+    },
+    {
+      "name": "installer-native-corrected.log",
+      "sha256": "5a77f7cbc5e3b90a405a04521d61663ab7c7d127915d1a4165a444221d91b22a"
+    },
+    {
+      "name": "installer-native-corrected-02.log",
+      "sha256": "2faa3dc25b9b69af4964e404c9c4699e578ba1d07a723ad7ce13cf08f7fcf100"
+    },
+    {
+      "name": "tooling-lint-corrected.log",
+      "sha256": "a472d7bfc8351071f1ff20ce46b782e41183cb869aa703fe03fac60f166aaa0f"
+    },
+    {
+      "name": "format-check-corrected.log",
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "name": "windows-launcher-full.log",
+      "sha256": "093b2502f7f524c6eba25f9cace29c5ee7cc5343ad1d55b39e3c42ea93f48b1f"
+    },
+    {
+      "name": "tooling-coverage.log",
+      "sha256": "45a86276e5aaa10eccffb1b670b3ff0be5c858ef4fa1426f9527815c06914c36"
+    },
+    {
+      "name": "baseline-native-controls.log",
+      "sha256": "2a75d37294eb665bc96a51abc372f82e48aaea83f595779da64487e29eaa4763"
+    },
+    {
+      "name": "shadow-negative-control-02.log",
+      "sha256": "ebfbacf25e425e368b61426e5c6406755589f3a7fb71e4da8be28446eb6b32a6"
+    }
+  ]
+}

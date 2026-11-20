@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
+  overrides, including case variants and empty values, before writing staged or installed JSON
+  (#437). The native launcher refuses the same keys in manually edited configuration, without
+  printing their values. Ordinary overrides remain supported.
+  **Upgrade:** previously installed JSON containing either key now refuses to launch. Remove
+  those entries and reinstall the launcher. Preserve the existing encryption key using the
+  data directory's `master.key` before restarting; changing that key makes stored secrets
+  unreadable. Set the Jev key through GraphGoblin's encrypted secret store. The installer does
+  not rewrite existing credential-bearing files or clear old copies; protect and remove them
+  yourself after preserving the required credentials.
+
 - Concurrent Windows store recovery handles a refused read of a vanished UUID marker without
   unlinking it. It accepts `EPERM` deletion only after independently verifying
   that the exact observed stale marker or empty guard directory is absent (#471). It never retries

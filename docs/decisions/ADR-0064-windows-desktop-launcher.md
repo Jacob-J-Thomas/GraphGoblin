@@ -4,6 +4,8 @@ Date: 2026-11-07. Status: Accepted for the owner-dispatched bounded launcher wor
 
 The PID-only ownership precheck is superseded by
 [ADR-0069](ADR-0069-windows-lock-process-identity.md); other decisions remain unchanged.
+Explicit secret-bearing overrides are refused by
+[ADR-0085](ADR-0085-refuse-launcher-secret-overrides.md).
 
 ## Decision
 

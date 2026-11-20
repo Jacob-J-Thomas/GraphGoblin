@@ -69,6 +69,15 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
+case-insensitively, before the installer writes any configuration, including temporary staging
+files. Empty values are refused too. The native launcher also refuses these keys in manually
+edited JSON before starting or reusing a gateway. Refusals never print their values. Use the
+data directory's `master.key` and GraphGoblin's encrypted secret store instead. Ordinary
+non-secret overrides remain supported; inherited `GG_*` variables are still cleared rather
+than copied into launcher configuration or its child environment
+([ADR-0085](decisions/ADR-0085-refuse-launcher-secret-overrides.md)).
+
 A gateway started by the Windows launcher keeps its private server log in the launcher folder,
 which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
 Retention is bounded to two 4 MiB gateway files and two 256 KiB launcher files. The gateway log
