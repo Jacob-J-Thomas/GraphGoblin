@@ -81,6 +81,9 @@ namespace GraphGoblin.Desktop
             if (!HasLogProtocol(Path.Combine(Repo, "apps/api/dist/main.js")))
                 throw new ConfigurationRefusal("The configured checkout's built gateway does not match this launcher (apps/api/dist/main.js). Stop any running GraphGoblin gateway, rebuild the checkout with Node 22 and reinstall the launcher.");
             Environment = Environment ?? new Dictionary<string, string>();
+            if (Environment.Keys.Any(key => string.Equals(key, "GG_MASTER_KEY", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, "GG_JEV_API_KEY", StringComparison.OrdinalIgnoreCase)))
+                throw new ConfigurationRefusal("Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY (case-insensitive). Keep credentials in GraphGoblin secret stores; use the data directory master.key for encryption.");
             foreach (var item in Environment)
                 if (!item.Key.StartsWith("GG_", StringComparison.Ordinal) || item.Value == null || item.Key.IndexOfAny(new[] { '=', '\0' }) >= 0 || item.Value.Contains("\0"))
                     throw new ConfigurationRefusal("Launcher Environment must contain GG_* string overrides only.");

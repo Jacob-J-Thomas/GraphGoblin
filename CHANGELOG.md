@@ -10,6 +10,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   and line separators in the explanation. Lock records, acquisition rules, managed startup
   categories and unrelated diagnostics are unchanged.
 
+- The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
+  overrides, including case variants and empty values, before writing staged or installed JSON
+  (#437). The native launcher refuses the same keys in manually edited configuration, without
+  printing their values. Ordinary overrides remain supported.
+  **Upgrade:** previously installed JSON containing either key now refuses to launch. Remove
+  those entries and reinstall the launcher. Preserve the existing encryption key using the
+  data directory's `master.key` before restarting; changing that key makes stored secrets
+  unreadable. Set the Jev key through GraphGoblin's encrypted secret store. The installer does
+  not rewrite existing credential-bearing files or clear old copies; protect and remove them
+  yourself after preserving the required credentials.
+
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
