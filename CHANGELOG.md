@@ -14,9 +14,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   their existing messages and root-path convention.
   **Upgrade (ADR-0062):** no stored content is rewritten. The existing startup guard refuses any
   invalid definition in `loop_versions.definition`, including drafts, published versions and
-  draft-run snapshots. Before upgrading, stop the gateway and back up the database. Inspect the
-  typed inference-node override keys with this read-only query; it ignores scalar values and
-  authored JSON outside those fields:
+  draft-run snapshots. The target store is the database used by the gateway being upgraded;
+  identify its configured `GG_DATA_DIR` and `GG_DB_URL`, including defaults. Before editing it,
+  [stop the gateway and confirm it has exited](docs/guide/01-install-and-first-run.md#stop-and-restart-safely),
+  then follow the [full backup procedure](docs/guide/06-settings-and-secrets.md#back-up-and-restore).
+  Preserve the database with any WAL/SHM files, the data directory and any external database
+  location, configuration and keys described there. Keep that backup unchanged with its previous
+  build. If rehearsing the correction on a separate copy, use offline SQL and structured-JSON
+  checks only, without starting a gateway against the copy. Apply both the key corrections and
+  any required explicit harness values below to the stopped target store itself; a repaired
+  rehearsal copy does not repair that target. On the stopped target, inspect the typed
+  inference-node override keys with this read-only query; it ignores scalar values and authored
+  JSON outside those fields:
 
   ```sql
   SELECT v.id, v.loop_id, v.status, json_extract(n.value, '$.id') AS node_id,
@@ -37,9 +46,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
       OR instr('.' || k.key || '.', '.prototype.') > 0);
   ```
 
-  Retain the discovery output before editing. On a copy already repaired with the earlier
-  key-only instructions, this separate read-only query still finds omitted harnesses even when
-  invalid-key discovery returns zero rows:
+  Retain the target's discovery output before editing. Run this separate read-only query on the
+  same stopped target as well: it finds omitted harnesses even when invalid-key discovery returns
+  zero rows:
 
   ```sql
   SELECT n.key AS node_index, v.id, v.loop_id, v.status,
@@ -52,7 +61,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   Public API writes in both builds materialize an omitted Codex harness; an externally authored
   or hand-edited row can still omit it. For each reported draft or published version with
   `harness_omitted = 1` (or found by the omission query), explicitly materialize its effective
-  `codex` value on the stopped disposable copy. Bind `harness_path`, `id`, then the same
+  `codex` value on the stopped target store. Bind `harness_path`, `id`, then the same
   `harness_path` to this operator-only statement (explicit JSON null is not an omitted harness):
 
   ```sql
@@ -63,8 +72,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   ```
 
   This is an explicit hand correction, not a product backfill. Correct each reported member's
-  spelling in the stored definition, or deliberately remove just that member. For a draft or
-  published version, bind its reported `key_path` and `id` to:
+  spelling in the stopped target's stored definition, or deliberately remove just that member.
+  For a draft or published version, bind its reported `key_path` and `id` to:
 
   ```sql
   UPDATE loop_versions
@@ -74,12 +83,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
   An affected-row count of 1 is not proof that the member was removed: the product's libsql
   driver can report that count while leaving a quoted member and the stored bytes unchanged.
-  Re-run discovery and read the complete stored text back, comparing it with the exact intended
-  structured JSON correction. A zero-key discovery result or successful startup also does not
+  On the stopped target, re-run both discovery queries and read the complete stored text back,
+  comparing it with the exact intended structured JSON correction and confirming unrelated
+  fields/history are unchanged. A zero-key discovery result or successful startup also does not
   materialize omitted defaults: without the explicit harness correction, GET and publication of
-  such a manually authored row can still fail. Verify authenticated GET, publication of the
-  corrected draft and another restart, with unrelated fields/history unchanged. A reported
-  path containing quotation marks may not address the member through SQLite JSON1. In that case,
+  such a manually authored row can still fail. A reported path containing quotation marks may
+  not address the member through SQLite JSON1. In that case,
   parse the complete definition as structured JSON, correct/remove that exact object member,
   serialize the JSON and bind the replacement and row ID to
   `UPDATE loop_versions SET definition = ? WHERE id = ? AND status IN ('draft', 'published')`.
@@ -88,9 +97,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   a key. The same explicit node-field correction applies to exported or recovery JSON when its
   harness was omitted.
 
-  Snapshot rows are immutable: do not update them or disable their triggers. Keep the original
-  database backup with its previous build first. To preserve authored work in a fresh current
-  store, export the affected loop with that build (`GET /loops/{loop_id}/export?draft=true` for
+  Snapshot rows are immutable: do not update them or disable their triggers. The omission query
+  also reports snapshots, but an omitted harness alone is accepted by definition parsing with
+  its effective `codex` default. That omission alone does not justify rewriting, deleting or
+  resetting history. Use the following options only for an actually incompatible snapshot, such
+  as one with an invalid override key. Keep the original database backup with its previous build
+  first. To preserve authored work in a fresh current store, export the affected loop with that
+  build (`GET /loops/{loop_id}/export?draft=true` for
   its draft, omit the query for its published definition), correct the exported keys as structured
   JSON, and import it through `POST /loops/import` into a separate fresh store. The original
   backup retains its history; the new store carries the imported definition only, without the
@@ -99,6 +112,20 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   and snapshots), or explicitly reset the store. Exported definitions and saved device/recovery draft copies carry the same
   `nodes[].config.harnessOptions.configOverrides` fields; correct or remove their offending keys
   before importing or recovering them. The definition format is unchanged.
+
+  Once no invalid-key discovery result remains unresolved, applicable editable target rows have
+  their key and explicit-harness corrections verified by stored-text checks, and any actually
+  incompatible snapshots have been handled through a deliberate option above, the operator can
+  resume normal service. An omission-only result for an immutable snapshot need not be cleared.
+  Restart the repaired target with the new build using its usual configuration. This is an
+  operational restart: boot recovers runs and re-arms published triggers, as described in the
+  [restart guide](docs/guide/01-install-and-first-run.md#stop-and-restart-safely). After that restart,
+  verify authenticated `GET /loops/{loop_id}` returns 200 for each corrected loop and compare its
+  returned draft/current definitions with the intended corrections. Other retained versions are
+  covered by the offline discovery and exact stored-text checks. Keep this verification
+  read-only; do not publish owner drafts or start runs for a test. Synthetic QA can separately
+  exercise publication and restart with inert fixtures, fake harnesses and timers disabled; it
+  does not establish owner-store acceptance.
 
 - The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
   times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
