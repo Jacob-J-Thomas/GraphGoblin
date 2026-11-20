@@ -1,0 +1,3027 @@
+{
+  "source": "d3d69ace3ee885a106e8583d83db370ac14ea09b",
+  "base": "38378d63ff897a9952ae727cea0e0c45552cfac4",
+  "tree": "3eecc61c373afb6903c7008a6e0312ea8507b361",
+  "verdict": {
+    "P1": "PASS",
+    "P2": "PASS"
+  },
+  "groups": [
+    {
+      "id": "P1-refusal-gate",
+      "total": 20,
+      "pass": 20,
+      "fail": 0,
+      "cases": [
+        {
+          "id": "C1-01 genuine compound: store-unverified refusal + staging cleanup EPERM (real ACL)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "retained native recording full-run-01.json $.details.candidate.H-staging-cleanup-real-acl.0.X (earlier product 52bbab67, pre-#530 refusal text; cleanupFailure/filesystemFailure unchanged at d3d69ace, held() text/class changed by #530); graph rebuilt from recorded chain; shipped facts()",
+          "status": "genuine native shape; executed through candidate predicate and baseline matcher",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 2,
+          "structuredFailureCodes": [
+            "EPERM",
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "staging-marker-unlink",
+            "staging-directory-remove"
+          ]
+        },
+        {
+          "id": "C1-02 clean expected refusal: store-held",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "retained native recording full-run-01.json $.details.candidate.F-replacement-identity-enoent.0.A (earlier product 52bbab67, pre-#530 refusal text; cleanupFailure/filesystemFailure unchanged at d3d69ace, held() text/class changed by #530); graph rebuilt from recorded chain; shipped facts()",
+          "status": "genuine native shape; executed through candidate predicate and baseline matcher",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-03 different filesystem refusal: stale-marker-unlink EPERM (real ACL)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "source": "retained native recording full-run-01.json $.details.candidate.D-acl-denied-stale-marker.0.unmodified (earlier product 52bbab67, pre-#530 refusal text; cleanupFailure/filesystemFailure unchanged at d3d69ace, held() text/class changed by #530); graph rebuilt from recorded chain; shipped facts()",
+          "status": "genuine native shape; executed through candidate predicate and baseline matcher",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "stale-marker-unlink"
+          ]
+        },
+        {
+          "id": "C1-04 different filesystem refusal: stale-marker-unlink EBUSY (real sharing denial)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "source": "retained native recording full-run-01.json $.details.candidate.E-sharing-denied-stale-marker.0.refusal (earlier product 52bbab67, pre-#530 refusal text; cleanupFailure/filesystemFailure unchanged at d3d69ace, held() text/class changed by #530); graph rebuilt from recorded chain; shipped facts()",
+          "status": "genuine native shape; executed through candidate predicate and baseline matcher",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EBUSY"
+          ],
+          "structuredFailureOperations": [
+            "stale-marker-unlink"
+          ]
+        },
+        {
+          "id": "C1-05 different filesystem refusal: raw EPERM marker open (controlled barrier, earlier source)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "rejected"
+          },
+          "source": "retained native recording full-run-01.json $.details.candidate.C-controlled-stale-unlink-barrier.18.nonOwnershipRefusals.0 (earlier product 52bbab67, pre-#530 refusal text; cleanupFailure/filesystemFailure unchanged at d3d69ace, held() text/class changed by #530); graph rebuilt from recorded chain; shipped facts()",
+          "status": "genuine native shape; executed through candidate predicate and baseline matcher",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-06 compound: store-unverified + recovery-marker-unlink (shape of data-dir-lock-failures.test.ts:202)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed from #529-era product constructors cleanupFailure()/filesystemFailure() with pre-#530 held() text (not the d3d69ace text); shipped facts()",
+          "status": "controlled/reconstructed shape; not natively observed in this QA",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "recovery-marker-unlink"
+          ]
+        },
+        {
+          "id": "C1-07 compound: store-held + recovery-directory-remove (data-dir-lock.ts:350-355 path)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed from #529-era product constructors cleanupFailure()/filesystemFailure() with pre-#530 held() text (not the d3d69ace text); shipped facts()",
+          "status": "controlled/reconstructed shape; not natively observed in this QA",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "recovery-directory-remove"
+          ]
+        },
+        {
+          "id": "C1-08 compound: store-held + staging-marker-unlink (data-dir-lock.ts:249-258 path)",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed from #529-era product constructors cleanupFailure()/filesystemFailure() with pre-#530 held() text (not the d3d69ace text); shipped facts()",
+          "status": "controlled/reconstructed shape; not natively observed in this QA",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "staging-marker-unlink"
+          ]
+        },
+        {
+          "id": "C1-N trial 1 pid-1",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 1 pid-2",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 1 pid-4",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 1 pid-5",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 2 pid-1",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 2 pid-3",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 2 pid-4",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 2 pid-5",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 3 pid-2",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 3 pid-3",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 3 pid-4",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        },
+        {
+          "id": "C1-N trial 3 pid-5",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "historical retained native run of the shipped acceptance at 9ae40884 by the prior separate operator QA (read-only native-tap.log; pre-#530 message text; not a fresh native execution of d3d69ace)",
+          "status": "retained native contender line; current integrated predicate executed on it in-process now",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": []
+        }
+      ]
+    },
+    {
+      "id": "P2-recorder-finalize-cli",
+      "total": 42,
+      "pass": 42,
+      "fail": 0,
+      "cases": [
+        {
+          "id": "E-01",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "complete authentic receipts, all three trials"
+        },
+        {
+          "id": "E-02",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "totals only, all trials (maintained baseline success-fixture shape)"
+        },
+        {
+          "id": "E-03",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "totals only, trial 2"
+        },
+        {
+          "id": "E-04",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "absent: one refused contender result (trial 2)"
+        },
+        {
+          "id": "E-05",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "absent: acquired owner result (trial 2)"
+        },
+        {
+          "id": "E-06",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "absent: live owner check (trial 2)"
+        },
+        {
+          "id": "E-07",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "absent: final cleanup (trial 2)"
+        },
+        {
+          "id": "E-08",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "absent: contention totals (trial 2)"
+        },
+        {
+          "id": "E-09",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: check token differs from owner token, matched=true (trial 2)"
+        },
+        {
+          "id": "E-10",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: check PID is a refused contender, matched=true (trial 2)"
+        },
+        {
+          "id": "E-11",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: owner not live (trial 2)"
+        },
+        {
+          "id": "E-12",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: seeded marker remains (trial 2)"
+        },
+        {
+          "id": "E-13",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: owner record not matched (trial 2)"
+        },
+        {
+          "id": "E-14",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: one contender with a different seeded token (trial 2)"
+        },
+        {
+          "id": "E-15",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: refused contender carries an owner token (trial 2)"
+        },
+        {
+          "id": "E-16",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "inconsistent: totals 5 contenders but one counted as other (trial 2)"
+        },
+        {
+          "id": "E-17",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: not released (trial 2)"
+        },
+        {
+          "id": "E-18",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: main lock remains (trial 2)"
+        },
+        {
+          "id": "E-19",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: guard remains (trial 2)"
+        },
+        {
+          "id": "E-20",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: staging entry remains (trial 2)"
+        },
+        {
+          "id": "E-21",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: staging count unavailable (trial 2)"
+        },
+        {
+          "id": "E-22",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "final cleanup: unrelated file changed (trial 2)"
+        },
+        {
+          "id": "E-23",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: one contender PID recorded twice in place of another (trial 2)"
+        },
+        {
+          "id": "E-24",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: extra copy of a refused result (6 results, trial 2)"
+        },
+        {
+          "id": "E-25",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: owner check (trial 2)"
+        },
+        {
+          "id": "E-26",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: final cleanup (trial 2)"
+        },
+        {
+          "id": "E-27",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "records-rejected"
+              ]
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "records-rejected"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "records-rejected"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "records-rejected"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: contention totals (trial 2)"
+        },
+        {
+          "id": "E-28",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: a second acquired owner while totals say one (trial 2)"
+        },
+        {
+          "id": "E-29",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "records-rejected",
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "records-rejected"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "records-rejected",
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "records-rejected"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "duplicated: whole trial 2 recorded twice"
+        },
+        {
+          "id": "E-30",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "scope: trial 2 ownership receipts in the launcher case only"
+        },
+        {
+          "id": "E-31",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "scope: trial 2 ownership receipts in a lock-contention subtest"
+        },
+        {
+          "id": "E-32",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "complete",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "genuine compound refusal (C1-01) with otherwise passing receipts, native success"
+        },
+        {
+          "id": "E-33",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "genuine compound refusal (C1-01), native failure: downloadable and preserved"
+        },
+        {
+          "id": "E-34",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "different filesystem refusal (C1-03 stale-marker-unlink EPERM), native failure"
+        },
+        {
+          "id": "E-35",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "partial failed run: trial 2 stopped before cleanup, trial 3 never ran; native failure"
+        },
+        {
+          "id": "E-36",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ]
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "incomplete",
+              "exitCode": 1,
+              "state": "valid",
+              "missing": [
+                "lock-contention-pass",
+                "contention-trials"
+              ],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "same partial recording but native step reported success (incomplete success)"
+        },
+        {
+          "id": "E-37",
+          "result": "PASS",
+          "expected": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": []
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "missing": []
+            }
+          },
+          "observed": {
+            "candidate": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            },
+            "baseline": {
+              "status": "native-failed",
+              "exitCode": 0,
+              "state": "valid",
+              "missing": [],
+              "upload": [
+                "manifest.json",
+                "result.json",
+                "observations.ndjson"
+              ],
+              "uploadedFilesExist": true,
+              "observationsUnchangedByFinalize": true,
+              "rereadState": "valid"
+            }
+          },
+          "description": "complete authentic receipts, native cancelled (failed run stays downloadable)"
+        },
+        {
+          "id": "CLI-01 complete authentic receipts",
+          "result": "PASS",
+          "expected": {
+            "exit": 0,
+            "status": "complete"
+          },
+          "observed": {
+            "exit": 0,
+            "status": "complete",
+            "observations": "valid",
+            "missing": [],
+            "uploadPaths": [
+              "manifest.json",
+              "result.json",
+              "observations.ndjson"
+            ],
+            "stepSummaryMentionsMissing": true
+          }
+        },
+        {
+          "id": "CLI-02 totals only",
+          "result": "PASS",
+          "expected": {
+            "exit": 1,
+            "status": "incomplete"
+          },
+          "observed": {
+            "exit": 1,
+            "status": "incomplete",
+            "observations": "valid",
+            "missing": [
+              "contention-trials"
+            ],
+            "uploadPaths": [
+              "manifest.json",
+              "result.json",
+              "observations.ndjson"
+            ],
+            "stepSummaryMentionsMissing": true
+          }
+        },
+        {
+          "id": "CLI-03 genuine compound, native failure",
+          "result": "PASS",
+          "expected": {
+            "exit": 0,
+            "status": "native-failed"
+          },
+          "observed": {
+            "exit": 0,
+            "status": "native-failed",
+            "observations": "valid",
+            "missing": [
+              "contention-trials"
+            ],
+            "uploadPaths": [
+              "manifest.json",
+              "result.json",
+              "observations.ndjson"
+            ],
+            "stepSummaryMentionsMissing": true
+          }
+        },
+        {
+          "id": "CLI-04 manifest-only directory, native success",
+          "result": "PASS",
+          "expected": {
+            "exit": 1,
+            "status": "incomplete"
+          },
+          "observed": {
+            "exit": 1,
+            "status": "incomplete",
+            "observations": "absent",
+            "missing": [
+              "observations-absent"
+            ],
+            "uploadPaths": [
+              "manifest.json",
+              "result.json"
+            ],
+            "stepSummaryMentionsMissing": true
+          }
+        },
+        {
+          "id": "CLI-05 manifest-only directory, native failure",
+          "result": "PASS",
+          "expected": {
+            "exit": 0,
+            "status": "native-failed"
+          },
+          "observed": {
+            "exit": 0,
+            "status": "native-failed",
+            "observations": "absent",
+            "missing": [
+              "observations-absent"
+            ],
+            "uploadPaths": [
+              "manifest.json",
+              "result.json"
+            ],
+            "stepSummaryMentionsMissing": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "P2-hosted-data-variants",
+      "total": 8,
+      "pass": 8,
+      "fail": 0,
+      "cases": [
+        {
+          "id": "H-00 authentic hosted records, unchanged",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              1,
+              2,
+              3
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "hosted corpus run 44740018660 (held source 107c0c4a), parsed read-only",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-01 totals only for trial 2 (ownership receipts absent)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              1,
+              3
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                1,
+                3
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-02 totals only for all trials",
+          "result": "PASS",
+          "expected": {
+            "candidate": [],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-03 one refused contender result absent (trial 3)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              1,
+              2
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                1,
+                2
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-04 duplicated owner check (trial 3)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              1,
+              2
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                1,
+                2
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-05 inconsistent owner readback: recorded token is the seeded token (trial 1)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              2,
+              3
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                2,
+                3
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-06 final cleanup absent (trial 1)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              2,
+              3
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                2,
+                3
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        },
+        {
+          "id": "H-07 structured cleanup failure row added (trial 2; values of retained compound C1-01)",
+          "result": "PASS",
+          "expected": {
+            "candidate": [
+              1,
+              3
+            ],
+            "baseline": [
+              1,
+              2,
+              3
+            ]
+          },
+          "observed": {
+            "candidate": {
+              "contention": [
+                1,
+                3
+              ],
+              "missing": [
+                "contention-trials"
+              ]
+            },
+            "baseline": {
+              "contention": [
+                1,
+                2,
+                3
+              ],
+              "missing": []
+            }
+          },
+          "source": "in-memory variant of the hosted records (corpus not modified); recorder-closed position realigned in memory",
+          "status": "executed: summarize()+missingRequirements() of candidate and baseline helpers"
+        }
+      ]
+    },
+    {
+      "id": "P1-typed-integration",
+      "total": 6,
+      "pass": 6,
+      "fail": 0,
+      "cases": [
+        {
+          "id": "T-01",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted",
+            "diagnostic": "store-held"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "typed store-held refusal, current #530 text (main lock)",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": [],
+          "facts": {
+            "topLevelName": "StoreOwnershipRefusedError",
+            "topLevelTyped": true,
+            "nestedTyped": false,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-held",
+            "ownershipErrorRows": 0
+          }
+        },
+        {
+          "id": "T-02",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted",
+            "diagnostic": "store-held"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "typed store-held refusal, current #530 text (reclamation guard)",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": [],
+          "facts": {
+            "topLevelName": "StoreOwnershipRefusedError",
+            "topLevelTyped": true,
+            "nestedTyped": false,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-held",
+            "ownershipErrorRows": 0
+          }
+        },
+        {
+          "id": "T-03",
+          "result": "PASS",
+          "expected": {
+            "candidate": "accepted",
+            "baseline": "accepted",
+            "diagnostic": "store-unverified"
+          },
+          "observed": {
+            "candidate": "accepted",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "typed store-unverified refusal, current #530 text",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 0,
+          "structuredFailureCodes": [],
+          "structuredFailureOperations": [],
+          "facts": {
+            "topLevelName": "StoreOwnershipRefusedError",
+            "topLevelTyped": true,
+            "nestedTyped": false,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-unverified",
+            "ownershipErrorRows": 0
+          }
+        },
+        {
+          "id": "T-04",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted",
+            "diagnostic": "store-held"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "compound: typed store-held (guard) + staging-marker-unlink EPERM + staging-directory-remove EPERM; staging cleanup also failed",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 2,
+          "structuredFailureCodes": [
+            "EPERM",
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "staging-marker-unlink",
+            "staging-directory-remove"
+          ],
+          "facts": {
+            "topLevelName": "AggregateError",
+            "topLevelTyped": false,
+            "nestedTyped": true,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-held",
+            "ownershipErrorRows": 2
+          }
+        },
+        {
+          "id": "T-05",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted",
+            "diagnostic": "store-unverified"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "compound: typed store-unverified + recovery-marker-unlink EPERM; reclamation cleanup also failed",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EPERM"
+          ],
+          "structuredFailureOperations": [
+            "recovery-marker-unlink"
+          ],
+          "facts": {
+            "topLevelName": "AggregateError",
+            "topLevelTyped": false,
+            "nestedTyped": true,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-unverified",
+            "ownershipErrorRows": 1
+          }
+        },
+        {
+          "id": "T-06",
+          "result": "PASS",
+          "expected": {
+            "candidate": "rejected",
+            "baseline": "accepted",
+            "diagnostic": "store-held"
+          },
+          "observed": {
+            "candidate": "rejected",
+            "baseline": "accepted"
+          },
+          "source": "reconstructed with the current d3d69ace templates; typed class from the built module; not natively observed",
+          "label": "compound: typed store-held + recovery-directory-remove EBUSY; reclamation cleanup also failed",
+          "lineUnchangedByClassifier": true,
+          "structuredFailureCount": 1,
+          "structuredFailureCodes": [
+            "EBUSY"
+          ],
+          "structuredFailureOperations": [
+            "recovery-directory-remove"
+          ],
+          "facts": {
+            "topLevelName": "AggregateError",
+            "topLevelTyped": false,
+            "nestedTyped": true,
+            "lineKeys": [
+              "status",
+              "pid",
+              "error",
+              "code",
+              "operation",
+              "markerToken",
+              "failures"
+            ],
+            "lineKeysExact": true,
+            "nameSerialized": false,
+            "messageMatchesWording": true,
+            "receiptDiagnostic": "store-held",
+            "ownershipErrorRows": 1
+          }
+        }
+      ]
+    }
+  ],
+  "hostedReplays": [
+    {
+      "helper": "current",
+      "helperSha256": "3f294986ac2179ea968c8c34ad5eb14b11df690f823668b1cec6d9e1ecdaf5e4",
+      "records": 298,
+      "status": "complete",
+      "state": "valid",
+      "exit": 0,
+      "exactResultReplay": true,
+      "rejectedRecords": 0,
+      "omittedRecords": 0
+    },
+    {
+      "helper": "baseline",
+      "helperSha256": "33f2e0fd9070592ab9d201deff090bfa192ff140d1059e8a51035bf2e9bbc9d8",
+      "records": 298,
+      "status": "complete",
+      "state": "valid",
+      "exit": 0,
+      "exactResultReplay": true,
+      "rejectedRecords": 0,
+      "omittedRecords": 0
+    }
+  ],
+  "maintainedEvidenceTests": {
+    "pass": 40,
+    "total": 40,
+    "exit": 0,
+    "rawLogSha256": "afc295c662248558178cbe8a46482ef7937f47a48419d1fd6fdd435d22fa2678"
+  },
+  "setup": {
+    "firstReplayAttempts": {
+      "count": 2,
+      "exitCodes": [
+        1,
+        1
+      ],
+      "reason": "Invalid JSON from unescaped backslashes in a binding file; stopped before corpus access; retained originals; corrected binding then replayed successfully."
+    },
+    "priorStandaloneRecorderFirstRun": {
+      "pass": 40,
+      "total": 42,
+      "reason": "E-27/E-29 duplicate-total expectations corrected in the prior QA; original remains retained."
+    },
+    "coordinatorAdmissionGuard": "Initial whole-old-product equality assumption was corrected for the intentional signed #530 typed-refusal integration before QA; no product failure."
+  },
+  "limits": [
+    "No new native launcher, contention, permission reproduction, instrumentation, fault workflow or broad regression was run.",
+    "No hosted CI or native execution of integrated d3d69ace existed at this QA time; target #530 and historical #529 receipts are distinct.",
+    "#530-text refusal cases are constructed from current templates and the real built class, not native observations.",
+    "The retained compound error nesting was rebuilt from its original recorded chain; baseline inline assertion and current exported predicate were compared on identical result lines.",
+    "Hosted variants are data-only summarization tests; recorder cases cover stream validation.",
+    "The prior native 23/25 symlink failures remain native-failed; historical failure-site, owner and cause attribution remains unresolved.",
+    "The prior nonblocking source-only guard-release observation remains outside the accepted structured-cleanup criterion and was not investigated."
+  ]
+}

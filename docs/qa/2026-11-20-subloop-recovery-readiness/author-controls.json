@@ -1,0 +1,487 @@
+{
+  "original": {
+    "file": "proof/terminal-control-verification.json",
+    "bytes": 9050,
+    "sha256": "b7ec9be6ba4b17fadbc76aca8a61b635e05316049b13d25de0dc9f5349632d3d"
+  },
+  "source": "e5e665fd83753af4e684a969083711883466ce55",
+  "scope": "Controlled test-harness mutations; no production permission-error reproduction.",
+  "verification": {
+    "positive_probe_counts": {
+      "delayed-valid-ready": 2,
+      "durable-cut-after-release": 4,
+      "two-real-restarts": 4,
+      "fixture-cleanup": 4,
+      "completion": 2,
+      "expected-failure-guard": 2
+    },
+    "negative_probe_counts": {
+      "missed-cut-idle-falsifier": 2,
+      "failure-cleanup": 8,
+      "fixture-cleanup": 8,
+      "completion": 4,
+      "genuine-wrong-state": 4,
+      "cleanup-watchdog": 2,
+      "primary-and-cleanup-errors": 2
+    },
+    "positive_test_exit": 0,
+    "negative_test_exit": 1,
+    "positive_constructed_cases": 4,
+    "expected_negative_constructed_cases": 8,
+    "all_receipt_assertions_passed": true,
+    "receipts": [
+      {
+        "probe": "delayed-valid-ready",
+        "state": "child finished while down",
+        "minimumDelayMs": 1600,
+        "observed": "waiting",
+        "elapsedMs": 1652
+      },
+      {
+        "probe": "durable-cut-after-release",
+        "state": "child finished while down",
+        "entireRowsAndEventsUnchanged": true,
+        "middleWakes": 0,
+        "topWakes": 0,
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "two-real-restarts",
+        "state": "child finished while down",
+        "unchangedParentContinuationAssertionsPassed": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "delayed-valid-ready",
+        "state": "parent interrupted mid-wake",
+        "minimumDelayMs": 1600,
+        "observed": "waiting",
+        "elapsedMs": 1655
+      },
+      {
+        "probe": "durable-cut-after-release",
+        "state": "parent interrupted mid-wake",
+        "entireRowsAndEventsUnchanged": true,
+        "middleWakes": 1,
+        "topWakes": 0,
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "two-real-restarts",
+        "state": "parent interrupted mid-wake",
+        "unchangedParentContinuationAssertionsPassed": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      },
+      {
+        "probe": "durable-cut-after-release",
+        "state": "child finished while down",
+        "entireRowsAndEventsUnchanged": true,
+        "middleWakes": 0,
+        "topWakes": 0,
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "expected-failure-guard",
+        "state": "child finished while down",
+        "caught": true,
+        "managerIdle": true,
+        "clientClosed": true
+      },
+      {
+        "probe": "two-real-restarts",
+        "state": "child finished while down",
+        "unchangedParentContinuationAssertionsPassed": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "durable-cut-after-release",
+        "state": "parent interrupted mid-wake",
+        "entireRowsAndEventsUnchanged": true,
+        "middleWakes": 1,
+        "topWakes": 0,
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "expected-failure-guard",
+        "state": "parent interrupted mid-wake",
+        "caught": true,
+        "managerIdle": true,
+        "clientClosed": true
+      },
+      {
+        "probe": "two-real-restarts",
+        "state": "parent interrupted mid-wake",
+        "unchangedParentContinuationAssertionsPassed": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      },
+      {
+        "probe": "missed-cut-idle-falsifier",
+        "state": "child finished while down",
+        "reachedCut": false,
+        "managerIdle": true
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "child finished while down",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "missed-cut-idle-falsifier",
+        "state": "parent interrupted mid-wake",
+        "reachedCut": false,
+        "managerIdle": true
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "parent interrupted mid-wake",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      },
+      {
+        "probe": "genuine-wrong-state",
+        "state": "child finished while down",
+        "observed": "queued"
+      },
+      {
+        "probe": "cleanup-watchdog",
+        "state": "child finished while down",
+        "originalReadinessCausePreserved": true,
+        "managerMethodRestored": true
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "child finished while down",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "primary-and-cleanup-errors",
+        "state": "child finished while down",
+        "originalCausePreserved": true,
+        "errorCount": 2
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "genuine-wrong-state",
+        "state": "parent interrupted mid-wake",
+        "observed": "queued"
+      },
+      {
+        "probe": "cleanup-watchdog",
+        "state": "parent interrupted mid-wake",
+        "originalReadinessCausePreserved": true,
+        "managerMethodRestored": true
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "parent interrupted mid-wake",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "primary-and-cleanup-errors",
+        "state": "parent interrupted mid-wake",
+        "originalCausePreserved": true,
+        "errorCount": 2
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "child finished while down",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "parent interrupted mid-wake",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      },
+      {
+        "probe": "genuine-wrong-state",
+        "state": "child finished while down",
+        "observed": "queued"
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "child finished while down",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "genuine-wrong-state",
+        "state": "parent interrupted mid-wake",
+        "observed": "queued"
+      },
+      {
+        "probe": "failure-cleanup",
+        "state": "parent interrupted mid-wake",
+        "managerIdle": true,
+        "clientClosed": true,
+        "ownedMocksRestored": true
+      },
+      {
+        "probe": "fixture-cleanup",
+        "directoryRemoved": true,
+        "listenerClosed": true,
+        "allOwnedChildrenExited": true,
+        "reservationReleased": true
+      },
+      {
+        "probe": "completion",
+        "unhandled": 0,
+        "activeWatchdogs": 0
+      }
+    ]
+  },
+  "controlSources": [
+    {
+      "file": "baseline-subloop-restart.test.ts",
+      "bytes": 11903,
+      "sha256": "40b4128df3e33955ae39405d93852ffae21b8796e6a6be0b0415059f575d3633"
+    },
+    {
+      "file": "final-delay-control.test.ts",
+      "bytes": 19445,
+      "sha256": "abad46bc2a8eaa2b2dca6be0900fd6e38cfd9f987999df7cd19f1266e9412efb"
+    },
+    {
+      "file": "final-failure-control.test.ts",
+      "bytes": 19013,
+      "sha256": "efa9e149a8ebaf5d8b3c6c4ffd6940674349801b145447c944a2f3a263f00402"
+    },
+    {
+      "file": "final-missed-control.test.ts",
+      "bytes": 18784,
+      "sha256": "d80ff459606d0359756c115f977e361445d02c8b3efedf76a4023647fc3a2f78"
+    },
+    {
+      "file": "final-stall-control.test.ts",
+      "bytes": 19092,
+      "sha256": "b97e7ad06f4c52019fd2ff313798bb6d9fc2ac2ccb80f798fe4f33cba6314b5a"
+    },
+    {
+      "file": "final-wrong-control.test.ts",
+      "bytes": 18834,
+      "sha256": "e5b0eed038e0726ace9dff0844afaf54ebf163407942cda0b8e5d2b363cbc1c3"
+    },
+    {
+      "file": "final-cleanup-control.test.ts",
+      "bytes": 20260,
+      "sha256": "2d6001fca3382a47c1f57d0062d193715bf864c233f12b17412ab02593adf3d2"
+    }
+  ],
+  "selectedLogs": [
+    {
+      "file": "baseline.log",
+      "bytes": 1355,
+      "sha256": "0d552022d7a515e633010be94cb973a27dd26862f3117eb37df624d4d6166691",
+      "summaryLines": [" Test Files  1 passed (1)", "      Tests  3 passed (3)"]
+    },
+    {
+      "file": "candidate.log",
+      "bytes": 1355,
+      "sha256": "25c6f47ab676c641ecaf85076f2f46190b7835af0eb7ef83d111693c9e1a2378",
+      "summaryLines": [" Test Files  1 passed (1)", "      Tests  3 passed (3)"]
+    },
+    {
+      "file": "final-candidate.log",
+      "bytes": 1355,
+      "sha256": "ea47c4de67aba64717867340d69cfc2ce611638e503683554ae5417753e36371",
+      "summaryLines": [" Test Files  1 passed (1)", "      Tests  3 passed (3)"]
+    },
+    {
+      "file": "original-delay-control.log",
+      "bytes": 1846,
+      "sha256": "34d78e9f6426c746746268c64c004b20936bf63af9e74c0e9fd4e2b29e1a420f",
+      "summaryLines": [" Test Files  1 failed (1)", "      Tests  1 failed | 2 skipped (3)"]
+    },
+    {
+      "file": "candidate-delay-failure-controls.log",
+      "bytes": 4554,
+      "sha256": "7e9c9c452c87d780c41a3f4cf33331b734261343d6c4834cbb65b0a99f76013f",
+      "summaryLines": [
+        " Test Files  1 failed | 1 passed (2)",
+        "      Tests  1 failed | 3 passed | 2 skipped (6)"
+      ]
+    },
+    {
+      "file": "candidate-delay-controls-corrected-probe.log",
+      "bytes": 1892,
+      "sha256": "bc4caa15a2dbe059433f9efbb230c06d32b53c9fa9eed20095f2258a733488e1",
+      "summaryLines": [" Test Files  1 passed (1)", "      Tests  2 passed | 1 skipped (3)"]
+    },
+    {
+      "file": "candidate-missed-before-control.log",
+      "bytes": 2436,
+      "sha256": "895d4d195bb8bc7006a4ae6f9789b2a3fd993905270f2b5e1c7a62322d3ae74a",
+      "summaryLines": [" Test Files  1 failed (1)", "      Tests  2 failed | 1 skipped (3)"]
+    },
+    {
+      "file": "candidate-wrong-state-control.log",
+      "bytes": 2705,
+      "sha256": "ddc21c326103f4aebdd9466f2684b0bbf1cbe76d1043de84b26ebf72880dc234",
+      "summaryLines": [" Test Files  1 failed (1)", "      Tests  2 failed | 1 skipped (3)"]
+    },
+    {
+      "file": "final-cleanup-control-corrected-probe.log",
+      "bytes": 4335,
+      "sha256": "b4c738bafd91266936ea07d7043d7609b98fd1ddbf268487fc42eccd0c109fb9",
+      "summaryLines": [" Test Files  1 failed (1)", "      Tests  2 failed | 1 skipped (3)"]
+    },
+    {
+      "file": "pre-final-lint-failure.log",
+      "bytes": 537,
+      "sha256": "76131968d0c624a5a1ee2f0b6ff1e2606dafa3f9d64141b576e63edc992bbf21",
+      "summaryLines": ["✖ 3 problems (3 errors, 0 warnings)"]
+    },
+    {
+      "file": "terminal-positive-controls.log",
+      "bytes": 3790,
+      "sha256": "9088ff0f24c3ae19f6dd9ce344431e394b8f5f086f07f7310c2f048711c5e841",
+      "summaryLines": [" Test Files  2 passed (2)", "      Tests  4 passed | 2 skipped (6)"]
+    },
+    {
+      "file": "terminal-negative-controls.log",
+      "bytes": 11453,
+      "sha256": "0d3cd79e683e32b365e4b6451a1dae924726fd8d73c93e06a0d948d4c1b0ca8a",
+      "summaryLines": [" Test Files  4 failed (4)", "      Tests  8 failed | 4 skipped (12)"]
+    },
+    {
+      "file": "final-typecheck.log",
+      "bytes": 53,
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "summaryLines": []
+    },
+    {
+      "file": "final-lint.log",
+      "bytes": 11,
+      "sha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1",
+      "summaryLines": []
+    },
+    {
+      "file": "final-format.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "summaryLines": ["All matched files use Prettier code style!"]
+    }
+  ],
+  "earlierNegatives": {
+    "delayedFailureProbe": "The earlier combined delay/failure attempt had 1 failed / 3 passed / 2 skipped. Retained before the corrected probe.",
+    "cleanupCorrectedProbe": "The earlier cleanup-control probe intentionally failed 2 cases with 1 skipped; original retained.",
+    "lint": "Intermediate test patch failed 3 lint rules; final author local lint later passed. Original red result remains in selected log hashes."
+  },
+  "qualification": "All original structured receipts are retained as values, with exact input hash. Unfiltered logs and full fixture rows are omitted. Completed control-command results alone are not an independent QA or whole-CI verdict."
+}
