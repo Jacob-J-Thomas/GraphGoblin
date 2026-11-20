@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  access,
   copyFile,
   link,
   lstat,
@@ -227,6 +228,7 @@ test(
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
     ciEvidence.fixture('installer', base);
     const install = join(base, 'installed space α');
+    await privateDirectory(install);
     const store = join(base, 'store');
     await mkdir(store);
     const exe = join(install, 'GraphGoblin.exe');
@@ -252,7 +254,7 @@ test(
       DesktopShortcut: desktop,
       StartMenuShortcut: programs,
     };
-    function runPowerShell(script, request) {
+    function runPowerShell(script, request, inherited = {}) {
       return execute(
         powerShell,
         [
@@ -264,7 +266,7 @@ test(
           Buffer.from(script, 'utf16le').toString('base64'),
         ],
         {
-          env: { ...env, GG_INSTALLER_FIXTURE: JSON.stringify(request) },
+          env: { ...env, ...inherited, GG_INSTALLER_FIXTURE: JSON.stringify(request) },
           cwd: base,
           windowsHide: true,
           timeout: 40_000,
@@ -306,7 +308,7 @@ test(
       },
     );
 
-    const invoke = (overrides = {}) =>
+    const invoke = (overrides = {}, inherited = {}) =>
       runPowerShell(
         `$ErrorActionPreference = 'Stop'
       $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
@@ -319,6 +321,7 @@ test(
       }
       & $request.installer @options`,
         { installer, options: { ...options, ...overrides } },
+        inherited,
       );
     async function invokeWithNodeDiscovery(childPath, overrides = {}) {
       const discoveredOptions = { ...options, ...overrides };
@@ -340,9 +343,25 @@ test(
       );
     }
     const sourceBefore = await readFile(source);
-    await invoke();
+    const safeOverrides = {
+      GG_LOG_LEVEL: 'silent',
+      GG_REQUIRE_API_KEY: 'false',
+      GG_OLLAMA_ENABLED: 'false',
+    };
+    const secretCanary = 'GG_LAUNCHER_SECRET_CANARY synthetic only';
+    await invoke(
+      { Environment: safeOverrides },
+      {
+        GG_MASTER_KEY: secretCanary,
+        GG_JEV_API_KEY: secretCanary,
+        GG_LOG_LEVEL: 'invalid-inherited-value',
+        GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
+      },
+    );
     assert.deepEqual(await readFile(source), sourceBefore);
     const config = JSON.parse(await readFile(exe + '.json', 'utf8'));
+    assert.deepEqual(config.Environment, safeOverrides);
+    assert.ok(!(await readFile(exe + '.json', 'utf8')).includes(secretCanary));
     const configPath = exe + '.json';
     const validConfig = await execute(fixture, ['--validate-install', '--config', configPath], {
       cwd: base,
@@ -370,6 +389,7 @@ test(
         assert.equal(error.code, 1);
         assert.match(error.stderr, expected);
         assert.doesNotMatch(error.stdout + error.stderr, /GG_INSTALLER_PRIVATE_PATH_CANARY/);
+        assert.ok(!(error.stdout + error.stderr).includes(secretCanary));
         return true;
       });
       assert.deepEqual(await snapshot(), before);
@@ -385,6 +405,64 @@ test(
       assert.deepEqual(await snapshot(), before);
       assert.deepEqual(await readdir(store), []);
       if (stagedOutput) await assert.rejects(lstat(stagedOutput), { code: 'ENOENT' });
+    }
+    const secretRefusal =
+      'Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY (case-insensitive). Keep credentials in GraphGoblin secret stores; use the data directory master.key for encryption.';
+    const secretKeys = [
+      'GG_MASTER_KEY',
+      'GG_JEV_API_KEY',
+      'GG_Master_Key',
+      'GG_Jev_Api_Key',
+      'gg_master_key',
+      'gg_jev_api_key',
+    ];
+    const manualDirectory = join(base, 'manual credentials');
+    await privateDirectory(manualDirectory);
+    const baseEntries = await readdir(base);
+    for (const key of secretKeys) {
+      for (const NoShortcuts of [false, true]) {
+        await refuses(
+          { NoShortcuts, Environment: { ...safeOverrides, [key]: secretCanary } },
+          /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+        );
+        assert.deepEqual(await readdir(base), baseEntries, 'Refusal must create no stage.');
+      }
+      const manual = join(manualDirectory, 'manual-credential-config.json');
+      await writeFile(
+        manual,
+        JSON.stringify({ ...config, Environment: { ...safeOverrides, [key]: secretCanary } }),
+      );
+      const manualBefore = await readFile(manual);
+      await refusesPrivate(['--validate-install', '--config', manual], secretRefusal);
+      const stagedShortcut = join(base, 'refused-credential-shortcut.lnk');
+      await refusesPrivate(
+        ['--stage-shortcut', stagedShortcut, manual, exe],
+        secretRefusal,
+        stagedShortcut,
+      );
+      await assert.rejects(
+        execute(exe, ['--ensure-gateway', '--config', manual], { env, windowsHide: true }),
+        (error) => {
+          assert.equal(error.code, 1);
+          assert.equal(error.stdout, '');
+          assert.ok(error.stderr.startsWith(secretRefusal));
+          assert.ok(!error.stderr.includes(secretCanary));
+          return true;
+        },
+      );
+      assert.deepEqual(await readFile(manual), manualBefore);
+      assert.deepEqual(await snapshot(), before);
+      assert.deepEqual(await readdir(store), []);
+      assert.equal(await listening(port), false, 'Refused config must not start a gateway.');
+      const launcherLog = await readFile(join(manualDirectory, 'launcher.log'), 'utf8');
+      assert.ok(!launcherLog.includes(secretCanary));
+      await unlink(manual);
+    }
+    for (const key of ['GG_MASTER_KEY', 'GG_JEV_API_KEY']) {
+      await refuses(
+        { Environment: { [key]: '' } },
+        /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+      );
     }
     const noNodePath = [join(system, 'System32'), system].join(';');
     await assert.rejects(invokeWithNodeDiscovery(noNodePath), (error) => {
@@ -491,6 +569,30 @@ test(
       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
       /Node.+22\.22\.2.+-NodePath/is,
     );
+    try {
+      const started = await execute(exe, ['--ensure-gateway', '--config', configPath], {
+        env: {
+          ...env,
+          GG_MASTER_KEY: secretCanary,
+          GG_JEV_API_KEY: secretCanary,
+          GG_LOG_LEVEL: 'invalid-inherited-value',
+          GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
+        },
+        windowsHide: true,
+        timeout: 30_000,
+      });
+      assert.deepEqual([started.stdout, started.stderr], ['', '']);
+      await health(config);
+      await access(join(store, 'master.key'));
+      const response = await fetch(origin(config) + '/secrets');
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { items: [] });
+      assert.deepEqual(await readFile(source), sourceBefore);
+      assert.deepEqual(await snapshot(), before);
+      assert.ok(!(await readFile(join(install, 'gateway.log'), 'utf8')).includes(secretCanary));
+    } finally {
+      await stop(config);
+    }
   }),
 );
 
