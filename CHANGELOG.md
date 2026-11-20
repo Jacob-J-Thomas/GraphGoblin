@@ -13,7 +13,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   other row's record. A record two rows name, as in a device copy an earlier editor left after
   such a collision, belongs to neither: renaming or removing either row keeps it and its manual
   route, as a load without the device copy's table does, and a row retyped to the port such a
-  record is on takes it up, so removing that row repairs the shared id. Reset route, segment
+  record is on takes it up, so removing that row repairs the shared id. Deleting a card one of
+  two connections with an id reaches no longer moves the other connection onto the route that
+  owned the deleted one: it stays on its own output with its manual route, no route claims it,
+  and Undo and Redo give back exactly that; removing a route or applying a whole new draft that
+  leaves one connection with the id does the same. Reset route, segment
   drags and nudges, and a moved card's route reset refuse a shared id as Remove connection does,
   changing nothing. Selecting such a
   connection shows a note with the reason and the repair at once; Reset route and Remove connection

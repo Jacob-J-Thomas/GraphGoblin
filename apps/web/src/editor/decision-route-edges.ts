@@ -70,11 +70,12 @@ function holderPorts(edges: readonly StoredEdge[], edgeId: string): string {
  * once an edit removes the record a claim named, another connection with the same id can become
  * the only one left and the claim would name it, handing the row a connection it never owned. So
  * a claim is read in the draft before the edit and kept only when it names the same record after
- * it: that very record, or the edit's rewrite of it (a new manual route, a renamed end), which the
- * edit shows by leaving every record of that id on the ports they were on and rewriting the record
- * the claim names, so the same reading picks out its rewrite. A claim that named no record keeps
- * naming none. Any other claim is dropped, so its record, if one is left, is one no row has
- * claimed: a row takes it up only through its own unique ID being that record's port.
+ * it: that very record, or the edit's rewrite of it (a new manual route, a renamed end, a reparsed
+ * copy). A rewrite is a record the edit wrote, never one already stored before it, and the edit
+ * left every record of that id on the port it was on, so the same reading picks the rewrite out.
+ * A claim that named no record keeps naming none. Any other claim is dropped, so its record, if
+ * one is left, is one no row has claimed: a row takes it up only through its own unique ID being
+ * that record's port.
  */
 function carriedRows(
   stored: RouteRows,

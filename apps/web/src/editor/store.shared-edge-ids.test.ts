@@ -42,12 +42,12 @@ function acrossSources(): LoopDefinitionInput {
 
 /**
  * Within one Decision: the `yes` and `no` rows of `pick` each own an edge called `e1`; `m1` is the
- * unique connection of its `maybe` row.
+ * unique connection of its `maybe` row. With `second`, the second route's ID instead of `no`.
  */
-function withinDecision(): LoopDefinitionInput {
+function withinDecision(second = 'no'): LoopDefinitionInput {
   const definition = newLoopDefinition('Shared within a decision');
   definition.nodes.push(
-    { id: 'pick', kind: 'decision', label: 'Pick', config: routes('yes', 'no', 'maybe') },
+    { id: 'pick', kind: 'decision', label: 'Pick', config: routes('yes', second, 'maybe') },
     { id: 'other', kind: 'exit', label: 'Other', config: {} },
   );
   definition.edges = [
@@ -878,6 +878,139 @@ describe('a device copy whose route rows claim one record (#481)', () => {
     store().updateNode('pick', { config: pickRoutes('yes', 'maybe') }, removal(1));
     expect(edges()).toEqual([start, done, maybe]);
   });
+
+  it('deleting Done after the rename hands Yes’s claim to no other record, through Undo, Redo and reloads', () => {
+    // The final audit's sequence: the copy restored, its second route renamed to `affirm` (both
+    // `e1` records kept), then Done deleted. Its connections go; `no → Other` must stay as it is.
+    const copy = captured();
+    const [start, , other] = records(copy.definition);
+    restore(copy);
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'affirm', 'maybe') },
+      typing('routes.1.id'),
+    );
+    const renamed = store().definition!;
+    const renamedRoutes = store().decisionRoutes;
+    expect(rows()).toEqual([
+      ['yes', ['e1']],
+      ['affirm', []],
+      ['maybe', ['m1']],
+    ]);
+    pause();
+    const revision = store().revision;
+    store().removeNode('done');
+    const after = store().definition!;
+    expect(after.edges).toEqual([start, other]);
+    expect(after.edges[1]).toBe(other);
+    expect(rows()).toEqual([
+      ['yes', []],
+      ['affirm', []],
+      ['maybe', []],
+    ]);
+    expect(listed(0)).toEqual([]);
+    expect(store().revision).toBe(revision + 1);
+    expect(store().saveState).toBe('pending');
+    const afterRoutes = store().decisionRoutes;
+    store().undo();
+    expect(store().definition).toBe(renamed);
+    expect(store().decisionRoutes).toBe(renamedRoutes);
+    store().redo();
+    expect(store().definition).toBe(after);
+    expect(store().decisionRoutes).toBe(afterRoutes);
+    // Renaming or removing Yes later takes nothing: in this editor, and once the draft is reloaded
+    // from this device with its table or from the server without one.
+    const later = () => {
+      pause();
+      store().updateNode(
+        'pick',
+        { config: pickRoutes('accepted', 'affirm', 'maybe') },
+        typing('routes.0.id'),
+      );
+      expect(edges()).toEqual([start, other]);
+      pause();
+      store().updateNode('pick', { config: pickRoutes('affirm', 'maybe') }, removal(0));
+      expect(edges()).toEqual([start, other]);
+      expect(edges()[1]).toBe(other);
+    };
+    later();
+    store().load('L1', after, { dirty: true, deviceSaved: true, decisionRoutes: afterRoutes });
+    expect(store().decisionRoutes).toEqual(afterRoutes);
+    later();
+    store().load('L1', after);
+    expect(store().decisionRoutes).toEqual(afterRoutes);
+    later();
+  });
+
+  /**
+   * The captured copy whose table also names `e1` for Maybe, though neither `e1` is on its port,
+   * so the claim names neither. With `second` other than `yes`, the second route has that ID and
+   * names nothing, and the first names the `e1` on its port alone.
+   */
+  function maybeNamesE1(second = 'yes'): ReturnType<typeof captured> {
+    const copy = captured(second);
+    const [first, next, last] = copy.decisionRoutes['pick']!.rows;
+    copy.decisionRoutes = {
+      pick: {
+        nextKey: 3,
+        rows: [
+          first!,
+          second === 'yes' ? next! : { key: 1, id: second, edgeIds: [] },
+          { ...last!, edgeIds: ['m1', 'e1'] },
+        ],
+      },
+    };
+    return copy;
+  }
+
+  it('keeps a claim that named no record naming none when deleting Done leaves one record of its id', () => {
+    const copy = maybeNamesE1();
+    const [start, , other, maybe] = records(copy.definition);
+    restore(copy);
+    // Maybe's `e1` names neither record: two hold it and neither is on `maybe`.
+    expect(listed(2)).toEqual([maybe]);
+    store().removeNode('done');
+    expect(edges()).toEqual([start, other]);
+    expect(listed(2)).toEqual([]);
+    pause();
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'yes', 'perhaps') },
+      typing('routes.2.id'),
+    );
+    expect(edges()).toEqual([start, other]);
+    expect(edges()[1]).toBe(other);
+    pause();
+    store().updateNode('pick', { config: pickRoutes('yes', 'yes') }, removal(2));
+    expect(edges()).toEqual([start, other]);
+    expect(edges()[1]).toBe(other);
+  });
+
+  it('keeps a claim that named no record naming none when removing a route leaves one record of its id', () => {
+    const copy = maybeNamesE1('affirm');
+    const [start, done, other, maybe] = records(copy.definition);
+    restore(copy);
+    expect(listed(0)).toEqual([done]);
+    expect(listed(2)).toEqual([maybe]);
+    store().updateNode('pick', { config: pickRoutes('affirm', 'maybe') }, removal(0));
+    const after = store().definition!;
+    expect(after.edges).toEqual([start, other, maybe]);
+    expect(rows()).toEqual([
+      ['affirm', []],
+      ['maybe', ['m1']],
+    ]);
+    expect(listed(1)).toEqual([maybe]);
+    pause();
+    store().updateNode('pick', { config: pickRoutes('affirm', 'perhaps') }, typing('routes.1.id'));
+    expect(edges()).toEqual([start, other, on(maybe, 'perhaps')]);
+    expect(edges()[1]).toBe(other);
+    store().undo();
+    expect(store().definition).toBe(after);
+    store().undo();
+    expect(store().definition).toBe(copy.definition);
+    store().redo();
+    expect(store().definition).toBe(after);
+  });
 });
 
 describe('a record two rows came to claim while editing (#481)', () => {
@@ -940,6 +1073,184 @@ describe('repairing a shared id in the editor (#481)', () => {
     expect(store().decisionRoutes['gate']!.rows[0]).toMatchObject({ id: 'yes', edgeIds: ['e1'] });
     store().updateMeta({ name: 'After the rename' });
     expect(edges()[0]!.from.port).toBe('out');
+  });
+});
+
+describe('deleting a card one of two records of an id reaches (#481)', () => {
+  type Edge = LoopDefinitionInput['edges'][number];
+  /**
+   * The final audit's map-free draft: `pick`'s routes are `yes`, `affirm` and `maybe`, so `yes` owns
+   * the `e1` to Done and the `e1` on `no` (to Other, with its own bend) belongs to no route.
+   */
+  function unowned(): LoopDefinitionInput {
+    const definition = withinDecision('affirm');
+    definition.edges[2] = { ...definition.edges[2]!, ui: { route: [670] } };
+    return definition;
+  }
+  /** The fixture's records in stored order: `s1`, `e1` to Done, `e1` to Other, `m1` to Done. */
+  const records = (definition: LoopDefinitionInput) => definition.edges as [Edge, Edge, Edge, Edge];
+  const on = (edge: Edge, port: string) => ({ ...edge, from: { ...edge.from, port } });
+  const rows = () => store().decisionRoutes['pick']!.rows.map((row) => [row.id, row.edgeIds]);
+  const listed = (index: number) =>
+    rowConnections(store().definition!, store().decisionRoutes, 'pick', index);
+  const rename = (ids: string[], index: number) =>
+    store().updateNode('pick', { config: routes(...ids) }, typing(`routes.${index}.id`));
+
+  it('keeps the other record where it is and hands it to no route, with Undo and Redo', () => {
+    const definition = unowned();
+    const [start, , other] = records(definition);
+    store().load('L1', definition);
+    const loaded = store().decisionRoutes;
+    expect(rows()).toEqual([
+      ['yes', ['e1']],
+      ['affirm', []],
+      ['maybe', ['m1']],
+    ]);
+    store().removeNode('done');
+    const after = store().definition!;
+    expect(after.edges).toEqual([start, other]);
+    expect(after.edges[1]).toBe(other);
+    expect(rows()).toEqual([
+      ['yes', []],
+      ['affirm', []],
+      ['maybe', []],
+    ]);
+    expect(listed(0)).toEqual([]);
+    store().undo();
+    expect(store().definition).toBe(definition);
+    expect(store().decisionRoutes).toBe(loaded);
+    store().redo();
+    expect(store().definition).toBe(after);
+    // Yes's later rename and removal take nothing.
+    pause();
+    rename(['accepted', 'affirm', 'maybe'], 0);
+    pause();
+    store().updateNode('pick', { config: routes('affirm', 'maybe') }, removal(0));
+    expect(edges()).toEqual([start, other]);
+    expect(edges()[1]).toBe(other);
+  });
+
+  it('keeps each row’s own record when the deleted card was the other record’s target', () => {
+    const definition = unowned();
+    const [start, done, , maybe] = records(definition);
+    store().load('L1', definition);
+    store().removeNode('other');
+    expect(edges()).toEqual([start, done, maybe]);
+    expect(listed(0)).toEqual([done]);
+    pause();
+    rename(['accepted', 'affirm', 'maybe'], 0);
+    expect(edges()).toEqual([start, on(done, 'accepted'), maybe]);
+    pause();
+    store().updateNode('pick', { config: routes('affirm', 'maybe') }, removal(0));
+    expect(edges()).toEqual([start, maybe]);
+  });
+
+  it.each([
+    ['both records owned', () => withinDecision()],
+    [
+      'unique ids',
+      () => {
+        const definition = withinDecision();
+        definition.edges[2] = { ...definition.edges[2]!, id: 'e2' };
+        return definition;
+      },
+    ],
+  ])('keeps the surviving route’s own record and lets it be renamed and removed: %s', (_, make) => {
+    const definition = make();
+    const [start, , other] = records(definition);
+    store().load('L1', definition);
+    store().removeNode('done');
+    const after = store().definition!;
+    expect(after.edges).toEqual([start, other]);
+    expect(listed(1)).toEqual([other]);
+    pause();
+    rename(['yes', 'nah', 'maybe'], 1);
+    expect(edges()).toEqual([start, on(other, 'nah')]);
+    store().undo();
+    expect(store().definition).toBe(after);
+    store().undo();
+    expect(store().definition).toBe(definition);
+    store().redo();
+    store().redo();
+    pause();
+    store().updateNode('pick', { config: routes('yes', 'maybe') }, removal(1));
+    expect(edges()).toEqual([start]);
+  });
+
+  it('keeps every claim through edits that rewrite a record: a route, a renamed end, a reparsed draft', () => {
+    const definition = unowned();
+    const [start, done, other, maybe] = records(definition);
+    store().load('L1', definition);
+    const loaded = store().decisionRoutes;
+    store().setEdgeRoute('m1', [600]);
+    expect(store().decisionRoutes).toBe(loaded);
+    expect(store().renameNode('done', 'finish')).toBeUndefined();
+    expect(store().decisionRoutes).toBe(loaded);
+    // A whole draft the store takes as given (chat audio's domain edit parses and returns one):
+    // every record is a new object, on the ports it was on.
+    const s = store();
+    const reparsed = { ...structuredClone(s.definition!), description: 'Reparsed' };
+    expect(s.applyChatAudio(s.definition!, reparsed, s, 'enable')).toBeUndefined();
+    expect(store().definition).toBe(reparsed);
+    expect(store().decisionRoutes).toBe(loaded);
+    pause();
+    rename(['accepted', 'affirm', 'maybe'], 0);
+    pause();
+    rename(['accepted', 'affirm', 'perhaps'], 2);
+    const finish = { node: 'finish' };
+    expect(edges()).toEqual([
+      start,
+      { ...on(done, 'accepted'), to: finish },
+      other,
+      { ...on(maybe, 'perhaps'), to: finish, ui: { route: [600] } },
+    ]);
+  });
+
+  it('keeps a colliding row’s claim through a route edit and a renamed end', () => {
+    // While the second route reads `yes` like the first, neither takes a record up by its ID: only
+    // the claim it kept says `e2` is its own.
+    const definition = withinDecision();
+    definition.edges[2] = { ...definition.edges[2]!, id: 'e2' };
+    const [start, done, other, maybe] = records(definition);
+    store().load('L1', definition);
+    rename(['yes', 'yes', 'maybe'], 1);
+    pause();
+    store().setEdgeRoute('e2', [650]);
+    pause();
+    expect(store().renameNode('other', 'elsewhere')).toBeUndefined();
+    pause();
+    rename(['yes', 'affirm', 'maybe'], 1);
+    expect(edges()).toEqual([
+      start,
+      done,
+      { ...on(other, 'affirm'), to: { node: 'elsewhere' }, ui: { route: [650] } },
+      maybe,
+    ]);
+  });
+
+  it('hands no claim on through a reparsed draft without one of the records', () => {
+    const definition = unowned();
+    const [start, , other] = records(definition);
+    store().load('L1', definition);
+    const s = store();
+    const next = structuredClone(definition);
+    next.nodes = next.nodes.filter((node) => node.id !== 'done');
+    next.edges = [next.edges[0]!, next.edges[2]!];
+    expect(s.applyChatAudio(definition, next, s, 'enable')).toBeUndefined();
+    expect(edges()).toEqual([start, other]);
+    expect(listed(0)).toEqual([]);
+    pause();
+    rename(['accepted', 'affirm', 'maybe'], 0);
+    expect(edges()).toEqual([start, other]);
+  });
+
+  it('changes neither a record nor the table for an unrelated edit', () => {
+    const definition = unowned();
+    store().load('L1', definition);
+    const loaded = store().decisionRoutes;
+    store().updateMeta({ description: 'Unrelated content' });
+    untouched(definition);
+    expect(store().decisionRoutes).toBe(loaded);
   });
 });
 
