@@ -18,9 +18,26 @@ import { ownWindowsProcessIdentity, windowsProcessIdentity } from './windows-pro
 const heldPaths = new Set<string>();
 const acquiringPaths = new Set<string>();
 
+/** The data-directory lock's file name. */
+export const DATA_DIR_LOCK_FILE = 'graphgoblin.lock';
+/** Appended to a lock file's name to name its reclamation guard. */
+export const RECLAIM_GUARD_SUFFIX = '.reclaim';
+/** The database lock's file name, beside a database file named `databaseFileName`. */
+export const databaseLockFileName = (databaseFileName: string): string =>
+  `${databaseFileName}.graphgoblin.lock`;
+
+/**
+ * What a release found: this acquisition's own record, which it removed; nothing, because the file
+ * was already gone; or another record, which it kept.
+ */
+export type ReleaseOutcome = 'removed' | 'missing' | 'kept';
+
 export interface DataDirLock {
-  /** Release only this acquisition's file. Safe to call more than once. */
-  release(): Promise<void>;
+  /**
+   * Release only this acquisition's file. Safe to call more than once; every call resolves to the
+   * first call's outcome.
+   */
+  release(): Promise<ReleaseOutcome>;
 }
 
 function hasCode(error: unknown, code: string): boolean {
@@ -169,18 +186,19 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
         await rename(staging, path);
         published = true;
         heldPaths.add(path);
-        let releasing: Promise<void> | undefined;
+        let releasing: Promise<ReleaseOutcome> | undefined;
         return {
           release() {
-            releasing ??= (async () => {
+            releasing ??= (async (): Promise<ReleaseOutcome> => {
               try {
                 const marker = join(path, name);
-                if ((await readFile(marker, 'utf8')) === record) {
-                  await unlink(marker);
-                  await removeEmptyRecovery(path);
-                }
+                if ((await readFile(marker, 'utf8')) !== record) return 'kept';
+                await unlink(marker);
+                await removeEmptyRecovery(path);
+                return 'removed';
               } catch (error) {
                 if (!hasCode(error, 'ENOENT')) throw error;
+                return 'missing';
               } finally {
                 heldPaths.delete(path);
               }
@@ -214,10 +232,10 @@ async function acquireRecovery(path: string, record: string, token: string): Pro
  */
 export async function dataDirLockState(
   dataDir: string,
-  filename = 'graphgoblin.lock',
+  filename = DATA_DIR_LOCK_FILE,
 ): Promise<{ state: 'free' } | { state: 'held'; path: string; detail: string }> {
   const path = resolve(canonicalPath(dataDir), filename);
-  const recovery = `${path}.reclaim`;
+  const recovery = `${path}${RECLAIM_GUARD_SUFFIX}`;
   if (heldPaths.has(recovery) || acquiringPaths.has(path))
     return {
       ...live(),
@@ -252,15 +270,18 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
   } finally {
     await file.close();
   }
-  let releasing: Promise<void> | undefined;
+  let releasing: Promise<ReleaseOutcome> | undefined;
   return {
     release() {
-      releasing ??= (async () => {
+      releasing ??= (async (): Promise<ReleaseOutcome> => {
         try {
           // The record includes a random ownership token: never remove a replacement lock.
-          if ((await readFile(path, 'utf8')) === record) await unlink(path);
+          if ((await readFile(path, 'utf8')) !== record) return 'kept';
+          await unlink(path);
+          return 'removed';
         } catch (error) {
           if (!hasCode(error, 'ENOENT')) throw error;
+          return 'missing';
         } finally {
           heldPaths.delete(path);
         }
@@ -278,7 +299,7 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
  */
 export async function acquireDataDirLock(
   dataDir: string,
-  filename = 'graphgoblin.lock',
+  filename = DATA_DIR_LOCK_FILE,
 ): Promise<DataDirLock> {
   const path = resolve(canonicalPath(dataDir), filename);
   // Reserve pending acquisitions too, before any asynchronous filesystem operation.
@@ -294,7 +315,7 @@ export async function acquireDataDirLock(
       token,
     });
     // Take the guard even if the main file is missing after a crash during reclamation.
-    const recovery = await acquireRecovery(`${path}.reclaim`, record, token);
+    const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
     try {
       return await acquireFile(path, record);
     } finally {
@@ -316,10 +337,10 @@ export async function acquireDatabaseLock(databaseFile: string): Promise<DataDir
     throw new Error(
       `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
     );
-  return acquireDataDirLock(dirname(file), `${basename(file)}.graphgoblin.lock`);
+  return acquireDataDirLock(dirname(file), databaseLockFileName(basename(file)));
 }
 
 export function databaseLockState(databaseFile: string): ReturnType<typeof dataDirLockState> {
   const file = canonicalPath(databaseFile);
-  return dataDirLockState(dirname(file), `${basename(file)}.graphgoblin.lock`);
+  return dataDirLockState(dirname(file), databaseLockFileName(basename(file)));
 }

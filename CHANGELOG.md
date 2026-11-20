@@ -4,6 +4,25 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- `--reset` manifests and output account for both writer locks and their `.reclaim` guards
+  (#434). The dry run and the confirmed manifest list `<database-file>.graphgoblin.lock` and
+  `graphgoblin.lock` as the reset's own locks, removed on release, where the confirmed manifest
+  previously listed its own database lock under Keeps as unrelated data. A stale lock file or
+  `.reclaim` guard is listed as reclaimed when the reset takes that lock, instead of being kept
+  (the database lock and its guard) or omitted (the data-directory guard); the stale lock of
+  another database, an abandoned guard staging directory and a hard link of a lock stay under
+  Keeps and are never removed. Completion and failure output names each lock and what releasing
+  it did (removed, already gone, or kept because another process's record replaced it) instead
+  of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
+  lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
+  its locks names any stale lock file or guard they reclaimed instead of saying nothing
+  changed. A lock path that is not a regular file, or a guard path that is not a directory, is
+  refused before anything changes.
+  **Upgrade:** no stored data, schema or format change, and no reset. Rebuild the API. Scripts
+  that parse reset output must expect the new lock rows and release lines in place of
+  `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
+  `Released graphgoblin.lock.`
+
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently

@@ -31,7 +31,7 @@ A reset removes, inside the data directory only:
 - `artifacts/`;
 - private chat audio under `chat-audio/`, even when database metadata is unreadable;
 - the database file and its SQLite sidecars (`-wal`, `-shm`, `-journal`);
-- the lock file, last, when the reset releases it.
+- its own database lock (`<database-file>.graphgoblin.lock`, beside the database) and, last, its data-directory lock (`graphgoblin.lock`), when it releases them. A stale lock file or `.reclaim` guard left by a stopped process is reclaimed when the reset takes that lock, and the manifest lists it.
 
 It keeps `master.key` (the secret-store key: a backup of the database stays readable with it, and the next store reuses it), every other entry, and anything under `workspaces/` that is not a stored run ID. Only physical store-owned directories are removed; a top-level `artifacts/` or `chat-audio/` link or non-directory is kept with an explicit reason and its target is never followed. Links inside a selected removal tree are removed as links themselves. Immediately before removal the reset checks the planned identities of the physical root, every ancestor and the entry. These checks protect referenced repositories, working directories and harness installations, subject to Node's remaining race: it offers no handle-relative removal, so an external process can still change the tree between a check and removal. The lock prevents concurrent GraphGoblin changes. Browser device drafts live in each browser; see [Old device drafts](#old-device-drafts-in-a-browser).
 
@@ -62,7 +62,8 @@ Removes:
   graphgoblin.db                         database                 1 file, 4.0 KB
   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 285.7 KB
   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
-  graphgoblin.lock                       the reset's own lock     removed last, on release
+  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release
+  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release
 
 Keeps:
   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
@@ -75,7 +76,7 @@ Nothing was removed. To reset, stop every GraphGoblin process using this data di
   node apps/api/dist/main.js --reset --yes --data-dir "C:\Users\you\.graphgoblin"
 ```
 
-Each section lists at most 20 rows and summarises the rest; the totals always cover everything. A dry run refuses while another process holds the data-directory lock.
+Each section lists at most 20 rows and summarises the rest; the totals always cover every store item, and the lock rows are not counted. A lock file or `.reclaim` guard found before the reset takes its locks was left by a stopped process: the database lock or data-directory lock row then says `stale; replaced by the reset's own`, and a guard is listed as a `stale lock guard` that is `reclaimed when the reset takes` that lock. These are never listed under Keeps; a look-alike such as another database's lock file or an abandoned `.reclaim.<UUID>.tmp` staging directory is kept. A dry run refuses while another process holds, or may hold, either lock or its guard.
 
 ## Reset
 
@@ -85,11 +86,11 @@ Run the command the dry run printed:
 node apps/api/dist/main.js --reset --yes --data-dir "C:\Users\you\.graphgoblin"
 ```
 
-`--yes` alone is refused: the confirmation must name the data directory, and it must be the one this environment configures (`GG_DATA_DIR`, or `~/.graphgoblin` when it is unset), so a different shell cannot reset another store by accident. The reset takes the data-directory lock (it refuses while GraphGoblin is running), lists the same manifest again, removes exactly those items, prints each one, and ends with `Reset complete.` It refuses, changing no data-directory byte, when the database is outside the data directory, is not a local file (for example `:memory:`), is reached through a link, is not a regular file, or lies inside `artifacts/`, `chat-audio/` or `workspaces/`.
+`--yes` alone is refused: the confirmation must name the data directory, and it must be the one this environment configures (`GG_DATA_DIR`, or `~/.graphgoblin` when it is unset), so a different shell cannot reset another store by accident. The reset takes the data-directory and database locks (it refuses while GraphGoblin is running), lists the same manifest again, removes exactly those items, prints each one and what releasing each lock did (`removed graphgoblin.db.graphgoblin.lock (database lock)`, then `removed graphgoblin.lock (data-directory lock)`), and ends with `Reset complete.` A lock file whose record another program replaced during the reset is kept and named, never removed. It also refuses when a lock path is not a regular file or a guard path is not a directory. It refuses, changing no data-directory byte, when the database is outside the data directory, is not a local file (for example `:memory:`), is reached through a link, is not a regular file, or lies inside `artifacts/`, `chat-audio/` or `workspaces/`.
 
-Before removing anything, it compares the locked plan with its own read-only preview. If the preview could read the store but the locked read fails, it refuses with the read failure and asks you to run the reset again, even if no run workspace was matched. It also refuses if the locked plan would keep a run workspace path selected by the preview, or a parent of that path, including when two successful reads return different run IDs. The acquired lock is released; no database, sidecar, artifact, chat audio, workspace or other data-directory byte is changed. This preserves the database needed to identify those workspaces on a rerun. If both reads are unreadable, a damaged-store reset still removes physical artifacts/chat-audio directories and database files while keeping unmatched workspaces. If only the preview is unreadable, the reset can proceed using the run IDs from the successful locked read.
+Before removing anything, it compares the locked plan with its own read-only preview. If the preview could read the store but the locked read fails, it refuses with the read failure and asks you to run the reset again, even if no run workspace was matched. It also refuses if the locked plan would keep a run workspace path selected by the preview, or a parent of that path, including when two successful reads return different run IDs. Both locks are released; no database, sidecar, artifact, chat audio, workspace or other store byte is changed. If taking the locks reclaimed a stale lock file or guard, the refusal says `No store data was removed. Lock files and guards:` and lists each reclaimed entry and what releasing each lock did; otherwise it says nothing in the data directory was changed. This preserves the database needed to identify those workspaces on a rerun. If both reads are unreadable, a damaged-store reset still removes physical artifacts/chat-audio directories and database files while keeping unmatched workspaces. If only the preview is unreadable, the reset can proceed using the run IDs from the successful locked read.
 
-If something goes wrong part of the way (for example another program holds a file open), the reset stops, releases its lock and reports exactly what it removed, what it removed partly (with counts) and what it did not remove. Do not start GraphGoblin on that directory until the reset finishes: fix the cause and run the same command again; it lists and removes what is left.
+If something goes wrong part of the way (for example another program holds a file open), the reset stops, releases its locks and reports exactly what it removed, what it removed partly (with counts), what it did not remove and what releasing each lock did. Do not start GraphGoblin on that directory until the reset finishes: fix the cause and run the same command again; it lists and removes what is left.
 
 Exit codes: 0 done (or nothing to reset), 1 refused or stopped, 2 a mistyped command line (nothing is read or changed).
 

@@ -177,14 +177,17 @@ describe('reset dry run', () => {
       '',
       'Removes:',
     ]);
-    // Removal order: run workspaces, artifacts, the database and its sidecars, the lock last.
-    expect(lines.slice(6, 12).map((line) => line.trim().split(/ {2,}/)[0])).toEqual([
+    // Removal order: run workspaces, artifacts, the database and its sidecars, then the database
+    // lock and, last, the data-directory lock as the reset releases them.
+    expect(lines.slice(6, 14).map((line) => line.trim().split(/ {2,}/)[0])).toEqual([
       `workspaces/${RUN_A}`,
       `workspaces/${RUN_B}`,
       'artifacts',
       'graphgoblin.db',
       'graphgoblin.db-wal',
+      'graphgoblin.db.graphgoblin.lock',
       'graphgoblin.lock',
+      '',
     ]);
     expect(result.out).toMatch(
       row(`workspaces/${RUN_A}`, 'run workspace', '1 file, 2 directories, 1 link, 26 B'),
@@ -198,7 +201,14 @@ describe('reset dry run', () => {
     expect(result.out).toMatch(/\n {2}graphgoblin\.db +database +1 file, [\d.]+ KB\n/);
     expect(result.out).toMatch(/\n {2}graphgoblin\.db-wal +SQLite write-ahead log +1 file, /);
     expect(result.out).toMatch(
-      row('graphgoblin.lock', "the reset's own lock", 'removed last, on release'),
+      row(
+        'graphgoblin.db.graphgoblin.lock',
+        'database lock',
+        "the reset's own; removed on release",
+      ),
+    );
+    expect(result.out).toMatch(
+      row('graphgoblin.lock', 'data-directory lock', "the reset's own; removed last, on release"),
     );
     expect(result.out).toMatch(
       new RegExp(
@@ -309,6 +319,20 @@ describe('confirmed reset', () => {
     expect(result.out).toContain(
       `Database:       ${join(dataDir, 'graphgoblin.db')} (format 3; this build requires format 4)`,
     );
+    // The locked plan holds both locks: they are the reset's own, never kept as unrelated data.
+    expect(result.out).toContain(
+      [
+        "  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release",
+        "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
+        '',
+        'Keeps:',
+        '  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable',
+        '  notes.txt                              not part of the store',
+        '  workspaces/my-notes                    not a stored run ID',
+        '  Browser device drafts stay in each browser; discard them from the loop editor.',
+        '',
+      ].join('\n'),
+    );
     const removing = result.out.slice(result.out.indexOf('Removing:\n'));
     expect(removing).toMatch(
       new RegExp(
@@ -319,7 +343,8 @@ describe('confirmed reset', () => {
           ' {2}removed artifacts \\(1 file, 2 directories, 1 link, 13 B\\)',
           ' {2}removed graphgoblin\\.db \\(1 file, [\\d.]+ KB\\)',
           ' {2}removed graphgoblin\\.db-wal \\(1 file, [\\d.]+ (KB|B)\\)',
-          ' {2}removed graphgoblin\\.lock',
+          ' {2}removed graphgoblin\\.db\\.graphgoblin\\.lock \\(database lock\\)',
+          ' {2}removed graphgoblin\\.lock \\(data-directory lock\\)',
           `Reset complete\\. The next start creates a new, empty format-4 store in ${escape(dataDir)}\\.`,
           '$',
         ].join('\\n'),
@@ -402,7 +427,8 @@ describe('confirmed reset', () => {
           ` {2}Removed: {8}workspaces/${RUN_A}, workspaces/${RUN_B}`,
           ' {2}Partly removed: artifacts \\(2 of 4 entries\\)',
           ' {2}Not removed: {4}graphgoblin\\.db, graphgoblin\\.db-wal',
-          ' {2}Released graphgoblin\\.lock\\.',
+          ' {2}removed graphgoblin\\.db\\.graphgoblin\\.lock \\(database lock\\)',
+          ' {2}removed graphgoblin\\.lock \\(data-directory lock\\)',
           'Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left\\.',
           '$',
         ].join('\\n'),
@@ -1083,13 +1109,22 @@ describe('refused resets change nothing', () => {
 });
 
 describe('data directory layouts', () => {
-  it('lists an empty data directory as nothing but the lock', async () => {
+  it('lists an empty data directory as nothing but the locks', async () => {
     const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-wp-b3-rid-empty-')));
     bases.push(base);
     const result = await reset(['--reset'], { GG_DATA_DIR: base });
     expect(result.code).toBe(0);
     expect(result.out).toContain(
-      "  nothing but the lock file\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  nothing else is in the data directory\n",
+      [
+        'Removes:',
+        '  no store data',
+        "  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release",
+        "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
+        '',
+        'Keeps:',
+        '  nothing else is in the data directory',
+        '',
+      ].join('\n'),
     );
     expect(result.out).toContain('Total removed: 0 files, 0 B in 0 items.');
     expect(await snapshotTree(base)).toEqual([]);
@@ -1150,6 +1185,7 @@ describe('data directory layouts', () => {
             },
           ],
           kept: [],
+          ownership: [],
         },
         () => undefined,
       ),
