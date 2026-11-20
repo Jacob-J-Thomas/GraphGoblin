@@ -18,6 +18,7 @@ import * as canonical from '../canonical-path.js';
 import * as ownership from '../data-dir-lock.js';
 import { CASE_INSENSITIVE_NAMES, planReset, runResetCli } from './reset.js';
 import type { StoreFacts } from './store-facts.js';
+import * as tree from './tree.js';
 import { identityOf } from './tree.js';
 import { snapshotTree, type TreeRecord } from './__fixtures__/stores.js';
 
@@ -537,6 +538,66 @@ describe('reset manifests classify both locks and both reclamation guards', () =
       expect(await snapshotTree(base)).toEqual(before);
     },
   );
+
+  it('lists the lock as its own when the stale lock is removed after its identity was read', async () => {
+    const base = await realpath(await mkdtemp(join(tmpdir(), 'gg-i3-reset-ownership-')));
+    bases.push(base);
+    const dataDir = join(base, 'data');
+    const lock = join(dataDir, 'graphgoblin.lock');
+    await writeTree(dataDir, {
+      'graphgoblin.db': 'database bytes',
+      'graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
+      'notes.txt': 'owner notes',
+    });
+    const before = await snapshotTree(dataDir);
+    // After the store read, another process removes the stale lock once the reset has read its
+    // identity and before the reset lists the directory.
+    let stored = false;
+    let observed: string | undefined;
+    const identity = tree.identityOf;
+    vi.spyOn(tree, 'identityOf').mockImplementation(async (path) => {
+      const found = await identity(path);
+      if (stored && observed === undefined && path === lock) {
+        observed = found;
+        unlinkSync(lock);
+      }
+      return found;
+    });
+    const readStore = () => {
+      stored = true;
+      return Promise.resolve<StoreFacts>({ ...oldStore, runIds: [] });
+    };
+    const result = await reset(dataDir, ['--reset'], { readStore });
+    expect(observed).toBeDefined();
+    expect(result).toEqual({
+      code: 0,
+      err: '',
+      out:
+        [
+          'GraphGoblin reset (dry run: nothing is removed)',
+          '',
+          `Data directory: ${dataDir}`,
+          `Database:       ${join(dataDir, 'graphgoblin.db')} (format 3; this build requires format 4)`,
+          '',
+          'Removes:',
+          '  graphgoblin.db                         database                 1 file, 14 B',
+          "  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release",
+          "  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release",
+          '',
+          'Keeps:',
+          '  notes.txt                              not part of the store',
+          '  Browser device drafts stay in each browser; discard them from the loop editor.',
+          '',
+          'Total removed: 1 file, 14 B in 1 item.',
+          '',
+          '',
+        ].join('\n') + dryRunTail(dataDir),
+    });
+    // Only the other process's removal changed the directory.
+    expect(await snapshotTree(dataDir)).toEqual(
+      before.filter((record) => record.path !== 'graphgoblin.lock'),
+    );
+  });
 });
 
 describe('a confirmed reset claims only the stale entries its own acquisition reclaimed', () => {
