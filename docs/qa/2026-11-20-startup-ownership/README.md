@@ -18,10 +18,10 @@ node drivers/qa-409-baseline.mjs --checkout <built-checkout> --label <label> --o
 
 Run it from a private scratch copy: it creates disposable data next to itself. The driver only contacts listeners whose health check identifies its own child. Its recorded output remains private; this packet retains sanitized per-assertion observations and original SHA-256 bindings. Windows shell startup is covered; managed-launcher and POSIX behavior are not. Reset overlap is timing controlled and checked as a precondition.
 
-The separately retained [candidate driver](drivers/qa-409-candidate.mjs) and [reconstruction helper](drivers/make-baseline.mjs) preserve the exact post-terminal bytes. The raw candidate JSON names its driver without embedding a hash; this packet records the retained driver's hash without asserting a stronger provenance. Candidate usage:
+The separately retained [candidate driver](drivers/qa-409-candidate.mjs) and [reconstruction helper](drivers/make-baseline.mjs) preserve the exact post-terminal bytes. The raw candidate JSON names its driver without embedding a hash; this packet records the retained driver's hash without asserting a stronger provenance. From this evidence directory, replace the angle-bracket values with local paths. The driver starts the built API in disposable stores under the scratch directory and writes its results to the output file.
 
 ```text
-node drivers/qa-409-candidate.mjs --checkout <built-checkout> --label <label> --out <private-results.json>
+node drivers/qa-409-candidate.mjs --api-main "<built-checkout>/apps/api/dist/main.js" --work "<private-scratch-directory>" --label replay --out "<private-results.json>"
 ```
 
 Candidate limits include no managed-launcher run, key-command holder, reclamation-guard holder, identity-permission failure, WMI timeout or database-hardlink scenario. Holder release uses owned shutdown or reset completion. Its reset overlap uses 3,000 disposable files and a liveness precondition; two earlier smoke calibrations are excluded.
