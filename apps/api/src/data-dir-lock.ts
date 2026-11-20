@@ -72,6 +72,8 @@ async function lockFileState(path: string, token?: string): Promise<OwnerState> 
     }
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
+    // Only recovery markers have immutable names. A main owner record can be replaced in place.
+    if (token !== undefined && (await removedConcurrently(path, error))) return { state: 'absent' };
     throw error;
   }
   if (
@@ -173,7 +175,7 @@ async function recoveryState(path: string): Promise<OwnerState & { marker?: stri
       return unknown('reclamation guard is not a physical directory with one valid owner marker');
     const marker = join(path, entry.name);
     const state = await lockFileState(marker, match[1]);
-    return state.state === 'held' ? state : { state: 'stale', marker };
+    return state.state === 'stale' ? { state: 'stale', marker } : state;
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
     if (hasCode(error, 'ENOTDIR'))

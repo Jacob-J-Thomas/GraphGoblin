@@ -8,7 +8,12 @@ import * as identity from './windows-process-identity.js';
 
 vi.mock('node:fs/promises', async (original) => {
   const actual = await original<typeof fs>();
-  return { ...actual, unlink: vi.fn(actual.unlink), rmdir: vi.fn(actual.rmdir) };
+  return {
+    ...actual,
+    readFile: vi.fn(actual.readFile),
+    unlink: vi.fn(actual.unlink),
+    rmdir: vi.fn(actual.rmdir),
+  };
 });
 const actual = await vi.importActual<typeof fs>('node:fs/promises');
 const platform = process.platform;
@@ -24,6 +29,7 @@ beforeEach(async () => {
 afterEach(async () => {
   Object.defineProperty(process, 'platform', { value: platform });
   vi.restoreAllMocks();
+  vi.mocked(fs.readFile).mockReset();
   vi.mocked(fs.unlink).mockImplementation(actual.unlink);
   vi.mocked(fs.rmdir).mockImplementation(actual.rmdir);
   await fs.rm(directory, { recursive: true, force: true });
@@ -37,6 +43,39 @@ async function seed() {
   await fs.writeFile(marker, JSON.stringify({ pid: process.pid, token }));
   return marker;
 }
+
+it('recognizes a Windows recovery marker that disappeared before its owner could be read', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  const marker = await seed();
+  vi.mocked(fs.readFile).mockImplementationOnce(async (target) => {
+    expect(target).toBe(marker);
+    await actual.unlink(marker);
+    throw denied();
+  });
+  const lock = await acquireDataDirLock(directory);
+  await expect(actual.readFile(path, 'utf8')).resolves.toContain(String(process.pid));
+  expect(vi.mocked(fs.unlink).mock.calls.some(([target]) => target === marker)).toBe(false);
+  await lock.release();
+  expect(await fs.readdir(directory)).toEqual([]);
+});
+
+it('preserves a refused read when the recovery marker still exists', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  const marker = await seed();
+  const original = await actual.readFile(marker);
+  const refusal = denied();
+  vi.mocked(fs.readFile).mockRejectedValueOnce(refusal);
+  await expect(acquireDataDirLock(directory)).rejects.toBe(refusal);
+  expect(await actual.readFile(marker)).toEqual(original);
+});
+
+it('preserves a refused main owner record read even when its path is absent', async () => {
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  const refusal = denied();
+  vi.mocked(fs.readFile).mockRejectedValueOnce(refusal);
+  await expect(dataDirLockState(directory)).rejects.toBe(refusal);
+  expect(await fs.readdir(directory)).toEqual([]);
+});
 
 it('accepts Windows EPERM only after the exact stale UUID marker is independently absent', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' });

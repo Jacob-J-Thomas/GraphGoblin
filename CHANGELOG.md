@@ -4,7 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Concurrent Windows store recovery accepts `EPERM` deletion only after independently verifying
+- Concurrent Windows store recovery handles a refused read of a vanished UUID marker without
+  unlinking it. It accepts `EPERM` deletion only after independently verifying
   that the exact observed stale marker or empty guard directory is absent (#471). It never retries
   deletion or removes a successor marker. Genuine filesystem refusals keep their operation and
   error code. Recovery cleanup failures roll back a newly acquired main lock, explicitly report

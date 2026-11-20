@@ -91,6 +91,10 @@ verified live ownership from unverifiable ownership and retain the probe failure
 prove reuse and need independent inspection if their PID now belongs to another process.
 See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
 
+Reading an enumerated recovery marker on Windows can also report `EPERM`. If an independent
+`lstat` finds that exact UUID path absent, recovery continues without unlinking it. An unreadable
+marker that still exists keeps its original error. Reads of the main owner record keep their errors.
+
 Concurrent Windows deletion can report `EPERM` after another contender has removed the same
 stale UUID marker or empty guard directory. The API accepts that outcome only when a separate
 `lstat` establishes that exact path is absent; it never retries the deletion. A marker or directory
