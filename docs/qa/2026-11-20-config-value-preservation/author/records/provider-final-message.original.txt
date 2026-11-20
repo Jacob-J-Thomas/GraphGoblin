@@ -1,0 +1,35 @@
+The P1 is fixed in the working tree. A Codex override row's JSON Value that contains a member named `__proto__`, at any depth or inside an array, is now kept exactly as typed with a clear refusal instead of being saved without that member. Nothing is committed; the coordinator freezes and publishes. The full web suite passes on the final source and tests: 227 files, 3017 tests, coverage 97.72% statements and 94.4% branches. No browser run was done by me; that is left to independent QA.
+
+**Production candidate for browser QA: `CANDIDATE-03.md`** in `i2-429-raw-value-author-evidence/`. The patch is `candidate-03.patch` (`b5ed15cf…cfee6`) against head `053015f9`, built with web bundle `index-ZDYtIq88.js`. The publication patch is `final.patch` (`52275a4b…89f0`); its code and tests are identical to candidate 03 and only the docs/09 wording differs.
+
+**Cause.** The member wasn't only lost in `stripUnset`: react-hook-form's own value copy also drops it, so a helper-only fix would not have worked.
+
+**Fix (the "refuse" option).** The Value is checked at the existing JSON validation step, before anything is written to the form, using the record's own schema for that one entry (no Codex-specific code):
+- If the form would keep the value unchanged, it is accepted as before. That keeps the existing behavior for `"bad key"`, ordinary objects and arrays, and other JSON fields.
+- If the form would lose part of it and the schema refuses it, the text stays as typed. The editor is marked invalid with a message such as `rows.0.__proto__: Codex config overrides require …` and a Discard button.
+- While it's refused, nothing is saved or sent and the draft is unchanged. One blocking issue shows and Publish refuses.
+- Renaming the member saves the whole value, which survives reload.
+- Under an invalid Key such as `team docs`, the Value shows the Key's message, which becomes the member's message as soon as the Key is fixed.
+
+Changed files: `apps/web/src/forms/fields/json.tsx` and `structure.tsx`, plus the docs/09 records description and the #429 CHANGELOG entry.
+
+**Regressions.** 8 new tests:
+- 3 in the node editor with real autosave, using the auditor's two exact inputs plus a deeper object. They also cover clearing an optional field while a Value is refused.
+- 4 at the form level, including the refused-Key case.
+- 1 that checks declared variables' JSON Schemas are still accepted as before.
+
+All 8 fail on the original source, recorded in `07-old-source-red-final-tests.txt`.
+
+**Failures along the way (preserved).** Both came from the same cause: a delayed update re-reported or cleared stale "held input" entries.
+- **Candidate 01:** renaming a Key left a stray held entry at an intermediate path. Caught by the focused suite before any QA use.
+- **Candidate 02:** invalid JSON typed in a declared variable's Value was dropped from the editor store, failing `EditorPage.rename.test.tsx`. I marked it superseded as soon as the full run caught it; if QA had already picked it up, it should be discarded.
+
+**Other checks:** repo-wide format check, typecheck (21/21), lint (13/13), generated-docs check and the production build all pass. The remaining `pnpm check` gates were not run; no dependency, contract, API or route changed.
+
+**Outside this fix, for separate tracking** (details in `REPORT.md`):
+- Other JSON fields whose schema accepts a `__proto__` member still lose it silently, as before. docs/09 now states this.
+- A stored definition that already contains such a member would lose it when the form loads. Stored invalid overrides are covered by #513's manual recovery steps; I didn't exercise this.
+- One defensive branch, which keeps the last message if a later re-check finds nothing wrong, is never reached by any current schema.
+- #521 (nested inline feedback) is unchanged.
+
+The full report, with every test file, result and hash, is `REPORT.md` (`5ccf2209…982d`) in the same folder.

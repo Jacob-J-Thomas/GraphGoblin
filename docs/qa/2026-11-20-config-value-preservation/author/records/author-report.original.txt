@@ -1,0 +1,109 @@
+# #429 / PR #513 P1: raw override Value refusal, author report
+
+Author: Claude Code, Opus 5.5 (xhigh), frontend implementer. I made no commit, push, index or ref change, external message, or provider/owner-data access. The coordinator freezes and publishes.
+
+- **Source:** PR #513 head `053015f93f7d106435bed7ffa052e1938e3d1d85`, tree `1c8e6276cacbabcf83ce54600f3cfc605fc2e89f`. The index is unchanged and HEAD is unchanged.
+- **Target:** main `b9ad7a03898d8dd4b46552a5750de79ce81a91f1`.
+- **Checkout:** `G:/GraphGoblin-AIDLC/2026-11-19-five/gg-i2-config-value-fix/GraphGoblin`. Its working tree holds the change.
+- **Runtime:** Node 22.23.4 (project-scoped) with pnpm 12.8.1.
+- **Trigger:** the final audit `pr513-final-053015f93f/report.md` (P1) and `editor-value-observations.json`.
+
+## Finding and cause (reproduced in source)
+
+In a structured Codex override row, the JSON **Value** editor (`RecordValue` → `JsonControl` → `JsonText`) took a parsed value straight into the form. `JSON.parse` creates a member named `__proto__` as an own member. The form keeps values by assignment, so that member is lost in two places:
+
+- react-hook-form's `_setValue` → `cloneObject` assigns `copy[key] = ...` (checked in installed `react-hook-form@7.89.0`).
+- `stripUnset` assigns `out[key] = ...` on every watch report.
+
+The form therefore reported a narrowed value that the contract accepted. That value was autosaved, and the editor rewrote the visible text to it. Only a rule outside the value, at the record level, refuses `__proto__`: the `CodexConfigOverridesSchema` intersection's raw-key check. A fix only in `stripUnset` would not be enough, because react-hook-form's own copy drops the member too. Preserving the member through RHF storage, the store and every copy would not be a bounded change.
+
+## Correction (the architecture decision's refusal option)
+
+The still-raw Value is refused at the existing JSON validation boundary, before anything can discard it. That boundary is `JsonText`'s `validateValue`, which already runs before any write. The check uses the record's existing public contract (the form's own record schema) and is scoped to the one entry.
+
+- **`apps/web/src/forms/fields/structure.tsx`:** new `entryValueRefusal`, passed by `RecordField` → `RecordValue` → `JsonControl`.
+  - If the form's copy (`stripUnset`) equals the parsed value (`sameJson`), the value is taken exactly as before.
+  - Otherwise the record's schema checks `{ [key]: value }` for that entry alone, so other entries cannot mask it. If the schema refuses, the text is held with its messages:
+    - A member inside the value: `<path from the value>: <message>`, for example `rows.0.__proto__: Codex config overrides require …`.
+    - A record-level key check that stops at a refused key (the Codex check): `Key "<key>": <message>`. This becomes the member's message once the key is corrected.
+  - Under a key that the record's key schema refuses (Zod `invalid_key`, value unchecked), the value schema decides.
+  - A value the schema accepts is taken as before.
+  - There is no Codex-specific code, no allowance for the reserved member, and no rewriting of submitted text.
+- **`apps/web/src/forms/fields/json.tsx`:**
+  - `JsonControl` passes `validateValue` through to `JsonText`.
+  - A live (non-explicit) editor's derived re-check falls back to its own held message, not the section editor's "Apply JSON" prompt.
+  - Its report effect only refreshes the message of the entry that still holds this render's text; it never creates or clears one. Typing, Discard, row removal and key rename already update held input synchronously. Explicit section editors are unchanged.
+- The behavior of `stripUnset`, UNSET-marker removal, RHF storage, row identity (`rowIds`), the Key rules (including the `__proto__` Key refusal) and "Edit as JSON" section validation is unchanged.
+
+### Resulting behavior
+
+- The refused Value stays exactly as typed. It is `aria-invalid`, described by the message, and offers "Discard the unparsed text".
+- The form reports nothing for that entry. The committed entry, neighbours, draft, revision, save state and server draft are unchanged, and no draft PUT is sent.
+- The editor shows one blocking `FIELD_INPUT_INVALID` issue, and Publish refuses ("Some fields hold input that is not a valid value yet; complete or discard it first.").
+- Renaming the member takes the whole value as typed, autosaves it and reloads it whole.
+- Multi-level objects and objects inside arrays follow the same path.
+
+## Tests added (maintained, at normal entry points)
+
+**`apps/web/src/forms/codex-override-value.test.tsx`** (new). This uses the node editor dialog, editor store and real `useAutosave` against the recording fake API. It covers three cases: the final audit's two exact inputs and a member two objects down. Each case checks:
+
+- The text is held, with the message.
+- `fieldErrors` holds the blocking entry, and the Settings tab shows `1 error`.
+- After twice the autosave delay there is no PUT, and the revision and save state are unchanged.
+- The store and server keep the committed overrides.
+- The UNSET control: clearing Web search ("Not set") while held saves without `webSearch` and without the marker, with the committed overrides.
+- The corrected value is saved whole, with `saved` state.
+- Reopening from the server draft shows the whole value.
+
+**`apps/web/src/forms/json-sections.test.tsx`** (SchemaForm entry point, `#429` describe):
+
+- Three shapes (in the value, two objects down, inside an array): held as typed, exact held report, nothing reported, Keys and neighbour clean, neighbour still editable, correction taken whole, and remount shows it.
+- A refused Key (`team docs`) with such a value gives the `Key "team docs": …` hold. Correcting the Key refreshes it to `__proto__: …` without a keystroke, and the correction is then taken.
+
+**`apps/web/src/forms/structure.test.tsx`** (generic control with `VariableDeclarationsSchema`):
+
+- A JSON Schema with a `__proto__` member that the schema accepts is taken as before, which keeps unrelated admitted JSON intact.
+- A value the schema refuses is held with the schema's message and nothing is reported.
+- Under an `invalid_key` key, the value schema alone decides, with no `Key` message.
+
+Existing controls still pass: ordinary JSON values, nested `bad key` committed with a blocking issue, Key refusals, the `__proto__` Key hold, section paste refusals, a cleared optional child (UNSET), and renaming or removing rows with held text.
+
+## Verification (exact-source attribution)
+
+Behavior source in the final state is `json.tsx` `796a5ac3…3743` and `structure.tsx` `d95e5d74…a2f7`. Tests in the final state are `json-sections.test.tsx` `0281399f…fbfb`, `codex-override-value.test.tsx` `8910ff40…8e4b` and `structure.test.tsx` `7a59d86c…1c6c`. Full hashes are in `final.sha256`.
+
+| # | Check | Source under test | Result | Evidence |
+| --- | --- | --- | --- | --- |
+| 1 | New regressions on the original source (first test bytes) | HEAD `json.tsx` `18cd2644…128f`, `structure.tsx` `c4148e80…1de1` | 5 failed (the editor rewrote the text to the narrowed value) | `01-old-source-red.txt` |
+| 2 | Same, final test bytes | HEAD source files restored from git objects (working-tree swap, then restored and hash-verified) | **8 failed**, 3 pre-existing `__proto__` tests passed; the structure test failed at the held assertion after its control passed | `07-old-source-red-final-tests.txt` |
+| 3 | New regressions, candidate 01 | candidate 01 | 7 passed | session output |
+| 4 | Focused forms/node-editor suites, candidate 01 | candidate 01 | **FAILED** 1/490: `structure.test.tsx` "renames an unparsed variable…" left a stray held entry at `variables.r` | `02-focused-suite-candidate-01-FAILED.txt` (same bytes as `02-focused-suite.txt`) |
+| 5 | Full web coverage, candidate 02 | candidate 02 | **FAILED** 1/3015: `EditorPage.rename.test.tsx` "remounts only the settings form, keeping unfinished variables text" (held Variables JSON not kept in the store). It was reproduced in isolation. | `03-web-coverage-candidate-02.txt` |
+| 6 | Full web suite with coverage, candidate 03 | final source and test bytes | **227 files / 3017 tests passed**, exit 0. Statements 97.72%, branches 94.4%, functions 97.23%, lines 98.63% (threshold 90%) | `06-web-coverage-candidate-03.txt` |
+| 7 | Changed-file coverage | as #6 | `json.tsx` 100% lines / 97.04% branches; `structure.tsx` 98.26% / 95.71%. Every new `entryValueRefusal` line and branch was taken. | `06b-changed-file-coverage.txt` |
+| 8 | `pnpm format:check` (whole repo) | final bytes, including the final docs/09 (`37bc48c0…901e`) | exit 0 | `12-format-check-final-bytes.txt` (an earlier docs wording also passed: `08-format-check-final.txt`) |
+| 9 | `pnpm typecheck` | final source | exit 0, 21/21 tasks | `09-typecheck-final.txt` |
+| 10 | `pnpm lint` | final source | exit 0, 13/13 (web lint executed, not cached) | `10-lint-final.txt` |
+| 11 | `pnpm check:docs` | final | "Generated docs are up to date" | `11-check-docs.txt` |
+| 12 | `pnpm build` | candidate 03 (= final source) | exit 0, 12/12, web build a cache miss; bundle `index-ZDYtIq88.js` | `candidate-03-build.txt`, `candidate-03-web-dist.sha256` |
+
+Diagnosis of the candidate 01 and 02 failures: a passive effect from a render that lagged behind a synchronous event reported held input from stale state. In candidate 01 that was the old key path; in candidate 02 it was an old "no error" state, which cleared the entry the keystroke had just reported. A temporary `console.log` trace confirmed this; it was removed and the file hash verified. Both failures are preserved. Candidate 01 was superseded before any QA use. Candidate 02 was marked superseded in `CANDIDATE-02.md` once the failure was found.
+
+Not run: a browser/Playwright journey (left to independent browser QA on `CANDIDATE-03.md`), the API/tooling suites, and the remaining `pnpm check` gates (layers, deps, migrations, tokens, templates, licences, contrast). No dependency, layer, contract, API or route changed.
+
+## Documentation
+
+- **`docs/09-frontend-and-pwa.md`** (Schema-driven forms, records): describes the entry Value check and hold, its message forms, its single-entry scope, the masked-key and `invalid_key` cases, and the unchanged taking of other values. It also states the remaining limitation below.
+- **`CHANGELOG.md`** (`Unreleased` #429 entry): one sentence on the held override Value.
+- `docs/06` already states that the editor rejects invalid keys with their path rather than discarding them, which is now true for row Values. No QA packet, contract, API or backend file was touched.
+
+## Residual observations (outside this slice)
+
+1. **Admitted JSON elsewhere still loses `__proto__`.** A JSON field whose schema accepts a member named `__proto__` still loses it silently in the form. This is pre-existing and generic to RHF/`stripUnset` copying. Examples are a declared variable's JSON Schema and `unknown` JSON fields. The API's JSON body parser refuses such members anyway (the final audit observed 400 `MALFORMED_BODY`). The brief kept unrelated admitted JSON fields intact, so this is documented in docs/09 and suggested for separate tracking. It is not changed here.
+2. **Mount-time loss of a stored member.** A form mounted on a stored definition that already contains such a member would also drop it through RHF's `defaultValues` copy. Stored invalid overrides are handled by #513's manual store recovery and publication check. This was not changed or exercised.
+3. **One untaken defensive branch in `json.tsx`.** If no error is found on a later re-check, a live held editor keeps its last message until the next keystroke. No current contract reaches this: Codex refuses the member after a key fix, and Variables decide by the value schema either way. It is untaken in coverage.
+4. **Separately tracked UX is unchanged.** The nested inline feedback for already-detected issues (#521) and the "Discard the unparsed text" wording for a parsed but refused value (it matches existing section refusals) are not changed here.
+
+## Production candidate
+
+The current candidate is `CANDIDATE-03.md`, with `candidate-03.patch` (`b5ed15cf…cfee6`). The final publication patch is `final.patch` (`52275a4b…89f0`). Its source and tests are identical to candidate 03; it differs only in the final docs/09 wording, which does not affect the build. Candidates 01 and 02 are superseded and their notes and failures are retained.

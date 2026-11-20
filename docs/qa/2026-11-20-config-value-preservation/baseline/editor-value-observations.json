@@ -1,0 +1,247 @@
+{
+  "head": "053015f93f7d106435bed7ffa052e1938e3d1d85",
+  "target": "b9ad7a03898d8dd4b46552a5750de79ce81a91f1",
+  "tree": "1c8e6276cacbabcf83ce54600f3cfc605fc2e89f",
+  "setup": "Node 22.23.4, production web assets, Playwright CLI 0.1.25, new headless Chromium session, real ephemeral HTTP over the built API test component with fake providers, timers off and an in-memory disposable database. No publication or run. The fixture used local access without a required key.",
+  "field": "Inference work, Settings, Advanced, Config overrides, Value 1 for example. A second valid row named neighbor held the string unchanged.",
+  "initialValue": "{\"previous\":true}",
+  "firstTrial": {
+    "observations": {
+      "initial": {
+        "status": 200,
+        "currentPublished": false,
+        "server": {
+          "example": {
+            "previous": true
+          },
+          "neighbor": "unchanged"
+        },
+        "valueText": "{\n  \"previous\": true\n}",
+        "inlineInvalid": null,
+        "ruleShown": false,
+        "saved": true,
+        "issues": []
+      },
+      "space": {
+        "status": 200,
+        "currentPublished": false,
+        "server": {
+          "example": {
+            "previous": true
+          },
+          "neighbor": "unchanged"
+        },
+        "valueText": "{\"ordinary\":\"one\",\"bad key\":false}",
+        "inlineInvalid": null,
+        "ruleShown": false,
+        "saved": false,
+        "issues": [
+          "1 error",
+          "Fix the schema errors to save to the server. Changes are kept on this device.",
+          "1 error",
+          "1 error",
+          "1 config issue"
+        ]
+      },
+      "corrected": {
+        "status": 200,
+        "currentPublished": false,
+        "server": {
+          "example": {
+            "previous": true
+          },
+          "neighbor": "unchanged"
+        },
+        "valueText": "{\"ordinary\":\"two\",\"valid_key\":false}",
+        "inlineInvalid": null,
+        "ruleShown": false,
+        "saved": false,
+        "issues": [
+          "Unsaved changes"
+        ]
+      },
+      "reserved": {
+        "status": 200,
+        "currentPublished": false,
+        "server": {
+          "example": {
+            "ordinary": "three"
+          },
+          "neighbor": "unchanged"
+        },
+        "valueText": "{\n  \"ordinary\": \"three\"\n}",
+        "inlineInvalid": null,
+        "ruleShown": false,
+        "saved": true,
+        "issues": []
+      },
+      "reopened": {
+        "status": 200,
+        "currentPublished": false,
+        "server": {
+          "example": {
+            "ordinary": "three"
+          },
+          "neighbor": "unchanged"
+        },
+        "valueText": "{\n  \"ordinary\": \"three\"\n}",
+        "inlineInvalid": null,
+        "ruleShown": false,
+        "saved": true,
+        "issues": []
+      }
+    },
+    "autosaves": [
+      {
+        "phase": "reserved-member",
+        "value": {
+          "ordinary": "three"
+        },
+        "neighbor": "unchanged"
+      }
+    ]
+  },
+  "firstTrialNote": "Intermediate corrected control was sampled before the autosave settled. The final reserved-member readback and reload were observed. A separate confirmation below polls actual server GET and the saved UI for every valid marker.",
+  "confirmationInputs": {
+    "baseline": "{\"marker\":\"valid-before\",\"survivor\":true}",
+    "spaceControl": "{\"marker\":\"refused-control\",\"bad key\":false}",
+    "correctedBefore": "{\"marker\":\"corrected-before\",\"survivor\":true}",
+    "nestedReservedBoolean": "{\"marker\":\"reserved-changed\",\"__proto__\":false,\"survivor\":true}",
+    "insideAnArray": "{\"marker\":\"array-changed\",\"rows\":[{\"__proto__\":false,\"enabled\":true}]}"
+  },
+  "confirmation": {
+    "apiControl": {
+      "status": 400,
+      "code": "MALFORMED_BODY",
+      "unchanged": true
+    },
+    "snapshots": [
+      {
+        "phase": "baseline",
+        "server": {
+          "example": {
+            "marker": "valid-before",
+            "survivor": true
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\"marker\":\"valid-before\",\"survivor\":true}",
+        "hasBlockingMessage": false,
+        "saved": true
+      },
+      {
+        "phase": "ordinary-space-control",
+        "server": {
+          "example": {
+            "marker": "valid-before",
+            "survivor": true
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\"marker\":\"refused-control\",\"bad key\":false}",
+        "hasBlockingMessage": true,
+        "saved": false
+      },
+      {
+        "phase": "control-correction",
+        "server": {
+          "example": {
+            "marker": "corrected-before",
+            "survivor": true
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\"marker\":\"corrected-before\",\"survivor\":true}",
+        "hasBlockingMessage": false,
+        "saved": true
+      },
+      {
+        "phase": "nested-reserved-boolean",
+        "server": {
+          "example": {
+            "marker": "reserved-changed",
+            "survivor": true
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\n  \"marker\": \"reserved-changed\",\n  \"survivor\": true\n}",
+        "hasBlockingMessage": false,
+        "saved": true
+      },
+      {
+        "phase": "array-reserved-boolean",
+        "server": {
+          "example": {
+            "marker": "array-changed",
+            "rows": [
+              {
+                "enabled": true
+              }
+            ]
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\n  \"marker\": \"array-changed\",\n  \"rows\": [\n    {\n      \"enabled\": true\n    }\n  ]\n}",
+        "hasBlockingMessage": false,
+        "saved": true
+      },
+      {
+        "phase": "reloaded",
+        "server": {
+          "example": {
+            "marker": "array-changed",
+            "rows": [
+              {
+                "enabled": true
+              }
+            ]
+          },
+          "neighbor": "unchanged"
+        },
+        "editorText": "{\n  \"marker\": \"array-changed\",\n  \"rows\": [\n    {\n      \"enabled\": true\n    }\n  ]\n}",
+        "hasBlockingMessage": false,
+        "saved": true
+      }
+    ],
+    "writes": [
+      {
+        "phase": "baseline",
+        "example": {
+          "marker": "valid-before",
+          "survivor": true
+        },
+        "neighbor": "unchanged"
+      },
+      {
+        "phase": "control-correction",
+        "example": {
+          "marker": "corrected-before",
+          "survivor": true
+        },
+        "neighbor": "unchanged"
+      },
+      {
+        "phase": "nested-reserved-boolean",
+        "example": {
+          "marker": "reserved-changed",
+          "survivor": true
+        },
+        "neighbor": "unchanged"
+      },
+      {
+        "phase": "array-reserved-boolean",
+        "example": {
+          "marker": "array-changed",
+          "rows": [
+            {
+              "enabled": true
+            }
+          ]
+        },
+        "neighbor": "unchanged"
+      }
+    ],
+    "published": null
+  },
+  "teardown": "The dedicated browser session and synthetic server closed. Fresh connection to the test port was refused."
+}
