@@ -28,7 +28,7 @@ import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
 import { JsonApplyReviewContext, JsonCandidateContext } from '../forms/fields/json.js';
-import { removedAnswerConnections } from './decision-route-edges.js';
+import { removedAnswerConnections, rowConnections } from './decision-route-edges.js';
 import {
   FormEditReviewContext,
   ReorderablePathsContext,
@@ -441,8 +441,13 @@ export function NodeEditorDialog({
       request.type === 'remove' &&
       ['routes', 'answer.options', 'answer.bands'].includes(request.path)
     ) {
-      const owned =
-        useEditorStore.getState().decisionRoutes[node.id]?.rows[request.index!]?.edgeIds ?? [];
+      // The records the removal takes (#481): the row's own, never another edge with the same id.
+      const owned = rowConnections(
+        definition,
+        useEditorStore.getState().decisionRoutes,
+        node.id,
+        request.index!,
+      );
       const rows =
         request.path === 'routes'
           ? record(node.config)['routes']
@@ -452,7 +457,7 @@ export function NodeEditorDialog({
       const removedRepeat = Array.isArray(rows) && record(rows[request.index!])['repeat'] === true;
       const edges = definition.edges.filter(
         (edge) =>
-          owned.includes(edge.id) ||
+          owned.includes(edge) ||
           (removedRepeat && edge.from.node === node.id && edge.from.port === 'limit-reached'),
       );
       if (edges.length || removedRepeat) {

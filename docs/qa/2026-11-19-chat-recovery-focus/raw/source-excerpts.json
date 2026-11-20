@@ -1,0 +1,30 @@
+[
+  {
+    "path": "apps/web/src/chat/ChatSurface.tsx",
+    "fullSourceSha256": "3ff0a857e7f59e1be759c91936ab177311427a73fdb3e556f5d84d00f6f9565d",
+    "firstLine": 529,
+    "lastLine": 535,
+    "text": "    if (recording.error && recording.errorRecovery !== 'retry' && !audioError && !uploadState.error)\n      return;\n    if (audioError || recording.error || uploadState.error) {\n      const element = audioProblemRef.current;\n      (element?.querySelector<HTMLElement>('button') ?? element)?.focus();\n    }\n  }, [audioError, recording.error, recording.errorRecovery, uploadState.error]);"
+  },
+  {
+    "path": "apps/web/src/chat/ChatSurface.tsx",
+    "fullSourceSha256": "3ff0a857e7f59e1be759c91936ab177311427a73fdb3e556f5d84d00f6f9565d",
+    "firstLine": 879,
+    "lastLine": 887,
+    "text": "            onKeyDown={(event) => {\n              if (event.key === 'Escape' && captureBusy) {\n                event.preventDefault();\n                void recorder\n                  .stop()\n                  .then(() => textareaRef.current?.focus())\n                  .catch(() => undefined);\n              }\n              if ("
+  },
+  {
+    "path": "apps/web/src/chat/ChatSurface.test.tsx",
+    "fullSourceSha256": "19dfe0bdb966de21d50775013caa6d0535fc9fc8f78682d42f342572c58ef871",
+    "firstLine": 632,
+    "lastLine": 653,
+    "text": "  it('pauses capture on Escape and backgrounding, and surfaces finalization failures without upload', async () => {\n    const client = mockChatClient();\n    client.session.mockResolvedValue(audioReady);\n    await load(client);\n    await userEvent.setup().click(screen.getByRole('button', { name: 'Record voice message' }));\n    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Escape' });\n    expect(await screen.findByRole('list', { name: 'Voice recordings' })).toBeVisible();\n    await userEvent.setup().click(screen.getByRole('button', { name: 'Add more voice' }));\n    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);\n    fireEvent(document, new Event('visibilitychange'));\n    await waitFor(() =>\n      expect(screen.getByRole('list', { name: 'Voice recordings' }).children).toHaveLength(2),\n    );\n    const recorder = media.drafts.get(`${key}/new`)!;\n    recorder.freeze.mockRejectedValueOnce(\n      new Error('Final words could not be saved. Record again.'),\n    );\n    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));\n    expect(await screen.findByRole('alert')).toHaveTextContent('Final words could not be saved.');\n    expect(screen.getByRole('button', { name: 'Try again' })).toHaveFocus();\n    expect(client.upload).not.toHaveBeenCalled();\n  });"
+  },
+  {
+    "path": "apps/web/src/__fixtures__/setup.ts",
+    "fullSourceSha256": "0b1fded1a8c9950434337ac6bd017e90274e94f4484f9c590bb0ef07371bceac",
+    "firstLine": 1,
+    "lastLine": 11,
+    "text": "import '@testing-library/jest-dom/vitest';\nimport 'fake-indexeddb/auto';\nimport { cleanup, configure } from '@testing-library/react';\nimport { afterEach } from 'vitest';\nimport { useApiKeyStore } from '../api/api-key.js';\nimport { dialogClose } from './dialog.js';\n\n// Whole-app renders under a busy parallel run can take longer than the 1 s default.\nconfigure({ asyncUtilTimeout: 5000 });\n\n// jsdom lacks the layout APIs that @xyflow/react and CodeMirror call; give them inert versions."
+  }
+]

@@ -1,0 +1,2166 @@
+{
+  "status": "complete",
+  "case": "description-control",
+  "checks": [
+    {
+      "label": "exact intended definition and ordered physical records",
+      "passed": true
+    },
+    {
+      "label": "Undo restores exact full definition",
+      "passed": true
+    },
+    {
+      "label": "Redo restores exact full definition and ownership",
+      "passed": true
+    },
+    {
+      "label": "offline reload preserves exact definition and present ownership",
+      "passed": true
+    },
+    {
+      "label": "API saved exact intended definition",
+      "passed": true
+    },
+    {
+      "label": "server reload preserves exact intended definition",
+      "passed": true
+    }
+  ],
+  "observations": [
+    {
+      "phase": "server-original",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Independent transient route-identity ownership QA",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T03:25:58.383Z"
+      },
+      "device": null,
+      "deviceOwnDecisionRoutes": false,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "changed",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 0,
+        "error": "TypeError: Failed to fetch"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "undo",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 0,
+        "error": "TypeError: Failed to fetch"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Independent transient route-identity ownership QA",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "redo",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 0,
+        "error": "TypeError: Failed to fetch"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "offline-device-reloaded",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 0,
+        "error": "TypeError: Failed to fetch"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "saved",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T03:33:39.437Z"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "server-reloaded",
+      "loopId": "01M7VFTKQFF6327A58X73Q27A1",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T03:33:39.437Z"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Topology description-control",
+          "description": "Unrelated topology QA description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 310,
+                "y": 100
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "affirm",
+                    "label": "No"
+                  },
+                  {
+                    "id": "maybe",
+                    "label": "Maybe"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 810,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 810,
+                "y": 360
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "s1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  200,
+                  650
+                ]
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  670
+                ]
+              }
+            },
+            {
+              "id": "m1",
+              "from": {
+                "node": "pick",
+                "port": "maybe"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  550,
+                  440,
+                  700
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 3,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [],
+                "id": "affirm"
+              },
+              {
+                "key": 2,
+                "edgeIds": [
+                  "m1"
+                ],
+                "id": "maybe"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "s1",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "m1",
+          "label": "pick Maybe (maybe) to done, manual route"
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/loops/<disposable-loop-id>/edit",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-BYLDPfuy.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-DH560BJA.css",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/GeistMono-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/Geist-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/shutdown",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/storage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/favicon.svg",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/model-catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/model-defaults",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/classifier-models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/harness/preflight",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>/validate",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/loops/<disposable-loop-id>/edit",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-BYLDPfuy.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-DH560BJA.css",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/GeistMono-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/Geist-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/favicon.svg",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/model-catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/model-defaults",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/classifier-models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/harness/preflight",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>/validate",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/loops/<disposable-loop-id>/edit",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-BYLDPfuy.js",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/assets/index-DH560BJA.css",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/GeistMono-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/fonts/Geist-Variable.woff2",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/shutdown",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/app/favicon.svg",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/storage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/model-catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/system/model-defaults",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/classifier-models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/harness/preflight",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "origin": "http://127.0.0.1:51057",
+      "path": "/loops/<disposable-loop-id>/validate",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "origin": "http://127.0.0.1:51057",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "cases": [
+    {
+      "case": "target-original-file",
+      "result": "pass",
+      "meaning": "57/57 complete unchanged ChatSurface file, normal scheduler",
+      "rawLog": {
+        "artifact": "target-original-file.log",
+        "sha256": "a25fc8bfbc84fc54165a3e148518db48237740f8690a34de81414c0a469178fb"
+      }
+    },
+    {
+      "case": "candidate-original-file",
+      "result": "pass",
+      "meaning": "57/57 complete unchanged ChatSurface file, normal scheduler",
+      "rawLog": {
+        "artifact": "candidate-original-file.log",
+        "sha256": "05e7b152ae20e470e45674effa3e2a1bd300df58e727fbf589dd1e945955bfd4"
+      }
+    },
+    {
+      "case": "candidate-observed-original",
+      "result": "pass",
+      "meaning": "First selected observation run passed, but console trace was not retained; does not establish chronology",
+      "rawLog": {
+        "artifact": "candidate-observed-original.log",
+        "sha256": "6a264fde14b2c433ead86948bc5085f22b227b1ee5241f1887686c1c944186e1"
+      }
+    },
+    {
+      "case": "candidate-observed-file",
+      "result": "mixed",
+      "meaning": "Focus case passed; unrelated R2 status query failed during instrumented complete-file run",
+      "rawLog": {
+        "artifact": "candidate-observed-file.log",
+        "sha256": "10939c11a9b43da7dbe5c1ad6976bb26c44f6933d701f2de5038a13418754b93"
+      }
+    },
+    {
+      "case": "candidate-no-drain",
+      "result": "expected-failure",
+      "meaning": "Original immediate assertion fails, then effect and native focus succeed; exploratory wrapper has two differences",
+      "rawLog": {
+        "artifact": "candidate-no-drain.log",
+        "sha256": "2610574e28e2252ec5247cfbd9dde8ad4ac6b78f96ce0612a1c02737763667f1"
+      }
+    },
+    {
+      "case": "candidate-no-drain-wait",
+      "result": "pass",
+      "meaning": "Proposed same-element wait passes under exploratory wrapper",
+      "rawLog": {
+        "artifact": "candidate-no-drain-wait.log",
+        "sha256": "7934ae1e2a64b98074e3779a064c509a2fdbe9585d655d7dae41382b369ab455"
+      }
+    },
+    {
+      "case": "candidate-no-drain-preserved",
+      "result": "expected-failure",
+      "meaning": "Original immediate assertion fails before passive error effect; corrected one-variable wrapper discriminator",
+      "rawLog": {
+        "artifact": "candidate-no-drain-preserved.log",
+        "sha256": "33cff74cd5a8cee4d84a2a9ead6c2d94b9479cdd1d54bd984d1177bdff2a72f6"
+      }
+    },
+    {
+      "case": "candidate-no-drain-preserved-wait",
+      "result": "pass",
+      "meaning": "Proposed same-element wait passes under corrected wrapper discriminator",
+      "rawLog": {
+        "artifact": "candidate-no-drain-preserved-wait.log",
+        "sha256": "19ad84107a85e10f9716833c9751ccd29ce5d7e9f777f3377332036c93e0b9aa"
+      }
+    },
+    {
+      "case": "candidate-wait",
+      "result": "pass",
+      "meaning": "Proposed SAME-element native focus wait passes with default wrapper and original deadlines",
+      "rawLog": {
+        "artifact": "candidate-wait.log",
+        "sha256": "d0b8ff48026041d4a37268f95a437fa0358842d43a50778cc27640ce8210b89c"
+      }
+    },
+    {
+      "case": "candidate-no-focus",
+      "result": "expected-failure",
+      "meaning": "Suppressing only functional error-focus transfer makes proposed wait fail at the unchanged default deadline",
+      "rawLog": {
+        "artifact": "candidate-no-focus.log",
+        "sha256": "c35c7e48e02aad1798b0d30ad54030a9e5d815f3e3efa5fb44f6e4a02ffbc352"
+      }
+    }
+  ],
+  "normalScheduler": {
+    "pool": "threads",
+    "isolate": true,
+    "maxWorkers": 2,
+    "environment": "jsdom",
+    "testTimeout": 20000,
+    "hookTimeout": 20000,
+    "asyncUtilTimeout": 5000
+  },
+  "negativeControlElapsedMs": 5007.9807,
+  "normalFileCommand": "pnpm.cmd --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx",
+  "targetedCommand": "pnpm.cmd --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx -t 'pauses capture on Escape'"
+}

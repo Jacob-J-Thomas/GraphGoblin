@@ -1,0 +1,164 @@
+{
+  "base": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "firstAuthorSource": "6dc09c91706cb7f4cfbb28dcbcda3e554a855634",
+  "correctedSource": "00d96d08160ddb63c5fad97dda8892f5f93bc2b3",
+  "limits": [
+    "The full local coverage runs exercise the pre-guidance source. The second run does not replace the first result.",
+    "Intermediate correction suites preceded the six-case corrected source. Existing edge-route outcomes retain their first timeout.",
+    "Raw local logs are retained outside the repository. This file records selected exact result tokens and the SHA-256 of each full log."
+  ],
+  "runs": [
+    {
+      "phase": "baseline",
+      "check": "Maintained store witness on the original implementation",
+      "log": "01-baseline-store-regression.log",
+      "logSha256": "305b75b5ba658ceee782a774734bc729d0130cdc7ccdbe6716dc7e14b3a6dae1",
+      "observed": [
+        "22 failed",
+        "5 passed"
+      ]
+    },
+    {
+      "phase": "baseline",
+      "check": "Maintained UI witness on the original implementation",
+      "log": "03-baseline-ui-regression.log",
+      "logSha256": "ae5fbf8d839d6173d1d886f321f1d305eba55219697fc527999bd91a6aa1c710",
+      "observed": [
+        "4 failed"
+      ]
+    },
+    {
+      "phase": "baseline",
+      "check": "Real browser and API witness",
+      "log": "08a-baseline-e2e.log",
+      "logSha256": "9daea5a55db7fbf4984fa611ff07e7ceb8a80fed5e7ae01b6d50c04efa760e56",
+      "observed": [
+        "3 failed"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "Ten affected unit files",
+      "log": "02-candidate-affected-tests.log",
+      "logSha256": "5c85c7f478200b98d5d0319a651c587b7c7d92007e6cad4ecd1b768e7684ce16",
+      "observed": [
+        "246 passed"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "Editor, form and draft tests before the wording correction",
+      "log": "04-web-editor-forms-drafts.log",
+      "logSha256": "6d82a9465bf03b6f58cd554d5650a1b27afbe79931041d82d53282f0ded26df9",
+      "observed": [
+        "1612 passed"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "New editor scenarios with existing Decision and edge routes",
+      "log": "08-candidate-e2e.log",
+      "logSha256": "9aba38114a7a264eeaa4f766617f18b7c4491c4a3602b5a5bc95f8ef1e2cddf2",
+      "observed": [
+        "27 passed"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "First full local Windows web coverage",
+      "log": "10-web-full-coverage-run1-7-workers-unstarted.log",
+      "logSha256": "391510e8290292c897409304201e9caea28ae4490ddc8f02f645410c8394dbac",
+      "observed": [
+        "219 passed",
+        "2709 passed",
+        "7 errors",
+        "88.57%",
+        "93.26%",
+        "exit=1"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "Seven files that lacked a worker in the first run, run in isolation",
+      "log": "10b-unstarted-files-rerun.log",
+      "logSha256": "bf800cf536753cf29560b9d54f2f06ec2e0b5dec8ab90b1d9d9723ae0931298a",
+      "observed": [
+        "7 passed",
+        "240 passed",
+        "exit=0"
+      ]
+    },
+    {
+      "phase": "first author",
+      "check": "Second full local Windows web coverage",
+      "log": "10-web-full-coverage.log",
+      "logSha256": "389f84446ee86a17d892f0c1383082bf9e5410364e35b19bf45f2d54f20d365e",
+      "observed": [
+        "226 passed",
+        "2949 passed",
+        "94.31%",
+        "98.61%",
+        "exit=0"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "Initial correction suite, including a failed control actionability expectation and an Undo timeout",
+      "log": "e2e-run-01.log",
+      "logSha256": "5d4a27ddd55d668e08c4679a958061b96be553c7ac1adcf5543e4fc6e7e155e8",
+      "observed": [
+        "2 failed",
+        "3 passed",
+        "toBeEnabled",
+        "waiting for getByRole('button', { name: 'Undo'"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "Corrected shared-ID checks before adding the public API repair case",
+      "log": "e2e-run-02.log",
+      "logSha256": "a4480a4985049dba40bf90494bc270170701fb39ff4a5831af45f58972d19d43",
+      "observed": [
+        "5 passed"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "Shared IDs including pointer guidance, narrow layout, Decision and ordinary API repair",
+      "log": "e2e-run-03.log",
+      "logSha256": "d17e899c0c1dbcd8068fa09a3d0d6758b0682b01257528c5e25875fc19b918e2",
+      "observed": [
+        "6 passed"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "First existing edge-route suite, double-click case timed out at Fit view setup",
+      "log": "e2e-edge-routes-run-01.log",
+      "logSha256": "a8483b149671c33e6cd3becace3773400c0c68b5d62e092697a712dd4dbe5962",
+      "observed": [
+        "1 failed",
+        "10 passed",
+        "waiting for getByRole('button', { name: 'Fit view' })"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "Double-click case in isolation",
+      "log": "e2e-edge-routes-run-02-doubleclick-only.log",
+      "logSha256": "3e2b66d52b847430143f8b33fb861b855611808eac752cdc6a90d363aceb9f2d",
+      "observed": [
+        "1 passed"
+      ]
+    },
+    {
+      "phase": "corrective author",
+      "check": "Second full existing edge-route suite",
+      "log": "e2e-edge-routes-run-03.log",
+      "logSha256": "f6eaec65754847ff17024ad0d17e2f9767c96892b0431c910092b483441ec647",
+      "observed": [
+        "11 passed"
+      ]
+    }
+  ]
+}

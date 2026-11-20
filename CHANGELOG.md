@@ -130,6 +130,30 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   exercise publication and restart with inert fixtures, fake harnesses and timers disabled; it
   does not establish owner-store acceptance.
 
+- The editor keeps every stored edge record when a draft gives two edges one id
+  (`DUPLICATE_EDGE_ID`, #481). Decision route bookkeeping changes or removes only the record a
+  route row names alone among that Decision's own connections, so an unrelated edit no longer
+  rewrites another edge's output port, and removing a route or replacing its JSON no longer removes
+  another node's edge with the same id. A row keeps naming its own record while its ID is typed
+  blank, invalid or the same as another row's, so renaming or removing it then never changes the
+  other row's record. A record two rows name, as in a device copy an earlier editor left after
+  such a collision, belongs to neither: renaming or removing either row keeps it and its manual
+  route, as a load without the device copy's table does, and a row retyped to the port such a
+  record is on takes it up, so removing that row repairs the shared id. Deleting a card one of
+  two connections with an id reaches no longer moves the other connection onto the route that
+  owned the deleted one: it stays on its own output with its manual route, no route claims it,
+  and Undo and Redo give back exactly that; removing a route or applying a whole new draft that
+  leaves one connection with the id does the same. Reset route, segment
+  drags and nudges, and a moved card's route reset refuse a shared id as Remove connection does,
+  changing nothing. Selecting such a
+  connection shows a note with the reason and the repair at once; Reset route and Remove connection
+  stay focusable but unavailable, described by the note, and clicking them changes nothing. The
+  repair leads with removing a Decision route (its review lists just that connection), adding it
+  back and drawing it again, repeated while the id is shared, and otherwise, or without a pointer,
+  the API's draft save; it no longer suggests deleting a card, which also removes the card's other
+  connections and their routes. Validation, draft saves and Publish's refusal are unchanged. No
+  stored, export or device-draft format changes; nothing to upgrade.
+
 - The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
   times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
   cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and

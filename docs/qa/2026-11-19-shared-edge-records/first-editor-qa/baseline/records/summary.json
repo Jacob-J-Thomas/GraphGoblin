@@ -1,0 +1,174 @@
+{
+  "baseline": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "publicApi": {
+    "requests": 19,
+    "result": "pass"
+  },
+  "store": {
+    "cases": 21,
+    "passes": 9,
+    "failures": [
+      "duplicate: unrelated description",
+      "duplicate: remove unique c1",
+      "duplicate: reset route e1",
+      "duplicate: set route e1",
+      "duplicate: rename Decision yes ID",
+      "duplicate: remove Decision yes row",
+      "two-rows: unrelated description",
+      "two-rows: remove unique c1",
+      "two-rows: reset route e1",
+      "two-rows: set route e1",
+      "two-rows: rename Decision yes ID",
+      "two-rows: remove Decision yes row"
+    ],
+    "allMutationUndoRedoExact": true
+  },
+  "browser": {
+    "unrelatedEdit": {
+      "preservesEdges": false,
+      "originalEdge": {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      "changedEdge": {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "yes"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      "deviceMatchesSaved": true,
+      "undoExact": true,
+      "redoExact": true,
+      "reloadExact": true
+    },
+    "ambiguousRouteReset": {
+      "preservesEdges": false,
+      "changedHolders": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "no"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "unaffectedRecordsExact": true,
+      "undoExact": true,
+      "redoExact": true
+    },
+    "recovery": {
+      "offlineFetchFailed": true,
+      "deviceUnsynced": true,
+      "offlineReloadDefinitionExact": true,
+      "offlineReloadOwnershipExact": true,
+      "serverUnaffectedWhileBrowserOffline": true,
+      "onlineSavedRecoveredDefinitionExact": true,
+      "onlineDeviceSynced": true
+    },
+    "uniqueJourney": {
+      "result": "pass",
+      "checks": [
+        {
+          "name": "unrelated unique edit preserves all edges",
+          "pass": true
+        },
+        {
+          "name": "edit loop description: exact Undo",
+          "pass": true
+        },
+        {
+          "name": "edit loop description: exact Redo",
+          "pass": true
+        },
+        {
+          "name": "unique Reset changes only selected edge geometry",
+          "pass": true
+        },
+        {
+          "name": "reset route of start to pick: exact Undo",
+          "pass": true
+        },
+        {
+          "name": "reset route of start to pick: exact Redo",
+          "pass": true
+        },
+        {
+          "name": "unique nudge changes only selected edge geometry",
+          "pass": true
+        },
+        {
+          "name": "reroute start to pick: exact Undo",
+          "pass": true
+        },
+        {
+          "name": "reroute start to pick: exact Redo",
+          "pass": true
+        },
+        {
+          "name": "unique drag changes only selected edge geometry",
+          "pass": true
+        },
+        {
+          "name": "reroute start to pick: exact Undo",
+          "pass": true
+        },
+        {
+          "name": "reroute start to pick: exact Redo",
+          "pass": true
+        },
+        {
+          "name": "reload preserves full unique draft and manual geometry",
+          "pass": true
+        }
+      ]
+    }
+  }
+}

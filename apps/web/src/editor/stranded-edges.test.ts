@@ -121,11 +121,15 @@ describe('stored edges the canvas cannot draw (#207)', () => {
     expect(store().definition!.edges).toEqual(blank.edges.filter((e) => e.id !== 'e5'));
     expect(store().definition!.nodes).toBe(blank.nodes);
     expect(store().past.at(-1)!.label).toBe('remove edge pick route-3 to branch');
-    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: [] });
+    // The blank row's ownership stays on the port its records are on, its last valid ID.
+    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: 'route-3', edgeIds: [] });
     store().undo();
     expect(store().definition).toEqual(before.definition);
     expect(store().decisionRoutes).toEqual(before.decisionRoutes);
-    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: ['e5'] });
+    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({
+      id: 'route-3',
+      edgeIds: ['e5'],
+    });
   });
 
   it('removes exactly the expected edge as one undo step; undo restores it with its route', () => {

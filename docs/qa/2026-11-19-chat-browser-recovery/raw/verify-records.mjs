@@ -1,0 +1,16 @@
+import fs from'node:fs/promises';import path from'node:path';import{fileURLToPath}from'node:url';import assert from'node:assert/strict';
+const root=path.dirname(fileURLToPath(import.meta.url)),read=async name=>JSON.parse(await fs.readFile(path.join(root,name),'utf8')),records=await read('observations.json'),identity=await read('identity-and-boundaries.json'),checks=[];const check=(name,value)=>{assert.ok(value,name);checks.push({name,pass:true});};
+const kept=records[0].record,failure=records[1].record,recovered=records[2].record;
+check('exact clean actual-browser candidate',identity.source==='babba15fd5aa0444636607c6acbf3ead7ec98c47'&&identity.tree==='98d3da3d511ee93c579421fde746aea52153088f'&&identity.clean===true);
+check('native public synthetic first capture finalized',kept.captures[0].sampleRate===16000&&kept.captures[0].frames>=16000&&kept.captures[0].stopped===true&&kept.recordings===1);
+check('exactly one native stop request fault and actual finalization timeout alert',failure.observation.blockedStops===1&&failure.observation.captures[1].stopped===false&&failure.alert.includes('The microphone did not confirm the final words.'));
+check('actual supported recovery control is Record again and owns focus',failure.recordAgainCount===1&&failure.actualRecoveryControlOwnsFocus===true&&failure.observation.active.tag==='BUTTON'&&failure.observation.active.text==='Record again');
+check('Try again is absent; that browser-specific criterion stays unverified',failure.tryAgainCount===0&&recovered.tryAgainCount===0);
+check('keyboard activated already focused SAME recovery element',recovered.before.nativeSameElementFocus===true&&recovered.before.text==='Record again');
+check('native recovery capture finalized after Enter and Escape',recovered.observation.captures.length===3&&recovered.observation.captures[2].frames>=16000&&recovered.observation.captures[2].stopped===true);
+check('recovery has two retained recordings, no alert and textarea focus',recovered.observation.recordings===2&&recovered.alertCount===0&&recovered.observation.active.id==='chat-message');
+check('no browser upload or turn POST',kept.posts.length===0&&failure.observation.posts.length===0&&recovered.observation.posts.length===0);
+check('disposable maintained backend observed zero fake-provider starts or conversations',identity.harness.status===200&&identity.harness.body.started.length===0&&identity.conversations.status===200&&identity.conversations.body.items.length===0);
+check('foreground visibility limits explicit',failure.observation.hidden===false&&failure.observation.visibility==='visible'&&failure.observation.documentHasFocus===true&&recovered.observation.hidden===false);
+check('no key/login and no synthetic replacement of clock or product promise',identity.fixture.noKeyOrLoginUsed===true&&identity.fixture.requireApiKey===false&&identity.nativeBoundary.clockReplacement===false&&identity.nativeBoundary.productPromiseReplacement===false);
+console.log(JSON.stringify({result:'pass',checksPassed:checks.length,checksTotal:checks.length,checks,disposition:'Actual Record again focus and keyboard/native capture recovery observed. Try again browser criterion remains unverified because that control is absent on this real recorder failure path.'},null,2));

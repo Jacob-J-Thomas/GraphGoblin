@@ -66,7 +66,7 @@ import {
   type EditorIssue,
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
-import { useEditorStore } from './store.js';
+import { edgeRouteRefusal, useEditorStore, type EditorState } from './store.js';
 import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } from './routing.js';
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
@@ -242,6 +242,23 @@ function mayAct(
 
 /** What a stale action says (#207): politely, in the canvas's live region. */
 const STALE_CONNECTION = 'That connection changed since it was selected; nothing changed.';
+
+/**
+ * Store a manual route of `edgeId` with the store's `setEdgeRoute`, and whether it was stored. The
+ * store refuses an id more than one stored connection holds (#481), changing nothing, and its
+ * connection notice says why; the canvas then announces no change.
+ */
+function routeStored(
+  setEdgeRoute: EditorState['setEdgeRoute'],
+  edgeId: string,
+  route: readonly number[] | undefined,
+  coalesceKey?: string,
+): boolean {
+  const { definition } = useEditorStore.getState();
+  const refused = definition !== undefined && edgeRouteRefusal(definition, edgeId) !== undefined;
+  setEdgeRoute(edgeId, route, coalesceKey);
+  return !refused;
+}
 
 type Size = { width: number; height: number };
 
@@ -799,7 +816,7 @@ export function Canvas({
         announce('This route has as many segments as a route can hold');
         return undefined;
       }
-      setEdgeRoute(edgeId, stored.length ? stored : undefined);
+      if (!routeStored(setEdgeRoute, edgeId, stored.length ? stored : undefined)) return undefined;
       return stored;
     };
     const crossing = (route: readonly number[], from: XYPosition, to: XYPosition) =>
@@ -811,6 +828,14 @@ export function Canvas({
         // The drag belongs to the selection it starts from. A load, or another selection (even of
         // a connection with the same id, selected again), ends it without writing a route.
         const bound = selectionRef.current;
+        // An id more than one connection holds names no single route (#481): no preview, and the
+        // notice says why, as the store would on release.
+        const definition = useEditorStore.getState().definition;
+        const refusal = definition && edgeRouteRefusal(definition, edgeId);
+        if (refusal) {
+          useEditorStore.setState({ connectionError: refusal });
+          return;
+        }
         closeStep();
         const start = screenToFlowPosition({ x: pointer.clientX, y: pointer.clientY });
         let latest: number[] | undefined;
@@ -866,7 +891,7 @@ export function Canvas({
       },
       reset(edgeId) {
         if (!mayAct(selectionRef.current, selectionRef.current, edgeId)) return refuseStale();
-        setEdgeRoute(edgeId, undefined);
+        if (!routeStored(setEdgeRoute, edgeId, undefined)) return;
         announce('Route reset: the connection routes automatically.');
       },
       remove(edgeId) {
@@ -912,12 +937,15 @@ export function Canvas({
     const candidates = newlyCrossed(definition, plan, id, position);
     const reset = candidates.filter((edgeId) => plan.suspended.has(edgeId));
     moveNode(id, position);
-    // Part of the move's step: undoing the move brings the routes back with it.
-    for (const edgeId of reset) setEdgeRoute(edgeId, undefined, `move:${id}`);
+    // Part of the move's step: undoing the move brings the routes back with it. The store refuses
+    // an id more than one connection holds (#481), keeps those routes and its notice says why.
+    const applied = reset.filter((edgeId) =>
+      routeStored(setEdgeRoute, edgeId, undefined, `move:${id}`),
+    ).length;
     const messages: string[] = [];
-    if (reset.length)
+    if (applied)
       messages.push(
-        `${reset.length === 1 ? 'A manual route' : `${reset.length} manual routes`} would cross a card and now route${reset.length === 1 ? 's' : ''} automatically.`,
+        `${applied === 1 ? 'A manual route' : `${applied} manual routes`} would cross a card and now route${applied === 1 ? 's' : ''} automatically.`,
       );
     const kept = candidates.length - reset.length;
     if (kept)

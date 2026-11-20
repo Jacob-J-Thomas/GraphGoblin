@@ -1,0 +1,218 @@
+{
+  "source": "3c2a4dfc80825e53cc68431a0a077d9aacd2aebc",
+  "tree": "9f775acb60f3d18daff8df88289f28b484d73331",
+  "baseline": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "result": "pass",
+  "publicApi": {
+    "requests": 19,
+    "result": "pass"
+  },
+  "store": {
+    "cases": 21,
+    "passes": 21,
+    "failures": []
+  },
+  "checks": [
+    {
+      "name": "all matched store cases pass",
+      "pass": true
+    },
+    {
+      "name": "unrelated browser edit preserves every complete edge",
+      "pass": true
+    },
+    {
+      "name": "saved device exactly matches browser edit",
+      "pass": true
+    },
+    {
+      "name": "browser Description Undo exact",
+      "pass": true
+    },
+    {
+      "name": "browser Description Redo exact",
+      "pass": true
+    },
+    {
+      "name": "browser Description reload exact",
+      "pass": true
+    },
+    {
+      "name": "Reset and removal are disabled with concrete repair guidance",
+      "pass": true
+    },
+    {
+      "name": "actual ambiguous keyboard nudge leaves full draft unchanged",
+      "pass": true
+    },
+    {
+      "name": "initial pointer attempt leaves full draft unchanged",
+      "pass": true
+    },
+    {
+      "name": "fresh pointer hits a real segment and creates a new refusal",
+      "pass": true
+    },
+    {
+      "name": "fresh pointer refusal preserves complete saved draft and device",
+      "pass": true
+    },
+    {
+      "name": "offline edit preserves every original edge",
+      "pass": true
+    },
+    {
+      "name": "offline edit is durable and unsynced",
+      "pass": true
+    },
+    {
+      "name": "offline full reload restores exact definition and ownership",
+      "pass": true
+    },
+    {
+      "name": "server stays original during browser outage",
+      "pass": true
+    },
+    {
+      "name": "online recovery saves exact device definition",
+      "pass": true
+    },
+    {
+      "name": "Decision label edit preserves every edge",
+      "pass": true
+    },
+    {
+      "name": "Decision ID edit changes only its own record",
+      "pass": true
+    },
+    {
+      "name": "Decision ID Undo and Redo exact",
+      "pass": true
+    },
+    {
+      "name": "removal review names only the owned connection",
+      "pass": true
+    },
+    {
+      "name": "Cancel preserves full saved definition and device",
+      "pass": true
+    },
+    {
+      "name": "confirmed removal takes only the owned record",
+      "pass": true
+    },
+    {
+      "name": "removal Undo and Redo exact including device ownership",
+      "pass": true
+    },
+    {
+      "name": "actual redraw gives the repaired connection a new unique ID",
+      "pass": true
+    },
+    {
+      "name": "repair leaves all other original edge records exact",
+      "pass": true
+    },
+    {
+      "name": "normal Publish freezes the exact repaired definition",
+      "pass": true
+    },
+    {
+      "name": "malformed Publish still refuses duplicate IDs without changing draft",
+      "pass": true
+    },
+    {
+      "name": "unchanged unique browser journey passes all thirteen checks",
+      "pass": true
+    }
+  ],
+  "uniqueBrowserChecks": [
+    {
+      "name": "unrelated unique edit preserves all edges",
+      "pass": true
+    },
+    {
+      "name": "edit loop description: exact Undo",
+      "pass": true
+    },
+    {
+      "name": "edit loop description: exact Redo",
+      "pass": true
+    },
+    {
+      "name": "unique Reset changes only selected edge geometry",
+      "pass": true
+    },
+    {
+      "name": "reset route of start to pick: exact Undo",
+      "pass": true
+    },
+    {
+      "name": "reset route of start to pick: exact Redo",
+      "pass": true
+    },
+    {
+      "name": "unique nudge changes only selected edge geometry",
+      "pass": true
+    },
+    {
+      "name": "reroute start to pick: exact Undo",
+      "pass": true
+    },
+    {
+      "name": "reroute start to pick: exact Redo",
+      "pass": true
+    },
+    {
+      "name": "unique drag changes only selected edge geometry",
+      "pass": true
+    },
+    {
+      "name": "reroute start to pick: exact Undo",
+      "pass": true
+    },
+    {
+      "name": "reroute start to pick: exact Redo",
+      "pass": true
+    },
+    {
+      "name": "reload preserves full unique draft and manual geometry",
+      "pass": true
+    }
+  ],
+  "repair": {
+    "review": {
+      "review": "Remove connected route?\n\nThe repeat settings and listed connections will be removed together in one undoable edit.\n\nThese fields or connections will be removed:\n\nConnection accepted → done (e1)\nCancel change\nConfirm change",
+      "entries": [
+        "Connection accepted → done (e1)"
+      ]
+    },
+    "generatedEdge": {
+      "id": "e5",
+      "from": {
+        "node": "pick",
+        "port": "yes"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    }
+  },
+  "pointer": {
+    "target": {
+      "tag": "circle",
+      "handle": "Route segment 2 of 5, vertical",
+      "class": "gg-route-handle-dot"
+    },
+    "hadRefusalBefore": 0,
+    "refusalsAfter": [
+      "Connection refused: More than one connection uses the ID \"e1\"; this action cannot choose just one. To give one a new ID, remove the Decision route it starts from or delete a card at either end, add a new one, and draw the connection again."
+    ]
+  },
+  "limits": [
+    "Frozen provisional source only; final author/integrated source binding and changed guidance wording need a separate affected recheck.",
+    "One post-drag diagnostic lookup timed out after route handles disappeared; its original error is retained. The fresh target/new-refusal observation independently establishes actual pointer refusal.",
+    "Bounded #481 coverage; no full application regression, inference/provider acceptance or owner acceptance."
+  ]
+}

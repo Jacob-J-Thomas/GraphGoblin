@@ -1,0 +1,14 @@
+diff --git a/apps/web/src/chat/ChatSurface.test.tsx b/apps/web/src/chat/ChatSurface.test.tsx
+index 7ebefb19..6149b8b0 100644
+--- a/apps/web/src/chat/ChatSurface.test.tsx
++++ b/apps/web/src/chat/ChatSurface.test.tsx
+@@ -648,7 +648,8 @@ describe('thread recovery and reading intent', () => {
+     );
+     fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+     expect(await screen.findByRole('alert')).toHaveTextContent('Final words could not be saved.');
+-    expect(screen.getByRole('button', { name: 'Try again' })).toHaveFocus();
++    const retry = screen.getByRole('button', { name: 'Try again' });
++    await waitFor(() => expect(retry).toHaveFocus());
+     expect(client.upload).not.toHaveBeenCalled();
+   });
+   it('unavailable owner credentials and offline readiness use audience-specific actionable copy', async () => {

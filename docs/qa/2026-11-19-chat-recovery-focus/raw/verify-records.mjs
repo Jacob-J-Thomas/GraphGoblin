@@ -1,0 +1,32 @@
+import fs from'node:fs/promises';import path from'node:path';import{fileURLToPath}from'node:url';import assert from'node:assert/strict';
+const root=path.dirname(fileURLToPath(import.meta.url)),read=async n=>JSON.parse(await fs.readFile(path.join(root,n),'utf8')),checks=[];
+const check=(name,value)=>{assert.ok(value,name);checks.push({name,pass:true});};
+const source=await read('source-identity.json'),cases=await read('cases.json'),traces=await read('traces.json'),correction=await read('correction-identity.json');
+const trace=name=>traces.find(x=>x.case===name).events,event=(events,kind)=>events.find(x=>x.kind===kind),errorEffect=events=>events.find(x=>x.kind==='error-effect-enter'&&x.value.audioError),retryFocus=events=>events.find(x=>x.kind==='focus-after'&&x.active?.tag==='BUTTON'&&x.active.text==='Try again');
+check('exact target/candidate identities',source.target==='10cdc55a8573e484ceb07a32fba9fe9f513a005f'&&source.candidate==='c07ba2904821964829755d79e152955188295880');
+check('all relevant chat/UI/setup/scheduler/dependency input diffs empty',source.changedRelevant.length===0);
+check('all ten complete source snapshots equal across exact commits',Object.keys(source.snapshots[0].files).length===10&&Object.entries(source.snapshots[0].files).every(([name,value])=>source.snapshots[1].files[name].sha256===value.sha256&&source.snapshots[1].files[name].gitBlob===value.gitBlob));
+check('normal scheduler and original deadlines retained',source.normalScheduler.pool==='threads'&&source.normalScheduler.maxWorkers===2&&source.normalScheduler.isolate===true&&source.normalScheduler.testTimeout===20000&&source.normalScheduler.asyncUtilTimeout===5000);
+for(const name of ['target','candidate'])check(`${name} original complete file57/57`,/Tests\s+57 passed \(57\)/.test(await fs.readFile(path.join(root,name+'-original-file.txt'),'utf8')));
+const original=trace('candidate-no-drain-preserved');
+check('controlled original assertion fails after real alert/retry appearance',event(original,'first-alert-mutation').value.retryPresent&&event(original,'first-alert-mutation').order<event(original,'original-focus-assertion-failed').order&&event(original,'before-original-focus-assertion').active.id==='chat-message');
+check('controlled existing passive effect actually runs after original assertion',event(original,'original-focus-assertion-failed').order<errorEffect(original).order&&errorEffect(original).value.buttonPresent===true);
+check('native retry focus then succeeds without product replacement',errorEffect(original).order<retryFocus(original).order&&event(original,'eventual-focus-observed').active.text==='Try again');
+for(const name of ['candidate-wait','candidate-no-drain-preserved-wait']){
+ const events=trace(name);
+ check(`${name}: SAME native button eventually owns focus`,event(events,'proposed-focus-wait-passed').value.sameElement===true&&retryFocus(events).active.tag==='BUTTON');
+ check(`${name}: no observed post-error textarea focus stealing`,!events.some(x=>x.order>errorEffect(events).order&&x.kind==='focus-before'&&x.value.target?.tag==='TEXTAREA'));
+}
+const negative=trace('candidate-no-focus');
+check('negative control effect runs and only its focus transfer is suppressed',errorEffect(negative).value.buttonPresent===true&&event(negative,'suppressed-only-error-focus-transfer').value.buttonPresent===true);
+check('same-element proposed wait fails without that transfer',event(negative,'proposed-focus-wait-failed').value.sameElement===false&&event(negative,'proposed-focus-wait-failed').active.id==='chat-message'&&!retryFocus(negative));
+check('negative failed at unchanged default five-second wait',cases.negativeControlElapsedMs>=5000&&cases.negativeControlElapsedMs<5500);
+check('hidden spy does not establish actual hidden tab/window semantics',errorEffect(original).hidden===true&&errorEffect(original).visibility==='visible'&&errorEffect(original).documentHasFocus===true);
+check('browser finalization-recovery focus remains explicitly unobserved',source.browserEvidence.finalizationRecoveryFocusObserved===false);
+check('exploratory wrapper qualification retained',traces.filter(x=>['candidate-no-drain','candidate-no-drain-wait'].includes(x.case)).every(x=>x.qualification.includes('also omitted the act-environment toggle')));
+check('test-only correction identity bound to original candidate',correction.commit==='babba15fd5aa0444636607c6acbf3ead7ec98c47'&&correction.parent===source.candidate&&correction.changedFiles.length===1&&correction.changedFiles[0]==='apps/web/src/chat/ChatSurface.test.tsx');
+const patch=await fs.readFile(path.join(root,'minimal-test-delta.patch'),'utf8');
+check('minimal delta preserves native same-element assertion and has no timeout option',patch.includes('+    const retry = screen.getByRole(\'button\', { name: \'Try again\' });')&&patch.includes('+    await waitFor(() => expect(retry).toHaveFocus());')&&!/^\+.*timeout/im.test(patch));
+const broad=await read('broad-workload-qualification.json');
+check('broad incomplete workloads not labeled coverage acceptance',broad.result.includes('Stopped incomplete')&&broad.result.includes('not a coverage gate'));
+console.log(JSON.stringify({result:'pass',checksPassed:checks.length,checksTotal:checks.length,checks,qualification:'Controlled timing race proven; exact hosted scheduler chronology inferred, not directly recorded. Positive/negative same-element focus controls retain default deadlines. No real-browser finalization-recovery focus claim.'},null,2));

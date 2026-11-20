@@ -1,0 +1,167 @@
+
+ RUN  v5.0.3 <checkout>/apps/web
+
+ ❯ src/editor/store.shared-edge-ids.test.ts (64 tests | 5 failed) 142ms
+   ❯ a device copy whose route rows claim one record (#481) (14)
+     × deleting Done after the rename hands Yes’s claim to no other record, through Undo, Redo and reloads 20ms
+     × keeps a claim that named no record naming none when deleting Done leaves one record of its id 3ms
+     × keeps a claim that named no record naming none when removing a route leaves one record of its id 2ms
+   ❯ deleting a card one of two records of an id reaches (#481) (7)
+     × keeps the other record where it is and hands it to no route, with Undo and Redo 2ms
+     × hands no claim on through a reparsed draft without one of the records 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/store.shared-edge-ids.test.ts > a device copy whose route rows claim one record (#481) > deleting Done after the rename hands Yes’s claim to no other record, through Undo, Redo and reloads
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -16,11 +16,11 @@
+      },
+    },
+    {
+      "from": {
+        "node": "pick",
+-       "port": "no",
++       "port": "yes",
+      },
+      "id": "e1",
+      "to": {
+        "node": "other",
+        "port": "in",
+
+ ❯ src/editor/store.shared-edge-ids.test.ts:904:25
+    902|     store().removeNode('done');
+    903|     const after = store().definition!;
+    904|     expect(after.edges).toEqual([start, other]);
+       |                         ^
+    905|     expect(after.edges[1]).toBe(other);
+    906|     expect(rows()).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/editor/store.shared-edge-ids.test.ts > a device copy whose route rows claim one record (#481) > keeps a claim that named no record naming none when deleting Done leaves one record of its id
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -16,11 +16,11 @@
+      },
+    },
+    {
+      "from": {
+        "node": "pick",
+-       "port": "no",
++       "port": "maybe",
+      },
+      "id": "e1",
+      "to": {
+        "node": "other",
+        "port": "in",
+
+ ❯ src/editor/store.shared-edge-ids.test.ts:973:21
+    971|     expect(listed(2)).toEqual([maybe]);
+    972|     store().removeNode('done');
+    973|     expect(edges()).toEqual([start, other]);
+       |                     ^
+    974|     expect(listed(2)).toEqual([]);
+    975|     pause();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/editor/store.shared-edge-ids.test.ts > a device copy whose route rows claim one record (#481) > keeps a claim that named no record naming none when removing a route leaves one record of its id
+AssertionError: expected [ [ 'affirm', [] ], …(1) ] to deeply equal [ [ 'affirm', [] ], …(1) ]
+
+- Expected
++ Received
+
+@@ -4,9 +4,10 @@
+      [],
+    ],
+    [
+      "maybe",
+      [
++       "e1",
+        "m1",
+      ],
+    ],
+  ]
+
+ ❯ src/editor/store.shared-edge-ids.test.ts:994:20
+    992|     const after = store().definition!;
+    993|     expect(after.edges).toEqual([start, other, maybe]);
+    994|     expect(rows()).toEqual([
+       |                    ^
+    995|       ['affirm', []],
+    996|       ['maybe', ['m1']],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/editor/store.shared-edge-ids.test.ts > deleting a card one of two records of an id reaches (#481) > keeps the other record where it is and hands it to no route, with Undo and Redo
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -10,11 +10,11 @@
+      },
+    },
+    {
+      "from": {
+        "node": "pick",
+-       "port": "no",
++       "port": "yes",
+      },
+      "id": "e1",
+      "to": {
+        "node": "other",
+      },
+
+ ❯ src/editor/store.shared-edge-ids.test.ts:1107:25
+    1105|     store().removeNode('done');
+    1106|     const after = store().definition!;
+    1107|     expect(after.edges).toEqual([start, other]);
+       |                         ^
+    1108|     expect(after.edges[1]).toBe(other);
+    1109|     expect(rows()).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/editor/store.shared-edge-ids.test.ts > deleting a card one of two records of an id reaches (#481) > hands no claim on through a reparsed draft without one of the records
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -10,11 +10,11 @@
+      },
+    },
+    {
+      "from": {
+        "node": "pick",
+-       "port": "no",
++       "port": "yes",
+      },
+      "id": "e1",
+      "to": {
+        "node": "other",
+      },
+
+ ❯ src/editor/store.shared-edge-ids.test.ts:1214:21
+    1212|     next.edges = [next.edges[0]!, next.edges[2]!];
+    1213|     expect(s.applyChatAudio(definition, next, s, 'enable')).toBeUndefi…
+    1214|     expect(edges()).toEqual([start, other]);
+       |                     ^
+    1215|     expect(listed(0)).toEqual([]);
+    1216|     pause();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 59 passed (64)
+   Start at  21:26:31
+   Duration  4.67s (environment 56%, transform 14%, setup 14%, import 12%, tests 3%)
