@@ -1,0 +1,171 @@
+--- qa434-driver.source-a7cd8e30.mjs	2026-11-20 07:59:09.238751900 -0600
++++ qa434-driver.mjs	2026-11-20 08:04:41.987177800 -0600
+@@ -2,6 +2,18 @@
+ // through the real built reset CLI, on fresh disposable fixtures. Reusable for another checkout:
+ //   node qa434-driver.mjs --repo <checkout> --evidence <dir> --work <scratch dir> --label <name>
+ // Writes only below --work (fixtures) and --evidence (results). Never writes the checkout.
++//
++// CANDIDATE COPY (#434 candidate fd3b845 QA). Derived from the retained baseline driver
++// baseline-corrected-driver.original.mjs, SHA-256 a7cd8e303e6166a21559aa6e9471048a5a114ae1d13300f19bd4394886816d70.
++// Changes are limited to (L) private expectation labels and (I) interpretation of output in
++// observations; every fixture, precondition proof, snapshot, assertion predicate and refusal control is
++// unchanged. See CHANGES.md beside this file.
++//   L1: the 23 F1 rows the baseline labelled 'fail' (F1A/F1B/D1 x6, R4G x5) are labelled 'pass' for the
++//       candidate, per public acceptance (each physical ownership entry once, under Removes, with its
++//       directory-listed spelling). The baseline label is retained on each row as `baselineLabel`.
++//   I1-I3: F2 observations compute their assessment from the actual output and snapshots instead of
++//       embedding baseline-specific prose/source line numbers, and also capture the candidate's
++//       "already gone" wording.
+ import { execFileSync, spawn } from 'node:child_process';
+ import { createHash, randomUUID } from 'node:crypto';
+ import {
+@@ -290,12 +302,19 @@
+ }
+ 
+ // ---------------------------------------------------------------- assertions
++// L1: assertion ids the baseline driver labelled 'fail' (expected defect on 71bf970). Metadata only.
++const BASELINE_FAIL_LABELS = new Set([
++  ...['F1A-greek-final-upper', 'F1B-greek-reverse', 'D1-greek-distinct-lookalikes'].flatMap((c) =>
++    ['dry.disjoint', 'dry.once.guard.db', 'dry.spelling.guard.db', 'dry.once.lock.db', 'dry.spelling.lock.db', 'confirmed.guard-row-spelling.db'].map((s) => `${c}.${s}`)),
++  ...['dry.disjoint', 'dry.once.guard.db', 'dry.spelling.guard.db', 'dry.once.lock.db', 'dry.spelling.lock.db'].map((s) => `R4G-greek-hardlinked-db.${s}`),
++]);
+ function check(ctx, id, finding, description, predicted, ok, details) {
+   const a = {
+     id: `${ctx.id}.${id}`,
+     finding,
+     description,
+-    predicted, // 'pass' | 'fail' (baseline prediction recorded in PLAN.md)
++    predicted, // 'pass' | 'fail' (candidate expectation from the public acceptance; candidate PLAN.md)
++    baselineLabel: BASELINE_FAIL_LABELS.has(`${ctx.id}.${id}`) ? 'fail' : 'pass',
+     result: ok ? 'pass' : 'fail',
+     classification: ok
+       ? predicted === 'pass' ? 'control-pass' : 'defect-not-reproduced'
+@@ -720,10 +739,27 @@
+     releaseChecks(ctx, 'confirmed', cm, conf.stdout, conf.stderr);
+     afterResetChecks(ctx, 'confirmed', before, after);
+     // F2 (observation): attribution wording versus the isolated pre/post observation.
+-    const claims = cRemoves.filter((r) => /stale lock guard|replacing a stale one/.test(r.rest));
+-    observe(ctx, 'F2.success-attribution', 'F2', 'confirmed manifest attribution claims compared with isolated pre/post observation (no other process ran against this fixture during the transaction; the driver awaits each child)', {
+-      claims: claims.map((r) => ({ line: r.line, entry: r.key, presentBefore: before.some((b) => b.path === r.key), presentAfter: after.some((a) => a.path === r.key) })),
+-      assessment: 'consistent with isolated observation; a peer clearing the entry between preview and acquisition is not observable by ordinary CLI use and was not orchestrated',
++    // I1 (candidate interpretation): every confirmed lock/guard row is classified from its actual wording,
++    // including the candidate's "already gone" wording, and judged against the snapshots; no canned verdict.
++    const claims = cRemoves.filter((r) => /^(stale lock guard|database lock|data-directory lock)\s/.test(r.rest)).map((r) => {
++      const wording = /reclaimed when the reset took/.test(r.rest) ? 'reclaimed-by-this-reset'
++        : /replacing a stale one/.test(r.rest) ? 'replaced-stale-by-this-reset'
++          : /already gone when the reset took/.test(r.rest) ? 'already-gone-not-attributed'
++            : /the reset's own/.test(r.rest) ? 'own-no-stale-claim' : 'other';
++      const presentBefore = before.some((b) => b.path === r.key);
++      const presentAfter = after.some((a) => a.path === r.key);
++      const consistent = wording === 'reclaimed-by-this-reset' || wording === 'replaced-stale-by-this-reset'
++        ? presentBefore && !presentAfter
++        : wording === 'already-gone-not-attributed' || wording === 'own-no-stale-claim' ? !presentBefore : false;
++      return { line: r.line, entry: r.key, wording, presentBefore, presentAfter, consistent };
++    });
++    const inconsistent = claims.filter((c) => !c.consistent);
++    observe(ctx, 'F2.success-attribution', 'F2', 'confirmed manifest lock/guard rows compared with isolated pre/post observation (no other process ran against this fixture during the transaction; the driver awaits each child)', {
++      claims,
++      consistent: inconsistent.length === 0,
++      assessment: inconsistent.length === 0
++        ? `all ${claims.length} confirmed lock/guard rows agree with the isolated snapshots (a reclaimed/replaced claim only for an entry present before and absent after; no already-gone or bare own-lock wording for an entry present before). No peer interval was exercised.`
++        : `INCONSISTENT: ${inconsistent.map((c) => `${c.entry} (${c.wording}; presentBefore ${c.presentBefore}, presentAfter ${c.presentAfter})`).join('; ')}`,
+     });
+   } catch (error) {
+     harness(`${id}: driver exception`, false, { error: String(error?.stack ?? error) });
+@@ -792,15 +828,30 @@
+   const dirOwnership = fx.ownership.filter((o) => o.role === 'data-directory lock').map((o) => o.listed);
+   const expectRemoved = before.map((b) => b.path).filter((p) => dirOwnership.includes(p.split('/')[0]));
+   check(ctx, `${tag}.only-dir-metadata-changed`, 'control', `${tag}: only the data-directory lock's stale entries are gone; database, its hard link, DB lock/guard, store data and unrelated entries are unchanged`, 'pass', JSON.stringify(diff.removed.sort()) === JSON.stringify(expectRemoved.sort()) && diff.added.length === 0 && diff.changed.length === 0, { diff, expectRemoved });
++  // I2 (candidate interpretation): computed from the actual lines and snapshots; no baseline source
++  // line reference and no claim that a line was emitted unless it was.
+   const reclaimed = lines.filter((l) => l.startsWith('  reclaimed stale '));
++  const alreadyGone = lines.filter((l) => /: stale in the preview, already gone when the reset took that lock$/.test(l));
++  const entryOf = (l, re) => {
++    const p = re.exec(l)?.[1];
++    const key = ctx.resolution?.get(p)?.key ?? p;
++    return { line: l, printed: p, entry: key, presentBefore: before.some((b) => b.path === key), presentAfter: after.some((a) => a.path === key) };
++  };
++  const reclaimedEntries = reclaimed.map((l) => entryOf(l, /^ {2}reclaimed stale (\S+) /)).map((e) => ({ ...e, consistent: e.presentBefore && !e.presentAfter }));
++  const alreadyGoneEntries = alreadyGone.map((l) => entryOf(l, /^ {2}(\S+) \(/)).map((e) => ({ ...e, consistent: false, note: 'isolated transaction: no other process ran, so an entry the preview found cannot have been removed by anyone else' }));
++  const dirOwnershipBefore = fx.ownership.filter((o) => o.role === 'data-directory lock' && before.some((b) => b.path === o.listed) && !after.some((a) => a.path === o.listed)).map((o) => o.listed);
++  const unclaimed = dirOwnershipBefore.filter((n) => !reclaimedEntries.some((e) => e.entry === n));
++  const f2ok = reclaimedEntries.every((e) => e.consistent) && alreadyGoneEntries.length === 0 && unclaimed.length === 0;
+   observe(ctx, `${tag}.F2.reclaimed-lines`, 'F2', `${tag}: post-acquisition refusal attribution lines compared with isolated pre/post observation`, {
+     reclaimedLines: reclaimed,
+-    entries: reclaimed.map((l) => {
+-      const p = /^ {2}reclaimed stale (\S+) /.exec(l)?.[1];
+-      const key = ctx.resolution?.get(p)?.key ?? p;
+-      return { line: l, printed: p, entry: key, presentBefore: before.some((b) => b.path === key), presentAfter: after.some((a) => a.path === key) };
+-    }),
+-    assessment: 'output wording "reclaimed stale …" (by source, produced only by reclaimedLines at reset.ts:769) was emitted; no other process ran against this fixture, so the claim is consistent with the isolated observation; a peer reclamation before acquisition was not orchestrated and remains unobserved',
++    alreadyGoneLines: alreadyGone,
++    entries: reclaimedEntries,
++    alreadyGoneEntries,
++    takenLockEntriesRemovedButUnclaimed: unclaimed,
++    consistent: f2ok,
++    assessment: f2ok
++      ? `${reclaimed.length} "reclaimed stale" line(s) emitted, each for an entry present before this transaction and absent after; ${alreadyGone.length} "already gone" line(s). No other process ran against this fixture, so this is consistent with the isolated observation. A peer reclamation before acquisition was not orchestrated and remains unobserved.`
++      : `INCONSISTENT with the isolated observation: reclaimed ${JSON.stringify(reclaimedEntries.filter((e) => !e.consistent).map((e) => e.entry))}, already-gone ${JSON.stringify(alreadyGoneEntries.map((e) => e.entry))}, removed-but-unclaimed ${JSON.stringify(unclaimed)}`,
+   });
+   const spelled = lines.filter((l) => /\((database lock|database lock guard|data-directory lock|data-directory lock guard)\)/.test(l)).map((l) => {
+     const p = /(?:reclaimed stale |removed |^ {2})(\S+) \(/.exec(l)?.[1];
+@@ -840,8 +891,9 @@
+     const rRemoves = resolveRows(fx.data, m.removes ?? [], table);
+     const rKeeps = resolveRows(fx.data, m.keeps ?? [], table);
+     ctx.record.dryManifest = { removes: rRemoves, keeps: rKeeps, database: m.database };
+-    manifestChecks(ctx, 'dry', m, rRemoves, rKeeps, { disjoint: 'fail' });
+-    dryRunOwnershipChecks(ctx, 'dry', rRemoves, rKeeps, { once: { 'database lock': { guard: 'fail', lock: 'fail' } }, spelling: { 'database lock': { guard: 'fail', lock: 'fail' } } });
++    // L1: baseline labels were 'fail' (expected defect on 71bf970); candidate expectation is 'pass'.
++    manifestChecks(ctx, 'dry', m, rRemoves, rKeeps, { disjoint: 'pass' });
++    dryRunOwnershipChecks(ctx, 'dry', rRemoves, rKeeps, { once: { 'database lock': { guard: 'pass', lock: 'pass' } }, spelling: { 'database lock': { guard: 'pass', lock: 'pass' } } });
+     observe(ctx, 'dry.db-hardlink-listing', 'scope', 'how the dry run lists the subdirectory holding the database hard link (outside the two findings; recorded only)', { removesRows: rRemoves.filter((r) => r.key === 'backups' || r.key === 'οσ-1.db').map((r) => r.line), keepsRows: rKeeps.filter((r) => r.key === 'backups').map((r) => r.line) });
+     await hardlinkedDbSteps(ctx, 'R4G', {});
+   } catch (error) {
+@@ -909,8 +961,14 @@
+     ctx.fx = fxAt4;
+     afterResetChecks(ctx, 'tx5', s4, s5);
+     ctx.fx = saved;
++    // I3 (candidate interpretation): the "established" statement is conditional on the actual tx5 rows.
++    const tx5Rows = ctx.record.assertions.filter((a) => a.id === `${id}.tx5.no-claim-for-peer-cleared` || a.id === `${id}.tx5.claims-own-preview`);
++    const tx5Ok = tx5Rows.length === 2 && tx5Rows.every((a) => a.result === 'pass');
+     observe(ctx, 'F2.chain-assessment', 'F2', 'what the chain establishes', {
+-      established: 'each confirmed transaction attributes reclamation only to entries present in its own in-process preview; an earlier dry run listing (tx1) is not later claimed after a separate ordinary transaction (tx2) cleared those entries',
++      tx5Rows: tx5Rows.map((a) => ({ id: a.id, result: a.result })),
++      established: tx5Ok
++        ? 'across separate ordinary sequential transactions, tx5 attributed reclamation only to entries present when it ran; the earlier dry run listing (tx1) was not later claimed after a separate ordinary transaction (tx2) cleared those entries'
++        : 'NOT established: at least one tx5 attribution row failed or was not evaluated',
+       notEstablished: 'whether a peer clearing an entry between the in-process preview and acquisition of a single confirmed transaction is misattributed (the auditor’s source finding); no interleaving was orchestrated',
+     });
+   } catch (error) {
+@@ -939,6 +997,9 @@
+ }
+ 
+ // ---------------------------------------------------------------- main
++// L1: the baseline passed { dryDisjoint: 'fail', once/spelling db guard+lock: 'fail', confirmedGuardSpelling db: 'fail' }
++// for F1A, F1B and D1 (expected defect on 71bf970). The candidate expectation from the public acceptance is 'pass'.
++const CANDIDATE_F1_EXPECT = { dryDisjoint: 'pass', once: { 'database lock': { guard: 'pass', lock: 'pass' } }, spelling: { 'database lock': { guard: 'pass', lock: 'pass' } }, confirmedGuardSpelling: { 'database lock': 'pass' } };
+ const CASES = [
+   ['P1-ascii-exact', () => manifestCase('P1-ascii-exact', 'ASCII exact spellings, all stale entries, hard links to a stale lock and a guard marker', {
+     dbConfigured: 'graphgoblin.db', dbListed: 'graphgoblin.db',
+@@ -964,18 +1025,18 @@
+     dbConfigured: 'οσ-1.db', dbListed: 'οσ-1.db',
+     stale: { dbLock: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK', dbGuard: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK.RECLAIM', dbGuardMarker: false },
+     hardlinks: [{ name: 'lock-hardlink.bak', to: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK' }],
+-  }, { dryDisjoint: 'fail', once: { 'database lock': { guard: 'fail', lock: 'fail' } }, spelling: { 'database lock': { guard: 'fail', lock: 'fail' } }, confirmedGuardSpelling: { 'database lock': 'fail' } })],
++  }, CANDIDATE_F1_EXPECT)],
+   ['F1B-greek-reverse', () => manifestCase('F1B-greek-reverse', 'Reverse: database listed ΟΣ-1.DB (configured οσ-1.db), lowercase listed stale lock and guard', {
+     dbConfigured: 'οσ-1.db', dbListed: 'ΟΣ-1.DB',
+     stale: { dbLock: 'οσ-1.db.graphgoblin.lock', dbGuard: 'οσ-1.db.graphgoblin.lock.reclaim', dbGuardMarker: true },
+     hardlinks: [{ name: 'lock-hardlink.bak', to: 'οσ-1.db.graphgoblin.lock' }, { name: 'guard-marker-hardlink.json', to: 'GUARD_MARKER' }],
+-  }, { dryDisjoint: 'fail', once: { 'database lock': { guard: 'fail', lock: 'fail' } }, spelling: { 'database lock': { guard: 'fail', lock: 'fail' } }, confirmedGuardSpelling: { 'database lock': 'fail' } })],
++  }, CANDIDATE_F1_EXPECT)],
+   ['D1-greek-distinct-lookalikes', () => manifestCase('D1-greek-distinct-lookalikes', 'F1A entries plus genuinely distinct final-sigma look-alikes (JS upper/lowercase fold them together)', {
+     dbConfigured: 'οσ-1.db', dbListed: 'οσ-1.db',
+     stale: { dbLock: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK', dbGuard: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK.RECLAIM', dbGuardMarker: true },
+     distinct: [{ name: 'ος-1.db.graphgoblin.lock', kind: 'file', equivalentTo: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK' }, { name: 'ος-1.db.graphgoblin.lock.reclaim', kind: 'dir', equivalentTo: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK.RECLAIM' }],
+     hardlinks: [{ name: 'lock-hardlink.bak', to: 'ΟΣ-1.DB.GRAPHGOBLIN.LOCK' }],
+-  }, { dryDisjoint: 'fail', once: { 'database lock': { guard: 'fail', lock: 'fail' } }, spelling: { 'database lock': { guard: 'fail', lock: 'fail' } }, confirmedGuardSpelling: { 'database lock': 'fail' } })],
++  }, CANDIDATE_F1_EXPECT)],
+   ['D2-kelvin-distinct', () => manifestCase('D2-kelvin-distinct', 'ASCII-uppercase equivalent lock and guard plus genuinely distinct Kelvin-sign look-alikes', {
+     dbConfigured: 'k.db', dbListed: 'k.db',
+     stale: { dbLock: 'K.DB.GRAPHGOBLIN.LOCK', dbGuard: 'K.DB.GRAPHGOBLIN.LOCK.RECLAIM', dbGuardMarker: true },
