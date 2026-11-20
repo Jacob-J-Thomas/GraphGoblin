@@ -1290,6 +1290,123 @@ describe('Codex config overrides in the structured editor (#429)', () => {
     expect(lastIsValid(spy)).toBe(true);
   });
 
+  // A JSON member named "__proto__" parses as an own member, but the form keeps values by
+  // assignment and cannot hold it: it must not vanish into a narrowed value the form reports.
+  it.each([
+    [
+      'among its other members',
+      '{"marker":"held","__proto__":false,"survivor":true}',
+      '__proto__',
+      { marker: 'held', proto_flag: false, survivor: true },
+    ],
+    [
+      'two objects down',
+      '{"outer":{"inner":{"__proto__":false,"kept":1}}}',
+      'outer.inner.__proto__',
+      { outer: { inner: { proto_flag: false, kept: 1 } } },
+    ],
+    [
+      'in an object inside an array',
+      '{"rows":[{"__proto__":false,"enabled":true}]}',
+      'rows.0.__proto__',
+      { rows: [{ proto_flag: false, enabled: true }] },
+    ],
+  ])(
+    'holds a Value with a member "__proto__" %s as typed, reports nothing, and takes it whole once corrected',
+    (_where, text, path, corrected) => {
+      const spy = vi.fn();
+      const report = vi.fn();
+      const initial = config({ example: { previous: true }, neighbor: 'unchanged' });
+      const view = render(
+        <Harness schema={InferenceConfigSchema} initial={initial} spy={spy} report={report} />,
+      );
+      openAdvanced();
+      const value = screen.getByLabelText('Config overrides value 1');
+      const message = `${path}: ${CODEX_CONFIG_KEY_MESSAGE}`;
+      setCode('Config overrides value 1', text);
+      // Held exactly as typed: invalid, and described by the refused member's path and the rule.
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      expect(value).toHaveAccessibleDescription(expect.stringContaining(message));
+      expect(screen.getByText(message)).toBeVisible();
+      expect(report).toHaveBeenLastCalledWith('harnessOptions.configOverrides.example', {
+        message,
+        text,
+        input: 'unparsed text',
+      });
+      // Nothing is reported for it: the entry keeps its committed value, the rest stay valid.
+      expect(spy).not.toHaveBeenCalled();
+      expectClean(screen.getByLabelText('Config overrides key 1'));
+      expectClean(screen.getByLabelText('Config overrides key 2'));
+      expectClean(screen.getByLabelText('Config overrides value 2'));
+      // A neighbour stays editable meanwhile, beside the held entry's committed value.
+      setCode('Config overrides value 2', '"changed"');
+      expect(reported(spy)).toEqual({ example: { previous: true }, neighbor: 'changed' });
+      expect(lastIsValid(spy)).toBe(true);
+      expect(getCode('Config overrides value 1')).toBe(text);
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      // Renamed, the member is taken with the whole value as typed, and the hold ends.
+      const typed = text.replace('"__proto__"', '"proto_flag"');
+      setCode('Config overrides value 1', typed);
+      expectClean(value);
+      expect(getCode('Config overrides value 1')).toBe(typed);
+      expect(report).toHaveBeenLastCalledWith('harnessOptions.configOverrides.example', undefined);
+      expect(reported(spy)).toEqual({ example: corrected, neighbor: 'changed' });
+      expect(lastIsValid(spy)).toBe(true);
+      // Loaded again, the form shows the whole value it reported.
+      view.rerender(
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={initial}
+          spy={spy}
+          report={report}
+          revision={1}
+        />,
+      );
+      expect(JSON.parse(getCode('Config overrides value 1'))).toEqual(corrected);
+    },
+  );
+
+  it('holds a Value with a member "__proto__" under a refused Key, and names the member once the Key is corrected', () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={InferenceConfigSchema}
+        initial={config({ example: { previous: true } })}
+        spy={spy}
+      />,
+    );
+    openAdvanced();
+    const key = screen.getByLabelText('Config overrides key 1');
+    const value = screen.getByLabelText('Config overrides value 1');
+    fireEvent.change(key, { target: { value: 'team docs' } });
+    expect(reported(spy)).toEqual({ 'team docs': { previous: true } });
+    const calls = spy.mock.calls.length;
+    const text = '{"marker":"held","__proto__":false}';
+    setCode('Config overrides value 1', text);
+    // The contract refuses the entry for its Key first; the value is held rather than narrowed.
+    expect(getCode('Config overrides value 1')).toBe(text);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(
+      expect.stringContaining(`Key "team docs": ${CODEX_CONFIG_KEY_MESSAGE}`),
+    );
+    expect(spy).toHaveBeenCalledTimes(calls);
+    // Once the Key is corrected, the held value names its own refused member, without a keystroke.
+    fireEvent.change(key, { target: { value: 'example' } });
+    expectClean(key);
+    expect(reported(spy)).toEqual({ example: { previous: true } });
+    expect(lastIsValid(spy)).toBe(true);
+    expect(getCode('Config overrides value 1')).toBe(text);
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(
+      expect.stringContaining(`__proto__: ${CODEX_CONFIG_KEY_MESSAGE}`),
+    );
+    setCode('Config overrides value 1', '{"marker":"held","proto_flag":false}');
+    expectClean(value);
+    expect(reported(spy)).toEqual({ example: { marker: 'held', proto_flag: false } });
+    expect(lastIsValid(spy)).toBe(true);
+  });
+
   it.each([
     ['{"__proto__":{"enabled":true}}', '__proto__'],
     ['{"features.prototype":true}', 'features.prototype'],

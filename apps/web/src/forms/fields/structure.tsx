@@ -32,7 +32,7 @@ import {
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
 import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
-import { formLayout } from '../layout.js';
+import { formLayout, sameJson } from '../layout.js';
 import { ContextPanelContext, LayoutFields, ProblemBadge } from '../sections.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
@@ -750,6 +750,7 @@ function RecordField({
                   label={`${label} value ${index + 1}`}
                   value={value}
                   onChange={(next) => setValue(index, key, next)}
+                  validateValue={(next) => entryValueRefusal(schema, shape, key, next)}
                 />
               </RecordKeyIssueContext>
             </div>
@@ -770,7 +771,8 @@ function RecordField({
 /**
  * One record entry's value, drawn by the same field renderers as any other field over the value
  * the record hands it: a string as an input or a template or expression editor, anything else as
- * JSON. Its visible caption is "Value"; its accessible name says which record and row.
+ * JSON, which holds a parsed value `validateValue` refuses (`entryValueRefusal`). Its visible
+ * caption is "Value"; its accessible name says which record and row.
  */
 function RecordValue({
   schema,
@@ -778,12 +780,14 @@ function RecordValue({
   label,
   value,
   onChange,
+  validateValue,
 }: {
   schema: Schema;
   name: string;
   label: string;
   value: unknown;
   onChange: (value: unknown) => void;
+  validateValue: (value: unknown) => string | undefined;
 }) {
   const shape = shapeOf(schema);
   return shape.kind === 'string' ? (
@@ -806,8 +810,41 @@ function RecordValue({
       caption="Value"
       value={value}
       onChange={onChange}
+      validateValue={validateValue}
     />
   );
+}
+
+/**
+ * Why a record entry's value, parsed from its JSON, is held rather than taken (#429): the form
+ * would not keep it as authored, and the record's schema refuses the entry. The form keeps values
+ * by assignment (react-hook-form's copies, `stripUnset`), which loses a member named `__proto__`
+ * that JSON parses as an own member. Taken, such a value would be reported narrowed: the schema
+ * would never see the member it refuses, and a save would drop it unseen. Held, its text stays as
+ * typed with the schema's messages for this entry alone, so other entries cannot mask them: a
+ * member inside the value by its path from the value, an issue about the entry's key as its Key
+ * shows it (it hides what the schema says about the value until the key is corrected). Any other
+ * value is taken as before, its issues shown through the form's own validation: one the form keeps
+ * as authored, and one the record's schema accepts.
+ */
+function entryValueRefusal(
+  schema: Schema,
+  shape: Extract<FieldShape, { kind: 'record' }>,
+  key: string,
+  value: unknown,
+): string | undefined {
+  if (sameJson(stripUnset(value), value)) return undefined;
+  const result = schema.safeParse({ [key]: value });
+  if (result.success) return undefined;
+  return result.error.issues
+    .map(({ path, message }) => {
+      const inside = path.slice(1).map(String).join('.');
+      if (inside) return `${inside}: ${message}`;
+      return entryKeyIssue(shape, key, value, message) === undefined
+        ? message
+        : `Key "${key}": ${message}`;
+    })
+    .join('; ');
 }
 
 /**
