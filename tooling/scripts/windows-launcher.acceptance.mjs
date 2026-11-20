@@ -2,8 +2,10 @@
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
+import { watch } from 'node:fs';
 import {
   access,
+  chmod,
   copyFile,
   link,
   lstat,
@@ -342,6 +344,22 @@ test(
         { installer, options: discoveredOptions, childPath },
       );
     }
+    async function observeStages(action) {
+      const stages = [];
+      let watchFailure;
+      const observer = watch(base, { recursive: true }, (_event, name) => {
+        if (name?.includes('gg-launcher-stage-')) stages.push(name);
+      });
+      observer.on('error', (error) => (watchFailure = error));
+      try {
+        await action();
+        await sleep(50);
+        if (watchFailure) throw watchFailure;
+        return stages;
+      } finally {
+        observer.close();
+      }
+    }
     const sourceBefore = await readFile(source);
     const safeOverrides = {
       GG_LOG_LEVEL: 'silent',
@@ -349,14 +367,20 @@ test(
       GG_OLLAMA_ENABLED: 'false',
     };
     const secretCanary = 'GG_LAUNCHER_SECRET_CANARY synthetic only';
-    await invoke(
-      { Environment: safeOverrides },
-      {
-        GG_MASTER_KEY: secretCanary,
-        GG_JEV_API_KEY: secretCanary,
-        GG_LOG_LEVEL: 'invalid-inherited-value',
-        GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
-      },
+    const ordinaryStages = await observeStages(() =>
+      invoke(
+        { Environment: safeOverrides },
+        {
+          GG_MASTER_KEY: secretCanary,
+          GG_JEV_API_KEY: secretCanary,
+          GG_LOG_LEVEL: 'invalid-inherited-value',
+          GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
+        },
+      ),
+    );
+    assert.ok(
+      ordinaryStages.length > 0,
+      'A normal hashtable install must exercise the stage observer.',
     );
     assert.deepEqual(await readFile(source), sourceBefore);
     const config = JSON.parse(await readFile(exe + '.json', 'utf8'));
@@ -457,6 +481,39 @@ test(
       const launcherLog = await readFile(join(manualDirectory, 'launcher.log'), 'utf8');
       assert.ok(!launcherLog.includes(secretCanary));
       await unlink(manual);
+    }
+    const protectedOutputs = [exe, configPath, desktop, programs];
+    const originalModes = await Promise.all(
+      protectedOutputs.map(async (file) => (await stat(file)).mode),
+    );
+    try {
+      for (const file of protectedOutputs) await chmod(file, 0o444);
+      for (const key of secretKeys) {
+        const stages = await observeStages(() =>
+          refuses(
+            {
+              Environment: {
+                ...safeOverrides,
+                Keys: 'ordinary companion',
+                [key]: secretCanary,
+              },
+            },
+            /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+          ),
+        );
+        assert.deepEqual(stages, [], 'Credential refusal must precede any temporary stage.');
+      }
+      await refuses(
+        {
+          RepoPath: join(base, 'must-not-be-opened'),
+          NodePath: join(base, 'must-not-be-run.exe'),
+          Environment: { Keys: 'ordinary companion', GG_MASTER_KEY: secretCanary },
+        },
+        /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+      );
+    } finally {
+      for (let index = 0; index < protectedOutputs.length; index++)
+        await chmod(protectedOutputs[index], originalModes[index]);
     }
     for (const key of ['GG_MASTER_KEY', 'GG_JEV_API_KEY']) {
       await refuses(
