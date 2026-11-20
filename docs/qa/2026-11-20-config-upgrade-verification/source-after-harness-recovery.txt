@@ -1,0 +1,17 @@
+Recovery of a manually edited stored row needs more than removing its bad override key: if its
+defaulted harness was omitted, explicitly store `harness: "codex"` in the node configuration as
+part of the operator correction on the stopped target store, alongside the key repair. Normal
+API writes already materialize that value. Startup and input-schema validation do not rewrite a
+stored omission; key-only repair can allow startup while GET and publication still fail. The
+CHANGELOG recipe identifies the target and full backup procedure, limits any copy rehearsal to
+offline checks without a gateway, and requires both discovery queries plus exact stored-text
+readback because SQLite's affected-row count alone does not prove a quoted member changed. Before
+restart, correct applicable editable rows, resolve invalid-key discovery results and choose a
+deliberate disposition for any actually incompatible snapshots. An omitted harness alone in an
+immutable snapshot is accepted by definition parsing and does not justify rewriting, deleting or
+resetting history.
+After the operator's normal restart of the repaired target, authenticated read-only GET verifies
+its served draft/current definitions; offline checks cover other retained versions. Verification
+does not publish owner drafts or start runs. Publication and restart tests use separate synthetic
+fixtures with fake harnesses and timers disabled, not a copy of the owner's store. No runtime
+converter or backfill is provided (ADR-0062).

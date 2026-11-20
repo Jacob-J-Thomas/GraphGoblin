@@ -1,0 +1,100 @@
+{
+  "verdict": "PASS",
+  "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/codex-config-overrides.test.ts src/codex-config-recovery.test.ts --no-cache --no-file-parallelism --maxWorkers=1 --reporter=json",
+  "node": "v22.23.4",
+  "total": 11,
+  "passed": 11,
+  "failed": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "file": "apps/api/src/codex-config-overrides.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) verifies the documented manual discovery and correction on a disposable store",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) exports a retained draft for correction and import into a separate fresh store",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses a stored invalid override when its defaulted Codex harness is omitted",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) validates and publishes scalar, table and dotted overrides without rewriting them",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses invalid incoming keys and keeps the earlier draft: {\"features.prototype\":true}",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses invalid incoming keys and keeps the earlier draft: {\"features..plugins\":true}",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses invalid incoming keys and keeps the earlier draft: {\"list\":[1,{\"team docs\":true}]}",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses invalid incoming keys and keeps the earlier draft: {\"__proto__\":{\"enabled\":true}}",
+          "status": "passed"
+        },
+        {
+          "name": "Codex override keys through ordinary authoring routes (#429) refuses publication of a retained invalid-key draft while keeping its readable authored data",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "apps/api/src/codex-config-recovery.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "requires full explicit operator correction before authenticated GET, publish and restart (#429 F2)",
+          "status": "passed"
+        },
+        {
+          "name": "requires discovery and exact bytes after the product driver reports a quoted-member update (#429 F3)",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "recoveryObservations": [
+    {
+      "finding": "F2",
+      "phase": "key-only repair",
+      "get": 500,
+      "getCode": "RESPONSE_INVALID",
+      "publish": 500,
+      "publishCode": "INTERNAL_ERROR",
+      "startup": "accepted"
+    },
+    {
+      "finding": "F2",
+      "phase": "complete documented recipe",
+      "materializationStepPresent": true,
+      "get": 200,
+      "publish": 200
+    },
+    {
+      "finding": "F2",
+      "phase": "restart after complete repair",
+      "get": 200,
+      "unrelatedHistoryUnchanged": true,
+      "originalBackupUnchanged": true
+    },
+    {
+      "finding": "F3",
+      "sqlite": "3.45.1",
+      "rowsAffected": 1,
+      "bytesUnchanged": true,
+      "discoveredAfter": 1
+    }
+  ],
+  "qualification": "Existing shipped tests executed unchanged on this source; their synthetic recovery-copy publish checks establish retained component predicates, not the revised target-store verification procedure. The independent check never publishes its corrected target."
+}
