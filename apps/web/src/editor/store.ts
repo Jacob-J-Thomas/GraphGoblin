@@ -529,13 +529,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
     const s = get();
     const def = s.definition;
     if (!def) return;
-    const { definition, decisionRoutes } = decisionRouteEdges(
-      fn(def),
-      s.decisionRoutes,
+    const { definition, decisionRoutes } = decisionRouteEdges(fn(def), s.decisionRoutes, {
+      source: def,
       change,
-      step.renamed,
+      renamed: step.renamed,
       editedNodeId,
-    );
+    });
     if (sameValue(definition, def)) return;
     const { fieldErrors } = s;
     set({
@@ -731,7 +730,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         Object.values(s.fieldErrors).some((scope) => Object.keys(scope).length > 0)
       )
         return 'The gateway staged the voice draft, but this editor changed. Your local work is kept. Reopen the loop to review the server draft.';
-      const nextState = decisionRouteEdges(next, s.decisionRoutes);
+      const nextState = decisionRouteEdges(next, s.decisionRoutes, { source });
       const before = {
         definition: source,
         fieldErrors: s.fieldErrors,
@@ -778,7 +777,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
       const fieldErrors = Object.fromEntries(
         Object.entries(s.fieldErrors).filter(([scope]) => !scopes.has(scope)),
       );
-      const next = decisionRouteEdges(preview.definition, s.decisionRoutes);
+      const next = decisionRouteEdges(preview.definition, s.decisionRoutes, {
+        source: preview.source,
+      });
       const before = {
         definition: preview.source,
         fieldErrors: s.fieldErrors,
@@ -817,8 +818,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       const { definition, decisionRoutes } = decisionRouteEdges(
         result.definition,
         s.decisionRoutes,
-        undefined,
-        renamed,
+        { source: def, renamed },
       );
       // Unparsed field text follows the node to its new id; other forms' text stays as typed.
       const { [`node:${nodeId}`]: moved, ...otherErrors } = s.fieldErrors;

@@ -53,6 +53,55 @@ function ownedRecord(
   return onPort.length === 1 ? onPort[0] : undefined;
 }
 
+/** The ports of the records in `edges` that hold `edgeId`, in a stable order. */
+function holderPorts(edges: readonly StoredEdge[], edgeId: string): string {
+  return JSON.stringify(
+    edges
+      .filter((edge) => edge.id === edgeId)
+      .map((edge) => edge.from.port)
+      .sort(),
+  );
+}
+
+/**
+ * A Decision's `stored` rows as an edit that turned its route connections `source` into `outgoing`
+ * leaves them, before this pass reads them (#481). A row's claim is an edge id read on the row's
+ * port (`ownedRecord`), so which record it names depends on the other records holding that id:
+ * once an edit removes the record a claim named, another connection with the same id can become
+ * the only one left and the claim would name it, handing the row a connection it never owned. So
+ * a claim is read in the draft before the edit and kept only when it names the same record after
+ * it: that very record, or the edit's rewrite of it (a new manual route, a renamed end), which the
+ * edit shows by leaving every record of that id on the ports they were on and rewriting the record
+ * the claim names, so the same reading picks out its rewrite. A claim that named no record keeps
+ * naming none. Any other claim is dropped, so its record, if one is left, is one no row has
+ * claimed: a row takes it up only through its own unique ID being that record's port.
+ */
+function carriedRows(
+  stored: RouteRows,
+  source: readonly StoredEdge[],
+  outgoing: readonly StoredEdge[],
+): RouteRows {
+  const keeps = (row: RouteRow, edgeId: string) => {
+    const named = ownedRecord(source, edgeId, row.id);
+    const now = ownedRecord(outgoing, edgeId, row.id);
+    if (now === named) return true;
+    return (
+      named !== undefined &&
+      now !== undefined &&
+      !source.includes(now) &&
+      holderPorts(source, edgeId) === holderPorts(outgoing, edgeId)
+    );
+  };
+  if (stored.rows.every((row) => row.edgeIds.every((edgeId) => keeps(row, edgeId)))) return stored;
+  return {
+    nextKey: stored.nextKey,
+    rows: stored.rows.map((row) => ({
+      ...row,
+      edgeIds: row.edgeIds.filter((edgeId) => keeps(row, edgeId)),
+    })),
+  };
+}
+
 /**
  * A Decision's `rows` without the claims that name no owner (#481). A row's claim is an edge id
  * read on the row's port (`ownedRecord`), and a record the claims of more than one row name is
@@ -209,19 +258,39 @@ function sameRows(a: RouteRows, b: RouteRows): boolean {
   );
 }
 
+/** The edit `decisionRouteEdges` follows: the draft before it, and how it changed a Decision. */
+export interface RouteEdit {
+  /** The draft before the edit, in which each row's claims are read first (`carriedRows`). */
+  source: LoopDefinitionInput;
+  change?: FormChange | undefined;
+  /** A node renamed by this edit: its rows are found under its old id. */
+  renamed?: { from: string; to: string } | undefined;
+  /** The node whose config `change` describes. */
+  editedNodeId?: string | undefined;
+}
+
+/** A row as this pass leaves it, with the records it owns before the pass rewrites any. */
+interface OwningRow {
+  row: RouteRow;
+  owns: readonly StoredEdge[];
+}
+
 /**
  * Keep an edge attached to its option ID through label edits and explicit ID renames. Rows own
  * edges by id, but each port change and removal applies to a stored record the row names alone
  * (`ownedRecord`) and no other row names (`trustedRows`), never to every edge with that id (#481).
+ * With `edit`, each row's claims are first carried through it (`carriedRows`), so an edit that
+ * removes a record never hands its claim to another record with that id. Without one (a load),
+ * the rows are read in `definition` as they are. Either way, the claims this pass leaves name, in
+ * the draft it returns, only a record their row owns, or none (#481).
  */
 export function decisionRouteEdges(
   definition: LoopDefinitionInput,
   previous: DecisionRoutes,
-  change?: FormChange,
-  renamed?: { from: string; to: string },
-  editedNodeId?: string,
+  edit?: RouteEdit,
 ): { definition: LoopDefinitionInput; decisionRoutes: DecisionRoutes } {
-  const decisionRoutes: Record<string, RouteRows> = {};
+  const { source, change, renamed, editedNodeId } = edit ?? {};
+  const pending: { nodeId: string; stored: RouteRows; nextKey: number; rows: OwningRow[] }[] = [];
   const removed = new Set<StoredEdge>();
   const ports = new Map<StoredEdge, string>();
   for (const node of definition.nodes) {
@@ -233,7 +302,10 @@ export function decisionRouteEdges(
       rows: [],
     };
     const outgoing = routeConnections(definition, node.id);
-    const before = trustedRows(stored, outgoing);
+    const before = trustedRows(
+      source ? carriedRows(stored, routeConnections(source, oldId), outgoing) : stored,
+      outgoing,
+    );
     const answer = answerRows(node.config);
     const after = answer?.rows.map((row) => row.id);
     let nextKey = before.nextKey;
@@ -308,19 +380,24 @@ export function decisionRouteEdges(
     );
     // A kept row's records are on its port before this edit (`RouteRow.id`).
     const previousIds = new Map(before.rows.map((row) => [row.key, row.id]));
-    rows = rows.map((row) => {
+    const owning = rows.map((row): OwningRow => {
       const unique =
         row.id !== undefined && rows.filter((other) => other.id === row.id).length === 1;
       const valid = unique && ChoiceOptionIdSchema.safeParse(row.id).success;
+      const takesUp = (edge: StoredEdge) =>
+        unique && !claimed.has(edge) && edge.from.port === row.id;
       const edgeIds = idsOf(
-        outgoing.filter(
-          (edge) =>
-            row.edgeIds.includes(edge.id) ||
-            (unique && !claimed.has(edge) && edge.from.port === row.id),
-        ),
+        outgoing.filter((edge) => row.edgeIds.includes(edge.id) || takesUp(edge)),
       );
       const existing = previousIds.has(row.key);
       const port = existing ? previousIds.get(row.key) : row.id;
+      // The records the row's claims name: a kept row's on its port before this edit, section
+      // JSON's (and a new row's) on the port of its ID.
+      const claimPort = existing && !jsonReplacement ? port : row.id;
+      const owns = [
+        ...row.edgeIds.flatMap((edgeId) => ownedRecord(outgoing, edgeId, claimPort) ?? []),
+        ...outgoing.filter(takesUp),
+      ];
       // Only the records the row owned before this edit move with it. One it takes up now through
       // its ID is on that port already, and read on its old port, its id could name another
       // record; section JSON names every row's records by the port of its ID.
@@ -331,28 +408,53 @@ export function decisionRouteEdges(
         }
       // Only a valid ID moves the row's records, so only it moves the row's port. Section JSON
       // names each row's records by the port of its ID, valid or not.
-      return { ...row, id: valid || !existing || jsonReplacement ? row.id : port, edgeIds };
+      return {
+        row: { ...row, id: valid || !existing || jsonReplacement ? row.id : port, edgeIds },
+        owns,
+      };
     });
-    const next = { nextKey, rows };
-    decisionRoutes[node.id] = sameRows(stored, next) ? stored : next;
+    pending.push({ nodeId: node.id, stored, nextKey, rows: owning });
   }
+  // Each record this pass keeps, as it leaves it.
+  const continued = new Map<StoredEdge, StoredEdge>();
   const edges = definition.edges.flatMap((edge) => {
     if (removed.has(edge)) return [];
     const port = ports.get(edge);
-    return [
+    const next =
       port !== undefined && port !== edge.from.port
         ? { ...edge, from: { ...edge.from, port } }
-        : edge,
-    ];
+        : edge;
+    continued.set(edge, next);
+    return [next];
   });
   const unchangedEdges =
     edges.length === definition.edges.length &&
     edges.every((edge, i) => edge === definition.edges[i]);
+  const result = unchangedEdges ? definition : { ...definition, edges };
+  const decisionRoutes: Record<string, RouteRows> = {};
+  for (const { nodeId, stored, nextKey, rows } of pending) {
+    // A record this pass removes can leave another with the same id the only one of its Decision:
+    // a claim that named neither must not come to name it. Each claim names, in the result, one of
+    // its row's own records as this pass leaves them, or none (#481).
+    const outgoing = routeConnections(result, nodeId);
+    const next = {
+      nextKey,
+      rows: rows.map(({ row, owns }) => {
+        const own = new Set(owns.map((edge) => continued.get(edge)));
+        const edgeIds = row.edgeIds.filter((edgeId) => {
+          const named = ownedRecord(outgoing, edgeId, row.id);
+          return named === undefined || own.has(named);
+        });
+        return edgeIds.length === row.edgeIds.length ? row : { ...row, edgeIds };
+      }),
+    };
+    decisionRoutes[nodeId] = sameRows(stored, next) ? stored : next;
+  }
   const unchangedRows =
     Object.keys(previous).length === Object.keys(decisionRoutes).length &&
     Object.entries(decisionRoutes).every(([id, optionRows]) => optionRows === previous[id]);
   return {
-    definition: unchangedEdges ? definition : { ...definition, edges },
+    definition: result,
     decisionRoutes: unchangedRows ? previous : decisionRoutes,
   };
 }
