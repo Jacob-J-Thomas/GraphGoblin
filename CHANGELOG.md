@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API startup now prints one stack-free line for held or unverifiable data-directory,
+  SQLite-file and reclamation ownership, with exit code 1 (#409). It keeps the lock path and
+  verification reason, gives guidance for live and unknown owners, and escapes control characters
+  and line separators in the explanation. Lock records, acquisition rules, managed startup
+  categories and unrelated diagnostics are unchanged.
+
 - Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
   validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
   and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
