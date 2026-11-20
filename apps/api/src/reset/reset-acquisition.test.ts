@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { link, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
@@ -32,8 +31,12 @@ afterEach(async () => {
     await rm(base, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
-/** The PID of a process that has exited, so a lock record naming it is stale. */
-const deadPid = (): number => spawnSync(process.execPath, ['-e', '']).pid;
+/**
+ * A PID far above any these platforms assign (Linux caps PIDs at 2^22), so a lock record naming it
+ * is stale. A process that has exited is not used: Windows can hand its PID to another process
+ * within seconds, and a PID-only record naming a live process is (correctly) refused as unverifiable.
+ */
+const DEAD_PID = 2147483644;
 const STAGING = `graphgoblin.lock.reclaim.${randomUUID()}.tmp`;
 const store: StoreFacts = { readable: true, format: 3, status: 'complete', runIds: ['run-a'] };
 
@@ -68,16 +71,16 @@ async function fixture(stale: boolean) {
     'master.key': 'synthetic key material',
     'notes.txt': 'owner notes',
     'graphgoblin.db.graphgoblin.lock.bak': 'a copy the owner made',
-    'other.db.graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'another database' }),
+    'other.db.graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'another database' }),
     [`${STAGING}/${randomUUID()}.json`]: 'abandoned staging marker',
   };
   if (stale) {
     const token = randomUUID();
     Object.assign(files, {
-      'graphgoblin.db.graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'stale db' }),
-      'graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'stale directory' }),
+      'graphgoblin.db.graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale db' }),
+      'graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
       [`graphgoblin.db.graphgoblin.lock.reclaim/${token}.json`]: JSON.stringify({
-        pid: deadPid(),
+        pid: DEAD_PID,
         token,
       }),
     });

@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { link, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
@@ -20,8 +19,12 @@ afterEach(async () => {
     await rm(base, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
-/** The PID of a process that has exited, so a lock record naming it is stale. */
-const deadPid = (): number => spawnSync(process.execPath, ['-e', '']).pid;
+/**
+ * A PID far above any these platforms assign (Linux caps PIDs at 2^22), so a lock record naming it
+ * is stale. A process that has exited is not used: Windows can hand its PID to another process
+ * within seconds, and a PID-only record naming a live process is (correctly) refused as unverifiable.
+ */
+const DEAD_PID = 2147483644;
 const STAGING_TOKEN = '0d1f6f0e-6a55-4b8e-9d7c-2b1f9a3c4e5d';
 /** An abandoned guard staging directory (ADR-0069): the lock module ignores it, so a reset keeps it. */
 const STAGING = `graphgoblin.lock.reclaim.${STAGING_TOKEN}.tmp`;
@@ -38,7 +41,7 @@ async function writeTree(root: string, files: Record<string, string>): Promise<v
 async function staleGuard(path: string): Promise<void> {
   const token = randomUUID();
   await mkdir(path);
-  await writeFile(join(path, `${token}.json`), JSON.stringify({ pid: deadPid(), token }));
+  await writeFile(join(path, `${token}.json`), JSON.stringify({ pid: DEAD_PID, token }));
 }
 
 /**
@@ -60,13 +63,13 @@ async function fixture(stale: boolean) {
     'notes.txt': 'owner notes',
     'graphgoblin.db.graphgoblin.lock.bak': 'a copy the owner made',
     // Another database's lock record: not this store's, so never reclaimed or removed here.
-    'other.db.graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'another database' }),
+    'other.db.graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'another database' }),
     [`${STAGING}/${STAGING_TOKEN}.json`]: 'abandoned staging marker',
   });
   if (stale) {
     await writeTree(dataDir, {
-      'graphgoblin.db.graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'stale db' }),
-      'graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'stale directory' }),
+      'graphgoblin.db.graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale db' }),
+      'graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
     });
     await staleGuard(join(dataDir, 'graphgoblin.db.graphgoblin.lock.reclaim'));
     await mkdir(join(dataDir, 'graphgoblin.lock.reclaim'));
@@ -296,7 +299,7 @@ describe('reset manifests classify both locks and both reclamation guards', () =
     const dataDir = join(base, 'data');
     await writeTree(dataDir, {
       'db/store.db': 'database bytes',
-      'db/store.db.graphgoblin.lock': JSON.stringify({ pid: deadPid(), token: 'stale db' }),
+      'db/store.db.graphgoblin.lock': JSON.stringify({ pid: DEAD_PID, token: 'stale db' }),
       'db/readme.txt': 'kept beside the database',
       'notes.txt': 'owner notes',
     });
@@ -350,7 +353,7 @@ describe('reset manifests classify both locks and both reclamation guards', () =
 
   it('never takes a hard link of a stale lock for the lock, and keeps it', async () => {
     const { dataDir } = await fixture(false);
-    const stale = JSON.stringify({ pid: deadPid(), token: 'stale directory' });
+    const stale = JSON.stringify({ pid: DEAD_PID, token: 'stale directory' });
     await writeFile(join(dataDir, 'graphgoblin.lock'), stale);
     await link(join(dataDir, 'graphgoblin.lock'), join(dataDir, 'backup.lock'));
     const dry = await reset(dataDir, ['--reset']);
@@ -372,7 +375,7 @@ describe('reset manifests classify both locks and both reclamation guards', () =
       const { dataDir } = await fixture(false);
       await writeFile(
         join(dataDir, 'GraphGoblin.Lock'),
-        JSON.stringify({ pid: deadPid(), token: 'stale directory' }),
+        JSON.stringify({ pid: DEAD_PID, token: 'stale directory' }),
       );
       const dry = await reset(dataDir, ['--reset']);
       expect(dry.out).toContain(
