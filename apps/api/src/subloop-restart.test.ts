@@ -126,6 +126,25 @@ async function expectOneContinuation(
   return events;
 }
 
+/** A deadlock guard; readiness and interruption are determined by operations, not elapsed time. */
+async function constructedWork<T>(work: Promise<T>, phase: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_resolve, reject) => {
+        // Match the API suite's ordinary 20 s allowance, inside this test's 120 s timeout.
+        timer = setTimeout(
+          () => reject(new Error(`Constructed subloop ${phase} did not settle`)),
+          20_000,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const recoveredStarts = (events: RunEvent[]) =>
   events.filter((event) => event.type === 'run.started' && event.attempt > 1).length;
 
@@ -193,7 +212,6 @@ describe('awaited subloops across process death (#242)', () => {
       const api = await boot();
       // A process over the same store that dies at a constructed point: its durable writes stay.
       const handle = openDatabase({ url: api.f.env.GG_DB_URL! });
-      await handle.migrate();
       const fake = createFakePorts();
       const events = new SqliteEventStore(handle.db, fake.clock);
       const runs = new SqliteRunRepository(handle.db);
@@ -202,53 +220,90 @@ describe('awaited subloops across process death (#242)', () => {
         { ...fake, events, runs, loops, admission: new SqliteTriggerAdmission(handle.db, events) },
         DEFAULT_TEST_SETTINGS,
       );
-      await manager.start();
-      const publish = async (definition: LoopDefinitionInput) => {
-        const { loop } = await loops.create('local', LoopDefinitionSchema.parse(definition));
-        await loops.publish(loop.id);
-        return loop.id;
-      };
-      const leaf = await publish(leafLoop);
-      const middle = await publish(parentLoop('Constructed middle', leaf));
-      const top = await publish(parentLoop('Constructed top', middle));
-      const run = await manager.startRun({ ownerId: 'local', loopId: top, source: 'manual.api' });
+      let run!: RunRecord;
       let mid: RunRecord | undefined;
-      let bottom: RunRecord | undefined;
-      await vi.waitFor(async () => {
+      const failures: unknown[] = [];
+      let releaseStranded: (() => void) | undefined;
+      try {
+        await handle.migrate();
+        await manager.start();
+        const publish = async (definition: LoopDefinitionInput) => {
+          const { loop } = await loops.create('local', LoopDefinitionSchema.parse(definition));
+          await loops.publish(loop.id);
+          return loop.id;
+        };
+        const leaf = await publish(leafLoop);
+        const middle = await publish(parentLoop('Constructed middle', leaf));
+        const top = await publish(parentLoop('Constructed top', middle));
+        run = await manager.startRun({ ownerId: 'local', loopId: top, source: 'manual.api' });
+        // Admission returns before execution. Wait for every executor (including descendants)
+        // to park, then assert the required state rather than polling under a timing deadline.
+        await constructedWork(manager.waitForIdle(), 'readiness');
         [mid] = await runs.listChildren(run.id);
-        [bottom] = mid ? await runs.listChildren(mid.id) : [];
+        const [bottom] = mid ? await runs.listChildren(mid.id) : [];
         expect(bottom?.status).toBe('waiting');
-      });
-      let stranded = false;
-      const hang = () => {
-        stranded = true;
-        return new Promise<never>(() => undefined);
-      };
-      if (state === 'child finished while down') {
-        // The leaf's terminal status is written; finalization (which tells its parent) never runs.
-        const cancel = fake.timers.cancel.bind(fake.timers);
-        vi.spyOn(fake.timers, 'cancel').mockImplementation(async (runId, key) =>
-          runId === bottom!.id && (await runs.get(runId))?.status === 'succeeded'
-            ? hang()
-            : cancel(runId, key),
+        let markStranded!: () => void;
+        const stranded = new Promise<void>((resolve) => {
+          markStranded = resolve;
+        });
+        const interrupted = new Promise<undefined>((resolve) => {
+          releaseStranded = () => resolve(undefined);
+        });
+        const hang = () => {
+          markStranded();
+          return interrupted;
+        };
+        if (state === 'child finished while down') {
+          // The leaf's terminal status is written; finalization (which tells its parent) never runs.
+          const cancel = fake.timers.cancel.bind(fake.timers);
+          vi.spyOn(fake.timers, 'cancel').mockImplementation(async (runId, key) =>
+            runId === bottom!.id && (await runs.get(runId))?.status === 'succeeded'
+              ? hang()
+              : cancel(runId, key),
+          );
+        } else {
+          // The middle run's wake is durable; its waiting-to-running status write never happens.
+          const transition = runs.transition.bind(runs);
+          vi.spyOn(runs, 'transition').mockImplementation((id, from, changes, ...rest) =>
+            id === mid!.id && changes.status === 'running' && from.includes('waiting')
+              ? hang()
+              : transition(id, from, changes, ...rest),
+          );
+        }
+        await manager.provideInput(bottom!.id, bottom!.waiting!.waitId, state);
+        const reachedCut = await constructedWork(
+          Promise.race([stranded.then(() => true), manager.waitForIdle().then(() => false)]),
+          'interruption',
         );
-      } else {
-        // The middle run's wake is durable; its waiting-to-running status write never happens.
-        const transition = runs.transition.bind(runs);
-        vi.spyOn(runs, 'transition').mockImplementation((id, from, changes, ...rest) =>
-          id === mid!.id && changes.status === 'running' && from.includes('waiting')
-            ? hang()
-            : transition(id, from, changes, ...rest),
-        );
+        expect(reachedCut).toBe(true);
+        manager.stop();
+        expect((await runs.get(mid!.id))?.status).toBe('waiting');
+        const durableWakes = (await events.read(mid!.id)).filter((e) => e.type === 'run.woken');
+        expect(durableWakes).toHaveLength(state === 'child finished while down' ? 0 : 1);
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        try {
+          manager.stop();
+          // Fence off further durable writes before releasing the simulated process death.
+          // Settle the executor even when a setup or crash-state assertion fails.
+          try {
+            handle.close();
+          } finally {
+            releaseStranded?.();
+          }
+          await constructedWork(manager.waitForIdle(), 'cleanup');
+        } catch (error) {
+          failures.push(error);
+        } finally {
+          vi.restoreAllMocks();
+        }
       }
-      await manager.provideInput(bottom!.id, bottom!.waiting!.waitId, state);
-      await vi.waitFor(() => expect(stranded).toBe(true));
-      manager.stop();
-      expect((await runs.get(mid!.id))?.status).toBe('waiting');
-      const durableWakes = (await events.read(mid!.id)).filter((e) => e.type === 'run.woken');
-      expect(durableWakes).toHaveLength(state === 'child finished while down' ? 0 : 1);
-      handle.close();
-      vi.restoreAllMocks();
+      if (failures.length === 1) throw failures[0];
+      if (failures.length > 1)
+        throw new AggregateError(failures, 'Constructed subloop setup and cleanup failed', {
+          cause: failures[0],
+        });
 
       const server = await api.start();
       await eventually(async () => (await api.run(run.id)).status === 'succeeded');

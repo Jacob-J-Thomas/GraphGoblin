@@ -104,6 +104,8 @@ async function lockFileState(path: string, token?: string): Promise<OwnerState> 
     }
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
+    // Only recovery markers have immutable names. A main owner record can be replaced in place.
+    if (token !== undefined && (await removedConcurrently(path, error))) return { state: 'absent' };
     throw error;
   }
   if (
@@ -147,7 +149,57 @@ async function removeStale(path: string): Promise<boolean> {
 const markerPattern =
   /^([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\.json$/;
 
+type CleanupOperation =
+  | 'stale-marker-unlink'
+  | 'recovery-marker-unlink'
+  | 'recovery-directory-remove'
+  | 'staging-marker-unlink'
+  | 'staging-directory-remove';
+
+function filesystemFailure(error: unknown, operation: CleanupOperation, path: string): Error {
+  const code = error instanceof Error && 'code' in error ? String(error.code) : 'UNKNOWN';
+  return Object.assign(
+    new Error(`Store ownership ${operation} failed (${code}): ${path}`, { cause: error }),
+    {
+      code,
+      operation,
+      markerToken: markerPattern.exec(basename(path))?.[1] ?? null,
+    },
+  );
+}
+
+function cleanupFailure(primary: unknown, cleanup: unknown[], detail: string): AggregateError {
+  return new AggregateError(
+    [primary, ...cleanup],
+    `${primary instanceof Error ? primary.message : 'Store acquisition failed'}; ${detail}`,
+  );
+}
+
+async function removedConcurrently(path: string, error: unknown): Promise<boolean> {
+  if (process.platform !== 'win32' || !hasCode(error, 'EPERM')) return false;
+  return lstat(path).then(
+    () => false,
+    (probeError: unknown) => hasCode(probeError, 'ENOENT'),
+  );
+}
+
+/** Whether this call removed the marker itself, rather than observing its absence. */
+async function removeMarker(path: string, operation: CleanupOperation): Promise<boolean> {
+  try {
+    await unlink(path);
+    return true;
+  } catch (error) {
+    if (hasCode(error, 'ENOENT')) return false;
+    // Windows can return EPERM when another process already deleted this exact UUID marker.
+    // Establish absence independently; never retry unlink, or delete a successor's marker.
+    if (operation === 'stale-marker-unlink' && (await removedConcurrently(path, error)))
+      return false;
+    throw filesystemFailure(error, operation, path);
+  }
+}
+
 async function recoveryState(path: string): Promise<OwnerState & { marker?: string }> {
+  if (heldPaths.has(path)) return live();
   try {
     const info = await lstat(path);
     // Old file guards and links are not converted or followed.
@@ -161,7 +213,7 @@ async function recoveryState(path: string): Promise<OwnerState & { marker?: stri
       return unknown('reclamation guard is not a physical directory with one valid owner marker');
     const marker = join(path, entry.name);
     const state = await lockFileState(marker, match[1]);
-    return state.state === 'held' ? state : { state: 'stale', marker };
+    return state.state === 'stale' ? { state: 'stale', marker } : state;
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
     if (hasCode(error, 'ENOTDIR'))
@@ -177,8 +229,9 @@ async function removeEmptyRecovery(path: string): Promise<boolean> {
     return true;
   } catch (error) {
     // A newly published owner's marker makes its directory nonempty. Never remove it.
+    if (await removedConcurrently(path, error)) return false;
     if (!hasCode(error, 'ENOENT') && !hasCode(error, 'ENOTEMPTY') && !hasCode(error, 'EEXIST'))
-      throw error;
+      throw filesystemFailure(error, 'recovery-directory-remove', path);
     return false;
   }
 }
@@ -205,14 +258,7 @@ async function acquireRecovery(
       if (observed.state === 'held') throw held(path, observed.detail);
       if (observed.marker) {
         // The immutable UUID name belongs only to the observed acquisition, never its successor.
-        await unlink(observed.marker).then(
-          () => {
-            reclaimed = true;
-          },
-          (removeError: unknown) => {
-            if (!hasCode(removeError, 'ENOENT')) throw removeError;
-          },
-        );
+        if (await removeMarker(observed.marker, 'stale-marker-unlink')) reclaimed = true;
       }
       if (await removeEmptyRecovery(path)) reclaimed = true;
       try {
@@ -225,18 +271,22 @@ async function acquireRecovery(
           reclaimed,
           release() {
             releasing ??= (async (): Promise<ReleaseOutcome> => {
+              let outcome: ReleaseOutcome;
               try {
                 const marker = join(path, name);
-                if ((await readFile(marker, 'utf8')) !== record) return 'kept';
-                await unlink(marker);
-                await removeEmptyRecovery(path);
-                return 'removed';
+                if ((await readFile(marker, 'utf8')) === record) {
+                  outcome = (await removeMarker(marker, 'recovery-marker-unlink'))
+                    ? 'removed'
+                    : 'missing';
+                  await removeEmptyRecovery(path);
+                } else outcome = 'kept';
               } catch (error) {
                 if (!hasCode(error, 'ENOENT')) throw error;
-                return 'missing';
-              } finally {
-                heldPaths.delete(path);
+                outcome = 'missing';
               }
+              // A failed release still owns its marker. Keep the in-process hold fail-closed.
+              heldPaths.delete(path);
+              return outcome;
             })();
             return releasing;
           },
@@ -251,13 +301,18 @@ async function acquireRecovery(
       }
     }
     throw held(path);
-  } finally {
+  } catch (error) {
     if (!published) {
-      await unlink(stagedMarker).catch((error: unknown) => {
-        if (!hasCode(error, 'ENOENT')) throw error;
+      const cleanup: unknown[] = [];
+      await removeMarker(stagedMarker, 'staging-marker-unlink').catch((cleanupError: unknown) =>
+        cleanup.push(cleanupError),
+      );
+      await rmdir(staging).catch((cleanupError: unknown) => {
+        cleanup.push(filesystemFailure(cleanupError, 'staging-directory-remove', staging));
       });
-      await rmdir(staging);
+      if (cleanup.length) throw cleanupFailure(error, cleanup, 'staging cleanup also failed');
     }
+    throw error;
   }
 }
 
@@ -312,17 +367,19 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
     reclaimed,
     release() {
       releasing ??= (async (): Promise<ReleaseOutcome> => {
+        let outcome: ReleaseOutcome;
         try {
           // The record includes a random ownership token: never remove a replacement lock.
-          if ((await readFile(path, 'utf8')) !== record) return 'kept';
-          await unlink(path);
-          return 'removed';
+          if ((await readFile(path, 'utf8')) === record) {
+            await unlink(path);
+            outcome = 'removed';
+          } else outcome = 'kept';
         } catch (error) {
           if (!hasCode(error, 'ENOENT')) throw error;
-          return 'missing';
-        } finally {
-          heldPaths.delete(path);
+          outcome = 'missing';
         }
+        heldPaths.delete(path);
+        return outcome;
       })();
       return releasing;
     },
@@ -354,15 +411,34 @@ export async function acquireDataDirLock(
     });
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
+    const file = await acquireFile(path, record).catch(async (error: unknown) => {
+      try {
+        await recovery.release();
+      } catch (cleanup) {
+        throw cleanupFailure(error, [cleanup], 'reclamation cleanup also failed');
+      }
+      throw error;
+    });
     try {
-      const file = await acquireFile(path, record);
-      return {
-        reclaimed: { file: file.reclaimed, guard: recovery.reclaimed },
-        release: () => file.release(),
-      };
-    } finally {
       await recovery.release();
+    } catch (cleanup) {
+      try {
+        await file.release();
+      } catch (rollback) {
+        throw cleanupFailure(
+          cleanup,
+          [rollback],
+          `main-lock rollback also failed; ownership remains held: ${path}`,
+        );
+      }
+      throw new Error(`Store acquisition rolled back because reclamation cleanup failed: ${path}`, {
+        cause: cleanup,
+      });
     }
+    return {
+      reclaimed: { file: file.reclaimed, guard: recovery.reclaimed },
+      release: () => file.release(),
+    };
   } finally {
     acquiringPaths.delete(path);
   }

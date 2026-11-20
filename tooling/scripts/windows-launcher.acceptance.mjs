@@ -31,6 +31,7 @@ import { promisify } from 'node:util';
 import {
   aliasStage,
   errorCodeOf,
+  isExpectedOwnershipRefusal,
   openWindowsLauncherEvidence,
 } from './windows-launcher-evidence.mjs';
 
@@ -58,15 +59,38 @@ function ownershipContender(dataDir) {
   const module = pathToFileURL(join(root, 'apps/api/dist/data-dir-lock.js')).href;
   const program = `
     const { acquireDataDirLock } = await import(process.argv[1]);
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const facts = error => {
+      const failures = [];
+      const pending = [error];
+      for (let inspected = 0; pending.length && inspected < 8; inspected++) {
+        const current = pending.shift();
+        if (current.operation) failures.push({ code: current.code ?? null, operation: current.operation, markerToken: current.markerToken ?? null });
+        if (current.errors) pending.push(...current.errors);
+        if (current.cause) pending.push(current.cause);
+      }
+      return { code: error.code ?? null, operation: error.operation ?? null, markerToken: error.markerToken ?? null, failures };
+    };
     process.stdin.resume();
     const released = new Promise(resolve => process.stdin.once('end', resolve));
+    let lock;
     try {
-      const lock = await acquireDataDirLock(process.argv[2]);
-      process.stdout.write(JSON.stringify({ status: 'acquired', pid: process.pid }) + '\\n');
-      await released;
-      await lock.release();
+      lock = await acquireDataDirLock(process.argv[2]);
+      const { token } = JSON.parse(await readFile(join(process.argv[2], 'graphgoblin.lock'), 'utf8'));
+      process.stdout.write(JSON.stringify({ status: 'acquired', pid: process.pid, token }) + '\\n');
     } catch (error) {
-      process.stdout.write(JSON.stringify({ status: 'refused', pid: process.pid, error: error.message }) + '\\n');
+      process.stdout.write(JSON.stringify({ status: 'refused', pid: process.pid, error: error.message, ...facts(error) }) + '\\n');
+    }
+    if (lock) {
+      await released;
+      try {
+        await lock.release();
+        process.stdout.write(JSON.stringify({ status: 'released', pid: process.pid }) + '\\n');
+      } catch (error) {
+        process.stdout.write(JSON.stringify({ status: 'release-failed', pid: process.pid, ...facts(error) }) + '\\n');
+        process.exitCode = 1;
+      }
     }
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', program, module, dataDir], {
@@ -74,7 +98,7 @@ function ownershipContender(dataDir) {
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
-  const exited = new Promise((resolve) => child.once('exit', resolve));
+  const exited = new Promise((resolve) => child.once('close', resolve));
   let stdout = '';
   let stderr = '';
   const result = new Promise((resolve, reject) => {
@@ -106,7 +130,17 @@ function ownershipContender(dataDir) {
         reject(new Error(`Ownership contender exited ${code}: ${stderr}`));
     });
   });
-  return { child, result, exited };
+  return {
+    child,
+    result,
+    exited,
+    messages: () =>
+      stdout
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line)),
+  };
 }
 let nextPort = Number(process.env.GG_TEST_PORT_START ?? 4830);
 const lastPort = nextPort + 20;
@@ -1582,11 +1616,36 @@ test(
       };
       await ownershipFixture(join(dataDir, 'graphgoblin.lock'), previous);
       await ownershipFixture(join(dataDir, 'graphgoblin.lock.reclaim'), previous);
+      await writeFile(join(dataDir, 'unrelated.txt'), 'retain unrelated bytes');
       const contenders = Array.from({ length: 5 }, () => ownershipContender(dataDir));
       try {
         const results = await Promise.all(contenders.map((contender) => contender.result));
         const owners = results.filter((result) => result.status === 'acquired');
         const refused = results.filter((result) => result.status === 'refused').length;
+        for (const result of results) {
+          ciEvidence.record('ownership-result', {
+            trial,
+            pid: result.pid,
+            status: result.status,
+            seededToken: previous.token,
+            ownerToken: result.token ?? null,
+            markerToken: result.markerToken ?? null,
+            operation: result.operation ?? null,
+            errorCode: result.code ?? null,
+            diagnostic:
+              result.status === 'acquired'
+                ? 'acquired'
+                : /another GraphGoblin process holds/.test(result.error)
+                  ? 'store-held'
+                  : /Store ownership could not be verified/.test(result.error)
+                    ? 'store-unverified'
+                    : result.code
+                      ? 'filesystem'
+                      : 'other',
+          });
+          for (const [index, failure] of (result.failures ?? []).entries())
+            ciEvidence.record('ownership-error', { trial, pid: result.pid, index, ...failure });
+        }
         ciEvidence.record('contention', {
           trial,
           contenders: contenders.length,
@@ -1596,11 +1655,40 @@ test(
         });
         // No successful contender is released before every result is known. The launcher
         // mutex and in-process acquiringPaths cannot serialize these separate API writers.
+        let liveOwners = 0;
         for (const owner of owners) {
           const contender = contenders.find(({ child }) => child.pid === owner.pid);
-          assert.equal(contender.child.exitCode, null);
-          process.kill(owner.pid, 0);
+          if (contender.child.exitCode === null) {
+            try {
+              process.kill(owner.pid, 0);
+              liveOwners++;
+            } catch {
+              /* recorded below */
+            }
+          }
         }
+        // Retain the final record check before any assertion can stop this trial.
+        const recorded = await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8').then(
+          (contents) => JSON.parse(contents),
+          () => null,
+        );
+        const seededMarker = await lstat(
+          join(dataDir, 'graphgoblin.lock.reclaim', `${previous.token}.json`),
+        ).then(
+          () => 'present',
+          (error) => (error.code === 'ENOENT' ? 'absent' : 'unavailable'),
+        );
+        ciEvidence.record('ownership-check', {
+          trial,
+          liveOwners,
+          recordedPid: recorded?.pid ?? null,
+          recordedToken: recorded?.token ?? null,
+          recordedOwnerMatched:
+            owners.length === 1 &&
+            recorded?.pid === owners[0].pid &&
+            recorded?.token === owners[0].token,
+          seededMarker,
+        });
         console.log(
           JSON.stringify({
             evidence: 'independent-api-lock-contention',
@@ -1614,16 +1702,18 @@ test(
           1,
           'Expected exactly one live owner after stale-guard reclamation.',
         );
+        assert.equal(liveOwners, 1, 'Expected the acquired writer to remain live.');
+        assert.equal(recorded?.pid, owners[0].pid);
+        assert.equal(recorded?.token, owners[0].token);
+        assert.equal(seededMarker, 'absent');
         for (const result of results) {
           if (result.status === 'acquired') continue;
           assert.equal(result.status, 'refused');
-          assert.match(
-            result.error,
-            /another GraphGoblin process holds|Store ownership could not be verified/,
+          assert.ok(
+            isExpectedOwnershipRefusal(result),
+            'Expected an ownership refusal without filesystem or cleanup failures.',
           );
         }
-        const recorded = JSON.parse(await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8'));
-        assert.equal(recorded.pid, owners[0].pid);
       } finally {
         for (const { child } of contenders) child.stdin.end();
         let closedContenders = 0;
@@ -1644,6 +1734,38 @@ test(
             count: closedContenders,
           }),
         );
+        const presence = (path) =>
+          lstat(path).then(
+            () => 'present',
+            (error) => (error.code === 'ENOENT' ? 'absent' : 'unavailable'),
+          );
+        const main = await presence(join(dataDir, 'graphgoblin.lock'));
+        const guard = await presence(join(dataDir, 'graphgoblin.lock.reclaim'));
+        const staging = await readdir(dataDir).then(
+          (entries) =>
+            entries.filter((name) => name.startsWith('graphgoblin.lock.reclaim.')).length,
+          () => null,
+        );
+        const unrelatedIntact = await readFile(join(dataDir, 'unrelated.txt'), 'utf8').then(
+          (contents) => contents === 'retain unrelated bytes',
+          () => false,
+        );
+        const released = contenders
+          .flatMap((contender) => contender.messages())
+          .filter((message) => message.status === 'released').length;
+        ciEvidence.record('ownership-cleanup', {
+          trial,
+          released,
+          main,
+          guard,
+          staging,
+          unrelatedIntact,
+        });
+        assert.equal(released, 1, 'Expected exactly one successful ownership release.');
+        assert.equal(main, 'absent');
+        assert.equal(guard, 'absent');
+        assert.equal(staging, 0);
+        assert.equal(unrelatedIntact, true);
       }
     }
   }),

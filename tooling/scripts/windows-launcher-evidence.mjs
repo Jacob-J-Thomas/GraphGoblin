@@ -269,6 +269,59 @@ const SCHEMAS = {
     refused: integer(0, 64),
     other: integer(0, 64),
   },
+  'ownership-result': {
+    ...scope,
+    trial: integer(1, 16),
+    pid: integer(1, 2_147_483_647),
+    status: oneOf('acquired', 'refused'),
+    seededToken: matching(UUID),
+    ownerToken: nullable(matching(UUID)),
+    markerToken: nullable(matching(UUID)),
+    operation: nullable(
+      oneOf(
+        'stale-marker-unlink',
+        'recovery-marker-unlink',
+        'recovery-directory-remove',
+        'staging-marker-unlink',
+        'staging-directory-remove',
+      ),
+    ),
+    errorCode: nullable(matching(ERROR_CODE)),
+    diagnostic: oneOf('acquired', 'store-held', 'store-unverified', 'filesystem', 'other'),
+  },
+  'ownership-check': {
+    ...scope,
+    trial: integer(1, 16),
+    liveOwners: integer(0, 64),
+    recordedPid: nullable(integer(1, 2_147_483_647)),
+    recordedToken: nullable(matching(UUID)),
+    recordedOwnerMatched: boolean,
+    seededMarker: oneOf('present', 'absent', 'unavailable'),
+  },
+  'ownership-error': {
+    ...scope,
+    trial: integer(1, 16),
+    pid: integer(1, 2_147_483_647),
+    index: integer(0, 7),
+    operation: oneOf(
+      'stale-marker-unlink',
+      'recovery-marker-unlink',
+      'recovery-directory-remove',
+      'staging-marker-unlink',
+      'staging-directory-remove',
+    ),
+    code: nullable(matching(ERROR_CODE)),
+    markerToken: nullable(matching(UUID)),
+  },
+  'ownership-cleanup': {
+    ...scope,
+    trial: integer(1, 16),
+    released: integer(0, 64),
+    main: oneOf('present', 'absent', 'unavailable'),
+    guard: oneOf('present', 'absent', 'unavailable'),
+    staging: nullable(integer(0, 64)),
+    unrelatedIntact: boolean,
+  },
   cleanup: {
     ...scope,
     action: oneOf('gateway-drain', 'window-fixture', 'contenders'),
@@ -1233,6 +1286,66 @@ function streamContradiction(records) {
 const CONTENTION_TRIALS = [1, 2, 3];
 const ALIAS_SPELLINGS = ['alias', 'direct'];
 
+/** An ordinary ownership refusal must not conceal a structured filesystem/cleanup failure. */
+export function isExpectedOwnershipRefusal(result) {
+  return (
+    result.status === 'refused' &&
+    typeof result.error === 'string' &&
+    /another GraphGoblin process holds|Store ownership could not be verified/.test(result.error) &&
+    result.code === null &&
+    result.operation === null &&
+    result.markerToken === null &&
+    Array.isArray(result.failures) &&
+    result.failures.length === 0
+  );
+}
+
+/** All existing ownership receipts must agree before a trial can support a passing recording. */
+function successfulContention(records) {
+  const totals = records.filter((r) => r.type === 'contention');
+  const results = records.filter((r) => r.type === 'ownership-result');
+  const owners = results.filter((r) => r.status === 'acquired');
+  const checks = records.filter((r) => r.type === 'ownership-check');
+  const cleanups = records.filter((r) => r.type === 'ownership-cleanup');
+  if (totals.length !== 1 || owners.length !== 1 || checks.length !== 1 || cleanups.length !== 1)
+    return false;
+  const [total] = totals;
+  const [owner] = owners;
+  const [check] = checks;
+  const [cleanup] = cleanups;
+  return (
+    total.contenders >= 2 &&
+    total.acquired === 1 &&
+    total.refused === total.contenders - 1 &&
+    total.other === 0 &&
+    results.length === total.contenders &&
+    new Set(results.map((r) => r.pid)).size === total.contenders &&
+    new Set(results.map((r) => r.seededToken)).size === 1 &&
+    owner.ownerToken !== null &&
+    results.every(
+      (r) =>
+        r.errorCode === null &&
+        r.operation === null &&
+        r.markerToken === null &&
+        (r.status === 'acquired'
+          ? r.diagnostic === 'acquired'
+          : r.ownerToken === null &&
+            (r.diagnostic === 'store-held' || r.diagnostic === 'store-unverified')),
+    ) &&
+    !records.some((r) => r.type === 'ownership-error') &&
+    check.liveOwners === 1 &&
+    check.recordedOwnerMatched === true &&
+    check.recordedPid === owner.pid &&
+    check.recordedToken === owner.ownerToken &&
+    check.seededMarker === 'absent' &&
+    cleanup.released === 1 &&
+    cleanup.main === 'absent' &&
+    cleanup.guard === 'absent' &&
+    cleanup.staging === 0 &&
+    cleanup.unrelatedIntact === true
+  );
+}
+
 /** Counts and per-case outcomes from validated records. */
 export function summarize(records) {
   const byType = {};
@@ -1257,7 +1370,7 @@ export function summarize(records) {
   const fixtures = new Set();
   const states = new Set();
   const aliases = { junction: { record: null, released: [] }, dir: { record: null, released: [] } };
-  const trials = new Set();
+  const trials = new Map();
   for (const record of records) {
     byType[record.type] = (byType[record.type] ?? 0) + 1;
     const entry = Object.hasOwn(cases, record.case) ? cases[record.case] : undefined;
@@ -1290,12 +1403,13 @@ export function summarize(records) {
       aliases[record.kind].released.push(record.spelling);
     else if (
       record.case === 'lock-contention' &&
-      record.type === 'contention' &&
-      record.contenders >= 2 &&
-      record.acquired === 1 &&
-      record.other === 0
-    )
-      trials.add(record.trial);
+      record.subtest === 0 &&
+      (record.type === 'contention' || record.type.startsWith('ownership-'))
+    ) {
+      const receipts = trials.get(record.trial) ?? [];
+      receipts.push(record);
+      trials.set(record.trial, receipts);
+    }
   }
   for (const name of CASES)
     for (const { started, result } of subtests[name].values()) {
@@ -1314,7 +1428,10 @@ export function summarize(records) {
     omittedBytes: closed?.omittedBytes ?? 0,
     cases,
     aliases,
-    contention: [...trials].sort((a, b) => a - b),
+    contention: [...trials]
+      .filter(([, receipts]) => successfulContention(receipts))
+      .map(([trial]) => trial)
+      .sort((a, b) => a - b),
     fixturesWithoutState: [...fixtures].filter((fixture) => !states.has(fixture)).length,
   };
 }
