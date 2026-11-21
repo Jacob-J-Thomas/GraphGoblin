@@ -1,0 +1,210 @@
+{
+  "schema": "qa167i-acceptance-map/1",
+  "source": "184c95ac2d08590e258c084723eb9ab379f0bbe5",
+  "tree": "404700711621832629aef6d505b69076972474da",
+  "parent": "c6f08d4a62c1488690096f69f577a68c6d382cbc",
+  "target": "47ca4640793a81efa5bec661dba25627de314774",
+  "classes": {
+    "component-deterministic": "production WorkDeadline members driven by a controlled clock, compiled from the unchanged source in one assembly",
+    "native-deterministic": "public HelperProcess.Read with real Node children in the production private job; the shared clock advances only from callbacks",
+    "native-real-time": "real Stopwatch and real elapsed waits; ordinary scheduling, no fault injected",
+    "native-public-entry": "compiled launcher ordinary quiet entry or public-API-only harness",
+    "source-integration": "established by reading the committed source; not separately executed",
+    "LIMIT": "not observed in this QA; scope retained from earlier records"
+  },
+  "elements": [
+    {
+      "element": "One immutable monotonic absolute deadline from caller admission through preparation, setup, creation, drains and validation",
+      "evidence": [
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06",
+        "D10",
+        "D11",
+        "N5"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-deterministic",
+        "native-real-time",
+        "native-public-entry"
+      ],
+      "sourceIntegration": "Gateway.ReadHelper wraps argument/environment preparation and Read in work.Within with the same deadline (Launcher.cs 1085-1090); Read checks the deadline at entry, before and after CreateProcess, in each drain pass and around decode/validate/trim (955-1010)."
+    },
+    {
+      "element": "Deadline checked before ownership result consumption; a late free cannot clear the last held outcome",
+      "evidence": [
+        "D03",
+        "D06"
+      ],
+      "classes": [
+        "native-deterministic"
+      ],
+      "sourceIntegration": "StoreHasLiveOwner calls work.Check(\"ownership\") after ReadHelper and before reading the validated owner (1381-1390); Ensure maps a retry failure to HeldFailure (1229-1230). The private mapping itself is source integration; N3 reaches a retry timeout through public Ensure in real time."
+    },
+    {
+      "element": "Equality at the cutoff is expired",
+      "evidence": [
+        "D01",
+        "D02",
+        "D05",
+        "D06",
+        "D08"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-deterministic"
+      ]
+    },
+    {
+      "element": "Already-expired admission starts no callback and no native child",
+      "evidence": [
+        "D02",
+        "D04",
+        "N5"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-deterministic",
+        "native-public-entry"
+      ]
+    },
+    {
+      "element": "Audit example (250 ms admitted, 50 ms lost, 225 ms helper) refuses",
+      "evidence": [
+        "D03"
+      ],
+      "classes": [
+        "native-deterministic"
+      ],
+      "limit": "The held source was not executed; its acceptance of that example is the audit's source-established arithmetic, not a dynamic reproduction here."
+    },
+    {
+      "element": "Initial identity and ownership checks each have a separate 15-second cap starting before preparation",
+      "evidence": [
+        "D07",
+        "N6"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-public-entry"
+      ],
+      "sourceIntegration": "Ensure calls WorkDeadline.Start(WorkMilliseconds) immediately before ReadHelper for identity (1205) and for the first ownership sample (1216). The initial ownership cap was not observed natively."
+    },
+    {
+      "element": "Held retry expires at min(admission + 15000, release - 2000)",
+      "evidence": [
+        "D01",
+        "D07",
+        "D08",
+        "N3"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-public-entry"
+      ],
+      "sourceIntegration": "Ensure builds the retry with Recheck(releaseClock, StartupTimeoutSeconds * 1000) after the capped sleep and probe (1221-1227)."
+    },
+    {
+      "element": "Minimum-sample / 200 ms admission and sleep/probe order unchanged",
+      "evidence": [
+        "D08",
+        "N1",
+        "N2",
+        "maintained: held ownership retains guidance and budgets the last recheck"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-public-entry"
+      ],
+      "sourceIntegration": "The comparison retryWork.Remaining < max(200, sample) lives in private Ensure (1227); D08 establishes the Remaining values (200 / 199), N2 observes a refusal after one sample without attributing which comparison refused."
+    },
+    {
+      "element": "Valid free requirement; held guidance retained on an inconclusive retry",
+      "evidence": [
+        "D05",
+        "N1",
+        "N2",
+        "N3",
+        "F3 Q05/Q07/Q10",
+        "maintained strict-protocol subtest"
+      ],
+      "classes": [
+        "native-deterministic",
+        "native-public-entry"
+      ]
+    },
+    {
+      "element": "F3 strict ownership parser unchanged",
+      "evidence": [
+        "F3 replay 16/16 CONFORMS, 176/176 controls",
+        "maintained strict-protocol subtest"
+      ],
+      "classes": [
+        "native-public-entry"
+      ]
+    },
+    {
+      "element": "F4 independent cleanup deadline and precedence unchanged",
+      "evidence": [
+        "maintained --cleanup-deadline-checks (author-maintained mode)",
+        "D10",
+        "N3",
+        "N6"
+      ],
+      "classes": [
+        "component-deterministic",
+        "native-real-time"
+      ],
+      "limit": "Unconfirmed-cleanup runtime mapping, pending-I/O transfer, Win32 faults and visible dialog proof are not observed; their earlier LIMIT scopes are unchanged."
+    },
+    {
+      "element": "Synchronous OS calls are charged when they return, not interrupted",
+      "evidence": [],
+      "classes": [
+        "source-integration",
+        "LIMIT"
+      ],
+      "sourceIntegration": "Checks immediately before and after CreateProcess (972-979).",
+      "limit": "No delayed or faulted creation was injected."
+    },
+    {
+      "element": "Ordinary detached gateway, warm reuse and unrelated process survival",
+      "evidence": [
+        "N4",
+        "sentinel in native, F3 and maintained runs"
+      ],
+      "classes": [
+        "native-public-entry"
+      ]
+    },
+    {
+      "element": "On-time success",
+      "evidence": [
+        "D03 control",
+        "D04 control",
+        "D05",
+        "D06 control",
+        "D09",
+        "N1",
+        "N4",
+        "N5 control"
+      ],
+      "classes": [
+        "native-deterministic",
+        "native-real-time",
+        "native-public-entry"
+      ]
+    },
+    {
+      "element": "Controlled OS scheduling or kernel race reproduction",
+      "evidence": [],
+      "classes": [
+        "LIMIT"
+      ],
+      "limit": "Not performed or authorized; compiled shared-clock checks establish the decision only."
+    }
+  ]
+}

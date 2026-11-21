@@ -1,0 +1,117 @@
+{
+  "schema": "qa167i-cases/1",
+  "frozenFor": {
+    "source": "184c95ac2d08590e258c084723eb9ab379f0bbe5",
+    "tree": "404700711621832629aef6d505b69076972474da",
+    "parent": "c6f08d4a62c1488690096f69f577a68c6d382cbc",
+    "target": "47ca4640793a81efa5bec661dba25627de314774"
+  },
+  "derivation": "Expectations derive from the D167 decision, ADR-0086 and the candidate source; none from observation. Executable assertions for D cases are the frozen Qa167iDeadline.cs; native expectations are the data below as evaluated by the frozen qa167i-native.mjs.",
+  "deadlineCases": [
+    { "id": "D01", "evidence": "component-deterministic", "assertions": 10, "expect": "Recheck(clock=7750, release=10000) cutoff 8000: 250 ms remain; 7999 passes; 8000 (equality) and 8001 refuse helper-timeout with the closed ownership text; Remaining clamps at 0." },
+    { "id": "D02", "evidence": "component-deterministic + native-deterministic", "assertions": 11, "expect": "Within at/after the cutoff runs no operation; public Read entered at equality refuses helper-timeout with no marker, no validator call and no cleanup wait; a ReadHelper-shaped call after the cutoff runs no preparation and starts no child." },
+    { "id": "D03", "evidence": "native-deterministic", "assertions": 8, "expect": "Audit example: 250 ms admitted (fits 200 ms minimum), 50 ms preparation, real helper free output validated while 225 ms is charged: refuses helper-timeout at 8025, nothing returned. Control 50 + 199 returns the free response." },
+    { "id": "D04", "evidence": "native-deterministic", "assertions": 6, "expect": "Preparation reaching 8000 inside Within: Read refuses before native creation (no marker, no validation). Control preparation to 7999 runs the helper and returns ok with marker." },
+    { "id": "D05", "evidence": "native-deterministic", "assertions": 9, "expect": "Validator moving the clock: valid at 8000 -> helper-timeout; valid at 7999 -> returned ok; invalid at 8000 -> helper-timeout (expiry precedes invalid); invalid at 7999 -> helper-invalid. One validator call each." },
+    { "id": "D06", "evidence": "native-deterministic", "assertions": 4, "expect": "Read returns at 7999, caller time reaches 8000 before Within returns: helper-timeout and nothing delivered. Control delivers ok." },
+    { "id": "D07", "evidence": "component-deterministic + real-clock construction", "assertions": 8, "expect": "WorkMilliseconds 15000, CleanupMilliseconds 2000; long window retry capped at admission + 15000 (15999 passes, 16000 refuses); late admission still capped; public Start(15000) grants (14000, 15000] and is not expired." },
+    { "id": "D08", "evidence": "component-deterministic", "assertions": 8, "expect": "Release 8000: cutoff 6000 (5999 passes, 6000 refuses); admission at 5800 leaves 200, at 5801 leaves 199; admission at 6000 or 7000 is expired with 0 remaining and runs no work." },
+    { "id": "D09", "evidence": "native-real-time", "assertions": 5, "expect": "Real-clock retry deadline (release 10000): free response returned, Remaining decreased (no restart), not expired; public Start(5000) identity-shaped helper returns ok." },
+    { "id": "D10", "evidence": "native-real-time", "assertions": 5, "expect": "Real-clock cutoff 600 ms; 400 ms real preparation then a helper needing about 1500 ms: helper-timeout (cleanup confirmed, not unconfirmed), helper never finished, refusal returned < 4100 ms. Premises: cutoff (500, 600], preparation ended in [400, 600)." },
+    { "id": "D11", "evidence": "component-deterministic", "assertions": 5, "expect": "One cutoff 600: first operation to 400 returns, 200 remain; second 250 ms operation refuses helper-timeout; 0 remain." }
+  ],
+  "nativeCases": [
+    {
+      "id": "N1",
+      "kind": "fixture",
+      "name": "timely held-to-free admits the ordinary start path (fixture marker, not a ready gateway)",
+      "startupSeconds": 10,
+      "ownerRecord": true,
+      "scenario": { "identity": [{ "mode": "identity" }], "ownership": [{ "mode": "held", "delayMs": 300 }, { "mode": "free" }] },
+      "expect": {
+        "launcherExit": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": [2, 2],
+        "gatewayMarkers": 1,
+        "elapsedMs": [300, 9000],
+        "stderrIncludes": ["exited during startup with an unrecognized status (exit code 54)"]
+      }
+    },
+    {
+      "id": "N2",
+      "kind": "fixture",
+      "name": "insufficient remaining time after a held sample starts no new helper",
+      "startupSeconds": 3,
+      "ownerRecord": true,
+      "scenario": { "identity": [{ "mode": "identity" }], "ownership": [{ "mode": "held", "delayMs": 700 }] },
+      "expect": {
+        "launcherExit": 1,
+        "code": "store-held",
+        "identityCalls": 1,
+        "ownershipCalls": [1, 1],
+        "gatewayMarkers": 0,
+        "recordLock": true,
+        "elapsedMs": [700, 6000],
+        "stderrIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started.",
+          "Do not stop an unrelated process or delete an unverified lock."
+        ]
+      }
+    },
+    {
+      "id": "N3",
+      "kind": "fixture",
+      "name": "stalled held retry ends at the reserved cutoff and retains held guidance",
+      "startupSeconds": 6,
+      "ownerRecord": true,
+      "scenario": { "identity": [{ "mode": "identity" }], "ownership": [{ "mode": "held", "delayMs": 300 }, { "mode": "stall" }] },
+      "expect": {
+        "launcherExit": 1,
+        "code": "store-held",
+        "identityCalls": 1,
+        "ownershipCalls": [2, 2],
+        "gatewayMarkers": 0,
+        "recordLock": true,
+        "elapsedMs": [4000, 9000],
+        "stderrIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started.",
+          "Do not stop an unrelated process or delete an unverified lock."
+        ],
+        "stderrExcludes": ["exceeded its work budget"],
+        "stalled": { "kind": "ownership", "index": 2, "maxLifetimeMs": 4000 }
+      }
+    },
+    {
+      "id": "N4",
+      "kind": "real-gateway",
+      "name": "ordinary detached gateway: cold start, warm reuse, unrelated sentinel survival, driver drain teardown"
+    },
+    {
+      "id": "N5",
+      "kind": "public-entry",
+      "name": "expired absolute deadline supplied at the public helper entry starts no owned marker child"
+    },
+    {
+      "id": "N6",
+      "kind": "fixture",
+      "name": "stalled initial identity check refuses at its 15-second cap",
+      "startupSeconds": 10,
+      "ownerRecord": false,
+      "scenario": { "identity": [{ "mode": "stall" }], "ownership": [{ "mode": "free" }] },
+      "expect": {
+        "launcherExit": 1,
+        "code": "helper-timeout",
+        "identityCalls": 1,
+        "ownershipCalls": [0, 0],
+        "gatewayMarkers": 0,
+        "elapsedMs": [15000, 20000],
+        "stderrIncludes": ["The read-only identity check exceeded its work budget."],
+        "stalled": { "kind": "identity", "index": 1, "maxLifetimeMs": 15000 }
+      }
+    }
+  ]
+}

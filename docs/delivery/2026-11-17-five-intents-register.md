@@ -325,3 +325,31 @@ This checkpoint records correction and bounded QA, not final acceptance. Correct
 bounded opposite-family corrective review and the fresh independent final audit remain required.
 The general-scan budget remains two of three consumed. #543 and #544 stay separately parked,
 PR #460 stays held, and owner decision review and any rework remain before owner QA.
+
+## November 21 amendment: D167, preserve the caller's work deadline
+
+The third and final general scan returned **CHANGES REQUIRED** at `c6f08d4a`: F3 and F4 were
+resolved, but F5 showed that setup before a new helper stopwatch could extend a held retry's
+admitted work into its cleanup reserve. The counterexample is established by source ordering;
+it is not an observed late gateway start, store mutation or OS scheduling race.
+[Original third audit](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/541#issuecomment-7058520258)
+and [D167 correction contract](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7058549018).
+
+Source `184c95ac2d08590e258c084723eb9ab379f0bbe5` carries one monotonic absolute work cutoff
+through argument/environment preparation, resource setup, native admission, output validation
+and ownership-result consumption. Initial identity and ownership checks each retain a separate
+15-second budget. A held retry expires at the earlier of admission plus 15 seconds and the
+outer release deadline minus the two-second cleanup reserve. Equality expires. Synchronous
+operations are charged when they return; they are not claimed to be interruptible. The strict
+ownership parser, independent cleanup deadline, prior-sample/200-ms admission and closed
+failure precedence remain intact.
+
+All **three general scans are consumed**. The existing D-035/D-042 completion path now requires
+the bounded Fable correction review, independent Opus behavior QA, fresh exact-head/current-target
+CI and native artifact verification, and an explicit coordinator disposition before signed merge.
+It does not create a fourth general scan, renew Astra sign-off or erase the original negative
+verdict. The [deadline evidence archive](../qa/2026-11-21-windows-helper-deadline/README.md)
+records source bindings, actual verification results, original failures and remaining limits.
+The earlier C14/C25–C31 and visual-dialog limits remain unless a named new observation directly
+addresses one. #543/#544 stay parked, PR #460 stays held, and consolidated owner decision
+review and any requested rework remain before owner QA.

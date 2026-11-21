@@ -1,0 +1,21 @@
+# Independent D167/F5 QA — derived public evidence
+
+The genuine independent Claude Code Opus 5.5 xhigh provider reports **PASS** on source `184c95ac2d08590e258c084723eb9ab379f0bbe5`, tree `404700711621832629aef6d505b69076972474da`, parent `c6f08d4a62c1488690096f69f577a68c6d382cbc`, target `47ca4640793a81efa5bec661dba25627de314774`. This publication-safe subset is an administrative projection of completed evidence; it grants no coordinator acceptance, review disposition, CI qualification, cap reset or merge authority.
+
+| Recorded group                         | Mechanically reconciled outcome                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| Independent deadline cases             | 11/11 cases, 79/79 assertions                                                    |
+| New independent native public controls | 6/6 groups, 97/97 assertions                                                     |
+| Unchanged frozen F3-driver replay      | 16/16 CONFORMS, 176/176 controls, 88/88 corrected-contract checks                |
+| Raw F3 baseline comparison             | Nine matched, seven intentionally differed; 65/88 prediction checks matched      |
+| Separately executed maintained group   | 9/9 TAP tests: one parent plus eight subtests; zero failures/cancellations/skips |
+
+All 492 whole-root manifest members (provider excluded), 14 frozen harness members, 27 original public members and 11 original F3-driver members matched. Source and assembly/build/run bindings reconcile. The provider final-message SHA-256 is `0f6200b1751cf793337051107628f37ac48513f0c64893a2f2a79838826494bb`; the detailed QA REPORT is a separate original with its own digest in [projection-map.json](projection-map.json).
+
+Two administrative qualifications remain explicit. Six new native groups plus the separate maintained group is **seven groups**, beyond the brief's six-total cap; coordinator disposition is required. Six compiler invocations failed across two prefreeze direct-shell batches before successful compile-only adapter checks. Two setup invocation adjustments were used; fixture-source changes remained zero. Those are retained administrative setup failures. F3's zero setup faults does not erase them. No retesting or additional review was performed by this staging task.
+
+Read [REPORT.md](REPORT.md), [case-results.json](case-results.json) and [acceptance-map.json](acceptance-map.json) at their actual evidence tiers. Shared-clock checks establish timing decisions; the late-free held mapping also uses source integration. No controlled OS scheduling/kernel/permission race was reproduced. Initial ownership-cap native coverage, unconfirmed-cleanup mapping, pending I/O, Win32 faults and visible dialog remain limited or unobserved. N1/F3 markers are fixture admission, not ready gateways. N4 alone exercised a real disposable gateway and the ordinary shutdown API; authenticated-flow QA is not inferred. Earlier failed aggregates and visual NOT PERFORMED remain retained.
+
+The common scrubber source containing the local-account literal is deliberately **omitted**. The public harness is therefore incomplete and is not the exact executed 14-file set. Exact frozen sources remain privately sealed. The two `MANIFEST.original.sha256` files are unchanged historical hash indexes, not verification manifests for this derivative subset. Other copied sources preserve their bytes unless specifically labelled as a prefix or Markdown projection. [Projection mapping](projection-map.json) binds every original and actual public hash, including the omission; [evidence-manifest.json](evidence-manifest.json) lists this stage's actual files. No binary, private full artifact inventory, credential value or owner-state dump is published here.
+
+Bounded corrective review, fresh exact-publication CI/native verification and explicit D-035/D-042 coordinator disposition remain separate gates. [D167](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7058549018) preserves the negative third audit and consumed three-scan cap. This stage does not alter the root's combined publication stage or any original QA file.

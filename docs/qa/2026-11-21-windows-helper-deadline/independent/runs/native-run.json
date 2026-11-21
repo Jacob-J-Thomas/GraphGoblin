@@ -1,0 +1,1211 @@
+{
+  "schema": "qa167i-native-run/1",
+  "runId": "native-20261121T070224Z-cf8476",
+  "startUtc": "2026-11-21T07:02:24.677Z",
+  "node": "v22.23.4",
+  "execPath": "<home>\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "ports": [
+    25880,
+    25899
+  ],
+  "setupFaults": [],
+  "cases": [
+    {
+      "id": "N1",
+      "name": "timely held-to-free admits the ordinary start path (fixture marker, not a ready gateway)",
+      "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+      "observed": {
+        "launcherPid": 36424,
+        "launcherExit": 1,
+        "launcherWatchdog": false,
+        "launcherMs": 1455,
+        "stdoutBytes": 0,
+        "stderr": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.\r\n\r\nLog folder: <scratch>\\native-20261121T070224Z-cf8476\\N1\\config\r\n\r\nConfiguration: <scratch>\\native-20261121T070224Z-cf8476\\N1\\config\\GraphGoblin.json\r\n",
+        "record": {
+          "time": "2026-11-21T07:02:26.6039031Z",
+          "pid": 36424,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "unknown-exit",
+          "childExit": 54,
+          "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+          "config": "<scratch>\\native-20261121T070224Z-cf8476\\N1\\config\\GraphGoblin.json",
+          "logFolder": "<scratch>\\native-20261121T070224Z-cf8476\\N1\\config"
+        },
+        "recordCount": 1,
+        "identityCalls": 1,
+        "ownershipCalls": 2,
+        "helperRuns": [
+          {
+            "kind": "identity",
+            "index": 1,
+            "pid": 7372,
+            "ppidIsLauncher": true,
+            "startAt": 1795244545586,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          },
+          {
+            "kind": "ownership",
+            "index": 1,
+            "pid": 31800,
+            "ppidIsLauncher": true,
+            "startAt": 1795244545709,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          },
+          {
+            "kind": "ownership",
+            "index": 2,
+            "pid": 19896,
+            "ppidIsLauncher": true,
+            "startAt": 1795244546354,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          }
+        ],
+        "gatewayMarkers": [
+          {
+            "pid": 20000,
+            "ppidIsLauncher": true,
+            "port": "25880",
+            "logDirProvided": true
+          }
+        ],
+        "storeBefore": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966601",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "storeAfter": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966601",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "lockBefore": {
+          "dev": "810877956",
+          "ino": "281474978966601",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "lockAfter": {
+          "dev": "810877956",
+          "ino": "281474978966601",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "port": 25880,
+        "portFreeAfter": true,
+        "sentinelAlive": true
+      },
+      "assertions": [
+        {
+          "name": "launcher exited without driver watchdog",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "launcher exit code",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "stdout empty",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "closed launcher.log code",
+          "pass": true,
+          "expected": "unknown-exit",
+          "observed": "unknown-exit"
+        },
+        {
+          "name": "launcher.log stage gateway",
+          "pass": true,
+          "expected": "gateway",
+          "observed": "gateway"
+        },
+        {
+          "name": "identity helper calls",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "ownership helper calls",
+          "pass": true,
+          "expected": [
+            2,
+            2
+          ],
+          "observed": 2
+        },
+        {
+          "name": "fixture gateway-start markers",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "every helper and marker was created by this launcher",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "helpers": [
+              true,
+              true,
+              true
+            ],
+            "markers": [
+              true
+            ]
+          }
+        },
+        {
+          "name": "non-stalled helper roots exited naturally with 0",
+          "pass": true,
+          "expected": true,
+          "observed": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "launcher elapsed within expected bounds",
+          "pass": true,
+          "expected": [
+            300,
+            9000
+          ],
+          "observed": 1455
+        },
+        {
+          "name": "store names and bytes preserved",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "owner record bytes and file identity preserved",
+          "pass": true,
+          "expected": {
+            "dev": "810877956",
+            "ino": "281474978966601",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          },
+          "observed": {
+            "dev": "810877956",
+            "ino": "281474978966601",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        },
+        {
+          "name": "owned port not listening afterwards",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "unrelated sentinel alive",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "launcher-observed fixture gateway exit",
+          "pass": true,
+          "expected": 54,
+          "observed": 54
+        },
+        {
+          "name": "stderr includes: exited during startup with an unrecognized status (exit code 54)",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "N2",
+      "name": "insufficient remaining time after a held sample starts no new helper",
+      "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+      "observed": {
+        "launcherPid": 29160,
+        "launcherExit": 1,
+        "launcherWatchdog": false,
+        "launcherMs": 1157,
+        "stdoutBytes": 0,
+        "stderr": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\native-20261121T070224Z-cf8476\\N2\\store\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <scratch>\\native-20261121T070224Z-cf8476\\N2\\config\\GraphGoblin.json\r\n",
+        "record": {
+          "time": "2026-11-21T07:02:29.5444243Z",
+          "pid": 29160,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\native-20261121T070224Z-cf8476\\N2\\store\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<scratch>\\native-20261121T070224Z-cf8476\\N2\\config\\GraphGoblin.json",
+          "lock": "<scratch>\\native-20261121T070224Z-cf8476\\N2\\store\\graphgoblin.lock"
+        },
+        "recordCount": 1,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "helperRuns": [
+          {
+            "kind": "identity",
+            "index": 1,
+            "pid": 11444,
+            "ppidIsLauncher": true,
+            "startAt": 1795244548672,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          },
+          {
+            "kind": "ownership",
+            "index": 1,
+            "pid": 41268,
+            "ppidIsLauncher": true,
+            "startAt": 1795244548819,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          }
+        ],
+        "gatewayMarkers": [],
+        "storeBefore": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966610",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "storeAfter": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966610",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "lockBefore": {
+          "dev": "810877956",
+          "ino": "281474978966610",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "lockAfter": {
+          "dev": "810877956",
+          "ino": "281474978966610",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "port": 25881,
+        "portFreeAfter": true,
+        "sentinelAlive": true
+      },
+      "assertions": [
+        {
+          "name": "launcher exited without driver watchdog",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "launcher exit code",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "stdout empty",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "closed launcher.log code",
+          "pass": true,
+          "expected": "store-held",
+          "observed": "store-held"
+        },
+        {
+          "name": "launcher.log stage gateway",
+          "pass": true,
+          "expected": "gateway",
+          "observed": "gateway"
+        },
+        {
+          "name": "identity helper calls",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "ownership helper calls",
+          "pass": true,
+          "expected": [
+            1,
+            1
+          ],
+          "observed": 1
+        },
+        {
+          "name": "fixture gateway-start markers",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "every helper and marker was created by this launcher",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "helpers": [
+              true,
+              true
+            ],
+            "markers": []
+          }
+        },
+        {
+          "name": "non-stalled helper roots exited naturally with 0",
+          "pass": true,
+          "expected": true,
+          "observed": [
+            0,
+            0
+          ]
+        },
+        {
+          "name": "launcher elapsed within expected bounds",
+          "pass": true,
+          "expected": [
+            700,
+            6000
+          ],
+          "observed": 1157
+        },
+        {
+          "name": "store names and bytes preserved",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "owner record bytes and file identity preserved",
+          "pass": true,
+          "expected": {
+            "dev": "810877956",
+            "ino": "281474978966610",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          },
+          "observed": {
+            "dev": "810877956",
+            "ino": "281474978966610",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        },
+        {
+          "name": "owned port not listening afterwards",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "unrelated sentinel alive",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "record lock is the held lock path",
+          "pass": true,
+          "expected": "lockPath",
+          "observed": "<scratch>\\native-20261121T070224Z-cf8476\\N2\\store\\graphgoblin.lock"
+        },
+        {
+          "name": "stderr includes: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr includes: No second gateway was started.",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr includes: Do not stop an unrelated process or delete an unverified lock.",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "N3",
+      "name": "stalled held retry ends at the reserved cutoff and retains held guidance",
+      "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+      "observed": {
+        "launcherPid": 36032,
+        "launcherExit": 1,
+        "launcherWatchdog": false,
+        "launcherMs": 4264,
+        "stdoutBytes": 0,
+        "stderr": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\native-20261121T070224Z-cf8476\\N3\\store\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <scratch>\\native-20261121T070224Z-cf8476\\N3\\config\\GraphGoblin.json\r\n",
+        "record": {
+          "time": "2026-11-21T07:02:35.6027417Z",
+          "pid": 36032,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\native-20261121T070224Z-cf8476\\N3\\store\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<scratch>\\native-20261121T070224Z-cf8476\\N3\\config\\GraphGoblin.json",
+          "lock": "<scratch>\\native-20261121T070224Z-cf8476\\N3\\store\\graphgoblin.lock"
+        },
+        "recordCount": 1,
+        "identityCalls": 1,
+        "ownershipCalls": 2,
+        "helperRuns": [
+          {
+            "kind": "identity",
+            "index": 1,
+            "pid": 16476,
+            "ppidIsLauncher": true,
+            "startAt": 1795244551553,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          },
+          {
+            "kind": "ownership",
+            "index": 1,
+            "pid": 27388,
+            "ppidIsLauncher": true,
+            "startAt": 1795244551663,
+            "exitCode": 0,
+            "naturalExit": true,
+            "heartbeats": null,
+            "heartbeatLifetimeMs": null,
+            "heartbeatStopped": null,
+            "lastHeartbeatBeforeLauncherExit": null
+          },
+          {
+            "kind": "ownership",
+            "index": 2,
+            "pid": 29104,
+            "ppidIsLauncher": true,
+            "startAt": 1795244552320,
+            "exitCode": null,
+            "naturalExit": false,
+            "heartbeats": 53,
+            "heartbeatLifetimeMs": 3233,
+            "heartbeatStopped": true,
+            "lastHeartbeatBeforeLauncherExit": true
+          }
+        ],
+        "gatewayMarkers": [],
+        "storeBefore": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966618",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "storeAfter": [
+          {
+            "path": "graphgoblin.lock",
+            "type": "file",
+            "dev": "810877956",
+            "ino": "281474978966618",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        ],
+        "lockBefore": {
+          "dev": "810877956",
+          "ino": "281474978966618",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "lockAfter": {
+          "dev": "810877956",
+          "ino": "281474978966618",
+          "bytes": 85,
+          "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+        },
+        "port": 25882,
+        "portFreeAfter": true,
+        "sentinelAlive": true
+      },
+      "assertions": [
+        {
+          "name": "launcher exited without driver watchdog",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "launcher exit code",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "stdout empty",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "closed launcher.log code",
+          "pass": true,
+          "expected": "store-held",
+          "observed": "store-held"
+        },
+        {
+          "name": "launcher.log stage gateway",
+          "pass": true,
+          "expected": "gateway",
+          "observed": "gateway"
+        },
+        {
+          "name": "identity helper calls",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "ownership helper calls",
+          "pass": true,
+          "expected": [
+            2,
+            2
+          ],
+          "observed": 2
+        },
+        {
+          "name": "fixture gateway-start markers",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "every helper and marker was created by this launcher",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "helpers": [
+              true,
+              true,
+              true
+            ],
+            "markers": []
+          }
+        },
+        {
+          "name": "non-stalled helper roots exited naturally with 0",
+          "pass": true,
+          "expected": true,
+          "observed": [
+            0,
+            0
+          ]
+        },
+        {
+          "name": "launcher elapsed within expected bounds",
+          "pass": true,
+          "expected": [
+            4000,
+            9000
+          ],
+          "observed": 4264
+        },
+        {
+          "name": "store names and bytes preserved",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "owner record bytes and file identity preserved",
+          "pass": true,
+          "expected": {
+            "dev": "810877956",
+            "ino": "281474978966618",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          },
+          "observed": {
+            "dev": "810877956",
+            "ino": "281474978966618",
+            "bytes": 85,
+            "sha256": "e2bf19f593490c2c2b9aaad79f42b0f3ce7058abbff5227d2bd8fc352424f79f"
+          }
+        },
+        {
+          "name": "owned port not listening afterwards",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "unrelated sentinel alive",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "record lock is the held lock path",
+          "pass": true,
+          "expected": "lockPath",
+          "observed": "<scratch>\\native-20261121T070224Z-cf8476\\N3\\store\\graphgoblin.lock"
+        },
+        {
+          "name": "stderr includes: another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr includes: No second gateway was started.",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr includes: Do not stop an unrelated process or delete an unverified lock.",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr excludes: exceeded its work budget",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "stalled helper observed",
+          "pass": true,
+          "expected": true,
+          "observed": 53
+        },
+        {
+          "name": "stalled helper had no natural exit (terminated by the launcher job)",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "stalled helper heartbeat stopped after launcher exit",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "stopped": true,
+            "beforeExit": true
+          }
+        },
+        {
+          "name": "stalled helper lifetime < 4000 ms",
+          "pass": true,
+          "expected": "< 4000",
+          "observed": 3233
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "N4",
+      "name": "ordinary detached gateway: cold start, warm reuse, unrelated sentinel survival, driver drain teardown",
+      "entry": "GraphGoblin.exe --config <file> --ensure-gateway (real built gateway)",
+      "observed": {
+        "port": 25883,
+        "cold": {
+          "pid": 5320,
+          "exit": 0,
+          "watchdog": false,
+          "ms": 8066,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        "afterCold": {
+          "status": 200,
+          "pid": "24672",
+          "instance": "59cb7fec80265b7f6473f5e113bf13110cc5caa22def697091306a0bc61b22f8",
+          "phase": "running"
+        },
+        "warm": {
+          "pid": 38892,
+          "exit": 0,
+          "watchdog": false,
+          "ms": 1499,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        "afterWarm": {
+          "status": 200,
+          "pid": "24672",
+          "instance": "59cb7fec80265b7f6473f5e113bf13110cc5caa22def697091306a0bc61b22f8",
+          "phase": "running"
+        },
+        "launcherRecords": 0,
+        "gatewayLogPresent": true,
+        "sentinelBefore": true,
+        "sentinelDuring": true,
+        "sentinelAfter": true,
+        "teardown": {
+          "kind": "driver-teardown-drain",
+          "requestedAt": "2026-11-21T07:02:47.040Z",
+          "status": 202,
+          "drained": true,
+          "portFreeAfter": true,
+          "completedAt": "2026-11-21T07:02:47.578Z"
+        }
+      },
+      "assertions": [
+        {
+          "name": "cold click exits 0 with empty stdout/stderr",
+          "pass": true,
+          "expected": "0, empty",
+          "observed": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "detached gateway healthy after the launcher exited",
+          "pass": true,
+          "expected": 200,
+          "observed": 200
+        },
+        {
+          "name": "gateway reports a 64-hex instance identity",
+          "pass": true,
+          "expected": "64 hex",
+          "observed": "59cb7fec80265b7f6473f5e113bf13110cc5caa22def697091306a0bc61b22f8"
+        },
+        {
+          "name": "gateway is a distinct process from the cold launcher",
+          "pass": true,
+          "expected": "!= launcher pid",
+          "observed": {
+            "gateway": "24672",
+            "launcher": 5320
+          }
+        },
+        {
+          "name": "warm click exits 0 with empty stdout/stderr",
+          "pass": true,
+          "expected": "0, empty",
+          "observed": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "warm click reused the same gateway (same pid and identity)",
+          "pass": true,
+          "expected": "24672",
+          "observed": "24672"
+        },
+        {
+          "name": "no launcher.log refusal records",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "unrelated sentinel alive before, during and after",
+          "pass": true,
+          "expected": true,
+          "observed": [
+            true,
+            true,
+            true
+          ]
+        },
+        {
+          "name": "driver drain teardown completed and port freed",
+          "pass": true,
+          "expected": true,
+          "observed": [
+            true,
+            true
+          ]
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "N5",
+      "name": "expired absolute deadline supplied at the public helper entry starts no owned marker child",
+      "entry": "Qa167iPublicEntry.exe (public HelperProcess.Read + WorkDeadline.Start)",
+      "observed": {
+        "pid": 42748,
+        "exit": 0,
+        "ms": 3298,
+        "result": {
+          "schema": "qa167i-public-entry-result/1",
+          "pid": 42748,
+          "startUtc": "2026-11-21T07:02:47.7008809Z",
+          "expired": {
+            "code": "helper-timeout",
+            "message": "The read-only identity check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started.",
+            "ms": 6,
+            "validations": 0,
+            "markerExists": false
+          },
+          "onTime": {
+            "code": "returned",
+            "value": "ok",
+            "ms": 140,
+            "validations": 1,
+            "markerExists": true
+          },
+          "endUtc": "2026-11-21T07:02:50.8681632Z"
+        }
+      },
+      "assertions": [
+        {
+          "name": "public harness completed",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "public Read with Start(0) refuses helper-timeout",
+          "pass": true,
+          "expected": "helper-timeout",
+          "observed": "helper-timeout"
+        },
+        {
+          "name": "expired entry: owned marker never written (no native child ran)",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "expired entry: validator never called",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "expired entry returned without a cleanup allowance (< 1000 ms)",
+          "pass": true,
+          "expected": "< 1000",
+          "observed": 6
+        },
+        {
+          "name": "control Start(15000) returns ok",
+          "pass": true,
+          "expected": "ok",
+          "observed": "ok"
+        },
+        {
+          "name": "control marker written by the on-time helper",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "unrelated sentinel alive",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "N6",
+      "name": "stalled initial identity check refuses at its 15-second cap",
+      "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+      "observed": {
+        "launcherPid": 1368,
+        "launcherExit": 1,
+        "launcherWatchdog": false,
+        "launcherMs": 15331,
+        "stdoutBytes": 0,
+        "stderr": "The read-only identity check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started.\r\n\r\nConfiguration: <scratch>\\native-20261121T070224Z-cf8476\\N6\\config\\GraphGoblin.json\r\n",
+        "record": {
+          "time": "2026-11-21T07:03:06.1175682Z",
+          "pid": 1368,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-timeout",
+          "message": "The read-only identity check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started.",
+          "config": "<scratch>\\native-20261121T070224Z-cf8476\\N6\\config\\GraphGoblin.json"
+        },
+        "recordCount": 1,
+        "identityCalls": 1,
+        "ownershipCalls": 0,
+        "helperRuns": [
+          {
+            "kind": "identity",
+            "index": 1,
+            "pid": 17128,
+            "ppidIsLauncher": true,
+            "startAt": 1795244571146,
+            "exitCode": null,
+            "naturalExit": false,
+            "heartbeats": 242,
+            "heartbeatLifetimeMs": 14900,
+            "heartbeatStopped": true,
+            "lastHeartbeatBeforeLauncherExit": true
+          }
+        ],
+        "gatewayMarkers": [],
+        "storeBefore": [],
+        "storeAfter": [],
+        "lockBefore": null,
+        "lockAfter": null,
+        "port": 25884,
+        "portFreeAfter": true,
+        "sentinelAlive": true
+      },
+      "assertions": [
+        {
+          "name": "launcher exited without driver watchdog",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "launcher exit code",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "stdout empty",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "closed launcher.log code",
+          "pass": true,
+          "expected": "helper-timeout",
+          "observed": "helper-timeout"
+        },
+        {
+          "name": "launcher.log stage gateway",
+          "pass": true,
+          "expected": "gateway",
+          "observed": "gateway"
+        },
+        {
+          "name": "identity helper calls",
+          "pass": true,
+          "expected": 1,
+          "observed": 1
+        },
+        {
+          "name": "ownership helper calls",
+          "pass": true,
+          "expected": [
+            0,
+            0
+          ],
+          "observed": 0
+        },
+        {
+          "name": "fixture gateway-start markers",
+          "pass": true,
+          "expected": 0,
+          "observed": 0
+        },
+        {
+          "name": "every helper and marker was created by this launcher",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "helpers": [
+              true
+            ],
+            "markers": []
+          }
+        },
+        {
+          "name": "non-stalled helper roots exited naturally with 0",
+          "pass": true,
+          "expected": true,
+          "observed": []
+        },
+        {
+          "name": "launcher elapsed within expected bounds",
+          "pass": true,
+          "expected": [
+            15000,
+            20000
+          ],
+          "observed": 15331
+        },
+        {
+          "name": "store names and bytes preserved",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "owner record bytes and file identity preserved",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "owned port not listening afterwards",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "unrelated sentinel alive",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stderr includes: The read-only identity check exceeded its work budget.",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "stalled helper observed",
+          "pass": true,
+          "expected": true,
+          "observed": 242
+        },
+        {
+          "name": "stalled helper had no natural exit (terminated by the launcher job)",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "stalled helper heartbeat stopped after launcher exit",
+          "pass": true,
+          "expected": true,
+          "observed": {
+            "stopped": true,
+            "beforeExit": true
+          }
+        },
+        {
+          "name": "stalled helper lifetime < 15000 ms",
+          "pass": true,
+          "expected": "< 15000",
+          "observed": 14900
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "checkout": {
+    "head": "184c95ac2d08590e258c084723eb9ab379f0bbe5",
+    "tree": "404700711621832629aef6d505b69076972474da",
+    "parents": [
+      "c6f08d4a62c1488690096f69f577a68c6d382cbc"
+    ],
+    "trackedChanges": 0,
+    "launcherBlob": "4293a97d549cc8920485f86d13e1ab7dce12e77a",
+    "matches": true
+  },
+  "assemblies": {
+    "launcher": {
+      "sha256": "a4db890920f57967644b9ed1d533a4ae89e357a8c40ce9b16114bbe9e283bab2",
+      "recorded": "a4db890920f57967644b9ed1d533a4ae89e357a8c40ce9b16114bbe9e283bab2"
+    },
+    "publicEntry": {
+      "sha256": "25317c704e22a2f35209378a776f235f3b0dfee008a36a2c1bc9d6f58e8c3ff2",
+      "recorded": "25317c704e22a2f35209378a776f235f3b0dfee008a36a2c1bc9d6f58e8c3ff2"
+    },
+    "launcherSource": {
+      "sha256": "34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce",
+      "recorded": "34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce"
+    }
+  },
+  "fixtureRepo": {
+    "apps/api/dist/instance-identity.js": "e342c23169b7801b6d4583d3ea5e07a79ce8eba229e2b002a820d3e5848d9c28",
+    "apps/api/dist/main.js": "4920834e8b753ccdc44ac19d274d5628790e5a60621deca0ae37d7d0468eecff",
+    "apps/api/dist/windows-log/guard.js": "440ea1dd1d154b55db777ac94adddd09b1f5f33388fe9a51fb3b78ef8a390127",
+    "apps/web/dist/index.html": "7debbf38068fca095ad1218b20a16dfa39cf588166d1afc3a465deefd822d9a0",
+    "package.json": "9817113a9f0acbc58cbe553f7c696433758c9a8c47d33a6ce89d6f0eefa148dd"
+  },
+  "sentinel": {
+    "pid": 44596,
+    "startedUtc": "2026-11-21T07:02:25.094Z",
+    "aliveAtTeardown": true,
+    "teardown": {
+      "kind": "driver-teardown",
+      "code": null,
+      "signal": "SIGTERM",
+      "at": "2026-11-21T07:03:08.041Z"
+    }
+  },
+  "endUtc": "2026-11-21T07:03:08.041Z",
+  "status": "COMPLETED",
+  "summary": {
+    "cases": 6,
+    "passed": 6,
+    "failed": 0,
+    "assertions": 97,
+    "assertionsPassed": 97
+  }
+}
