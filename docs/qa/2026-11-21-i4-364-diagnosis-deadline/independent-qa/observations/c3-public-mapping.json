@@ -1,0 +1,3884 @@
+{
+  "driver": "c3-public-mapping",
+  "utc": "2026-11-21T16:45:40.855Z",
+  "node": "v22.23.4",
+  "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "TEMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "TMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "passed": 66,
+  "failed": 0,
+  "predicates": [
+    {
+      "caseId": "setup",
+      "name": "seams bound for candidate process.js (fs, child, kill)",
+      "pass": true,
+      "observed": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ],
+      "expected": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ]
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "turn terminal",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "three successful probes then one refused turn",
+      "pass": true,
+      "observed": [
+        [
+          "version",
+          true
+        ],
+        [
+          "help",
+          true
+        ],
+        [
+          "auth",
+          true
+        ],
+        [
+          "turn",
+          false
+        ]
+      ],
+      "expected": [
+        [
+          "version",
+          true
+        ],
+        [
+          "help",
+          true
+        ],
+        [
+          "auth",
+          true
+        ],
+        [
+          "turn",
+          false
+        ]
+      ]
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "turn refused natively with ENOENT",
+      "pass": true,
+      "observed": {
+        "code": "ENOENT",
+        "syscallIsSpawn": true,
+        "atMs": 738.2255,
+        "pidAtError": false
+      },
+      "expected": "ENOENT spawn"
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "public event mapping with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "result error mapping",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "timely diagnosis settled well within the budget",
+      "pass": true,
+      "observed": 1.9814000000000078,
+      "expected": "< 500 ms"
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "no runner timer pending; no listener left; no kill",
+      "pass": true,
+      "observed": {
+        "timers": 0,
+        "listeners": 0,
+        "kills": 0
+      },
+      "expected": {
+        "timers": 0,
+        "listeners": 0,
+        "kills": 0
+      }
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "privacy: events, result and sessionId has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M1b-wd-is-file",
+      "name": "timely lookups",
+      "pass": true,
+      "observed": [
+        [
+          "binary",
+          "stats:non-directory"
+        ],
+        [
+          "binary.com",
+          "error:ENOENT"
+        ],
+        [
+          "binary.exe",
+          "error:ENOENT"
+        ],
+        [
+          "cwd",
+          "stats:non-directory"
+        ]
+      ],
+      "expected": [
+        [
+          "binary",
+          "stats:non-directory"
+        ],
+        [
+          "binary.com",
+          "error:ENOENT"
+        ],
+        [
+          "binary.exe",
+          "error:ENOENT"
+        ],
+        [
+          "cwd",
+          "stats:non-directory"
+        ]
+      ]
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "turn terminal",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "three successful probes then one refused turn",
+      "pass": true,
+      "observed": [
+        [
+          "version",
+          true
+        ],
+        [
+          "help",
+          true
+        ],
+        [
+          "auth",
+          true
+        ],
+        [
+          "turn",
+          false
+        ]
+      ],
+      "expected": [
+        [
+          "version",
+          true
+        ],
+        [
+          "help",
+          true
+        ],
+        [
+          "auth",
+          true
+        ],
+        [
+          "turn",
+          false
+        ]
+      ]
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "turn refused natively with ENOENT",
+      "pass": true,
+      "observed": {
+        "code": "ENOENT",
+        "syscallIsSpawn": true,
+        "atMs": 3354.5455,
+        "pidAtError": false
+      },
+      "expected": "ENOENT spawn"
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "public event mapping with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_NOT_INSTALLED",
+          "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_NOT_INSTALLED",
+          "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "result error mapping",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_NOT_INSTALLED",
+          "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_NOT_INSTALLED",
+          "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "timely diagnosis settled well within the budget",
+      "pass": true,
+      "observed": 0.6484000000000378,
+      "expected": "< 500 ms"
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "no runner timer pending; no listener left; no kill",
+      "pass": true,
+      "observed": {
+        "timers": 0,
+        "listeners": 0,
+        "kills": 0
+      },
+      "expected": {
+        "timers": 0,
+        "listeners": 0,
+        "kills": 0
+      }
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "privacy: events, result and sessionId has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M1c-executable-missing-at-turn",
+      "name": "timely lookups: every executable name absent",
+      "pass": true,
+      "observed": [
+        [
+          "binary",
+          "error:ENOENT"
+        ],
+        [
+          "binary.com",
+          "error:ENOENT"
+        ],
+        [
+          "binary.exe",
+          "error:ENOENT"
+        ]
+      ],
+      "expected": [
+        [
+          "binary",
+          "error:ENOENT"
+        ],
+        [
+          "binary.com",
+          "error:ENOENT"
+        ],
+        [
+          "binary.exe",
+          "error:ENOENT"
+        ]
+      ]
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "preflight facts",
+      "pass": true,
+      "observed": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null
+      },
+      "expected": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null
+      }
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "settled by the 50 ms request deadlines, far below the 1,000 ms budget",
+      "pass": true,
+      "observed": 130.7224000000001,
+      "expected": "< 600 ms"
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "probes refused natively (version, then auth)",
+      "pass": true,
+      "observed": [
+        [
+          "version",
+          false,
+          "ENOENT"
+        ],
+        [
+          "auth",
+          false,
+          "ENOENT"
+        ]
+      ],
+      "expected": [
+        [
+          "version",
+          false,
+          "ENOENT"
+        ],
+        [
+          "auth",
+          false,
+          "ENOENT"
+        ]
+      ]
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "request timers fired; diagnostic timers cleared",
+      "pass": true,
+      "observed": [
+        [
+          50,
+          true,
+          false
+        ],
+        [
+          1000,
+          false,
+          true
+        ],
+        [
+          50,
+          true,
+          false
+        ],
+        [
+          1000,
+          false,
+          true
+        ]
+      ],
+      "expected": [
+        [
+          50,
+          true,
+          false
+        ],
+        [
+          1000,
+          false,
+          true
+        ],
+        [
+          50,
+          true,
+          false
+        ],
+        [
+          1000,
+          false,
+          true
+        ]
+      ]
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "late metadata starts no follow-on lookup",
+      "pass": true,
+      "observed": 6,
+      "expected": 6
+    },
+    {
+      "caseId": "M2a-preflight-request-deadline",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "terminal",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "cancellation result, no error event",
+      "pass": true,
+      "observed": {
+        "events": [],
+        "name": "AbortError",
+        "message": "Claude turn cancelled",
+        "sessionId": "AbortError"
+      },
+      "expected": {
+        "events": [],
+        "name": "AbortError",
+        "message": "Claude turn cancelled",
+        "sessionId": "AbortError"
+      }
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "settled within 50 ms of abort (before the 1,000 ms budget)",
+      "pass": true,
+      "observed": 0.6082999999998719,
+      "expected": [
+        0,
+        50
+      ]
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "one turn attempt, no kill, timers/listeners released",
+      "pass": true,
+      "observed": {
+        "turns": 1,
+        "kills": 0,
+        "timers": 0,
+        "listeners": 0
+      },
+      "expected": {
+        "turns": 1,
+        "kills": 0,
+        "timers": 0,
+        "listeners": 0
+      }
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "late metadata leaves cancellation unchanged",
+      "pass": true,
+      "observed": "AbortError",
+      "expected": "AbortError"
+    },
+    {
+      "caseId": "M2b-external-abort",
+      "name": "privacy: cancellation outcome has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M3-output-loss-stdout",
+      "name": "output loss is unknown with no signed-out fact",
+      "pass": true,
+      "observed": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "hasAuthenticated": false,
+        "version": "2.1.290"
+      },
+      "expected": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "hasAuthenticated": false,
+        "version": "2.1.290"
+      }
+    },
+    {
+      "caseId": "M3-output-loss-stdout",
+      "name": "owned-tree shutdown requested once for the started check",
+      "pass": true,
+      "observed": [
+        [
+          true,
+          true
+        ]
+      ],
+      "expected": [
+        [
+          true,
+          true
+        ]
+      ]
+    },
+    {
+      "caseId": "M3-output-loss-stdout",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M3-output-loss-stderr",
+      "name": "output loss is unknown with no signed-out fact",
+      "pass": true,
+      "observed": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "hasAuthenticated": false,
+        "version": "2.1.290"
+      },
+      "expected": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "hasAuthenticated": false,
+        "version": "2.1.290"
+      }
+    },
+    {
+      "caseId": "M3-output-loss-stderr",
+      "name": "owned-tree shutdown requested once for the started check",
+      "pass": true,
+      "observed": [
+        [
+          true,
+          true
+        ]
+      ],
+      "expected": [
+        [
+          true,
+          true
+        ]
+      ]
+    },
+    {
+      "caseId": "M3-output-loss-stderr",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M3-completed-sign-out",
+      "name": "completed sign-out is auth",
+      "pass": true,
+      "observed": {
+        "state": "auth",
+        "problems": [
+          "Claude is not signed in. Run claude auth login, then retry preflight."
+        ],
+        "authenticated": false
+      },
+      "expected": {
+        "state": "auth",
+        "problems": [
+          "Claude is not signed in. Run claude auth login, then retry preflight."
+        ],
+        "authenticated": false
+      }
+    },
+    {
+      "caseId": "M3-completed-sign-out",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M4a-help-refused-timely",
+      "name": "help-only cause kept; version and auth succeed",
+      "pass": true,
+      "observed": {
+        "state": "unknown",
+        "problems": [
+          "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "version": "2.1.290",
+        "authMethod": "claude.ai",
+        "authenticated": true
+      },
+      "expected": {
+        "state": "unknown",
+        "problems": [
+          "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "version": "2.1.290",
+        "authMethod": "claude.ai",
+        "authenticated": true
+      }
+    },
+    {
+      "caseId": "M4a-help-refused-timely",
+      "name": "not rewritten as a versioned option failure",
+      "pass": true,
+      "observed": [
+        "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight."
+      ],
+      "expected": "no versioned rewrite"
+    },
+    {
+      "caseId": "M4a-help-refused-timely",
+      "name": "help probe refused natively",
+      "pass": true,
+      "observed": [
+        false,
+        "ENOENT"
+      ],
+      "expected": [
+        false,
+        "ENOENT"
+      ]
+    },
+    {
+      "caseId": "M4a-help-refused-timely",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M4b-help-refused-held-past-budget",
+      "name": "help-only cause kept; version and auth succeed",
+      "pass": true,
+      "observed": {
+        "state": "unknown",
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "version": "2.1.290",
+        "authMethod": "claude.ai",
+        "authenticated": true
+      },
+      "expected": {
+        "state": "unknown",
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "version": "2.1.290",
+        "authMethod": "claude.ai",
+        "authenticated": true
+      }
+    },
+    {
+      "caseId": "M4b-help-refused-held-past-budget",
+      "name": "not rewritten as a versioned option failure",
+      "pass": true,
+      "observed": [
+        "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+      ],
+      "expected": "no versioned rewrite"
+    },
+    {
+      "caseId": "M4b-help-refused-held-past-budget",
+      "name": "help probe refused natively",
+      "pass": true,
+      "observed": [
+        false,
+        "ENOENT"
+      ],
+      "expected": [
+        false,
+        "ENOENT"
+      ]
+    },
+    {
+      "caseId": "M4b-help-refused-held-past-budget",
+      "name": "help diagnosis expired at the budget (timer fired)",
+      "pass": true,
+      "observed": 1004.5794000000005,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "M4b-help-refused-held-past-budget",
+      "name": "privacy: preflight has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M5a-ready-preflight",
+      "name": "ready",
+      "pass": true,
+      "observed": {
+        "state": "ready",
+        "ok": true,
+        "problems": [],
+        "authMethod": "claude.ai",
+        "authenticated": true,
+        "version": "2.1.290"
+      },
+      "expected": {
+        "state": "ready",
+        "ok": true,
+        "problems": [],
+        "authMethod": "claude.ai",
+        "authenticated": true,
+        "version": "2.1.290"
+      }
+    },
+    {
+      "caseId": "M5a-ready-preflight",
+      "name": "no metadata lookup",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "terminal",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "completed successfully",
+      "pass": true,
+      "observed": {
+        "outcome": {
+          "ok": true
+        },
+        "finalText": "QA_D203_TURN_OK"
+      },
+      "expected": "QA_D203_TURN_OK"
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "events include session/submitted/usage/turn-complete, no error",
+      "pass": true,
+      "observed": [
+        "session",
+        "item",
+        "submitted",
+        "usage",
+        "turn-complete"
+      ],
+      "expected": "complete stream"
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "turn started natively and closed 0",
+      "pass": true,
+      "observed": [
+        true,
+        0
+      ],
+      "expected": [
+        true,
+        0
+      ]
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "no metadata lookup and no runner timer for the unbounded turn",
+      "pass": true,
+      "observed": {
+        "stats": 0,
+        "turnTimers": 0
+      },
+      "expected": {
+        "stats": 0,
+        "turnTimers": 0
+      }
+    },
+    {
+      "caseId": "M5b-ordinary-turn",
+      "name": "privacy: events and outcome has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "terminal",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "completed successfully",
+      "pass": true,
+      "observed": {
+        "outcome": {
+          "ok": true
+        },
+        "finalText": "QA_D203_TURN_OK"
+      },
+      "expected": "QA_D203_TURN_OK"
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "events include session/submitted/usage/turn-complete, no error",
+      "pass": true,
+      "observed": [
+        "session",
+        "item",
+        "submitted",
+        "usage",
+        "turn-complete"
+      ],
+      "expected": "complete stream"
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "turn started natively and closed 0",
+      "pass": true,
+      "observed": [
+        true,
+        0
+      ],
+      "expected": [
+        true,
+        0
+      ]
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "no metadata lookup and no runner timer for the unbounded turn",
+      "pass": true,
+      "observed": {
+        "stats": 0,
+        "turnTimers": 0
+      },
+      "expected": {
+        "stats": 0,
+        "turnTimers": 0
+      }
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "started turn ran past 1,000 ms (>= 1,500 ms) and still completed",
+      "pass": true,
+      "observed": 1580.6734000000006,
+      "expected": ">= 1500 ms"
+    },
+    {
+      "caseId": "M5c-slow-started-turn",
+      "name": "privacy: events and outcome has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no controlled stat left held",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "cleanup",
+      "name": "every started native fixture process closed",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    }
+  ],
+  "selfCheck": {
+    "performanceNowReplaced": true,
+    "setTimeoutWrapped": true,
+    "dateNowWrapped": true
+  },
+  "results": {
+    "M1b-wd-is-file": {
+      "elapsedFromRefusalMs": 1.9814000000000078,
+      "events": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    "binaryCopy": {
+      "sha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f",
+      "nodeSha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f",
+      "restoredSha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f"
+    },
+    "M1c-executable-missing-at-turn": {
+      "elapsedFromRefusalMs": 0.6484000000000378,
+      "events": [
+        {
+          "type": "error",
+          "code": "HARNESS_NOT_INSTALLED",
+          "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "renameAttempts": 1
+    },
+    "M2a-preflight-request-deadline": {
+      "elapsedMs": 130.7224000000001,
+      "preflight": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null,
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ]
+      }
+    },
+    "M2b-external-abort": {},
+    "M3-output-loss-stdout": {
+      "preflight": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null,
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290"
+      }
+    },
+    "M3-output-loss-stderr": {
+      "preflight": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null,
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290"
+      }
+    },
+    "M3-completed-sign-out": {
+      "preflight": {
+        "state": "auth",
+        "ok": false,
+        "problems": [
+          "Claude is not signed in. Run claude auth login, then retry preflight."
+        ],
+        "authMethod": null,
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290",
+        "authenticated": false
+      }
+    },
+    "M4a-help-refused-timely": {
+      "preflight": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": "claude.ai",
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290",
+        "authenticated": true
+      },
+      "helpDiagnosticTimer": {
+        "id": 30,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "delay": 1000,
+        "createdMs": 5151.1895,
+        "firedMs": null,
+        "clearedMs": 5152.112
+      }
+    },
+    "M4b-help-refused-held-past-budget": {
+      "preflight": {
+        "state": "unknown",
+        "ok": false,
+        "problems": [
+          "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": "claude.ai",
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290",
+        "authenticated": true
+      },
+      "helpDiagnosticTimer": {
+        "id": 34,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "delay": 1000,
+        "createdMs": 5427.3212,
+        "firedMs": 6431.8491,
+        "clearedMs": null
+      }
+    },
+    "M5a-ready-preflight": {
+      "preflight": {
+        "state": "ready",
+        "ok": true,
+        "problems": [],
+        "authMethod": "claude.ai",
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "version": "2.1.290",
+        "authenticated": true
+      }
+    },
+    "M5b-ordinary-turn": {
+      "eventTypes": [
+        "session",
+        "item",
+        "submitted",
+        "usage",
+        "turn-complete"
+      ],
+      "finalText": "QA_D203_TURN_OK",
+      "elapsedFromSpawnMs": 75.46129999999994
+    },
+    "M5c-slow-started-turn": {
+      "eventTypes": [
+        "session",
+        "item",
+        "submitted",
+        "usage",
+        "turn-complete"
+      ],
+      "finalText": "QA_D203_TURN_OK",
+      "elapsedFromSpawnMs": 1580.6734000000006
+    }
+  },
+  "leftoverReleasedAtCleanup": 0,
+  "scratchRootRemoved": true,
+  "instrumentation": {
+    "redirects": [
+      {
+        "from": "candidate",
+        "specifier": "node:child_process"
+      },
+      {
+        "from": "candidate",
+        "specifier": "node:fs/promises"
+      },
+      {
+        "from": "candidate",
+        "specifier": "../process/index.js"
+      }
+    ],
+    "statCalls": [
+      {
+        "id": 1,
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 738.7829,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 739.5855,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 739.6234,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 2,
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 738.9538,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 739.7366,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 739.7372,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 3,
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 738.9862,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 739.7095,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 739.711,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 4,
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 739.7656,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 739.8773,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 739.8788,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 5,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 3354.6406,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 3354.9798,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3354.9824,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 6,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 3354.6831,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 3355.0069,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3355.0079,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 7,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 3354.715,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 3355.0247,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3355.0254,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 8,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "target": "binary",
+        "issuedMs": 3443.0813,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3443.6092,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.18,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1496
+      },
+      {
+        "id": 9,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "target": "binary.com",
+        "issuedMs": 3443.1897,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3443.6362,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.1819,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1561
+      },
+      {
+        "id": 10,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "target": "binary.exe",
+        "issuedMs": 3443.2964,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3443.6532,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.1835,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1597
+      },
+      {
+        "id": 11,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "target": "binary",
+        "issuedMs": 3504.954,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3505.2296,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.1864,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1631
+      },
+      {
+        "id": 12,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "target": "binary.com",
+        "issuedMs": 3504.9978,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3505.2569,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.1874,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1638
+      },
+      {
+        "id": 13,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "target": "binary.exe",
+        "issuedMs": 3505.0211,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 3505.2736,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3567.1886,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3567.1649
+      },
+      {
+        "id": 14,
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 4009.4649,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4009.8865,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 4009.8945,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 15,
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 4009.5562,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4009.9499,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4009.9513,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 16,
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 4009.5798,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4009.9979,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4009.9993,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 17,
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 4010.0085,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 4010.1305,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4234.2384,
+        "delivered": "error:ENOENT",
+        "releasedMs": 4234.2134
+      },
+      {
+        "id": 18,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "target": "binary",
+        "issuedMs": 5151.2457,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5151.8875,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 5151.8908,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 19,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "target": "binary.com",
+        "issuedMs": 5151.388,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5151.9401,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 5151.9412,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 20,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "target": "binary.exe",
+        "issuedMs": 5151.4164,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5151.9699,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 5151.9706,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 21,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "target": "probe-dir",
+        "issuedMs": 5151.9799,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5152.098,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 5152.0997,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 22,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "target": "binary",
+        "issuedMs": 5427.3561,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5427.8846,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 5427.8871,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 23,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "target": "binary.com",
+        "issuedMs": 5427.3971,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5427.9274,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 5427.9284,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 24,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "target": "binary.exe",
+        "issuedMs": 5427.4161,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 5427.9628,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 5427.9638,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 25,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "target": "probe-dir",
+        "issuedMs": 5427.9726,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 5428.0877,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 6500.6419,
+        "delivered": "error:ENOENT",
+        "releasedMs": 6500.6185
+      }
+    ],
+    "spawnCalls": [
+      {
+        "id": 1,
+        "caseId": "M1b-wd-is-file",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 477.797,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46852,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 563.2253
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 563.2921
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "caseId": "M1b-wd-is-file",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 564.5175,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 38552,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 643.4168
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 643.4427
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "caseId": "M1b-wd-is-file",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 644.2986,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 31812,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 735.0956
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 735.1332
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "caseId": "M1b-wd-is-file",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 736.8518,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 738.2255,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 739.5021
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "caseId": "M1c-executable-missing-at-turn",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 2186.7737,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46380,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3193.3669
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3193.3992
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "caseId": "M1c-executable-missing-at-turn",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3193.563,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 47016,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3270.7241
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3270.7607
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "caseId": "M1c-executable-missing-at-turn",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3270.9646,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 48864,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3352.7522
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3352.7785
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "caseId": "M1c-executable-missing-at-turn",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 3353.4546,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 3354.5455,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 3354.9071
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "caseId": "M2a-preflight-request-deadline",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3441.4404,
+        "mode": "native",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 3442.9757,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 3443.5453
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "caseId": "M2a-preflight-request-deadline",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3504.2118,
+        "mode": "native",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 3504.8921,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 3505.2897
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "caseId": "M2b-external-abort",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3771.6972,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 22984,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3849.5563
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3849.5851
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "caseId": "M2b-external-abort",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3849.81,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46860,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3926.8636
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3926.8804
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "caseId": "M2b-external-abort",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3927.0132,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 12344,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4007.3291
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4007.3571
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "caseId": "M2b-external-abort",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 4008.3279,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 4009.2632,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 4009.8209
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "caseId": "M3-output-loss-stdout",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4439.9385,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 47324,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4509.329
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4509.3437
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "caseId": "M3-output-loss-stdout",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4509.424,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 25840,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4582.0846
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4582.1064
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "caseId": "M3-output-loss-stdout",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4582.2167,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": true,
+        "pid": 70001,
+        "error": null,
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": 1,
+            "atMs": 4593.6556
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "caseId": "M3-output-loss-stderr",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4597.7482,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 45388,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4667.7689
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4667.8074
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "caseId": "M3-output-loss-stderr",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4667.9242,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 2608,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4745.8699
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4745.8887
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "caseId": "M3-output-loss-stderr",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4746.008,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": true,
+        "pid": 70001,
+        "error": null,
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": null,
+            "atMs": 4765.6483
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "caseId": "M3-completed-sign-out",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4770.6194,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 45120,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4861.9508
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4861.9897
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "caseId": "M3-completed-sign-out",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4862.0994,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 32144,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4946.7752
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4946.8228
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "caseId": "M3-completed-sign-out",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4946.9889,
+        "mode": "native",
+        "fixtureMode": "signed-out",
+        "pidAtReturn": true,
+        "pid": 23576,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 1,
+            "atMs": 5037.783
+          }
+        ],
+        "closes": [
+          {
+            "code": 1,
+            "atMs": 5037.8193
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "caseId": "M4a-help-refused-timely",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 5041.9589,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 48252,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 5149.5127
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 5149.5565
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "caseId": "M4a-help-refused-timely",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 5149.6744,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 5151.1146,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 5151.6852
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "caseId": "M4a-help-refused-timely",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 5152.2098,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 40436,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 5234.3822
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 5234.4043
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 5343.1398,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 36164,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 5426.064
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 5426.092
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 5426.1827,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 5427.2697,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 5427.6231
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6432.1332,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 13004,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6499.6575
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6499.6837
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "caseId": "M5a-ready-preflight",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6605.6896,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 31992,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6672.8366
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6672.8566
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "caseId": "M5a-ready-preflight",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6672.9553,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 45672,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6740.7873
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6740.7989
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "caseId": "M5a-ready-preflight",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6740.9124,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 48204,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6808.1568
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6808.1857
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "caseId": "M5b-ordinary-turn",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6811.9488,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 28852,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6889.2293
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6889.2404
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "caseId": "M5b-ordinary-turn",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6889.3116,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 37624,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6956.3285
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6956.3395
+          }
+        ]
+      },
+      {
+        "id": 35,
+        "caseId": "M5b-ordinary-turn",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6956.4362,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 22780,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7022.6238
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7022.6416
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "caseId": "M5b-ordinary-turn",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 7023.2572,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 39940,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7098.4584
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7098.4911
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "caseId": "M5c-slow-started-turn",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 7101.9498,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 48480,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7170.7976
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7170.8182
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "caseId": "M5c-slow-started-turn",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 7170.8997,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 28084,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7241.5893
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7241.6191
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "caseId": "M5c-slow-started-turn",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 7241.7585,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 29112,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7309.9655
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7309.9929
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "caseId": "M5c-slow-started-turn",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 7310.6946,
+        "mode": "native",
+        "fixtureMode": "slow",
+        "pidAtReturn": true,
+        "pid": 22148,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 8891.2115
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 8891.2423
+          }
+        ]
+      }
+    ],
+    "killCalls": [
+      {
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-auth",
+        "atMs": 4593.6228,
+        "pidPresent": true,
+        "scripted": true
+      },
+      {
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-auth",
+        "atMs": 4765.6344,
+        "pidPresent": true,
+        "scripted": true
+      }
+    ],
+    "timers": [
+      {
+        "id": 1,
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 490.8659,
+        "firedMs": null,
+        "clearedMs": 563.4563
+      },
+      {
+        "id": 2,
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 572.9967,
+        "firedMs": null,
+        "clearedMs": 643.449
+      },
+      {
+        "id": 3,
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 651.1114,
+        "firedMs": null,
+        "clearedMs": 735.1405
+      },
+      {
+        "id": 4,
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 738.4944,
+        "firedMs": null,
+        "clearedMs": 739.9109
+      },
+      {
+        "id": 5,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 3114.8788,
+        "firedMs": null,
+        "clearedMs": 3193.4058
+      },
+      {
+        "id": 6,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 3199.6171,
+        "firedMs": null,
+        "clearedMs": 3270.7677
+      },
+      {
+        "id": 7,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 3278.3709,
+        "firedMs": null,
+        "clearedMs": 3352.7849
+      },
+      {
+        "id": 8,
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 3354.5866,
+        "firedMs": null,
+        "clearedMs": 3355.035
+      },
+      {
+        "id": 9,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "delay": 50,
+        "createdMs": 3442.2961,
+        "firedMs": 3503.6414,
+        "clearedMs": null
+      },
+      {
+        "id": 10,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "delay": 1000,
+        "createdMs": 3443.0395,
+        "firedMs": null,
+        "clearedMs": 3503.8688
+      },
+      {
+        "id": 11,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "delay": 50,
+        "createdMs": 3504.6642,
+        "firedMs": 3566.0218,
+        "clearedMs": null
+      },
+      {
+        "id": 12,
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "delay": 1000,
+        "createdMs": 3504.9263,
+        "firedMs": null,
+        "clearedMs": 3566.0633
+      },
+      {
+        "id": 13,
+        "caseId": "M2b-external-abort",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 3777.1922,
+        "firedMs": null,
+        "clearedMs": 3849.5892
+      },
+      {
+        "id": 14,
+        "caseId": "M2b-external-abort",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 3854.4745,
+        "firedMs": null,
+        "clearedMs": 3926.8834
+      },
+      {
+        "id": 15,
+        "caseId": "M2b-external-abort",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 3931.0882,
+        "firedMs": null,
+        "clearedMs": 4007.3606
+      },
+      {
+        "id": 16,
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 4009.4171,
+        "firedMs": null,
+        "clearedMs": 4218.9571
+      },
+      {
+        "id": 17,
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 4444.182,
+        "firedMs": null,
+        "clearedMs": 4509.3467
+      },
+      {
+        "id": 18,
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 4513.4555,
+        "firedMs": null,
+        "clearedMs": 4582.1137
+      },
+      {
+        "id": 19,
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 4582.5844,
+        "firedMs": null,
+        "clearedMs": 4593.3198
+      },
+      {
+        "id": 20,
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-auth",
+        "delay": 5000,
+        "createdMs": 4593.4712,
+        "firedMs": null,
+        "clearedMs": 4593.7157
+      },
+      {
+        "id": 21,
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 4601.549,
+        "firedMs": null,
+        "clearedMs": 4667.8122
+      },
+      {
+        "id": 22,
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 4672.3645,
+        "firedMs": null,
+        "clearedMs": 4745.8919
+      },
+      {
+        "id": 23,
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 4746.1434,
+        "firedMs": null,
+        "clearedMs": 4765.5
+      },
+      {
+        "id": 24,
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-auth",
+        "delay": 5000,
+        "createdMs": 4765.5914,
+        "firedMs": null,
+        "clearedMs": 4765.6683
+      },
+      {
+        "id": 25,
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 4776.703,
+        "firedMs": null,
+        "clearedMs": 4861.9937
+      },
+      {
+        "id": 26,
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 4867.2795,
+        "firedMs": null,
+        "clearedMs": 4946.8277
+      },
+      {
+        "id": 27,
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 4955.2815,
+        "firedMs": null,
+        "clearedMs": 5037.8244
+      },
+      {
+        "id": 28,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 5047.7557,
+        "firedMs": null,
+        "clearedMs": 5149.5611
+      },
+      {
+        "id": 29,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 5150.6884,
+        "firedMs": null,
+        "clearedMs": 5152.1058
+      },
+      {
+        "id": 30,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "delay": 1000,
+        "createdMs": 5151.1895,
+        "firedMs": null,
+        "clearedMs": 5152.112
+      },
+      {
+        "id": 31,
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 5157.6103,
+        "firedMs": null,
+        "clearedMs": 5234.4071
+      },
+      {
+        "id": 32,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 5348.1159,
+        "firedMs": null,
+        "clearedMs": 5426.0955
+      },
+      {
+        "id": 33,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 5426.9337,
+        "firedMs": null,
+        "clearedMs": 6431.9737
+      },
+      {
+        "id": 34,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "delay": 1000,
+        "createdMs": 5427.3212,
+        "firedMs": 6431.8491,
+        "clearedMs": null
+      },
+      {
+        "id": 35,
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 6436.3932,
+        "firedMs": null,
+        "clearedMs": 6499.6873
+      },
+      {
+        "id": 36,
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 6609.3537,
+        "firedMs": null,
+        "clearedMs": 6672.8599
+      },
+      {
+        "id": 37,
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 6676.7021,
+        "firedMs": null,
+        "clearedMs": 6740.8024
+      },
+      {
+        "id": 38,
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 6744.7619,
+        "firedMs": null,
+        "clearedMs": 6808.189
+      },
+      {
+        "id": 39,
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 6826.7665,
+        "firedMs": null,
+        "clearedMs": 6889.2431
+      },
+      {
+        "id": 40,
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 6893.0689,
+        "firedMs": null,
+        "clearedMs": 6956.3421
+      },
+      {
+        "id": 41,
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 6960.2002,
+        "firedMs": null,
+        "clearedMs": 7022.6451
+      },
+      {
+        "id": 42,
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 7106.7686,
+        "firedMs": null,
+        "clearedMs": 7170.822
+      },
+      {
+        "id": 43,
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 7174.8803,
+        "firedMs": null,
+        "clearedMs": 7241.6229
+      },
+      {
+        "id": 44,
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 7245.5307,
+        "firedMs": null,
+        "clearedMs": 7309.9965
+      }
+    ],
+    "listeners": [
+      {
+        "caseId": "M1b-wd-is-file",
+        "phase": "init",
+        "owner": "harness",
+        "addedMs": 472.2586,
+        "removedMs": 740.0833,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 490.9445,
+        "removedMs": 563.5539,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 573.0636,
+        "removedMs": 643.4656,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1b-wd-is-file",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 651.1616,
+        "removedMs": 735.1676,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1b-wd-is-file",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 737.6394,
+        "removedMs": 739.9211,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 2185.9391,
+        "removedMs": 3355.1639,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 3114.9288,
+        "removedMs": 3193.4251,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 3199.6798,
+        "removedMs": 3270.7871,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 3278.4296,
+        "removedMs": 3352.7988,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M1c-executable-missing-at-turn",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 3354.3729,
+        "removedMs": 3355.0435,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 3442.3691,
+        "removedMs": 3503.895,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2a-preflight-request-deadline",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 3504.7008,
+        "removedMs": 3566.0849,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2b-external-abort",
+        "phase": "probe-auth",
+        "owner": "harness",
+        "addedMs": 3770.9481,
+        "removedMs": 4219.1148,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2b-external-abort",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 3777.2375,
+        "removedMs": 3849.6035,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2b-external-abort",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 3854.5387,
+        "removedMs": 3926.8933,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2b-external-abort",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 3931.1334,
+        "removedMs": 4007.3739,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M2b-external-abort",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 4009.0277,
+        "removedMs": 4218.9776,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 4444.2512,
+        "removedMs": 4509.3603,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 4513.5084,
+        "removedMs": 4582.1279,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stdout",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 4582.618,
+        "removedMs": 4593.7279,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 4601.6021,
+        "removedMs": 4667.8308,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 4672.4182,
+        "removedMs": 4745.9081,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-output-loss-stderr",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 4746.1765,
+        "removedMs": 4765.6797,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 4776.7763,
+        "removedMs": 4862.0149,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 4867.3382,
+        "removedMs": 4946.8516,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M3-completed-sign-out",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 4955.3622,
+        "removedMs": 5037.8474,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 5047.8203,
+        "removedMs": 5149.5856,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 5150.7547,
+        "removedMs": 5152.124,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4a-help-refused-timely",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 5157.6775,
+        "removedMs": 5234.426,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 5348.1831,
+        "removedMs": 5426.115,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 5426.9946,
+        "removedMs": 6431.9994,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M4b-help-refused-held-past-budget",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 6436.4318,
+        "removedMs": 6499.7113,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 6609.4026,
+        "removedMs": 6672.8799,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 6676.756,
+        "removedMs": 6740.822,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5a-ready-preflight",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 6744.8168,
+        "removedMs": 6808.2121,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-auth",
+        "owner": "harness",
+        "addedMs": 6811.5061,
+        "removedMs": 7098.6804,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 6826.9098,
+        "removedMs": 6889.2578,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 6893.1046,
+        "removedMs": 6956.3577,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5b-ordinary-turn",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 6960.2373,
+        "removedMs": 7022.6622,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5b-ordinary-turn",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 7029.3167,
+        "removedMs": 7098.5067,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5c-slow-started-turn",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 7101.5994,
+        "removedMs": 8891.3537,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 7106.8128,
+        "removedMs": 7170.8432,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 7174.9372,
+        "removedMs": 7241.6476,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5c-slow-started-turn",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 7245.5774,
+        "removedMs": 7310.0239,
+        "stillAttached": false
+      },
+      {
+        "caseId": "M5c-slow-started-turn",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 7316.717,
+        "removedMs": 8891.2623,
+        "stillAttached": false
+      }
+    ],
+    "unhandled": [],
+    "heldStillUndelivered": [],
+    "nativeFixturePids": [
+      46852,
+      38552,
+      31812,
+      46380,
+      47016,
+      48864,
+      22984,
+      46860,
+      12344,
+      47324,
+      25840,
+      45388,
+      2608,
+      45120,
+      32144,
+      23576,
+      48252,
+      40436,
+      36164,
+      13004,
+      31992,
+      45672,
+      48204,
+      28852,
+      37624,
+      22780,
+      39940,
+      48480,
+      28084,
+      29112,
+      22148
+    ]
+  }
+}

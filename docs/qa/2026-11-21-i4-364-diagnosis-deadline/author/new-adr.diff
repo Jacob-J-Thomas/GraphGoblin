@@ -1,0 +1,73 @@
+diff --git a/docs/decisions/ADR-0089-bounded-claude-refusal-diagnosis.md b/docs/decisions/ADR-0089-bounded-claude-refusal-diagnosis.md
+new file mode 100644
+index 00000000..3aa64ed6
+--- /dev/null
++++ b/docs/decisions/ADR-0089-bounded-claude-refusal-diagnosis.md
+@@ -0,0 +1,67 @@
++# ADR-0089: Bound optional Claude start-refusal diagnosis
++
++Status: Accepted under delegated delivery decision D203, 2026-11-21.
++
++## Context
++
++After a native spawn refusal with no child PID, the Claude runner knows that nothing
++was submitted. Read-only filesystem observations can distinguish a missing absolute
++executable or missing/file working directory from an unknown cause (#364). Waiting
++for those optional observations must not postpone the known failure indefinitely.
++Normal turns have no request timeout, and the inference watchdog and run deadline
++are optional. A filesystem metadata read can remain pending after Node delivers both
++the refusal and the child close.
++
++The third general audit identified this liveness defect. It did not observe a
++naturally stalled Windows filesystem. The earlier output-loss and help-only failure
++corrections remain necessary and retain their existing precedence.
++
++## Decision
++
++Give optional diagnosis a private absolute monotonic deadline 1,000 ms after the
++runner observes a genuine no-PID refusal. It applies independently of the caller's
++request timeout, including null. Timely factual observations retain the existing
++fixed cause. On expiry return the actual spawn code with unknown cause and definite
++non-submission. Expiry does not mean that a process timed out, was cancelled or had
++a missing executable/directory.
++
++Check the elapsed budget before each metadata lookup, when accepting its result and
++when the diagnostic timer runs. A delayed event-loop callback cannot make late
++metadata timely. Earlier request deadlines and cancellation settle promptly through
++the existing outcome rules. Every settlement clears the owned diagnostic timer and
++removes the abort listener. Late metadata cannot change the result or initiate a
++follow-on lookup. Node may still finish an already issued native `stat`; this bounds
++the wait, without claiming filesystem cancellation.
++
++Started-process output loss, uncertain delivery and stronger failures retain their
++existing behavior. There is no additional launch, kill of a nonexistent child,
++retry, fallback, PATH resolver, dependency or public configuration option.
++
++## Alternatives
++
++- Rely on the request timeout or watchdog: declined because supported defaults
++  provide neither bound.
++- Return unknown immediately for every refusal: declined because fast local
++  metadata provides useful factual diagnoses without further execution.
++- Use synchronous filesystem access or a new worker/process subsystem: declined
++  because either blocking the event loop or adding an execution boundary is
++  disproportionate to this optional diagnostic.
++- Add user-facing configuration or automatic retry: declined because a known failed
++  start needs a conservative terminal result, not another turn or policy choice.
++
++## Consequences
++
++One second allows ordinary local metadata while bounding the known refusal under
++default settings. Slow or unavailable metadata produces the existing generic
++unknown-cause failure instead of a specific diagnosis. The event loop must run to
++deliver any JavaScript result; the monotonic check prevents late cause acceptance
++when it resumes. This is neither a hard real-time guarantee nor native stat cancellation.
++
++Maintained tests exercise the public harness and real runner with successful
++prerequisites, a refused default turn and a controlled pending stat, plus timely and
++late metadata, earlier deadlines/abort, cleanup and started-process controls. An
++old-source control must fail the finite default-turn liveness oracle. Controlled
++metadata delays remain distinct from native refusal observations and a naturally
++occurring filesystem stall. No schema, stored-content, environment, coverage-policy
++or owner acceptance change is required. Independent corrective review, separate QA,
++current CI/native verification and coordinator completion remain delivery gates.
