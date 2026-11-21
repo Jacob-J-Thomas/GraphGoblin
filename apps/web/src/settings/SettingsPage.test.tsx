@@ -2,9 +2,20 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { defaultScheduler, notifyManager } from '@tanstack/react-query';
+import { CODEX_PLUGIN_OBSERVABILITY_NOTICE } from '@graphgoblin/domain';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useApiKeyStore } from '../api/api-key.js';
+
+/** Every element whose whole text is the shared Codex notice (its commands are inner code). */
+const codexNotices = (scope: HTMLElement) =>
+  within(scope).queryAllByText(
+    (_, element) =>
+      element?.textContent === CODEX_PLUGIN_OBSERVABILITY_NOTICE &&
+      ![...element.children].some(
+        (child) => child.textContent === CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+      ),
+  );
 
 function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
   const api = new FakeApi();
@@ -943,6 +954,24 @@ describe('SettingsPage', () => {
     expect(screen.getByText(/Install app/)).toBeInTheDocument();
   });
 
+  it('shows the Codex plugin notice beside Ready on the Codex preflight row only', async () => {
+    renderApp('/settings', seeded());
+    const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
+    const codexRow = (await within(preflight).findByText('codex', { selector: 'code' })).closest(
+      'li',
+    )!;
+    expect(await within(codexRow).findByText('Ready')).toBeVisible();
+    const [notice, ...extra] = codexNotices(document.body);
+    expect(extra).toHaveLength(0);
+    expect(notice).toBeVisible();
+    expect(codexRow).toContainElement(notice!);
+    // The other harness keeps its own badge and problem, without the Codex notice.
+    const otherRow = within(preflight).getByText('other', { selector: 'code' }).closest('li')!;
+    expect(within(otherRow).getByText('Unknown')).toBeVisible();
+    expect(within(otherRow).getByText('not logged in')).toBeVisible();
+    expect(codexNotices(otherRow)).toHaveLength(0);
+  });
+
   it.each([
     [
       'Delete gpt-6-luna',
@@ -1104,5 +1133,35 @@ describe('Codex catalog rows and readiness', () => {
     expect(
       within(catalog).getByText('Disabled in catalog. Codex readiness: Connection failed.'),
     ).toBeInTheDocument();
+  });
+
+  it('keeps a Codex sign-in failure visible everywhere, with the plugin notice only in preflight', async () => {
+    const api = seeded();
+    const signIn = 'Codex sign-in is missing or invalid. Run codex login, then retry preflight.';
+    api.preflight = [
+      { harness: 'codex', state: 'auth', ok: false, authenticated: false, problems: [signIn] },
+    ];
+    renderApp('/settings', api);
+    const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
+    const problemLine = await within(preflight).findByText(signIn);
+    const codexRow = problemLine.closest('ul')!.closest('li')!;
+    expect(within(codexRow).getByText('Sign-in needed')).toBeVisible();
+    expect(problemLine.closest('ul')).toHaveClass('text-status-bad-fg');
+    const [notice, ...extra] = codexNotices(document.body);
+    expect(extra).toHaveLength(0);
+    expect(codexRow).toContainElement(notice!);
+    expect(problemLine.closest('ul')).not.toContainElement(notice!);
+    // The short readiness lines elsewhere are unchanged and do not repeat the notice.
+    const catalog = screen.getByRole('region', { name: 'Model catalog' });
+    expect(
+      await within(catalog).findByText('Enabled in catalog. Codex readiness: Sign-in needed.'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Defaults' })).getByText(
+        'Codex readiness: Sign-in needed. See Harness preflight below.',
+      ),
+    ).toBeInTheDocument();
+    expect(codexNotices(catalog)).toHaveLength(0);
+    expect(codexNotices(screen.getByRole('region', { name: 'Defaults' }))).toHaveLength(0);
   });
 });
