@@ -4,10 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Codex structured calls create short scratch names with exclusive `mkdir`, retrying at most
-  four `EEXIST` collisions and preserving every colliding directory (#363). This avoids the
-  Windows `mkdtemp` failure under the tested 226-character temp root; OS/CLI path limits remain.
-  Request/configured working directories and cancellation/error cleanup precedence are unchanged.
+- Codex structured calls create short scratch names with exclusive `mkdir` in at most four
+  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
+  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
+  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI
+  verification at the measured 226-character Windows temp root observes a 249-character adapter
+  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI
+  limits remain. Request/configured working directories and cleanup precedence are unchanged.
+  **Upgrade:** reinstall dependencies from the updated frozen lockfile, then rebuild the API.
+  No SDK version, dependency, stored schema/format or reset change.
 
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
