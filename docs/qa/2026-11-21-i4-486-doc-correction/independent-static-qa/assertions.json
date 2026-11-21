@@ -1,0 +1,179 @@
+{
+  "status": "PASS_BOUNDED_STATIC_D209_QA",
+  "checks": [
+    {
+      "id": "API01",
+      "claim": "Ordinary API start defaults current/latest published; explicit editable draft requires versionId plus allowDraft:true",
+      "preparedResult": "Source-supported at a608",
+      "evidence": [
+        "API-body-forward",
+        "published-pointer",
+        "create-loop-pointers",
+        "version-policy"
+      ],
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "API02",
+      "claim": "Draft start freezes a separate immutable snapshot without publishing; direct snapshot start refused",
+      "preparedResult": "Source-supported at a608",
+      "evidence": [
+        "draft-freeze-at-start",
+        "draft-freeze-helper",
+        "version-policy"
+      ],
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "UI01",
+      "claim": "New run selects a published version and sends it without allowDraft; does not auto-publish or use an editable draft",
+      "preparedResult": "Source-supported at a608",
+      "evidence": [
+        "UI-published-select",
+        "UI-selected-version-request",
+        "UI-no-published-warning"
+      ],
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "PIN01",
+      "claim": "Resume continues the existing run version; Replay creates a fork on source.versionId and source.pinned",
+      "preparedResult": "Source-supported at a608; no runtime execution here",
+      "evidence": [
+        "Resume-transition",
+        "execution-existing-pin",
+        "Replay-source-version",
+        "Replay-existing-pin"
+      ],
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "DOC01",
+      "claim": "At final head, each D209 proposed replacement occurs exactly once, old universal-publication instruction absent in target authored-failure passage",
+      "preparedResult": "PENDING_FINAL_INTEGRATED_HEAD",
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "DOC02",
+      "claim": "All remaining #486 paragraph text and incoming D197 recovery paragraphs preserved; publication qualification does not imply Resume/Replay applies edits",
+      "preparedResult": "PENDING_FINAL_INTEGRATED_HEAD",
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    },
+    {
+      "id": "SCOPE01",
+      "claim": "Final 54-path source mapping keeps all50 noncombined frozen4d blobs/modes exact and bounds four combined docs; D209 adds no runtime edits",
+      "preparedResult": "PENDING_FINAL_INTEGRATED_HEAD_AND_PROOF",
+      "finalResult": "PASS_STATIC_AT_EXACT_INTEGRATED_HEAD"
+    }
+  ],
+  "expectedReplacements": [
+    {
+      "path": "CHANGELOG.md",
+      "old": "Correct the reported field and publish a new version before starting a new run.",
+      "proposed": "Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`.",
+      "contexts": {
+        "base": {
+          "commit": "02a0000998fa119be7553ddc06a60b63fbde1e31",
+          "firstLine": 5,
+          "text": "## Unreleased\n\n- Codex structured calls create short scratch names with exclusive `mkdir` in at most four\n  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing\n  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,\n  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI\n  verification at the measured 226-character Windows temp root observes a 249-character adapter\n  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI"
+        },
+        "ours": {
+          "commit": "d1177f105bd008fc084ccbbc086ee70e14d13e2f",
+          "firstLine": 5,
+          "text": "## Unreleased\n\n- Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and publish a new version before starting a new run. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)\n\n- Codex structured calls create short scratch names with exclusive `mkdir` in at most four\n  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing\n  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,\n  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI"
+        },
+        "theirs": {
+          "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+          "firstLine": 5,
+          "text": "## Unreleased\n\n- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first\n  catalog projection as startup (#448). Existing stored metadata and disabled rows retain\n  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or\n  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's\n  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an\n  empty one (no frames, so no stored data).\n  **Upgrade:** rebuild the API. No schema, stored format or reset change.\n\n- Document explicit Windows batch-file invocation and pinned-definition recovery for\n  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression\n  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.\n\n- System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check\n  passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin\n  tools are not verified by this check. CLI inventory commands are useful for investigation,\n  but do not prove every enabled plugin loaded. Readiness, authentication, exit status and\n  plugin inheritance/overrides keep their existing behavior; no new probe or repair runs.\n  **Upgrade:** rebuild the API and web app. Preflight output parsers must allow the new warning\n  row and warning count. No schema, stored format or reset change.\n\n- Codex structured calls create short scratch names with exclusive `mkdir` in at most four\n  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing\n  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,"
+        }
+      }
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "old": "Correct the field, publish the corrected version and start a new run.",
+      "proposed": "Correct the field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`.",
+      "contexts": {
+        "base": {
+          "commit": "02a0000998fa119be7553ddc06a60b63fbde1e31",
+          "firstLine": 271,
+          "text": "## Act on failure reasons\n\n`SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.\n\nA handler failure looks like this inside the run snapshot's `failure` field:\n\n<!-- guide-example: failure-shape -->\n"
+        },
+        "ours": {
+          "commit": "d1177f105bd008fc084ccbbc086ee70e14d13e2f",
+          "firstLine": 271,
+          "text": "## Act on failure reasons\n\nFor an authored template, expression or inference transform failure, open the reported node and edit the field named in the message. Item and operation numbers start at one. Correct the field, publish the corrected version and start a new run. Resume is unavailable for a deterministic fault in the pinned version. Check the timeline before running again. A heartbeat may already have probed, an earlier context file may already exist, or a child may already have finished. A message saying that GraphGoblin received the provider result means that the reported repair prompt or transform failed afterwards. [Execution and recovery](../05-execution-engine.md#resiliency-model-decided)\n\n`SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.\n\nA handler failure looks like this inside the run snapshot's `failure` field:\n"
+        },
+        "theirs": {
+          "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+          "firstLine": 271,
+          "text": "## Act on failure reasons\n\n`SCRIPT_START_FAILED` means the runner proved the command did not start. After restoring an external prerequisite, such as a missing executable, Resume can retry the pinned definition. If the command, arguments or working-directory configuration must change, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies that definition change: both retain the failed run's pinned version. See [Windows batch commands](07-troubleshooting.md#windows-batch-commands). `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.\n\nA handler failure looks like this inside the run snapshot's `failure` field:\n\n<!-- guide-example: failure-shape -->\n"
+        }
+      }
+    }
+  ],
+  "frozenSource": "4d982162ca60e885d5af22f66076383a048215db",
+  "currentMain": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+  "mergeBase": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+  "sourceChangedPaths": 54,
+  "combinedPaths": [
+    "CHANGELOG.md",
+    "docs/04-node-catalog.md",
+    "docs/06-harness-integration.md",
+    "docs/guide/03-run-and-observe.md"
+  ],
+  "noncombinedPaths": [
+    "apps/api/src/history-cleanup.test.ts",
+    "apps/api/src/prompt-evidence-matrix.test.ts",
+    "apps/api/src/prompt-failure-boundaries.test.ts",
+    "apps/api/src/prompt-provenance.test.ts",
+    "apps/api/src/prompt-sdk-storage-matrix.test.ts",
+    "apps/api/src/subloop-failure.test.ts",
+    "docs/05-execution-engine.md",
+    "docs/decisions/ADR-0088-authored-execution-failures.md",
+    "packages/domain/src/expression.test.ts",
+    "packages/domain/src/expression.ts",
+    "packages/domain/src/index.ts",
+    "packages/domain/src/mutations.test.ts",
+    "packages/domain/src/mutations.ts",
+    "packages/domain/src/template.test.ts",
+    "packages/domain/src/template.ts",
+    "packages/engine/src/adversarial.test.ts",
+    "packages/engine/src/authored-failure.test.ts",
+    "packages/engine/src/authored-failure.ts",
+    "packages/engine/src/awaited-children.test.ts",
+    "packages/engine/src/child-creation.test.ts",
+    "packages/engine/src/child-failure-parity.test.ts",
+    "packages/engine/src/edge-cases.test.ts",
+    "packages/engine/src/failure-publication.ts",
+    "packages/engine/src/handler.ts",
+    "packages/engine/src/handlers/common.ts",
+    "packages/engine/src/handlers/decision.ts",
+    "packages/engine/src/handlers/flow.test.ts",
+    "packages/engine/src/handlers/heartbeat-visit.test.ts",
+    "packages/engine/src/handlers/heartbeat.ts",
+    "packages/engine/src/handlers/inference-boundaries.test.ts",
+    "packages/engine/src/handlers/inference-context.test.ts",
+    "packages/engine/src/handlers/inference-context.ts",
+    "packages/engine/src/handlers/inference-evidence-matrix.test.ts",
+    "packages/engine/src/handlers/inference-workspace.test.ts",
+    "packages/engine/src/handlers/inference.test.ts",
+    "packages/engine/src/handlers/inference.ts",
+    "packages/engine/src/handlers/script.ts",
+    "packages/engine/src/handlers/subloop.ts",
+    "packages/engine/src/handlers/wait.ts",
+    "packages/engine/src/ports.ts",
+    "packages/engine/src/prompt-provenance.test.ts",
+    "packages/engine/src/prompt-recovery.test.ts",
+    "packages/engine/src/run-manager.test.ts",
+    "packages/engine/src/run-manager.ts",
+    "packages/engine/src/testing/fakes.ts",
+    "packages/infrastructure/src/fs/fs.test.ts",
+    "packages/infrastructure/src/fs/owned-resources.ts",
+    "packages/infrastructure/src/fs/workspace.ts",
+    "packages/infrastructure/src/sqlite/history-cleanup.test.ts",
+    "packages/infrastructure/src/sqlite/workspace-references.ts"
+  ],
+  "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+  "finalTree": "d50fb576f1ef4498cb30e52521198575d6d0ebd4"
+}

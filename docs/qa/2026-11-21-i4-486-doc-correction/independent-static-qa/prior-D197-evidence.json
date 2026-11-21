@@ -1,0 +1,163 @@
+{
+  "role": "Prior D197 runtime evidence only; not new D209 execution",
+  "head": "08633913a58cb42c32b4a18c72cd4aed67cfefa6",
+  "tree": "f7b63399b7f66ece81cc711c684073463fa39731",
+  "sealSha256": "5b4f50ec5aae5b89f6aba2628bc84afd8d81d0f0c2ca7fb57b5a0fc32bf4cd43",
+  "manifestSha256": "c2f56c8fb04a29a6cf1075827038cbecdf41f6eeedf0588d6e9ce85cc1136aa0",
+  "manifestMembersVerified": 88,
+  "caseRecords": [
+    {
+      "suite": "engine",
+      "title": "draft runs pin a snapshot of the draft keeps the snapshot through an edit while waiting; a new draft run sees the edit",
+      "status": "passed",
+      "durationMs": 160.49190000000044
+    },
+    {
+      "suite": "engine",
+      "title": "draft runs pin a snapshot of the draft keeps the snapshot when the draft is edited while a node is running",
+      "status": "passed",
+      "durationMs": 370.5762999999997
+    },
+    {
+      "suite": "engine",
+      "title": "draft runs pin a snapshot of the draft continues on the snapshot after a restart, and a replay fork reuses the pin",
+      "status": "passed",
+      "durationMs": 108.53909999999996
+    },
+    {
+      "suite": "engine",
+      "title": "draft runs pin a snapshot of the draft never starts a snapshot directly",
+      "status": "passed",
+      "durationMs": 33.17659999999978
+    },
+    {
+      "suite": "engine",
+      "title": "published runs pin their version keeps the version through a newer publish while waiting; a new run takes the newer one",
+      "status": "passed",
+      "durationMs": 136.6246999999994
+    },
+    {
+      "suite": "engine",
+      "title": "inherited model defaults are pinned at start ignores Settings and process default changes for a waiting run, across a restart",
+      "status": "passed",
+      "durationMs": 152.9974000000002
+    },
+    {
+      "suite": "engine",
+      "title": "children keep their own pins runs the selection pinned at parent start, on every visit, with the parent defaults",
+      "status": "passed",
+      "durationMs": 368.3679000000002
+    },
+    {
+      "suite": "engine",
+      "title": "triggered starts pin like manual ones pins a webhook admission at claim time and a poll item at admission",
+      "status": "passed",
+      "durationMs": 34.347099999999955
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start calls the binding pinned at start after a catalog edit while waiting and a restart",
+      "status": "passed",
+      "durationMs": 78.52379999999994
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start keeps availability live: a disabled classifier fails explicitly, and nothing is substituted",
+      "status": "passed",
+      "durationMs": 57.193599999999606
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start never looks up a classifier that was missing when the run started",
+      "status": "passed",
+      "durationMs": 46.83389999999963
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start binds and calls a classifier whose catalog id is an Object property name",
+      "status": "passed",
+      "durationMs": 75.40859999999975
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start treats an unbound Object property name as missing, not as an inherited binding",
+      "status": "passed",
+      "durationMs": 46.500700000000506
+    },
+    {
+      "suite": "engine",
+      "title": "classifier bindings are pinned at start gives a child its parent binding for a shared classifier",
+      "status": "passed",
+      "durationMs": 107.3168999999998
+    },
+    {
+      "suite": "engine",
+      "title": "pin labels name the source and number",
+      "status": "passed",
+      "durationMs": 0.3018000000001848
+    },
+    {
+      "suite": "api",
+      "title": "validates manual inputs against the selected schema across loops, versions and restart",
+      "status": "passed",
+      "durationMs": 2389.534599999999
+    },
+    {
+      "suite": "api",
+      "title": "runs pin their definition across edits, Settings changes and a restart keeps published and draft runs on their start definition and defaults",
+      "status": "passed",
+      "durationMs": 1315.4807
+    },
+    {
+      "suite": "api",
+      "title": "classifier bindings are pinned at start calls the provider model a waiting run pinned, after a catalog edit and a restart",
+      "status": "passed",
+      "durationMs": 840.1099000000013
+    },
+    {
+      "suite": "api",
+      "title": "classifier bindings are pinned at start starts and runs a classifier whose catalog id is an Object property name",
+      "status": "passed",
+      "durationMs": 353.96060000000034
+    }
+  ],
+  "sourceComparisons": [
+    {
+      "path": "packages/engine/src/definition-pin.test.ts",
+      "priorBlob": "52aa95f9588e8e5ccff3ba64b29b8b1303db5646",
+      "a608Blob": "52aa95f9588e8e5ccff3ba64b29b8b1303db5646",
+      "equal": true
+    },
+    {
+      "path": "apps/api/src/definition-pins.test.ts",
+      "priorBlob": "44c7f993c74c27aba09536543769b089a072bf07",
+      "a608Blob": "44c7f993c74c27aba09536543769b089a072bf07",
+      "equal": true
+    },
+    {
+      "path": "apps/api/src/routes/runs.ts",
+      "priorBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674",
+      "a608Blob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674",
+      "equal": true
+    },
+    {
+      "path": "packages/engine/src/definition-pin.ts",
+      "priorBlob": "b4359db5d43a80790c27d4fdabef44159f065e68",
+      "a608Blob": "b4359db5d43a80790c27d4fdabef44159f065e68",
+      "equal": true
+    },
+    {
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "priorBlob": "59064efb453b8b4852702a9fe9fb4770b1c95efe",
+      "a608Blob": "59064efb453b8b4852702a9fe9fb4770b1c95efe",
+      "equal": true
+    }
+  ],
+  "newRuntimeCommands": 0,
+  "limits": [
+    "Engine public methods over fakes; API Fastify injection and disposable SQLite",
+    "Prior container/store reopen, not a newly observed OS-process restart",
+    "UI publication selection is source evidence, not prior or new browser interaction",
+    "No new D209 runtime/build/provider execution"
+  ]
+}

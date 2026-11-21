@@ -1,0 +1,20 @@
+{
+  "head": "29e165e14fdda138300ba2a34585ddd47268b475",
+  "branch": "codex/gg-i4-553-browser-diagnostic",
+  "statusPorcelain": " M apps/web/e2e/global-setup.ts\n M apps/web/e2e/pwa.spec.ts\n M apps/web/public/chat-update-worker.js\n M apps/web/src/pwa/chat-update-guard.ts\n M apps/web/src/pwa/register.ts\n?? apps/web/e2e/pwa-diagnostic.ts\n",
+  "indexDiff": "",
+  "targetBlockExactAfterOnlyDiagnosticCatchRemoval": true,
+  "targetBlockBaseSha256": "d01a28ca6f4dd510402a372e4213de4fc6e4160124517773d30b49d2c38a350f",
+  "playwrightConfigExactBase": true,
+  "lockfileExactBase": true,
+  "sourceChanges": "Only the six disclosed diagnostic files; no commit or index mutation.",
+  "firstBodyErrorPath": "Exact target catch logs then rethrows before finally; reset catch logs then rethrows. Error branches not exercised because target passed both attempts.",
+  "observerReach": [
+    "Production worker: console logging; scoped lock snapshots at APPLY and exclusive grant; activation event observer.",
+    "Page guard and PWA registration: console logging around existing protocol/lease/result/reload operations.",
+    "Test observer: console listener, ServiceWorker CDP sessions/version updates, one-second read-only registration/locks/status-text samples.",
+    "Test spec: before/after observer hooks; target first-body/cleanup error recording without swallowing.",
+    "Global setup: child/server PID logging only."
+  ],
+  "observerLimit": "No explicit online/offline setter, fetch, storage or UI mutation added by instrumentation. Extra CDP sessions, read calls and console/logging can change timing or browser behavior; offline-banner failure is instrumented evidence, not a proven pristine defect."
+}

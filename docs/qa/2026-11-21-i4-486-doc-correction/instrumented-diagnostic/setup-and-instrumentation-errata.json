@@ -1,0 +1,36 @@
+{
+  "instrumentationGenerationFailures": [
+    {
+      "attempt": 1,
+      "phase": "before build/test",
+      "error": "ValueError: clearTimeout/close/resolve anchor matched 2 sites, required 1",
+      "record": "instrumentation-failed-01/failure.json",
+      "partialSourceCopies": "instrumentation-failed-01/",
+      "correction": "Precise protocol-result validation anchor; regenerated only owned files from base"
+    }
+  ],
+  "staticInspectionErrors": [
+    {
+      "attempt": 1,
+      "error": "AssertionError: instrument.py separator needle count was 0",
+      "productExecution": false
+    },
+    {
+      "attempt": 2,
+      "error": "AssertionError: expected doubled slash absent; final character-code inspection confirmed one slash followed by n in both generator/helper",
+      "productExecution": false
+    }
+  ],
+  "productDiagnosticInvocations": 2,
+  "furtherRuns": 0,
+  "noErrorOutcomeDiscarded": true,
+  "rawLogs": [
+    "setup-failed-install.log",
+    "install.log",
+    "build.log",
+    "build-dependencies.log",
+    "isolated.log",
+    "sequence.log"
+  ],
+  "limit": "Static generator/inspection errors were tool results; structured error records and partial files retained, not represented as newly captured raw process stderr files."
+}

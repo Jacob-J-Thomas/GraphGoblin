@@ -1,0 +1,70 @@
+{
+  "scope": "Immutable source-linked excerpts for the two-sentence bounded review; root fills final integrated head/doc hashes later",
+  "snippets": [
+    {
+      "commit": "4d982162ca60e885d5af22f66076383a048215db",
+      "path": "apps/api/src/routes/runs.ts",
+      "modeAndBlob": [
+        "100644",
+        "656f81c3122e58d0645b6f9ae3b7cb77658e5674"
+      ],
+      "fileSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+      "firstLine": 70,
+      "lastLine": 124,
+      "claim": "REST start forwards editable versionId and allowDraft",
+      "text": "  }\n\n  app.post(\n    '/loops/:id/runs',\n    {\n      schema: {\n        tags: ['runs'],\n        summary: 'Start a run from a manual trigger',\n        params: IdParams,\n        body: z\n          .object({\n            triggerNodeId: z.string().optional(),\n            input: JsonValueSchema.optional(),\n            return: z.array(ReturnChannelSchema).optional(),\n            versionId: z.string().optional(),\n            allowDraft: z.boolean().optional(),\n          })\n          .default({}),\n        response: { 202: z.object({ run: RunRecordSchema }) },\n      },\n    },\n    async (request, reply) => {\n      const loop = await repos.loops.getLoop(request.params.id);\n      if (!loop || loop.ownerId !== request.auth.ownerId)\n        throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);\n      const body = request.body;\n      const versionId = body.versionId || loop.currentVersionId;\n      const readiness = readinessOperation(ports.harnesses);\n      try {\n        const run = await manager.startRun(\n          {\n            ownerId: request.auth.ownerId,\n            loopId: loop.id,\n            source: sourceFor(request),\n            caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },\n            ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),\n            ...(body.input !== undefined ? { payload: body.input } : {}),\n            ...(body.return ? { returnDefaults: body.return } : {}),\n            ...(versionId ? { versionId } : {}),\n            ...(body.allowDraft ? { allowDraft: true } : {}),\n          },\n          async (plan) => {\n            if (loop.system && systemChatIssues(plan.root.definition).length)\n              throw new ChatError(\n                'SYSTEM_CHAT_CONTRACT_INVALID',\n                400,\n                'the pinned system chat boundary must be valid before execution',\n              );\n            await assertRunReadiness(plan, readiness, await ports.modelCatalog.list());\n          },\n        );\n        reply.status(202);\n        return { run };\n      } catch (error) {\n        if (error instanceof RunReadinessError)"
+    },
+    {
+      "commit": "4d982162ca60e885d5af22f66076383a048215db",
+      "path": "packages/engine/src/run-manager.ts",
+      "modeAndBlob": [
+        "100644",
+        "4ad5fd9ad6c844ac54d52a8ed9c46660be598a18"
+      ],
+      "fileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e",
+      "firstLine": 655,
+      "lastLine": 735,
+      "claim": "Fresh validated draft run creates its frozen snapshot",
+      "text": "\n  // ---------------------------------------------------------------------------\n  // Commands\n  // ---------------------------------------------------------------------------\n\n  private async prepareStart(input: StartRunInput): Promise<PreparedStart> {\n    const source = await this.resolveVersion(input);\n    const def = source.definition;\n    const systemChat = await this.ports.loops.getSystemChatBinding(input.loopId);\n    if (systemChat && systemChatIssues(def).length)\n      throw new ChatAdmissionError('CHAT_NOT_READY', 'The system chat boundary is invalid');\n    const trigger = this.resolveTrigger(def, input.triggerNodeId);\n    const payload: JsonValue = input.payload ?? null;\n    if (!input.conversationTurn && systemChat) {\n      const chatInput = validateJson(ChatTextInputJsonSchema, payload);\n      if (!chatInput.ok)\n        throw new EngineRequestError(\n          'INVALID_INPUT',\n          'System chat runs started outside Chat accept canonical text input only',\n        );\n    }\n    if (trigger.config.type === 'manual' && trigger.config.inputSchema) {\n      const validation = validateJson(trigger.config.inputSchema, payload);\n      if (!validation.ok) {\n        throw new EngineRequestError(\n          'INVALID_INPUT',\n          `trigger input is invalid: ${validation.errors.join('; ')}`,\n          { errors: validation.errors },\n        );\n      }\n    }\n    const now = this.now();\n    const runId = this.ports.ids.next();\n    const invocationId = this.ports.ids.next();\n    // The run's definition is immutable for its whole life (ADR-0041): a draft start pins a frozen\n    // copy of exactly the draft read and validated above, committed with the run.\n    const snapshot =\n      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;\n    const version = snapshot ?? source;\n    const pinned = pinnedFields(version, {\n      defaults: input.pinnedDefaults ?? (await this.startDefaults(input)),\n      classifiers: await bindClassifiers(\n        def,\n        input.ownerId,\n        this.ports.classifiers,\n        input.pinnedClassifiers,\n      ),\n    });\n    const thread = createInitialThread({\n      runId,\n      loopId: version.loopId,\n      versionId: version.id,\n      ...(input.parentRunId ? { parentRunId: input.parentRunId } : {}),\n      invocation: {\n        id: invocationId,\n        source: input.source,\n        ...(input.caller ? { caller: input.caller } : {}),\n        trigger: {\n          nodeId: trigger.id,\n          kind: input.triggerKind ?? triggerKindOf(trigger),\n          payload,\n          receivedAt: now,\n          ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),\n          ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),\n        },\n        ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),\n      },\n      ...(input.seed ? { seed: input.seed } : {}),\n    });\n    thread.gates = Object.fromEntries(\n      version.definition.nodes\n        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)\n        .map((node) => [node.id, { passes: 1 }]),\n    );\n    const run: RunRecord = {\n      id: runId,\n      ownerId: input.ownerId,\n      loopId: version.loopId,\n      ...pinned,\n      ...(input.parentRunId ? { parentRunId: input.parentRunId } : {}),\n      invocationId,"
+    },
+    {
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "modeAndBlob": [
+        "100644",
+        "59064efb453b8b4852702a9fe9fb4770b1c95efe"
+      ],
+      "fileSha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8",
+      "firstLine": 14,
+      "lastLine": 34,
+      "claim": "UI version selection filters published versions",
+      "text": "function StartForm({ loopId, version }: { loopId: string; version: LoopVersionRecord }) {\n  const client = useApi();\n  const navigate = useNavigate();\n  const queryClient = useQueryClient();\n  const triggers = version.definition.nodes.filter(\n    (n): n is Extract<typeof n, { kind: 'trigger' }> =>\n      n.kind === 'trigger' && n.config.type === 'manual',\n  );\n  const [triggerId, setTriggerId] = useState(triggers[0]?.id ?? '');\n  const start = useMutation({\n    mutationFn: (input: unknown) =>\n      runs.start(client, loopId, {\n        triggerNodeId: triggerId,\n        versionId: version.id,\n        ...(input !== undefined ? { input: input as never } : {}),\n      }),\n    onSuccess: (run) => {\n      void queryClient.invalidateQueries({ queryKey: ['runs'] });\n      void navigate(`/runs/${run.id}`);\n    },\n  });"
+    },
+    {
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "modeAndBlob": [
+        "100644",
+        "59064efb453b8b4852702a9fe9fb4770b1c95efe"
+      ],
+      "fileSha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8",
+      "firstLine": 86,
+      "lastLine": 99,
+      "claim": "UI sends selected version ID on start",
+      "text": "  const [chosen, setChosen] = useState(currentVersionId);\n  return (\n    <QueryState query={query} what=\"Versions\">\n      {(items) => {\n        const published = items\n          .filter((v) => v.status === 'published')\n          .sort((a, b) => b.version - a.version);\n        const version = published.find((v) => v.id === chosen) ?? published[0];\n        if (!version) return <Alert tone=\"warn\">This loop has no published version yet.</Alert>;\n        return (\n          <section aria-label=\"Start a run\" className=\"grid gap-field\">\n            <FieldGroup className=\"max-w-[440px]\">\n              <Label htmlFor=\"run-version\">Version</Label>\n              <Select"
+    },
+    {
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "path": "docs/guide/03-run-and-observe.md",
+      "modeAndBlob": [
+        "100644",
+        "9409b8d2f2cb3bba34edcb8f810b24363fd22666"
+      ],
+      "fileSha256": "9b7329496f4e28b427d6389bcbf9b5affd2abccddcf7a9472edc19bea707075b",
+      "firstLine": 170,
+      "lastLine": 181,
+      "claim": "Merged D197 fresh-definition, UI and API draft distinction",
+      "text": "\nWindows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The examples therefore send the observed JSON command.\n\nPause and input retain their state-conflict errors. Resume and Replay return typed current eligibility refusals; see [ADR-0061](../decisions/ADR-0061-recovery-eligibility.md) for the complete list.\n\nEditing the loop does not change a failed run's pinned config. For a config or graph fix, start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there. To test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run freezes a new snapshot without publication. Publishing can arm the new version's cron and webhook triggers and disable the earlier version's registrations; see [trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6). Resume and Replay retain the original pin. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.\n\nChild runs reconstruct like any other run: their first event, `run.queued`, carries the thread the parent seeded (`initialThread`), so the inspector shows inherited messages and values at every event. Runs recorded before that field existed start from empty collections; `GET /runs/{id}/thread` always returns the server's current thread.\n\n## Replay from a node\n\nTo debug a node, fork a new run at it with the same input it had: the fork starts from the recorded thread just before that node first started, on the same pinned definition. The source may be in any status. Nothing before the chosen node runs again unless the graph routes back to it. **Replay runs the path again for a new run:** scripts, provider turns, child runs and deliveries after that node run again. The inspector's picker names the effectful nodes that can be reached. The source's effects, result, history and own recorded deliveries stay unchanged; the fork performs its own exit delivery. A path into the current uncertain script requires an additional explicit confirmation. This example replays **summarise**, so it calls the provider again. In Bash:"
+    }
+  ]
+}

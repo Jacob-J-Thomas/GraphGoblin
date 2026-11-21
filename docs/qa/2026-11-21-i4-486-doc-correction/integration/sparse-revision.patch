@@ -1,0 +1,65 @@
+--- integrate.py
++++ integrate-sparse-01.py
+@@ -79,6 +79,22 @@
+         'branch': git('branch', '--show-current').decode().strip(), 'clean': not status, 'statusSha256': sha(status),
+         'indexPath': str(index), 'indexBytes': index.stat().st_size, 'indexSha256': sha(index.read_bytes()),
+         'stageListingSha256': sha(git('ls-files', '--stage', '-z'))}
++
++def sparse_scope():
++    rows = git('ls-files', '-t', '-z', '--', *sorted(COMBINED)).split(b'\0')[:-1]
++    flags = {}
++    for row in rows:
++        flag, path = row[:1].decode(), row[2:].decode()
++        require(path in COMBINED and flag != 'S', 'Combined path is outside sparse scope: ' + path)
++        flags.setdefault(path, []).append(flag)
++    require(set(flags) == COMBINED, 'A combined path is not present in the owned index')
++    for path in COMBINED:
++        require((REPO / path).is_file() and not (REPO / path).is_symlink(), 'Combined path is not an existing regular worktree file: ' + path)
++    pattern = Path(git('rev-parse', '--path-format=absolute', '--git-path', 'info/sparse-checkout').decode().strip())
++    data = pattern.read_bytes() if pattern.is_file() else b''
++    return {'patternPath': str(pattern), 'patternExists': pattern.is_file(), 'patternBytes': len(data), 'patternSha256': sha(data),
++        'combinedPathFlags': {p: sorted(v) for p, v in sorted(flags.items())}, 'allSixExistingPathsInScope': True,
++        'scope': 'Targeted six-path admission only; no archive payload/materialization traversal and no sparse expansion'}
+ 
+ def target_guard():
+     actual = git('rev-parse', 'refs/remotes/origin/main').decode().strip()
+@@ -215,6 +231,8 @@
+ 
+ def merge_phase(name, ours, theirs, base, cfg, source_paths):
+     target_guard()
++    sparse_before = sparse_scope()
++    require(sparse_before['patternSha256'] == cfg['initialSparsePatternSha256'], 'Sparse-pattern bytes changed before phase')
+     require(snapshot()['head'] == ours and snapshot()['clean'], 'Owned delivery head/index is not the admitted clean phase input')
+     require(git('merge-base', ours, theirs).decode().strip() == base, 'Actual merge base differs')
+     expected, doc_proof = combined_files(base, ours, theirs, name, cfg)
+@@ -227,6 +245,8 @@
+         require((REPO / path).resolve().is_relative_to(REPO), 'Combined write escaped owned checkout')
+         if (REPO / path).read_bytes() != raw:
+             (REPO / path).write_bytes(raw)
++    sparse_pre_stage = sparse_scope()
++    require(sparse_pre_stage['patternSha256'] == cfg['initialSparsePatternSha256'], 'Sparse-pattern bytes changed before staging')
+     run_mutation(name + '-stage-combined-only', 'add', '--', *sorted(COMBINED))
+     require(not git('ls-files', '--unmerged') and not git('diff', '--name-only'), 'Unexpected unresolved or unstaged state')
+     run_mutation(name + '-diff-check', 'diff', '--cached', '--check')
+@@ -239,7 +259,9 @@
+     new = snapshot()
+     require(new['clean'] and new['tree'] == final_tree, 'Post-merge checkout not exact/clean')
+     require(git('show', '-s', '--format=%P', new['head']).decode().split() == [ours, theirs], 'Merge parents differ')
+-    put('execution/' + name + '-receipt.json', {**new, 'parents': [ours, theirs], 'base': base, 'proof': proof, 'testsBuildsProvidersPushPerformed': False})
++    sparse_after = sparse_scope()
++    require(sparse_after['patternSha256'] == sparse_before['patternSha256'], 'Sparse-pattern bytes changed during phase')
++    put('execution/' + name + '-receipt.json', {**new, 'parents': [ours, theirs], 'base': base, 'proof': proof, 'sparseBefore': sparse_before, 'sparseAfter': sparse_after, 'noSparseExpansion': True, 'testsBuildsProvidersPushPerformed': False})
+     return new['head']
+ 
+ def main():
+@@ -259,7 +281,9 @@
+     require(initial['head'] == INITIAL and initial['branch'] == BRANCH and initial['clean'], 'Existing delivery no longer exact clean d117')
+     require(initial['indexSha256'] == cfg['initialDeliveryIndexSha256'], 'Delivery index bytes changed before integration admission')
+     target_guard()
+-    result = {'delivery': initial, 'main': TARGET, 'sourceCorrection': CORRECTION, 'sourcePaths': len(source_paths),
++    sparse = sparse_scope()
++    require(sparse['patternSha256'] == cfg['initialSparsePatternSha256'], 'Sparse-pattern bytes changed since root preparation')
++    result = {'sparseScope': sparse, 'delivery': initial, 'main': TARGET, 'sourceCorrection': CORRECTION, 'sourcePaths': len(source_paths),
+         'evidenceHead': args.evidence_head, 'executionAuthorizedByConfig': cfg.get('rootExecutionAuthorized', False), 'documentationDecisionRecorded': cfg['documentationQualification'].get('rootApproved', False)}
+     if args.evidence_head:
+         result['evidenceAdmission'] = evidence_admission(args.evidence_head)

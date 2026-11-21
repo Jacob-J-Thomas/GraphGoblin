@@ -1,0 +1,400 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/pwa.spec.ts",
+      "--grep",
+      "an open window detects a changed worker on focus|two clean tabs reload after an update found more than 60 seconds|cold offline Loops reload recovers|another tab.s unresolved voice upload vetoes update activation until that tab closes",
+      "--trace",
+      "on",
+      "--output",
+      "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results",
+      "--reporter",
+      "list,json"
+    ],
+    "configFile": "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\playwright.config.ts",
+    "rootDir": "G:/ggq/gg-i4-553-browser-diagnostic/GraphGoblin/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-553-browser-reproduction-01/attempts/sequence/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "G:/ggq/gg-i4-553-browser-diagnostic/GraphGoblin/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "pwa.spec.ts",
+      "file": "pwa.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "an open window detects a changed worker on focus, prompts, and updates only on confirmation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 100000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4440,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"document-created\",\"at\":1795288383675,\"documentId\":1795288383646.4,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288383675,\"pageShown\":false,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"pageshow\",\"at\":1795288383950,\"documentId\":1795288383646.4,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288383675,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-start\",\"at\":1795288384030,\"documentId\":1795288383646.4,\"calls\":0,\"found\":0,\"pending\":1,\"activity\":1795288384030,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-complete\",\"at\":1795288384143,\"documentId\":1795288383646.4,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288384143,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288384144,\"documentId\":1795288383646.4,\"calls\":1,\"found\":0,\"pending\":1,\"activity\":1795288384144,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"updatefound\",\"at\":1795288384144,\"documentId\":1795288383646.4,\"calls\":1,\"found\":1,\"pending\":1,\"activity\":1795288384144,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288384343,\"documentId\":1795288383646.4,\"calls\":1,\"found\":1,\"pending\":0,\"activity\":1795288384343,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"document-created\",\"at\":1795288384395,\"documentId\":1795288384380.1,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288384395,\"pageShown\":false,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"pageshow\",\"at\":1795288384522,\"documentId\":1795288384380.1,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288384395,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-start\",\"at\":1795288384611,\"documentId\":1795288384380.1,\"calls\":0,\"found\":0,\"pending\":1,\"activity\":1795288384611,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-complete\",\"at\":1795288384618,\"documentId\":1795288384380.1,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288384618,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288384618,\"documentId\":1795288384380.1,\"calls\":1,\"found\":0,\"pending\":1,\"activity\":1795288384618,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288384645,\"documentId\":1795288384380.1,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288384645,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA baseline: {\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288384645,\"pageShown\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"focus\",\"at\":1795288385762,\"documentId\":1795288384380.1,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288384645,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":false}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288385762,\"documentId\":1795288384380.1,\"calls\":2,\"found\":0,\"pending\":1,\"activity\":1795288385762,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288385783,\"documentId\":1795288384380.1,\"calls\":2,\"found\":0,\"pending\":0,\"activity\":1795288385783,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"updatefound\",\"at\":1795288385783,\"documentId\":1795288384380.1,\"calls\":2,\"found\":1,\"pending\":0,\"activity\":1795288385783,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"visibilitychange\",\"at\":1795288385925,\"documentId\":1795288384380.1,\"calls\":2,\"found\":1,\"pending\":0,\"activity\":1795288385783,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":false}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288385925,\"documentId\":1795288384380.1,\"calls\":3,\"found\":1,\"pending\":1,\"activity\":1795288385925,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288385952,\"documentId\":1795288384380.1,\"calls\":3,\"found\":1,\"pending\":0,\"activity\":1795288385952,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"updatefound\",\"at\":1795288385952,\"documentId\":1795288384380.1,\"calls\":3,\"found\":2,\"pending\":0,\"activity\":1795288385952,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"visibilitychange\",\"at\":1795288386026,\"documentId\":1795288384380.1,\"calls\":3,\"found\":2,\"pending\":0,\"activity\":1795288385952,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":false}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288386026,\"documentId\":1795288384380.1,\"calls\":4,\"found\":2,\"pending\":1,\"activity\":1795288386026,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288386056,\"documentId\":1795288384380.1,\"calls\":4,\"found\":2,\"pending\":0,\"activity\":1795288386056,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"updatefound\",\"at\":1795288386056,\"documentId\":1795288384380.1,\"calls\":4,\"found\":3,\"pending\":0,\"activity\":1795288386056,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"document-created\",\"at\":1795288386108,\"documentId\":1795288386092.3,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288386108,\"pageShown\":false,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"pageshow\",\"at\":1795288386151,\"documentId\":1795288386092.3,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288386108,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-start\",\"at\":1795288386208,\"documentId\":1795288386092.3,\"calls\":0,\"found\":0,\"pending\":1,\"activity\":1795288386208,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-complete\",\"at\":1795288386240,\"documentId\":1795288386092.3,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288386240,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288386240,\"documentId\":1795288386092.3,\"calls\":1,\"found\":0,\"pending\":1,\"activity\":1795288386240,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288386255,\"documentId\":1795288386092.3,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288386255,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"document-created\",\"at\":1795288387334,\"documentId\":1795288386317,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288387334,\"pageShown\":false,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"pageshow\",\"at\":1795288387449,\"documentId\":1795288386317,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288387334,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-start\",\"at\":1795288387508,\"documentId\":1795288386317,\"calls\":0,\"found\":0,\"pending\":1,\"activity\":1795288387508,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"register-complete\",\"at\":1795288387532,\"documentId\":1795288386317,\"calls\":0,\"found\":0,\"pending\":0,\"activity\":1795288387532,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-start\",\"at\":1795288387532,\"documentId\":1795288386317,\"calls\":1,\"found\":0,\"pending\":1,\"activity\":1795288387532,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"update-complete\",\"at\":1795288387544,\"documentId\":1795288386317,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288387544,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":null}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"pagehide\",\"at\":1795288387774,\"documentId\":1795288386317,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288387544,\"pageShown\":true,\"visibility\":\"visible\",\"focused\":true,\"trusted\":true}\n"
+                    },
+                    {
+                      "text": "PWA lifecycle:{\"kind\":\"visibilitychange\",\"at\":1795288387774,\"documentId\":1795288386317,\"calls\":1,\"found\":0,\"pending\":0,\"activity\":1795288387544,\"pageShown\":true,\"visibility\":\"hidden\",\"focused\":true,\"trusted\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T19:13:03.042Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results\\pwa-an-open-window-detects-5e2af-pdates-only-on-confirmation-chromium\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30bf0965a0eb07fc9173-d1c0f3d91d89dcb6e133",
+          "file": "pwa.spec.ts",
+          "line": 217,
+          "column": 1
+        },
+        {
+          "title": "two clean tabs reload after an update found more than 60 seconds after registration",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3329,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T19:13:07.964Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results\\pwa-two-clean-tabs-reload--02e72--seconds-after-registration-chromium\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30bf0965a0eb07fc9173-83c1bf89b04f57e9e06f",
+          "file": "pwa.spec.ts",
+          "line": 402,
+          "column": 1
+        },
+        {
+          "title": "cold offline Loops reload recovers on reconnect without navigating",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 12890,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('You are offline', { exact: true })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('You are offline', { exact: true }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('You are offline', { exact: true })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('You are offline', { exact: true })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('You are offline', { exact: true }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('You are offline', { exact: true })\u001b[22m\n\n    at G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\pwa.spec.ts:522:70",
+                    "location": {
+                      "file": "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\pwa.spec.ts",
+                      "column": 70,
+                      "line": 522
+                    },
+                    "snippet": "  520 |     const offline = page.getByText(/Loops needs the GraphGoblin API/);\n  521 |     await expect(offline).toBeVisible();\n> 522 |     await expect(page.getByText('You are offline', { exact: true })).toBeVisible();\n      |                                                                      ^\n  523 |     await expect(row).toBeHidden();\n  524 |\n  525 |     const recovered = page.waitForResponse("
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\pwa.spec.ts",
+                        "column": 70,
+                        "line": 522
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('You are offline', { exact: true })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('You are offline', { exact: true }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('You are offline', { exact: true })\u001b[22m\n\n\n  520 |     const offline = page.getByText(/Loops needs the GraphGoblin API/);\n  521 |     await expect(offline).toBeVisible();\n> 522 |     await expect(page.getByText('You are offline', { exact: true })).toBeVisible();\n      |                                                                      ^\n  523 |     await expect(row).toBeHidden();\n  524 |\n  525 |     const recovered = page.waitForResponse(\n    at G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\pwa.spec.ts:522:70"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T19:13:11.465Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results\\pwa-cold-offline-Loops-rel-e0b0c-econnect-without-navigating-chromium\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results\\pwa-cold-offline-Loops-rel-e0b0c-econnect-without-navigating-chromium\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "G:\\ggq\\gg-i4-553-browser-diagnostic\\GraphGoblin\\apps\\web\\e2e\\pwa.spec.ts",
+                    "column": 70,
+                    "line": 522
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "30bf0965a0eb07fc9173-dcfcfff65bf754405dd4",
+          "file": "pwa.spec.ts",
+          "line": 498,
+          "column": 1
+        },
+        {
+          "title": "another tab’s unresolved voice upload vetoes update activation until that tab closes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6296,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T19:13:25.563Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-browser-reproduction-01\\attempts\\sequence\\test-results\\pwa-another-tab’s-unresolv-6d30f-ation-until-that-tab-closes-chromium\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30bf0965a0eb07fc9173-69206ed0fabf4ae4de9d",
+          "file": "pwa.spec.ts",
+          "line": 540,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-21T19:12:58.497Z",
+    "duration": 34206.574,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

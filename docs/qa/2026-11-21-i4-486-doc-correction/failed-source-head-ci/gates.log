@@ -1,0 +1,53 @@
+﻿2026-11-21T18:36:35.7026961Z Current runner version: '2.338.2'
+2026-11-21T18:36:35.7051983Z ##[group]Runner Image Provisioner
+2026-11-21T18:36:35.7052896Z Hosted Compute Agent
+2026-11-21T18:36:35.7053444Z Version: 20261111.635
+2026-11-21T18:36:35.7054041Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-21T18:36:35.7054804Z Build Date: 2026-11-11T01:49:01Z
+2026-11-21T18:36:35.7055420Z Worker ID: {495bd1dc-9a14-4887-a151-d97881639293}
+2026-11-21T18:36:35.7056092Z Region: westus3
+2026-11-21T18:36:35.7056614Z Cloud: Azure
+2026-11-21T18:36:35.7057105Z ##[endgroup]
+2026-11-21T18:36:35.7058939Z ##[group]Operating System
+2026-11-21T18:36:35.7059524Z Ubuntu
+2026-11-21T18:36:35.7060048Z 26.04.1
+2026-11-21T18:36:35.7060530Z LTS
+2026-11-21T18:36:35.7061040Z ##[endgroup]
+2026-11-21T18:36:35.7061580Z ##[group]Runner Image
+2026-11-21T18:36:35.7062358Z Image: ubuntu-26.04
+2026-11-21T18:36:35.7063346Z Version: 20261116.202.1
+2026-11-21T18:36:35.7064865Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-21T18:36:35.7066493Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+2026-11-21T18:36:35.7067614Z ##[endgroup]
+2026-11-21T18:36:35.7069000Z ##[group]GITHUB_TOKEN Permissions
+2026-11-21T18:36:35.7071605Z Metadata: read
+2026-11-21T18:36:35.7072327Z ##[endgroup]
+2026-11-21T18:36:35.7075140Z Secret source: Actions
+2026-11-21T18:36:35.7076071Z Cache mode: write
+2026-11-21T18:36:35.7076774Z Prepare workflow directory
+2026-11-21T18:36:35.7409089Z Prepare all required actions
+2026-11-21T18:36:35.7508599Z Complete job name: Gates
+2026-11-21T18:36:35.8761694Z ##[group]Run {
+2026-11-21T18:36:35.8762713Z [36;1m{[0m
+2026-11-21T18:36:35.8763662Z [36;1m  echo '## Gates'[0m
+2026-11-21T18:36:35.8764645Z [36;1m  echo[0m
+2026-11-21T18:36:35.8765889Z [36;1m  echo '| Required job | Result |'[0m
+2026-11-21T18:36:35.8767041Z [36;1m  echo '| --- | --- |'[0m
+2026-11-21T18:36:35.8768495Z [36;1m  echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"[0m
+2026-11-21T18:36:35.8770034Z [36;1m  echo "| Coverage | \`${COVERAGE:-missing}\` |"[0m
+2026-11-21T18:36:35.8771270Z [36;1m} >> "$GITHUB_STEP_SUMMARY"[0m
+2026-11-21T18:36:35.8772733Z [36;1mecho "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"[0m
+2026-11-21T18:36:35.8774613Z [36;1mif [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then[0m
+2026-11-21T18:36:35.8776359Z [36;1m  echo 'Gates passed: Repository checks and Coverage both succeeded.'[0m
+2026-11-21T18:36:35.8777775Z [36;1m  exit 0[0m
+2026-11-21T18:36:35.8779008Z [36;1mfi[0m
+2026-11-21T18:36:35.8780658Z [36;1mecho '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'[0m
+2026-11-21T18:36:35.8782498Z [36;1mexit 1[0m
+2026-11-21T18:36:35.9044039Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-21T18:36:35.9045136Z env:
+2026-11-21T18:36:35.9045674Z   REPOSITORY_CHECKS: success
+2026-11-21T18:36:35.9046253Z   COVERAGE: success
+2026-11-21T18:36:35.9046781Z ##[endgroup]
+2026-11-21T18:36:35.9256605Z Repository checks: success; Coverage: success
+2026-11-21T18:36:35.9258442Z Gates passed: Repository checks and Coverage both succeeded.
+2026-11-21T18:36:35.9442202Z Cleaning up orphan processes

@@ -1,0 +1,31 @@
+{
+  "number": 556,
+  "state": "open",
+  "title": "Diagnose cold offline banner mismatch in Windows Edge diagnostic",
+  "body": "Follow-up from [PR #553's bounded PWA diagnostics](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/553#issuecomment-7067985393). Parked outside the approved 26-issue five-intent batch; no implementation is dispatched. This is an instrumented Windows observation, not a proven pristine product defect.\n\n## Observed mismatch\n\nOn Windows Edge158.0.4370.33 / Playwright1.63.0 / Node22.23.4, a bounded invocation of three preceding PWA tests and the cross-tab update case ran from source `29e165e14fdda138300ba2a34585ddd47268b475`, tree `d50fb576f1ef4498cb30e52521198575d6d0ebd4`, with disclosed diagnostic-only logging/CDP observations.\n\nThe first two cases passed. In `cold offline Loops reload recovers on reconnect without navigating`, `context.setOffline(true)` and the cold reload completed. “Loops needs the GraphGoblin API” appeared, but exact “You are offline” was absent for the existing10-second assertion window at original `pwa.spec.ts:518` (instrumented522). The inspected screenshot/error context instead showed “Cannot reach the GraphGoblin API”. The reconnect portion was never reached; normal cleanup restored online. Playwright replaced the worker before the subsequent target passed.\n\n## Limits and impact\n\nThe diagnostic patch adds console observations to PWA update/lease/registration paths, extra CDP ServiceWorker observation, read-only registration/lock/status-text sampling and separate target body/cleanup error logging. It adds no explicit network setter, storage write or UI mutation, but observation can alter timing or browser behavior. No pristine confirmation or additional repetition was performed. This is separate from the original Linux missed-reload failure and does not explain it.\n\nThe entire web source tree is identical to main a608. No current #486 authored-error change directly edits this banner. The concern is whether a cold offline browser is distinguished correctly from an unreachable API, or whether the automation/observer setup caused the mismatch. Existing closed #47/#55 establish the intended connectivity distinction; they do not establish the cause of this new observation.\n\n## Bounded outcome and acceptance\n\n- Establish browser online state, dispatched events, query connectivity classification and the displayed banner during a source-bound pristine cold offline reload; distinguish Windows/Edge behavior from Linux and diagnostic observer effects.\n- Preserve both original assertions and distinguish offline, API-unreachable and recovered states. Do not make the test accept either banner merely to turn this observation green.\n- Determine whether a product correction or test/diagnostic correction is warranted. If no cause is established, state that limit; no repeated-pass or “flaky” conclusion without evidence.\n- If a correction is warranted, verify cold and warm offline/reconnect behavior plus API-only outage behavior without navigation, and retain all ordinary review, QA, coverage and browser gates.\n- Preserve this failed observation, exact instrumentation, screenshot/trace and cleanup limits separately from any future pristine evidence. Use isolated test data only.\n\n## Duplicate check and disposition\n\nNovember21 searches covered open and closed issues for cold offline, You are offline, PWA update and cleanup/test. Closed #47 is failed-query refetch after reconnect; closed #55 is recovery when the API returns while the browser stays online; closed #56 is update discovery. None specifically tracks the observed cold-offline banner mismatch under the described Windows diagnostic. The root cause is not known to be shared with the update retry failure, so these observations are tracked separately.\n\nThe two diagnostic invocations produced five test-result records total: four passed and this one failed. They are not a normal CI pass and do not alter CI44934348117's failed result or #486's final mandatory gates. Reproduction report SHA256: `6ee184e2969f62844a923d4c411ee00643e900af68c19fa5a400034952eb7fa8`;67-member seal: `20d5be8f684906bf94e783a3cc2ce0b05f54de0a12160a185109384f4cbed1f8`.\n",
+  "labels": [
+    {
+      "name": "qa:touched-systems",
+      "color": "FBCA04",
+      "description": "QA tests and catalogues every system the change touches, positive and negative"
+    },
+    {
+      "name": "type:research",
+      "color": "D4C5F9",
+      "description": "Evaluation or decision work, no implementation"
+    },
+    {
+      "name": "area:web",
+      "color": "BFDADC",
+      "description": "Web app shell and screens"
+    },
+    {
+      "name": "backlog",
+      "color": "9E9E9E",
+      "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+    }
+  ],
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/556",
+  "created_at": "2026-11-21T19:24:51Z",
+  "updated_at": "2026-11-21T19:24:51Z"
+}
