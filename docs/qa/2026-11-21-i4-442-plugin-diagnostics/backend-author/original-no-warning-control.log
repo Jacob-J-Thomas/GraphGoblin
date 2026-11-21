@@ -1,0 +1,48 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-442-plugin-diagnostics/GraphGoblin/apps/api
+
+ ❯ src/preflight.test.ts (41 tests | 1 failed | 40 skipped) 30ms
+   ❯ runPreflight (19)
+     × reports plugin observability separately without another probe or provider turn 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/preflight.test.ts > runPreflight > reports plugin observability separately without another probe or provider turn
+AssertionError: expected undefined to deeply equal { id: 'plugins.codex', …(3) }
+
+- Expected:
+{
+  "id": "plugins.codex",
+  "label": "Codex plugins",
+  "message": "Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.",
+  "status": "warn",
+}
+
++ Received:
+undefined
+
+ ❯ src/preflight.test.ts:207:43
+    205|     expect(report.ok).toBe(true);
+    206|     expect(byId(report, 'harness.codex')).toMatchObject({ state: 'read…
+    207|     expect(byId(report, 'plugins.codex')).toEqual({
+       |                                           ^
+    208|       id: 'plugins.codex',
+    209|       label: 'Codex plugins',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 40 skipped (41)
+   Start at  03:19:18
+   Duration  8.79s (import 52%, transform 47%, setup 1%)
+
+  Transform  transforming modules took 3.94s · 47% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-442-plugin-
+  │ diagnostics\GraphGoblin\apps\api
+

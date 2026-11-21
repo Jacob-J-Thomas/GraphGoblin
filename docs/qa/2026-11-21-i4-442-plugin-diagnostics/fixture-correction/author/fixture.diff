@@ -1,0 +1,14 @@
+diff --git a/apps/web/src/settings/sections/PreflightSection.test.tsx b/apps/web/src/settings/sections/PreflightSection.test.tsx
+index d3a6bd8b..84566b78 100644
+--- a/apps/web/src/settings/sections/PreflightSection.test.tsx
++++ b/apps/web/src/settings/sections/PreflightSection.test.tsx
+@@ -46,7 +46,8 @@ function codex(state: keyof typeof LABELS): FakeApi['preflight'][number] {
+     state,
+     ok: state === 'ready',
+     ...(state === 'cli-missing' ? {} : { version: '0.160.0' }),
+-    authenticated: state === 'ready',
++    // As the adapter reports: false only for a confirmed sign-out, absent when login is unknown.
++    ...(state === 'ready' || state === 'auth' ? { authenticated: state === 'ready' } : {}),
+     problems: state === 'ready' ? [] : [readinessMessage('codex', state)],
+   };
+ }

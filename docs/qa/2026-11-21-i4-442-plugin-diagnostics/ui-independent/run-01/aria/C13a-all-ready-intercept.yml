@@ -1,0 +1,28 @@
+- region "Harness preflight":
+  - heading "Harness preflight" [level=2]
+  - status
+  - button "Retry preflight"
+  - list:
+    - listitem:
+      - text: Ready
+      - code: codex
+      - text: v0.160.0
+      - paragraph:
+        - text: Loaded plugin tools are not verified by this check. Inspect
+        - code: codex plugin list --json
+        - text: and
+        - code: codex mcp list --json
+        - text: in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.
+    - listitem:
+      - text: Ready
+      - code: claude
+      - text: v2.1.287 (QA intercept)
+      - paragraph: Signed in with Claude.ai.
+      - list "Claude model support":
+        - listitem:
+          - code: claude-opus-5-5
+          - text: listed by adapter
+      - paragraph: Adapter model listings do not confirm account access. Preflight never starts a model turn.
+    - listitem:
+      - text: Ready
+      - code: ollama
