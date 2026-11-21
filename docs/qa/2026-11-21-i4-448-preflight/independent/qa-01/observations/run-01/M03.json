@@ -1,0 +1,70 @@
+{
+  "id": "M03",
+  "kind": "built-public-method",
+  "purpose": "after ordinary startup: disabled rows still refused by SqliteModelCatalog.isAllowed and resolveHarnessModel",
+  "checks": [
+    {
+      "name": "S03: isAllowed(codex,gpt-6.1-terra,medium) false",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "S03: isAllowed(claude,claude-opus-5-5,high) true (seeded counterpart)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "S03: resolveHarnessModel unavailable MODEL_DISABLED",
+      "expected": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "actual": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "pass": true
+    },
+    {
+      "name": "S03: validateHarnessDefaults (boot) no invalid issue",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "S04: isAllowed(claude,claude-opus-5-5,high) false",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "S04: isAllowed(codex,gpt-6.1-terra,medium) true (seeded counterpart)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "S04: resolveHarnessModel unavailable MODEL_DISABLED",
+      "expected": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "actual": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "pass": true
+    },
+    {
+      "name": "S04: validateHarnessDefaults (boot) no invalid issue",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:01:56.526Z",
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:01:56.578Z"
+}

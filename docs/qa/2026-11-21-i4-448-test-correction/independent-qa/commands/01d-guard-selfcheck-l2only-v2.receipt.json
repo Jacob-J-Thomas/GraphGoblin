@@ -1,0 +1,165 @@
+{
+  "label": "01d-guard-selfcheck-l2only-v2",
+  "spec": {
+    "label": "01d-guard-selfcheck-l2only-v2",
+    "cwd": "G:/ggq/qa-scratch/i4-448-test-independent-01",
+    "program": "node",
+    "args": [
+      "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-448-test-independent-01/driver/v2/selfcheck-01.cjs"
+    ],
+    "layers": "L2",
+    "guard": true,
+    "observe": false,
+    "timeoutMs": 120000
+  },
+  "executed": {
+    "file": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+    "argv": [
+      "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-448-test-independent-01/driver/v2/selfcheck-01.cjs"
+    ],
+    "cwd": "G:/ggq/qa-scratch/i4-448-test-independent-01",
+    "windowsVerbatimArguments": false
+  },
+  "environment": {
+    "pathHead": [
+      "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64",
+      "C:\\Users\\98jak\\bin"
+    ],
+    "TEMP": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01",
+    "TMP": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01",
+    "NODE_OPTIONS": "--require=C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\driver\\v2\\guard.cjs",
+    "QA448": {
+      "QA448_GUARD_LOG": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\commands\\01d-guard-selfcheck-l2only-v2.guard.jsonl",
+      "QA448_GUARD_LAYERS": "L2",
+      "QA448_LABEL": "01d-guard-selfcheck-l2only-v2"
+    },
+    "npm_config_update_notifier": "false",
+    "extraEnv": {},
+    "inheritedGGVariables": []
+  },
+  "node": {
+    "path": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+    "version": "v22.23.4"
+  },
+  "startedUtc": "2026-11-21T16:19:45.766Z",
+  "finishedUtc": "2026-11-21T16:20:00.979Z",
+  "durationMs": 15211,
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "before": {
+    "head": "446da9ce32b2304f17c53b5ff09af559f35dd3cf",
+    "status": "",
+    "sourceSha256": "a67356cd6773b265df80ced4e26a9c1f17cd0fe0c48f2d4cb286ddc315c611ae"
+  },
+  "after": {
+    "head": "446da9ce32b2304f17c53b5ff09af559f35dd3cf",
+    "status": "",
+    "sourceSha256": "a67356cd6773b265df80ced4e26a9c1f17cd0fe0c48f2d4cb286ddc315c611ae"
+  },
+  "sourceUnchanged": true,
+  "poller": {
+    "ready": true,
+    "exit": 0,
+    "present": true,
+    "trackedProcesses": [
+      {
+        "pid": 45120,
+        "name": "node.exe"
+      }
+    ],
+    "rows": 0,
+    "distinctRows": [],
+    "stop": {
+      "utc": "2026-11-21T16:20:02.5345145Z",
+      "samples": 24,
+      "trackedPids": [
+        45120,
+        47904
+      ],
+      "event": "poller-stop",
+      "rowsWritten": 0
+    }
+  },
+  "guard": {
+    "present": true,
+    "lines": 19,
+    "byEvent": {
+      "installed": 2,
+      "blocked": 14,
+      "forwarded": 1,
+      "exit": 2
+    },
+    "byKind": {
+      "blocked:L2-tcp-connect": 8,
+      "blocked:L2-getaddrinfo": 4,
+      "blocked:L2-udp-send": 2,
+      "forwarded:L2-pipe-connect": 1
+    },
+    "installed": [
+      {
+        "pid": 45120,
+        "ppid": 47904,
+        "layers": [
+          "L2"
+        ],
+        "argv": [
+          "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\driver\\v2\\selfcheck-01.cjs"
+        ]
+      },
+      {
+        "pid": 46520,
+        "ppid": 45120,
+        "layers": [
+          "L2"
+        ],
+        "argv": [
+          "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\driver\\v2\\selfcheck-01.cjs",
+          "child",
+          "51518",
+          "49684"
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "pid": 46520,
+        "code": 0,
+        "counts": {
+          "blocked": 7,
+          "attemptObserved": 0,
+          "forwarded": 0,
+          "byKind": {
+            "L2-tcp-connect": 4,
+            "L2-getaddrinfo": 2,
+            "L2-udp-send": 1
+          }
+        }
+      },
+      {
+        "pid": 45120,
+        "code": 0,
+        "counts": {
+          "blocked": 7,
+          "attemptObserved": 0,
+          "forwarded": 1,
+          "byKind": {
+            "L2-tcp-connect": 4,
+            "L2-getaddrinfo": 2,
+            "L2-udp-send": 1,
+            "L2-pipe-connect": 1
+          }
+        }
+      }
+    ],
+    "blockedOrAttempted": 14
+  },
+  "files": {
+    "stdout": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\commands\\01d-guard-selfcheck-l2only-v2.stdout.txt",
+    "stderr": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\commands\\01d-guard-selfcheck-l2only-v2.stderr.txt",
+    "guardLog": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\commands\\01d-guard-selfcheck-l2only-v2.guard.jsonl",
+    "tcpLog": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\commands\\01d-guard-selfcheck-l2only-v2.tcp.jsonl"
+  }
+}

@@ -4,7 +4,27 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and publish a new version before starting a new run. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+- Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+
+- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
+  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
+  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
+  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's
+  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an
+  empty one (no frames, so no stored data).
+  **Upgrade:** rebuild the API. No schema, stored format or reset change.
+
+- Document explicit Windows batch-file invocation and pinned-definition recovery for
+  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression
+  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.
+
+- System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
+  passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
+  tools are not verified by this check. CLI inventory commands are useful for investigation,
+  but do not prove every enabled plugin loaded. Readiness, authentication, exit status and
+  plugin inheritance/overrides keep their existing behavior; no new probe or repair runs.
+  **Upgrade:** rebuild the API and web app. Preflight output parsers must allow the new warning
+  row and warning count. No schema, stored format or reset change.
 
 - Codex structured calls create short scratch names with exclusive `mkdir` in at most four
   attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing

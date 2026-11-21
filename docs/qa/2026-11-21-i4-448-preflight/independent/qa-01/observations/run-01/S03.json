@@ -1,0 +1,1592 @@
+{
+  "id": "S03",
+  "kind": "built-ordinary-startup",
+  "purpose": "disabled Codex default boots (structurally valid), row stays disabled, execution refused",
+  "variant": "dis-codex",
+  "defaults": {
+    "byHarness": {
+      "codex": {
+        "model": "gpt-6.1-terra",
+        "effort": "medium"
+      },
+      "claude": {
+        "model": "claude-opus-5-5",
+        "effort": "high"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "gateway listening",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "healthz answered by this owned child pid",
+      "expected": "29820",
+      "actual": "29820",
+      "pass": true
+    },
+    {
+      "name": "GET /model-catalog codex/gpt-6.1-terra enabled=false",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "GET /model-catalog claude/claude-opus-5-5 enabled=true",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "GET /system/model-defaults equals GG_DEFAULTS",
+      "expected": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-terra",
+            "effort": "medium"
+          },
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      },
+      "actual": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-terra",
+            "effort": "medium"
+          },
+          "claude": {
+            "model": "claude-opus-5-5",
+            "effort": "high"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "name": "POST /loops draft admitted (MODEL_DISABLED is not a draft-admission refusal)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "validate reports MODEL_DISABLED as warning (unavailable, not invalid)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "validate reports no harness readiness issue (fakes ready)",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "validate publishable=false",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "publish refused 422 LOOP_INVALID",
+      "expected": [
+        422,
+        "LOOP_INVALID"
+      ],
+      "actual": [
+        422,
+        "LOOP_INVALID"
+      ],
+      "pass": true
+    },
+    {
+      "name": "publish refusal carries MODEL_DISABLED",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "draft run admitted 202 (execution reaches the catalog gate)",
+      "expected": 202,
+      "actual": 202,
+      "pass": true
+    },
+    {
+      "name": "run refused at execution with MODEL_DISABLED",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "run failure code EVALUATION_UNAVAILABLE",
+      "expected": "EVALUATION_UNAVAILABLE",
+      "actual": "EVALUATION_UNAVAILABLE",
+      "pass": true
+    },
+    {
+      "name": "no fake CLI turn attempted during run",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "enabled control model has no MODEL_DISABLED",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "drained exit code 0",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "not timed out",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "fake CLIs saw probes only (no turn)",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "stored after start codex/gpt-6.1-terra enabled=0",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "stored after start claude/claude-opus-5-5 enabled=1",
+      "expected": 1,
+      "actual": 1,
+      "pass": true
+    },
+    {
+      "name": "catalog rowcount after = before + seeded",
+      "expected": 13,
+      "actual": 13,
+      "pass": true
+    },
+    {
+      "name": "no pre-existing row changed enabled state",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "migration ledger unchanged (store already current)",
+      "expected": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "actual": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "pass": true
+    },
+    {
+      "name": "format marker unchanged",
+      "expected": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "actual": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:01:24.499Z",
+  "env": {
+    "TEMP": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp",
+    "USERPROFILE": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "HOME": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "APPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Roaming",
+    "LOCALAPPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Local",
+    "GG_HOST": "127.0.0.1",
+    "GG_LOG_LEVEL": "info",
+    "GG_SWAGGER_UI": "false",
+    "GG_WEB_DIST": "",
+    "GG_GOBLIN_DIST": "",
+    "GG_OLLAMA_ENABLED": "true",
+    "GG_OLLAMA_URL": "http://127.0.0.1:52275",
+    "GG_CODEX_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\codex-fake.mjs",
+    "GG_CLAUDE_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\claude.exe",
+    "GG_MASTER_KEY": "synthetic-32-bytes-0x48",
+    "GG_DATA_DIR": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\S03\\data",
+    "GG_DB_URL": "file:///C:/Users/98jak/AppData/Local/Temp/gg-448-qa-indep-20261121T090017/cases/S03/external%20store/gateway.db",
+    "GG_DEFAULTS": "{\"byHarness\":{\"codex\":{\"model\":\"gpt-6.1-terra\",\"effort\":\"medium\"},\"claude\":{\"model\":\"claude-opus-5-5\",\"effort\":\"high\"}}}"
+  },
+  "before": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "f3786d96c16fea85948b90e58ac41ac41da79060ede53c5c101d0c372a6efdb1"
+      },
+      "-wal": null,
+      "-shm": null,
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "1ceaba730a4c8d11734a9830a94c3ae313c99867de7dc8cf6137d7d67f42f3c0",
+      "logicalHash": "f61ebcc132f41153cd230adac660d39758253eeec49a521f588d56e389c257ec",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "9e8d7a3eaf0745c075ae71c929cf5c48306805941e156194a4e22025cf91f165"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "bf22dcbb01679c4b3ab52c5ac1cae3823fded2170b39560c1ea741f7be5d24ae"
+        },
+        "model_catalog": {
+          "count": 12,
+          "sha256": "b40e4481af00522669ce9f388d918fee7444f144140595b96464a040d5361c7a"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79dd6198004ef1bdda0699c3a7d2b7fd4feb8b72fb873159c2c1b361c7d8198f"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 0
+        }
+      ],
+      "catalogCount": 12,
+      "catalogHash": "0a7482953997ed0d25d31cebbe8b577f6ae02a9e627cbca7b25c515b6167a99b",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "storeDir": [
+        "gateway.db (479232)"
+      ],
+      "dataDir": null
+    }
+  },
+  "pid": 29820,
+  "port": 58760,
+  "listening": true,
+  "publicCatalog": {
+    "class": "public-response",
+    "status": 200,
+    "count": 13,
+    "items": [
+      {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "source": "harness",
+        "displayName": "Claude Fable 5.1",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "claude",
+        "model": "claude-haiku-5-5",
+        "source": "harness",
+        "displayName": "Claude Haiku 5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "source": "harness",
+        "displayName": "Claude Opus 5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true,
+        "ecosystemDefault": true
+      },
+      {
+        "harness": "claude",
+        "model": "claude-sonnet-5-5",
+        "source": "harness",
+        "displayName": "Claude Sonnet 5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.5",
+        "source": "harness",
+        "displayName": "GPT-5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "source": "harness",
+        "displayName": "GPT-5.6 Luna",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "low",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-sol",
+        "source": "harness",
+        "displayName": "GPT-5.6 Sol",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-terra",
+        "source": "harness",
+        "displayName": "GPT-5.6 Terra",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "source": "harness",
+        "displayName": "GPT-6 Astra",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "source": "harness",
+        "displayName": "GPT-6 Luna",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "low",
+        "enabled": true,
+        "ecosystemDefault": true
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-sol",
+        "source": "harness",
+        "displayName": "GPT-6 Sol",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-sol",
+        "source": "harness",
+        "displayName": "GPT-6.1 Sol",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": true,
+        "ecosystemDefault": false
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-terra",
+        "source": "harness",
+        "displayName": "GPT-6.1 Terra",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": false,
+        "ecosystemDefault": false
+      }
+    ]
+  },
+  "publicProbe": {
+    "class": "public-response",
+    "create": {
+      "status": 201,
+      "loopId": "01M7YNDMBND698YDQJWDN4XP2Z",
+      "draftVersionId": "01M7YNDMBND698YDQJWDN4XP30"
+    },
+    "validate": {
+      "status": 200,
+      "publishable": false,
+      "issues": [
+        {
+          "code": "MODEL_DISABLED",
+          "severity": "warning",
+          "message": "The selected model is disabled",
+          "nodeId": "infer",
+          "path": "config.model"
+        }
+      ]
+    },
+    "publish": {
+      "status": 422,
+      "code": "LOOP_INVALID",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-invalid",
+        "title": "loop invalid",
+        "status": 422,
+        "code": "LOOP_INVALID",
+        "detail": "the draft has structural errors",
+        "errors": [
+          {
+            "code": "MODEL_DISABLED",
+            "severity": "warning",
+            "nodeId": "infer",
+            "path": "config.model",
+            "message": "The selected model is disabled"
+          }
+        ]
+      }
+    },
+    "runStart": {
+      "status": 202,
+      "runId": "01M7YNDMCTKW5G45YZ8RXY49PG",
+      "body": {
+        "run": {
+          "id": "01M7YNDMCTKW5G45YZ8RXY49PG",
+          "ownerId": "local",
+          "loopId": "01M7YNDMBND698YDQJWDN4XP2Z",
+          "versionId": "01M7YNDMCTKW5G45YZ8RXY49PJ",
+          "pinned": {
+            "source": "draft",
+            "version": 1,
+            "name": "QA448 codex gpt-6.1-terra medium",
+            "label": "QA448 codex gpt-6.1-terra medium draft v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6.1-terra",
+                    "effort": "medium"
+                  },
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "high"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7YNDMCTKW5G45YZ8RXY49PH",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-11-21T09:01:27.834Z",
+          "lastEventSeq": 1
+        }
+      }
+    },
+    "run": {
+      "status": "failed",
+      "failure": {
+        "code": "EVALUATION_UNAVAILABLE",
+        "message": "The selected model is disabled",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "code": "MODEL_DISABLED",
+          "path": "model"
+        }
+      }
+    },
+    "fakeInvocationsDuringRun": [
+      {
+        "cli": "codex",
+        "kind": "version",
+        "exit": 0,
+        "pid": 18328,
+        "utc": "2026-11-21T09:01:27.916Z",
+        "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+        "args": [
+          "--version"
+        ]
+      },
+      {
+        "cli": "codex",
+        "kind": "exec-help",
+        "exit": 0,
+        "pid": 26368,
+        "utc": "2026-11-21T09:01:27.995Z",
+        "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+        "args": [
+          "exec",
+          "--help"
+        ]
+      },
+      {
+        "cli": "codex",
+        "kind": "exec-resume-help",
+        "exit": 0,
+        "pid": 39152,
+        "utc": "2026-11-21T09:01:28.076Z",
+        "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+        "args": [
+          "exec",
+          "resume",
+          "--help"
+        ]
+      },
+      {
+        "cli": "codex",
+        "kind": "login-status",
+        "exit": 0,
+        "pid": 40848,
+        "utc": "2026-11-21T09:01:28.157Z",
+        "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+        "args": [
+          "login",
+          "status"
+        ]
+      }
+    ],
+    "enabledControl": {
+      "model": [
+        "codex",
+        "gpt-6-luna",
+        "low"
+      ],
+      "publishable": true,
+      "issues": []
+    }
+  },
+  "shutdownResponse": {
+    "status": 202,
+    "phase": "draining"
+  },
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "durationMs": 4279,
+  "raw": {
+    "stdout": "raw/S03.stdout.txt",
+    "stderr": "raw/S03.stderr.txt",
+    "class": "private-synthetic-raw"
+  },
+  "after": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "f3786d96c16fea85948b90e58ac41ac41da79060ede53c5c101d0c372a6efdb1"
+      },
+      "-wal": {
+        "size": 259592,
+        "sha256": "74b9d44de3282c023b9a7935962238ffcd7d178d2470e8af6440657200cd9275"
+      },
+      "-shm": {
+        "size": 32768,
+        "sha256": "8f60b51962d7c3ced23f4e06bb18ced86b4f001fac5e53a28f909df361415708"
+      },
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "61412baf768d7693c1c500213c4bc5832dcfeb0a59f411ccb7213c56ee7e57b1",
+      "logicalHash": "d62316c9c7f2105bed6a2dfc389ec88dfdc1a9e5c69d17d9eb248a48dd9ecc63",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 3,
+          "sha256": "b0d033750e6fe3aae51ca71679e596947b9652590b262c06d0760590571e300b"
+        },
+        "loops": {
+          "count": 2,
+          "sha256": "06ad91ca1728b774933e5d55a10dfe60954cbe1d97fa73652859f2592d798ccf"
+        },
+        "model_catalog": {
+          "count": 13,
+          "sha256": "4d7846621efa488ea02e6fd22eccd64a26b7d5480fdf6b875fdf44e3a1b574ff"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "9178e981b2acced0444a3877966fd7b5aa9483316ca6405d9ccb6daaa2743e00"
+        },
+        "run_events": {
+          "count": 6,
+          "sha256": "219b0e044a078f9fbd6d0e15f15597346f83365d79b1d0f55c1e4bcdd9c64f1d"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 1,
+          "sha256": "0cfd3bbeffed18231299154ad4dad241345f47e36f253293b035ae102f322080"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "display_name": "Claude Opus 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 0
+        }
+      ],
+      "catalogCount": 13,
+      "catalogHash": "fdb77f85e8cc2f9414097dafa9d04eb1f0da8767d7120c2e2ed6c846d1e75215",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 119,
+        "journal_mode": "wal"
+      }
+    },
+    "baseOnly": {
+      "exists": true,
+      "withWal": false,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "1ceaba730a4c8d11734a9830a94c3ae313c99867de7dc8cf6137d7d67f42f3c0",
+      "logicalHash": "f61ebcc132f41153cd230adac660d39758253eeec49a521f588d56e389c257ec",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "9e8d7a3eaf0745c075ae71c929cf5c48306805941e156194a4e22025cf91f165"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "bf22dcbb01679c4b3ab52c5ac1cae3823fded2170b39560c1ea741f7be5d24ae"
+        },
+        "model_catalog": {
+          "count": 12,
+          "sha256": "b40e4481af00522669ce9f388d918fee7444f144140595b96464a040d5361c7a"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79dd6198004ef1bdda0699c3a7d2b7fd4feb8b72fb873159c2c1b361c7d8198f"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 0
+        }
+      ],
+      "catalogCount": 12,
+      "catalogHash": "0a7482953997ed0d25d31cebbe8b577f6ae02a9e627cbca7b25c515b6167a99b",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "storeDir": [
+        "gateway.db (479232)",
+        "gateway.db-shm (32768)",
+        "gateway.db-wal (259592)"
+      ],
+      "dataDir": []
+    }
+  },
+  "fakeInvocations": [
+    {
+      "cli": "codex",
+      "kind": "version",
+      "exit": 0,
+      "pid": 18328,
+      "utc": "2026-11-21T09:01:27.916Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+      "args": [
+        "--version"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-help",
+      "exit": 0,
+      "pid": 26368,
+      "utc": "2026-11-21T09:01:27.995Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+      "args": [
+        "exec",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-resume-help",
+      "exit": 0,
+      "pid": 39152,
+      "utc": "2026-11-21T09:01:28.076Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+      "args": [
+        "exec",
+        "resume",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "login-status",
+      "exit": 0,
+      "pid": 40848,
+      "utc": "2026-11-21T09:01:28.157Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-09b07ae7",
+      "args": [
+        "login",
+        "status"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "version",
+      "exit": 0,
+      "pid": 39148,
+      "utc": "2026-11-21T09:01:28.431Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-87cb516c",
+      "args": [
+        "--version"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-help",
+      "exit": 0,
+      "pid": 42764,
+      "utc": "2026-11-21T09:01:28.531Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-87cb516c",
+      "args": [
+        "exec",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-resume-help",
+      "exit": 0,
+      "pid": 38744,
+      "utc": "2026-11-21T09:01:28.633Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-87cb516c",
+      "args": [
+        "exec",
+        "resume",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "login-status",
+      "exit": 0,
+      "pid": 36848,
+      "utc": "2026-11-21T09:01:28.747Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-87cb516c",
+      "args": [
+        "login",
+        "status"
+      ]
+    }
+  ],
+  "ollamaRequests": [
+    {
+      "method": "GET",
+      "url": "/api/tags",
+      "utc": "2026-11-21T09:01:27.710Z"
+    }
+  ],
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:01:28.851Z"
+}

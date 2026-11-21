@@ -1,0 +1,26 @@
+{
+  "name": "@graphgoblin/tooling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared configuration and repository gate scripts.",
+  "exports": {
+    "./vitest": {
+      "types": "./vitest.shared.d.mts",
+      "import": "./vitest.shared.mjs"
+    },
+    "./plugin-output": {
+      "types": "./plugin-output.d.mts",
+      "import": "./plugin-output.mjs"
+    },
+    "./layers.json": "./layers.json"
+  },
+  "scripts": {
+    "lint": "eslint scripts/*.mjs perf/*.mjs *.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.3"
+  }
+}

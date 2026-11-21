@@ -1,0 +1,49 @@
+import { defineConfig, mergeConfig } from 'vitest/config';
+
+/**
+ * Shared Vitest configuration for every package and app.
+ *
+ * Coverage thresholds are the repository policy (docs/10-testing-and-quality.md):
+ * at least 90% for lines, branches, functions and statements in every package. They are not tunable per
+ * package; raise them repo-wide or add an exclusion for generated code only.
+ *
+ * Workspace packages declare a `development` export condition that points at their TypeScript
+ * source. Resolving it here means tests never need another package's `dist/`: a change in a lower
+ * package is visible to a higher package's tests without a rebuild. See ADR-0014.
+ *
+ * @param {import('vitest/config').UserConfig} [overrides]
+ */
+export function createVitestConfig(overrides = {}) {
+  const base = defineConfig({
+    resolve: {
+      conditions: ['development'],
+    },
+    test: {
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      environment: 'node',
+      clearMocks: true,
+      restoreMocks: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text-summary', 'json-summary', 'lcov'],
+        reportsDirectory: './coverage',
+        all: true,
+        include: ['src/**/*.ts', 'src/**/*.tsx'],
+        exclude: [
+          'src/**/*.test.ts',
+          'src/**/*.test.tsx',
+          'src/**/*.d.ts',
+          'src/**/__fixtures__/**',
+          'src/**/generated/**',
+        ],
+        thresholds: {
+          lines: 90,
+          branches: 90,
+          functions: 90,
+          statements: 90,
+        },
+      },
+    },
+  });
+  return mergeConfig(base, overrides);
+}

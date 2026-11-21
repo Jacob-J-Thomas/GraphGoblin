@@ -1,0 +1,88 @@
+[2026-11-21T09:04:29.461Z] fake CLI self-test {"claudeVersion":{"status":0,"stdout":"2.1.287 (Claude Code)","stderr":""},"claudeTurn":{"status":86,"stdout":"","stderr":"qa448 fake claude refuses non-probe invocations"},"codexVersion":{"status":0,"stdout":"codex-cli 0.160.0","stderr":""},"codexTurn":{"status":86,"stdout":"","stderr":"qa448 fake codex refuses non-probe invocations"}}
+[2026-11-21T09:04:29.483Z] fake Ollama recorder http://127.0.0.1:59538
+[2026-11-21T09:04:29.486Z] scratch root C:\Users\98jak\AppData\Local\Temp\gg-448-qa-indep-20261121T090427 nonce 53701a428fc1a7f8
+[2026-11-21T09:04:29.487Z] CASE G0-first-run-startup - first-run ordinary startup creates and seeds a current store (golden)
+[2026-11-21T09:04:33.874Z]   RESULT G0-first-run-startup PASS (18/18)
+[2026-11-21T09:04:33.913Z] CASE V-missing - derive missing from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:33.944Z]   RESULT V-missing PASS (4/4)
+[2026-11-21T09:04:33.944Z] CASE V-walonly - derive walonly from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:34.025Z]   RESULT V-walonly PASS (4/4)
+[2026-11-21T09:04:34.026Z] CASE V-dis-codex - derive dis-codex from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:34.059Z]   RESULT V-dis-codex PASS (4/4)
+[2026-11-21T09:04:34.059Z] CASE V-dis-claude - derive dis-claude from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:34.098Z]   RESULT V-dis-claude PASS (4/4)
+[2026-11-21T09:04:34.098Z] CASE V-meta - derive meta from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:34.131Z]   RESULT V-meta PASS (4/4)
+[2026-11-21T09:04:34.131Z] CASE V-unsupported - derive unsupported from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:04:34.170Z]   RESULT V-unsupported PASS (3/3)
+[2026-11-21T09:04:34.170Z] CASE V-pending - current-format store migrated to 0028 (one shipped migration pending) via a test-owned product connection
+[2026-11-21T09:04:34.515Z]   RESULT V-pending PASS (3/3)
+[2026-11-21T09:04:34.521Z] CASE P01 - missing Codex+Claude seeds, external percent-encoded path: admitted in memory
+[2026-11-21T09:04:37.340Z]   RESULT P01 PASS (21/21)
+[2026-11-21T09:04:37.342Z] CASE P02 - missing Codex+Claude seeds, store inside GG_DATA_DIR: admitted in memory
+[2026-11-21T09:04:39.711Z]   RESULT P02 PASS (21/21)
+[2026-11-21T09:04:39.716Z] CASE P03 - rows missing only in the current WAL: admitted, DB+WAL bytes untouched, no checkpoint
+[2026-11-21T09:04:41.831Z]   RESULT P03 PASS (20/20)
+[2026-11-21T09:04:41.835Z] CASE P04 - Codex default row exists disabled (same seed id) + Claude seed missing: Codex WARN, exit 0
+[2026-11-21T09:04:44.381Z]   RESULT P04 PASS (21/21)
+[2026-11-21T09:04:44.384Z] CASE P05 - Claude default row exists disabled (same seed id) + Codex seed missing: Claude FAIL, exit 1
+[2026-11-21T09:04:46.676Z]   RESULT P05 PASS (21/21)
+[2026-11-21T09:04:46.680Z] CASE P06 - unknown Codex model on missing-seed store: FAIL
+[2026-11-21T09:04:49.026Z]   RESULT P06 PASS (20/20)
+[2026-11-21T09:04:49.029Z] CASE P07 - wrong harness: Codex default names the (missing) Claude seed: FAIL
+[2026-11-21T09:04:51.285Z]   RESULT P07 PASS (20/20)
+[2026-11-21T09:04:51.288Z] CASE P08 - wrong family: Claude default names the (missing) Codex seed: FAIL
+[2026-11-21T09:04:53.446Z]   RESULT P08 PASS (21/21)
+[2026-11-21T09:04:53.449Z] CASE P09 - unsupported Claude effort on projected seed: FAIL
+[2026-11-21T09:04:56.017Z]   RESULT P09 PASS (21/21)
+[2026-11-21T09:04:56.019Z] CASE P10 - stored Claude metadata (efforts [high]) wins over shipped seed: low FAILs
+[2026-11-21T09:04:58.184Z]   RESULT P10 PASS (21/21)
+[2026-11-21T09:04:58.187Z] CASE P11 - stored Claude metadata (efforts [high]) admits high
+[2026-11-21T09:05:00.624Z]   RESULT P11 PASS (21/21)
+[2026-11-21T09:05:00.627Z] CASE P12 - existing policy: Codex preflight checks membership/enabled only (gpt-5.5 effort none)
+[2026-11-21T09:05:02.848Z]   RESULT P12 PASS (20/20)
+[2026-11-21T09:05:02.849Z] CASE P13 - first run, store absent: shipped catalog, nothing created
+[2026-11-21T09:05:04.727Z]   RESULT P13 PASS (14/14)
+[2026-11-21T09:05:04.728Z] CASE P14 - first run, store absent, unknown model: FAIL, nothing created
+[2026-11-21T09:05:07.099Z]   RESULT P14 PASS (13/13)
+[2026-11-21T09:05:07.102Z] CASE P15 - unsupported store (format 3): Database FAIL, bytes unchanged
+[2026-11-21T09:05:09.574Z]   RESULT P15 PASS (17/17)
+[2026-11-21T09:05:09.576Z] CASE P16 - unreadable store (not SQLite): Database FAIL, bytes unchanged
+[2026-11-21T09:05:11.685Z]   RESULT P16 PASS (12/12)
+[2026-11-21T09:05:11.694Z] CASE P17 - pending migration store: Database WARN, shipped catalog, bytes unchanged
+[2026-11-21T09:05:13.899Z]   RESULT P17 PASS (19/19)
+[2026-11-21T09:05:13.900Z] CASE P18 - repeat offline preflight on P01 store (reader files now exist): DB and WAL strictly byte-identical
+[2026-11-21T09:05:16.198Z]   RESULT P18 PASS (20/20)
+[2026-11-21T09:05:16.198Z] CASE M01 - projectStartupModelCatalog keeps the stored disabled row and appends only the missing seed
+[2026-11-21T09:05:16.224Z]   RESULT M01 PASS (9/9)
+[2026-11-21T09:05:16.224Z] CASE M02 - counterfactual: same missing-seed store through built runPreflight with candidate vs stored-only catalog source
+[2026-11-21T09:05:16.426Z]   RESULT M02 PASS (7/7)
+[2026-11-21T09:05:16.429Z] CASE S01 - parity: same missing-seed store + same GG_DEFAULTS boots and seeds normally (external path)
+[2026-11-21T09:05:21.473Z]   RESULT S01 PASS (17/17)
+[2026-11-21T09:05:21.481Z] CASE S02 - parity: WAL-only missing rows inside GG_DATA_DIR boot and seed normally
+[2026-11-21T09:05:25.946Z]   RESULT S02 PASS (14/14)
+[2026-11-21T09:05:25.949Z] CASE S03 - disabled Codex default boots (structurally valid), row stays disabled, execution refused
+[2026-11-21T09:05:31.099Z]   RESULT S03 PASS (25/25)
+[2026-11-21T09:05:31.102Z] CASE S04 - disabled Claude default boots (structurally valid), row stays disabled, execution refused
+[2026-11-21T09:05:35.665Z]   RESULT S04 PASS (25/25)
+[2026-11-21T09:05:35.668Z] CASE S05 - unknown Codex model refused before writes
+[2026-11-21T09:05:39.419Z]   RESULT S05 PASS (10/10)
+[2026-11-21T09:05:39.423Z] CASE S06 - Codex default naming the missing Claude seed: MODEL_HARNESS_MISMATCH (projection visible to boot)
+[2026-11-21T09:05:45.349Z]   RESULT S06 PASS (10/10)
+[2026-11-21T09:05:45.352Z] CASE S07 - Claude default naming the missing Codex seed: MODEL_HARNESS_MISMATCH
+[2026-11-21T09:05:50.049Z]   RESULT S07 PASS (10/10)
+[2026-11-21T09:05:50.053Z] CASE S08 - unsupported Claude effort none on projected seed: EFFORT_UNSUPPORTED
+[2026-11-21T09:05:53.278Z]   RESULT S08 PASS (10/10)
+[2026-11-21T09:05:53.281Z] CASE S09 - stored Claude metadata efforts [high] wins at boot admission: low refused
+[2026-11-21T09:05:57.669Z]   RESULT S09 PASS (10/10)
+[2026-11-21T09:05:57.672Z] CASE S10 - existing policy: boot checks Codex effort (gpt-5.5 none) unlike preflight
+[2026-11-21T09:06:01.408Z]   RESULT S10 PASS (10/10)
+[2026-11-21T09:06:01.411Z] CASE S11 - unsupported store (format 3) refused by startup without writes
+[2026-11-21T09:06:04.939Z]   RESULT S11 PASS (9/9)
+[2026-11-21T09:06:04.939Z] CASE M03 - after ordinary startup: disabled rows still refused by SqliteModelCatalog.isAllowed and resolveHarnessModel
+[2026-11-21T09:06:05.000Z]   RESULT M03 PASS (8/8)
+[2026-11-21T09:06:05.001Z] CASE M04 - unlink immediately after closing a test-owned writer connection, record EBUSY if any
+[2026-11-21T09:06:07.990Z]   CHECK FAIL M04 libsql read-only client on WAL store, close() then immediate unlink: all files removable within 1.25 s expected [] actual ["","-wal","-shm"]
+[2026-11-21T09:06:07.991Z]   RESULT M04 FAIL (6/7)
+[2026-11-21T09:06:07.991Z] CASE M05 - which read-only open creates a 0-byte -wal on a store that has none (no projection involved)
+[2026-11-21T09:06:08.120Z]   RESULT M05 PASS (12/12)

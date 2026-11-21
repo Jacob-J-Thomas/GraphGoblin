@@ -1,0 +1,128 @@
+{
+  "id": "M01",
+  "kind": "built-public-method",
+  "purpose": "projectStartupModelCatalog keeps the stored disabled row and appends only the missing seed",
+  "checks": [
+    {
+      "name": "codex/gpt-6.1-terra appears once, disabled (stored wins)",
+      "expected": [
+        1,
+        false
+      ],
+      "actual": [
+        1,
+        false
+      ],
+      "pass": true
+    },
+    {
+      "name": "claude/claude-opus-5-5 appended once, enabled (seed)",
+      "expected": [
+        1,
+        true
+      ],
+      "actual": [
+        1,
+        true
+      ],
+      "pass": true
+    },
+    {
+      "name": "stored rows first, unchanged order",
+      "expected": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false}]",
+      "actual": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false}]",
+      "pass": true
+    },
+    {
+      "name": "projected count = stored + 1 missing seed",
+      "expected": 13,
+      "actual": 13,
+      "pass": true
+    },
+    {
+      "name": "input not mutated",
+      "expected": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false}]",
+      "actual": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false}]",
+      "pass": true
+    },
+    {
+      "name": "idempotent",
+      "expected": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false},{\"harness\":\"claude\",\"source\":\"harness\",\"model\":\"claude-opus-5-5\",\"displayName\":\"Claude Opus 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true}]",
+      "actual": "[{\"harness\":\"claude\",\"model\":\"claude-fable-5-1\",\"source\":\"harness\",\"displayName\":\"Claude Fable 5.1\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-haiku-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Haiku 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"claude\",\"model\":\"claude-sonnet-5-5\",\"source\":\"harness\",\"displayName\":\"Claude Sonnet 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.5\",\"source\":\"harness\",\"displayName\":\"GPT-5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-5.6-terra\",\"source\":\"harness\",\"displayName\":\"GPT-5.6 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-astra\",\"source\":\"harness\",\"displayName\":\"GPT-6 Astra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-luna\",\"source\":\"harness\",\"displayName\":\"GPT-6 Luna\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"low\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-sol\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Sol\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":true},{\"harness\":\"codex\",\"model\":\"gpt-6.1-terra\",\"source\":\"harness\",\"displayName\":\"GPT-6.1 Terra\",\"efforts\":[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"medium\",\"enabled\":false},{\"harness\":\"claude\",\"source\":\"harness\",\"model\":\"claude-opus-5-5\",\"displayName\":\"Claude Opus 5.5\",\"efforts\":[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"],\"defaultEffort\":\"high\",\"enabled\":true}]",
+      "pass": true
+    },
+    {
+      "name": "boot validator: no invalid issue for disabled Codex default",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "execution resolution: unavailable MODEL_DISABLED",
+      "expected": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "actual": [
+        "unavailable",
+        "MODEL_DISABLED"
+      ],
+      "pass": true
+    },
+    {
+      "name": "read-only listing left DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "a3153b94be224eb2ae8156cba87446a1c7b67ede14dcc9de847b1a7aa9270057"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "a3153b94be224eb2ae8156cba87446a1c7b67ede14dcc9de847b1a7aa9270057"
+      },
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:05:16.198Z",
+  "observed": {
+    "storedCount": 12,
+    "projectedCount": 13,
+    "terra": [
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-terra",
+        "source": "harness",
+        "displayName": "GPT-6.1 Terra",
+        "efforts": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "medium",
+        "enabled": false
+      }
+    ],
+    "opus": [
+      {
+        "harness": "claude",
+        "source": "harness",
+        "model": "claude-opus-5-5",
+        "displayName": "Claude Opus 5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true
+      }
+    ],
+    "shippedCount": 13
+  },
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:05:16.223Z"
+}

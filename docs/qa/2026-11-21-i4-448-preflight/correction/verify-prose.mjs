@@ -1,0 +1,28 @@
+import {readFile,writeFile,copyFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {join} from 'node:path';
+const P=import.meta.dirname,W='G:/ggq/gg-i4-448-preflight/GraphGoblin';const sha=b=>createHash('sha256').update(b).digest('hex'),json=v=>JSON.stringify(v,null,2)+'\n';
+const admission=JSON.parse(await readFile(join(P,'admission.json'),'utf8'));
+const git=(...args)=>execFileSync('git',args,{cwd:W,encoding:'utf8'}).trim();
+const changed=git('diff','--name-only').split('\n').filter(Boolean).sort();
+if(changed.join('|')!=='CHANGELOG.md|docs/11-security-and-distribution.md')throw Error('Unexpected changed file set '+changed);
+const afterA=await readFile(join(W,'CHANGELOG.md')),afterB=await readFile(join(W,'docs/11-security-and-distribution.md'));
+await writeFile(join(P,'after/CHANGELOG.md'),afterA);await writeFile(join(P,'after/docs11-security-and-distribution.md'),afterB);
+const appliedA=await readFile(join(P,'after-apply/CHANGELOG.md')),appliedB=await readFile(join(P,'after-apply/docs11-security-and-distribution.md'));
+const tablePaddingOnly=text=>text.split('\n').map(line=>line.startsWith('|')?line.split('|').map(cell=>{const s=cell.trim();return /^:?-+:?$/.test(s)?s.replace(/-+/g,'-'):s;}).join('|'):line).join('\n');
+if(!afterA.equals(appliedA))throw Error('Formatter changed CHANGELOG beyond exact selected text');
+if(tablePaddingOnly(afterB.toString())!==tablePaddingOnly(appliedB.toString()))throw Error('Formatter changed doc11 beyond table padding');
+const snippetById=Object.fromEntries(admission.selectedSnippets.map(s=>[s.id,s]));
+const actualA=/^- Offline `--preflight` admits missing shipped model seeds[\s\S]*?(?=\n\n)/m.exec(afterA.toString())?.[0],actualB=afterB.toString().split('\n').find(line=>line.startsWith('`apps/api/src/preflight.ts` runs a fixed list of checks'));
+const row=afterB.toString().split('\n').find(line=>/^\| Default model\s+\|/.test(line)),cells=row.split('|').map(c=>c.trim());
+const actualSnips={'7a-changelog':actualA,'7b-doc11-paragraph':actualB,'7c-default-model-fail':cells[4],'7c-default-model-ok':cells[2]};
+const proseBindings=Object.entries(actualSnips).map(([id,text])=>({id,verbatimSourceSha256:snippetById[id].sha256,afterFormatterSha256:sha(Buffer.from(text)),sourceBytes:snippetById[id].utf8Bytes,afterFormatterBytes:Buffer.byteLength(text),exact:text===snippetById[id].text}));
+if(proseBindings.some(s=>!s.exact)||cells[3]!==admission.replaced.unchangedWarnCell)throw Error('Selected prose or unchanged warning cell differs');
+const indexAfter=sha(await readFile(admission.indexPath));if(indexAfter!==admission.indexShaBefore||git('rev-parse','HEAD')!==admission.head)throw Error('Index or HEAD changed');
+const fileBindings=[];for(const [path,save]of [['CHANGELOG.md','CHANGELOG.md'],['docs/11-security-and-distribution.md','docs11-security-and-distribution.md']]){const before=await readFile(join(P,'before',save)),applied=await readFile(join(P,'after-apply',save)),after=await readFile(join(P,'after',save));fileBindings.push({path,beforeSha256:sha(before),beforeBytes:before.length,afterApplySha256:sha(applied),afterApplyBytes:applied.length,afterFormatterSha256:sha(after),afterFormatterBytes:after.length});}
+await writeFile(join(P,'source-before-after.patch'),execFileSync('git',['diff','--','CHANGELOG.md','docs/11-security-and-distribution.md'],{cwd:W}));
+let formatterDiff;try{formatterDiff=execFileSync('git',['diff','--no-index','--',join(P,'after-apply/docs11-security-and-distribution.md'),join(P,'after/docs11-security-and-distribution.md')],{cwd:W,stdio:['ignore','pipe','pipe']});}catch(error){if(error.status!==1)throw error;formatterDiff=error.stdout;}await writeFile(join(P,'formatter-only.patch'),formatterDiff);
+await copyFile('C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-448-publication-01/apply-selected-prose-phase1.mjs',join(P,'commands/apply-selected-prose-phase1.mjs'));
+const receipt={at:new Date().toISOString(),kind:'Phase1 documentation-only source handoff; not final archive seal, final audit or acceptance.',workspace:W,head:git('rev-parse','HEAD'),tree:git('rev-parse','HEAD^{tree}'),changedFiles:changed,fileBindings,proseBindings,unchangedWarningCell:true,formatterOnlyDocTablePadding:true,formatterChangelogUnchanged:true,indexShaBefore:admission.indexShaBefore,indexShaAfter:indexAfter,indexUnchanged:true,runtimeDiff:git('diff','--name-only','--','apps','packages','tooling','pnpm-lock.yaml'),formatter:JSON.parse((await readFile(join(P,'commands/formatter-result.json'),'utf8')).replace(/^\uFEFF/,'')),testsRun:false,sourceFreeze:'WAITING FOR ROOT: do not proceed to final archive before a new immutable head/tree binding',providerReportSha256:admission.report.sha256};
+await writeFile(join(P,'correction-receipt.json'),json(receipt));console.log(JSON.stringify(receipt));

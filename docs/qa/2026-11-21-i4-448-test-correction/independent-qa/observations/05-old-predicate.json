@@ -1,0 +1,413 @@
+{
+  "modules": {
+    "candidate-helper.mts": "5927a71ac61c5bf1c27e2d74748a9b12558715dc57393cf5cdf2c3bb3ee2c0e3",
+    "old-predicate.mts": "b411882971f41db7465f8a58cd5f8acf0809c4aba36ff57c1a85bb59b5bca871"
+  },
+  "cases": [
+    {
+      "source": "run 04 S1-absent (immediate)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { …(2) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S1-absent (settled)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { …(2) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S2a-empty-written (immediate)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S2a-empty-written (settled)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S2b-empty-from-prior-reader (immediate)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S2b-empty-from-prior-reader (settled)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S3-frozen-nonempty (immediate)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8"
+        },
+        "gateway.db-wal": {
+          "size": 8272,
+          "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8"
+        },
+        "gateway.db-wal": {
+          "size": 8272,
+          "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S3-frozen-nonempty (settled)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8"
+        },
+        "gateway.db-wal": {
+          "size": 8272,
+          "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8"
+        },
+        "gateway.db-wal": {
+          "size": 8272,
+          "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a"
+        }
+      },
+      "oldStrict": {
+        "decision": "accept"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 03b actual candidate test \"preserves rows and migrations with an initially absent WAL\" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 2",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { 'gateway.db-wal': Buffer[], …(1) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 03b actual candidate test \"preserves rows and migrations with an initially absent WAL\" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 3",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { 'gateway.db-wal': Buffer[], …(1) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    }
+  ],
+  "absentToEmptyCases": [
+    {
+      "source": "run 04 S1-absent (immediate)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { …(2) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 04 S1-absent (settled)",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        },
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { …(2) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 03b actual candidate test \"preserves rows and migrations with an initially absent WAL\" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 2",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { 'gateway.db-wal': Buffer[], …(1) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    },
+    {
+      "source": "run 03b actual candidate test \"preserves rows and migrations with an initially absent WAL\" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 3",
+      "dbFile": "gateway.db",
+      "before": {
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "after": {
+        "gateway.db-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gateway.db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7"
+        }
+      },
+      "oldStrict": {
+        "decision": "reject",
+        "error": "AssertionError: expected { 'gateway.db-wal': Buffer[], …(1) } to deeply equal { …(1) }"
+      },
+      "candidateHelper": {
+        "decision": "accept"
+      }
+    }
+  ],
+  "verdict": {
+    "absentToEmptyObserved": 4,
+    "oldRejectsAllAbsentToEmpty": true,
+    "helperAcceptsAllAbsentToEmpty": true,
+    "otherCasesOldAccepts": true,
+    "otherCasesHelperAccepts": true
+  }
+}

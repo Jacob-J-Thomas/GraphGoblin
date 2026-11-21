@@ -1,0 +1,141 @@
+[2026-11-21T09:00:19.468Z] fake CLI self-test {"claudeVersion":{"status":0,"stdout":"2.1.287 (Claude Code)","stderr":""},"claudeTurn":{"status":86,"stdout":"","stderr":"qa448 fake claude refuses non-probe invocations"},"codexVersion":{"status":0,"stdout":"codex-cli 0.160.0","stderr":""},"codexTurn":{"status":86,"stdout":"","stderr":"qa448 fake codex refuses non-probe invocations"}}
+[2026-11-21T09:00:19.490Z] fake Ollama recorder http://127.0.0.1:52275
+[2026-11-21T09:00:19.493Z] scratch root C:\Users\98jak\AppData\Local\Temp\gg-448-qa-indep-20261121T090017 nonce 6ae77d82df58aaa2
+[2026-11-21T09:00:19.494Z] CASE G0-first-run-startup - first-run ordinary startup creates and seeds a current store (golden)
+[2026-11-21T09:00:24.065Z]   CHECK FAIL G0-first-run-startup catalog rowcount after = before + seeded expected null actual 13
+[2026-11-21T09:00:24.065Z]   CHECK FAIL G0-first-run-startup migration ledger unchanged (store already current) expected  actual {"count":30,"maxCreatedAt":1793075959185}
+[2026-11-21T09:00:24.065Z]   CHECK FAIL G0-first-run-startup format marker unchanged expected  actual [{"id":1,"format_version":4,"status":"complete","source_hash":"fresh","manifest_hash":"fresh"}]
+[2026-11-21T09:00:24.066Z]   RESULT G0-first-run-startup FAIL (14/17)
+[2026-11-21T09:00:24.074Z]   RESULT G0-first-run-startup PASS (17/17)
+[2026-11-21T09:00:24.112Z] CASE V-missing - derive missing from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.136Z]   RESULT V-missing PASS (4/4)
+[2026-11-21T09:00:24.137Z] CASE V-walonly - derive walonly from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.195Z]   RESULT V-walonly PASS (4/4)
+[2026-11-21T09:00:24.195Z] CASE V-dis-codex - derive dis-codex from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.221Z]   RESULT V-dis-codex PASS (4/4)
+[2026-11-21T09:00:24.221Z] CASE V-dis-claude - derive dis-claude from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.246Z]   RESULT V-dis-claude PASS (4/4)
+[2026-11-21T09:00:24.246Z] CASE V-meta - derive meta from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.286Z]   RESULT V-meta PASS (4/4)
+[2026-11-21T09:00:24.286Z] CASE V-unsupported - derive unsupported from the golden store with a test-owned node:sqlite connection
+[2026-11-21T09:00:24.311Z]   RESULT V-unsupported PASS (3/3)
+[2026-11-21T09:00:24.311Z] CASE V-pending - current-format store migrated to 0028 (one shipped migration pending) via a test-owned product connection
+[2026-11-21T09:00:24.866Z]   RESULT V-pending PASS (3/3)
+[2026-11-21T09:00:24.872Z] CASE P01 - missing Codex+Claude seeds, external percent-encoded path: admitted in memory
+[2026-11-21T09:00:29.112Z]   CHECK FAIL P01 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:29.112Z]   CHECK FAIL P01 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:29.112Z]   CHECK FAIL P01 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:29.114Z]   RESULT P01 FAIL (17/20)
+[2026-11-21T09:00:29.118Z] CASE P02 - missing Codex+Claude seeds, store inside GG_DATA_DIR: admitted in memory
+[2026-11-21T09:00:31.420Z]   CHECK FAIL P02 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:31.421Z]   CHECK FAIL P02 listing "caseDir" names unchanged (excluding -shm) expected ["data/","data/graphgoblin.db"] actual ["data/","data/graphgoblin.db","data/graphgoblin.db-wal"]
+[2026-11-21T09:00:31.421Z]   CHECK FAIL P02 listing "dataDir" names unchanged (excluding -shm) expected ["graphgoblin.db"] actual ["graphgoblin.db","graphgoblin.db-wal"]
+[2026-11-21T09:00:31.422Z]   RESULT P02 FAIL (17/20)
+[2026-11-21T09:00:31.427Z] CASE P03 - rows missing only in the current WAL: admitted, DB+WAL bytes untouched, no checkpoint
+[2026-11-21T09:00:33.522Z]   RESULT P03 PASS (20/20)
+[2026-11-21T09:00:33.525Z] CASE P04 - Codex default row exists disabled (same seed id) + Claude seed missing: Codex WARN, exit 0
+[2026-11-21T09:00:35.791Z]   CHECK FAIL P04 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:35.791Z]   CHECK FAIL P04 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:35.791Z]   CHECK FAIL P04 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:35.792Z]   RESULT P04 FAIL (17/20)
+[2026-11-21T09:00:35.796Z] CASE P05 - Claude default row exists disabled (same seed id) + Codex seed missing: Claude FAIL, exit 1
+[2026-11-21T09:00:38.339Z]   CHECK FAIL P05 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:38.340Z]   CHECK FAIL P05 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:38.340Z]   CHECK FAIL P05 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:38.342Z]   RESULT P05 FAIL (17/20)
+[2026-11-21T09:00:38.346Z] CASE P06 - unknown Codex model on missing-seed store: FAIL
+[2026-11-21T09:00:40.646Z]   CHECK FAIL P06 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:40.646Z]   CHECK FAIL P06 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:40.646Z]   CHECK FAIL P06 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:40.647Z]   RESULT P06 FAIL (16/19)
+[2026-11-21T09:00:40.654Z] CASE P07 - wrong harness: Codex default names the (missing) Claude seed: FAIL
+[2026-11-21T09:00:43.777Z]   CHECK FAIL P07 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:43.777Z]   CHECK FAIL P07 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:43.777Z]   CHECK FAIL P07 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:43.778Z]   RESULT P07 FAIL (16/19)
+[2026-11-21T09:00:43.781Z] CASE P08 - wrong family: Claude default names the (missing) Codex seed: FAIL
+[2026-11-21T09:00:46.306Z]   CHECK FAIL P08 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:46.306Z]   CHECK FAIL P08 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:46.306Z]   CHECK FAIL P08 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:46.307Z]   RESULT P08 FAIL (17/20)
+[2026-11-21T09:00:46.310Z] CASE P09 - unsupported Claude effort on projected seed: FAIL
+[2026-11-21T09:00:48.794Z]   CHECK FAIL P09 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:48.794Z]   CHECK FAIL P09 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:48.794Z]   CHECK FAIL P09 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:48.795Z]   RESULT P09 FAIL (17/20)
+[2026-11-21T09:00:48.798Z] CASE P10 - stored Claude metadata (efforts [high]) wins over shipped seed: low FAILs
+[2026-11-21T09:00:51.313Z]   CHECK FAIL P10 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:51.314Z]   CHECK FAIL P10 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:51.314Z]   CHECK FAIL P10 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:51.315Z]   RESULT P10 FAIL (17/20)
+[2026-11-21T09:00:51.317Z] CASE P11 - stored Claude metadata (efforts [high]) admits high
+[2026-11-21T09:00:53.920Z]   CHECK FAIL P11 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:53.920Z]   CHECK FAIL P11 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:53.920Z]   CHECK FAIL P11 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:53.922Z]   RESULT P11 FAIL (17/20)
+[2026-11-21T09:00:53.925Z] CASE P12 - existing policy: Codex preflight checks membership/enabled only (gpt-5.5 effort none)
+[2026-11-21T09:00:56.682Z]   CHECK FAIL P12 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:00:56.682Z]   CHECK FAIL P12 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:00:56.682Z]   CHECK FAIL P12 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:00:56.684Z]   RESULT P12 FAIL (16/19)
+[2026-11-21T09:00:56.686Z] CASE P13 - first run, store absent: shipped catalog, nothing created
+[2026-11-21T09:00:59.658Z]   RESULT P13 PASS (13/13)
+[2026-11-21T09:00:59.660Z] CASE P14 - first run, store absent, unknown model: FAIL, nothing created
+[2026-11-21T09:01:02.263Z]   RESULT P14 PASS (12/12)
+[2026-11-21T09:01:02.266Z] CASE P15 - unsupported store (format 3): Database FAIL, bytes unchanged
+[2026-11-21T09:01:04.572Z]   CHECK FAIL P15 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:04.573Z]   CHECK FAIL P15 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:01:04.573Z]   CHECK FAIL P15 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:01:04.573Z]   RESULT P15 FAIL (13/16)
+[2026-11-21T09:01:04.576Z] CASE P16 - unreadable store (not SQLite): Database FAIL, bytes unchanged
+[2026-11-21T09:01:08.018Z]   RESULT P16 PASS (11/11)
+[2026-11-21T09:01:08.022Z] CASE P17 - pending migration store: Database WARN, shipped catalog, bytes unchanged
+[2026-11-21T09:01:13.683Z]   CHECK FAIL P17 WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:13.683Z]   CHECK FAIL P17 listing "caseDir" names unchanged (excluding -shm) expected ["external store/","external store/gateway.db"] actual ["external store/","external store/gateway.db","external store/gateway.db-wal"]
+[2026-11-21T09:01:13.683Z]   CHECK FAIL P17 listing "storeDir" names unchanged (excluding -shm) expected ["gateway.db"] actual ["gateway.db","gateway.db-wal"]
+[2026-11-21T09:01:13.684Z]   RESULT P17 FAIL (15/18)
+[2026-11-21T09:01:13.685Z] CASE M01 - projectStartupModelCatalog keeps the stored disabled row and appends only the missing seed
+[2026-11-21T09:01:13.729Z]   RESULT M01 PASS (9/9)
+[2026-11-21T09:01:13.729Z] CASE M02 - counterfactual: same missing-seed store through built runPreflight with candidate vs stored-only catalog source
+[2026-11-21T09:01:14.092Z]   CHECK FAIL M02 WAL absent before and after expected [null,null] actual [null,{"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}]
+[2026-11-21T09:01:14.093Z]   RESULT M02 FAIL (5/6)
+[2026-11-21T09:01:14.097Z] CASE S01 - parity: same missing-seed store + same GG_DEFAULTS boots and seeds normally (external path)
+[2026-11-21T09:01:19.948Z]   RESULT S01 PASS (17/17)
+[2026-11-21T09:01:19.955Z] CASE S02 - parity: WAL-only missing rows inside GG_DATA_DIR boot and seed normally
+[2026-11-21T09:01:24.496Z]   RESULT S02 PASS (14/14)
+[2026-11-21T09:01:24.499Z] CASE S03 - disabled Codex default boots (structurally valid), row stays disabled, execution refused
+[2026-11-21T09:01:28.853Z]   RESULT S03 PASS (25/25)
+[2026-11-21T09:01:28.857Z] CASE S04 - disabled Claude default boots (structurally valid), row stays disabled, execution refused
+[2026-11-21T09:01:34.096Z]   RESULT S04 PASS (25/25)
+[2026-11-21T09:01:34.099Z] CASE S05 - unknown Codex model refused before writes
+[2026-11-21T09:01:37.756Z]   CHECK FAIL S05 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:37.757Z]   RESULT S05 FAIL (7/8)
+[2026-11-21T09:01:37.759Z] CASE S06 - Codex default naming the missing Claude seed: MODEL_HARNESS_MISMATCH (projection visible to boot)
+[2026-11-21T09:01:40.734Z]   CHECK FAIL S06 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:40.735Z]   RESULT S06 FAIL (7/8)
+[2026-11-21T09:01:40.738Z] CASE S07 - Claude default naming the missing Codex seed: MODEL_HARNESS_MISMATCH
+[2026-11-21T09:01:43.829Z]   CHECK FAIL S07 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:43.830Z]   RESULT S07 FAIL (7/8)
+[2026-11-21T09:01:43.833Z] CASE S08 - unsupported Claude effort none on projected seed: EFFORT_UNSUPPORTED
+[2026-11-21T09:01:46.919Z]   CHECK FAIL S08 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:46.920Z]   RESULT S08 FAIL (7/8)
+[2026-11-21T09:01:46.922Z] CASE S09 - stored Claude metadata efforts [high] wins at boot admission: low refused
+[2026-11-21T09:01:50.233Z]   CHECK FAIL S09 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:50.234Z]   RESULT S09 FAIL (7/8)
+[2026-11-21T09:01:50.237Z] CASE S10 - existing policy: boot checks Codex effort (gpt-5.5 none) unlike preflight
+[2026-11-21T09:01:53.759Z]   CHECK FAIL S10 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:53.760Z]   RESULT S10 FAIL (7/8)
+[2026-11-21T09:01:53.762Z] CASE S11 - unsupported store (format 3) refused by startup without writes
+[2026-11-21T09:01:56.488Z]   CHECK FAIL S11 stderr names EVALUATION_INVALID_CONFIGURATION expected true actual false
+[2026-11-21T09:01:56.515Z]   CHECK FAIL S11 refusal: WAL bytes/presence unchanged expected null actual {"size":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+[2026-11-21T09:01:56.516Z]   RESULT S11 FAIL (6/8)
+[2026-11-21T09:01:56.526Z]   RESULT S11 FAIL (6/7)
+[2026-11-21T09:01:56.526Z] CASE M03 - after ordinary startup: disabled rows still refused by SqliteModelCatalog.isAllowed and resolveHarnessModel
+[2026-11-21T09:01:56.579Z]   RESULT M03 PASS (8/8)
+[2026-11-21T09:01:56.579Z] CASE M04 - unlink immediately after closing a test-owned writer connection, record EBUSY if any
+[2026-11-21T09:01:59.424Z]   CHECK FAIL M04 libsql openDatabase writer, close() then immediate unlink: all files removable within 1.25 s expected [] actual ["","-wal","-shm"]
+[2026-11-21T09:01:59.424Z]   CHECK FAIL M04 libsql read-only client on WAL store, close() then immediate unlink: all files removable within 1.25 s expected [] actual ["","-wal","-shm"]
+[2026-11-21T09:01:59.425Z]   RESULT M04 FAIL (4/6)
+[2026-11-21T09:01:59.432Z] TOTALS {"cases":40,"passed":18,"failed":22,"checks":515,"failedChecks":49}
+[2026-11-21T09:01:59.432Z] owned children still running: []
+exit=1
