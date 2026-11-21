@@ -506,16 +506,21 @@ The bundled CLI's static model/plan metadata is not a live entitlement check. Th
 ChatGPT-account refusal for `gpt-5.5` in [#427](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427)
 is dated evidence, not a universal current restriction or proof that an API key always fixes it.
 
-For a structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
+For a Codex inference turn's structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
 as `HARNESS_ARGUMENTS_REJECTED`; the run records `HARNESS_TURN_FAILED` with that adapter code and
 does not offer Resume. An account/endpoint explanation is evidence for that refused request,
 not a diagnosis for every unavailable model or unknown provider error. Deliberately choose a
 model supported for that login/endpoint, or change the login/endpoint as the API process user;
-correct the applicable definition/default and start a new run. GraphGoblin does not substitute
+correct the applicable definition/default, restart the API if process defaults changed, and start a new run. GraphGoblin does not substitute
 another model or globally disable a seed from one account's refusal. See
 [model-access troubleshooting](guide/07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint).
 
-Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
+LLM decisions deliberately omit provider text: the same refusal maps to `DECIDER_HTTP_ERROR`
+and a non-resumable `EVALUATION_PROVIDER_FAILED` with “Decision provider request failed.”
+That run record cannot establish an account-specific cause. Diagnose the selected decision
+model/login/endpoint separately; this change does not expand the decision's diagnostic boundary.
+
+The adapter sends the supported thread settings below explicitly on every session. Their SDK CLI arguments follow `config` overrides and win over the corresponding keys in `configOverrides` or `config.toml`. Other keys, including Windows sandbox backend selection, remain inherited unless overridden. This precedence alone does not establish the enforcement effect of every other sandbox-related key.
 
 Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
 

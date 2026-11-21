@@ -5,9 +5,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ## Unreleased
 
 - Clarify that an enabled Codex model and a ready preflight do not establish current access
-  for the API user's login and provider endpoint. Model/account refusals retain the provider's
-  explanation in the run record; the guide describes deliberate supported-model/login selection
-  without automatic fallback or an API-key-only promise (#427).
+  for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
+  the provider's explanation; LLM decisions retain only a safe failure category. The guide
+  describes deliberate supported-model/login selection without automatic fallback or an
+  API-key-only promise (#427).
 - Reconcile Codex sandbox documentation and source comments: the authored sandbox permission
   level is explicit, while Windows backend selection remains inherited unless explicitly
   overridden. No sandbox permissions or backend behavior changed (#365).

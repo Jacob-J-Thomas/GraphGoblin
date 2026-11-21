@@ -88,7 +88,8 @@ export function sanitizeConfig(value: unknown): ConfigValue | undefined {
  * Client options: the SDK's `config` (dotted `--config` keys) is the isolation defaults of
  * ADR-0063/ADR-0067 with `harnessOptions.configOverrides` layered over them, so a node can opt
  * out of inherited plugins or turn another extension back on. The thread options are emitted
- * after them, so overrides cannot weaken the sandbox, approval, model, or effort a node declared.
+ * after them, so the corresponding thread settings win over same-key overrides. This precedence
+ * does not establish the enforcement effect of other sandbox-related keys.
  */
 export function clientOptions(
   options: HarnessOptions,
