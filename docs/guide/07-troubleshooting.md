@@ -304,6 +304,31 @@ stderr/stdout conflict rule. No model turn is used to resolve an uncertain login
 No readiness check starts a model turn. Native no-turn process evidence and disposable QA steps
 are recorded in the [WP-F1 report](../qa/2026-10-19-wp-f1-readiness/README.md).
 
+## Codex plugin tools are missing
+
+**Ready** confirms CLI prerequisites and sign-in. The Codex Settings card also says **Loaded
+plugin tools are not verified by this check.** The system `--preflight` command and
+`GET /system/preflight` show that limit as a `Codex plugins` warning after the Codex check passes.
+The warning is informational even for healthy or intentionally disabled plugins: it does not
+change readiness, start a plugin probe, or prevent execution. **Retry preflight** repeats the
+prerequisite check; it does not test every plugin tool.
+
+Use the same Codex executable GraphGoblin runs (`GG_CODEX_BINARY`, or the SDK's bundled CLI) in
+the worker's working directory to inspect its effective configuration:
+
+```text
+codex plugin list --json
+codex mcp list --json
+```
+
+These are inventory commands, not proof that every enabled plugin loaded. Pinned CLI 0.160.0
+can silently ignore an unknown enabled plugin ID or omit a plugin's tools when its MCP file is
+missing, while the turn still succeeds. Compare the inventory with the tools you expect that
+plugin to provide, review its intended enabled state and installation in Codex, then verify an
+expected tool in the worker before relying on it. An individual plugin disable or an inference
+node's `features.plugins=false` override can intentionally remove those tools. GraphGoblin
+does not install, repair, enable or replace plugins as part of this check.
+
 ## Recover a disconnected stream
 
 Reconnect with the last event ID, using your actual run ID and cursor. In Bash:

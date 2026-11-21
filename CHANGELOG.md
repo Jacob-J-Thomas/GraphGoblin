@@ -20,6 +20,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
   as a failed kill, is no longer taken for a refused start. No store, export or contract change.
 
+- System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
+  passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
+  tools are not verified by this check. CLI inventory commands are useful for investigation,
+  but do not prove every enabled plugin loaded. Readiness, authentication, exit status and
+  plugin inheritance/overrides keep their existing behavior; no new probe or repair runs.
+  **Upgrade:** rebuild the API and web app. Preflight output parsers must allow the new warning
+  row and warning count. No schema, stored format or reset change.
+
 - Codex structured calls create short scratch names with exclusive `mkdir` in at most four
   attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
   managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
