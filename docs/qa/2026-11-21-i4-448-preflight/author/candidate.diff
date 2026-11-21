@@ -1,0 +1,484 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f4f086b..94281bad 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
++  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
++  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
++  migrate the store; database and WAL bytes remain unchanged (SQLite readers may update `-shm`).
++  **Upgrade:** rebuild the API. No schema, stored format or reset change.
++
+ - Windows launcher identity and ownership checks own their descendants in private Windows jobs
+   (#459), drain both output streams within a bounded work window and collect failed checks
+   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+diff --git a/apps/api/src/container.ts b/apps/api/src/container.ts
+index d0412509..ca3f03d3 100644
+--- a/apps/api/src/container.ts
++++ b/apps/api/src/container.ts
+@@ -26,6 +26,7 @@ import { createOllamaServices, type OllamaServices } from '@graphgoblin/infrastr
+ import { CronScheduler, TimerService } from '@graphgoblin/infrastructure/scheduler';
+ import {
+   DEFAULT_MODEL_CATALOG,
++  projectStartupModelCatalog,
+   openReadOnlyDatabaseClient,
+   databaseView,
+   readPreMigrationModelCatalog,
+@@ -218,15 +219,7 @@ export async function createContainer(
+         startupReadiness = state;
+         if (state === 'current') {
+           const stored = await readPreMigrationModelCatalog(databaseView(readonlyClient));
+-          startupCatalog = [
+-            ...stored,
+-            ...DEFAULT_MODEL_CATALOG.filter(
+-              (seed) =>
+-                !stored.some(
+-                  (entry) => entry.harness === seed.harness && entry.model === seed.model,
+-                ),
+-            ),
+-          ];
++          startupCatalog = projectStartupModelCatalog(stored);
+         }
+       } finally {
+         readonlyClient.close();
+diff --git a/apps/api/src/preflight-catalog.test.ts b/apps/api/src/preflight-catalog.test.ts
+new file mode 100644
+index 00000000..582e28ee
+--- /dev/null
++++ b/apps/api/src/preflight-catalog.test.ts
+@@ -0,0 +1,311 @@
++import { copyFile, mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { basename, dirname, join } from 'node:path';
++import { pathToFileURL } from 'node:url';
++import type { HarnessDefaults, ModelCatalogEntry } from '@graphgoblin/contracts';
++import { FakeHarness } from '@graphgoblin/engine/testing';
++import {
++  DEFAULT_MODEL_CATALOG,
++  SqliteModelCatalog,
++  databaseView,
++  openDatabase,
++  openReadOnlyDatabaseClient,
++} from '@graphgoblin/infrastructure/sqlite';
++import { afterEach, beforeEach, describe, expect, it } from 'vitest';
++import { loadConfig } from './config.js';
++import { createContainer } from './container.js';
++import { runPreflightCli } from './preflight.js';
++
++const KEY = Buffer.alloc(32, 8).toString('base64');
++let dir: string;
++
++beforeEach(async () => {
++  dir = await mkdtemp(join(tmpdir(), 'gg-preflight-catalog-'));
++});
++
++afterEach(async () => {
++  globalThis.gc?.();
++  await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
++});
++
++function adapters() {
++  return {
++    harnesses: { codex: new FakeHarness(), claude: new FakeHarness([], 'claude') },
++    deciders: [],
++    startTimers: false,
++  };
++}
++
++function env(dbFile: string, defaults: HarnessDefaults): Record<string, string> {
++  return {
++    GG_DATA_DIR: join(dir, 'data'),
++    GG_DB_URL: pathToFileURL(dbFile).href,
++    GG_MASTER_KEY: KEY,
++    GG_DEFAULTS: JSON.stringify(defaults),
++  };
++}
++
++async function cli(environment: Record<string, string>) {
++  let out = '';
++  const code = await runPreflightCli({
++    env: environment,
++    ...adapters(),
++    write: (text) => {
++      out += text;
++    },
++  });
++  return { code, out };
++}
++
++async function fixture(dbFile: string, rows = DEFAULT_MODEL_CATALOG) {
++  await mkdir(dirname(dbFile), { recursive: true });
++  const handle = openDatabase({ url: pathToFileURL(dbFile).href });
++  try {
++    await handle.migrate();
++    await new SqliteModelCatalog(handle.db).seed(rows);
++    await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
++  } finally {
++    handle.close();
++  }
++}
++
++/** SQLite readers update -shm read marks; only DB/WAL contain the stored data. */
++async function storeBytes(dbFile: string) {
++  const names = (await readdir(dirname(dbFile))).filter(
++    (name) => name === basename(dbFile) || name === `${basename(dbFile)}-wal`,
++  );
++  return Object.fromEntries(
++    await Promise.all(
++      names.map(async (name): Promise<[string, Buffer]> => [
++        name,
++        await readFile(join(dirname(dbFile), name)),
++      ]),
++    ),
++  );
++}
++
++async function storedCatalog(dbFile: string) {
++  const client = openReadOnlyDatabaseClient(dbFile);
++  try {
++    return await new SqliteModelCatalog(databaseView(client)).list();
++  } finally {
++    client.close();
++  }
++}
++
++describe('offline startup catalog admission', () => {
++  it.each([
++    ['codex', 'gpt-6.1-terra', 'medium'],
++    ['claude', 'claude-opus-5-5', 'high'],
++  ] as const)(
++    'accepts a missing shipped %s seed without storing it',
++    async (harness, model, effort) => {
++      // The DB is outside GG_DATA_DIR and its URL is percent-encoded: both paths use startup's
++      // projected catalog. This simulates a current-format store before its first upgrade start.
++      const dbFile = join(dir, 'external store', 'gateway.db');
++      await fixture(
++        dbFile,
++        DEFAULT_MODEL_CATALOG.filter(
++          (entry) => !(entry.harness === harness && entry.model === model),
++        ),
++      );
++      const defaults: HarnessDefaults = {
++        byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' }, [harness]: { model, effort } },
++      };
++      const environment = env(dbFile, defaults);
++      const before = await storeBytes(dbFile);
++      const report = await cli(environment);
++      expect(report.code, report.out).toBe(0);
++      expect(report.out).toMatch(/ok\s+Database\s+reachable and migrated/);
++      expect(report.out).toMatch(
++        harness === 'codex'
++          ? /ok\s+Default model\s+gpt-6.1-terra \(codex\) is in the model catalog/
++          : /ok\s+Claude default model\s+Exact Claude model and effort are configured/,
++      );
++      expect(await storeBytes(dbFile)).toEqual(before);
++      expect(
++        (await storedCatalog(dbFile)).some((row) => row.harness === harness && row.model === model),
++      ).toBe(false);
++      await expect(readdir(environment['GG_DATA_DIR']!)).rejects.toMatchObject({ code: 'ENOENT' });
++
++      const container = await createContainer(loadConfig(environment), adapters());
++      try {
++        await container.start();
++        expect(await container.repos.catalog.findOne(harness, model)).toMatchObject({
++          enabled: true,
++        });
++      } finally {
++        await container.stop();
++      }
++    },
++  );
++
++  it.each([
++    {
++      harness: 'codex',
++      model: 'gpt-6.1-terra',
++      effort: 'medium',
++      enabled: false,
++      status: 'WARN',
++      code: 0,
++      refusal: undefined,
++    },
++    {
++      harness: 'claude',
++      model: 'claude-opus-5-5',
++      effort: 'high',
++      enabled: false,
++      status: 'FAIL',
++      code: 1,
++      refusal: undefined,
++    },
++    {
++      harness: 'codex',
++      model: 'unknown-model',
++      effort: 'low',
++      status: 'FAIL',
++      code: 1,
++      refusal: 'MODEL_NOT_IN_CATALOG',
++    },
++    {
++      harness: 'codex',
++      model: 'claude-opus-5-5',
++      effort: 'high',
++      status: 'FAIL',
++      code: 1,
++      refusal: 'MODEL_HARNESS_MISMATCH',
++    },
++    {
++      harness: 'claude',
++      model: 'gpt-6-luna',
++      effort: 'low',
++      status: 'FAIL',
++      code: 1,
++      refusal: 'MODEL_HARNESS_MISMATCH',
++    },
++    {
++      harness: 'claude',
++      model: 'claude-opus-5-5',
++      effort: 'none',
++      status: 'FAIL',
++      code: 1,
++      refusal: 'EFFORT_UNSUPPORTED',
++    },
++    {
++      harness: 'claude',
++      model: 'claude-opus-5-5',
++      effort: 'low',
++      efforts: ['high'],
++      status: 'FAIL',
++      code: 1,
++      refusal: 'EFFORT_UNSUPPORTED',
++    },
++    // Codex preflight currently checks membership/enabled, while startup also checks effort.
++    {
++      harness: 'codex',
++      model: 'gpt-5.5',
++      effort: 'none',
++      status: 'ok',
++      code: 0,
++      refusal: 'EFFORT_UNSUPPORTED',
++    },
++  ] as const)(
++    'preserves $harness $model defaults (effort=$effort, status=$status)',
++    async (test) => {
++      const dbFile = join(dir, 'gateway.db');
++      const rows: ModelCatalogEntry[] = DEFAULT_MODEL_CATALOG.map((entry) =>
++        entry.harness === test.harness && entry.model === test.model
++          ? {
++              ...entry,
++              ...('enabled' in test ? { enabled: test.enabled } : {}),
++              ...('efforts' in test ? { efforts: [...test.efforts] } : {}),
++            }
++          : entry,
++      );
++      await fixture(dbFile, rows);
++      const defaults: HarnessDefaults = {
++        byHarness: {
++          codex: { model: 'gpt-6-luna', effort: 'low' },
++          [test.harness]: { model: test.model, effort: test.effort },
++        },
++      };
++      const environment = env(dbFile, defaults);
++      const before = await storeBytes(dbFile);
++      const report = await cli(environment);
++      expect(report.code, report.out).toBe(test.code);
++      expect(report.out).toMatch(
++        new RegExp(
++          `${test.status}\\s+${test.harness === 'codex' ? 'Default model' : 'Claude default model'}\\s+`,
++        ),
++      );
++      expect(await storedCatalog(dbFile)).toEqual(
++        [...rows].sort(
++          (a, b) => a.harness.localeCompare(b.harness) || a.model.localeCompare(b.model),
++        ),
++      );
++      expect(await storeBytes(dbFile)).toEqual(before);
++      if (test.refusal) {
++        const outcome: unknown = await createContainer(loadConfig(environment), adapters()).then(
++          async (unexpected) => {
++            await unexpected.stop();
++            return undefined;
++          },
++          (error: unknown) => error,
++        );
++        expect(outcome).toMatchObject({
++          code: 'EVALUATION_INVALID_CONFIGURATION',
++          details: { code: test.refusal, harness: test.harness },
++        });
++        expect(await storeBytes(dbFile)).toEqual(before);
++      } else {
++        // A disabled model is unavailable to execution, but is not malformed configuration:
++        // ordinary boot must leave Settings available for correcting the selection.
++        const container = await createContainer(loadConfig(environment), adapters());
++        try {
++          await container.start();
++          expect(await container.repos.catalog.findOne(test.harness, test.model)).toMatchObject({
++            enabled: false,
++          });
++          expect(
++            await container.repos.catalog.isAllowed(test.harness, test.model, test.effort),
++          ).toBe(false);
++        } finally {
++          await container.stop();
++        }
++      }
++    },
++  );
++
++  it('projects a missing seed from a WAL-backed store without checkpointing or writing it', async () => {
++    const original = join(dir, 'gateway.db');
++    await fixture(original);
++    const copy = join(dir, 'copy');
++    await mkdir(copy);
++    const holder = openDatabase({ url: pathToFileURL(original).href });
++    try {
++      await holder.client.execute('PRAGMA journal_mode = WAL');
++      await holder.client.execute(
++        "DELETE FROM model_catalog WHERE harness = 'codex' AND model = 'gpt-6.1-terra'",
++      );
++      for (const suffix of ['', '-wal', '-shm'])
++        await copyFile(`${original}${suffix}`, join(copy, `gateway.db${suffix}`));
++    } finally {
++      holder.close();
++    }
++    const dbFile = join(copy, 'gateway.db');
++    const before = await storeBytes(dbFile);
++    expect(Object.keys(before)).toContain('gateway.db-wal');
++    const report = await cli(
++      env(dbFile, { byHarness: { codex: { model: 'gpt-6.1-terra', effort: 'medium' } } }),
++    );
++    expect(report.code, report.out).toBe(0);
++    expect(report.out).toMatch(/ok\s+Default model\s+gpt-6.1-terra/);
++    expect((await storedCatalog(dbFile)).some((row) => row.model === 'gpt-6.1-terra')).toBe(false);
++    expect(await storeBytes(dbFile)).toEqual(before);
++    expect((await readdir(copy)).sort()).toEqual([
++      'gateway.db',
++      'gateway.db-shm',
++      'gateway.db-wal',
++    ]);
++  });
++});
+diff --git a/apps/api/src/preflight.ts b/apps/api/src/preflight.ts
+index d1c58ca4..884285e3 100644
+--- a/apps/api/src/preflight.ts
++++ b/apps/api/src/preflight.ts
+@@ -24,6 +24,7 @@ import {
+   openDatabase,
+   openReadOnlyDatabaseClient,
+   pendingMigrationCount,
++  projectStartupModelCatalog,
+   type Database,
+   type ModelCatalogEntry,
+ } from '@graphgoblin/infrastructure/sqlite';
+@@ -641,7 +642,7 @@ export async function configPreflightSources(
+             JEV_SECRET,
+           )
+         : Promise.resolve(undefined),
+-    catalog: () => new SqliteModelCatalog(handle.db).list(),
++    catalog: async () => projectStartupModelCatalog(await new SqliteModelCatalog(handle.db).list()),
+     jevEnabled: async () =>
+       (await new SqliteClassifierModels(handle.db).findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
+     close: () => handle.close(),
+diff --git a/docs/11-security-and-distribution.md b/docs/11-security-and-distribution.md
+index 510842da..2dc5f69a 100644
+--- a/docs/11-security-and-distribution.md
++++ b/docs/11-security-and-distribution.md
+@@ -156,6 +156,14 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
+ 
+ `apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database and write-ahead log bytes (the `-shm` index is shared memory any reader updates).
+ 
++For an existing current, migrated store, offline model admission uses startup's catalog projection:
++stored rows come first, with shipped seeds appended in memory only when their `(harness, model)`
++pair is absent. A newly shipped seed can therefore satisfy `GG_DEFAULTS` before the first upgrade
++start without being inserted by preflight. Stored metadata and disabled rows still take precedence;
++preflight does not refresh them. Codex's disabled default remains a warning; disabled models stay
++unavailable to execution. Missing stores use the shipped catalog; unsupported or unreadable stores
++still fail their database check.
++
+ | Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                    |
+ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+ | Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                 |
+diff --git a/packages/infrastructure/src/sqlite/catalog-projection.test.ts b/packages/infrastructure/src/sqlite/catalog-projection.test.ts
+new file mode 100644
+index 00000000..da9b5ad3
+--- /dev/null
++++ b/packages/infrastructure/src/sqlite/catalog-projection.test.ts
+@@ -0,0 +1,51 @@
++import type { ModelCatalogEntry } from '@graphgoblin/contracts';
++import { describe, expect, it } from 'vitest';
++import { DEFAULT_MODEL_CATALOG, projectStartupModelCatalog } from './settings.js';
++
++describe('startup model catalog projection', () => {
++  it('projects all shipped seeds for an empty catalog without changing the seeds', () => {
++    const before = structuredClone(DEFAULT_MODEL_CATALOG);
++    const projected = projectStartupModelCatalog(Object.freeze([]));
++    expect(projected).toEqual(before);
++    expect(projected).not.toBe(DEFAULT_MODEL_CATALOG);
++    expect(DEFAULT_MODEL_CATALOG).toEqual(before);
++  });
++
++  it('preserves stored order, metadata and disabled rows, then appends only missing pairs', () => {
++    const stored: ModelCatalogEntry[] = [
++      {
++        harness: 'codex',
++        model: 'gpt-6.1-terra',
++        source: 'harness',
++        displayName: 'Stored Terra',
++        efforts: ['high'],
++        defaultEffort: 'high',
++        enabled: false,
++      },
++      {
++        harness: 'custom',
++        model: 'gpt-6-luna',
++        source: 'litellm',
++        displayName: 'Same name in another harness',
++        efforts: ['low'],
++        defaultEffort: 'low',
++        enabled: true,
++      },
++    ];
++    const before = structuredClone(stored);
++    for (const entry of stored) {
++      Object.freeze(entry.efforts);
++      Object.freeze(entry);
++    }
++    const projected = projectStartupModelCatalog(Object.freeze(stored));
++    expect(projected.slice(0, stored.length)).toEqual(before);
++    expect(projected.slice(stored.length)).toEqual(
++      DEFAULT_MODEL_CATALOG.filter(
++        (entry) => !(entry.harness === 'codex' && entry.model === 'gpt-6.1-terra'),
++      ),
++    );
++    expect(projected.filter((entry) => entry.model === 'gpt-6-luna')).toHaveLength(2);
++    expect(stored).toEqual(before);
++    expect(projectStartupModelCatalog(projected)).toEqual(projected);
++  });
++});
+diff --git a/packages/infrastructure/src/sqlite/settings.ts b/packages/infrastructure/src/sqlite/settings.ts
+index e54cac3f..e0775af3 100644
+--- a/packages/infrastructure/src/sqlite/settings.ts
++++ b/packages/infrastructure/src/sqlite/settings.ts
+@@ -454,6 +454,19 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
+   })),
+ ];
+ 
++/** Admission before startup seeds: stored rows win; missing shipped models exist in memory only. */
++export function projectStartupModelCatalog(
++  stored: readonly ModelCatalogEntry[],
++): ModelCatalogEntry[] {
++  return [
++    ...stored,
++    ...DEFAULT_MODEL_CATALOG.filter(
++      (seed) =>
++        !stored.some((entry) => entry.harness === seed.harness && entry.model === seed.model),
++    ),
++  ];
++}
++
+ /** Startup-only inspection before pending schema migrations; no discovery tables or writes. */
+ export async function readPreMigrationModelCatalog(db: Database): Promise<ModelCatalogEntry[]> {
+   return db

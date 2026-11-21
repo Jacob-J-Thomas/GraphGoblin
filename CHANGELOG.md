@@ -4,6 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
+  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
+  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
+  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's
+  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an
+  empty one (no frames, so no stored data).
+  **Upgrade:** rebuild the API. No schema, stored format or reset change.
+
 - Clarify that an enabled Codex model and a ready preflight do not establish current access
   for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
   the provider's explanation; LLM decisions retain only a safe failure category. The guide

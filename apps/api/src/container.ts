@@ -26,6 +26,7 @@ import { createOllamaServices, type OllamaServices } from '@graphgoblin/infrastr
 import { CronScheduler, TimerService } from '@graphgoblin/infrastructure/scheduler';
 import {
   DEFAULT_MODEL_CATALOG,
+  projectStartupModelCatalog,
   openReadOnlyDatabaseClient,
   databaseView,
   readPreMigrationModelCatalog,
@@ -218,15 +219,7 @@ export async function createContainer(
         startupReadiness = state;
         if (state === 'current') {
           const stored = await readPreMigrationModelCatalog(databaseView(readonlyClient));
-          startupCatalog = [
-            ...stored,
-            ...DEFAULT_MODEL_CATALOG.filter(
-              (seed) =>
-                !stored.some(
-                  (entry) => entry.harness === seed.harness && entry.model === seed.model,
-                ),
-            ),
-          ];
+          startupCatalog = projectStartupModelCatalog(stored);
         }
       } finally {
         readonlyClient.close();

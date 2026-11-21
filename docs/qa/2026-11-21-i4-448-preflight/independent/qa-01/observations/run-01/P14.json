@@ -1,0 +1,326 @@
+{
+  "id": "P14",
+  "kind": "built-cli-preflight",
+  "purpose": "first run, store absent, unknown model: FAIL, nothing created",
+  "variant": "absent",
+  "defaults": {
+    "byHarness": {
+      "codex": {
+        "model": "gpt-qa448-unknown",
+        "effort": "medium"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "not timed out",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "exit code",
+      "expected": 1,
+      "actual": 1,
+      "pass": true
+    },
+    {
+      "name": "row \"Database\" WARN /does not exist yet/",
+      "expected": {
+        "status": "WARN",
+        "detail": "/does not exist yet/"
+      },
+      "actual": {
+        "status": "WARN",
+        "detail": "/does not exist yet/"
+      },
+      "pass": true
+    },
+    {
+      "name": "row \"Default model\" FAIL /is not in the default catalog seeded on first start/",
+      "expected": {
+        "status": "FAIL",
+        "detail": "/is not in the default catalog seeded on first start/"
+      },
+      "actual": {
+        "status": "FAIL",
+        "detail": "/is not in the default catalog seeded on first start/"
+      },
+      "pass": true
+    },
+    {
+      "name": "DB bytes unchanged",
+      "expected": null,
+      "actual": null,
+      "pass": true
+    },
+    {
+      "name": "WAL bytes/presence unchanged",
+      "expected": null,
+      "actual": null,
+      "pass": true
+    },
+    {
+      "name": "no rollback journal created",
+      "expected": null,
+      "actual": null,
+      "pass": true
+    },
+    {
+      "name": "store still absent",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "listing \"caseDir\" names unchanged (excluding -shm)",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "still absent: cases\\P14\\never created",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "still absent: cases\\P14\\data",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "fake CLIs saw probes only (no turn)",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:00:59.660Z",
+  "env": {
+    "TEMP": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp",
+    "USERPROFILE": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "HOME": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "APPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Roaming",
+    "LOCALAPPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Local",
+    "GG_HOST": "127.0.0.1",
+    "GG_LOG_LEVEL": "info",
+    "GG_SWAGGER_UI": "false",
+    "GG_WEB_DIST": "",
+    "GG_GOBLIN_DIST": "",
+    "GG_OLLAMA_ENABLED": "true",
+    "GG_OLLAMA_URL": "http://127.0.0.1:52275",
+    "GG_CODEX_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\codex-fake.mjs",
+    "GG_CLAUDE_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\claude.exe",
+    "GG_MASTER_KEY": "synthetic-32-bytes-0x48",
+    "GG_DATA_DIR": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\P14\\data",
+    "GG_DB_URL": "file:///C:/Users/98jak/AppData/Local/Temp/gg-448-qa-indep-20261121T090017/cases/P14/never%20created/gateway.db",
+    "GG_DEFAULTS": "{\"byHarness\":{\"codex\":{\"model\":\"gpt-qa448-unknown\",\"effort\":\"medium\"}}}",
+    "GG_PORT": "50295"
+  },
+  "before": {
+    "files": {
+      "db": null,
+      "-wal": null,
+      "-shm": null,
+      "-journal": null
+    },
+    "logical": {
+      "exists": false
+    },
+    "listings": {
+      "caseDir": []
+    }
+  },
+  "pid": 37040,
+  "exit": {
+    "code": 1,
+    "signal": null
+  },
+  "timedOut": false,
+  "durationMs": 2584,
+  "raw": {
+    "stdout": "raw/P14.stdout.txt",
+    "stderr": "raw/P14.stderr.txt",
+    "class": "private-synthetic-raw"
+  },
+  "after": {
+    "files": {
+      "db": null,
+      "-wal": null,
+      "-shm": null,
+      "-journal": null
+    },
+    "logical": {
+      "exists": false
+    },
+    "listings": {
+      "caseDir": []
+    }
+  },
+  "fakeInvocations": [
+    {
+      "cli": "claude",
+      "kind": "version",
+      "exit": 0,
+      "pid": 38168,
+      "utc": "2026-11-21T09:01:01.7604791Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-5d26df34",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "version",
+      "exit": 0,
+      "pid": 37556,
+      "utc": "2026-11-21T09:01:01.804Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-93689926",
+      "args": [
+        "--version"
+      ]
+    },
+    {
+      "cli": "claude",
+      "kind": "help",
+      "exit": 0,
+      "pid": 36972,
+      "utc": "2026-11-21T09:01:01.8873571Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-5d26df34",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-help",
+      "exit": 0,
+      "pid": 42040,
+      "utc": "2026-11-21T09:01:01.958Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-93689926",
+      "args": [
+        "exec",
+        "--help"
+      ]
+    },
+    {
+      "cli": "claude",
+      "kind": "auth-status",
+      "exit": 0,
+      "pid": 4084,
+      "utc": "2026-11-21T09:01:01.9712645Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-5d26df34",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-resume-help",
+      "exit": 0,
+      "pid": 22424,
+      "utc": "2026-11-21T09:01:02.068Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-93689926",
+      "args": [
+        "exec",
+        "resume",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "login-status",
+      "exit": 0,
+      "pid": 30072,
+      "utc": "2026-11-21T09:01:02.193Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-93689926",
+      "args": [
+        "login",
+        "status"
+      ]
+    }
+  ],
+  "ollamaRequests": [
+    {
+      "method": "GET",
+      "url": "/api/tags",
+      "utc": "2026-11-21T09:01:01.697Z"
+    }
+  ],
+  "report": {
+    "rows": [
+      {
+        "status": "ok",
+        "label": "Node.js",
+        "detail": "Node 22.23.4"
+      },
+      {
+        "status": "WARN",
+        "label": "Data directory",
+        "detail": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\P14\\data does not exist yet; it is created on first start"
+      },
+      {
+        "status": "ok",
+        "label": "Master key",
+        "detail": "taken from GG_MASTER_KEY"
+      },
+      {
+        "status": "WARN",
+        "label": "Database",
+        "detail": "the database does not exist yet; it is created and migrated on first start"
+      },
+      {
+        "status": "ok",
+        "label": "Harness ollama",
+        "detail": "Ollama service metadata probe passed; model execution and memory requirements are not tested."
+      },
+      {
+        "status": "ok",
+        "label": "Harness claude",
+        "detail": "claude 2.1.287 is installed and logged in"
+      },
+      {
+        "status": "ok",
+        "label": "Harness codex",
+        "detail": "codex 0.160.0 is installed and logged in"
+      },
+      {
+        "status": "WARN",
+        "label": "Jev",
+        "detail": "not checked until the database is migrated; Jev is optional"
+      },
+      {
+        "status": "FAIL",
+        "label": "Default model",
+        "detail": "GG_DEFAULTS.byHarness.codex.model \"gpt-qa448-unknown\" is not in the default catalog seeded on first start; pick a listed harness model and enable it in Settings"
+      }
+    ],
+    "summary": "1 failed, 3 warning(s): fix the failed checks before starting"
+  },
+  "shm": {
+    "before": null,
+    "after": null,
+    "changed": false,
+    "note": "SQLite readers may update -shm; allowed"
+  },
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:01:02.262Z"
+}
