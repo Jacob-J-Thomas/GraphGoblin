@@ -265,6 +265,7 @@ namespace GraphGoblin.Desktop
                 if (!IsFullyQualifiedWindowsPath(args[2])) throw new ConfigurationRefusal("Invalid staged launcher configuration path.");
                 var config = new JavaScriptSerializer().Deserialize<Configuration>(File.ReadAllText(args[2]));
                 config.Validate(false);
+                HelperProcess.CheckCapability();
                 if (stage)
                 {
                     if (!IsFullyQualifiedWindowsPath(args[1]) || !IsFullyQualifiedWindowsPath(args[3]) ||
@@ -277,6 +278,7 @@ namespace GraphGoblin.Desktop
                 return 0;
             }
             catch (ConfigurationRefusal error) { Console.Error.WriteLine(error.Message); }
+            catch (LauncherFailure error) { Console.Error.WriteLine(error.Message); }
             catch (Exception) { Console.Error.WriteLine("The staged launcher configuration or shortcut could not be prepared."); }
             return 1;
         }
@@ -701,6 +703,306 @@ namespace GraphGoblin.Desktop
         }
     }
 
+    /// <summary>
+    /// A read-only helper owns a private, non-breakaway job from its first instruction. Neither
+    /// a PID from a lock nor the independent gateway ever enters this lifetime boundary.
+    /// </summary>
+    public static class HelperProcess
+    {
+        public const int WorkMilliseconds = 15000, CleanupMilliseconds = 2000, OutputBytes = 262144;
+        public const uint TerminationExit = 0xE0470459;
+        const int Pending = 997, Incomplete = 996, BrokenPipe = 109, PipeConnected = 535;
+
+        [StructLayout(LayoutKind.Sequential)] struct SecurityAttributes { public int size; public IntPtr descriptor; public int inherit; }
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] struct StartupInfo {
+            public int cb; public string reserved, desktop, title; public int x, y, xSize, ySize, xCount, yCount, fill, flags;
+            public short show, reservedBytes; public IntPtr reservedPointer, input, output, error;
+        }
+        [StructLayout(LayoutKind.Sequential)] struct StartupInfoEx { public StartupInfo startup; public IntPtr attributes; }
+        [StructLayout(LayoutKind.Sequential)] struct ProcessInformation { public IntPtr process, thread; public int pid, tid; }
+        [StructLayout(LayoutKind.Sequential)] struct BasicLimits {
+            public long processTime, jobTime; public uint flags; public UIntPtr minimum, maximum; public uint active;
+            public UIntPtr affinity; public uint priority, scheduling;
+        }
+        [StructLayout(LayoutKind.Sequential)] struct IoCounters { public ulong a, b, c, d, e, f; }
+        [StructLayout(LayoutKind.Sequential)] struct ExtendedLimits {
+            public BasicLimits basic; public IoCounters io; public UIntPtr processMemory, jobMemory, peakProcess, peakJob;
+        }
+        [StructLayout(LayoutKind.Sequential)] struct Accounting {
+            public long a, b, c, d; public uint faults, total, active, terminated;
+        }
+        [StructLayout(LayoutKind.Sequential)] struct Overlapped {
+            public IntPtr internalStatus, transferred; public uint offset, offsetHigh; public IntPtr signal;
+        }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern SafeFileHandle CreateJobObject(IntPtr security, string name);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(SafeFileHandle job, int kind, ref ExtendedLimits limits, uint size);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool QueryInformationJobObject(SafeFileHandle job, int kind, out Accounting accounting, uint size, IntPtr returned);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool TerminateJobObject(SafeFileHandle job, uint code);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool CreateProcess(string app, StringBuilder command, IntPtr processAttributes, IntPtr threadAttributes, bool inherit, uint flags, IntPtr environment, string directory, ref StartupInfoEx startup, out ProcessInformation process);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool InitializeProcThreadAttributeList(IntPtr list, int count, int flags, ref IntPtr size);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool UpdateProcThreadAttribute(IntPtr list, uint flags, IntPtr attribute, IntPtr value, IntPtr size, IntPtr previous, IntPtr returned);
+        [DllImport("kernel32.dll")] static extern void DeleteProcThreadAttributeList(IntPtr list);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetHandleInformation(SafeFileHandle handle, uint mask, uint flags);
+        [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern SafeFileHandle CreateNamedPipe(string name, uint open, uint mode, uint instances, uint output, uint input, uint timeout, ref SecurityAttributes security);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool ConnectNamedPipe(SafeFileHandle pipe, IntPtr overlapped);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetNamedPipeClientProcessId(SafeFileHandle pipe, out uint pid);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool ReadFile(SafeFileHandle pipe, IntPtr buffer, uint size, out uint read, IntPtr overlapped);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetOverlappedResult(SafeFileHandle pipe, IntPtr overlapped, out uint read, bool wait);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool CancelIoEx(SafeFileHandle pipe, IntPtr overlapped);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr CreateEvent(IntPtr security, bool manual, bool initial, string name);
+        [DllImport("kernel32.dll")] static extern bool ResetEvent(IntPtr signal);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(string text, uint revision, out IntPtr descriptor, out uint size);
+        [DllImport("kernel32.dll")] static extern IntPtr LocalFree(IntPtr value);
+
+        static LauncherFailure Containment() { return new LauncherFailure("helper-containment", "Windows could not start an isolated launcher check. Verify the configured runtime and the host's job policy. Windows 10 or Windows Server 2016 or later with compatible nested jobs is required. No gateway was started."); }
+        static LauncherFailure Invalid() { return new LauncherFailure("helper-invalid", "The read-only launcher check returned an invalid or oversized response. No gateway was started."); }
+        static SafeFileHandle NewJob()
+        {
+            SafeFileHandle job = CreateJobObject(IntPtr.Zero, null);
+            if (job.IsInvalid) { job.Dispose(); throw Containment(); }
+            var limits = new ExtendedLimits { basic = new BasicLimits { flags = 0x2000 } }; // KILL_ON_JOB_CLOSE, no breakaway
+            if (!SetInformationJobObject(job, 9, ref limits, (uint)Marshal.SizeOf(typeof(ExtendedLimits)))) { job.Dispose(); throw Containment(); }
+            return job;
+        }
+        static bool Empty(SafeFileHandle job)
+        {
+            Accounting accounting;
+            return QueryInformationJobObject(job, 1, out accounting, (uint)Marshal.SizeOf(typeof(Accounting)), IntPtr.Zero) && accounting.active == 0;
+        }
+
+        /// <summary>Backing memory must outlive both updates and the one CreateProcess call.</summary>
+        sealed class Attributes : IDisposable
+        {
+            public IntPtr List; IntPtr jobs, handles; bool initialized;
+            public Attributes(SafeFileHandle job, SafeFileHandle input, SafeFileHandle output, SafeFileHandle error)
+            {
+                try {
+                    IntPtr size = IntPtr.Zero;
+                    InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref size);
+                    if (size == IntPtr.Zero) throw Containment();
+                    List = Marshal.AllocHGlobal(size);
+                    if (!InitializeProcThreadAttributeList(List, 2, 0, ref size)) throw Containment();
+                    initialized = true;
+                    jobs = Marshal.AllocHGlobal(IntPtr.Size); Marshal.WriteIntPtr(jobs, job.DangerousGetHandle());
+                    if (!UpdateProcThreadAttribute(List, 0, new IntPtr(0x2000D), jobs, new IntPtr(IntPtr.Size), IntPtr.Zero, IntPtr.Zero)) throw Containment();
+                    if (input != null) {
+                        handles = Marshal.AllocHGlobal(IntPtr.Size * 3);
+                        var stdio = new[] { input, output, error };
+                        for (int i = 0; i < stdio.Length; i++) {
+                            if (!SetHandleInformation(stdio[i], 1, 1)) throw Containment();
+                            Marshal.WriteIntPtr(handles, i * IntPtr.Size, stdio[i].DangerousGetHandle());
+                        }
+                        if (!UpdateProcThreadAttribute(List, 0, new IntPtr(0x20002), handles, new IntPtr(IntPtr.Size * 3), IntPtr.Zero, IntPtr.Zero)) throw Containment();
+                    }
+                } catch { Dispose(); throw; }
+            }
+            public void Dispose() {
+                if (initialized) { DeleteProcThreadAttributeList(List); initialized = false; }
+                if (List != IntPtr.Zero) { Marshal.FreeHGlobal(List); List = IntPtr.Zero; }
+                if (jobs != IntPtr.Zero) { Marshal.FreeHGlobal(jobs); jobs = IntPtr.Zero; }
+                if (handles != IntPtr.Zero) { Marshal.FreeHGlobal(handles); handles = IntPtr.Zero; }
+            }
+        }
+
+        /// <summary>Installer capability preflight; actual host containment is checked on every click.</summary>
+        public static void CheckCapability()
+        {
+            try { using (var job = NewJob()) using (var attributes = new Attributes(job, null, null, null)) { } }
+            catch (EntryPointNotFoundException) { throw Containment(); }
+        }
+
+        /// <summary>One unmanaged buffer and one operation. No resource is freed before completion.</summary>
+        sealed class Pipe : IDisposable
+        {
+            const int BufferBytes = 8192;
+            SafeFileHandle reader; public SafeFileHandle Writer;
+            IntPtr buffer, operation, signal;
+            readonly byte[] bytes = new byte[BufferBytes]; GCHandle pin;
+            bool pending; public bool Eof;
+            public Pipe()
+            {
+                IntPtr descriptor = IntPtr.Zero;
+                try {
+                    uint size;
+                    string sid = WindowsIdentity.GetCurrent().User.Value;
+                    if (!ConvertStringSecurityDescriptorToSecurityDescriptor("D:P(A;;GA;;;" + sid + ")", 1, out descriptor, out size)) throw Containment();
+                    var security = new SecurityAttributes { size = Marshal.SizeOf(typeof(SecurityAttributes)), descriptor = descriptor };
+                    string name = @"\\.\pipe\GraphGoblin.Check." + Guid.NewGuid().ToString("N");
+                    reader = CreateNamedPipe(name, 0x40080001, 8, 1, BufferBytes, BufferBytes, 0, ref security);
+                    if (reader.IsInvalid) throw Containment();
+                    signal = CreateEvent(IntPtr.Zero, true, false, null);
+                    if (signal == IntPtr.Zero) throw Containment();
+                    pin = GCHandle.Alloc(bytes, GCHandleType.Pinned); buffer = pin.AddrOfPinnedObject();
+                    operation = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(Overlapped)));
+                    ResetOperation();
+                    // Our blocking writer connects before the server acknowledges it. A remote
+                    // client is rejected, and a local name race is refused by exact client identity.
+                    Writer = CreateFile(name, 0x40000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero);
+                    if (Writer.IsInvalid) throw Containment();
+                    if (!ConnectNamedPipe(reader, operation)) {
+                        int code = Marshal.GetLastWin32Error();
+                        if (code == Pending) pending = true;
+                        if (code != PipeConnected) throw Containment();
+                    }
+                    uint pid;
+                    if (!GetNamedPipeClientProcessId(reader, out pid) || pid != (uint)Process.GetCurrentProcess().Id) throw Containment();
+                } catch {
+                    Cancel();
+                    if (!Complete()) TransferCompletion(); else Dispose();
+                    throw;
+                } finally { if (descriptor != IntPtr.Zero) LocalFree(descriptor); }
+            }
+            void ResetOperation() {
+                ResetEvent(signal);
+                Marshal.StructureToPtr(new Overlapped { signal = signal }, operation, false);
+            }
+            public void CloseWriter() { if (Writer != null) { Writer.Dispose(); Writer = null; } }
+            public void Drain(MemoryStream retained)
+            {
+                if (Eof) return;
+                uint count;
+                bool done;
+                if (pending) {
+                    done = GetOverlappedResult(reader, operation, out count, false);
+                    int code = done ? 0 : Marshal.GetLastWin32Error();
+                    if (!done && code == Incomplete) return;
+                    pending = false;
+                    if (!done) { if (code == BrokenPipe || code == 232) { Eof = true; return; } throw Invalid(); }
+                } else {
+                    ResetOperation();
+                    done = ReadFile(reader, buffer, BufferBytes, out count, operation);
+                    if (!done) {
+                        int code = Marshal.GetLastWin32Error();
+                        if (code == Pending) { pending = true; return; }
+                        if (code == BrokenPipe || code == 232) { Eof = true; return; }
+                        throw Invalid();
+                    }
+                }
+                if (count == 0) { Eof = true; return; }
+                if (retained != null) {
+                    if (retained.Length + count > OutputBytes) throw Invalid();
+                    retained.Write(bytes, 0, (int)count);
+                }
+            }
+            public void Cancel() { if (pending) CancelIoEx(reader, operation); }
+            public bool Complete() {
+                if (!pending) return true;
+                uint count;
+                bool done = GetOverlappedResult(reader, operation, out count, false);
+                if (!done && Marshal.GetLastWin32Error() == Incomplete) return false;
+                pending = false; return true;
+            }
+            public void TransferCompletion() {
+                // The completion owner retains the SafeHandle, OVERLAPPED, event and buffer.
+                // CancelIoEx returning ERROR_NOT_FOUND is never treated as completion proof.
+                ThreadPool.QueueUserWorkItem(delegate {
+                    uint count; GetOverlappedResult(reader, operation, out count, true);
+                    pending = false; Dispose();
+                });
+            }
+            public void Dispose() {
+                if (pending) throw new InvalidOperationException("pending pipe operation");
+                CloseWriter();
+                if (reader != null) { reader.Dispose(); reader = null; }
+                if (signal != IntPtr.Zero) { CloseHandle(signal); signal = IntPtr.Zero; }
+                if (operation != IntPtr.Zero) { Marshal.FreeHGlobal(operation); operation = IntPtr.Zero; }
+                if (pin.IsAllocated) { pin.Free(); buffer = IntPtr.Zero; }
+            }
+        }
+
+        /// <summary>The validator runs inside the work window, before the already-empty job closes.</summary>
+        public static string Read(string executable, string arguments, string directory, SortedDictionary<string, string> environment, string stage, int workMilliseconds, Func<string, bool> validate)
+        {
+            var clock = Stopwatch.StartNew();
+            SafeFileHandle job = null; Pipe output = null, error = null; ChildProcess child = null;
+            LauncherFailure failure = null; bool success = false, exited = false; int exitCode = 0; string result = null;
+            try {
+                job = NewJob(); output = new Pipe(); error = new Pipe();
+                using (var input = CreateFile("NUL", 0x80000000, 3, IntPtr.Zero, 3, 0, IntPtr.Zero))
+                using (var attributes = new Attributes(job, input, output.Writer, error.Writer)) {
+                    if (input.IsInvalid) throw Containment();
+                    if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                    IntPtr block = Marshal.StringToHGlobalUni(string.Join("\0", environment.Select(item => item.Key + "=" + item.Value)) + "\0\0");
+                    try {
+                        var startup = new StartupInfoEx { attributes = attributes.List, startup = new StartupInfo {
+                            cb = Marshal.SizeOf(typeof(StartupInfoEx)), flags = 0x100, input = input.DangerousGetHandle(), output = output.Writer.DangerousGetHandle(), error = error.Writer.DangerousGetHandle() } };
+                        ProcessInformation created;
+                        if (!CreateProcess(executable, new StringBuilder(Program.Quote(executable) + " " + arguments), IntPtr.Zero, IntPtr.Zero, true, 0x08080400, block, directory, ref startup, out created)) {
+                            int code = Marshal.GetLastWin32Error();
+                            if (code == 2 || code == 3 || code == 193 || code == 216) throw new LauncherFailure("helper-unavailable", "The configured Node runtime could not be started. Check the Node path in the launcher configuration.");
+                            throw Containment();
+                        }
+                        child = new ChildProcess(created.pid, created.process); CloseHandle(created.thread);
+                    } finally { Marshal.FreeHGlobal(block); }
+                }
+                output.CloseWriter(); error.CloseWriter();
+                using (var retained = new MemoryStream()) {
+                    while (true) {
+                        if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                        if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
+                        output.Drain(retained);
+                        if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                        error.Drain(null);
+                        if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
+                        if (exited && output.Eof && error.Eof && Empty(job)) {
+                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                            if (exitCode != 0) throw Refused(exitCode);
+                            try { result = new UTF8Encoding(false, true).GetString(retained.GetBuffer(), 0, (int)retained.Length).Trim(); }
+                            catch (DecoderFallbackException) { throw Invalid(); }
+                            bool valid;
+                            try { valid = validate(result); } catch (Exception) { valid = false; }
+                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                            if (!valid) throw Invalid();
+                            success = true; break;
+                        }
+                        // Fair bounded chunks even under a perpetual flood on either stream.
+                        Thread.Sleep(1);
+                    }
+                }
+            }
+            catch (LauncherFailure refused) {
+                failure = refused;
+                if (refused.Code == "helper-invalid") {
+                    if (clock.ElapsedMilliseconds >= workMilliseconds) failure = Timeout(stage);
+                    else if (exited && exitCode != 0) failure = Refused(exitCode);
+                }
+            }
+            catch (EntryPointNotFoundException) { failure = Containment(); }
+            catch (Exception) { failure = Invalid(); }
+            finally {
+                // This finally finishes before the caller releases mutexes, logs or shows a dialog.
+                bool confirmed = true;
+                if (!success && job != null) {
+                    var cleanup = Stopwatch.StartNew();
+                    TerminateJobObject(job, TerminationExit);
+                    if (output != null) { output.CloseWriter(); output.Cancel(); }
+                    if (error != null) { error.CloseWriter(); error.Cancel(); }
+                    while (true) {
+                        int ignored;
+                        if (child != null && child.TryGetExit(out ignored)) { child.Dispose(); child = null; }
+                        bool outputDone = output == null || output.Complete();
+                        bool errorDone = error == null || error.Complete();
+                        confirmed = child == null && Empty(job) && outputDone && errorDone;
+                        if (confirmed || cleanup.ElapsedMilliseconds >= CleanupMilliseconds) break;
+                        Thread.Sleep(1);
+                    }
+                }
+                if (job != null) job.Dispose(); // last handle also kills any member on unconfirmed cleanup
+                if (child != null) child.Dispose();
+                foreach (var pipe in new[] { output, error }) if (pipe != null) {
+                    if (pipe.Complete()) pipe.Dispose(); else pipe.TransferCompletion();
+                }
+                if (!confirmed) failure = new LauncherFailure("helper-cleanup-unconfirmed", "Windows could not confirm that all processes for this launcher check stopped. No gateway was started.");
+            }
+            if (failure != null) throw failure;
+            return result;
+        }
+        static LauncherFailure Timeout(string stage) { return new LauncherFailure("helper-timeout", "The read-only " + stage + " check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started."); }
+        static LauncherFailure Refused(int code) { return new LauncherFailure("helper-refused", "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.", null, null, code); }
+    }
+
     public sealed class Gateway
     {
         readonly Configuration config;
@@ -718,29 +1020,10 @@ namespace GraphGoblin.Desktop
             origin = "http://127.0.0.1:" + config.Port;
         }
 
-        string ReadHelper(string argument, string validOutput)
+        string ReadHelper(string argument, string stage, int workMilliseconds, Func<string, bool> validate)
         {
-            var info = new ProcessStartInfo(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument) {
-                WorkingDirectory = config.Repo, UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardError = true
-            };
-            info.EnvironmentVariables.Clear();
-            foreach (var item in config.ChildEnvironment()) info.EnvironmentVariables[item.Key] = item.Value;
-            Process started;
-            try { started = Process.Start(info); }
-            catch (System.ComponentModel.Win32Exception) { throw new LauncherFailure("helper-unavailable", "The configured Node runtime could not be started. Check the Node path in the launcher configuration."); }
-            using (var process = started)
-            {
-                if (!process.WaitForExit(15000)) {
-                    // This is our read-only helper, never the gateway or an unrelated process.
-                    try { process.Kill(); process.WaitForExit(2000); } catch (InvalidOperationException) { }
-                    throw new LauncherFailure("helper-timeout", "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.");
-                }
-                string output = process.StandardOutput.ReadToEnd().Trim();
-                if (process.ExitCode != 0 || !System.Text.RegularExpressions.Regex.IsMatch(output, validOutput))
-                    throw new LauncherFailure("helper-refused", "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.");
-                return output;
-            }
+            return HelperProcess.Read(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument,
+                config.Repo, config.ChildEnvironment(), stage, workMilliseconds, validate);
         }
 
         bool Listening()
@@ -822,7 +1105,7 @@ namespace GraphGoblin.Desktop
         /// exit, so a holder is awaited until the existing release deadline. The probe reads
         /// nothing and never writes, truncates or prunes.
         /// </summary>
-        LogRoot AdmitLogRoot(DateTime releaseDeadline)
+        LogRoot AdmitLogRoot(Stopwatch releaseClock)
         {
             LogRoot root;
             NativeFiles.Identity active;
@@ -848,33 +1131,40 @@ namespace GraphGoblin.Desktop
                     if (Marshal.GetLastWin32Error() != NativeFiles.SharingViolation)
                         throw StartupOutcome.DestinationUnavailableFailure(root.Path, 0);
                 }
-                if (DateTime.UtcNow >= releaseDeadline) throw StartupOutcome.DestinationInUseFailure(root.Path, 0);
-                Thread.Sleep(200);
+                if (ReleaseRemaining(releaseClock) <= 0) throw StartupOutcome.DestinationInUseFailure(root.Path, 0);
+                Thread.Sleep((int)Math.Min(200, ReleaseRemaining(releaseClock)));
             }
             return root;
         }
 
         public void Ensure()
         {
-            expected = ReadHelper("", "^[a-f0-9]{64}$");
+            expected = ReadHelper("", "identity", HelperProcess.WorkMilliseconds,
+                value => System.Text.RegularExpressions.Regex.IsMatch(value, "\\A[a-f0-9]{64}\\z"));
             if (Probe()) return;
-            var releaseDeadline = DateTime.UtcNow.AddSeconds(config.StartupTimeoutSeconds);
+            var releaseClock = Stopwatch.StartNew();
             while (closing)
             {
-                if (DateTime.UtcNow >= releaseDeadline) throw new LauncherFailure("still-releasing", "The existing gateway is still releasing its store. Let deliberate shutdown finish and launch again. No process was stopped.");
-                Thread.Sleep(200); if (Probe()) return;
+                if (ReleaseRemaining(releaseClock) <= 0) throw new LauncherFailure("still-releasing", "The existing gateway is still releasing its store. Let deliberate shutdown finish and launch again. No process was stopped.");
+                Thread.Sleep((int)Math.Min(200, ReleaseRemaining(releaseClock))); if (Probe()) return;
             }
-            if (StoreHasLiveOwner())
+            var sampleClock = Stopwatch.StartNew();
+            bool held = StoreHasLiveOwner(HelperProcess.WorkMilliseconds);
+            long sampleMilliseconds = sampleClock.ElapsedMilliseconds;
+            while (held)
             {
-                while (DateTime.UtcNow < releaseDeadline)
-                {
-                    Thread.Sleep(200); if (Probe()) return;
-                    if (!StoreHasLiveOwner()) break;
-                }
-                if (StoreHasLiveOwner())
-                    throw new LauncherFailure(ownership.Code, ownership.Text + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.", null, ownership.Lock, 0);
+                long work = RecheckWork(releaseClock);
+                if (work < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
+                Thread.Sleep((int)Math.Min(200, Math.Max(0, work)));
+                if (Probe()) return;
+                work = RecheckWork(releaseClock);
+                if (work < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
+                sampleClock.Restart();
+                try { held = StoreHasLiveOwner((int)work); }
+                catch (LauncherFailure failure) { throw HeldFailure(failure); }
+                sampleMilliseconds = sampleClock.ElapsedMilliseconds;
             }
-            LogRoot root = AdmitLogRoot(releaseDeadline);
+            LogRoot root = AdmitLogRoot(releaseClock);
             ChildProcess child;
             try { child = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.GatewayEnvironment(root.Path)); }
             catch (System.ComponentModel.Win32Exception) { throw new LauncherFailure("spawn-failed", "Windows could not start the configured Node runtime for the gateway. Check the Node path and the built checkout. No gateway was started."); }
@@ -927,9 +1217,31 @@ namespace GraphGoblin.Desktop
             return new[] { "store-held", "The store is held or its ownership could not be verified" };
         }
 
-        bool StoreHasLiveOwner()
+        long ReleaseRemaining(Stopwatch clock) { return Math.Max(0, (long)config.StartupTimeoutSeconds * 1000 - clock.ElapsedMilliseconds); }
+        long RecheckWork(Stopwatch clock) { return Math.Min(HelperProcess.WorkMilliseconds, ReleaseRemaining(clock) - HelperProcess.CleanupMilliseconds); }
+        LauncherFailure HeldFailure(LauncherFailure inconclusive)
         {
-            var owner = new JavaScriptSerializer().Deserialize<Ownership>(ReadHelper(" --store-state", "^[{].*[}]$"));
+            string guidance = ownership.Text + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.";
+            if (inconclusive != null && inconclusive.Code == "helper-cleanup-unconfirmed")
+                return new LauncherFailure(inconclusive.Code, inconclusive.Message + " " + guidance, null, ownership.Lock, 0);
+            return new LauncherFailure(ownership.Code, guidance, null, ownership.Lock, 0);
+        }
+
+        static bool ValidOwnership(string text)
+        {
+            // Validate the complete response inside the helper's budget. Unknown shapes refuse.
+            var fields = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(text);
+            object state;
+            if (fields == null || !fields.TryGetValue("state", out state)) return false;
+            if (Equals(state, "free")) return fields.Count == 1;
+            object path, detail;
+            return Equals(state, "held") && fields.Count == 3 && fields.TryGetValue("path", out path) && path is string &&
+                !String.IsNullOrWhiteSpace((string)path) && fields.TryGetValue("detail", out detail) && detail is string && !String.IsNullOrWhiteSpace((string)detail);
+        }
+
+        bool StoreHasLiveOwner(int workMilliseconds)
+        {
+            var owner = new JavaScriptSerializer().Deserialize<Ownership>(ReadHelper(" --store-state", "ownership", workMilliseconds, ValidOwnership));
             if (owner != null && owner.state == "free") return false;
             if (owner == null || owner.state != "held" || String.IsNullOrWhiteSpace(owner.path) || String.IsNullOrWhiteSpace(owner.detail))
                 throw new LauncherFailure("helper-invalid", "The ownership helper returned an invalid result. No gateway was started.");

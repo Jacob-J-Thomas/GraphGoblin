@@ -4,6 +4,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher identity and ownership checks own their descendants in private Windows jobs
+  (#459), drain both output streams within a bounded work window and collect failed checks
+  before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+  for cleanup; held-store retries reserve that cleanup time and retain the last held guidance
+  when a conclusive new sample cannot fit. Raw helper output is never displayed or logged.
+  **Upgrade:** rebuild and reinstall the launcher. Windows 10 or Windows Server 2016 or later
+  with compatible nested jobs is required, including for warm shortcut clicks. A restricted host
+  can refuse the shortcut while an existing gateway remains callable at its current address.
+  No store, lock or export format change and no reset. PR #460 remains separately held.
+
 - API startup now prints one stack-free line for held or unverifiable data-directory,
   SQLite-file and reclamation ownership, with exit code 1 (#409). It keeps the lock path and
   verification reason, gives guidance for live and unknown owners, and escapes control characters

@@ -1894,6 +1894,12 @@ test(
         timeout: 60_000,
       });
       assert.match(result.stdout, /bounded log, closed outcome and NUL stdio checks passed/);
+      const helpers = await execute(checks, ['--helper-checks', work, process.execPath], {
+        env: environment,
+        windowsHide: true,
+        timeout: 60_000,
+      });
+      assert.match(helpers.stdout, /Native helper job, pipe and deadline checks passed/);
     });
 
     await t.test(
@@ -1978,6 +1984,69 @@ test(
         });
       },
     );
+
+    await t.test('held ownership retains guidance and budgets the last recheck', async () => {
+      // A tiny isolated built checkout replaces only the read-only protocol fixture. Its
+      // main records a spawn then exits; no real gateway, store or owner PID is involved.
+      for (const scenario of ['too-late', 'stalled-recheck', 'released']) {
+        const fixture = join(base, scenario);
+        const samples = join(fixture, 'samples');
+        const spawned = join(fixture, 'spawned');
+        const lock = join(fixture, 'graphgoblin.lock');
+        const marker = JSON.stringify({ pid: 1, token: randomUUID(), fixture: true });
+        for (const directory of ['apps/api/dist/windows-log', 'apps/web/dist'])
+          await mkdir(join(fixture, directory), { recursive: true });
+        await writeFile(lock, marker);
+        const before = await stat(lock, { bigint: true });
+        await writeFile(join(fixture, 'apps/web/dist/index.html'), '<html></html>');
+        await writeFile(join(fixture, 'apps/api/dist/windows-log/guard.js'), '');
+        await writeFile(
+          join(fixture, 'apps/api/dist/main.js'),
+          `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;\nimport fs from 'node:fs';fs.writeFileSync(${JSON.stringify(spawned)},'spawned');process.exit(75);`,
+        );
+        await writeFile(
+          join(fixture, 'apps/api/dist/instance-identity.js'),
+          `import fs from 'node:fs';
+          if(process.argv[2]!=='--store-state'){process.stdout.write('a'.repeat(64));}
+          else {
+            const file=${JSON.stringify(samples)};
+            const count=fs.existsSync(file)?Number(fs.readFileSync(file,'utf8')):0;
+            fs.writeFileSync(file,String(count+1));
+            if(count===0) setTimeout(()=>process.stdout.write(JSON.stringify({state:'held',path:${JSON.stringify(lock)},detail:'another GraphGoblin process holds this store'})),600);
+            else if(${JSON.stringify(scenario)}==='released') process.stdout.write('{"state":"free"}');
+            else setInterval(()=>{},1000);
+          }`,
+        );
+        const attempt = await configuration(install, `held-${scenario}`, {
+          Repo: fixture,
+          // Ten seconds leaves room for the measured first sample and the real TCP probe,
+          // while still forcing a final stalled query below the helper's 15-second cap.
+          StartupTimeoutSeconds: scenario === 'too-late' ? 2 : 10,
+        });
+        const started = performance.now();
+        const result = await launch(attempt.path);
+        const elapsed = performance.now() - started;
+        assert.equal(result.code, 1);
+        assert.ok(elapsed < 13_000, `The ${scenario} refusal exceeded bounded work and cleanup.`);
+        assert.equal(await readFile(lock, 'utf8'), marker);
+        const after = await stat(lock, { bigint: true });
+        assert.deepEqual([after.dev, after.ino], [before.dev, before.ino]);
+        assert.equal(await readFile(samples, 'utf8'), scenario === 'too-late' ? '1' : '2');
+        if (scenario === 'released') {
+          assert.equal(await readFile(spawned, 'utf8'), 'spawned');
+          assert.match(result.stderr, /failed during startup, and no startup diagnostic/);
+        } else {
+          await assert.rejects(lstat(spawned), { code: 'ENOENT' });
+          assert.match(result.stderr, /another GraphGoblin process holds this store/);
+          assert.match(result.stderr, /No second gateway was started/);
+          assert.match(
+            result.stderr,
+            /Do not stop an unrelated process or delete an unverified lock/,
+          );
+          assert.equal((await launcherRecords()).at(-1).code, 'store-held');
+        }
+      }
+    });
 
     const primary = await configuration(install, 'primary', { Port: await freePort() });
     try {

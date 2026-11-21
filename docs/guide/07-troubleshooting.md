@@ -2,6 +2,21 @@
 
 ## Windows launcher
 
+"Windows could not start an isolated launcher check" means the configured runtime could not be
+started inside the helper's private job. Use Windows 10 or Windows Server 2016 or later and check
+the enclosing shell or management tool's job policy. This applies to warm clicks too; a running
+gateway remains available at its existing address. A known missing or invalid runtime has its
+own Node-path guidance.
+
+Identity and initial ownership checks each allow 15 seconds of work, followed by at most two
+seconds for helper cleanup. Synchronous Windows calls have separate limits. Slow but legitimate
+WMI work can reach that cap; it never proves a lock stale. Later held-store checks reserve cleanup
+time and keep the last held reason if another complete sample cannot fit. Let deliberate startup
+or shutdown finish, then click again. Do not stop unrelated processes or delete an unverified lock.
+"Windows could not confirm that all processes for this launcher check stopped" takes precedence
+if cleanup could not be verified. No new gateway starts after that refusal. Raw helper output is
+never displayed or copied into launcher logs.
+
 The launcher reports the failed step in a dialog (stderr with `--ensure-gateway`) and records a
 closed JSON record in `launcher.log` next to its configuration. A gateway it started writes its
 private server log, including run failure details, to `gateway.log` in the same folder. The default

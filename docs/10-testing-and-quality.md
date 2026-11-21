@@ -1,5 +1,16 @@
 # 10 - Testing and quality
 
+The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
+floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
+exit and bounded work. Generation-specific handshakes retain exact native handles to nested
+members that ignore parent exit and broken pipes, with stdout, stderr, both or neither inherited.
+The Node fixture uses detached children so Node's own child-job cleanup cannot impersonate the
+launcher's collection. The checks require the launcher's distinctive job exit code within one
+shared cleanup allowance, while a same-executable sentinel and a separate helper survive.
+Controlled ownership fixtures verify a too-short retry window, a shortened stalled recheck and
+a conclusive held-to-free transition, preserving lock bytes and file identities on refusal.
+These synthetic cases are separate from the unmodified built helper's real WMI cases below.
+
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
 gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,

@@ -1,5 +1,17 @@
 # 11 - Security and distribution
 
+Windows launcher's read-only identity and ownership helpers each enter a private kill-on-close
+job at process creation (ADR-0086). Only their own descendants are collected; queried owners,
+WMI's service, providers and the detached gateway are outside that lifetime. This needs Windows
+10 or Windows Server 2016 or later and compatible nested jobs. Staged installation checks API
+capability, and every click verifies actual containment before even reusing a gateway. Failure
+refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
+at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share a
+15-second initial work budget. Failed checks use one further two-second cleanup allowance before
+operator presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store
+rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
+fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
+
 ## Licensing (Decided)
 
 - Allowed licences in the dependency tree: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0. Anything else fails the CI allowlist check and needs an ADR to add.

@@ -13,6 +13,7 @@ public static class NativeChecks
     [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr CommandLineToArgvW(string command, out int count);
     [DllImport("kernel32.dll")] static extern IntPtr LocalFree(IntPtr value);
     [DllImport("user32.dll")] static extern bool PostMessage(IntPtr window, uint message, IntPtr wparam, IntPtr lparam);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetExitCodeProcess(IntPtr process, out uint code);
     static string[] Parse(string command)
     {
         int count; IntPtr values = CommandLineToArgvW(command, out count);
@@ -182,11 +183,125 @@ public static class NativeChecks
         Check(File.ReadAllText(report) == "[true,true,true]", "Detached stdio is not NUL character devices.");
     }
 
+    static void HelperChecks(string work, string node)
+    {
+        Directory.CreateDirectory(work);
+        var env = new System.Collections.Generic.SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (System.Collections.DictionaryEntry item in Environment.GetEnvironmentVariables()) env[(string)item.Key] = (string)item.Value;
+        HelperProcess.CheckCapability();
+        Func<string, int, string> run = (script, budget) => HelperProcess.Read(node, "-e " + Program.Quote(script), work, env, "identity", budget, text => text == "ok");
+        Check(run("process.stdout.write('ok')", 5000) == "ok", "A clean helper did not succeed.");
+        var slow = Stopwatch.StartNew();
+        Check(run("setTimeout(()=>process.stdout.write('ok'),700)", 3000) == "ok" && slow.ElapsedMilliseconds >= 700, "Slow successful work was not awaited.");
+        Check(run("process.stderr.write('PRIVATE_CANARY'.repeat(100000));process.stdout.write('ok')", 5000) == "ok", "An in-budget stderr flood deadlocked.");
+        Check(run("const{spawn}=require('child_process');spawn(process.execPath,['-e','setTimeout(()=>{},250)'],{stdio:'ignore'});process.stdout.write('ok')", 5000) == "ok", "An ordinary short-lived member did not quiesce.");
+        string[] scripts = {
+            "process.stdout.write(Buffer.from([0xff]))",
+            "process.stdout.write('x'.repeat(262145))",
+            "process.stdout.write('not-the-protocol')",
+            "process.exit(17)",
+            "setInterval(()=>{process.stdout.write('x'.repeat(8192));process.stderr.write('PRIVATE_CANARY')},1)",
+            "setInterval(()=>process.stderr.write('PRIVATE_CANARY'.repeat(1024)),1)",
+        };
+        string[] codes = { "helper-invalid", "helper-invalid", "helper-invalid", "helper-refused", "helper-invalid", "helper-timeout" };
+        for (int i = 0; i < scripts.Length; i++) {
+            var clock = Stopwatch.StartNew();
+            try { run(scripts[i], 1200); throw new Exception("Invalid helper succeeded."); }
+            catch (LauncherFailure refused) {
+                Check(refused.Code == codes[i], "Unexpected closed helper outcome at case " + i + ": " + refused.Code);
+                Check(!Program.Present(refused, "gateway", @"C:\fixture\launcher.json").Contains("PRIVATE_CANARY"), "Helper output reached presentation.");
+                Check(!Encoding.UTF8.GetString(LauncherLog.Build(DateTime.UtcNow, 1, refused, "gateway", @"C:\fixture\launcher.json")).Contains("PRIVATE_CANARY"), "Helper output reached the bounded log.");
+                if (i == 3) Check(refused.ChildExit == 17, "Natural nonzero status was lost.");
+            }
+            Check(clock.ElapsedMilliseconds < 4500, "A helper exceeded work plus shared cleanup allowance.");
+        }
+        // The same executable survives outside the helper's private job. No PID walk is used.
+        using (var sentinel = Process.Start(new ProcessStartInfo(node, "-e " + Program.Quote("setInterval(()=>{},1000)")) { UseShellExecute = false, CreateNoWindow = true }))
+        try {
+            foreach (string mode in new[] { "both", "stdout", "stderr", "neither" }) {
+                string token = Guid.NewGuid().ToString("N"), marker = Path.Combine(work, token), nested = marker + "nested";
+                Process member = null, grandchild = null, helperRoot = null; Exception observedError = null;
+                var observer = new System.Threading.Thread(() => {
+                    try {
+                        foreach (string file in new[] { marker, nested }) {
+                            var clock = Stopwatch.StartNew();
+                            while (!File.Exists(file)) { Check(clock.ElapsedMilliseconds < 7000, "Fixture handshake missing."); System.Threading.Thread.Sleep(2); }
+                            int pid = 0;
+                            while (pid == 0) {
+                                try { int.TryParse(File.ReadAllText(file), out pid); } catch (IOException) { }
+                                Check(clock.ElapsedMilliseconds < 7000, "Fixture handshake bytes missing.");
+                                if (pid == 0) System.Threading.Thread.Sleep(2);
+                            }
+                            var exact = Process.GetProcessById(pid); IntPtr handle = exact.Handle;
+                            using (var ack = System.Threading.EventWaitHandle.OpenExisting(@"Local\GG.Check." + token + (file == nested ? "n" : ""))) ack.Set();
+                            if (file == marker) member = exact; else grandchild = exact;
+                        }
+                        helperRoot = Process.GetProcessById(int.Parse(File.ReadAllText(marker + ".root")));
+                        IntPtr rootHandle = helperRoot.Handle;
+                        File.WriteAllText(marker + ".root-ack", "ready");
+                    } catch (Exception error) { observedError = error; }
+                });
+                observer.Start();
+                var json = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string stdio = mode == "both" ? "['ignore','inherit','inherit']" : mode == "stdout" ? "['ignore','inherit','ignore']" : mode == "stderr" ? "['ignore','ignore','inherit']" : "'ignore'";
+                string script = "const fs=require('fs'),{spawn}=require('child_process');fs.writeFileSync(" + json.Serialize(marker + ".root") + ",String(process.pid));" +
+                    "spawn(" + json.Serialize(Application.ExecutablePath) + ",[ '--helper-member'," + json.Serialize(token) + "," + json.Serialize(marker) + "," + json.Serialize(nested) + "],{stdio:" + stdio + ",windowsHide:true,detached:true});" +
+                    "const t=setInterval(()=>{if(fs.existsSync(" + json.Serialize(nested + ".ready") + ")&&fs.existsSync(" + json.Serialize(marker + ".root-ack") + ")){clearInterval(t);process.stdout.write('ok');process.exit(23)}},5);";
+                var elapsed = Stopwatch.StartNew();
+                try { run(script, 2500); throw new Exception("A helper with a live descendant succeeded."); }
+                catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "A live member did not exhaust the work budget: " + refused.Code); }
+                observer.Join();
+                if (observedError != null) throw observedError;
+                using (helperRoot) { Check(helperRoot.WaitForExit(0) && helperRoot.ExitCode == 23, "An exited root lost its natural exit status."); }
+                Check(elapsed.ElapsedMilliseconds < 5500, "Nested cleanup exceeded the shared allowance.");
+                foreach (Process exact in new[] { member, grandchild }) using (exact) {
+                    Check(exact.WaitForExit((int)Math.Max(0, 4500 - elapsed.ElapsedMilliseconds)), "A known descendant survived cleanup.");
+                    uint actual; Check(GetExitCodeProcess(exact.Handle, out actual), "Could not query the retained fixture handle.");
+                    Check(actual == HelperProcess.TerminationExit, "A descendant was not collected by the owned job: " + actual);
+                }
+                Check(!sentinel.HasExited, "An unrelated same-executable sentinel was stopped.");
+                Check(run("process.stdout.write('ok')", 5000) == "ok", "A separate repeated helper was affected.");
+                Console.WriteLine("helper-fixture " + mode + " cleanup-confirmed elapsed-ms=" + elapsed.ElapsedMilliseconds);
+            }
+        } finally { if (!sentinel.HasExited) { sentinel.Kill(); sentinel.WaitForExit(2000); } }
+        // Synthetic latency, deliberately separate from real WMI. Four serial five-second
+        // probes cannot fit the preserved initial cap, even if each would eventually succeed.
+        var fourProbes = Stopwatch.StartNew();
+        try {
+            run("let n=0;const t=setInterval(()=>{if(++n===4){clearInterval(t);process.stdout.write('ok')}},5000)", HelperProcess.WorkMilliseconds);
+            throw new Exception("Four slow probes escaped the initial work cap.");
+        } catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "Synthetic four-probe timeout was misclassified."); }
+        Check(fourProbes.ElapsedMilliseconds >= 15000 && fourProbes.ElapsedMilliseconds < 18000, "The initial work cap changed.");
+    }
+
     [STAThread]
     public static int Main(string[] args)
     {
         try
         {
+            if (args[0] == "--helper-checks")
+            {
+                HelperChecks(args[1], args[2]);
+                Console.WriteLine("Native helper job, pipe and deadline checks passed."); return 0;
+            }
+            if (args[0] == "--helper-member")
+            {
+                // A generation-specific handshake keeps this exact fixture alive until its
+                // observer has retained its handle. Parent exit and broken stdio are irrelevant.
+                string token = args[1];
+                using (var ready = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.ManualReset, @"Local\GG.Check." + token))
+                {
+                    File.WriteAllText(args[2], Process.GetCurrentProcess().Id.ToString());
+                    if (!ready.WaitOne(10000)) return 91;
+                    File.WriteAllText(args[2] + ".ready", "ready");
+                    if (args.Length == 4) {
+                        var nested = new ProcessStartInfo(Application.ExecutablePath, "--helper-member " + Program.Quote(token + "n") + " " + Program.Quote(args[3])) { UseShellExecute = false, CreateNoWindow = true };
+                        using (var child = Process.Start(nested)) { }
+                    }
+                    System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+                }
+                return 92;
+            }
             if (args[0] == "--bounded-log-checks")
             {
                 BoundedLogChecks(args[1], args[2]);

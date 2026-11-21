@@ -111,7 +111,8 @@ refused clearly, and authoring/API/MCP identity rules to agree.
 ### Intent 3: local runtime ownership
 
 - **U3.1 / #459:** begin with the owned helper-descendant lifecycle design. Preserve its
-  architecture-plan gate and genuine native process verification.
+  architecture decision record and genuine native process verification. The November 20
+  D160 amendment below changes the timing of this issue's human plan review only.
 - **U3.2 / #471:** establish the actual Windows contention failure site and cause. Do not
   call it a confirmed sharing violation or relax single-writer, record or cleanup assertions.
 - **U3.3 / #437:** the approved recommendation is to refuse secret-bearing launcher
@@ -222,3 +223,21 @@ PR #460's separate hold continued. [Intent 1 delivery record](https://github.com
 Intent 2 entered the pipeline at that commit. The four issues received their approved
 delivery gate and named independent QA agents after checking their states, native
 relationships and open PRs. [Intent 2 admission and model assignments](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6996675245)
+
+## November 20 amendment: D160, #459 decision timing
+
+After delegating blocker decisions and choosing a consolidated decision review before owner
+QA, the owner corrected the coordinator's halt: "Why did you stop working? We need all intents
+fully completed before work should be halted." Under that delegated authority the coordinator
+selected the written #459 architecture that independent Claude Fable design review had cleared,
+so implementation can proceed before the consolidated review. This changes this specific
+preimplementation human timing gate; it does not state that the owner personally approved the
+technical plan, and no `plan-approved` label is inferred or set. The owner reviews the decision
+and any requested rework collectively before the owner QA walkthrough.
+
+The initial 15-second work cap, helper-only private jobs, host-policy refusal on warm clicks,
+two-stream closure, and two-second cleanup reserve are recorded in ADR-0086. Independent native
+QA, opposite-family review, the three-total-formal-scan cap, exact-head/current-target CI and a
+fresh independent Astra MAX final audit remain required. PR #460 remains separately held.
+[Issue authority amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7054679201)
+and [batch authority amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7054680224).
