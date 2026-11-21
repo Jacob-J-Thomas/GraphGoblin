@@ -4,6 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Clarify that an enabled Codex model and a ready preflight do not establish current access
+  for the API user's login and provider endpoint. Model/account refusals retain the provider's
+  explanation in the run record; the guide describes deliberate supported-model/login selection
+  without automatic fallback or an API-key-only promise (#427).
+- Reconcile Codex sandbox documentation and source comments: the authored sandbox permission
+  level is explicit, while Windows backend selection remains inherited unless explicitly
+  overridden. No sandbox permissions or backend behavior changed (#365).
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds

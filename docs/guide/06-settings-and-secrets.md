@@ -39,6 +39,15 @@ While a font is loading, or if it cannot load, the text it sets shows in the nex
 
 ## Choose a model and effort
 
+**Enabled in the catalogue** is your selection preference, and **Ready** preflight confirms
+prerequisites such as installation and login. Neither proves that your Codex account and provider
+endpoint can run every listed model. Shipped model and plan metadata is static; actual access
+can differ. A historical `gpt-5.5` refusal for a ChatGPT login does not establish a current
+restriction for every account, or guarantee that switching to an API key would fix it.
+If a run's provider message explicitly refuses that model for the account or endpoint, follow
+[model-access troubleshooting](07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint)
+and make a deliberate supported-model or login/endpoint choice.
+
 Use the **Enabled** switch in a model's row to enable or disable it. Tab reaches each switch; Space or Enter toggles it. The switch is named **Enable &lt;display name&gt;** and shows **Enabling…** or **Disabling…** with a busy indicator while it saves. It ignores further activation until the request finishes, then announces **Enabled** or **Disabled**. Keyboard focus stays on the switch while saving; moving to another control keeps that focus. A refused request restores its previous state and announces the reason. Disabling a model removes it from new **Default model** choices; enabling it restores the choice. A saved default stays selected as **&lt;name&gt; (disabled)** or **&lt;id&gt; (not in catalog)**, with a diagnostic that it must be corrected before publication or execution. Catalog entries do not prove your account has access.
 
 Harness models offer only the enable switch. Local models served through LiteLLM will appear in the catalog once the LiteLLM adapter is configured. Until local entries exist, **Add model**, **Edit**, and **Delete** are hidden and the catalog names this guide section. With a LiteLLM entry in the list, **Add model** appears and only LiteLLM rows offer **Edit** and **Delete**. Removing a local model leaves its loops referencing that model.

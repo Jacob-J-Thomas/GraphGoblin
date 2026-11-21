@@ -499,6 +499,22 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 ### Mapping inference config to the SDK (Decided, verified in M4)
 
+An enabled GraphGoblin catalogue entry or a ready preflight does not establish that the selected
+model is available to the API process user's actual Codex login and provider endpoint. Preflight
+checks installation, supported CLI capabilities and authentication without requesting a model turn.
+The bundled CLI's static model/plan metadata is not a live entitlement check. The October 2026
+ChatGPT-account refusal for `gpt-5.5` in [#427](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427)
+is dated evidence, not a universal current restriction or proof that an API key always fixes it.
+
+For a structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
+as `HARNESS_ARGUMENTS_REJECTED`; the run records `HARNESS_TURN_FAILED` with that adapter code and
+does not offer Resume. An account/endpoint explanation is evidence for that refused request,
+not a diagnosis for every unavailable model or unknown provider error. Deliberately choose a
+model supported for that login/endpoint, or change the login/endpoint as the API process user;
+correct the applicable definition/default and start a new run. GraphGoblin does not substitute
+another model or globally disable a seed from one account's refusal. See
+[model-access troubleshooting](guide/07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint).
+
 Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
 
 Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
@@ -537,7 +553,12 @@ converter or backfill is provided (ADR-0062).
 
 A loop turn still inherits from the machine:
 
-- the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
+- the login, the model catalog and the account's model access;
+- the CLI's Windows sandbox backend selection (`windows.sandbox`), unless an explicit node
+  config override supplies it. The SDK's `sandboxMode`
+  becomes the separate `--sandbox` permission level; it does not select that Windows backend.
+  GraphGoblin supplies no dedicated backend selection. The inheritance alone
+  is not evidence that the node's sandbox permissions were weakened;
 - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
 - the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
 

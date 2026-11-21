@@ -114,6 +114,29 @@ configuration and argument refusals remain non-resumable.
 | The provider refused the request (`HARNESS_TURN_FAILED` with `details.adapterCode: HARNESS_ARGUMENTS_REJECTED`; the message starts `The provider refused the request (HTTP 400, …)` and quotes the provider) | The provider refused a value the run's pinned definition sends, such as an effort or model it does not accept for this model or account. The failure keeps this cause even when the provenance says `delivery-uncertain` (Codex had already taken the prompt into its conversation). Resume is never offered, because the same request would be refused again. Correct the node, decision or default the message names, publish, and start a new run. |
 | Session missing (`HARNESS_SESSION_MISSING`)                                                                                                                                                                  | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. For eligible failures use the explicit Start fresh session control described below (#265).                                                                                                     |
 
+## Codex model unavailable for this account or endpoint
+
+Check the failed run's message, not just its top-level code. A structured provider refusal
+(`HTTP 400`, `invalid_request_error`) appears as `HARNESS_TURN_FAILED` with
+`details.adapterCode: HARNESS_ARGUMENTS_REJECTED`, followed by the provider's explanation.
+When that explanation says the selected model is unavailable for the account or endpoint,
+it identifies the cause of that request. `model_not_found` without that explanation, malformed
+output, or an unknown/transient error does not by itself establish an account restriction.
+
+An enabled catalogue row and a successful **Retry preflight** do not test model access.
+Preflight checks installation, CLI capabilities and login without sending a model turn; the
+catalogue's model/plan information is static. The `gpt-5.5` ChatGPT-account refusal reported in
+[October 2026](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427) is historical evidence,
+not a current availability claim for your account. An API-key login is not a guaranteed remedy.
+
+Choose a model the provider supports for the login and endpoint used by the API process, or
+deliberately change that user's Codex login/provider configuration to a supported choice.
+Correct the affected node, decision or default, publish if the definition changed, and start
+a new run. This pinned argument refusal has no Resume: repeating its saved request would send
+the same rejected choice. Keep the original run and its delivery provenance; do not infer
+that no effects occurred from the top-level failure alone. GraphGoblin does not fall back to
+another model, repeatedly retry the refusal, or disable a shipped model for every account.
+
 ## Find the symptom
 
 For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start; correct the missing command or start configuration and explicitly Resume. Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.

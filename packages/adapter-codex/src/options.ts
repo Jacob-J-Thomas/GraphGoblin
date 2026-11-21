@@ -8,9 +8,11 @@ import { codexEffortName } from './effort-names.js';
 import { isolationDefaults, layerConfig, overrideRefusal, table } from './isolation.js';
 
 /**
- * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
- * explicitly so the machine's `~/.codex/config.toml` defaults for it never apply to a loop; the
- * configured plugins are inherited while other extensions have isolation defaults (ADR-0067).
+ * Building the SDK's client and thread options. The thread settings listed below override their
+ * machine defaults. The Windows sandbox backend (`windows.sandbox`) remains inherited unless
+ * explicitly configured through an override; it is distinct from the authored `--sandbox`
+ * permission level. Configured plugins are inherited while other extensions have isolation
+ * defaults (ADR-0067).
  *
  * Verified against `@openai/codex-sdk` 0.160.0 (`dist/index.js`, `CodexExec.run`): the per-thread
  * options are turned into these CLI arguments, which come after any `config` overrides and so win
