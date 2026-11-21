@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 1734060,
+  "stop_reason": "end_turn",
+  "session_id": "5c6c9f17-cf3d-4e0f-87ad-704a15bd1fdf",
+  "total_cost_usd": 16.013601400000002,
+  "usage": {
+    "input_tokens": 318,
+    "cache_creation_input_tokens": 470422,
+    "cache_read_input_tokens": 41369067,
+    "output_tokens": 198757,
+    "output_tokens_details": {
+      "thinking_tokens": 56456
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 470422,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2328,
+        "cache_read_input_tokens": 472963,
+        "cache_creation_input_tokens": 2233,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2233
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 318,
+      "outputTokens": 198757,
+      "cacheReadInputTokens": 41369067,
+      "cacheCreationInputTokens": 470422,
+      "webSearchRequests": 0,
+      "costUSD": 16.013601400000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 56456,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 470422,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 185,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Verdict: CONDITIONAL.** No product failure was found in candidate `633d9ac` (tree `d0e38c6c`). In the final attempts of the 02 continuation all 430 new checks passed, and original01's domain lane (D1: 36/36) is carried forward unchanged. It is CONDITIONAL rather than PASS because some controls from the architecture-03 verification matrix were not executed (listed below) and need root to accept them or cover them elsewhere. `BLOCKERS.md` lists no product blockers.\n\n**What ran.** I re-checked identity first: commit/tree/parent, empty checkout status, the 52 frozen source files and all 1,189 built output files were unchanged, with no rebuild. The original binding step and D1 are labelled inherited and were not re-run. The new lanes drove a disposable built API through the existing `loadConfig` → `createContainer(overrides)` → `start` → `buildApp` → `listen` path, with API keys required. Behind it were real disk SQLite, real child scripts appending to counter files, a real loopback HTTP listener and real workspace files. The harness, decider, classifier and structured-completion ports were scripted, and their counters are reported separately from the native effects.\n\n| Area | Result |\n| --- | --- |\n| All 26 boundaries (B01–B26) | Every one executed through the public API. Effect counts held: zero dispatch on bad args, before/after heartbeat counts, first context file kept with no later writes, file-return receipt only. Stored row, `run.failed` event and REST snapshot matched, and deterministic Resume was refused with no new events. |\n| JSONata variants at a real engine site | Literal, grouped, conditional, nested, dynamic, assert, length, special characters, type error and `$eval` (malformed, unsafe regex, input-supplied) all get the neutral fixed copy; malformed/unsafe `$eval` never gets the compile/unsafe-regex reason. Only real depth and time limits get their own reasons, and no evaluator text was logged at the new sites. |\n| B17 canonical rerender | The failure itself is only reachable through a QA-owned module-resolution seam (no product change); it gives the engine-owned internal error, resumable, with no harness start. The real canonical history trim succeeded through the public API. |\n| Preserved contracts | P01, P02, B20 and B25 behave as before (B25's rejected signal added zero events and kept the same wait). A01–A03 (poll and event-trigger expression failures) kept their pre-run and request-side handling. |\n| External lookalikes (genuine domain error, name spoof, code spoof) | Probe port, script runner, classifier, LLM decider, structured coerce and harness `start` all stay on their existing paths; none becomes an authored error. |\n| Inference recovery | Exact retry survived a later resumable prep failure and a clean restart, with the same prompt and turn ID and no repeated retry object. The unusable-session guard fires before the model resolver. Session-missing with a temporarily disabled model reached the actionable failure after restore. Explicit fresh session works with and without a saved prompt. Stronger outcomes win over the after-result failure: cancel, node timeout and termination-unconfirmed cleanup. |\n| Children | Same failure inline, at depth 1 and at depth 2. Child inference evidence stays in the child. Both resumable mapping-fault dedup controls passed: one child, one completion, one wake, child never resumed. |\n| Surfaces and persistence | Unauthenticated or bad keys get 401; the read-only key gets 403 to start. Built MCP over stdio (`get_run`, `wait_for_run`, `list_runs`) matched REST. In the real browser inspector, alerts, Resume enable/disable and child links were correct; I looked at the screenshots. Row/event bytes were unchanged after new publications and reads, and across a clean shutdown and reopen. |\n\n**Attempts.** Three drivers needed a second attempt, all for QA-side bugs. D2 needed a dummy classifier secret in the scratch store, D3 had a wrong usage key in my scripted harness, and D4 had an unconnected decision port and a broken fault re-arm. Every attempt is kept and the fixes are recorded as dated amendments in `PLAN.md`. No driver needed a third attempt.\n\n**Not executed:**\n- Harness `resume`/repair synchronous-throw lookalikes, the transport-retry path, pinned model refusal, and init-only inherited sessions without durable acceptance.\n- Structured-completion timeout, artifact-write failure, final thread/serialization faults, and the coerce repair-prompt/target-write sites.\n- Decision transient/≥500 mapping, run-deadline and forced-stop races, and the inference timeout before context admission.\n- Workspace, context-file and secret port lookalikes: no existing override exists for those ports. Script-probe runner rejection was also not run.\n- B13 `output.artifacts.where`, the Liquid position fallback, 1,000-character cause clipping (synthetic only), and A04 web preview.\n- Rows written by the pre-change build. The history checks cover only rows this candidate wrote earlier.\n- Draft PR553's integrated head was not tested. I did not rerun full Windows coverage.\n\n**Cleanup.** Every API was stopped with an authenticated drain. Ports 5871–5879 refuse connections, the MCP child exited, and no browser or node process from my checkout, scratch or Chromium build remains. Two caveats:\n- **Browser PID:** `chromium.launch()` gives no PID, so I replaced the vacuous in-driver browser check with a targeted absence check.\n- **Overbroad listing:** one read-only process listing used too wide a filter and showed eight of your own MCP processes from `C:\\Users\\98jak\\source\\repos\\GraphGoblin`. Nothing was touched; it's disclosed in the report.\n\nThe checkout is still clean at `633d9ac`, and all 62 original01/checkpoint file locations recorded in `checkpoint.json` re-hash unchanged. No product, index, git or GitHub changes and no installs.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-02`:\n- `REPORT.md`\n- `PLAN.md`\n- `BLOCKERS.md`\n- `SHA256SUMS.json` (200 files)\n- `results/<driver>/attempt-N/`",
+  "ttft_ms": 4347,
+  "type": "result",
+  "duration_ms": 1986536,
+  "uuid": "60105c0a-b404-4649-b70c-7a3c3adaa84c",
+  "ttft_stream_ms": 3854,
+  "time_to_request_ms": 2742,
+  "first_content_frame_ms": 3854,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 318,
+      "outputTokens": 198757,
+      "cacheReadInputTokens": 41369067,
+      "cacheCreationInputTokens": 470422,
+      "webSearchRequests": 0,
+      "costUSD": 16.013601400000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 56456,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 470422,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:06.232Z"
+}

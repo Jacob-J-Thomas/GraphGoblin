@@ -1,0 +1,855 @@
+    id: 'again',
+    label: 'Again',
+    kind: 'decision',
+    config: {
+      kind: 'expression',
+      jsonata: '"repeat"',
+      maxPasses: 2,
+      routes: [
+        { id: 'repeat', label: 'Repeat', repeat: true },
+        { id: 'finish', label: 'Finish' },
+      ],
+    },
+  });
+  def.edges = def.edges.filter((edge) => edge.from.node !== 'infer');
+  def.edges.push(
+    { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'again' } },
+    { id: 'e3', from: { node: 'again', port: 'repeat' }, to: { node: 'infer' } },
+    { id: 'e4', from: { node: 'again', port: 'finish' }, to: { node: 'done' } },
+    { id: 'e5', from: { node: 'again', port: 'limit-reached' }, to: { node: 'done' } },
+  );
+  e.ports.sessions.forNodeAttempt = () => Promise.resolve(undefined);
+  const run = await e.runToIdle(e.publish(def).loopId);
+  expect(run.failure).toMatchObject({
+    code: 'HARNESS_SESSION_MISSING',
+    missingSession: { origin: 'resume-own' },
+  });
+  const seq = e.events(run.id).findLast((event) => event.type === 'run.failed')!.seq;
+  flag = true;
+  await e.manager.recoverSession(run.id, 'infer', seq, { kind: 'user', id: 'operator' });
+  const failed = await e.settle(run.id);
+  expect(failed.failure).toMatchObject({
+    code: 'TEMPLATE_ERROR',
+    resumable: false,
+    details: { boundary: 'inference.prompt.template' },
+  });
+  expect(failed.failure?.inference).toBeUndefined();
+  expect(e.events(run.id).filter((event) => event.type === 'harness.turn')).toHaveLength(1);
+});
+
+it.each(['definitely-not-submitted', 'delivery-uncertain'] as const)(
+  'retains %s as information on an authored preparation fault before a retry or continuation',
+  async (submission) => {
+    const e = await createTestEngine();
+    let newInput = false;
+    e.ports.structuredFake.respondWith(() => newInput);
+    const v = e.publish(
+      singleNodeLoop('later failed preparation', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          input: [
+            {
+              op: 'coerce',
+              source: '/vars/missing',
+              target: '/vars/flag',
+              jsonSchema: { type: 'boolean' },
+              repair: { maxAttempts: 1 },
+            },
+            {
+              op: 'set',
+              path: '/vars/value',
+              value: { kind: 'expression', jsonata: 'vars.flag ? $error("SECRET") : 1' },
+            },
+          ],
+          prompt: { template: 'saved' },
+        },
+      }),
+    );
+    e.ports.harness.script([
+      {
+        accepted: submission === 'delivery-uncertain',
+        announceSession: true,
+        submission,
+        error: { code: 'HARNESS_TURN_FAILED', message: 'prior provider error' },
+      },
+    ]);
+    const prior = await e.runToIdle(v.loopId);
+    expect(prior.failure?.resumable).toBe(true);
+    const before = e
+      .events(prior.id)
+      .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission');
+    const rows = structuredClone(e.ports.sessions.rows);
+    const cleanup = [...e.ports.harness.cancelled];
+    newInput = true;
+    await e.manager.resume(prior.id);
+    const failed = await e.settle(prior.id);
+    expect(failed.failure).toMatchObject({
+      code: 'MUTATION_ERROR',
+      resumable: false,
+      inference: prior.failure!.inference,
+      details: { boundary: 'inference.input', operationIndex: 1, operationKind: 'set' },
+    });
+    expect(failed.failure?.inference?.retry).toBeUndefined();
+    expect(
+      e
+        .events(prior.id)
+        .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission'),
+    ).toEqual(before);
+    expect(e.ports.sessions.rows).toEqual(rows);
+    expect(e.ports.harness.cancelled).toEqual(cleanup);
+    expect(e.ports.structuredFake.requests).toHaveLength(2);
+    expect(e.ports.harness.started).toHaveLength(1);
+    expect(e.ports.harness.resumed).toHaveLength(0);
+  },
+);
+import { describe, expect, it, vi } from 'vitest';
+import type { LoopDefinitionInput, RunEvent, WorkingDirectorySpec } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+import {
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  fakeUlid,
+  kitchenSinkLoop,
+  minimalLoop,
+  samplePin,
+} from '@graphgoblin/contracts/testing';
+import {
+  EngineRequestError,
+  RunManager,
+  attemptFor,
+  countEntries,
+  findPendingWake,
+} from './run-manager.js';
+import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+import { FakeHarness, createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
+import { createInitialThread } from './thread.js';
+import { INTERNAL_FAILURE_MESSAGE } from './failure-publication.js';
+
+function barrier() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+describe('working directory preparation', () => {
+  it.each([
+    {
+      template: 'private-parse-marker\n{% invalid_private %}',
+      cause: 'The template could not be parsed at line 2, column 1. Check its Liquid syntax.',
+    },
+    {
+      template: 'private-render-marker\n{% include "private-path-marker" %}',
+      cause:
+        'The template could not be rendered at line 2, column 1. Check its filters and input values.',
+    },
+    {
+      template: '\t {{vars.missing}}\r\n',
+      cause: 'The template rendered to an empty path. Supply a nonempty directory.',
+    },
+  ])(
+    'rejects a local workspace template before resolution: $cause',
+    async ({ template, cause }) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop('invalid workspace template', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'unused', cwd: 'workspace' },
+      });
+      loop.settings = { workingDirectory: { kind: 'template', template } };
+      const run = await engine.runToIdle(engine.publish(loop).loopId);
+      expect(run.status).toBe('failed');
+      expect(run.failure).toEqual({
+        code: 'TEMPLATE_ERROR',
+        nodeId: 'script',
+        resumable: false,
+        message: `Working directory template failed. ${cause}`,
+        details: {
+          boundary: 'settings.workingDirectory.template',
+          cause: { code: 'TEMPLATE_ERROR', message: cause },
+        },
+      });
+      const failed = engine.events(run.id).find((event) => event.type === 'run.failed');
+      expect(failed).toMatchObject({ failure: run.failure });
+      expect(JSON.stringify([run.failure, failed])).not.toContain('private-');
+      await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.workspace.files.size).toBe(0);
+      expect(engine.ports.scripts.calls).toEqual([]);
+      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
+      engine.manager.stop();
+    },
+  );
+
+  it.each<WorkingDirectorySpec>([
+    { kind: 'fixed', path: 'relative/workspace' },
+    { kind: 'temp' },
+    { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' },
+  ])(
+    'passes only a resolved $kind spec and caches it across nodes and file delivery',
+    async (spec) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop(
+        'workspace cache',
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'unused', cwd: 'workspace' },
+        },
+        {
+          returns: '"returned bytes"',
+          destinations: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+        },
+      );
+      loop.settings = { workingDirectory: spec };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, {
+        path: 'relative/workspace',
+      });
+      const directory = spec.kind === 'temp' ? `/tmp/graphgoblin/${run.id}` : 'relative/workspace';
+      expect(run.status).toBe('succeeded');
+      expect(engine.ports.workspace.resolved).toEqual([
+        {
+          spec: spec.kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: directory },
+          runId: run.id,
+        },
+      ]);
+      expect(engine.ports.scripts.calls).toHaveLength(1);
+      expect(engine.ports.scripts.calls[0]?.cwd).toBe(directory);
+      expect(engine.ports.workspace.files.get(`${directory}/result.txt`)).toBe('returned bytes');
+import { expect, it } from 'vitest';
+import type { HarnessId } from '@graphgoblin/contracts';
+import type { HarnessEvent, HarnessResult, HarnessSession } from '../ports.js';
+import { RunManager } from '../run-manager.js';
+import { FakeHarness } from '../testing/fakes.js';
+import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
+
+const families = ['codex', 'claude'] as const;
+const repairLoop = (family: HarnessId) =>
+  singleNodeLoop('repair boundary', {
+    id: 'infer',
+    kind: 'inference',
+    label: 'Infer',
+    config: {
+      harness: family,
+      model: family === 'claude' ? 'claude-opus-5-5' : 'gpt-6-luna',
+      effort: 'low',
+      harnessOptions: { sandbox: 'read-only', approval: 'never' },
+      prompt: { template: 'Original task' },
+      output: {
+        schema: {
+          jsonSchema: { type: 'number' },
+          repair: { enabled: true, maxAttempts: 1, prompt: 'Repair exactly: {{ value }}' },
+        },
+      },
+    },
+  });
+async function engine() {
+  const e = await createTestEngine();
+  e.ports.modelCatalog.entries.push({
+    harness: 'claude',
+    model: 'claude-opus-5-5',
+    source: 'harness',
+    displayName: 'Opus',
+    efforts: ['low'],
+    defaultEffort: 'low',
+    enabled: true,
+  });
+  return e;
+}
+const sequences = families.flatMap((family) =>
+  (
+    [
+      'iterator',
+      'result',
+      'cancel',
+      'cleanup',
+      'missing-cleanup',
+      'wrapper',
+      'later-event',
+    ] as const
+  ).flatMap((boundary) =>
+    (boundary === 'iterator' || boundary === 'result'
+      ? ['HARNESS_SESSION_MISSING', 'HARNESS_TERMINATION_UNCONFIRMED']
+      : [
+          boundary === 'wrapper'
+            ? 'GENERIC_WRAPPER'
+            : boundary === 'later-event'
+              ? 'HARNESS_DELIVERY_UNCERTAIN'
+              : 'HARNESS_TERMINATION_UNCONFIRMED',
+        ]
+    ).map((code) => ({ family, boundary, code })),
+  ),
+);
+it.each(sequences)(
+  'preserves later $family $code at $boundary',
+  async ({ family, boundary, code }) => {
+    const e = await engine();
+    const fake = new FakeHarness([{ finalText: 'invalid' }, { finalText: '42' }], family);
+    let entered!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    let calls = 0;
+    let cleanups = 0;
+    e.ports.harnesses[family] = {
+      id: family,
+      preflight: () => fake.preflight(),
+      start: (request, signal) => fake.start(request, signal),
+      resume(id, request, signal): HarnessSession {
+        calls += 1;
+        if (calls > 1) return fake.resume(id, request, signal);
+        let reject!: (error: Error) => void;
+        const result = new Promise<HarnessResult>((_resolve, rejected) => {
+          reject = rejected;
+        });
+        void result.catch(() => undefined);
+        const priorCode =
+          boundary === 'missing-cleanup' ? 'HARNESS_SESSION_MISSING' : 'HARNESS_NOT_AUTHENTICATED';
+        return {
+          sessionId: Promise.resolve(id),
+          result,
+          events: (async function* (): AsyncGenerator<HarnessEvent> {
+            yield {
+              type: 'error',
+              code: priorCode,
+              message: 'Earlier structured refusal',
+              retriable: true,
+              submission:
+                priorCode === 'HARNESS_SESSION_MISSING'
+                  ? 'session-missing'
+                  : 'definitely-not-submitted',
+            };
+            if (boundary === 'later-event')
+              yield {
+                type: 'error',
+                code: 'HARNESS_TURN_FAILED',
+                message: 'Later structured delivery uncertainty',
+                retriable: true,
+                submission: 'delivery-uncertain',
+              };
+            entered();
+            if (boundary === 'cancel')
+              await new Promise<void>((resolve) => {
+                if (signal.aborted) resolve();
+                else signal.addEventListener('abort', () => resolve(), { once: true });
+              });
+            const error =
+              boundary === 'wrapper' || boundary === 'later-event'
+                ? new Error('Generic final wrapper')
+                : Object.assign(new Error('Later authoritative evidence'), {
+                    code:
+                      boundary === 'cleanup' || boundary === 'missing-cleanup' ? priorCode : code,
+                    retriable: false,
+                  });
+            reject(error);
+            if (boundary === 'iterator') throw error;
+          })(),
+          cancel() {
+            cleanups += 1;
+            return boundary === 'cleanup' || boundary === 'missing-cleanup'
+              ? Promise.reject(
+                  Object.assign(new Error('Process still alive'), {
+                    code: 'HARNESS_TERMINATION_UNCONFIRMED',
+                  }),
+                )
+              : Promise.resolve();
+          },
+        };
+      },
+    };
+    try {
+      const v = e.publish(repairLoop(family));
+      const started = await e.start(v.loopId);
+      if (boundary === 'cancel') {
+        await ready;
+        await e.manager.cancel(started.id, { kind: 'user', id: 'owner' });
+      }
+      const run = await e.settle(started.id);
+      const wrapper = boundary === 'wrapper';
+      expect(run.status).toBe('failed');
+      expect(run.failure).toMatchObject({
+        code: wrapper ? 'HARNESS_NOT_AUTHENTICATED' : code,
+        resumable: wrapper || boundary === 'later-event',
+        inference: {
+          submission: wrapper
+            ? 'definitely-not-submitted'
+            : code === 'HARNESS_SESSION_MISSING'
+              ? 'session-missing'
+              : 'delivery-uncertain',
+          promptKind: 'repair',
+        },
+      });
+      expect(
+        e
+          .events(run.id)
+          .filter((event) => event.type === 'harness.submission')
+          .at(-1)?.submission,
+      ).toBe(run.failure?.inference?.submission);
+      if (wrapper || boundary === 'later-event') {
+        await e.manager.resume(run.id);
+        expect((await e.settle(run.id)).status).toBe('succeeded');
+        expect(fake.resumed.at(-1)?.request.turn.prompt).toBe(
+          wrapper
+            ? 'Repair exactly: "invalid"'
+            : 'The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.',
+        );
+      } else {
+        await expect(e.manager.resume(run.id)).rejects.toThrow();
+        expect(calls).toBe(1);
+      }
+      if (code === 'HARNESS_TERMINATION_UNCONFIRMED')
+        expect(cleanups).toBe(boundary === 'cleanup' || boundary === 'missing-cleanup' ? 1 : 0);
+    } finally {
+      e.manager.stop();
+    }
+  },
+);
+
+it.each(
+  families.flatMap((family) => [false, true].map((afterCommit) => ({ family, afterCommit }))),
+)(
+  'retains $family repair intent across append refusal afterCommit=$afterCommit',
+  async ({ family, afterCommit }) => {
+    const e = await engine();
+    e.manager.stop();
+    const fake = new FakeHarness([{ finalText: 'invalid' }, { finalText: '42' }], family);
+    e.ports.harnesses[family] = fake;
+    let refused = false;
+    const events = e.ports.events;
+    const manager = new RunManager(
+      {
+        ...e.ports,
+        events: {
+          async append(id, drafts, options) {
+  byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
+    const rows = this.rows
+      .filter((r) => r.scopeKey === scopeKey && r.harness === harness && r.sessionId)
+      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+    return Promise.resolve(rows[0]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fake harness: scripted sessions
+// ---------------------------------------------------------------------------
+
+export interface ScriptedTurn {
+  /** Matched against the prompt; the first turn whose matcher accepts is used. Omit to match anything. */
+  match?: (request: HarnessTurnRequest) => boolean;
+  items?: HarnessItem[];
+  finalText?: string;
+  structured?: unknown;
+  usage?: Partial<Usage>;
+  /** Simulate a harness-level failure. */
+  error?: { code: string; message: string; retriable?: boolean };
+  /** Explicit transport evidence. Default failed scripts are uncertain. */
+  submission?: PromptSubmission;
+  /** Omit even initialization/session evidence. */
+  announceSession?: boolean;
+  /** Positive acceptance marker, independent of initialization. */
+  accepted?: boolean;
+  /** Delay before completing, in fake-clock-independent real milliseconds; lets tests cancel mid-turn. */
+  delayMs?: number;
+}
+
+const ZERO_USAGE: Usage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cachedInputTokens: 0,
+  reasoningOutputTokens: 0,
+};
+
+export class FakeHarness implements HarnessPort {
+  readonly started: HarnessStartRequest[] = [];
+  readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
+  readonly cancelled: string[] = [];
+  preflightResult: HarnessPreflight = {
+    state: 'ready',
+    ok: true,
+    version: 'fake',
+    authenticated: true,
+    problems: [],
+  };
+  private sessionCounter = 0;
+
+  constructor(
+    private turns: ScriptedTurn[] = [],
+    readonly id: HarnessId = 'codex',
+  ) {}
+
+  /** Replace the script. Turns are consumed in order unless they carry a matcher. */
+  script(turns: ScriptedTurn[]): void {
+    this.turns = turns;
+  }
+
+  preflight(): Promise<HarnessPreflight> {
+    return Promise.resolve(this.preflightResult);
+  }
+
+  start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    this.started.push(request);
+    this.sessionCounter += 1;
+    const sessionId =
+      this.id === 'codex'
+        ? `fake-session-${this.sessionCounter}`
+        : `fake-${this.id}-session-${this.sessionCounter}`;
+    return this.session(sessionId, 'fresh', request.turn, signal);
+  }
+
+  resume(sessionId: string, request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    this.resumed.push({ sessionId, request });
+    return this.session(sessionId, 'resumed', request.turn, signal);
+  }
+
+  private pick(request: HarnessTurnRequest): ScriptedTurn {
+    const index = this.turns.findIndex((t) => (t.match ? t.match(request) : true));
+    if (index < 0) return { finalText: 'OK' };
+    const [turn] = this.turns.splice(index, 1);
+    return turn as ScriptedTurn;
+  }
+
+  private session(
+    sessionId: string,
+    mode: 'fresh' | 'resumed',
+    request: HarnessTurnRequest,
+    signal: AbortSignal,
+  ): HarnessSession {
+    const turn = this.pick(request);
+    const usage: Usage = { ...ZERO_USAGE, ...turn.usage };
+    const items = turn.items ?? [{ id: 'i1', type: 'message', summary: turn.finalText ?? 'OK' }];
+    const events: HarnessEvent[] = [
+      ...(turn.announceSession === false ? [] : [{ type: 'session' as const, sessionId, mode }]),
+      ...((turn.accepted ?? !turn.error)
+        ? [{ type: 'submitted' as const, marker: 'fake.accepted' as const }]
+        : []),
+      ...items.map((item) => ({ type: 'item', item }) as const),
+    ];
+    if (turn.error) {
+      events.push({
+        type: 'error',
+        code: turn.error.code,
+        message: turn.error.message,
+        retriable: turn.error.retriable ?? false,
+        submission:
+          turn.submission ??
+          (turn.error.code === 'HARNESS_SESSION_MISSING'
+            ? 'session-missing'
+            : 'delivery-uncertain'),
+      });
+    } else {
+      events.push({ type: 'usage', usage }, { type: 'turn-complete' });
+    }
+    const cancelled = { value: false };
+    const resultPromise: Promise<HarnessResult> = new Promise((resolve, reject) => {
+      const finish = (): void => {
+        if (signal.aborted || cancelled.value) {
+          reject(new DOMException('aborted', 'AbortError'));
+          return;
+        }
+        if (turn.error) {
+          reject(
+            Object.assign(new Error(turn.error.message), {
+              code: turn.error.code,
+              retriable: turn.error.retriable ?? false,
+            }),
+          );
+          return;
+        }
+        resolve({
+          finalText: turn.finalText ?? 'OK',
+          ...(turn.structured !== undefined ? { structured: turn.structured } : {}),
+          usage,
+          items,
+        });
+      };
+      if (turn.delayMs) {
+        const timer = setTimeout(finish, turn.delayMs);
+        signal.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timer);
+            finish();
+          },
+          { once: true },
+        );
+      } else {
+        finish();
+      }
+    });
+    resultPromise.catch(() => undefined);
+    const cancelledLog = this.cancelled;
+    return {
+      sessionId: Promise.resolve(sessionId),
+      events: asyncIterableOf(events),
+      result: resultPromise,
+      cancel(): Promise<void> {
+        cancelled.value = true;
+        cancelledLog.push(sessionId);
+        return Promise.resolve();
+      },
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Deciders, structured completions
+// ---------------------------------------------------------------------------
+
+export class FakeClassifier implements ClassifierPort {
+  readonly choices: ChoiceRequest[] = [];
+  readonly classifierNouls: NoulRequest[] = [];
+  readonly scores: ScoreRequest[] = [];
+  isAvailable = true;
+  constructor(
+141:  readonly lines: { level: string; msg: string; obj: Record<string, unknown> }[] = [];
+454:  readonly rows: HarnessSessionRecord[] = [];
+1382:  logger: CapturingLogger;
+1415:    logger: new CapturingLogger(),
+        const window = await harness.contextWindow(
+          {
+            workingDirectory,
+            model,
+            effort,
+            options: config.harnessOptions,
+            ...(config.capabilities ? { capabilities: config.capabilities } : {}),
+            turn: {
+              prompt,
+              ...(config.output.schema?.native
+                ? { outputSchema: config.output.schema.jsonSchema }
+                : {}),
+            },
+          },
+          timeout.signal,
+        );
+        const admitted = await admitInferencePrompt({
+          prompt,
+          template: config.prompt.template,
+          thread: viewThread,
+          allowHistoryTrim:
+            !visit.pending &&
+            !visit.freshSession &&
+            ctx.node.id === 'respond' &&
+            systemChatIssues(ctx.definition).length === 0,
+          window,
+        });
+        prompt = admitted.prompt;
+        admittedContext = admitted.context;
+      } catch (error) {
+        timeout.dispose();
+        if (timeout.timedOut())
+          throw new RunFailureError(
+            'INFERENCE_TIMEOUT',
+            `Inference exceeded ${config.timeoutSeconds ?? 0}s before context admission; no provider inference was submitted.`,
+            { nodeId: ctx.node.id, resumable: true },
+          );
+        if (ctx.signal.aborted || isAbortError(error)) throw new RunCancelledError();
+        if (error instanceof RunFailureError) throw error;
+        throw mapHarnessFailure(error, undefined, ctx.node.id, config.harness).failure;
+      }
+    }
+    const beginTurn = (
+      text: string,
+      kind: PendingTurn['turn']['promptKind'],
+      id?: string,
+    ): PendingTurn => {
+      const turn = {
+        visitId: visit.visitId,
+        turnId: ctx.services.newId(),
+        harness: config.harness,
+        prompt: text,
+        promptKind: kind,
+        ...(admittedContext
+          ? {
+              context:
+                kind === 'authored'
+                  ? admittedContext
+                  : { ...admittedContext, retainedHistoryPairs: 0, omittedHistoryPairs: 0 },
+            }
+          : {}),
+        ...(id ? { resumeSessionId: id } : {}),
+      };
+      return {
+        turn,
+        submission: 'delivery-uncertain',
+        accepted: false,
+        ...(id ? { sessionId: id } : {}),
+      };
+    };
+    const recordTurn = (task: PendingTurn) =>
+      ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...task.turn });
+    // A safe retry retains the original turn identity and exact rendered prompt.
+    if (!pending || pending.submission !== 'definitely-not-submitted') {
+      pending = beginTurn(prompt, promptKind, resumeId);
+      // A crash after this append may occur on either side of invocation: uncertain by default.
+    } else {
+      // Re-record the same task intent before another invocation. This resets any init-only ID
+      // from the refused invocation, so a fresh retry cannot recover into that unused session.
+      pending = {
+        turn: pending.turn,
+        submission: 'delivery-uncertain',
+        accepted: false,
+        ...(resumeId ? { sessionId: resumeId } : {}),
+      };
+    }
+
+    const row: HarnessSessionRecord = {
+      runId: ctx.run.id,
+      nodeId: ctx.node.id,
+      attempt: ctx.attempt,
+      harness: config.harness,
+      status: 'starting',
+      model,
+      effort,
+      updatedAt: ctx.services.now(),
+      ...(resumeId ? { sessionId: resumeId } : {}),
+      ...(config.session.policy === 'resume-named'
+        ? { scopeKey: `${ctx.thread.run.loopId}:${config.session.key}` }
+        : {}),
+    };
+    const schema = config.output.schema;
+    const turn: HarnessTurnRequest = {
+      prompt,
+      ...(schema?.native ? { outputSchema: schema.jsonSchema } : {}),
+    };
+    const sessionRequest = (next: HarnessTurnRequest): HarnessStartRequest => ({
+      workingDirectory,
+      model,
+      effort,
+      options: config.harnessOptions,
+      ...(config.capabilities ? { capabilities: config.capabilities } : {}),
+      turn: next,
+    });
+
+    let afterResultFailure: RunFailureError | undefined;
+    let result: HarnessResult;
+    let session: HarnessSession | undefined;
+    let invoking = false;
+    let intentUnconfirmed = true;
+    pending.intentUnconfirmed = true;
+    const failures: TurnFailures = { rejected: false, recording: [] };
+    let usage: Usage = ZERO_USAGE;
+    try {
+      // Initial tasks, exact retries and repairs share the same guarded intent boundary.
+      await recordTurn(pending);
+      intentUnconfirmed = false;
+      pending.intentUnconfirmed = false;
+      await ctx.ports.sessions.upsert({ ...row });
+      if (!harness) {
+        throw new RunFailureError(
+          'HARNESS_NOT_INSTALLED',
+          `harness "${config.harness}" is not configured`,
+          { nodeId: ctx.node.id },
+        );
+      }
+      invoking = true;
+      // F3's one retry uses F4's selected evidence, including acceptance and recording faults.
+      for (let retry = 0; ; retry += 1) {
+        session = resumeId
+          ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
+          : harness.start(sessionRequest(turn), timeout.signal);
+        try {
+          result = await consume(ctx, session, row, pending, failures);
+          requireAcceptanceRecording(failures);
+    if (await this.completeFromLog(run, version?.definition, events)) return;
+    if (!version) {
+      await this.failRun(
+        runId,
+        new InternalRunFailureError(`loop version ${run.versionId} not found`, {
+          resumable: false,
+        }),
+      );
+      return;
+    }
+    // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
+    // fail it explicitly before any node runs, instead of running to an exit it cannot deliver.
+    const refused = definitionUpgradeRequired(version);
+    if (refused) {
+      await this.failRun(runId, refused.toFailure());
+      return;
+    }
+    const def = version.definition;
+    // Inherited defaults (and classifier bindings, read by the decision handler) are the ones
+    // pinned when the run was created (ADR-0041): a Settings or process change reaches new runs
+    // only, never a run that waits, resumes or recovers.
+    const { owner: ownerDefaults, process: processDefaults } = run.pinned.defaults;
+    // Read before any recovery marker is appended; a marker does not consume a wake either.
+    const pendingWake = findPendingWake(events);
+    let thread = await this.loadThread(run, events);
+    const freshEntries = new FreshEntries(events);
+    /** Append drafts atomically and return the seq of the last one. */
+    const appendAll = async (drafts: EventDraft[]): Promise<number> => {
+      for (const draft of drafts)
+        if (draft.type === 'decision.made') {
+          const { type: _type, nodeId: _nodeId, ...evidence } = draft;
+          DecisionEmissionSchema.parse(evidence);
+        }
+      const stored = await this.ports.events.append(runId, drafts);
+      freshEntries.record(stored);
+      events.push(...stored);
+      return (stored.at(-1) as RunEvent).seq;
+    };
+    const append = async (draft: EventDraft): Promise<void> => {
+      await appendAll([draft]);
+    };
+
+    const started = await this.ports.runs.transition(runId, ['queued'], {
+      status: 'running',
+      startedAt: this.now(),
+    });
+    if (started) {
+      run = started;
+      await append({ type: 'run.started', attempt: 1 });
+    } else {
+      run = await this.mustGet(runId);
+      if (run.status !== 'running') {
+        this.recovering.delete(runId);
+        return; // paused or cancelled between enqueue and execution
+      }
+      if (!run.startedAt) {
+        // A paused-while-queued run that was resumed: this is its first real start.
+        run = await this.ports.runs.update(runId, { startedAt: this.now() });
+        await append({ type: 'run.started', attempt: 1 });
+      } else if (this.recovering.delete(runId)) {
+        const previousStarts = events.filter((e) => e.type === 'run.started').length;
+        await append({ type: 'run.started', attempt: previousStarts + 1 });
+      }
+    }
+
+    await this.armRunDeadline(run);
+
+    // The log is the source of truth for the cursor: a crash between a durable `node.finished` and
+    // the cursor write must not run the finished node again.
+    const caughtUp = await this.catchUpCursor(run, def, events);
+    if (caughtUp) {
+      run = caughtUp.run;
+      thread = { ...thread, run: { ...thread.run, iteration: run.iteration } };
+    }
+
+    let nodeId = run.currentNodeId ?? thread.invocation.trigger.nodeId;
+    let wake = pendingWake;
+    let previousWait = run.waiting;
+
+    const services: HandlerServices = {
+      render: (template, extras = {}) =>
+        renderTemplate(template, {
+          ...(threadView(thread) as unknown as Record<string, unknown>),
+          ...extras,
+        }),
+      record: async (draft) => {
+        await append(draft);
+        if (
+          draft.type === 'heartbeat.beat' &&
+          draft.result &&
+          typeof draft.result === 'object' &&
+          !Array.isArray(draft.result) &&
+          draft.result.terminationUnconfirmed === true
+        )
+          this.cleanupFailures.add(runId);

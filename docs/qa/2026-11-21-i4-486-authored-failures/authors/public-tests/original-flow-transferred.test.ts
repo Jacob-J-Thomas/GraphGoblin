@@ -1,0 +1,1413 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { describe, expect, it } from 'vitest';
+import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+import type { NodeContext } from '../handler.js';
+import type { ChoiceResult } from '../ports.js';
+import { createTestEngine, singleNodeLoop, type TestEngine } from '../testing/scenario.js';
+import { scriptHandler } from './script.js';
+import { waitHandler } from './wait.js';
+
+const malformedLeafTemplate = 'first\n{% PRIVATE_SOURCE %}';
+const leafParseCause =
+  'The template could not be parsed at line 2, column 1. Check its Liquid syntax.';
+const leafExpressionCause =
+  'The expression could not evaluate this input. Check its input type and mapping.';
+
+async function assertLeafFailure(
+  e: TestEngine,
+  run: RunRecord,
+  nodeId: string,
+  boundary: string,
+  label: string,
+  cause: string,
+  indices: Record<string, number> = {},
+) {
+  const code = boundary.endsWith('.where') ? 'EXPRESSION_ERROR' : 'TEMPLATE_ERROR';
+  expect(run.failure).toEqual({
+    code,
+    nodeId,
+    resumable: false,
+    message: `${label} failed. ${cause}`,
+    details: { boundary, ...indices, cause: { code, message: cause } },
+  });
+  expect(e.events(run.id).findLast((event) => event.type === 'run.failed')).toMatchObject({
+    failure: run.failure,
+  });
+  const before = e.events(run.id);
+  await expect(e.manager.resume(run.id)).rejects.toThrow();
+  await e.manager.waitForIdle();
+  expect(e.events(run.id)).toEqual(before);
+  for (const data of [run.failure, e.ports.logger.lines])
+    expect(JSON.stringify(data)).not.toContain('PRIVATE');
+}
+
+type DecisionInput = Extract<LoopDefinitionInput['nodes'][number], { kind: 'decision' }>['config'];
+type DecisionSettings =
+  | Omit<Extract<DecisionInput, { kind: 'expression' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'llm' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'classifier' }>, 'answer'>;
+const classifier = {
+  kind: 'classifier',
+  model: 'jev',
+  question: 'Is {{ trigger.payload.value }} good?',
+} as const;
+const llm = {
+  kind: 'llm',
+  harness: 'codex',
+  model: { mode: 'inherit' },
+  effort: { mode: 'inherit' },
+  instructions: 'Q',
+} as const;
+function decisionLoop(
+  name: string,
+  evaluation: DecisionSettings,
+  recordAlternatives = true,
+): LoopDefinitionInput {
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      {
+        id: 'decide',
+        kind: 'decision',
+        label: 'Choose',
+        config:
+          evaluation.kind === 'classifier'
+            ? {
+                ...evaluation,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
+                    { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
+                  ],
+                },
+                recordAlternatives,
+              }
+            : {
+                ...evaluation,
+                routes: [
+                  { id: 'good', label: 'Good outcome' },
+                  { id: 'bad', label: 'Bad outcome' },
+                ],
+              },
+      },
+      {
+        id: 'done',
+        kind: 'exit',
+        label: 'Done',
+        config: { returns: 'outputs.decide.value.portId' },
+      },
+    ],
+    edges: [
+      { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
+      { id: 'good', from: { node: 'decide', port: 'good' }, to: { node: 'done' } },
+      { id: 'bad', from: { node: 'decide', port: 'bad' }, to: { node: 'done' } },
+    ],
+  };
+}
+function answer(
+  optionId = 'good',
+  confidence: number | null = 0.8,
+  probabilities: ChoiceResult['probabilities'] = { good: 0.8, bad: 0.2 },
+): ChoiceResult {
+  return { type: 'choice', optionId, confidence, probabilities };
+}
+
+describe('decision node', () => {
+  it('records the canonical expression answer without rendering provider questions', async () => {
+    const e = await createTestEngine();
+    const v = e.publish(
+      decisionLoop('expression', {
+        kind: 'expression',
+        jsonata: 'trigger.payload.value > 5 ? "good" : "bad"',
+      }),
+    );
+    const good = await e.runToIdle(v.loopId, { value: 10 });
+    const bad = await e.runToIdle(v.loopId, { value: 1 });
+    expect(good.result).toBe('good');
+    expect(bad.result).toBe('bad');
+    const payload = {
+      observation: { kind: 'route', routeId: 'good', confidence: null, reasoning: null },
+      portId: 'good',
+      provenance: {
+        kind: 'expression',
+        provider: null,
+        classifierId: null,
+        model: null,
+        effort: null,
+      },
+    };
+    expect(e.events(good.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+      ...payload,
+      diagnostics: [],
+    });
+    expect((await e.manager.getThread(good.id))?.outputs['decide']?.value).toEqual(payload);
+    expect(e.ports.jev.choices).toEqual([]);
+    expect(e.ports.codexDecider.routes).toEqual([]);
+  });
+  it.each(['true', '42', 'null', '[]', '{}', '"unknown"'])(
+    'does not coerce expression result %s into a route',
+    async (jsonata) => {
+      const e = await createTestEngine();
+      const r = await e.runToIdle(
+        e.publish(decisionLoop('expression-invalid', { kind: 'expression', jsonata })).loopId,
+      );
+      expect(r.failure).toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE', resumable: false });
+      expect(e.eventTypes(r.id)).not.toContain('decision.made');
+    },
+  );
+  it('types expression evaluation failures without retaining authored/private error text', async () => {
+    const e = await createTestEngine();
+    const r = await e.runToIdle(
+      e.publish(
+        decisionLoop('expression-throws', { kind: 'expression', jsonata: '$error("private")' }),
+      ).loopId,
+    );
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_EXPRESSION_FAILED', resumable: false });
+    expect(JSON.stringify(r)).not.toContain('private');
+  });
+  it('passes stable ids, display labels and criteria and records classifier probabilities', async () => {
+    const e = await createTestEngine();
+    e.ports.jev.choose = () => Promise.resolve(answer());
+    const r = await e.runToIdle(e.publish(decisionLoop('classifier', classifier)).loopId, {
+      value: 7,
+    });
+    expect(r.result).toBe('good');
+    expect(e.ports.classifiers.requests).toEqual([
+      {
+        ownerId: 'local',
+        modelId: 'jev',
+        primitive: 'choice',
+        binding: expect.objectContaining({ provider: 'typesafe', providerModel: 'jev-latest' }),
+      },
+    ]);
+    expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+      observation: { kind: 'classifier', answer: answer() },
+      portId: 'good',
+      provenance: {
+        kind: 'classifier',
+        provider: 'typesafe',
+        classifierId: 'jev',
+        model: 'jev-latest',
+        effort: null,
+      },
+      diagnostics: [],
+    });
+  });
+  it('keeps the full-thread question and selected state exposure distinct', async () => {
+    const e = await createTestEngine();
+    const loop = decisionLoop('question-context', {
+      ...classifier,
+      question: '{{ vars.hidden }} / {{ messages.first.content }}',
+      context: { messages: 'none', vars: ['visible', 'missing'], includeLastOutput: true },
+    });
+    loop.nodes.splice(1, 0, {
+      id: 'prep',
+      kind: 'mutate',
+      label: 'Prepare',
+      config: {
+        operations: [
+          {
+            op: 'set',
+            path: '/vars/hidden',
+            value: { kind: 'literal', value: 'full-thread-only' },
+          },
+          { op: 'set', path: '/vars/visible', value: { kind: 'literal', value: 'selected' } },
+          { op: 'append-message', role: 'note', content: 'old message' },
+          {
+            op: 'set',
+            path: '/lastOutput',
+            value: {
+              kind: 'literal',
+              value: { nodeId: 'prep', value: 'last output', at: '2026-10-02T12:00:00.000Z' },
+            },
+          },
+        ],
+      },
+    });
+    loop.edges[0] = {
+      id: 'start-prep',
+      from: { node: 'start', port: 'out' },
+      to: { node: 'prep' },
+    };
+    loop.edges.push({
+      id: 'prep-decide',
+      from: { node: 'prep', port: 'out' },
+      to: { node: 'decide' },
+    });
+    const r = await e.runToIdle(e.publish(loop).loopId, { value: 7 });
+    expect(r.status).toBe('succeeded');
+    expect(e.ports.jev.choices[0]).toMatchObject({
+      question: 'full-thread-only / old message',
+      context: {
+        trigger: { value: 7 },
+        messages: [],
+        vars: { visible: 'selected' },
+        lastOutput: 'last output',
+      },
+      options: [
+        { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
+        { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
+      ],
+    });
+    const noOutput = await e.runToIdle(
+      e.publish(
+        decisionLoop('no-output', {
+          ...classifier,
+          context: { includeLastOutput: false, vars: [] },
+        }),
+      ).loopId,
+    );
+    expect(noOutput.status).toBe('succeeded');
+    expect(e.ports.jev.choices.at(-1)?.context).not.toHaveProperty('lastOutput');
+  });
+  it('rejects low classifier confidence without another evaluator call', async () => {
+    const e = await createTestEngine();
+    e.ports.jev.choose = () => Promise.resolve(answer('bad', 0.3, { good: 0.7, bad: 0.3 }));
+    const r = await e.runToIdle(
+      e.publish(decisionLoop('low', { ...classifier, minConfidence: 0.5 })).loopId,
+    );
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_RESULT_REJECTED', resumable: false });
+    expect(e.ports.codexDecider.routes).toEqual([]);
+    expect(e.eventTypes(r.id)).not.toContain('decision.made');
+  });
+  it('omits rejected Choice alternatives while retaining selected answer, confidence and gate', async () => {
+    const e = await createTestEngine();
+    e.ports.jev.choose = () => Promise.resolve(answer('bad', 0.3, { good: 0.7, bad: 0.3 }));
+    const r = await e.runToIdle(
+      e.publish(
+        decisionLoop('low-without-alternatives', { ...classifier, minConfidence: 0.5 }, false),
+      ).loopId,
+    );
+    expect(r.failure).toMatchObject({
+      code: 'EVALUATION_RESULT_REJECTED',
+      details: {
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        },
+        provenance: { kind: 'classifier', classifierId: 'jev' },
+        acceptance: { status: 'rejected', minConfidence: 0.5 },
+      },
+    });
+    expect(e.eventTypes(r.id)).not.toContain('decision.made');
+    expect((await e.manager.getThread(r.id))?.outputs['decide']).toBeUndefined();
+    const failed = e.events(r.id).find((event) => event.type === 'run.failed');
+    expect(failed).toMatchObject({
+      failure: {
+        details: { observation: { kind: 'classifier', answer: { probabilities: null } } },
+      },
+    });
+  });
+  it.each([
+    answer('unknown'),
+    answer('good', null),
+    answer('good', 1, null),
+    answer('good', NaN),
+    answer('good', Infinity),
+    answer('good', 2),
+    answer('good', -1),
+    answer('good', 1, { good: 1 }),
+    answer('good', 1, { good: 1, private: 0 }),
+  ])('rejects invalid classifier responses without recording them (%j)', async (value) => {
+    const e = await createTestEngine();
+    e.ports.jev.choose = () => Promise.resolve(value);
+    const r = await e.runToIdle(e.publish(decisionLoop('invalid', classifier)).loopId);
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE', resumable: false });
+    expect(e.eventTypes(r.id)).not.toContain('decision.made');
+    expect(JSON.stringify(e.events(r.id))).not.toContain('private');
+  });
+  it('omits probability recording when requested while retaining its checked selected answer', async () => {
+    const e = await createTestEngine();
+    const r = await e.runToIdle(
+      e.publish(decisionLoop('no-probabilities', classifier, false)).loopId,
+    );
+    expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+      observation: { kind: 'classifier', answer: { probabilities: null } },
+      diagnostics: [],
+    });
+    expect((await e.manager.getThread(r.id))?.outputs['decide']?.value).toMatchObject({
+      observation: { kind: 'classifier', answer: { probabilities: null } },
+    });
+  });
+  it('records resolved LLM provenance and keeps informational confidence separate from probability', async () => {
+    const e = await createTestEngine();
+    const r = await e.runToIdle(
+      e.publish(
+        decisionLoop('llm', {
+          ...llm,
+          model: { mode: 'explicit', value: 'gpt-6-sol' },
+          effort: { mode: 'explicit', value: 'xhigh' },
+        }),
+      ).loopId,
+    );
+    expect(r.result).toBe('good');
+    expect(e.ports.codexDecider.routes[0]).toMatchObject({ model: 'gpt-6-sol', effort: 'xhigh' });
+    expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+      provenance: {
+        kind: 'llm',
+        provider: 'codex',
+        classifierId: null,
+        model: 'gpt-6-sol',
+        effort: 'xhigh',
+      },
+      observation: { kind: 'route', confidence: 1, reasoning: 'Selected' },
+    });
+  });
+  it.each([answer(), answer('good', null, null)])(
+    'rejects LLM evidence with classifier probabilities or absent confidence',
+    async (value) => {
+      const e = await createTestEngine();
+      e.ports.codexDecider.route = () =>
+        Promise.resolve({
+          ...value,
+          route: value.optionId,
+          reasoning: 'Selected',
+          confidence: value.confidence ?? NaN,
+        });
+      const r = await e.runToIdle(e.publish(decisionLoop('bad-llm', llm, false)).loopId);
+      expect(r.failure?.code).toBe('EVALUATION_INVALID_RESPONSE');
+    },
+  );
+  it('reports a missing LLM evaluator as resumable without substituting classifier', async () => {
+    const e = await createTestEngine();
+    e.ports.codexDecider.isAvailable = false;
+    const r = await e.runToIdle(e.publish(decisionLoop('missing-llm', llm)).loopId);
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_UNAVAILABLE', resumable: true });
+    expect(e.ports.jev.choices).toEqual([]);
+  });
+  it.each([
+    ['DECIDER_INVALID_RESPONSE', undefined, 'EVALUATION_INVALID_RESPONSE', false],
+    ['DECIDER_UNAVAILABLE', undefined, 'EVALUATION_UNAVAILABLE', true],
+    ['DECIDER_NOT_AUTHENTICATED', 401, 'EVALUATION_PROVIDER_FAILED', true],
+    ['DECIDER_RATE_LIMITED', 429, 'EVALUATION_PROVIDER_FAILED', true],
+    ['DECIDER_UNREACHABLE', undefined, 'EVALUATION_PROVIDER_FAILED', true],
+    ['DECIDER_TIMEOUT', undefined, 'EVALUATION_PROVIDER_FAILED', true],
+    ['DECIDER_HTTP_ERROR', 503, 'EVALUATION_PROVIDER_FAILED', true],
+    ['DECIDER_HTTP_ERROR', 400, 'EVALUATION_PROVIDER_FAILED', false],
+    ['DECIDER_REDIRECT', 302, 'EVALUATION_PROVIDER_FAILED', false],
+    ['RAW_PRIVATE_CODE', undefined, 'EVALUATION_PROVIDER_FAILED', false],
+  ] as const)(
+    'maps provider failure %s to exact resumability',
+    async (code, status, expected, resumable) => {
+      const e = await createTestEngine();
+      e.ports.jev.choose = () =>
+        Promise.reject(
+          Object.assign(new Error('private-provider-marker'), {
+            name: 'private-provider-marker',
+            code,
+            status,
+          }),
+        );
+      const r = await e.runToIdle(e.publish(decisionLoop('provider-failure', classifier)).loopId);
+      expect(r.failure).toMatchObject({ code: expected, resumable });
+      for (const data of [r, e.events(r.id), e.ports.logger.lines])
+        expect(JSON.stringify(data)).not.toContain('private-provider-marker');
+    },
+  );
+  it('does not retain raw string provider failures', async () => {
+    const e = await createTestEngine();
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Malformed third-party rejection is an engine boundary input.
+    e.ports.jev.choose = () => Promise.reject('private raw rejection');
+    const r = await e.runToIdle(e.publish(decisionLoop('raw-error', classifier)).loopId);
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_PROVIDER_FAILED', resumable: false });
+    expect(JSON.stringify(r)).not.toContain('private raw rejection');
+  });
+  it.each(
+    [3, 8].flatMap((count) => ['expression', 'classifier', 'llm'].map((kind) => ({ count, kind }))),
+  )(
+    'routes the same stable id with $count options after reorder and numeric display labels ($kind)',
+    async ({ count, kind }) => {
+      const e = await createTestEngine();
+      const selectedId = 'option-c';
+      const options = Array.from({ length: count }, (_, index) => ({
+        id: 'option-' + String.fromCharCode(97 + index),
+        label: String(index + 1),
+        criteria: 'Criterion ' + String(index + 1),
+      }));
+      for (const reverse of [false, true]) {
+        const definition = decisionLoop(
+          'stable-' + kind + '-' + String(count) + '-' + String(reverse),
+          kind === 'expression'
+            ? { kind: 'expression', jsonata: '"option-c"' }
+            : kind === 'classifier'
+              ? classifier
+              : llm,
+        );
+        const node = definition.nodes[1];
+        if (node?.kind !== 'decision') throw new Error('Expected Choice decision');
+        if (node.config.kind === 'classifier' && node.config.answer.type === 'choice')
+          node.config.answer.options = reverse ? [...options].reverse() : options;
+        else if (node.config.kind !== 'classifier')
+          node.config.routes = (reverse ? [...options].reverse() : options).map(
+            ({ id, label }) => ({ id, label }),
+          );
+        definition.edges = definition.edges.filter((edge) => edge.from.node !== 'decide');
+        definition.edges.push(
+          ...options.map((option) => ({
+            id: 'edge-' + option.id,
+            from: { node: 'decide', port: option.id },
+            to: { node: 'done' },
+          })),
+        );
+        e.ports.jev.choose = (request) => {
+          e.ports.jev.choices.push(request);
+          return Promise.resolve(
+            answer(
+              selectedId,
+              1,
+              Object.fromEntries(
+                request.options.map((option) => [option.id, option.id === selectedId ? 1 : 0]),
+              ),
+            ),
+          );
+        };
+        e.ports.codexDecider.route = (request) => {
+          e.ports.codexDecider.routes.push(request);
+          return Promise.resolve({ route: selectedId, confidence: 1, reasoning: 'Selected' });
+        };
+        const r = await e.runToIdle(e.publish(definition).loopId);
+        expect(r.result).toBe(selectedId);
+        expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+          portId: selectedId,
+          observation:
+            kind === 'classifier'
+              ? { kind: 'classifier', answer: { optionId: selectedId } }
+              : { kind: 'route', routeId: selectedId },
+        });
+        if (kind === 'classifier')
+          expect(e.ports.jev.choices.at(-1)?.options.map((option) => option.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
+          );
+        if (kind === 'llm')
+          expect(e.ports.codexDecider.routes.at(-1)?.routes.map((route) => route.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
+          );
+      }
+    },
+  );
+  it.each(['unknown', 'disabled', 'effort', 'shadowed-default'])(
+    'applies catalog admission inside the manager (%s)',
+    async (problem) => {
+      const e = await createTestEngine();
+      let evaluation: DecisionSettings = llm;
+      if (problem === 'unknown')
+        evaluation = { ...llm, model: { mode: 'explicit', value: 'unknown' } };
+      if (problem === 'disabled') e.ports.modelCatalog.entries[0]!.enabled = false;
+      if (problem === 'effort') {
+        e.ports.modelCatalog.entries[0]!.efforts = ['low'];
+        evaluation = { ...llm, effort: { mode: 'explicit', value: 'max' } };
+      }
+      if (problem === 'shadowed-default') {
+        e.settings.ownerDefaults = () =>
+          Promise.resolve({ byHarness: { codex: { model: 'unknown' } } });
+        evaluation = { ...llm, model: { mode: 'explicit', value: 'gpt-6-sol' } };
+      }
+      const r = await e.runToIdle(e.publish(decisionLoop('catalog-' + problem, evaluation)).loopId);
+      expect(r.failure).toMatchObject({
+        code: problem === 'effort' ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
+        resumable: problem !== 'effort',
+      });
+      expect(e.ports.codexDecider.routes).toEqual([]);
+    },
+  );
+});
+
+describe('mutate node', () => {
+  it('applies operations and repairs coerce failures through the structured port', async () => {
+    const engine = await createTestEngine();
+    engine.ports.structuredFake.respondWith(() => ({ ok: true }));
+    const schema = { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' } } };
+    const version = engine.publish(
+      singleNodeLoop('mut', {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'M',
+        config: {
+          operations: [
+            { op: 'set', path: '/vars/raw', value: { kind: 'literal', value: { ok: 'yes' } } },
+            {
+              op: 'coerce',
+              source: '/vars/raw',
+              jsonSchema: schema,
+              target: '/vars/clean',
+              repair: { maxAttempts: 1 },
+            },
+            { op: 'append-message', content: 'clean is {{ vars.clean.ok }}' },
+          ],
+        },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('succeeded');
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.vars['clean']).toEqual({ ok: true });
+    expect(thread?.messages.at(-1)?.content).toBe('clean is true');
+    expect(engine.ports.structuredFake.requests[0]?.prompt).toMatch(/Validation errors/);
+  });
+
+  it('continues raw or fails when repair cannot help', async () => {
+    const engine = await createTestEngine();
+    engine.ports.structuredFake.respondWith(() => ({ ok: 'still wrong' }));
+    const schema = { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' } } };
+    const raw = engine.publish(
+      singleNodeLoop('raw', {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'M',
+        config: {
+          operations: [
+            {
+              op: 'coerce',
+              source: '/vars/missing',
+              jsonSchema: schema,
+              target: '/vars/clean',
+              repair: { maxAttempts: 1, onFailure: 'continue-raw' },
+            },
+          ],
+        },
+      }),
+    );
+    const okRun = await engine.runToIdle(raw.loopId);
+    expect(okRun.status).toBe('succeeded');
+    expect((await engine.manager.getThread(okRun.id))?.vars['clean']).toBeNull();
+
+    const strict = engine.publish(
+      singleNodeLoop('strict', {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'M',
+        config: {
+          operations: [
+            {
+              op: 'coerce',
+              source: '/vars/missing',
+              jsonSchema: schema,
+              target: '/vars/clean',
+              repair: { maxAttempts: 1 },
+            },
+          ],
+        },
+      }),
+    );
+    const failed = await engine.runToIdle(strict.loopId);
+    expect(failed.failure?.code).toBe('OUTPUT_SCHEMA_MISMATCH');
+
+    delete engine.ports.structured;
+    const noProvider = await engine.runToIdle(strict.loopId);
+    expect(noProvider.failure?.code).toBe('DECIDER_UNAVAILABLE');
+  });
+
+  it('reports mutation errors as unavoidable failures', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('bad', {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'M',
+        config: {
+          operations: [{ op: 'set', path: '/run/id', value: { kind: 'literal', value: 'x' } }],
+        },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure?.code).toBe('MUTATION_ERROR');
+    expect(run.failure?.message).toMatch(/not in a mutable region/);
+  });
+});
+
+describe('script node', () => {
+  it('passes the thread on stdin, renders args, resolves secrets, and stores JSON stdout', async () => {
+    const engine = await createTestEngine({}, { secrets: { token: 's3cret' } });
+    engine.ports.scripts.respondWith((req) => ({
+      exitCode: 0,
+      stdout: JSON.stringify({
+        got: req.args,
+        env: req.env['TOKEN'],
+        hasStdin: typeof req.stdin === 'string',
+      }),
+      stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify({
+          got: req.args,
+          env: req.env['TOKEN'],
+          hasStdin: typeof req.stdin === 'string',
+        }),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    const version = engine.publish(
+      singleNodeLoop('script', {
+        id: 'script',
+        kind: 'script',
+        label: 'S',
+        config: {
+          command: 'node',
+          args: ['check.js', '{{ trigger.payload.n }}'],
+          env: { TOKEN: 'secret:token', PLAIN: 'x' },
+          cwd: '/work',
+        },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId, { n: 4 });
+    expect(run.status).toBe('succeeded');
+    expect(engine.ports.scripts.calls[0]).toMatchObject({
+      command: 'node',
+      cwd: '/work',
+      env: { TOKEN: 's3cret', PLAIN: 'x' },
+    });
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.lastOutput?.value).toEqual({
+      got: ['check.js', '4'],
+      env: 's3cret',
+      hasStdin: true,
+    });
+  });
+
+  it('applies a JSON patch from stdout and rejects patches outside mutable regions', async () => {
+    const engine = await createTestEngine();
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
+      stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    const version = engine.publish(
+      singleNodeLoop('patch', {
+        id: 'script',
+        kind: 'script',
+        label: 'S',
+        config: { command: 'x', stdout: 'patch', stdin: 'last-output' },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect((await engine.manager.getThread(run.id))?.vars['fromScript']).toBe(1);
+    expect(engine.ports.scripts.calls[0]?.stdin).toBe('null');
+
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
+      stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
+      /outside the mutable regions/,
+    );
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'not json',
+      stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(/not a JSON patch/);
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: JSON.stringify([{ op: 'explode' }]),
+      stderr: '',
+      stdoutBytes: new TextEncoder().encode(JSON.stringify([{ op: 'explode' }])).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
+      /not a valid JSON patch/,
+    );
+  });
+
+  it('routes by exit code, ignores stdout when told, and fails on unmapped codes, timeouts, and missing secrets', async () => {
+    const engine = await createTestEngine();
+    const loop: LoopDefinitionInput = {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: 'codes',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'S',
+          config: {
+            command: 'x',
+            stdout: 'ignore',
+            stdin: 'none',
+            exitCodeRoutes: { '3': 'retry' },
+            timeoutSeconds: 5,
+            env: { K: 'secret:nope' },
+          },
+        },
+        {
+          id: 'mark',
+          kind: 'mutate',
+          label: 'M',
+          config: {
+            operations: [
+              { op: 'set', path: '/vars/retried', value: { kind: 'literal', value: true } },
+            ],
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'D', config: { returns: 'vars' } },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'script' } },
+        { id: 'e2', from: { node: 'script', port: 'out' }, to: { node: 'done' } },
+        { id: 'e3', from: { node: 'script', port: 'retry' }, to: { node: 'mark' } },
+        { id: 'e4', from: { node: 'mark', port: 'out' }, to: { node: 'done' } },
+      ],
+    };
+    const version = engine.publish(loop);
+    expect((await engine.runToIdle(version.loopId)).failure?.code).toBe('SECRET_MISSING');
+
+    const withSecret = await createTestEngine({}, { secrets: { nope: 'v' } });
+    const v2 = withSecret.publish(loop);
+    withSecret.ports.scripts.respondWith(() => ({
+      exitCode: 3,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    expect((await withSecret.runToIdle(v2.loopId)).result).toEqual({ retried: true });
+    withSecret.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'ignored',
+      stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    const plain = await withSecret.runToIdle(v2.loopId);
+    expect(plain.result).toEqual({});
+    withSecret.ports.scripts.respondWith(() => ({
+      exitCode: 7,
+      stdout: '',
+      stderr: 'bad',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 3,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    expect((await withSecret.runToIdle(v2.loopId)).failure).toMatchObject({
+      code: 'SCRIPT_EXIT_CODE',
+      details: { exitCode: 7, stderr: 'bad' },
+    });
+    withSecret.ports.scripts.respondWith(() => ({
+      exitCode: null,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: true,
+    }));
+    expect((await withSecret.runToIdle(v2.loopId)).failure?.code).toBe('SCRIPT_TIMEOUT');
+    expect(withSecret.ports.scripts.calls.at(-1)?.timeoutMs).toBe(5000);
+  });
+});
+
+describe('authored leaf preparation failures (#486)', () => {
+  it.each([
+    [malformedLeafTemplate, leafParseCause],
+    [
+      'first\n{% include "PRIVATE_FILE" %}',
+      'The template could not be rendered at line 2, column 1. Check its filters and input values.',
+    ],
+  ])('rejects the second script argument before dispatch (%s)', async (source, cause) => {
+    const e = await createTestEngine();
+    let secretReads = 0;
+    e.ports.secrets.resolve = () => {
+      secretReads += 1;
+      return Promise.resolve('value');
+    };
+    const v = e.publish(
+      singleNodeLoop('bad-script-argument', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'effect', args: ['ok', source], env: { TOKEN: 'secret:key' } },
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    await assertLeafFailure(e, run, 'script', 'script.args', 'Script argument 2', cause, {
+      argumentIndex: 1,
+    });
+    expect(secretReads).toBe(1);
+    expect(e.ports.workspace.resolved).toHaveLength(1);
+    expect(e.ports.scripts.calls).toHaveLength(0);
+    expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    expect(run.failure).not.toHaveProperty('script');
+  });
+
+  it('checks an unresolved previous dispatch before workspace, secrets or arguments', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const v = e.publish(
+      singleNodeLoop('previous-script-effect', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: {
+          command: 'effect',
+          args: [malformedLeafTemplate],
+          env: { TOKEN: 'secret:missing' },
+        },
+      }),
+    );
+    const run = await e.start(v.loopId);
+    const dispatchId = e.ports.ids.next();
+    await e.ports.events.append(run.id, [
+      { type: 'node.started', nodeId: 'script', kind: 'script', attempt: 1, configHash: 'test' },
+      { type: 'script.dispatched', nodeId: 'script', visitId: 'prior', dispatchId },
+      { type: 'node.started', nodeId: 'script', kind: 'script', attempt: 2, configHash: 'test' },
+    ]);
+    const node = v.definition.nodes.find((n) => n.kind === 'script');
+    const thread = await e.manager.getThread(run.id);
+    if (node?.kind !== 'script' || !thread) throw new Error('fixture');
+    let preparation = 0;
+    const unused = () => {
+      preparation += 1;
+      return Promise.reject(new Error('preparation must not run'));
+    };
+    const ctx: NodeContext<'script'> = {
+      node,
+      config: node.config,
+      definition: v.definition,
+      thread,
+      run,
+      attempt: 2,
+      signal: new AbortController().signal,
+      ports: e.ports,
+      settings: e.settings,
+      services: {
+        render: unused,
+        record: unused,
+        resolveModel: unused,
+        startChild: unused,
+        childOutcome: unused,
+        resumeChild: unused,
+        workingDirectory: unused,
+        events: () => e.ports.events.read(run.id),
+        depth: unused,
+        newId: () => {
+          throw new Error('no new dispatch');
+        },
+        now: () => e.ports.clock.now().toISOString(),
+      },
+    };
+    await expect(scriptHandler.execute(ctx)).rejects.toMatchObject({
+      code: 'SCRIPT_OUTCOME_UNCERTAIN',
+      options: { script: { visitId: 'prior', dispatchId, state: 'outcome-uncertain' } },
+    });
+    expect(preparation).toBe(0);
+    expect(e.ports.scripts.calls).toHaveLength(0);
+    expect(e.ports.workspace.resolved).toHaveLength(0);
+    expect(e.events(run.id).filter((event) => event.type === 'script.dispatched')).toHaveLength(1);
+  });
+
+  it.each(['llm', 'classifier'] as const)(
+    'reports the %s question field before context evaluation or a provider call',
+    async (kind) => {
+      const e = await createTestEngine();
+      const config =
+        kind === 'llm'
+          ? { ...llm, instructions: malformedLeafTemplate }
+          : { ...classifier, question: malformedLeafTemplate };
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('bad-question', {
+            ...config,
+            context: { messages: { where: '$error("PRIVATE_CONTEXT")' } },
+          }),
+        ).loopId,
+      );
+      const field = kind === 'llm' ? 'instructions' : 'question';
+      await assertLeafFailure(
+        e,
+        run,
+        'decide',
+        `decision.${field}`,
+        kind === 'llm' ? 'Decision instructions' : 'Decision question',
+        leafParseCause,
+      );
+      expect(e.ports.jev.choices).toHaveLength(0);
+      expect(e.ports.codexDecider.routes).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('decision.made');
+    },
+  );
+
+  it.each(['llm', 'classifier'] as const)(
+    'attributes the exact failing context item before the %s provider',
+    async (kind) => {
+      const e = await createTestEngine();
+      const messages = ['first', 'PRIVATE_INPUT'].map((content) => ({
+        id: e.ports.ids.next(),
+        role: 'note' as const,
+        content,
+        nodeId: 'seed',
+        ts: e.ports.clock.now().toISOString(),
+      }));
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('bad-context', {
+            ...(kind === 'llm' ? llm : classifier),
+            context: { messages: { where: '$index = 0 ? true : $error(content)' } },
+          }),
+        ).loopId,
+        null,
+        { seed: { messages } },
+      );
+      await assertLeafFailure(
+        e,
+        run,
+        'decide',
+        'decision.context.messages.where',
+        'Decision context message selector, item 2',
+        leafExpressionCause,
+        { itemIndex: 1 },
+      );
+      expect(e.ports.jev.choices).toHaveLength(0);
+      expect(e.ports.codexDecider.routes).toHaveLength(0);
+    },
+  );
+
+  it.each(['llm', 'classifier'] as const)(
+    'keeps successful %s context predicates and full-thread rendered questions',
+    async (kind) => {
+      const e = await createTestEngine();
+      const messages = ['first', 'second'].map((content) => ({
+        id: e.ports.ids.next(),
+        role: 'note' as const,
+        content,
+        nodeId: 'seed',
+        ts: e.ports.clock.now().toISOString(),
+      }));
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('selected-context', {
+            ...(kind === 'llm'
+              ? { ...llm, instructions: 'Ask {{ trigger.payload }}' }
+              : { ...classifier, question: 'Ask {{ trigger.payload }}' }),
+            context: { messages: { where: '$index = 1 and $thread.trigger.payload = "value"' } },
+          }),
+        ).loopId,
+        'value',
+        { seed: { messages } },
+      );
+      expect(run.status).toBe('succeeded');
+      const request = kind === 'llm' ? e.ports.codexDecider.routes[0] : e.ports.jev.choices[0];
+      expect(request).toMatchObject({
+        ...(kind === 'llm' ? { instructions: 'Ask value' } : { question: 'Ask value' }),
+        context: { messages: [{ role: 'note', content: 'second' }] },
+      });
+    },
+  );
+
+  it.each([
+    [
+      'input',
+      { mode: 'input', prompt: malformedLeafTemplate },
+      'wait.prompt',
+      'Wait input prompt',
+      leafParseCause,
+    ],
+    [
+      'until-template',
+      { mode: 'until', timestamp: malformedLeafTemplate },
+      'wait.timestamp',
+      'Wait timestamp',
+      leafParseCause,
+    ],
+    [
+      'until-value',
+      { mode: 'until', timestamp: '{{ trigger.payload }}' },
+      'wait.timestamp',
+      'Wait timestamp',
+      'The value must render to a timestamp. Check the template and date format.',
+    ],
+  ] as const)(
+    'fails %s before the first park or timer',
+    async (_name, config, boundary, label, cause) => {
+      const e = await createTestEngine();
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('bad-wait', {
+            id: 'wait',
+            kind: 'wait',
+            label: 'Wait',
+            config: { ...config, timeoutSeconds: 2 },
+          }),
+        ).loopId,
+        'PRIVATE_TIMESTAMP',
+      );
+      await assertLeafFailure(e, run, 'wait', boundary, label, cause);
+      expect(run.waiting).toBeUndefined();
+      expect(e.ports.timers.scheduled).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toEqual(expect.arrayContaining(['run.waiting']));
+      for (const type of ['run.woken', 'input.received', 'signal.received'])
+        expect(e.eventTypes(run.id)).not.toContain(type);
+    },
+  );
+
+  it.each(['input', 'until'] as const)(
+    'does not render the %s field again on wake',
+    async (mode) => {
+      const e = await createTestEngine();
+      const v = e.publish(
+        singleNodeLoop('wake-bypass', {
+          id: 'wait',
+          kind: 'wait',
+          label: 'Wait',
+          config:
+            mode === 'input'
+              ? { mode, prompt: 'Approve {{ trigger.payload }}?' }
+              : { mode, timestamp: '{{ trigger.payload }}' },
+        }),
+      );
+      const run = await e.runToIdle(v.loopId, mode === 'input' ? 'work' : '2026-10-02T13:00:00Z');
+      expect(run.status).toBe('waiting');
+      expect(run.waiting).toMatchObject(
+        mode === 'input'
+          ? { kind: 'input', prompt: 'Approve work?' }
+          : { kind: 'timer', until: '2026-10-02T13:00:00.000Z' },
+      );
+      const node = v.definition.nodes.find((n) => n.kind === 'wait');
+      const thread = await e.manager.getThread(run.id);
+      if (node?.kind !== 'wait' || !thread) throw new Error('fixture');
+      const unused = () => Promise.reject(new Error('unused'));
+      const ctx: NodeContext<'wait'> = {
+        node,
+        config:
+          mode === 'input'
+            ? { ...node.config, mode, prompt: malformedLeafTemplate }
+            : { ...node.config, mode, timestamp: malformedLeafTemplate },
+        definition: v.definition,
+        thread,
+        run,
+        attempt: 2,
+        wake: { reason: mode === 'input' ? 'input' : 'timer', payload: 'approved' },
+        signal: new AbortController().signal,
+        ports: e.ports,
+        settings: e.settings,
+        services: {
+          render: unused,
+          record: unused,
+          resolveModel: unused,
+          startChild: unused,
+          childOutcome: unused,
+          resumeChild: unused,
+          workingDirectory: unused,
+          events: unused,
+          depth: unused,
+          newId: () => e.ports.ids.next(),
+          now: () => e.ports.clock.now().toISOString(),
+        },
+      };
+      expect((await waitHandler.execute(ctx)).kind).toBe('done');
+      expect(e.ports.timers.scheduled).toHaveLength(0);
+      e.manager.stop();
+    },
+  );
+
+  const externalLeafErrors = [
+    new TemplateError('PRIVATE_EXTERNAL'),
+    new ExpressionError('PRIVATE_EXTERNAL'),
+    Object.assign(new Error('PRIVATE_EXTERNAL'), { name: 'TemplateError' }),
+    { code: 'TEMPLATE_ERROR', message: 'PRIVATE_EXTERNAL' },
+  ];
+  it.each([malformedLeafTemplate, '   '])(
+    'maps only local workspace preparation failures before dispatch (%s)',
+    async (template) => {
+      const e = await createTestEngine();
+      const def = singleNodeLoop('script-workspace', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'effect' },
+      });
+      def.settings = { workingDirectory: { kind: 'template', template } };
+      const run = await e.runToIdle(e.publish(def).loopId);
+      await assertLeafFailure(
+        e,
+        run,
+        'script',
+        'settings.workingDirectory.template',
+        'Working directory template',
+        template === malformedLeafTemplate
+          ? leafParseCause
+          : 'The template rendered to an empty path. Supply a nonempty directory.',
+      );
+      expect(e.ports.workspace.resolved).toHaveLength(0);
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it('does not resolve an unused workspace for an explicit script cwd', async () => {
+    const e = await createTestEngine();
+    const def = singleNodeLoop('script-explicit-cwd', {
+      id: 'script',
+      kind: 'script',
+      label: 'Script',
+      config: { command: 'effect', cwd: '/explicit', args: ['{{ trigger.payload }}'] },
+    });
+    def.settings = { workingDirectory: { kind: 'template', template: malformedLeafTemplate } };
+    const run = await e.runToIdle(e.publish(def).loopId, 'argument');
+    expect(run.status).toBe('succeeded');
+    expect(e.ports.scripts.calls).toEqual([
+      expect.objectContaining({ cwd: '/explicit', args: ['argument'] }),
+    ]);
+    expect(e.ports.workspace.resolved).toHaveLength(0);
+  });
+  it.each(externalLeafErrors)(
+    'preserves the script workspace external exception path (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let resolves = 0;
+      e.ports.workspace.resolve = () => {
+        resolves += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-script-workspace', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: { command: 'effect' },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        resumable: true,
+        nodeId: 'script',
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(resolves).toBe(1);
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps post-dispatch runner rejection uncertain and requires explicit retry consent (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let runs = 0;
+      e.ports.scripts.run = () => {
+        runs += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-runner', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: { command: 'effect' },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'SCRIPT_OUTCOME_UNCERTAIN',
+        resumable: true,
+        nodeId: 'script',
+        script: { state: 'outcome-uncertain' },
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(e.events(run.id).filter((event) => event.type === 'script.dispatched')).toHaveLength(
+        1,
+      );
+      await expect(e.manager.resume(run.id)).rejects.toThrow();
+      await e.manager.waitForIdle();
+      expect(runs).toBe(1);
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps external secret errors outside authored attribution (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+      e.ports.secrets.resolve = () => Promise.reject(error);
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-secret', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: {
+              command: 'effect',
+              args: [malformedLeafTemplate],
+              env: { TOKEN: 'secret:key' },
+            },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        resumable: true,
+        nodeId: 'script',
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps external decision failures in provider policy (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let calls = 0;
+      e.ports.jev.choose = () => {
+        calls += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(decisionLoop('external-decision', classifier)).loopId,
+      );
+      expect(run.failure).toMatchObject({ code: 'EVALUATION_PROVIDER_FAILED', resumable: false });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(calls).toBe(1);
+    },
+  );
+});
+
+describe('exit node and return channels', () => {
+  it('finishes at a terminal exit and delivers to every channel, recording failures per channel', async () => {
+    const engine = await createTestEngine({}, { secrets: { hook: 'hs' } });
+    const version = engine.publish(
+      singleNodeLoop(
+        'returns',
+        {
+          id: 'set',
+          kind: 'mutate',
+          label: 'M',
+          config: {
+            operations: [
+              { op: 'set', path: '/vars/answer', value: { kind: 'literal', value: 42 } },
+            ],
+          },
+        },
+        {
+          returns: '{ "answer": vars.answer }',
+          destinations: [
+            { kind: 'caller' },
+            { kind: 'log' },
+            { kind: 'file', path: 'out/result.json' },
+            { kind: 'file', path: '/abs/result.md', format: 'markdown' },
+            { kind: 'file', path: 'plain.txt', format: 'text' },
+            { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
+          ],
+        },
+      ),
+    );
+    const run = await engine.runToIdle(version.loopId, null, {
+      returnDefaults: [{ kind: 'log' }, { kind: 'webhook', url: 'https://example.test/default' }],
+    });
+    expect(run.status).toBe('succeeded');
+    expect(run.result).toEqual({ answer: 42 });
+    expect(engine.ports.delivery.logged).toHaveLength(1);
+    expect(
+      [...engine.ports.workspace.files.keys()].some((k) => k.endsWith('out/result.json')),
+    ).toBe(true);
+    expect(engine.ports.workspace.files.get('/abs/result.md')).toMatch(/Outcome: success/);
+    expect([...engine.ports.workspace.files.values()]).toContain('{"answer":42}');
+    // Webhook deliveries run concurrently in the background, so their order is not part of the
+    // contract: the signed one resolves its secret first.
+    expect(engine.ports.delivery.webhooks.map((w) => w.url).sort()).toEqual([
+      'https://example.test/default',
+      'https://example.test/hook',
+    ]);
+    expect(
+      engine.ports.delivery.webhooks.find((w) => w.url === 'https://example.test/hook')?.secret,
+    ).toBe('hs');
+    const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
+    expect(delivered).toHaveLength(5);
+    expect(engine.events(run.id).filter((e) => e.type === 'delivery.finished')).toHaveLength(2);
+  });
+
+  it('records webhook failures and skips delivery when mapping is none', async () => {
+    const engine = await createTestEngine();
+    engine.ports.delivery.failWebhooks = true;
+    const failing = engine.publish(
+      singleNodeLoop(
+        'hookfail',
+        {
+          id: 'noop',
+          kind: 'mutate',
+          label: 'M',
+          config: { operations: [{ op: 'delete', path: '/vars/x' }] },
+        },
+        {
+          returns: 'vars',
+          destinations: [{ kind: 'webhook', url: 'https://example.test/x' }],
+        },
+      ),
+    );
+    const run = await engine.runToIdle(failing.loopId);
+    expect(run.status).toBe('succeeded');
+    const failed = engine.events(run.id).find((e) => e.type === 'delivery.finished');
+    expect(failed).toMatchObject({
+      delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } },
+    });
+
+    const silent = engine.publish(
+      singleNodeLoop('silent', {
+        id: 'noop',
+        kind: 'mutate',
+        label: 'M',
+        config: { operations: [{ op: 'delete', path: '/vars/x' }] },
+      }),
+      {
+        loopId: engine.loopId('silent'),
+      },
+    );
+    const quiet = await engine.runToIdle(silent.loopId, null, {
+      returnDefaults: [{ kind: 'log' }],
+    });
+    expect(quiet.result).toBeUndefined();
+    expect(engine.ports.delivery.logged).toHaveLength(0);
+  });
+});

@@ -1,0 +1,567 @@
+{
+  "scope": "Fixed forty-case planning discriminators; deterministic literal boundaries, not algorithmic fuzzing. Raw synthetic canaries remain private to this QA root. No proposed classifier/helper is implemented.",
+  "cases": [
+    {
+      "id": "C01-min-1",
+      "source": "$error(\"A\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C02-max-128",
+      "source": "$error(\"LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C03-source-whitespace",
+      "source": " \n\t $error(\"PRIVATE_C486_LABEL\") \n",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C04-single-quoted",
+      "source": "$error('PRIVATE_C486_LABEL')",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C05-escaped-ascii",
+      "source": "$error(\"\\u0041\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C06-grouped",
+      "source": "($error(\"PRIVATE_C486_LABEL\"))",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "block",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C07-block-extra",
+      "source": "(1;$error(\"PRIVATE_C486_LABEL\"))",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "block",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C08-conditional-throw",
+      "source": "true ? $error(\"PRIVATE_C486_LABEL\") : 1",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "condition",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C09-conditional-not-taken",
+      "source": "false ? $error(\"PRIVATE_C486_LABEL\") : 1",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "condition",
+        "rawOutcome": "return",
+        "rawCode": null,
+        "domainOutcome": "return",
+        "domainCode": null
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C10-nested-call",
+      "source": "$string($error(\"PRIVATE_C486_LABEL\"))",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C11-eval",
+      "source": "$eval(\"$error(\\\"PRIVATE_C486_LABEL\\\")\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3121",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C12-dynamic-path",
+      "source": "$error(label)",
+      "bindingProfile": "default",
+      "input": {
+        "label": "PRIVATE_C486_DYNAMIC_CANARY"
+      },
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C13-dynamic-concat",
+      "source": "$error(\"PRIVATE_C486_\" & \"COMPUTED\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C14-assert-false",
+      "source": "$assert(false,\"PRIVATE_C486_ASSERT\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3141",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C15-assert-true",
+      "source": "$assert(true,\"PRIVATE_C486_ASSERT\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "return",
+        "rawCode": null,
+        "domainOutcome": "return",
+        "domainCode": null
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C16-empty",
+      "source": "$error(\"\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C17-length-129",
+      "source": "$error(\"LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C18-unicode",
+      "source": "$error(\"PRIVATE_C486_\\u00e9\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C19-trailing-newline",
+      "source": "$error(\"PRIVATE_C486_LABEL\\n\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C20-carriage-return",
+      "source": "$error(\"PRIVATE_C486_LABEL\\r\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C21-tab",
+      "source": "$error(\"PRIVATE_C486_LABEL\\t\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C22-nul",
+      "source": "$error(\"PRIVATE_C486_LABEL\\u0000\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C23-del",
+      "source": "$error(\"PRIVATE_C486_LABEL\\u007f\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C24-excluded-punctuation",
+      "source": "$error(\"PRIVATE_C486_LABEL.\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C25-space-only",
+      "source": "$error(\" \")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C26-zero-arguments",
+      "source": "$error()",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C27-two-arguments",
+      "source": "$error(\"PRIVATE_C486_LABEL\",\"EXTRA\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "T0410",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "C28-lexical-shadow",
+      "source": "($error := function($x){$x}; $error(\"PRIVATE_C486_LABEL\"))",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "block",
+        "rawOutcome": "return",
+        "rawCode": null,
+        "domainOutcome": "return",
+        "domainCode": null
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S01-own-enumerable-return",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "enumerable-return",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "return",
+        "rawCode": null,
+        "domainOutcome": "return",
+        "domainCode": null
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S02-own-enumerable-same-code",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "enumerable-same-code",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S03-jsonata-function-same-code",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "jsonata-function-same-code",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S04-nonenumerable-error",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "nonenumerable-error",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S05-inherited-error",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "inherited-error",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S06-error-getter-throws",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "error-getter-throws",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": null,
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S07-actual-builtin-object",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "actual-builtin",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S08-dollar-prefixed-key",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "dollar-prefixed",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S09-input-error-property",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "input-error-property",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S10-injected-domain-error",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "domain-error",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "EXPRESSION_ERROR",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S11-other-binding-getter-throws",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "other-getter-throws",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": null,
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    },
+    {
+      "id": "S12-post-shadow-cache-builtin",
+      "source": "$error(\"PRIVATE_C486_LABEL\")",
+      "bindingProfile": "default",
+      "input": {},
+      "prediction": {
+        "astRootType": "function",
+        "rawOutcome": "throw",
+        "rawCode": "D3137",
+        "domainOutcome": "throw",
+        "domainCode": "EXPRESSION_ERROR"
+      },
+      "planningQuestion": "AST/runtime fact only; no classifier is implemented or accepted"
+    }
+  ]
+}

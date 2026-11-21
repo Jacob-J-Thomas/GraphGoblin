@@ -1,0 +1,28 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-486-public-tests-author-01\\original-flow-transferred.test.ts" "b/G:\\ggq\\gg-i4-486-authored-errors\\GraphGoblin\\packages\\engine\\src\\handlers\\flow.test.ts"
+index 62e6d17d..bffd48c1 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-486-public-tests-author-01\\original-flow-transferred.test.ts"
++++ "b/G:\\ggq\\gg-i4-486-authored-errors\\GraphGoblin\\packages\\engine\\src\\handlers\\flow.test.ts"
+@@ -1110,14 +1110,19 @@ describe('authored leaf preparation failures (#486)', () => {
+       );
+       const node = v.definition.nodes.find((n) => n.kind === 'wait');
+       const thread = await e.manager.getThread(run.id);
+-      if (node?.kind !== 'wait' || !thread) throw new Error('fixture');
++      if (
++        node?.kind !== 'wait' ||
++        !thread ||
++        (node.config.mode !== 'input' && node.config.mode !== 'until')
++      )
++        throw new Error('fixture');
+       const unused = () => Promise.reject(new Error('unused'));
+       const ctx: NodeContext<'wait'> = {
+         node,
+         config:
+-          mode === 'input'
+-            ? { ...node.config, mode, prompt: malformedLeafTemplate }
+-            : { ...node.config, mode, timestamp: malformedLeafTemplate },
++          node.config.mode === 'input'
++            ? { ...node.config, prompt: malformedLeafTemplate }
++            : { ...node.config, timestamp: malformedLeafTemplate },
+         definition: v.definition,
+         thread,
+         run,

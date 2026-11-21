@@ -1,0 +1,365 @@
+    const def = singleNodeLoop('inf', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'I',
+      config: {
+        prompt: { template: 'go' },
+        model: 'gpt-6-luna',
+        effort: 'high',
+        harnessOptions: { sandbox: 'read-only', approval: 'never', webSearch: true },
+      },
+    });
+    ports.loops.publish(versionId, loopId, 1, LoopDefinitionSchema.parse(def));
+    const thread = createInitialThread({
+      runId,
+      loopId,
+      versionId,
+      invocation: {
+        id: invocationId,
+        source: 'manual.api',
+        trigger: { nodeId: 'start', kind: 'manual', payload: null, receivedAt: FIXTURE_TS },
+      },
+    });
+    await ports.runs.create(
+      {
+        id: runId,
+        ownerId: 'local',
+        loopId,
+        versionId,
+        pinned: samplePin(),
+        invocationId,
+        status: 'running',
+        currentNodeId: 'infer',
+        iteration: 1,
+        createdAt: FIXTURE_TS,
+        startedAt: FIXTURE_TS,
+        lastEventSeq: 0,
+      },
+      thread,
+    );
+    await ports.events.append(runId, [
+      { type: 'run.queued', versionId, pinned: samplePin() },
+      { type: 'run.started', attempt: 1 },
+      { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
+      { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
+      { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'h' },
+      {
+        type: 'harness.turn',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        harness: 'codex',
+        promptKind: 'authored',
+        prompt: 'go',
+      },
+      {
+        type: 'harness.session',
+        nodeId: 'infer',
+        harness: 'codex',
+        sessionId: 'left-behind',
+        mode: 'fresh',
+      },
+      {
+        type: 'harness.submission',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        submission: 'delivery-uncertain',
+        marker: 'fake.accepted',
+      },
+    ]);
+    await ports.sessions.upsert({
+      runId,
+      nodeId: 'infer',
+      attempt: 1,
+      harness: 'codex',
+      sessionId: 'left-behind',
+      status: 'active',
+      updatedAt: FIXTURE_TS,
+    });
+    ports.harness.script([
+  }
+
+  private async startAdmittedRun(
+    input: StartRunInput,
+    beforeAdmission?: (plan: RunStartPlan) => Promise<void>,
+  ): Promise<RunRecord> {
+    const prepared = await this.prepareStart(input);
+    if (beforeAdmission) {
+      const versions = new Map([[prepared.version.id, prepared.version]]);
+      const intent = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {}, versions);
+        return input.parentNodeId ? { ...intent, parentNodeId: input.parentNodeId } : intent;
+      });
+      // Slow admission policy (such as no-turn CLI probes) never holds the shared pin lock.
+      // Commit this same intent afterwards: a publish or draft edit cannot change what was checked.
+      await beforeAdmission({
+        root: prepared.version,
+        versions,
+        subloopVersions: intent.queued.subloopVersions ?? {},
+        defaults: prepared.run.pinned.defaults,
+      });
+      const admitted = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        for (const version of versions.values())
+          if (version.id !== prepared.version.id)
+            await this.assertVersionPresent(version.id, version.loopId);
+
+        return this.ports.admission.create(intent);
+      });
+      if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
+      if (admitted.id === prepared.run.id) this.enqueue(admitted.id);
+      return admitted;
+    }
+    const admitted = await this.withPinLock(async () => {
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
+      return this.ports.admission.create(
+        input.parentNodeId ? { ...intent, parentNodeId: input.parentNodeId } : intent,
+      );
+    });
+    if (input.parentRunId && this.draining) this.drainRuns.add(admitted.id);
+    if (admitted.id === prepared.run.id) this.enqueue(admitted.id);
+    return admitted;
+  }
+
+  /** Items-mode polls serialize committed and pending key admission with webhook claim/deletion. */
+  async startPollItem(input: StartRunInput): Promise<RunRecord | undefined> {
+    return this.withIntake(undefined, () => this.startAdmittedPollItem(input));
+  }
+
+  private async startAdmittedPollItem(input: StartRunInput): Promise<RunRecord | undefined> {
+    const prepared = await this.prepareStart(input);
+    const trigger = nodeById(
+      prepared.version.definition,
+      prepared.thread.invocation.trigger.nodeId,
+    );
+    if (trigger?.kind !== 'trigger' || trigger.config.type !== 'poll' || !trigger.config.items)
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        'Atomic poll admission requires an items-mode trigger',
+      );
+    const run = await this.withPinLock(async () => {
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, {});
+    return Promise.resolve();
+  }
+  commitCreated(run: RunRecord, initialThread: ContextThread): void {
+    this.runs.set(run.id, run);
+    this.initial.set(run.id, initialThread);
+    this.threads.set(run.id, initialThread);
+  }
+  hasTriggerKey(ownerId: string, loopId: string, nodeId: string, key: string): boolean {
+    return [...this.runs.values()].some((run) => {
+      const invocation = this.initial.get(run.id)?.invocation;
+      return (
+        run.ownerId === ownerId &&
+        run.loopId === loopId &&
+        invocation !== undefined &&
+        invocation.trigger.nodeId === nodeId &&
+        invocation.trigger.dedupeKey === key
+      );
+    });
+  }
+  get(runId: string): Promise<RunRecord | undefined> {
+    return Promise.resolve(this.runs.get(runId));
+  }
+  update(runId: string, changes: RunRecordChanges): Promise<RunRecord> {
+    const current = this.runs.get(runId);
+    if (!current) return Promise.reject(new Error(`run ${runId} not found`));
+    return Promise.resolve(this.apply(current, changes));
+  }
+  transition(
+    runId: string,
+    from: readonly RunStatus[],
+    changes: RunRecordChanges,
+    guard?: { waitId?: string; observedSeq?: number },
+  ): Promise<RunRecord | undefined> {
+    const current = this.runs.get(runId);
+    if (!current) return Promise.reject(new Error(`run ${runId} not found`));
+    if (
+      !from.includes(current.status) ||
+      (guard?.waitId !== undefined && current.waiting?.waitId !== guard.waitId) ||
+      (guard?.observedSeq !== undefined && current.lastEventSeq !== guard.observedSeq)
+    )
+      return Promise.resolve(undefined);
+    return Promise.resolve(this.apply(current, changes));
+  }
+  claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined> {
+    const current = this.runs.get(runId);
+    if (!current) return Promise.reject(new Error(`run ${runId} not found`));
+    if (current.cancelRequestedAt || !from.includes(current.status))
+      return Promise.resolve(undefined);
+    return Promise.resolve(this.apply(current, { cancelRequestedAt: at }));
+  }
+  private apply(current: RunRecord, changes: RunRecordChanges): RunRecord {
+    const next: Record<string, unknown> = { ...current };
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === undefined) delete next[key];
+      else next[key] = value;
+    }
+    const record = next as unknown as RunRecord;
+    this.runs.set(current.id, record);
+    return record;
+  }
+  listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((r) => !isTerminal(r.status) || !this.finalized.has(r.id))
+        .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
+    );
+  }
+  markFinalized(runId: string): Promise<void> {
+    this.finalized.add(runId);
+    const run = this.runs.get(runId);
+    if (run) run.finalizedAt = new Date().toISOString();
+    return Promise.resolve();
+  }
+  clearFinalized(runId: string): Promise<void> {
+    this.finalized.delete(runId);
+    const run = this.runs.get(runId);
+    if (run) delete run.finalizedAt;
+    return Promise.resolve();
+  }
+  listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((run) => statuses.includes(run.status))
+        .map(({ id, loopId, versionId }) => ({
+          id,
+          loopId,
+          versionId,
+        })),
+    );
+  }
+  listChildren(parentRunId: string): Promise<RunRecord[]> {
+    return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));
+  }
+  getInitialThread(runId: string): Promise<ContextThread | undefined> {
+    return Promise.resolve(this.initial.get(runId));
+  }
+  getThread(runId: string): Promise<ContextThread | undefined> {
+    return Promise.resolve(this.threads.get(runId));
+  }
+  saveThread(
+    runId: string,
+    thread: ContextThread,
+    seq: number,
+    replayState: ReplayState,
+  ): Promise<void> {
+    this.threads.set(runId, thread);
+    this.checkpoints.set(runId, { seq, replayState });
+    return Promise.resolve();
+  }
+  getThreadCheckpoint(runId: string, atOrBefore?: number): Promise<ThreadCheckpoint | undefined> {
+    const thread = this.threads.get(runId);
+    const checkpoint = this.checkpoints.get(runId);
+    const kept = checkpoint && (atOrBefore === undefined || checkpoint.seq <= atOrBefore);
+    return Promise.resolve(thread && kept ? { thread, ...checkpoint } : undefined);
+  }
+  /** Test helper: drop the thread snapshot to force replay. */
+  dropThreadSnapshot(runId: string): void {
+    this.threads.delete(runId);
+    this.checkpoints.delete(runId);
+import type {
+  ContextThread,
+  DecisionEvidence,
+  JsonPatch,
+  JsonValue,
+  LoopDefinition,
+  Node,
+  NodeKind,
+  NodeOfKind,
+  Outcome,
+  ReturnChannel,
+  RunFailure,
+  RunRecord,
+  WaitSpec,
+  Effort,
+  HarnessId,
+  RunEvent,
+} from '@graphgoblin/contracts';
+import type { TemplateFact } from '@graphgoblin/domain';
+import type { EnginePorts, EventDraft, EngineSettings } from './ports.js';
+
+/** Why a parked node was woken, with the payload that woke it. */
+export interface WakeInfo {
+  reason: 'input' | 'timer' | 'signal' | 'child' | 'timeout' | 'manual';
+  payload?: JsonValue;
+  /** Timer key for timer wakes: `timer`, `timeout`, or `heartbeat`. */
+  key?: string;
+}
+
+export interface ChildStartRequest {
+  /** The subloop node whose visit starts the child; the parent's link names it. */
+  nodeId: string;
+  loopId: string;
+  version: 'latest' | number;
+  seed: Pick<Partial<ContextThread>, 'messages' | 'vars' | 'artifacts' | 'outputs' | 'lastOutput'>;
+  triggerPayload: JsonValue;
+  depthLimit: number;
+}
+
+export interface ChildOutcome {
+  runId: string;
+  status: RunRecord['status'];
+  outcome?: Outcome;
+  result?: JsonValue;
+  /** The child's runtime failure; absent for an authored Failure exit, which is an outcome. */
+  failure?: RunFailure;
+  /** Sequence of the terminal event that supplies this outcome; absent while unfinished. */
+  terminalSeq?: number;
+  thread?: ContextThread;
+}
+
+export type WorkingDirectoryResult =
+  { ok: true; directory: string } | { ok: false; reason: TemplateFact | 'empty-path' };
+
+/** Services the executor hands to handlers. Everything that touches the outside world goes through here. */
+export interface HandlerServices {
+  /** Render a Liquid template against the thread view plus extras. */
+  render(template: string, extras?: Record<string, unknown>): Promise<string>;
+  /** Append events to the run log right away (progress and usage). Decision completion is appended atomically by the executor. */
+  record(draft: EventDraft): Promise<void>;
+  /** Resolve the model and effort for an inferencing or decision step. */
+  resolveModel(
+    harness: HarnessId,
+    model?: string,
+    effort?: Effort,
+  ): Promise<{ model: string; effort: Effort }>;
+  /**
+   * Start a child run and return its id. The child and this run's `child_run.started` commit
+   * together (#320), so the visit's child is in the log before this returns. The parent then parks
+   * on it.
+   */
+  startChild(request: ChildStartRequest): Promise<string>;
+  /** Read a finished child's outcome and final thread. */
+  childOutcome(childRunId: string): Promise<ChildOutcome>;
+  /**
+   * Resume a child whose runtime failure is resumable, on behalf of this run (an explicit resume
+   * of this run re-executes its subloop node, which resumes the child as an inline node would be
+   * re-executed), then read the child again.
+   */
+  resumeChild(childRunId: string): Promise<ChildOutcome>;
+  /** Events of this run so far. */
+  events(): Promise<readonly RunEvent[]>;
+  /** Current depth of this run in the subloop tree (0 for a top-level run). */
+  depth(): Promise<number>;
+  /** Working directory for this run, resolved once per run. */
+  workingDirectory(): Promise<WorkingDirectoryResult>;
+  /** Generate ids and read the clock. */
+  newId(): string;
+  now(): string;
+}
+
+export interface NodeContext<K extends NodeKind = NodeKind> {
+  node: NodeOfKind<K>;
+  config: NodeOfKind<K>['config'];
+  definition: LoopDefinition;

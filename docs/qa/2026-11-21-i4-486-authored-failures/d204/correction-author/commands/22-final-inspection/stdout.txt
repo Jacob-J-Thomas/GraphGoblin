@@ -1,0 +1,627 @@
+ docs/05-execution-engine.md                        |  2 +
+ packages/engine/src/failure-publication.ts         | 15 +++-
+ .../engine/src/handlers/inference-context.test.ts  | 82 ++++++++++++++--------
+ packages/engine/src/handlers/inference-context.ts  | 14 +++-
+ packages/engine/src/run-manager.ts                 | 22 +++---
+ 5 files changed, 92 insertions(+), 43 deletions(-)
+ M docs/05-execution-engine.md
+ M packages/engine/src/failure-publication.ts
+ M packages/engine/src/handlers/inference-context.test.ts
+ M packages/engine/src/handlers/inference-context.ts
+ M packages/engine/src/run-manager.ts
+?? packages/engine/src/handlers/inference-workspace.test.ts
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index 054d67bd..9275ca7d 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -483,6 +483,8 @@ For a newly recognized authored failure, the failure message identifies the fiel
+ 
+ A parent subloop evaluates its seed before child creation and maps its output after observing the child's terminal sequence. A failed parent mapping keeps that completion in the event log. The parent owns the error and the child retains its actual status. When a child itself fails, the existing child link leads to its authoritative failure and any inference submission evidence.
+ 
++An unexpected failure rerendering a canonical system prompt retains its diagnostic only in private server logs correlated by run and inference node, including when prior task provenance is attached. The error's enumerable properties and serialized public failure omit that diagnostic. This internal renderer fault remains resumable and occurs before a new provider turn is recorded or invoked; newly typed authored-template and expression failures still omit raw evaluator diagnostics from logs.
++
+ Provider exceptions from decision evaluation use a shared fixed summary instead of raw diagnostics. The catch-all also sanitizes errors carrying `DECIDER_*`: it stores a recognized code and the selected strategy when available, without provider messages or stacks. Engine provider warnings contain only safe name, code, numeric HTTP status, and run/node/strategy identifiers. Newly recorded ordinary internal defects expose the safe `INTERNAL_ERROR` message; their raw diagnostics are in server logs correlated by run and node when available. Historical rows and events retain their earlier content.
+ 
+ Resuming a failed run re-executes the failed node using the crash-recovery rules above. A failure that came from a subloop child carries the child's class and resumability; resuming the parent resumes that child in place (see "Child failures follow the inline rules").
+diff --git a/packages/engine/src/failure-publication.ts b/packages/engine/src/failure-publication.ts
+index 6b4890ce..6a1fe259 100644
+--- a/packages/engine/src/failure-publication.ts
++++ b/packages/engine/src/failure-publication.ts
+@@ -2,10 +2,21 @@ import { SlugSchema, UlidSchema, type JsonValue, type RunFailure } from '@graphg
+ import { deciderFailure } from './decider-errors.js';
+ import { describeError, RunFailureError } from './errors.js';
+ 
+-/** Engine-owned public copy for an internal fault with no raw diagnostic fields. */
++/** Engine-owned public copy; the optional diagnostic is private and never serialized. */
+ export class InternalRunFailureError extends RunFailureError {
+-  constructor(message: string, options: RunFailureError['options']) {
++  #diagnostic: ReturnType<typeof errorDiagnostic> | undefined;
++
++  constructor(
++    message: string,
++    options: RunFailureError['options'],
++    diagnostic?: ReturnType<typeof errorDiagnostic>,
++  ) {
+     super('INTERNAL_ERROR', message, options);
++    this.#diagnostic = diagnostic;
++  }
++
++  get diagnostic() {
++    return this.#diagnostic;
+   }
+ }
+ 
+diff --git a/packages/engine/src/handlers/inference-context.test.ts b/packages/engine/src/handlers/inference-context.test.ts
+index 7fab4510..3f3be197 100644
+--- a/packages/engine/src/handlers/inference-context.test.ts
++++ b/packages/engine/src/handlers/inference-context.test.ts
+@@ -32,6 +32,7 @@ const window = (limit: number) => ({
+   profile: 'test/byte-ceiling',
+   fits: (prompt: string) => Buffer.byteLength(prompt) <= limit,
+ });
++
+ async function options() {
+   const thread = fixture();
+   return {
+@@ -176,39 +177,60 @@ it.each([1, 2])(
+       expect(render).toHaveBeenCalledTimes(call);
+       expect(error).toMatchObject({ code: 'INTERNAL_ERROR', options: { resumable: true } });
+       expect(JSON.stringify(error)).not.toContain('private canonical failure');
++      expect(JSON.stringify(Object.assign({}, error))).not.toContain('private canonical failure');
+     } finally {
+       render.mockRestore();
+     }
+   },
+ );
+ 
+-it('publishes a canonical rerender fault on the current inference node before provider invocation', async () => {
+-  const engine = await createTestEngine();
+-  const harness: HarnessPort = engine.ports.harness;
+-  const version = engine.publish(
+-    domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
+-  );
+-  // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
+-  const render = vi.spyOn(domain, 'renderTemplate');
+-  try {
+-    harness.contextWindow = () => {
+-      render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
+-      return Promise.resolve(window(400));
+-    };
+-    const run = await engine.runToIdle(version.loopId, payload);
+-    expect(render).toHaveBeenCalled();
+-    expect(run.failure).toEqual({
+-      code: 'INTERNAL_ERROR',
+-      nodeId: 'respond',
+-      resumable: true,
+-      message: 'An unexpected error interrupted the run. See the server logs for this run.',
+-    });
+-    expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
+-      { failure: run.failure },
+-    ]);
+-    expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
+-    expect(engine.ports.harness.started).toHaveLength(0);
+-  } finally {
+-    render.mockRestore();
+-  }
+-});
++it.each([1, 2])(
++  'privately logs canonical rerender %i on the current inference node before provider invocation',
++  async (call) => {
++    const engine = await createTestEngine();
++    const harness: HarnessPort = engine.ports.harness;
++    const version = engine.publish(
++      domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
++    );
++    // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
++    const original = domain.renderTemplate;
++    const render = vi.spyOn(domain, 'renderTemplate');
++    try {
++      harness.contextWindow = () => {
++        if (call === 2) render.mockImplementationOnce(original);
++        render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
++        return Promise.resolve(window(400));
++      };
++      const run = await engine.runToIdle(version.loopId, payload);
++      expect(render).toHaveBeenCalled();
++      expect(run.failure).toEqual({
++        code: 'INTERNAL_ERROR',
++        nodeId: 'respond',
++        resumable: true,
++        message: 'An unexpected error interrupted the run. See the server logs for this run.',
++      });
++      expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
++        { failure: run.failure },
++      ]);
++      expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
++      expect(engine.ports.harness.started).toHaveLength(0);
++      expect(engine.ports.harness.resumed).toHaveLength(0);
++      expect(JSON.stringify([run, engine.events(run.id)])).not.toContain(
++        'private renderer diagnostic',
++      );
++      expect(engine.ports.logger.lines).toContainEqual({
++        level: 'error',
++        msg: 'node failed',
++        obj: {
++          runId: run.id,
++          nodeId: 'respond',
++          failure: run.failure,
++          error: expect.objectContaining({ message: 'private renderer diagnostic' }),
++        },
++      });
++    } finally {
++      render.mockRestore();
++      engine.manager.stop();
++    }
++  },
++);
+diff --git a/packages/engine/src/handlers/inference-context.ts b/packages/engine/src/handlers/inference-context.ts
+index f4645f6c..7d9b971a 100644
+--- a/packages/engine/src/handlers/inference-context.ts
++++ b/packages/engine/src/handlers/inference-context.ts
+@@ -6,7 +6,11 @@ import {
+   SYSTEM_CHAT_SCRIPT_PROMPT,
+   SYSTEM_CHAT_SUBLOOP_PROMPT,
+ } from '@graphgoblin/domain';
+-import { InternalRunFailureError, INTERNAL_FAILURE_MESSAGE } from '../failure-publication.js';
++import {
++  errorDiagnostic,
++  InternalRunFailureError,
++  INTERNAL_FAILURE_MESSAGE,
++} from '../failure-publication.js';
+ import { RunFailureError } from '../errors.js';
+ import type { HarnessPort } from '../ports.js';
+ 
+@@ -27,8 +31,12 @@ function overflow(): never {
+ 
+ function renderCanonical(template: string, thread: ContextThread): Promise<string> {
+   const view = { ...threadView(thread) };
+-  return renderTemplate(template, view).catch(() => {
+-    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, { resumable: true });
++  return renderTemplate(template, view).catch((error: unknown) => {
++    throw new InternalRunFailureError(
++      INTERNAL_FAILURE_MESSAGE,
++      { resumable: true },
++      errorDiagnostic(error),
++    );
+   });
+ }
+ 
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index aae3a8d5..4ad5fd9a 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -2670,11 +2670,15 @@ export class RunManager {
+         ) {
+           const prior = visitTurn(events, nodeId).pending;
+           if (failure instanceof InternalRunFailureError) {
+-            failure = new InternalRunFailureError(failure.message, {
+-              ...failure.options,
+-              nodeId: failure.options.nodeId ?? nodeId,
+-              ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
+-            });
++            failure = new InternalRunFailureError(
++              failure.message,
++              {
++                ...failure.options,
++                nodeId: failure.options.nodeId ?? nodeId,
++                ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
++              },
++              failure.diagnostic,
++            );
+           } else if (prior && !failure.inference) {
+             failure = { ...failure, inference: provenance(prior) };
+           }
+@@ -2690,9 +2694,11 @@ export class RunManager {
+               runId,
+               nodeId,
+               failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
+-              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+-                ? { error: errorDiagnostic(error) }
+-                : {}),
++              ...(failure instanceof InternalRunFailureError && failure.diagnostic
++                ? { error: failure.diagnostic }
++                : failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
++                  ? { error: errorDiagnostic(error) }
++                  : {}),
+             },
+             'node failed',
+           );
+packages/engine/src/prompt-provenance.test.ts:70:      expect.objectContaining({ submission: 'submitted', marker: 'fake.accepted' }),
+packages/engine/src/prompt-provenance.test.ts:140:        .every((x) => !x.marker),
+packages/engine/src/prompt-provenance.test.ts:354:    const logged = e.ports.logger.lines.find(
+packages/engine/src/prompt-provenance.test.ts:523:              value: { kind: 'expression', jsonata: 'vars.flag ? $error("SECRET") : 1' },
+packages/engine/src/handlers/flow.test.ts:41:  for (const data of [run.failure, e.ports.logger.lines])
+packages/engine/src/handlers/flow.test.ts:399:          Object.assign(new Error('private-provider-marker'), {
+packages/engine/src/handlers/flow.test.ts:400:            name: 'private-provider-marker',
+packages/engine/src/handlers/flow.test.ts:407:      for (const data of [r, e.events(r.id), e.ports.logger.lines])
+packages/engine/src/handlers/flow.test.ts:408:        expect(JSON.stringify(data)).not.toContain('private-provider-marker');
+packages/engine/src/handlers/flow.test.ts:624:  it('passes the thread on stdin, renders args, resolves secrets, and stores JSON stdout', async () => {
+packages/engine/src/handlers/flow.test.ts:625:    const engine = await createTestEngine({}, { secrets: { token: 's3cret' } });
+packages/engine/src/handlers/flow.test.ts:655:          env: { TOKEN: 'secret:token', PLAIN: 'x' },
+packages/engine/src/handlers/flow.test.ts:746:  it('routes by exit code, ignores stdout when told, and fails on unmapped codes, timeouts, and missing secrets', async () => {
+packages/engine/src/handlers/flow.test.ts:763:            env: { K: 'secret:nope' },
+packages/engine/src/handlers/flow.test.ts:786:    expect((await engine.runToIdle(version.loopId)).failure?.code).toBe('SECRET_MISSING');
+packages/engine/src/handlers/flow.test.ts:788:    const withSecret = await createTestEngine({}, { secrets: { nope: 'v' } });
+packages/engine/src/handlers/flow.test.ts:855:    let secretReads = 0;
+packages/engine/src/handlers/flow.test.ts:856:    e.ports.secrets.resolve = () => {
+packages/engine/src/handlers/flow.test.ts:857:      secretReads += 1;
+packages/engine/src/handlers/flow.test.ts:865:        config: { command: 'effect', args: ['ok', source], env: { TOKEN: 'secret:key' } },
+packages/engine/src/handlers/flow.test.ts:872:    expect(secretReads).toBe(1);
+packages/engine/src/handlers/flow.test.ts:879:  it('checks an unresolved previous dispatch before workspace, secrets or arguments', async () => {
+packages/engine/src/handlers/flow.test.ts:890:          env: { TOKEN: 'secret:missing' },
+packages/engine/src/handlers/flow.test.ts:1271:    'keeps external secret errors outside authored attribution (%s)',
+packages/engine/src/handlers/flow.test.ts:1275:      e.ports.secrets.resolve = () => Promise.reject(error);
+packages/engine/src/handlers/flow.test.ts:1278:          singleNodeLoop('external-secret', {
+packages/engine/src/handlers/flow.test.ts:1285:              env: { TOKEN: 'secret:key' },
+packages/engine/src/handlers/flow.test.ts:1324:    const engine = await createTestEngine({}, { secrets: { hook: 'hs' } });
+packages/engine/src/handlers/flow.test.ts:1346:            { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
+packages/engine/src/handlers/flow.test.ts:1363:    // contract: the signed one resolves its secret first.
+packages/engine/src/handlers/flow.test.ts:1369:      engine.ports.delivery.webhooks.find((w) => w.url === 'https://example.test/hook')?.secret,
+packages/engine/src/handlers/inference.test.ts:516:            .some((x) => x.marker),
+packages/engine/src/handlers/inference.test.ts:520:      expect(JSON.stringify([run.failure, e.ports.logger.lines])).not.toContain(
+packages/engine/src/handlers/inference.test.ts:653:  const genuine = new TemplateError('external marker');
+packages/engine/src/handlers/inference.test.ts:656:    Object.assign(new Error('external marker'), { name: 'TemplateError' }),
+packages/engine/src/handlers/inference.test.ts:657:    { code: 'TEMPLATE_ERROR', message: 'external marker' },
+packages/engine/src/handlers/inference.test.ts:768:        if (harnessError) expect(run.failure?.message).toContain('external marker');
+import * as domain from '@graphgoblin/domain';
+import { describe, expect, it, vi } from 'vitest';
+import type { PromptProvenance } from '@graphgoblin/contracts';
+import { fakeUlid, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
+import { RunManager } from '../run-manager.js';
+import { createInitialThread } from '../thread.js';
+import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
+import type { HandlerRegistry } from '../handler.js';
+import { defaultHandlers } from './index.js';
+import { admitInferencePrompt } from './inference-context.js';
+
+const cases = [
+  {
+    template: 'private-workspace-marker\n{% invalid_private %}',
+    cause: 'The template could not be parsed at line 2, column 1. Check its Liquid syntax.',
+  },
+  {
+    template: '{% include "private-workspace-marker" %}',
+    cause:
+      'The template could not be rendered at line 1, column 1. Check its filters and input values.',
+  },
+  {
+    template: '\t {{ vars.missing }}\r\n',
+    cause: 'The template rendered to an empty path. Supply a nonempty directory.',
+  },
+];
+
+function definition(template: string) {
+  const loop = singleNodeLoop('inference workspace failure', {
+    id: 'infer',
+    kind: 'inference',
+    label: 'Infer',
+    config: { model: 'gpt-6-luna', effort: 'low', prompt: { template: 'Original task' } },
+  });
+  loop.settings = { workingDirectory: { kind: 'template', template } };
+  return loop;
+}
+
+describe('inference workspace preparation through public RunManager methods', () => {
+  it.each(cases)(
+    'rejects the workspace before any provider intent: $cause',
+    async ({ template, cause }) => {
+      const engine = await createTestEngine();
+      try {
+        const run = await engine.runToIdle(engine.publish(definition(template)).loopId);
+        expect(run.failure).toEqual({
+          code: 'TEMPLATE_ERROR',
+          nodeId: 'infer',
+          resumable: false,
+          message: `Working directory template failed. ${cause}`,
+          details: {
+            boundary: 'settings.workingDirectory.template',
+            cause: { code: 'TEMPLATE_ERROR', message: cause },
+          },
+        });
+        expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
+          { failure: run.failure },
+        ]);
+        expect(
+          JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines]),
+        ).not.toContain('private-workspace-marker');
+        expect(engine.ports.workspace.resolved).toEqual([]);
+        expect(engine.ports.harness.started).toEqual([]);
+        expect(engine.ports.harness.resumed).toEqual([]);
+        expect(engine.ports.sessions.rows).toEqual([]);
+        expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
+        await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
+          code: 'FAILURE_NOT_RESUMABLE',
+        });
+      } finally {
+        engine.manager.stop();
+      }
+    },
+  );
+});
+
+// Synthetic durable history, seeded only through supported repository/event ports. The
+// definition is schema-valid, but its workspace has not been evaluated by this process.
+// This establishes recovery behavior, not a naturally occurring change in pinned source.
+async function storedTask(
+  template: string,
+  submission: PromptProvenance['submission'],
+  usable = true,
+  handlers?: HandlerRegistry,
+) {
+  const engine = await createTestEngine();
+  engine.manager.stop();
+  const version = engine.publish(definition(template));
+  const runId = fakeUlid('workspace-reentry-run');
+  const invocationId = fakeUlid('workspace-reentry-invocation');
+  const visitId = runId + ':3';
+  const turnId = fakeUlid('workspace-reentry-turn');
+  const sessionId = usable ? 'recorded-session' : undefined;
+  const inference: PromptProvenance = {
+    visitId,
+    turnId,
+    promptKind: 'authored',
+    submission,
+    ...(sessionId ? { sessionId } : {}),
+  };
+  await engine.ports.runs.create(
+    {
+      id: runId,
+      ownerId: 'local',
+      loopId: version.loopId,
+      versionId: version.id,
+      invocationId,
+      pinned: samplePin(),
+      status: 'running',
+      currentNodeId: 'infer',
+      iteration: 1,
+      createdAt: FIXTURE_TS,
+      startedAt: FIXTURE_TS,
+      lastEventSeq: 0,
+    },
+    createInitialThread({
+      runId,
+      loopId: version.loopId,
+      versionId: version.id,
+      invocation: {
+        id: invocationId,
+        source: 'manual.api',
+        trigger: {
+          nodeId: 'start',
+          kind: 'manual',
+          payload: null,
+          receivedAt: FIXTURE_TS,
+        },
+      },
+    }),
+  );
+  await engine.ports.events.append(runId, [
+    { type: 'run.queued', versionId: version.id, pinned: samplePin() },
+    { type: 'run.started', attempt: 1 },
+    { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'fixture' },
+    {
+      type: 'harness.turn',
+      nodeId: 'infer',
+      visitId,
+      turnId,
+      harness: 'codex',
+      promptKind: 'authored',
+      prompt: 'Original task',
+    },
+    ...(sessionId
+      ? [
+          {
+            type: 'harness.session' as const,
+            nodeId: 'infer',
+            harness: 'codex' as const,
+            sessionId,
+            mode: 'fresh' as const,
+          },
+        ]
+      : []),
+    {
+      type: 'harness.submission',
+      nodeId: 'infer',
+      visitId,
+      turnId,
+      submission,
+      ...(submission === 'delivery-uncertain' && usable
+        ? { marker: 'fake.accepted' as const }
+        : {}),
+    },
+  ]);
+  await engine.ports.sessions.upsert({
+    runId,
+    nodeId: 'infer',
+    attempt: 1,
+    harness: 'codex',
+    status: 'active',
+    updatedAt: FIXTURE_TS,
+    ...(sessionId ? { sessionId } : {}),
+    model: 'gpt-6-luna',
+    effort: 'low',
+  });
+  return {
+    engine,
+    runId,
+    inference,
+    manager: new RunManager(engine.ports, engine.settings, handlers),
+  };
+}
+
+it('preserves the private canonical diagnostic when reconstruction attaches stored prior task provenance', async () => {
+  const marker = 'private reconstructed canonical diagnostic';
+  const thread = sampleThread();
+  thread.invocation.trigger.payload = {
+    protocol: 'graphgoblin.chat.v1',
+    conversationId: fakeUlid('canonical-reconstruction'),
+    requestId: '33d911ae-7293-4acb-ab74-910e67293f1d',
+    turn: 1,
+    history: [],
+    input: { kind: 'text', text: 'Required question' },
+  };
+  // Synthetic B17 reachability: real pending turns disable canonical history trimming.
+  // The handler fixture invokes that pure seam against already durable task history.
+  const handlers: HandlerRegistry = {
+    ...defaultHandlers(),
+    inference: {
+      kind: 'inference',
+      async execute() {
+        await admitInferencePrompt({
+          prompt: 'oversized prompt',
+          template: domain.SYSTEM_CHAT_TEXT_PROMPT,
+          thread,
+          allowHistoryTrim: true,
+          window: {
+            profile: 'test/reconstruction',
+            contextTokens: 4096,
+            outputReserveTokens: 1024,
+            fits: () => false,
+          },
+        });
+        throw new Error('synthetic canonical renderer unexpectedly succeeded');
+      },
+    },
+  };
+  const { engine, manager, runId, inference } = await storedTask(
+    cases[2]!.template,
+    'definitely-not-submitted',
+    true,
+    handlers,
+  );
+  const before = engine.events(runId).filter((event) => event.type.startsWith('harness.'));
+  const render = vi
+    .spyOn(domain, 'renderTemplate')
+    .mockRejectedValueOnce(new domain.TemplateError(marker));
+  try {
+    await manager.start();
+    await manager.waitForIdle();
+    const run = await engine.ports.runs.get(runId);
+    expect(run?.failure).toEqual({
+      code: 'INTERNAL_ERROR',
+      nodeId: 'infer',
+      resumable: true,
+      inference,
+      message: 'An unexpected error interrupted the run. See the server logs for this run.',
+    });
+    expect(run?.failure?.inference?.retry).toBeUndefined();
+    expect(engine.ports.logger.lines).toContainEqual({
+      level: 'error',
+      msg: 'node failed',
+      obj: {
+        runId,
+        nodeId: 'infer',
+        failure: run?.failure,
+        error: expect.objectContaining({ message: marker }),
+      },
+    });
+    expect(JSON.stringify([run, engine.events(runId)])).not.toContain(marker);
+    expect(engine.events(runId).filter((event) => event.type.startsWith('harness.'))).toEqual(
+      before,
+    );
+    expect(engine.ports.harness.started).toEqual([]);
+    expect(engine.ports.harness.resumed).toEqual([]);
+  } finally {
+    render.mockRestore();
+    manager.stop();
+  }
+});
+
+it.each(
+  cases.flatMap((item) =>
+    (['definitely-not-submitted', 'delivery-uncertain'] as const).map((submission) => ({
+      ...item,
+      submission,
+    })),
+  ),
+)(
+  'retains stored $submission evidence when the inference workspace fails: $cause',
+  async ({ template, submission, cause }) => {
+    const { engine, manager, runId, inference } = await storedTask(template, submission);
+    const before = engine.events(runId);
+    const rows = structuredClone(engine.ports.sessions.rows);
+    try {
+      await manager.start();
+      await manager.waitForIdle();
+      const run = await engine.ports.runs.get(runId);
+      expect(run?.failure).toEqual({
+        code: 'TEMPLATE_ERROR',
+        nodeId: 'infer',
+        resumable: false,
+        inference,
+        message: `Working directory template failed. ${cause}`,
+        details: {
+          boundary: 'settings.workingDirectory.template',
+          cause: { code: 'TEMPLATE_ERROR', message: cause },
+        },
+      });
+      expect(run?.failure?.inference?.retry).toBeUndefined();
+      expect(
+        engine
+          .events(runId)
+          .filter(
+            (event) =>
+              event.type === 'harness.turn' ||
+              event.type === 'harness.submission' ||
+              event.type === 'harness.session',
+          ),
+      ).toEqual(
+        before.filter(
+          (event) =>
+            event.type === 'harness.turn' ||
+            event.type === 'harness.submission' ||
+            event.type === 'harness.session',
+        ),
+      );
+      expect(engine.events(runId).findLast((event) => event.type === 'run.failed')).toMatchObject({
+        failure: run?.failure,
+      });
+      expect(engine.ports.sessions.rows).toEqual(rows);
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.harness.started).toEqual([]);
+      expect(engine.ports.harness.resumed).toEqual([]);
+      expect(JSON.stringify([run, engine.events(runId), engine.ports.logger.lines])).not.toContain(
+        'private-workspace-marker',
+      );
+      await expect(manager.resume(runId)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+    } finally {
+      manager.stop();
+    }
+  },
+);
+
+it.each([
+  { submission: 'delivery-uncertain' as const, usable: false, code: 'HARNESS_DELIVERY_UNCERTAIN' },
+  { submission: 'session-missing' as const, usable: true, code: 'HARNESS_SESSION_MISSING' },
+])(
+  'keeps the earlier $code refusal ahead of workspace evaluation',
+  async ({ submission, usable, code }) => {
+    const { engine, manager, runId, inference } = await storedTask(
+      cases[0]!.template,
+      submission,
+      usable,
+    );
+    const observer = vi.spyOn(domain, 'observeTemplate');
+    const rows = structuredClone(engine.ports.sessions.rows);
+    const before = engine.events(runId).filter((event) => event.type.startsWith('harness.'));
+    try {
+      await manager.start();
+      await manager.waitForIdle();
+      expect((await engine.ports.runs.get(runId))?.failure).toMatchObject({
+        code,
+        resumable: false,
+        inference,
+      });
+      expect(observer).not.toHaveBeenCalled();
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.sessions.rows).toEqual(rows);
+      expect(engine.events(runId).filter((event) => event.type.startsWith('harness.'))).toEqual(
+        before,
+      );
+      expect(engine.ports.harness.started).toEqual([]);
+      expect(engine.ports.harness.resumed).toEqual([]);
+    } finally {
+      observer.mockRestore();
+      manager.stop();
+    }
+  },
+);

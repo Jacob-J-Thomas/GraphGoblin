@@ -1,0 +1,1026 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-qa/GraphGoblin/packages/infrastructure
+
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > preserves binary bytes, hashes the bounded stream, and derives an absolute internal path 43ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > creates private storage and tightens an existing directory before writing 20ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > publishes a complete file after streaming and excludes concurrent same-ID writes and cleanup 22ms
+ × src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks 35ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "../outside" 3ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01arz3ndektsv4rrffq69g5fa0" 4ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\n" 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\\x" 3ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "OOOOOOOOOOOOOOOOOOOOOOOOOO" 3ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "" 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 0 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit -1 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 1.5 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit Infinity 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 10485761 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > accepts the exact size limit, and stops an oversized stream before reading more bytes 24ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects empty bodies and empty streams without leaving files 12ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > cleans up an interrupted body and preserves its cause behind a bounded message 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > pins both real immutable upstream assets and MIT model licensing 58ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports ENOSPC during publication, removes temporary bytes, and allows a retry 19ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > does not hide publication failures when best-effort temporary cleanup also fails 9ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > leaves a failed lock cleanup for the protected orphan scanner without losing successful bytes 13ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports unexpected exclusive-lock and destination inspection errors 7ms
+ × src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\chat-audio'
+ × src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink 21ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports a failed exact deletion without recursively removing directories 11ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > does not create a directory when there are no uploads 2ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > fingerprints actual files, notices replacement, and never treats identity as licence proof 187ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects invalid local relative 10ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects invalid local null 12ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects invalid local missing 10ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects invalid local directory 10ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects invalid local empty 13ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: missing 9ms
+ × src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: symlink 19ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav-link'
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: directory 9ms
+ × src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata 33ms
+   → ENOENT: no such file or directory, open 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-vd0LAA\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+'
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > rechecks the current file before deletion and tolerates concurrent exact deletion 31ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > closes a cursor after a filesystem failure and can start another bounded scan 14ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > preserves the cleanup failure if closing its directory cursor also fails 15ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > releases an unfinished directory cursor explicitly at shutdown 13ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 0 2ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit -1 2ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 1.5 2ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 1001 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit Infinity 2ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff NaN 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff Infinity 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff -Infinity 2ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: short 9ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: oversized 23ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: invalid 15ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 0 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 4 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 8 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 12 before cloud dispatch 7ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 16 before cloud dispatch 7ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 20 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 22 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 24 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 28 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 32 before cloud dispatch 9ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 34 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 36 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > refuses malformed canonical WAV header at byte 40 before cloud dispatch 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects misaligned or oversized PCM length 1 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects misaligned or oversized PCM length 3840002 8ms
+ ✓ src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects misaligned or oversized PCM length 10485760 8ms
+ × src/process/voice.test.ts > private runtime qualification > requires a matching operator record and all current dependency hashes 15ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > invalidates changed runtime binary and symlink target identities 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-public 17ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-public 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-link 17ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-link 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: bad-json 18ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: too-large 14ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: empty 14ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: directory 26ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 0 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 1 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 2 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 3 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 4 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 5 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 6 24ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 7 11ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 8 11ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 9 11ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 10 14ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 11 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 12 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 13 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 14 18ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 15 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 16 11ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects selection of a different binary, nonexecutables and invalid paths 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: added 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: removed 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: type 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: duplicate 30ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: target 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: hash 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: directory-path 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 0 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 1 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 2 13ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 3 23ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 4 16ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-alias.so'
+ × src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 5 18ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-alias.so'
+ ✓ src/process/voice.test.ts > private runtime qualification > qualifies only exact approved model bytes and rejects changed assets 14ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > invokes the selected executable directly with canonical WAV, no inherited secrets and bounded output/deadline 24ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 0 24ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 1 14ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 2 14ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 3 17ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 4 16ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 5 15ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 6 17ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > refuses unsuccessful or truncated process outcomes 7 15ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > does not accept or truncate invalid transcript 0 14ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > does not accept or truncate invalid transcript 1 17ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > does not dispatch cancelled or invalid audio and sanitizes process exceptions 25ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > preserves unsafe native outcomes even when cancellation also arrives 0 19ms
+ ✓ src/process/voice.test.ts > direct bounded local transcription > preserves unsafe native outcomes even when cancellation also arrives 1 17ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > uses only the explicit voice key and fixed native multipart endpoint/model, preserving returned speech 163ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > sanitizes HTTP 401 with no retry 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > sanitizes HTTP 429 with no retry 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > sanitizes HTTP 302 with no retry 11ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > sanitizes HTTP 500 with no retry 12ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > rejects unusable keys without a request 0 8ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > rejects unusable keys without a request 1 8ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > rejects unusable keys without a request 2 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 0 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 1 8ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 2 7ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 3 15ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 4 11ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 5 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 6 10ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > refuses invalid/empty/long transcript 7 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds all provider response forms 0 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds all provider response forms 1 10ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds all provider response forms 2 8ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds all provider response forms 3 9ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds all provider response forms 4 12ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > never sends preaborted audio and treats lost acknowledgement/read cancellation as uncertain, without a retry 14ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > bounds a fetch adapter that ignores its cancellation signal 10ms
+ ✓ src/process/voice.test.ts > fixed OpenAI file transcription > sanitizes failed stream reads and failed cancellation without exposing provider data 11ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > never starts build tools or downloads for missing/unqualified runtimes 11ms
+ × src/process/voice.test.ts > bounded allowlisted model installation > streams tiny.en into an exclusively created private file and atomically commits verified bytes 27ms
+   → expected 438 to be 384 // Object.is equality
+ × src/process/voice.test.ts > bounded allowlisted model installation > streams base.en into an exclusively created private file and atomically commits verified bytes 21ms
+   → expected 438 to be 384 // Object.is equality
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > uses an already valid model without network traffic 17ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: bad-hash 24ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: short 21ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: overflow 21ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: length 20ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: bad-length 22ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: status 17ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: no-body 16ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > retains the previous model and cleans every failed partial file: network 20ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > exposes real progress, deduplicates concurrent starts, and cancels a stalled stream with cleanup 73ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rechecks runtime trust before committing a download 19ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > enforces disk headroom before network traffic 15ms
+ × src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private voice directories 11ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\voice'
+ × src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private models directories 12ms
+   → EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\voice\models'
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects: https://unapproved.example/model 24ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects: http://huggingface.co/model 26ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects: https://user:password@huggingface.co/model 18ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects: https://huggingface.co:444/model 25ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects:  19ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unsafe or unbounded redirects: loop 23ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > accepts only the fixed HTTPS model host and reviewed HF asset CDN redirects 21ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > rejects unapproved model identifiers and preaborted operations 9ms
+ ✓ src/process/voice.test.ts > bounded allowlisted model installation > cleans model partial files even if the download stream fails to cancel 15ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > seeds GPT-6.1 Terra enabled with medium default immediately after Sol 6.1 265ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > adds only missing Terra to an existing catalog and preserves owner switches, defaults and custom entries 127ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > seeds once, joins classification through every loop read, protects save/publication/deletion and reports corruption 251ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > does not publish a system draft changed after its validated read 97ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > clones the current publication atomically, retries one claim, rejects competing/expired/revoked identities and keeps loops 100ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > does not create orphan devices or loops when seed is absent, unpublished, invalid, or token is already owned 87ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > atomically admits one run/event/turn/counter for concurrent retry and rejects body changes, stale context and busy turns 146ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > refuses inconsistent canonical attachments and invalid pinned boundaries before mutation 136ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > permits canonical generic text and verifies native replay source input before retaining its authority 178ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > recovers exact complete native admission after commit acknowledgement loss, without replay or queued re-notification 166ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > refuses acknowledgement recovery when complete committed native proof is missing 154ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > rolls back admission on a failing chat write and leaves neither native run nor turn 97ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > checks ownership and live revocation at commit, including auth-to-admission races 156ms
+ ✓ src/sqlite/chat.test.ts > durable chat identities > retains durable request tombstones after deletion and never re-executes the old key 87ms
+ × src/sqlite/chat.test.ts > durable chat identities > returns an acknowledged admission after closing/reopening the store and does not repeat seeds or pair claims 248ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-restart-n8Jim1\db.sqlite'
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > reserves quota before bytes, permits three ready uploads, expires abandoned work and retries exact-ID cleanup until acknowledged 87ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > reports the same audio quota refusal when the gateway has eight in-flight uploads 83ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > reserves worst-case bytes across retained consumed uploads and enforces audience and gateway byte quotas 80ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > redacts credential-bearing driver errors and throttles the durable device last-seen timestamp 79ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > rejects invalid metadata, stale reservation and foreign/unknown access without exposing paths 70ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > refuses stale, foreign or changed audio metadata at native commit without consuming it 121ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > readback of lost commit acknowledgement requires and preserves the consumed audio link 90ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > retains a Windows audio path encoded in a surviving initialThread until its final history is deleted 122ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > retains a Windows audio path encoded in a surviving threadSnapshot until its final history is deleted 113ms
+ ✓ src/sqlite/chat.test.ts > audio metadata lifecycle > claims bytes exactly once, validates immutable metadata, retains consumed files for native replays, then queues final deletion 109ms
+ ✓ src/sqlite/chat.test.ts > durable audio upload identities > scopes identity, conflicts changed digests and preserves retired tombstones 77ms
+ ✓ src/sqlite/chat.test.ts > durable audio upload identities > marks interrupted uploads failed on restart without resuming them 71ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > enables previously blocked Fable once, then preserves owner switches and every other row 5875ms
+ × src/sqlite/catalog.test.ts > model catalog source migration and repository > reads current-format base catalog before discovery migrations without joining new tables 5848ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-pre-discovery-catalog-QwgQq2\catalog.db-shm'
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > adds Sonnet 5.5 and Haiku 5.5 enabled to an existing store and keeps every owner switch 149ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > adds source on a fresh database and defaults direct legacy inserts to harness 91ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > preserves seeded, edited, and hand-added 1.0.0 rows, then refreshes only seed metadata 1161ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > runs the previous release without SQL rollback and retains provenance on re-upgrade 756ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > never refreshes a LiteLLM row that shares a seed key and toggles either source 86ms
+ ✓ src/sqlite/catalog.test.ts > model catalog source migration and repository > can roll back the column and migration record without losing model data 334ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 52 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:106:5
+    104|     const outside = join(dataDir, 'outside');
+    105|     await fs.writeFile(outside, 'untouched');
+    106|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    107|     await expect(store.write(id('2'), Buffer.of(2))).rejects.toMatchOb…
+    108|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\outside', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-nkKcMg\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/52]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\chat-audio'
+ ❯ src/fs/chat-audio.test.ts:230:5
+    228|     const outside = join(dataDir, 'outside');
+    229|     await fs.mkdir(outside);
+    230|     await fs.symlink(outside, directory, 'dir');
+       |     ^
+    231|     await expect(store.write(id(), Buffer.of(1))).rejects.toMatchObjec…
+    232|     await expect(store.remove(id())).rejects.toMatchObject({ code: 'st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\outside', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-6WUzQu\chat-audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/52]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:248:5
+    246|     const outside = join(dataDir, 'outside');
+    247|     await fs.writeFile(outside, 'untouched');
+    248|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    249|     expect(await store.remove(id('2'))).toBe(true);
+    250|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\outside', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-fuKl0e\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/52]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata
+Error: ENOENT: no such file or directory, open 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-vd0LAA\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+'
+ ❯ src/fs/chat-audio.test.ts:284:5
+    282|     await fs.writeFile(join(directory, lock), '');
+    283|     await fs.writeFile(join(directory, 'unknown-file'), 'preserved');
+    284|     await fs.writeFile(join(directory, `${id('5')}.audio\n`), 'preserv…
+       |     ^
+    285|     await fs.mkdir(store.resolve(id('6')));
+    286|     const outside = join(dataDir, 'outside');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ENOENT', syscall: 'open', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-audio-vd0LAA\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/52]⎯
+
+ FAIL  src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: symlink
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav-link'
+ ❯ src/process/voice.test.ts:218:9
+    216|       if (kind === 'symlink') {
+    217|         path += '-link';
+    218|         await fs.symlink(audioPath, path);
+       |         ^
+    219|       }
+    220|       if (kind === 'directory') path = directory;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-0DKsES\audio.wav-link' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > requires a matching operator record and all current dependency hashes
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:252:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-UjW3Xm\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > invalidates changed runtime binary and symlink target identities
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:262:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SicLjv\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-public
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-vrapgx\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-public
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-h6uUoI\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-link
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rGNiOj\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-link
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-dVS7RK\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: bad-json
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rWOJzF\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: too-large
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5SesVD\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: empty
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6HtTqr\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: directory
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-6wZRBz\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 0
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-thQ8PG\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 1
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-5AWF11\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 2
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-ay4RfB\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 3
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-3YRCsD\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 4
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-DaFQ3K\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 5
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-PuSH1c\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 6
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-c1Gt7G\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 7
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IdkTdb\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 8
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-btmfcB\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 9
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-I5SZDC\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 10
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-9n3t99\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 11
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-iNS3aT\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 12
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-SpmIAo\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 13
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-rznUuZ\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 14
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-4w4Hii\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 15
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Z2VyWI\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 16
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pzPfAR\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects selection of a different binary, nonexecutables and invalid paths
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:340:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-Uq0NO9\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: added
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-jTvDkw\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: removed
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-X95C4b\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: type
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-l4fywm\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: duplicate
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-moNAIE\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: target
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-pGGheD\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: hash
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-VSQNJx\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: directory-path
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-E0jwEY\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 0
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-fDlaAK\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 1
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-2FVgf1\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 2
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-siD9j7\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 3
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-OpudLO\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 4
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-r3Vw6k\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/52]⎯
+
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 5
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-cpu.so', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-90kfoq\backends\libggml-alias.so' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/52]⎯
+
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams tiny.en into an exclusively created private file and atomically commits verified bytes
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams base.en into an exclusively created private file and atomically commits verified bytes
+AssertionError: expected 438 to be 384 // Object.is equality
+
+- Expected
++ Received
+
+- 384
++ 438
+
+ ❯ src/process/voice.test.ts:706:65
+    704|       expect(await fs.readFile(operation.modelPath)).toEqual(bytes);
+    705|       expect(operation.executable).toBe(executable);
+    706|       expect((await fs.stat(operation.modelPath)).mode & 0o777).toBe(0…
+       |                                                                 ^
+    707|       expect((await fs.stat(join(directory, 'voice', 'models'))).mode …
+    708|       expect(await fs.readdir(join(directory, 'voice', 'models'))).toE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/52]⎯
+
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private voice directories
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\voice'
+ ❯ src/process/voice.test.ts:816:27
+    814|     const target = join(directory, 'outside');
+    815|     await fs.mkdir(target);
+    816|     if (name === 'voice') await fs.symlink(target, join(directory, 'vo…
+       |                           ^
+    817|     else {
+    818|       await fs.mkdir(join(directory, 'voice'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\outside', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-grqIgj\voice' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/52]⎯
+
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private models directories
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\voice\models'
+ ❯ src/process/voice.test.ts:819:7
+    817|     else {
+    818|       await fs.mkdir(join(directory, 'voice'));
+    819|       await fs.symlink(target, join(directory, 'voice', 'models'));
+       |       ^
+    820|     }
+    821|     const fetcher = vi.fn<typeof fetch>();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\outside', dest: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-voice-test-IDzzlF\voice\models' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/52]⎯
+
+ FAIL  src/sqlite/catalog.test.ts > model catalog source migration and repository > reads current-format base catalog before discovery migrations without joining new tables
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-pre-discovery-catalog-QwgQq2\catalog.db-shm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-pre-discovery-catalog-QwgQq2\catalog.db-shm' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/52]⎯
+
+ FAIL  src/sqlite/chat.test.ts > durable chat identities > returns an acknowledged admission after closing/reopening the store and does not repeat seeds or pair claims
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-restart-n8Jim1\db.sqlite'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg486-controls-01\gg-chat-restart-n8Jim1\db.sqlite' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/52]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  52 failed | 157 passed (209)
+   Start at  06:34:43
+   Duration  17.76s (tests 72%, import 18%, transform 10%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-
+  │ qa\GraphGoblin\packages\infrastructure
+

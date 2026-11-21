@@ -1,0 +1,1 @@
+The verified unoccupied repository-convention path for the reserved ADR is docs/decisions/ADR-0088-authored-execution-failures.md. Coordinator acknowledged before creation. This corrects only the future document name in freeze-v1.md. Original freeze bytes and hashes retained.

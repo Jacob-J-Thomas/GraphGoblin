@@ -1,0 +1,1089 @@
+{
+  "schema_version": 1,
+  "purpose": "Factual source-only readiness inventory for later #486 architecture; no intent4 admission, architecture approval, implementation, review scan, QA or acceptance",
+  "source": {
+    "checkout": "G:/ggq/gg-459-qa-main/GraphGoblin",
+    "head": "47ca4640793a81efa5bec661dba25627de314774",
+    "tree": "c0ff3509016ce0db415fd1f35939ad39a7a9ac9d",
+    "before": {
+      "clean": true,
+      "branch": "detached HEAD"
+    },
+    "after": "Recorded separately in provenance.json after output creation",
+    "initial_administrative_mismatch": {
+      "path": "G:/ggq/gg-531cap-e/GraphGoblin",
+      "actual_head": "fb06fcf84f26da9382a9839980a400cc9759f96d",
+      "actual_branch": "codex/gg-531-guard-evidence",
+      "status": "clean",
+      "action": "Stopped before evaluator/source inventory; only governing docs had been read. Parent supplied corrected checkout. Not product evidence."
+    }
+  },
+  "limits": {
+    "execution": "None: no dependencies, build, tests, providers, browser, native lifecycle, store, auth or config access",
+    "github_state": "Not read; parent-reported intent3 hold is a task constraint, not independently verified issue state",
+    "coverage": "Source call-site sweep and selected maintained test source anchors; no passing/coverage/acceptance claim",
+    "future_admission": "Refresh then-current main, issue state, native hierarchy, architecture/refinement gates and ordered delivery status"
+  },
+  "shared_policies": {
+    "E": {
+      "description": "Handler catch and persistence; unless cancellation/deadline/stop or explicit typed failure overrides. See also S.",
+      "source": [
+        "packages/engine/src/run-manager.ts:2511-2533",
+        "packages/engine/src/run-manager.ts:2604-2683",
+        "packages/engine/src/run-manager.ts:2685-2704",
+        "packages/engine/src/run-manager.ts:2729-2745",
+        "packages/engine/src/run-manager.ts:3040-3075"
+      ],
+      "ordinary_escape": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "typed": "RunFailureError.toFailure sets node from options/current node, default resumable true; details JSON-serialized. Ordinary INTERNAL_ERROR details stripped at failRun unless explicit InternalRunFailureError engine-owned projection.",
+      "precedence": "ChildCancelledError first. Unconfirmed native termination marks cleanup veto. Forced stop precedes ordinary failure; run deadline precedes abort cancellation unless explicit cancellation requested; then abort/current controller cancels. On successful late handler return explicit cancel wins before run deadline. These are source branch order, not race acceptance evidence."
+    },
+    "I": {
+      "description": "Guarded inference main try starts after prompt preparation; context-admission catch is distinct.",
+      "source": [
+        "packages/engine/src/handlers/inference.ts:525-595",
+        "packages/engine/src/handlers/inference.ts:707-879",
+        "packages/engine/src/handlers/inference-turn.ts:114-180",
+        "packages/engine/src/handlers/inference-failure.ts:52-99"
+      ],
+      "precedence": "Cancel completed handle; fold cleanup safety evidence. Node timeout sets HARNESS_TIMEOUT; missing-session/termination/pinned evidence rank above ordinary. Cancellation replaces ordinary failure unless unconfirmed termination or node timeout. Executor E then applies run-level precedence.",
+      "recovery": "Recorded exact turn identity/prompt retained. Accepted work cannot become definitely-not-submitted. Uncertain work resumes only usable session; inherited authored handle requires durable acceptance or new usable session. Fresh replay is separate. Non-resumable typed authored choice must not be inferred to authorize repeated external work."
+    },
+    "S": {
+      "description": "Script visit/dispatched provenance is reclassified before failure persistence.",
+      "source": [
+        "packages/engine/src/handlers/script-dispatch.ts:16-93"
+      ],
+      "policy": "Unfinished prior visit/dispatch prevents automatic script invocation. Generic post-dispatch bookkeeping escape becomes SCRIPT_OUTCOME_UNCERTAIN with script visit/dispatch/state; interruption/deadline retain their authoritative non-resumable code plus uncertainty evidence. Ordinary API Resume requires explicit script consent via recovery policy."
+    },
+    "N": {
+      "description": "Inline/child/nested propagation",
+      "source": [
+        "packages/engine/src/handlers/subloop.ts:188-208",
+        "packages/engine/src/handlers/subloop.ts:238-326",
+        "packages/engine/src/child-failure-parity.test.ts:270-323",
+        "packages/engine/src/child-failure-parity.test.ts:509-530"
+      ],
+      "policy": "Child failure code,resumable,script copied; parent node becomes subloop node; details wrap childRunId, optional childNodeId, childDetails; child message prefixed. Inference field not copied by this wrapper. Child INTERNAL_ERROR projects engine-owned safe historical diagnostic slots before new parent persistence; stored child rows unchanged. Child cancellation cancels ancestors. Authored Failure exit is ordinary data. Explicit parent resume can resume same resumable failed child in place; crash retry alone does not select child resume. Mapping retry reuses completed child and retains/deduplicates completion records."
+    }
+  },
+  "boundary_count": 32,
+  "boundaries": [
+    {
+      "id": "B01",
+      "boundary": "Script argument templates",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/script.ts:39-40"
+      ],
+      "catch_scope": "No local render catch; executor E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "After event read/workspace resolution/secrets callbacks, before script.dispatched and scripts.run; earlier script ambiguity check runs first.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/script.test.ts:26-72",
+        "packages/engine/src/script-recovery.test.ts:134-240",
+        "packages/engine/src/script-stop.test.ts:6-48"
+      ],
+      "notes": "scripts.run same-class errors are a separate uncertain-dispatch catch at script.ts:63-78; never a render failure."
+    },
+    {
+      "id": "B02",
+      "boundary": "Heartbeat HTTP headers",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/heartbeat.ts:18-20"
+      ],
+      "catch_scope": "Outside HTTP try; executor E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Before current fetch; events already read; earlier beats may have happened.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:194-309"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B03",
+      "boundary": "Heartbeat HTTP URL/body",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/heartbeat.ts:22-40"
+      ],
+      "catch_scope": "Inside fetch-expression try; catches ProbeBodyOverflowError only, rethrows TemplateError/ExpressionError unchanged to E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Request arguments render before fetch is invoked. Same lexical catch also encloses an external fetch rejection.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:194-309"
+      ],
+      "notes": "A same-class fetch rejection reaches E identically, but its origin/effect certainty differs. Body overflow explicitly emits HTTP_PROBE_BODY_OVERFLOW with node and default resumable true."
+    },
+    {
+      "id": "B04",
+      "boundary": "Heartbeat script arguments",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/heartbeat.ts:49-71"
+      ],
+      "catch_scope": "Before runner try/finally; no render mapping; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Before workingDirectory callback and current scripts.run. No ordinary script.dispatched marker or scriptVisit policy is used for heartbeat probes.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:194-309"
+      ],
+      "notes": "Runner only has finally(dispose); same-class runner rejection escapes to E. Termination-unconfirmed during explicit stop has its separate non-resumable branch at :73-82."
+    },
+    {
+      "id": "B05",
+      "boundary": "Heartbeat until predicate",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/heartbeat.ts:129-149"
+      ],
+      "catch_scope": "No local catch; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "After probe returns and heartbeat.beat append is awaited; HTTP/script effect and beat can already exist. Predicate is checked before deadline/maxBeats exhaustion.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:194-309"
+      ],
+      "notes": "On eligible resume execute computes next beat from previous wait plus recorded beat events, then probes again; source does not promise no repeated probe effect."
+    },
+    {
+      "id": "B06",
+      "boundary": "Heartbeat deadline template / timestamp check",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/heartbeat.ts:151-171"
+      ],
+      "catch_scope": "Render failure escapes to E. Separate post-render NaN check throws RunFailureError.",
+      "current_public_outcome": {
+        "render_failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "node": "current handler node",
+          "resumable": true,
+          "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+          "path": "E"
+        },
+        "invalid_timestamp": {
+          "code": "TEMPLATE_ERROR",
+          "message": "heartbeat deadline rendered \"<rendered>\", which is not a timestamp",
+          "node": "heartbeat node",
+          "resumable": true,
+          "details": "none"
+        }
+      },
+      "external_dispatch_and_effect_position": "After probe and recorded beat, only if until is absent/false; before exhaustion decision.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:194-309"
+      ],
+      "notes": "Invalid rendered timestamp retains rendered value in typed message, later subject only to whole-message bound; no boundedAuthoredCause call here."
+    },
+    {
+      "id": "B07",
+      "boundary": "Subloop projected input selections",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:53-55",
+        "packages/engine/src/handlers/common.ts:108-139"
+      ],
+      "catch_scope": "No local catch; common selection evaluates each item without mapper; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Only on new-child path, before startChild; childOfThisVisit/previousWait reuse check runs first.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": "Both messages.where and artifacts.where are covered by these shared helpers."
+    },
+    {
+      "id": "B08",
+      "boundary": "Subloop input variable expressions",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:58-64"
+      ],
+      "catch_scope": "evaluateExpression is not caught; subsequent toJson is a separate operation; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Before startChild, after optional projected selection.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": "Serialization failure is not automatically authored evaluator failure."
+    },
+    {
+      "id": "B09",
+      "boundary": "Subloop injected message templates",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:66-74",
+        "packages/engine/src/run-manager.ts:2427-2432"
+      ],
+      "catch_scope": "services.render forwards to domain renderTemplate; no local catch; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Before startChild; makeMessage/newId/now run after the awaited render and have separate provenance.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B10",
+      "boundary": "Subloop trigger payload expression",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:219-233"
+      ],
+      "catch_scope": "No local catch; evaluator followed by separate toJson; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "After buildSeed and before atomic child/start event service.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B11",
+      "boundary": "Subloop custom output patch expression / result checks",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:98-124",
+        "packages/engine/src/handlers/subloop.ts:301-325"
+      ],
+      "catch_scope": "finishWithChild catches outputMapping; typed RunFailureError preserves options + completion records; all other errors logged then engine-owned InternalRunFailureError.",
+      "current_public_outcome": {
+        "evaluator_failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "node": "current handler node",
+          "resumable": true,
+          "details": "none",
+          "path": "subloop output catch, then E"
+        },
+        "invalid_patch": {
+          "code": "EXPRESSION_ERROR",
+          "message": "custom output mapping did not produce a JSON patch: <schema messages>",
+          "node": "parent subloop node",
+          "resumable": true,
+          "details": "none"
+        },
+        "nonmutable_patch": {
+          "code": "EXPRESSION_ERROR",
+          "message": "custom output mapping is outside the mutable regions: <error message>",
+          "node": "parent subloop node",
+          "resumable": true,
+          "details": "none"
+        }
+      },
+      "external_dispatch_and_effect_position": "After identity-bound child terminal wake; child execution has completed. child_run.finished records travel with run.failed. No new child starts on mapping retry.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": "The nonmutable-patch catch encloses assertMutablePatch, not evaluateExpression. Not a TemplateError/ExpressionError-by-class mapper."
+    },
+    {
+      "id": "B12",
+      "boundary": "Subloop explicit output variable expressions",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:134-146",
+        "packages/engine/src/handlers/subloop.ts:301-325"
+      ],
+      "catch_scope": "Same outputMapping catch as B11; toJson remains distinct.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "parent subloop node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "output catch + E"
+      },
+      "external_dispatch_and_effect_position": "After terminal child; before parent output patch commit; child_run.finished retained.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B13",
+      "boundary": "Subloop output message/artifact selection predicates",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/subloop.ts:148-160",
+        "packages/engine/src/handlers/common.ts:108-139",
+        "packages/engine/src/handlers/subloop.ts:301-325"
+      ],
+      "catch_scope": "Same outputMapping catch as B11; no common helper mapping.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "parent subloop node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "output catch + E"
+      },
+      "external_dispatch_and_effect_position": "After terminal child; child_run.finished retained even if predicate fails; no new child on retry.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:398-544",
+        "packages/engine/src/child-creation.test.ts:177-189"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B14",
+      "boundary": "Inference input mutation evaluators and coerce repair",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference.ts:298-308",
+        "packages/engine/src/handlers/common.ts:266-311",
+        "packages/domain/src/mutations.ts:80-121",
+        "packages/domain/src/mutations.ts:173-243"
+      ],
+      "catch_scope": "runMutations called without MutationFailureMapper and before inference main try. Ordinary domain errors reach E; typed repair failures stay typed.",
+      "current_public_outcome": {
+        "ordinary_evaluator_failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "node": "current handler node",
+          "resumable": true,
+          "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+          "path": "E"
+        },
+        "repair_typed_failures": "DECIDER_UNAVAILABLE / OUTPUT_SCHEMA_MISMATCH default resumable true; STRUCTURED_COMPLETION_TIMEOUT adds timeoutMs + LLM/codex/model/effort provenance. Current node defaults in E."
+      },
+      "external_dispatch_and_effect_position": "Before current authored harness turn. Input transforms are view-only; a coerce repair may already have called structured.complete, including before a later operation fails. resolveModel/workingDirectory already ran.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/mutation-failures.test.ts:79-199",
+        "packages/engine/src/repair-deadline.test.ts:14-76"
+      ],
+      "notes": "Mapper precedent does not currently apply to inference. Failure before main try does not acquire new failure.inference, though prior-visit turn evidence can already exist."
+    },
+    {
+      "id": "B15",
+      "boundary": "Inference context-file templates",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference.ts:311-317"
+      ],
+      "catch_scope": "No local catch and before inference main try; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Each template renders before its writeFile callback. Earlier files may already be written, and working-directory resolve can create directories. Runs before pending-turn guard/reuse and authored prompt selection.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/inference.test.ts:1-195",
+        "packages/engine/src/prompt-recovery.test.ts:40-232",
+        "packages/engine/src/handlers/inference-boundaries.test.ts:65-244"
+      ],
+      "notes": "A same-class workspace.writeFile rejection is a separate external boundary with the same current E projection; no rollback shown for earlier file writes."
+    },
+    {
+      "id": "B16",
+      "boundary": "Inference authored initial prompt template",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference.ts:346-396"
+      ],
+      "catch_scope": "No local catch and before timeout/main try; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "After context-file writes. Skipped when saved pending prompt/continuation or explicit freshSession prompt is used. Before new harness.turn record/start.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/inference.test.ts:1-195",
+        "packages/engine/src/prompt-recovery.test.ts:40-232",
+        "packages/engine/src/handlers/inference-boundaries.test.ts:65-244"
+      ],
+      "notes": "A proven-not-submitted pending turn reuses exact saved prompt; unsafe uncertainty/missing-session guard can refuse before this call."
+    },
+    {
+      "id": "B17",
+      "boundary": "Inference canonical-chat prompt re-render during context admission",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference-context.ts:51-70",
+        "packages/engine/src/handlers/inference.ts:397-443"
+      ],
+      "catch_scope": "admitInferencePrompt is awaited in same try as external harness.contextWindow and window.fits callbacks. Timeout wins locally, then abort, typed RunFailureError, else mapHarnessFailure.",
+      "current_public_outcome": {
+        "ordinary_domain_error": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: <domain error message>",
+          "node": "inference node",
+          "resumable": "codex true, other harness only if error.retriable === true (ordinary domain errors do not set it)",
+          "details": "{adapterCode: error.code}, e.g. TEMPLATE_ERROR; no new failure.inference"
+        },
+        "node_timeout": {
+          "code": "INFERENCE_TIMEOUT",
+          "resumable": true,
+          "details": "none"
+        },
+        "context_overflow": {
+          "code": "INFERENCE_CONTEXT_LIMIT",
+          "resumable": false,
+          "details": "none; no node set locally, E supplies node"
+        }
+      },
+      "external_dispatch_and_effect_position": "Before current harness.turn record/start, after working directory/context files and external contextWindow call. Re-render is reachable only for canonical prompts with validated paired history and allowHistoryTrim.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/inference-context.test.ts:87-161"
+      ],
+      "notes": "window.fits is an external synchronous callback. Same-class errors thrown there and in contextWindow share lexical catch but do not establish authored-template origin. No runtime reachability proof of a failing canonical template here."
+    },
+    {
+      "id": "B18",
+      "boundary": "Inference same-session schema repair prompt",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference.ts:598-635",
+        "packages/engine/src/handlers/inference.ts:707-879"
+      ],
+      "catch_scope": "Inside guarded inference main try. Ordinary render error becomes engine-owned safe INTERNAL_ERROR, subject to cleanup/timeout/provider evidence and turn provenance I.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR unless higher-priority cleanup/timeout evidence replaces it",
+        "message": "safe internal message, with uncertainty guidance if no usable session",
+        "node": "inference node",
+        "resumable": "!session-missing && (!delivery-uncertain || canContinueTurn(pending)) && original resumable !== false",
+        "details": "none normally; safe recording operation list may be added",
+        "inference": "existing pending turn provenance; new repair identity is not created until after prompt rendering"
+      },
+      "external_dispatch_and_effect_position": "After successful previous harness result and acceptance-recording check, before clearing completed handle/beginning repair turn/recording repair intent/resume. Previous provider work already happened.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/inference.test.ts:1-195",
+        "packages/engine/src/prompt-recovery.test.ts:40-232",
+        "packages/engine/src/handlers/inference-boundaries.test.ts:65-244",
+        "packages/engine/src/repair-deadline.test.ts:78-140"
+      ],
+      "notes": "A render rejection at :608 refers to completed prior pending turn, not an uninvoked repair. This distinction is source ordering, not a selected future recovery policy."
+    },
+    {
+      "id": "B19",
+      "boundary": "Inference output mutation evaluators and coerce repair",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/inference.ts:663-705",
+        "packages/engine/src/handlers/common.ts:266-311",
+        "packages/domain/src/mutations.ts:80-121",
+        "packages/domain/src/mutations.ts:173-243"
+      ],
+      "catch_scope": "runMutations without mapper inside main try; domain errors follow I. Typed repair errors retained then constrained by pending-turn state.",
+      "current_public_outcome": {
+        "ordinary_evaluator_failure": "I -> safe INTERNAL_ERROR + inference provenance, resumability constrained by usable-session/submission; details normally absent except recording",
+        "typed_repair_failure": "Original typed code/details, then I provenance and resumability constraint"
+      },
+      "external_dispatch_and_effect_position": "After successful harness result, possible same-session repairs, transcript artifact put, and local output/usage patch creation. Coerce may dispatch structured completion. Parent thread patch not yet committed at handler return.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/mutation-failures.test.ts:79-199",
+        "packages/engine/src/repair-deadline.test.ts:14-76"
+      ],
+      "notes": "Artifact put, applyPatch, output serialization, sessions.upsert and completion-provider/resolver exceptions have distinct provenance even if they carry a domain error class."
+    },
+    {
+      "id": "B20",
+      "boundary": "Decision route expression",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/primitive-evaluator.ts:269-286",
+        "packages/engine/src/handlers/decision.ts:50-61"
+      ],
+      "catch_scope": "Only expression evaluation plus before/after abort checks are in expressionValue try; abort rethrows; all other errors fixed fail().",
+      "current_public_outcome": {
+        "code": "EVALUATION_EXPRESSION_FAILED",
+        "message": "The evaluation expression could not be evaluated",
+        "node": "decision node",
+        "resumable": false,
+        "details": "none"
+      },
+      "external_dispatch_and_effect_position": "Before observation/decision.made; no provider dispatch for expression kind.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/flow.test.ts:124-132",
+        "packages/engine/src/handlers/gates.test.ts:185-190"
+      ],
+      "notes": "Existing behavior deliberately hides authored/private expression text."
+    },
+    {
+      "id": "B21",
+      "boundary": "Decision LLM instructions / classifier question templates",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/decision.ts:56-73",
+        "packages/engine/src/run-manager.ts:2427-2432"
+      ],
+      "catch_scope": "services.render occurs during request argument construction, before evaluateRoute/evaluateClassifier provider catches; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Before decision-context construction and evaluator/provider call for the current decision.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/flow.test.ts:124-132",
+        "packages/engine/src/handlers/gates.test.ts:185-190"
+      ],
+      "notes": "Do not attribute same-class decider/classifier failures using this call. Provider catch has fixed EVALUATION_* mapping at primitive-evaluator.ts:64-100,217-219,313-332."
+    },
+    {
+      "id": "B22",
+      "boundary": "Decision context message-selection predicate",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/decision.ts:15-32",
+        "packages/engine/src/handlers/decision.ts:56-73",
+        "packages/engine/src/handlers/common.ts:108-124"
+      ],
+      "catch_scope": "No local catch; before provider evaluator; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "After instructions/question renders, before provider dispatch; only selected-message predicate uses evaluator.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/flow.test.ts:124-132",
+        "packages/engine/src/handlers/gates.test.ts:185-190"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B23",
+      "boundary": "Wait input prompt template",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/wait.ts:24-33",
+        "packages/engine/src/run-manager.ts:2427-2432"
+      ],
+      "catch_scope": "services.render without local catch; E.",
+      "current_public_outcome": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "node": "current handler node",
+        "resumable": true,
+        "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+        "path": "E"
+      },
+      "external_dispatch_and_effect_position": "Initial park only; before run.waiting and timer/user-input acceptance. Not evaluated on wake branch.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:17-171"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "B24",
+      "boundary": "Wait-until timestamp template / check",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/wait.ts:6-15",
+        "packages/engine/src/handlers/wait.ts:40-42"
+      ],
+      "catch_scope": "Render rejection reaches E; separate isoFromTemplate NaN validation throws typed RunFailureError.",
+      "current_public_outcome": {
+        "render_failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "node": "current handler node",
+          "resumable": true,
+          "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+          "path": "E"
+        },
+        "invalid_timestamp": {
+          "code": "TEMPLATE_ERROR",
+          "message": "wait \"until\" rendered \"<rendered>\", which is not a timestamp",
+          "node": "wait node",
+          "resumable": true,
+          "details": "none"
+        }
+      },
+      "external_dispatch_and_effect_position": "Initial park only, before wait event/timer schedule.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:142-150"
+      ],
+      "notes": "Explicit NaN error embeds rendered value and uses whole-message bound, not boundedAuthoredCause."
+    },
+    {
+      "id": "B25",
+      "boundary": "Wait signal-filter predicate in incoming signal command",
+      "scope": "request",
+      "call_sites": [
+        "packages/engine/src/run-manager.ts:1647-1708",
+        "apps/api/src/routes/runs.ts:463-488"
+      ],
+      "catch_scope": "No evaluator catch in signalRun; error rejects withWork command. API generic DomainError branch returns Problem Details.",
+      "current_public_outcome": {
+        "run_failure": "none recorded by this predicate branch",
+        "http_status": 400,
+        "code": "EXPRESSION_ERROR for domain ExpressionError",
+        "message": "raw domain error.message in detail",
+        "details": "domain error.details in errors",
+        "node": "no RunFailure node; run remains in existing wait unless separate concurrent operation changes it",
+        "resumable": "not a new run-failure policy"
+      },
+      "external_dispatch_and_effect_position": "After reading current run/version/events/thread, before signal.received append/wake; no accepted signal from this branch on rejection.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "See entry and adjacent-boundary notes; executor precedence does not automatically apply.",
+      "parent_child_policy": "No automatic run-failure propagation proved at this boundary.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/waiting.test.ts:74-123"
+      ],
+      "notes": "This is a request path, not handler execute. withWork only lifecycle/accounting, not E. Same-class store errors reaching the API DomainError handler also require origin discrimination."
+    },
+    {
+      "id": "B26",
+      "boundary": "Working-directory template behind workspace.resolve",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/infrastructure/src/fs/workspace.ts:14-35",
+        "packages/engine/src/run-manager.ts:3338-3351",
+        "packages/engine/src/run-manager.ts:3004-3033"
+      ],
+      "catch_scope": "No adapter evaluator catch. Handler execution callers reach E; finalization caller has separate return-delivery catch, not E.",
+      "current_public_outcome": {
+        "during_handler": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "node": "current handler node",
+          "resumable": true,
+          "details": "absent in newly persisted ordinary internal failure; raw error goes to correlated server logger",
+          "path": "E"
+        },
+        "finalization": "return.failed event with describeError(error).slice(0,4000), no run-failure code; terminal execution outcome is not replaced"
+      },
+      "external_dispatch_and_effect_position": "Template resolves before mkdir; earlier workflow side effects may exist. Workspace service cached after successful resolve; underlying callback mixes authored rendering with filesystem creation.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/infrastructure/src/fs/fs.test.ts:31-48"
+      ],
+      "notes": "Callers: inference.ts:303; script.ts:19; heartbeat.ts:52; run-manager.ts:3014 during file return delivery. Class alone cannot distinguish render error from resolve/mkdir fault. File delivery has its own catch at run-manager.ts:3004-3033."
+    },
+    {
+      "id": "P01",
+      "boundary": "Existing mutate authored mapper, including nested domain evaluators and repair prompt",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/mutate.ts:10-34",
+        "packages/engine/src/handlers/common.ts:225-248",
+        "packages/engine/src/handlers/common.ts:266-311",
+        "packages/domain/src/mutations.ts:80-121",
+        "packages/domain/src/mutations.ts:166-243",
+        "packages/domain/src/mutations.ts:318-331"
+      ],
+      "catch_scope": "Mapper supplied only at authored operation/evaluator/patch boundaries. Repair prompt maps only TemplateError. External resolver/completion outside mapper.",
+      "current_public_outcome": {
+        "code": "MUTATION_ERROR",
+        "message": "Mutation operation <1-based index> (<kind>) failed: <bounded reason>",
+        "node": "mutate node",
+        "resumable": false,
+        "details": "{operationIndex: zero-based, operationKind, cause:{code,message<=1000}}"
+      },
+      "external_dispatch_and_effect_position": "No thread changes committed until successful handler return. Earlier coerce provider call may already have occurred before later authored operation fails.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/mutation-failures.test.ts:79-199"
+      ],
+      "notes": "Final ContextThread validation stays E non-resumable INTERNAL_ERROR; same-class completion/resolver negative controls remain private resumable internal errors."
+    },
+    {
+      "id": "P02",
+      "boundary": "Existing exit return expression mapper",
+      "scope": "run-execution",
+      "call_sites": [
+        "packages/engine/src/handlers/exit.ts:14-23"
+      ],
+      "catch_scope": "Only evaluateExpression promise catches ExpressionError; toJson is outside that catch.",
+      "current_public_outcome": {
+        "code": "EXPRESSION_ERROR",
+        "message": "boundedAuthoredCause(error.message), <=1000",
+        "node": "exit node",
+        "resumable": false,
+        "details": "none"
+      },
+      "external_dispatch_and_effect_position": "Before exit.evaluated / node.finished / run.finished and return-channel dispatch; earlier nodes may already have effects.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "E; inference guarded regions additionally I. No evaluator receives ctx.signal directly.",
+      "parent_child_policy": "N: a failure inside a child propagates with parent subloop node and child identifiers; output mapping failures belong to the parent.",
+      "test_source_anchors": [
+        "packages/engine/src/handlers/exit.test.ts:33-69"
+      ],
+      "notes": "Existing mapper does not classify final serialization errors as authored expression errors."
+    },
+    {
+      "id": "A01",
+      "boundary": "Poll probe templates, fireWhen and legacy dedupe expression",
+      "scope": "pre-admission",
+      "call_sites": [
+        "apps/api/src/triggers/poll.ts:143-179",
+        "apps/api/src/triggers/poll.ts:209-225",
+        "apps/api/src/triggers/poll.ts:235-269"
+      ],
+      "catch_scope": "Target-wide catch returns [] and fixed logging code; no run failure.",
+      "current_public_outcome": {
+        "code": "POLL_TRIGGER_FAILED unless recognized PollProbeError/PollItemsError/ProbeBodyOverflowError",
+        "message": "fixed logger text poll trigger failed",
+        "node": "logger target.triggerNodeId",
+        "resumable": "not a run failure",
+        "details": "logger loop/node and recognized fixed fields; no raw ordinary error"
+      },
+      "external_dispatch_and_effect_position": "Probe templates before current HTTP/script call; fireWhen/dedupe after probe effect. Before new run admission; catch also encloses store/start callbacks.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "See entry and adjacent-boundary notes; executor precedence does not automatically apply.",
+      "parent_child_policy": "No automatic run-failure propagation proved at this boundary.",
+      "test_source_anchors": [],
+      "notes": "Adjacent pre-admission surface only; not added to486 implementation scope."
+    },
+    {
+      "id": "A02",
+      "boundary": "Poll items select and per-item dedupe expressions",
+      "scope": "pre-admission",
+      "call_sites": [
+        "packages/domain/src/poll-items.ts:71-93",
+        "apps/api/src/triggers/poll.ts:151-175"
+      ],
+      "catch_scope": "Local evaluator catches throw PollItemsError before admission/dedupe I/O.",
+      "current_public_outcome": {
+        "code": "POLL_ITEMS_INVALID",
+        "message": "Poll items are invalid: SELECTOR_FAILED or KEY_FAILED",
+        "node": "target node in poll logger",
+        "resumable": "not a run failure",
+        "details": "reason,path and itemIndex when relevant"
+      },
+      "external_dispatch_and_effect_position": "After probe; all candidates curated before findSeen/start callbacks.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "See entry and adjacent-boundary notes; executor precedence does not automatically apply.",
+      "parent_child_policy": "No automatic run-failure propagation proved at this boundary.",
+      "test_source_anchors": [
+        "packages/domain/src/poll-items.test.ts"
+      ],
+      "notes": "The domain expression catches do not enclose external callbacks."
+    },
+    {
+      "id": "A03",
+      "boundary": "Webhook/event trigger dedupe expressions",
+      "scope": "pre-admission",
+      "call_sites": [
+        "apps/api/src/triggers/trigger-service.ts:463-475",
+        "apps/api/src/triggers/trigger-service.ts:617-627"
+      ],
+      "catch_scope": "Local evaluator/key conversion catches emit fixed request/admission failure.",
+      "current_public_outcome": {
+        "webhook": "HTTP422 EXPRESSION_FAILED; fixed webhook dedupe expression failed",
+        "event": "EVENT_KEY_EXPRESSION_FAILED, fixed message + logger loop/node",
+        "resumable": "not a run failure",
+        "details": "no raw evaluator error"
+      },
+      "external_dispatch_and_effect_position": "Before building/claiming this inbound receipt/run admission; webhook auth/extraction already happened.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "See entry and adjacent-boundary notes; executor precedence does not automatically apply.",
+      "parent_child_policy": "No automatic run-failure propagation proved at this boundary.",
+      "test_source_anchors": [],
+      "notes": "Adjacent pre-admission surface; no focused test assertion inspected for this entry."
+    },
+    {
+      "id": "A04",
+      "boundary": "Editor sample-thread preview template/expression",
+      "scope": "authoring",
+      "call_sites": [
+        "apps/web/src/forms/preview.ts:19-27"
+      ],
+      "catch_scope": "Local catch returns {ok:false,error:error.message}.",
+      "current_public_outcome": {
+        "code": "no run error code",
+        "message": "domain error message as preview error",
+        "node": "none",
+        "resumable": "not applicable",
+        "details": "none"
+      },
+      "external_dispatch_and_effect_position": "Client sample fixture only; expression timeout explicitly500ms; no run dispatch.",
+      "current_recovery_policy": "See shared policies E, I, S and N as applicable; this entry states any local override.",
+      "cancellation_deadline_policy": "See entry and adjacent-boundary notes; executor precedence does not automatically apply.",
+      "parent_child_policy": "No automatic run-failure propagation proved at this boundary.",
+      "test_source_anchors": [],
+      "notes": "Adjacent authoring surface only; no focused test assertion inspected; runtime equality is not established for all input-dependent failures."
+    }
+  ],
+  "test_anchor_qualification": "A file/range is an inspected maintained source locator. No test was run. Adjacent file-only locators require a focused assertion read before anyone claims they establish a specific failure behavior.",
+  "public_projections": [
+    {
+      "id": "C01",
+      "surface": "Contract + diagnostic bounds",
+      "sources": [
+        "packages/contracts/src/run.ts:42-96",
+        "packages/contracts/src/run.ts:159-168",
+        "packages/contracts/src/common.ts:21-22",
+        "packages/engine/src/failure-publication.ts:28-31",
+        "packages/engine/src/event-validation.ts:26-39",
+        "packages/domain/src/expression.ts:113-154",
+        "packages/domain/src/template.ts:33-43"
+      ],
+      "facts": "RunFailure strict object: enum code, message <=10000 JS characters, optional slug node/details JSON/script/inference/missingSession, required resumable. details uses z.json with no additional per-cause/size cap here. boundedAuthoredCause caps at1000 incl ellipsis; expression runtime/nested-$eval message helper independently truncates1000 then adds suffix/prefix, not a guaranteed1000 total; compile/unsafe-regex errors preserve expression details. TemplateError may carry first200 template chars in domain details but whole message not bounded locally. boundedFailure truncates ONLY failure.message with original-length marker; invalid metadata falls back EVENT_INVALID non-resumable, no node/details."
+    },
+    {
+      "id": "C02",
+      "surface": "New failure publication + history",
+      "sources": [
+        "packages/engine/src/run-manager.ts:3040-3075",
+        "packages/engine/src/failure-publication.ts:73-130",
+        "packages/engine/src/errors.ts:54-67",
+        "packages/engine/src/errors.ts:116-121"
+      ],
+      "facts": "Script evidence classification first. Ordinary INTERNAL_ERROR gets fixed public message and details removed unless explicit engine-owned InternalRunFailureError; toFailure details JSON serialize (fallback String on failure). Bounded payload appended as run.failed before failed row transition. Child historical projection only redacts known engine diagnostic slots when publishing new parent failure; no rewrite of stored old failure/event. Typed authored/provider failure text/details not generally semantically sanitized by this path."
+    },
+    {
+      "id": "C03",
+      "surface": "SQLite row/event",
+      "sources": [
+        "packages/infrastructure/src/sqlite/schema.ts:76-88",
+        "packages/infrastructure/src/sqlite/runs.ts:19-49",
+        "packages/infrastructure/src/sqlite/runs.ts:60-85",
+        "packages/infrastructure/src/sqlite/events.ts:27-45",
+        "packages/infrastructure/src/sqlite/events.ts:63-109",
+        "packages/infrastructure/src/sqlite/run-decoding.ts:64-81",
+        "packages/infrastructure/src/sqlite/run-row.ts:29-34",
+        "packages/contracts/src/events.ts:141"
+      ],
+      "facts": "Failure row is JSON; event payload contains same validated RunFailure. Append validates complete event inside transaction before insert; listener errors cannot roll back committed event. Read decoders validate current schemas, do not remap ordinary failure messages by class. No owner store was opened."
+    },
+    {
+      "id": "C04",
+      "surface": "REST snapshot/history/observation + request DomainError",
+      "sources": [
+        "packages/engine/src/run-manager.ts:1258-1277",
+        "apps/api/src/routes/runs.ts:185-198",
+        "apps/api/src/routes/runs.ts:314-329",
+        "apps/api/src/routes/runs.ts:333-345",
+        "apps/api/src/plugins/errors.ts:192-194"
+      ],
+      "facts": "GET run returns manager snapshot {run fields,recovery}; history/observation return stored event schema. Handler errors become run.failed asynchronously; signal-filter rejection is instead request DomainError =>400 code/message/details as Problem Detail, outside failure bounding. Snapshot has server-authoritative recovery; failure.resumable alone is insufficient."
+    },
+    {
+      "id": "C05",
+      "surface": "Recovery projection",
+      "sources": [
+        "packages/engine/src/run-recovery.ts:85-125",
+        "packages/engine/src/handlers/inference-turn.ts:136-180",
+        "packages/engine/src/handlers/script-dispatch.ts:59-93"
+      ],
+      "facts": "Actual recovery additionally considers parent ownership, active/cancelled state, missing sessions, script consent and then-current lifecycle. Script uncertainty requires explicit Recover script consent despite resumable:true; inference uncertainty requires usable session, never automatic repeat of original prompt."
+    },
+    {
+      "id": "C06",
+      "surface": "MCP full versus summary",
+      "sources": [
+        "packages/api-client/src/resources.ts:145-146",
+        "apps/mcp/src/tools.ts:252-261",
+        "apps/mcp/src/tools.ts:214-245",
+        "apps/mcp/src/describe.ts:126-155"
+      ],
+      "facts": "get_run forwards full API snapshot through api-client. Finished wait_for_run returns observation result with full run; unfinished result returns status/recovery/cursor fields. summarizeRun (listings) retains failure.code/message and includes script+resumable only when script metadata exists; does not retain arbitrary failure.details/inference in summary. No MCP live call made.",
+      "test_sources": [
+        "apps/mcp/src/units.test.ts:221-235",
+        "apps/mcp/src/describe.test.ts:9-29"
+      ]
+    },
+    {
+      "id": "C07",
+      "surface": "Web inspector/list/event projections",
+      "sources": [
+        "apps/web/src/runs/RunInspectorPage.tsx:208-222",
+        "apps/web/src/runs/projections.ts:84-85",
+        "apps/web/src/runs/RunsPage.tsx:215",
+        "apps/web/src/runs/inspector/EvaluationDetails.tsx:24-44"
+      ],
+      "facts": "Failed alert renders code and React text message except special SCRIPT_OUTCOME_UNCERTAIN/SCRIPT_START_FAILED fixed copy. Resumable indicator uses run.recovery.resume.allowed; child link reads details. Event summary formats code:message. EvaluationDetails interprets recognized evaluation structures, not generic arbitrary authored cause by default. No DOM/browser visibility or XSS execution claim.",
+      "test_sources": [
+        "apps/web/src/runs/RunInspectorPage.test.tsx:605-663",
+        "apps/web/src/runs/RunInspectorPage.test.tsx:880-893"
+      ]
+    }
+  ],
+  "factual_omissions_from_prior_readiness": [
+    "Wait prompt/timestamp services.render, decision instruction/question services.render, and decision context selection caller were absent from prior direct call-site list.",
+    "Signal-wait filter runs in request path, not handler execute: current source can return400 DomainError without run.failed.",
+    "Workspace template lives behind I/O port resolve and is also called during file return delivery; render failures and same-class callback failures need distinct provenance.",
+    "Canonical system-chat context-admission re-renders template, within same catch as contextWindow/window.fits. Current source maps an ordinary error to HARNESS_TURN_FAILED before turn-intent setup, not executor INTERNAL_ERROR.",
+    "Inference pre-main-try context files/input transforms can run even before pending-turn guards; earlier files or coerce structured completions can already exist when a later evaluator fails.",
+    "Inference repair prompt occurs before retiring previous completed session/pending identity; a render failure has previous-turn provenance. Output transform happens after harness work and optional artifact publication.",
+    "Parent copies child code,resumable,script,wrapped details but does not copy child failure.inference as a top-level field.",
+    "Heartbeat timestamp NaN and subloop patch-result shape/nonmutable failures are already typed with default resumable true; runtime evaluator errors at adjacent calls currently differ.",
+    "MCP full get_run and summarizeRun have distinct failure projections; summary does not generally retain details or inference.",
+    "boundedFailure bounds only message; details has no per-cause cap in current RunFailure contract. Authored-cause cap exists only where explicitly used."
+  ],
+  "unknowns_and_limits": [
+    "No runtime execution: reachability, observed emissions, races, storage before/after-commit behavior and UI presentation are source-derived, not reproduced.",
+    "No live GitHub issue, labels, hierarchy, PR541, CI, provider/account or candidate state inspected. Future admission must refresh them.",
+    "Selected maintained tests establish intended controls on inspection; no test result or coverage percentage claimed. Most individual new boundary candidates lack a focused authored runtime-error assertion identified in this read.",
+    "No same-class negative-control matrix was executed for every storage/HTTP/harness/workspace boundary; mutate test source explicitly covers TemplateError from completion/resolver only.",
+    "Source could not prove all failing canonical-chat template re-render paths are reachable with published canonical definitions; recorded as candidate boundary, not product defect.",
+    "Current source does not supply a single before/after external-effect recovery policy across heartbeat, inference transform repair, file writes and subloop mapping. This inventory records existing branch order without selecting a change.",
+    "No public code, contract change, recovery policy, architectural design or implementation plan is proposed or approved."
+  ],
+  "required_gates_preserved": [
+    "Intent4 remains unadmitted behind intent3 engineering delivery, as instructed by parent.",
+    "No issue refinement/parking/architecture-plan/owner acceptance gate changed; no review reservation or formal scan used.",
+    "No source/index/worktree, GitHub or store mutations. Only requested private artifact directory written.",
+    "Applicable source register and workflow: docs/15-issue-workflow.md; docs/delivery/2026-11-17-five-intents-register.md:128-148."
+  ]
+}

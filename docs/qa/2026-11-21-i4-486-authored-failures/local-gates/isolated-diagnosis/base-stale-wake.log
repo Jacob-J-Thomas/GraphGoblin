@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-qa/GraphGoblin/packages/engine
+
+ ↓ src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never answers a later input park of its parent
+ ✓ src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never reaches the next visit of the same subloop node 349ms
+ ↓ src/awaited-children.test.ts > child results (#242) > a child that returns no output leaves the result absent in its parent
+ ↓ src/awaited-children.test.ts > child results (#242) > a child that returns JSON null passes null, distinct from no output
+ ↓ src/awaited-children.test.ts > child results (#242) > with a parent-wins variable merge, the result variable holds only what the child returned > no output: the inherited stale value is not restored by the merge
+ ↓ src/awaited-children.test.ts > child results (#242) > with a parent-wins variable merge, the result variable holds only what the child returned > JSON null: the variable holds null
+ ↓ src/awaited-children.test.ts > child results (#242) > with a parent-wins variable merge, the result variable holds only what the child returned > data: the variable holds the returned data, not the merged stale value
+ ↓ src/awaited-children.test.ts > child results (#242) > with a child-wins variable merge, the result variable holds only what the child returned > no output: the inherited stale value is not restored by the merge
+ ↓ src/awaited-children.test.ts > child results (#242) > with a child-wins variable merge, the result variable holds only what the child returned > JSON null: the variable holds null
+ ↓ src/awaited-children.test.ts > child results (#242) > with a child-wins variable merge, the result variable holds only what the child returned > data: the variable holds the returned data, not the merged stale value
+ ↓ src/awaited-children.test.ts > child results (#242) > a later visit without output removes the result an earlier visit stored, and a custom mapping sees no result
+ ↓ src/awaited-children.test.ts > child results (#242) > a child exit returns its data and never terminates its parent, which continues to its own exit
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > an unfinished child is never mapped: a parent woken before its child was resumed awaits it again
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > nested children each finish before their parent continues to its own work and exit
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a child that finished while the process was down wakes its parent exactly once
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a parent interrupted mid-wake continues exactly once after recovery
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during live execution (#410)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during recovery (#410)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a parent that dies while finishing its subloop records the child completion once after recovery (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a child resumed directly after its parent lost its failure write records the completion the parent observes when it succeeds (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a child resumed directly after its parent lost its failure write records the completion the parent observes when it fails again (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > does not republish old INTERNAL_ERROR diagnostics through nested child details
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > does not republish old HARNESS_TRANSPORT_FAILED diagnostics through nested child details
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > an output patch the executor cannot apply (a missing path) keeps the child completion with the failure (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > an output patch the executor cannot apply (an invalid thread) keeps the child completion with the failure (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a parent that dies cancelling for its child before its journal append records the completion once (#398)
+ ↓ src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > a parent that dies cancelling for its child after its journal append records the completion once (#398)
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 27 skipped (28)
+   Start at  06:26:46
+   Duration  2.68s (import 50%, transform 35%, tests 14%)
+

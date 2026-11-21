@@ -1,0 +1,283 @@
+$ vitest run src/handlers/inference-context.test.ts src/handlers/inference-workspace.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored definitely-not-submitted evidence when the inference workspace fails: The template could not be parsed at lin…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template could not be parsed at line 2, column 1. Check its Liquid syntax.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "definitely-not-submitted",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template could not be parsed at line 2, column 1. Check its Liquid syntax.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored delivery-uncertain evidence when the inference workspace fails: The template could not be parsed at lin…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template could not be parsed at line 2, column 1. Check its Liquid syntax.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "delivery-uncertain",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template could not be parsed at line 2, column 1. Check its Liquid syntax.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored definitely-not-submitted evidence when the inference workspace fails: The template could not be rendered at l…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "definitely-not-submitted",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored delivery-uncertain evidence when the inference workspace fails: The template could not be rendered at l…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "delivery-uncertain",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored definitely-not-submitted evidence when the inference workspace fails: The template rendered to an empty path.…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template rendered to an empty path. Supply a nonempty directory.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "definitely-not-submitted",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > retains stored delivery-uncertain evidence when the inference workspace fails: The template rendered to an empty path.…
+AssertionError: expected { …(6) } to deeply equal { code: 'TEMPLATE_ERROR', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "code": "TEMPLATE_ERROR",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "details": {
+-     "boundary": "settings.workingDirectory.template",
+-     "cause": {
+-       "code": "TEMPLATE_ERROR",
+-       "message": "The template rendered to an empty path. Supply a nonempty directory.",
++     "code": "MODEL_UNRESOLVED",
++     "path": "model",
+    },
+-   },
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "delivery-uncertain",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+      "visitId": "WHRQ67SNX9YCYPV9DC5AV7F9DS:3",
+    },
+-   "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
++   "message": "No model is configured for the selected harness",
+    "nodeId": "infer",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/inference-workspace.test.ts:120:28
+    118|       await manager.waitForIdle();
+    119|       const run = await engine.ports.runs.get(runId);
+    120|       expect(run?.failure).toEqual({
+       |                            ^
+    121|         code: 'TEMPLATE_ERROR', nodeId: 'infer', resumable: false, inf…
+    122|         message: `Working directory template failed. ${cause}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/handlers/inference-workspace.test.ts > keeps the earlier HARNESS_SESSION_MISSING refusal ahead of workspace evaluation
+AssertionError: expected { …(6) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "code": "HARNESS_SESSION_MISSING",
++   "code": "EVALUATION_INVALID_CONFIGURATION",
+    "inference": {
+      "promptKind": "authored",
+      "sessionId": "recorded-session",
+      "submission": "session-missing",
+      "turnId": "PHV61G14Q0WB2MDTMXXQ440JDG",
+
+ ❯ src/handlers/inference-workspace.test.ts:149:59
+    147|     await manager.start();
+    148|     await manager.waitForIdle();
+    149|     expect((await engine.ports.runs.get(runId))?.failure).toMatchObjec…
+       |                                                           ^
+    150|     expect(observer).not.toHaveBeenCalled();
+    151|     expect(engine.ports.workspace.resolved).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-486-review-
+  │ fixes\GraphGoblin\packages\engine
+
