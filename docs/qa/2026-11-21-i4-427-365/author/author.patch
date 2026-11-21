@@ -1,0 +1,186 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f4f086bbd6608b7fa9af2e30bfce7908e81919b..3ce55812d2646f15b7e6fbdcc895b73edaf8a34d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Clarify that an enabled Codex model and a ready preflight do not establish current access
++  for the API user's login and provider endpoint. Model/account refusals retain the provider's
++  explanation in the run record; the guide describes deliberate supported-model/login selection
++  without automatic fallback or an API-key-only promise (#427).
++- Reconcile Codex sandbox documentation and source comments: the authored sandbox permission
++  level is explicit, while Windows backend selection remains inherited unless explicitly
++  overridden. No sandbox permissions or backend behavior changed (#365).
++
+ - Windows launcher identity and ownership checks own their descendants in private Windows jobs
+   (#459), drain both output streams within a bounded work window and collect failed checks
+   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index 47bd8470928055e2d8316da14294bea176690782..b3a9b34cc892c31f9c386f64bd5db0b9bed38344 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -499,6 +499,22 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
+ 
+ ### Mapping inference config to the SDK (Decided, verified in M4)
+ 
++An enabled GraphGoblin catalogue entry or a ready preflight does not establish that the selected
++model is available to the API process user's actual Codex login and provider endpoint. Preflight
++checks installation, supported CLI capabilities and authentication without requesting a model turn.
++The bundled CLI's static model/plan metadata is not a live entitlement check. The October 2026
++ChatGPT-account refusal for `gpt-5.5` in [#427](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427)
++is dated evidence, not a universal current restriction or proof that an API key always fixes it.
++
++For a structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
++as `HARNESS_ARGUMENTS_REJECTED`; the run records `HARNESS_TURN_FAILED` with that adapter code and
++does not offer Resume. An account/endpoint explanation is evidence for that refused request,
++not a diagnosis for every unavailable model or unknown provider error. Deliberately choose a
++model supported for that login/endpoint, or change the login/endpoint as the API process user;
++correct the applicable definition/default and start a new run. GraphGoblin does not substitute
++another model or globally disable a seed from one account's refusal. See
++[model-access troubleshooting](guide/07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint).
++
+ Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
+ 
+ Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
+@@ -537,7 +553,12 @@ converter or backfill is provided (ADR-0062).
+ 
+ A loop turn still inherits from the machine:
+ 
+-- the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
++- the login, the model catalog and the account's model access;
++- the CLI's Windows sandbox backend selection (`windows.sandbox`), unless an explicit node
++  config override supplies it. The SDK's `sandboxMode`
++  becomes the separate `--sandbox` permission level; it does not select that Windows backend.
++  GraphGoblin supplies no dedicated backend selection. The inheritance alone
++  is not evidence that the node's sandbox permissions were weakened;
+ - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
+ - the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
+ 
+diff --git a/docs/delivery/2026-11-17-five-intents-register.md b/docs/delivery/2026-11-17-five-intents-register.md
+index e25697e10f0a101aa9add877cbb0872e9b3b22e8..ca6ce1b7578214ddca5bbb0bccc32c92033eeab1 100644
+--- a/docs/delivery/2026-11-17-five-intents-register.md
++++ b/docs/delivery/2026-11-17-five-intents-register.md
+@@ -353,3 +353,35 @@ records source bindings, actual verification results, original failures and rema
+ The earlier C14/C25–C31 and visual-dialog limits remain unless a named new observation directly
+ addresses one. #543/#544 stay parked, PR #460 stays held, and consolidated owner decision
+ review and any requested rework remain before owner QA.
++
++## November 21 amendment: intent 3 engineering delivered; D171 admits intent 4
++
++PR [#541](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/541) merged with verified signed
++commit `02351e2fb932b3be44e7cc3fb3943a61d568226c`. Intent 3 engineering is complete: **14/26 core
++issues (53.8%)**, **3/5 intents**. [Verified engineering roll-up](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448).
++This does not complete #459's separately open, parked owner/visual QA, Mac #501 or held #460.
++The original negative audits, corrected-source evidence and remaining limits remain historical.
++
++Under the owner's delegated blocker-decision authority,
++[D171](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) admits
++the eight intent 4 units in registered order: #427, #448, #362, #363, #364, #365, #486 and #442.
++Independent units may overlap only with explicit file ownership. Admission records no completed
++implementation, QA, review or owner acceptance. Intent 5 remains behind intent 4 engineering.
++
++D171 refines #427 to distinguish dated account refusal, static catalogue metadata and current
++account/endpoint availability. Start with explicit guidance and prove the existing structured
++refusal recognition through independent disposable public-interface QA. A documentation-only
++disposition depends on that proof; a narrow demonstrated diagnostic gap requires a bounded
++correction. Do not substitute a model, globally disable a seed from one account result, promise
++that an API-key login fixes access, or claim current entitlement without evidence. No paid
++provider request or owner configuration change is needed. #365 reconciles inherited Windows
++sandbox/backend documentation without changing permissions or backend behavior.
++
++#448 retains its owner-only closure requirement. #362 needs evidence of its current already-landed
++behavior before disposition; #486 requires its separate boundary/recovery architecture selection.
++#442 uses supported diagnostics or states the observability limit and does not close related
++owner acceptance. Each unit retains independent behavior QA, actual Claude contribution,
++opposite-family review, unchanged coverage, exact-head/current-target CI and the registered fresh
++independent Astra MAX final audit within the three-general-scan cap. No human `plan-approved`
++label is inferred. Consolidated owner decision review and any requested rework remain before
++owner QA; #460, Mac #501, parked #542/#543/#544 and conditional #379 retain their separate gates.
+diff --git a/docs/guide/06-settings-and-secrets.md b/docs/guide/06-settings-and-secrets.md
+index ac25b9e809c15f5750f2464e9d290d7b4d32ce7e..b42a308117cc1f665b0d7e79faab3c786d5e69d0 100644
+--- a/docs/guide/06-settings-and-secrets.md
++++ b/docs/guide/06-settings-and-secrets.md
+@@ -39,6 +39,15 @@ While a font is loading, or if it cannot load, the text it sets shows in the nex
+ 
+ ## Choose a model and effort
+ 
++**Enabled in the catalogue** is your selection preference, and **Ready** preflight confirms
++prerequisites such as installation and login. Neither proves that your Codex account and provider
++endpoint can run every listed model. Shipped model and plan metadata is static; actual access
++can differ. A historical `gpt-5.5` refusal for a ChatGPT login does not establish a current
++restriction for every account, or guarantee that switching to an API key would fix it.
++If a run's provider message explicitly refuses that model for the account or endpoint, follow
++[model-access troubleshooting](07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint)
++and make a deliberate supported-model or login/endpoint choice.
++
+ Use the **Enabled** switch in a model's row to enable or disable it. Tab reaches each switch; Space or Enter toggles it. The switch is named **Enable &lt;display name&gt;** and shows **Enabling…** or **Disabling…** with a busy indicator while it saves. It ignores further activation until the request finishes, then announces **Enabled** or **Disabled**. Keyboard focus stays on the switch while saving; moving to another control keeps that focus. A refused request restores its previous state and announces the reason. Disabling a model removes it from new **Default model** choices; enabling it restores the choice. A saved default stays selected as **&lt;name&gt; (disabled)** or **&lt;id&gt; (not in catalog)**, with a diagnostic that it must be corrected before publication or execution. Catalog entries do not prove your account has access.
+ 
+ Harness models offer only the enable switch. Local models served through LiteLLM will appear in the catalog once the LiteLLM adapter is configured. Until local entries exist, **Add model**, **Edit**, and **Delete** are hidden and the catalog names this guide section. With a LiteLLM entry in the list, **Add model** appears and only LiteLLM rows offer **Edit** and **Delete**. Removing a local model leaves its loops referencing that model.
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+index b1b4db08a1c05f490ea4ac461201f63471ebce84..d3d2c5cfae18287e76913b04de7172b718b5153f 100644
+--- a/docs/guide/07-troubleshooting.md
++++ b/docs/guide/07-troubleshooting.md
+@@ -114,6 +114,29 @@ configuration and argument refusals remain non-resumable.
+ | The provider refused the request (`HARNESS_TURN_FAILED` with `details.adapterCode: HARNESS_ARGUMENTS_REJECTED`; the message starts `The provider refused the request (HTTP 400, …)` and quotes the provider) | The provider refused a value the run's pinned definition sends, such as an effort or model it does not accept for this model or account. The failure keeps this cause even when the provenance says `delivery-uncertain` (Codex had already taken the prompt into its conversation). Resume is never offered, because the same request would be refused again. Correct the node, decision or default the message names, publish, and start a new run. |
+ | Session missing (`HARNESS_SESSION_MISSING`)                                                                                                                                                                  | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. For eligible failures use the explicit Start fresh session control described below (#265).                                                                                                     |
+ 
++## Codex model unavailable for this account or endpoint
++
++Check the failed run's message, not just its top-level code. A structured provider refusal
++(`HTTP 400`, `invalid_request_error`) appears as `HARNESS_TURN_FAILED` with
++`details.adapterCode: HARNESS_ARGUMENTS_REJECTED`, followed by the provider's explanation.
++When that explanation says the selected model is unavailable for the account or endpoint,
++it identifies the cause of that request. `model_not_found` without that explanation, malformed
++output, or an unknown/transient error does not by itself establish an account restriction.
++
++An enabled catalogue row and a successful **Retry preflight** do not test model access.
++Preflight checks installation, CLI capabilities and login without sending a model turn; the
++catalogue's model/plan information is static. The `gpt-5.5` ChatGPT-account refusal reported in
++[October 2026](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427) is historical evidence,
++not a current availability claim for your account. An API-key login is not a guaranteed remedy.
++
++Choose a model the provider supports for the login and endpoint used by the API process, or
++deliberately change that user's Codex login/provider configuration to a supported choice.
++Correct the affected node, decision or default, publish if the definition changed, and start
++a new run. This pinned argument refusal has no Resume: repeating its saved request would send
++the same rejected choice. Keep the original run and its delivery provenance; do not infer
++that no effects occurred from the top-level failure alone. GraphGoblin does not fall back to
++another model, repeatedly retry the refusal, or disable a shipped model for every account.
++
+ ## Find the symptom
+ 
+ For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start; correct the missing command or start configuration and explicitly Resume. Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.
+diff --git a/docs/research/codex-sdk.md b/docs/research/codex-sdk.md
+index af7bcc409e3a5a8df9b0f0e3952efb25b7153385..2ba7a6f97562a45679f3e1ae3b132399f1552f73 100644
+--- a/docs/research/codex-sdk.md
++++ b/docs/research/codex-sdk.md
+@@ -34,7 +34,7 @@ Captured 2026-10-02. Sources: the `openai/codex` repository, OpenAI Codex config
+ | `additionalDirectories` | `--add-dir <dir>` (repeated)                             | paths                                                                               |
+ | `threadSource`          | `--thread-source <v>` (new threads only)                 | string                                                                              |
+ 
+-Thread options are emitted after `config` and `configOverrides`, so they win over both and over `config.toml`. The adapter therefore uses thread options for every behaviour-affecting setting and `config` only for `harnessOptions.configOverrides`. The adapter sends every canonical effort, including `max`, unchanged. Checked 2026-10-26 without a provider (#205): CLI 0.160.0 passes `model_reasoning_effort` through to the request's `reasoning.effort` without validating it (even an invalid value), and the model catalog compiled into the CLI lists `low`, `medium`, `high`, `xhigh` and `max` for the GPT-6 and GPT-5.6 models (plus `ultra` for most), but only `low` to `xhigh` for `gpt-5.5`. Until then the adapter mapped `max` to `xhigh`. `ultra` and `persistent` remain untested and are not canonical efforts. The catalog lists `minimal` (and `none`) for no model; a real turn on `gpt-6-luna` at `minimal` was refused by the provider with HTTP 400 (`Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'`, 2026-10-27 final integrated check F2, LP-5), so GraphGoblin's Codex catalog stops offering `minimal` (`docs/qa/2026-10-27-f2-fixes/`).
++Thread options are emitted after `config` and `configOverrides`, so they override the corresponding `config.toml` values. The adapter sends the authored thread settings listed above explicitly and layers node config overrides over its extension-isolation defaults (ADR-0063/ADR-0067). Settings without a thread option or explicit config override remain inherited. In particular, the SDK's `sandboxMode` emits the permission-level `--sandbox` argument and does not select the Windows backend (`windows.sandbox`). This documents inherited configuration, not a proven permission weakening. See [the current mapping and inherited settings](../06-harness-integration.md#mapping-inference-config-to-the-sdk-decided-verified-in-m4). The adapter sends every canonical effort, including `max`, unchanged. Checked 2026-10-26 without a provider (#205): CLI 0.160.0 passes `model_reasoning_effort` through to the request's `reasoning.effort` without validating it (even an invalid value), and the model catalog compiled into the CLI lists `low`, `medium`, `high`, `xhigh` and `max` for the GPT-6 and GPT-5.6 models (plus `ultra` for most), but only `low` to `xhigh` for `gpt-5.5`. Until then the adapter mapped `max` to `xhigh`. `ultra` and `persistent` remain untested and are not canonical efforts. The catalog lists `minimal` (and `none`) for no model; a real turn on `gpt-6-luna` at `minimal` was refused by the provider with HTTP 400 (`Supported values are: 'none', 'low', 'medium', 'high', 'xhigh', and 'max'`, 2026-10-27 final integrated check F2, LP-5), so GraphGoblin's Codex catalog stops offering `minimal` (`docs/qa/2026-10-27-f2-fixes/`).
+ 
+ Unknown `--config` keys are accepted but produce a warning item ("Codex is ignoring 1 unrecognized configuration setting"), so the adapter adds no marker keys of its own.
+ 
+diff --git a/packages/adapter-codex/src/options.ts b/packages/adapter-codex/src/options.ts
+index 702999145036196161ab4ab28b285000e08d2eda..ac5dd5d0b5f851657cf471f493f9c89c159d6b15 100644
+--- a/packages/adapter-codex/src/options.ts
++++ b/packages/adapter-codex/src/options.ts
+@@ -8,9 +8,11 @@ import { codexEffortName } from './effort-names.js';
+ import { isolationDefaults, layerConfig, overrideRefusal, table } from './isolation.js';
+ 
+ /**
+- * Building the SDK's client and thread options. Every behaviour-affecting setting is passed
+- * explicitly so the machine's `~/.codex/config.toml` defaults for it never apply to a loop; the
+- * configured plugins are inherited while other extensions have isolation defaults (ADR-0067).
++ * Building the SDK's client and thread options. The thread settings listed below override their
++ * machine defaults. The Windows sandbox backend (`windows.sandbox`) remains inherited unless
++ * explicitly configured through an override; it is distinct from the authored `--sandbox`
++ * permission level. Configured plugins are inherited while other extensions have isolation
++ * defaults (ADR-0067).
+  *
+  * Verified against `@openai/codex-sdk` 0.160.0 (`dist/index.js`, `CodexExec.run`): the per-thread
+  * options are turned into these CLI arguments, which come after any `config` overrides and so win

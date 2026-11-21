@@ -1,0 +1,359 @@
+# Manage settings and secrets
+
+## Open Settings
+
+Open **Settings** from the navigation bar:
+
+```text
+/app/settings
+```
+
+Choose the colour theme and the font under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+
+## Confirm destructive actions
+
+Deleting a model, deleting a classifier model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone. Model deletion applies only to LiteLLM entries; harness entries have no Edit or Delete actions and remain available to enable or disable. Classifier deletion applies only to classifiers you registered; built-in Jev can only be enabled or disabled (see [Configure classifier models](#configure-classifier-models)). A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
+
+Only the API key marked **This browser** adds the browser sign-out warning. Other active keys still warn that their clients receive 401 immediately. In trusted mode no key is marked; if this browser stores a key, every active row instead explains that revoking it may sign this browser out and that **Forget key** in Settings clears it.
+
+## Choose the theme
+
+**Appearance → Theme** switches between **Dark** (the default) and **Light**. Light keeps a white page with warm, tinted cards and panels and dark-brown titles, rather than white on white. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
+
+## Choose the font
+
+**Appearance → Font**, under the theme, sets the typeface of the whole app. Each option shows its name in its own face, with a line about it:
+
+| Font                      | What it is                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Geist** (the default)   | Compact and clean.                                                                             |
+| **Space Grotesk**         | Characterful: quirky, engineered letters for all text.                                         |
+| **Chakra Petch**          | Robotic, squared-off headings and wordmark; the rest of the text stays in Geist.               |
+| **Atkinson Hyperlegible** | Easier reading: letters shaped so that similar ones (I, l, 1; O, 0) are hard to confuse.       |
+| **OpenDyslexic**          | For some dyslexic readers: letters weighted at the bottom. Much wider, so long labels cut off. |
+| **Inter**                 | Neutral: a plainer alternative to Geist.                                                       |
+
+Click an option, or Tab to the chosen one and use the arrow keys. The font changes at once, without a reload, and this browser remembers it: on the next visit the app starts with your font already chosen, and other open tabs switch too. Code, ids, and JSON always stay in Geist Mono. The fonts come with the app, so they work offline. The choice is per browser, kept in `localStorage` (`graphgoblin-font`); a private window or blocked site data opens in Geist.
+
+While a font is loading, or if it cannot load, the text it sets shows in the next font in its list and stays usable: Chakra Petch headings and the wordmark show in Geist, and the other fonts, Geist included, show in your system's interface font (Segoe UI on Windows). Text size and spacing settings are not available yet.
+
+## Choose a model and effort
+
+**Enabled in the catalogue** is your selection preference, and **Ready** preflight confirms
+prerequisites such as installation and login. Neither proves that your Codex account and provider
+endpoint can run every listed model. Shipped model definitions and the bundled CLI's static plan
+information do not measure current access. A historical `gpt-5.5` refusal for a ChatGPT login does not establish a current
+restriction for every account, or guarantee that switching to an API key would fix it.
+If a Codex inference turn's provider message explicitly refuses that model for the account or endpoint, follow
+[model-access troubleshooting](07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint)
+and make a deliberate supported-model or login/endpoint choice. LLM decisions retain only a safe
+provider-failure category, so their run record cannot establish an account-specific cause.
+
+Use the **Enabled** switch in a model's row to enable or disable it. Tab reaches each switch; Space or Enter toggles it. The switch is named **Enable &lt;display name&gt;** and shows **Enabling…** or **Disabling…** with a busy indicator while it saves. It ignores further activation until the request finishes, then announces **Enabled** or **Disabled**. Keyboard focus stays on the switch while saving; moving to another control keeps that focus. A refused request restores its previous state and announces the reason. Disabling a model removes it from new **Default model** choices; enabling it restores the choice. A saved default stays selected as **&lt;name&gt; (disabled)** or **&lt;id&gt; (not in catalog)**, with a diagnostic that it must be corrected before publication or execution. Catalog entries do not prove your account has access.
+
+Harness models offer only the enable switch. Local models served through LiteLLM will appear in the catalog once the LiteLLM adapter is configured. Until local entries exist, **Add model**, **Edit**, and **Delete** are hidden and the catalog names this guide section. With a LiteLLM entry in the list, **Add model** appears and only LiteLLM rows offer **Edit** and **Delete**. Removing a local model leaves its loops referencing that model.
+
+**GPT-6.1 Terra** (`gpt-6.1-terra`) appears enabled when GraphGoblin next starts, with `medium` as its listed catalog default effort and choices from **none (no reasoning)** to `max`. Leaving a node's Effort unset keeps the existing loop, owner and process defaults; choose `medium` explicitly to request that level. Existing model switches and your saved default model stay as you chose them. Short real Terra turns at `none` and `medium` passed on the bundled Codex CLI 0.160.0; account access is still checked when a run executes. The [delivery evidence](../qa/2026-11-07-issue-440/README.md) records the verified scope. Claude Fable remains Fable 5.1, the latest Fable identity verified in official documentation.
+
+Toggle and model-form refusals use plain sentences: **Harness models can only be enabled or disabled.** (`MODEL_MANAGED_BY_HARNESS`); **LiteLLM is not configured. Adding local models is not available yet.** (`LITELLM_NOT_CONFIGURED`); and **This model is no longer in the catalog.** (`MODEL_NOT_FOUND`). A toggle refused with 404 refreshes the catalog, announces the reason in the section, and focuses its heading if the focused row disappears. LiteLLM creation remains unavailable until the adapter ships.
+
+On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. GPT-6 and GPT-5.6 entries list **none (no reasoning)**, `low`, `medium`, `high`, `xhigh`, and `max`; **GPT-5.5** (`gpt-5.5`) lists `low` to `xhigh`, as the Codex CLI's own model catalog does. `none` is the one lowest level: Codex receives it under the name the model's family uses for that level, and the run records `none`. Every other level reaches Codex unchanged. A `none` saved for a model that does not offer it, such as GPT-5.5, is refused with `EFFORT_UNSUPPORTED` when you save it, and a run that would use it fails before any provider request. Claude's supported models are **Claude Opus 5.5** (`claude-opus-5-5`), **Claude Fable 5.1** (`claude-fable-5-1`), **Claude Sonnet 5.5** (`claude-sonnet-5-5`) and **Claude Haiku 5.5** (`claude-haiku-5-5`), each with `low`, `medium`, `high`, `xhigh`, or `max`; Claude Code has no `none`. All seed enabled. A Claude model added by a newer GraphGoblin appears enabled at the next start; the switches you already set are kept. Haiku 5.5 was verified on Claude Code 2.1.292, although Claude Code's documentation names 2.1.293 as its minimum; if a Haiku run fails on your CLI, update Claude Code. Migration `0011_enable_claude_fable` enables existing Fable rows once; subsequent owner disablement is preserved. Catalogue enablement is an owner preference, separate from CLI readiness. When a harness is not ready, each of its rows (Claude or Codex) says "Enabled in catalog." (or "Disabled") and "<Harness> readiness: <label>.", for example "Claude readiness: Sign-in needed."; Harness preflight below has the full problem and **Retry preflight**. The engine checks catalog membership and supported effort before publication and execution.
+
+In Settings **Defaults**, Claude choices are gated by readiness: when Claude is not ready, the
+saved choice stays selected as "<name> (saved)" with the short help line "Claude readiness:
+<label>. See Harness preflight below." Codex keeps its enabled catalog choices and shows the
+same help line for Codex when it is not ready. This asymmetry is recorded for a later owner
+decision in the [delivery register, section 9](../delivery/2026-10-18-i01-i07-register.md#9-pending-owner-decisions-and-acceptance).
+
+The Codex **Default effort** lists the efforts of the model it applies to: the selected
+**Default model**, or, with **(server default)**, the server's default model (GPT-6 Luna unless
+`GG_DEFAULTS` names another). While that model is unknown it lists only the efforts every Codex
+model shares; **none (no reasoning)** comes first when that model offers it. A stored effort that
+model does not offer, such as `none` with GPT-5.5, stays selected as "none (not supported by this
+model)" with "Effort none is not supported by GPT-5.5. Choose a supported effort or Default."
+under the field. If the server
+refuses a chosen effort, the field says "Not saved." with the same explanation.
+
+Scripts that PUT an entry to toggle it must switch to PATCH. For example (replace the base URL with your gateway):
+
+```bash
+curl -X PATCH "$GG_API_URL/model-catalog/codex/gpt-6-luna" \
+  -H 'Content-Type: application/json' -d '{"enabled":false}'
+```
+
+```powershell
+Invoke-RestMethod -Method Patch -Uri "$env:GG_API_URL/model-catalog/codex/gpt-6-luna" `
+  -ContentType 'application/json' -Body '{"enabled":false}'
+```
+
+With API keys enabled, include a bearer key with `settings:write`; listing needs `settings:read`. PATCH returns the full entry (200) or `MODEL_NOT_FOUND` (404). PUT/DELETE against harness rows, including old hand-added ones, return `MODEL_MANAGED_BY_HARNESS`; PUT requesting a new `source: "litellm"` returns `LITELLM_NOT_CONFIGURED`. LiteLLM PUT retains the existing source, preserves enabled when omitted, and requires default effort to belong to efforts.
+
+Validation checks explicit and inherited choices against the selected harness catalog. Unknown or wrong-harness models and unsupported effort are errors. Disabled or unconfigured choices remain visible with a reason and block publication. A published run rechecks its selected model without silently choosing another. Catalog metadata does not guarantee provider access; harness preflight and a bounded real run establish different parts of readiness.
+
+Set `model` and `effort` on the inference node or in that harness's loop `defaults`, set owner defaults in **Defaults** (below), or set the API's environment before startup:
+
+```powershell
+$env:GG_DEFAULTS = '{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
+```
+
+```bash
+export GG_DEFAULTS='{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
+```
+
+Restart the API after changing process defaults. Resolution is node value, then loop default, then the owner default from Settings, then the API-process default, within the selected harness family. The Claude adapter passes the requested effort; its CLI does not report the effective effort.
+
+Owner defaults in **Settings** are stored under `defaults`, with the same `{byHarness:{codex?:{model?,effort?},claude?:{model?,effort?}}}` shape as loop and process defaults. They are read when a run starts or resumes. Each model and effort resolves within its selected harness from node, loop, owner, then process. Old `defaultModel`/`defaultEffort` settings are refused with `STORE_UNSUPPORTED`; repair them by hand or use the explicit reset described in [Reset and fresh start](08-offline-upgrade.md). Old `GG_DEFAULT_MODEL`/`GG_DEFAULT_EFFORT` environment variables are rejected with instructions to use `GG_DEFAULTS`.
+
+The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing, disabled, or wrong-harness saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** below a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, the picker offers that harness's supported effort choices. For Claude, the inspector labels effort as requested and reports effective effort as not reported. An unavailable catalog or a Claude harness that is not ready makes the current choices read-only until recovery, with the reason and **Retry Claude preflight** under the field; saved values are never substituted and show as "(saved)". A background recheck, such as returning to the window, keeps a ready field editable. A Codex readiness problem appears under the field with **Retry Codex preflight**; Codex choices stay editable.
+
+See [readiness lookup behavior](../09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
+for first load, background rechecks, offline pauses, completed lookup failures, transport wording
+and which operations probe readiness.
+
+## Configure classifier models
+
+**Settings → Classifier models**, below the model catalog, lists the models an explicit Classifier decision can use to choose an option: the built-in **Jev** first, then the ones you register. Each row shows the provider and the model name it sends, what it can answer (**Choice / classification**, **Noul**, **Score**), whether it is configured, and an **Enabled** switch. Configured and enabled are separate: **Needs a key** means the secret the classifier sends is missing, blank, or unreadable, with the reason and an **Open Secrets** link that takes you to [Store secrets](#store-secrets); **Configured** only means its settings are complete, not that the endpoint answers.
+
+Built-in Jev uses the alias `jev-latest` and the secret `jev-api-key` (see [Store secrets](#store-secrets)). It can only be enabled or disabled. Disabling it also stops Exit predicates that use Jev: they fail with `DECIDER_UNAVAILABLE` when evaluated.
+
+### Register a classifier you host
+
+An open-source classifier registers as an HTTP endpoint that speaks the Jev-compatible primitive protocol, `POST <endpoint>/v1/systemone` ([the contract](../06-harness-integration.md#http-classifier-endpoint-contract-decided-adr-0021)). GraphGoblin does not install or run models. For Kev, start its owner's server as [the Kev research note](../research/jev.md#kev-http-protocol-verification-2026-10-05) describes; it listens on port 8008 by default. Then choose **Add classifier** and fill in:
+
+| Field             | Kev                                                                |
+| ----------------- | ------------------------------------------------------------------ |
+| Id                | `kev`: a lowercase letter, then lowercase letters, digits, `_ . -` |
+| Display name      | `Kev 4B`                                                           |
+| Provider model id | `kev-latest`                                                       |
+| Endpoint          | `http://127.0.0.1:8008`, the API root without `/v1/systemone`      |
+| Capabilities      | **Choice / classification**                                        |
+| Bearer secret     | **(none)**, unless you started Kev with `KEV_API_KEY` (see below)  |
+
+**Save classifier** checks the fields first and explains each problem beside its field. The id cannot change later, because loops refer to it, and `jev` and existing ids are taken. **Add classifier** waits until the list has loaded, so the id can be checked against it, and adding never replaces an existing classifier: if another tab or script registered the same id in the meantime, Settings says so, saves nothing, and refreshes the list. A new classifier starts disabled: switch it on when its server is running.
+
+If the server wants a bearer key (Kev does when `KEV_API_KEY` is set), store the key in **Secrets** first, then choose its name under **Bearer secret**. With a secret, the endpoint must use `https://` unless its host is loopback (`localhost`, `127.0.0.0/8`, or `[::1]`), so a key is never sent in clear text across a network. Saving a classifier with a secret needs an API key with both `settings:write` and `secrets:write`; without the second, Settings says so and saves nothing. Choosing **(none)** on an edit removes the secret.
+
+**Edit** changes everything but the classifier id and keeps its enabled state. **Delete** asks first. Decisions retain the deleted id so the problem is visible; publication is blocked and a published decision fails when that evaluator is selected. No fallback runs. The classifier secret remains in Secrets. Built-in Jev can be enabled or disabled but not deleted.
+
+### Choose a classifier in a decision
+
+Choose the decision answer type, select **Classifier** as its evaluator, then choose a model supporting that primitive. Choice options and Noul sides have stable IDs, display labels and authored criteria; Score uses ordered anchors with named routing bands. The provider receives the answer criteria, rendered question and existing selected context. The question template can still reference the full thread; the context selector does not limit that template.
+
+Only Classifier decisions have a minimum confidence. Below-threshold results stop with `EVALUATION_RESULT_REJECTED`; they do not select an uncertainty route or another provider. Kev reports a rescaled confidence, `(p - 1/K) / (1 - 1/K)`, so a threshold is distinct from its chosen option's raw probability. For Noul, the truth threshold chooses true or false; minimum confidence separately accepts or rejects that side. LLM confidence is informational and has no decision threshold.
+
+### When a selected classifier is unavailable
+
+The editor keeps the selected ID and shows the problem. Disabled entries and missing or unreadable keys block publication until corrected. Unknown IDs and models without the selected answer capability are errors. A published run rechecks availability and fails with `EVALUATION_UNAVAILABLE` when it can be restored; it never substitutes a different model or kind. Restore the selection or key before resuming, or edit the loop and start a new run.
+
+Exit Jev predicates retain their existing contract until #99; see the node reference for their distinct availability behavior.
+
+## Store secrets
+
+In **Secrets**, enter a name and value, then click **Set secret**, or send `PUT /secrets/{name}` with a body of `{ "value": "..." }`. Names start with a letter and contain up to 128 letters, digits, `_`, `.`, or `-`. Values are write-only: listing returns names and timestamps, and setting a secret returns metadata rather than the value. Loop configs carry references; the server resolves them during execution. Do not paste secret values into prompts, expressions, or ordinary config fields.
+
+To configure Jev without pasting a key into Settings, set the machine environment variable `GG_JEV_API_KEY` once and start the API in a process that inherits it. A fresh store seeds from `GG_JEV_API_KEY`, else from `JEV_API_KEY` when `GG_JEV_API_KEY` is unset. After migration and before Jev initializes, startup seeds the local owner's encrypted secret only when it is absent. The secret store wins over both variables: restarting with a different environment value never overwrites an existing secret. An explicitly empty `GG_JEV_API_KEY` disables seeding, including the fallback. No plaintext file or secret value is logged; the startup message names the variable actually used: `seeded jev-api-key from GG_JEV_API_KEY` or `seeded jev-api-key from JEV_API_KEY`. Without a non-empty seed or when the secret already exists, there is no seed log line.
+
+Once seeded, the key stays available across restarts even if the environment variable is removed. To rotate it, use **Set secret** or `PUT /secrets/{name}`. Deleting it refreshes Jev immediately; a later API start seeds it again if the variable is still set. A read-only preflight before first startup may warn that the Jev secret is missing; it does not seed secrets.
+
+For Docker Compose, uncomment the `GG_JEV_API_KEY` line in `docker-compose.yml` to forward the host environment variable, including the `JEV_API_KEY` fallback, into the API container. The key value stays in the environment rather than the compose file.
+
+You can also store your Jev API key manually with this exact name:
+
+```text
+jev-api-key
+```
+
+The Jev decider uses it for decisions. Setting or deleting it refreshes that adapter without a restart. Without it, a decision selecting Jev fails as unavailable and can be resumed after the key is restored. Webhook HMAC authentication uses the name in `authentication.secretRef`; None requires no secret. Outbound signing uses the return channel's `secretRef`.
+
+For a script environment variable, use this reference syntax:
+
+```json
+{
+  "env": { "SERVICE_TOKEN": "secret:service-token" }
+}
+```
+
+A missing secret fails the run with `SECRET_MISSING`; set it and resume. A missing webhook signing secret makes the endpoint answer 503 `HOOK_NOT_READY`, and a missing return-channel secret sends the delivery unsigned.
+
+The secret's deletion confirmation spells out those effects for webhook triggers, webhook return channels, and script `env` values written as `secret:<name>`. Deleting `jev-api-key` also warns that Jev decisions turn off until the key is set again, and that startup re-seeds it if `GG_JEV_API_KEY` is set, or `JEV_API_KEY` when `GG_JEV_API_KEY` is unset. Deleting a secret that a registered classifier sends as its bearer key names that classifier: it will need a key, and decisions that select it fail as unavailable until the secret is set again. **Classifier models** shows the change at once, as it does when you set a secret.
+
+Secret reads never send plaintext back to the browser or API client. Server-side resolution supplies the Jev key to Jev and script values to the invoked process, so values can leave the process for their intended consumer. Scripts and external tools can print secrets into their output; avoid that and redact sensitive thread content before forwarding it. The secret store does not automatically scrub arbitrary output or earlier event-log entries.
+
+## Create API keys
+
+Create a key in **Settings → API keys** (**Create key** grants the wildcard scope) or over REST, and copy the token immediately: it is shown once. Keep an administrative key before switching authentication on, or create the first one from the command line as below.
+
+When keys are required, **This browser** marks the key that authenticated the latest key-list request. The marker refreshes when you enter, forget, or change the stored key, including changes from another tab. The API returns a required `current` boolean on list items, without revealing tokens or hashes; key creation still returns only metadata and the one-time token. In trusted mode no row is marked, even if a valid key is stored. A stored key is still sent in trusted mode, revoking it shows the API key panel, and **Forget key** in Settings recovers access without it.
+
+### The first key, from the command line
+
+With `GG_REQUIRE_API_KEY=true` from the start, `POST /api-keys` already needs a key. Create the first one from the command line instead; it writes straight to the database for the local owner, prints the token once, and does not start the server. Stop any API using the data directory first: the command takes the same exclusive lock as the server and exits 1 if another process holds it. Run it from the repository root with the same environment as the server (at least the same `GG_DATA_DIR`), after `pnpm build`:
+
+```powershell
+node apps/api/dist/main.js --create-api-key owner
+node apps/api/dist/main.js --create-api-key ci --scopes loops:write,runs:write
+```
+
+In the container image, stop the API, create the key in a one-off container using the same mounted data volume, then restart:
+
+```bash
+docker compose stop graphgoblin
+docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose up -d graphgoblin
+```
+
+Without `--scopes` the key gets `*`. The token is printed to standard output only, never logged, and only its hash is stored. Restart the server after the command exits and releases its lock. Paste the key into the web app when it asks for one, or send it as a bearer token.
+
+### More keys over REST
+
+Use REST to request narrower write scopes:
+
+```http
+POST /api-keys
+```
+
+Save this body:
+
+```text
+key.json
+```
+
+```json
+{
+  "label": "Codex loop runner",
+  "scopes": ["runs:write"]
+}
+```
+
+```bash
+curl -sS -X POST 'http://127.0.0.1:4747/api-keys' \
+  -H 'Content-Type: application/json' --data-binary @key.json
+```
+
+```powershell
+$created = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/api-keys' `
+  -ContentType 'application/json' -InFile key.json
+$created.token
+```
+
+The response's `token` is returned once; SQLite stores its hash. Local trusted mode and callers whose key holds `*` may grant any scopes; omitting `scopes` grants `*` only for them. A scoped caller needs `api-keys:write` to create a key and must list `scopes` explicitly, or the API returns `400 VALIDATION_FAILED`. It may grant only scopes it holds itself, including read scopes implied by its write scopes (`loops:write` covers `loops:read`), and may never grant `*`. An unheld scope or `*` returns `403 SCOPE_NOT_DELEGABLE`, with the offending scopes in `detail` and `errors.scopes`; no key is created. An explicit empty list creates a key with no access. Authenticate with:
+
+```http
+Authorization: Bearer <saved-token>
+```
+
+Every private route needs a scope, reads included: `<resource>:read` for `GET` requests and `<resource>:write` for everything else. A write scope includes the read scope of the same resource, so a `runs:write` key can follow the runs it starts.
+
+| Scope                             | Operations                                                                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                                                                                                                |
+| `runs:read`, `runs:write`         | Read runs, threads, and events; start (`POST /loops/{id}/runs`), cancel, pause, resume, replay, input, signals.                                                                                         |
+| `settings:read`, `settings:write` | Read and change settings and the model catalog.                                                                                                                                                         |
+| `secrets:read`, `secrets:write`   | List secret names; set and delete secrets.                                                                                                                                                              |
+| `api-keys:read`, `api-keys:write` | List keys; create and revoke them. A scoped key may create keys only with scopes it holds itself (write implies read) and must list them explicitly; only `*` keys or local trusted mode can grant `*`. |
+| `events:read`, `events:write`     | List inbound events; submit them.                                                                                                                                                                       |
+| `system:read`                     | The preflight reports (`/system/preflight`, `/harness/preflight`).                                                                                                                                      |
+| `*`                               | Everything; UI-created keys use this scope.                                                                                                                                                             |
+
+A key without the needed scope gets 403 `FORBIDDEN`. See [API, streaming, and MCP](../07-api-and-streaming.md) for the exact rules.
+
+A key carrying only a read scope cannot grant the corresponding write scope; a disallowed grant returns 403 `SCOPE_NOT_DELEGABLE`, and a scoped caller that omits `scopes` gets 400 `VALIDATION_FAILED` ([ADR-0016](../decisions/ADR-0016-api-key-scope-delegation.md)).
+
+Set the requirement in the API terminal and restart:
+
+```powershell
+$env:GG_REQUIRE_API_KEY = 'true'
+```
+
+```bash
+export GG_REQUIRE_API_KEY=true
+```
+
+A missing, malformed, or revoked key returns 401 on private routes; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public routes remain exempt; see the [full list](../07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
+
+Revoke an unused key in **Settings → API keys**, or through REST:
+
+```http
+DELETE /api-keys/{id}
+```
+
+**Revoke** names the key and warns that clients using it receive 401 immediately. Successful revocation closes the confirmation when the server confirms the request; refreshing the key list runs separately. Only the row marked **This browser** adds: "Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue." After that revocation, the rejected refresh shows the API key panel and focus moves to its input without waiting for the retry. Revoking another key leaves this browser signed in. If a key is stored but no row is marked, every active row instead explains that it may be this browser's stored key and that **Forget key** in Settings clears it.
+
+## Preserve the master key
+
+By default the API generates a random 32-byte master key and stores its base64 form here:
+
+```text
+<data-directory>/master.key
+```
+
+Alternatively, supply `GG_MASTER_KEY` containing base64 that decodes to exactly 32 bytes. Keep that same value across restarts and restores. Secrets are encrypted directly with AES-256-GCM using this master key and a fresh nonce per value. Replacing the key does not re-encrypt existing rows; it makes them unreadable. Protect the key file and backup with operating-system permissions.
+
+> After 1.0: The planned OS-keyring source and per-secret envelope key wrapping. The current implementation reads a file or environment master key and encrypts secret values directly with it.
+
+## Back up and restore
+
+Before upgrading, make a full backup using the steps below. To roll back, stop the API and restore the pre-upgrade backup of the entire data directory before running the previous release. Restoring the backup discards runs, edits, and secrets made since the upgrade. There is no partial rollback: do not edit the migration ledger or undo individual migrations. The backup restores both the stored definitions and migration state, so a later upgrade can apply every required migration again; it also recovers any seed metadata changed at startup.
+
+1. [Stop the API safely](01-install-and-first-run.md#stop-and-restart-safely) and confirm the process has exited.
+2. Copy the entire data directory, including the database, any WAL/SHM files, master key, artifacts, and temporary workspaces. Store the backup securely because it contains both encrypted secrets and their decryption key.
+3. Preserve any custom `GG_DB_URL` database location separately. Save environment configuration and an environment-supplied master key securely. Back up fixed workspaces, return files outside the data directory, and Codex session storage separately if you need them for continuation.
+
+For the default data directory used in [Installation](01-install-and-first-run.md), copy to a new destination in PowerShell:
+
+```powershell
+$backupSource = Join-Path $HOME '.graphgoblin'
+$backupDestination = Join-Path $HOME ('graphgoblin-backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+Copy-Item -LiteralPath $backupSource -Destination $backupDestination -Recurse
+```
+
+In Bash:
+
+```bash
+cp -R "$HOME/.graphgoblin" "$HOME/graphgoblin-backup-$(date +%Y%m%d-%H%M%S)"
+```
+
+Restore into an empty destination with the API stopped; do not overlay a different live database or master key. Copy the saved data, point `GG_DATA_DIR` at that restored directory, restore `GG_DB_URL` if overridden and `GG_MASTER_KEY` if supplied, and start the API. Preserve the same workspace locations for runs that reference them. Boot migrates and recovers runs and re-arms triggers, so review schedules and missed-fire policies before restoring onto a connected machine.
+
+Loop exports are useful for version control but omit runs, secret values, and artifacts; they do not replace a data backup.
+
+> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today. Deleting a loop permanently deletes all its run history; it does not offer selective history maintenance or reclaim shared artifact files.
+
+## Changing a node's Harness
+
+In an inference node, choosing another Harness keeps **(loop default)** values inherited. For an
+explicit model, it selects a compatible enabled loop default, then your Settings default, then the
+harness's built-in default. Supported effort stays; unsupported effort gets a compatible default.
+If the first checks are still loading, the switch waits and says so under Harness. A failed check
+keeps your selection and explains the problem there. Retry the affected check, then choose a model
+or switch again. A catalog failure shows **Validation unavailable**. If the switch left an incompatible value,
+the draft cannot be saved until you correct it after the catalog recovers. Saved incompatible values remain visible for correction.
+See [the editor description](../09-frontend-and-pwa.md#explicit-node-harness-changes-204) for details.
+
+Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Settings reads the schema's structured-completion default: null means no completion
+deadline unless the loop sets one. In the Loop tab, Structured completion milliseconds
+defaults to Unlimited. Choose Limited and enter milliseconds (the suggestion is 120000)
+to bound each LLM decision evaluation or output-transform repair through the structured port. The run inspector shows its pinned
+value. Expiry aborts the call and releases capacity with `STRUCTURED_COMPLETION_TIMEOUT`;
+late results cannot change that outcome. Unlimited disables this cutoff, while Cancel
+and independent authored limits remain available.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

@@ -1,0 +1,3226 @@
+[
+  {
+    "name": "historical-account-refusal",
+    "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+    "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+    "rest": {
+      "status": 200,
+      "body": {
+        "id": "01M7YMQS51XAGB4N1HN427GKNH",
+        "ownerId": "local",
+        "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+        "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 historical-account-refusal",
+          "label": "QA427 historical-account-refusal v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQS51XAGB4N1HN427GKNJ",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:31.809Z",
+        "startedAt": "2026-11-21T08:49:31.843Z",
+        "finishedAt": "2026-11-21T08:49:32.716Z",
+        "finalizedAt": "2026-11-21T08:49:32.725Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "events": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:31.809Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 historical-account-refusal",
+              "label": "QA427 historical-account-refusal v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQS51XAGB4N1HN427GKNH",
+                "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+                "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQS51XAGB4N1HN427GKNJ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:31.809Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:31.851Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:31.873Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:31.884Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:31.881Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:31.881Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:31.903Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "63b9dfecc9ffba3d"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:31.917Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:32.436Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d",
+            "mode": "fresh",
+            "model": "gpt-5.5",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:32.528Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:32.701Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:32.705Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:32.713Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_TURN_FAILED",
+              "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+              },
+              "inference": {
+                "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+                "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "mcpGet": {
+      "isError": false,
+      "body": {
+        "id": "01M7YMQS51XAGB4N1HN427GKNH",
+        "ownerId": "local",
+        "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+        "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 historical-account-refusal",
+          "label": "QA427 historical-account-refusal v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQS51XAGB4N1HN427GKNJ",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:31.809Z",
+        "startedAt": "2026-11-21T08:49:31.843Z",
+        "finishedAt": "2026-11-21T08:49:32.716Z",
+        "finalizedAt": "2026-11-21T08:49:32.725Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "mcpWait": {
+      "isError": false,
+      "body": {
+        "run": {
+          "id": "01M7YMQS51XAGB4N1HN427GKNH",
+          "ownerId": "local",
+          "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+          "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA427 historical-account-refusal",
+            "label": "QA427 historical-account-refusal v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7YMQS51XAGB4N1HN427GKNJ",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+            "nodeId": "infer",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+            },
+            "inference": {
+              "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+              "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d"
+            }
+          },
+          "createdAt": "2026-11-21T08:49:31.809Z",
+          "startedAt": "2026-11-21T08:49:31.843Z",
+          "finishedAt": "2026-11-21T08:49:32.716Z",
+          "finalizedAt": "2026-11-21T08:49:32.725Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Controlled local native turn",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "finished": true
+      }
+    },
+    "mcpEvents": {
+      "isError": false,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:31.809Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 historical-account-refusal",
+              "label": "QA427 historical-account-refusal v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQS51XAGB4N1HN427GKNH",
+                "loopId": "01M7YMQS3CWDF9QF3J94NZYK3P",
+                "versionId": "01M7YMQS3CWDF9QF3J94NZYK3Q",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQS51XAGB4N1HN427GKNJ",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:31.809Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:31.851Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:31.873Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:31.884Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:31.881Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:31.881Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:31.903Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "63b9dfecc9ffba3d"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:31.917Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:32.436Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d",
+            "mode": "fresh",
+            "model": "gpt-5.5",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:32.528Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:32.701Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:32.705Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+            "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQS51XAGB4N1HN427GKNH",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:32.713Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_TURN_FAILED",
+              "message": "harness turn failed: The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+              },
+              "inference": {
+                "visitId": "01M7YMQS51XAGB4N1HN427GKNH:5",
+                "turnId": "01M7YMQS8DKKCA3ARVB85ZK784",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-e6f0-7592-8eb5-310d92c9266d"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "requests": 1,
+    "harnessCalls": [
+      {
+        "action": "start",
+        "model": "gpt-5.5"
+      }
+    ],
+    "resume": {
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    "mcpResume": {
+      "isError": true,
+      "body": "GraphGoblin API error FAILURE_NOT_RESUMABLE (HTTP 409): This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    }
+  },
+  {
+    "name": "alternate-endpoint-refusal",
+    "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+    "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+    "rest": {
+      "status": 200,
+      "body": {
+        "id": "01M7YMQT709X5NTZBC42TGBM9J",
+        "ownerId": "local",
+        "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+        "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 alternate-endpoint-refusal",
+          "label": "QA427 alternate-endpoint-refusal v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQT709X5NTZBC42TGBM9K",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, model): This model is unavailable on the synthetic QA endpoint. QA427_ALTERNATE",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:32.896Z",
+        "startedAt": "2026-11-21T08:49:32.911Z",
+        "finishedAt": "2026-11-21T08:49:33.628Z",
+        "finalizedAt": "2026-11-21T08:49:33.634Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "events": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:32.896Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 alternate-endpoint-refusal",
+              "label": "QA427 alternate-endpoint-refusal v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQT709X5NTZBC42TGBM9J",
+                "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+                "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQT709X5NTZBC42TGBM9K",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:32.896Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:32.914Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:32.922Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:32.928Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:32.927Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:32.927Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:32.952Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:32.960Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:33.325Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:33.381Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:33.614Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:33.617Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:33.625Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_TURN_FAILED",
+              "message": "harness turn failed: The provider refused the request (HTTP 400, model): This model is unavailable on the synthetic QA endpoint. QA427_ALTERNATE",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+              },
+              "inference": {
+                "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+                "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "mcpGet": {
+      "isError": false,
+      "body": {
+        "id": "01M7YMQT709X5NTZBC42TGBM9J",
+        "ownerId": "local",
+        "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+        "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 alternate-endpoint-refusal",
+          "label": "QA427 alternate-endpoint-refusal v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQT709X5NTZBC42TGBM9K",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: The provider refused the request (HTTP 400, model): This model is unavailable on the synthetic QA endpoint. QA427_ALTERNATE",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+          },
+          "inference": {
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:32.896Z",
+        "startedAt": "2026-11-21T08:49:32.911Z",
+        "finishedAt": "2026-11-21T08:49:33.628Z",
+        "finalizedAt": "2026-11-21T08:49:33.634Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "mcpWait": {
+      "isError": false,
+      "body": {
+        "run": {
+          "id": "01M7YMQT709X5NTZBC42TGBM9J",
+          "ownerId": "local",
+          "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+          "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA427 alternate-endpoint-refusal",
+            "label": "QA427 alternate-endpoint-refusal v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7YMQT709X5NTZBC42TGBM9K",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_TURN_FAILED",
+            "message": "harness turn failed: The provider refused the request (HTTP 400, model): This model is unavailable on the synthetic QA endpoint. QA427_ALTERNATE",
+            "nodeId": "infer",
+            "resumable": false,
+            "details": {
+              "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+            },
+            "inference": {
+              "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+              "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78"
+            }
+          },
+          "createdAt": "2026-11-21T08:49:32.896Z",
+          "startedAt": "2026-11-21T08:49:32.911Z",
+          "finishedAt": "2026-11-21T08:49:33.628Z",
+          "finalizedAt": "2026-11-21T08:49:33.634Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": false,
+              "code": "FAILURE_NOT_RESUMABLE",
+              "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Controlled local native turn",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "finished": true
+      }
+    },
+    "mcpEvents": {
+      "isError": false,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:32.896Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 alternate-endpoint-refusal",
+              "label": "QA427 alternate-endpoint-refusal v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQT709X5NTZBC42TGBM9J",
+                "loopId": "01M7YMQT62NDVTJS9JVXF5B8HS",
+                "versionId": "01M7YMQT62NDVTJS9JVXF5B8HT",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQT709X5NTZBC42TGBM9K",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:32.896Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:32.914Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:32.922Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:32.928Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:32.927Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:32.927Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:32.952Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:32.960Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:33.325Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:33.381Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:33.614Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:33.617Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+            "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQT709X5NTZBC42TGBM9J",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:33.625Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_TURN_FAILED",
+              "message": "harness turn failed: The provider refused the request (HTTP 400, model): This model is unavailable on the synthetic QA endpoint. QA427_ALTERNATE",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+              },
+              "inference": {
+                "visitId": "01M7YMQT709X5NTZBC42TGBM9J:5",
+                "turnId": "01M7YMQT90SVQG7JD14C9BWGA2",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-ea4e-78d2-ac56-1e8eec2fad78"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "requests": 1,
+    "harnessCalls": [
+      {
+        "action": "start",
+        "model": "gpt-6-luna"
+      }
+    ],
+    "resume": {
+      "status": 409,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+        "title": "failure not resumable",
+        "status": 409,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      }
+    },
+    "mcpResume": {
+      "isError": true,
+      "body": "GraphGoblin API error FAILURE_NOT_RESUMABLE (HTTP 409): This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    }
+  },
+  {
+    "name": "supported-positive",
+    "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+    "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+    "rest": {
+      "status": 200,
+      "body": {
+        "id": "01M7YMQV349CS5Y9PV8FG2WMR4",
+        "ownerId": "local",
+        "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+        "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 supported-positive",
+          "label": "QA427 supported-positive v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQV349CS5Y9PV8FG2WMR5",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-11-21T08:49:33.796Z",
+        "startedAt": "2026-11-21T08:49:33.810Z",
+        "finishedAt": "2026-11-21T08:49:34.718Z",
+        "finalizedAt": "2026-11-21T08:49:34.727Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "events": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:33.796Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 supported-positive",
+              "label": "QA427 supported-positive v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQV349CS5Y9PV8FG2WMR4",
+                "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+                "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQV349CS5Y9PV8FG2WMR5",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:33.796Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:33.814Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:33.833Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:33.840Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:33.839Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:33.839Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:33.865Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:33.875Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQV349CS5Y9PV8FG2WMR4:5",
+            "turnId": "01M7YMQV5KTS9KZ6VD5VSX4RN1",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:34.385Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-ee62-7721-9b56-cae5cc8ef677",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:34.443Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQV349CS5Y9PV8FG2WMR4:5",
+            "turnId": "01M7YMQV5KTS9KZ6VD5VSX4RN1",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:34.555Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "item_0",
+                "summary": "QA427_PUBLIC_SUPPORTED_OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:34.619Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:34.690Z",
+            "type": "node.finished",
+            "nodeId": "infer",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M7YMQVYV0YW4E72CZ43VHF7B",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/8e71a633451c46e362bfade68eabcde66f06005b1d8e155016d882de39a09c2b",
+                  "nodeId": "infer",
+                  "bytes": 155,
+                  "label": "transcript infer"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M7YMQVYV0YW4E72CZ43VHF7C",
+                  "role": "assistant",
+                  "content": "QA427_PUBLIC_SUPPORTED_OK",
+                  "nodeId": "infer",
+                  "ts": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/infer",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "QA427_PUBLIC_SUPPORTED_OK",
+                  "at": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "QA427_PUBLIC_SUPPORTED_OK",
+                  "at": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 1,
+                  "outputTokens": 1,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 820
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 12,
+            "ts": "2026-11-21T08:49:34.703Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 13,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 14,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 2
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 15,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 15,
+        "hasMore": false
+      }
+    },
+    "mcpGet": {
+      "isError": false,
+      "body": {
+        "id": "01M7YMQV349CS5Y9PV8FG2WMR4",
+        "ownerId": "local",
+        "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+        "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 supported-positive",
+          "label": "QA427 supported-positive v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQV349CS5Y9PV8FG2WMR5",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-11-21T08:49:33.796Z",
+        "startedAt": "2026-11-21T08:49:33.810Z",
+        "finishedAt": "2026-11-21T08:49:34.718Z",
+        "finalizedAt": "2026-11-21T08:49:34.727Z",
+        "lastEventSeq": 15,
+        "recovery": {
+          "observedSeq": 15,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": true
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "mcpWait": {
+      "isError": false,
+      "body": {
+        "run": {
+          "id": "01M7YMQV349CS5Y9PV8FG2WMR4",
+          "ownerId": "local",
+          "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+          "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA427 supported-positive",
+            "label": "QA427 supported-positive v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7YMQV349CS5Y9PV8FG2WMR5",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "createdAt": "2026-11-21T08:49:33.796Z",
+          "startedAt": "2026-11-21T08:49:33.810Z",
+          "finishedAt": "2026-11-21T08:49:34.718Z",
+          "finalizedAt": "2026-11-21T08:49:34.727Z",
+          "lastEventSeq": 15,
+          "recovery": {
+            "observedSeq": 15,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Controlled local native turn",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": true
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "finished": true
+      }
+    },
+    "mcpEvents": {
+      "isError": false,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:33.796Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 supported-positive",
+              "label": "QA427 supported-positive v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQV349CS5Y9PV8FG2WMR4",
+                "loopId": "01M7YMQV25GYHPEKQQDE84C1QT",
+                "versionId": "01M7YMQV25GYHPEKQQDE84C1QV",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQV349CS5Y9PV8FG2WMR5",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:33.796Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:33.814Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:33.833Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:33.840Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:33.839Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:33.839Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:33.865Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:33.875Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQV349CS5Y9PV8FG2WMR4:5",
+            "turnId": "01M7YMQV5KTS9KZ6VD5VSX4RN1",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:34.385Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-ee62-7721-9b56-cae5cc8ef677",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:34.443Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQV349CS5Y9PV8FG2WMR4:5",
+            "turnId": "01M7YMQV5KTS9KZ6VD5VSX4RN1",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:34.555Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "item_0",
+                "summary": "QA427_PUBLIC_SUPPORTED_OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:34.619Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 1,
+              "outputTokens": 1,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:34.690Z",
+            "type": "node.finished",
+            "nodeId": "infer",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "01M7YMQVYV0YW4E72CZ43VHF7B",
+                  "kind": "transcript",
+                  "ref": "artifact:transcript/8e71a633451c46e362bfade68eabcde66f06005b1d8e155016d882de39a09c2b",
+                  "nodeId": "infer",
+                  "bytes": 155,
+                  "label": "transcript infer"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "01M7YMQVYV0YW4E72CZ43VHF7C",
+                  "role": "assistant",
+                  "content": "QA427_PUBLIC_SUPPORTED_OK",
+                  "nodeId": "infer",
+                  "ts": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/infer",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "QA427_PUBLIC_SUPPORTED_OK",
+                  "at": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "QA427_PUBLIC_SUPPORTED_OK",
+                  "at": "2026-11-21T08:49:34.683Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 1,
+                  "outputTokens": 1,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 820
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 12,
+            "ts": "2026-11-21T08:49:34.703Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 13,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 14,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 2
+          },
+          {
+            "runId": "01M7YMQV349CS5Y9PV8FG2WMR4",
+            "seq": 15,
+            "ts": "2026-11-21T08:49:34.711Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "nextAfter": 15,
+        "hasMore": false
+      }
+    },
+    "requests": 1,
+    "harnessCalls": [
+      {
+        "action": "start",
+        "model": "gpt-6-luna"
+      }
+    ]
+  },
+  {
+    "name": "code-only-lookalike",
+    "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+    "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+    "rest": {
+      "status": 200,
+      "body": {
+        "id": "01M7YMQW4KJF07A7P0BCQ18NXT",
+        "ownerId": "local",
+        "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+        "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 code-only-lookalike",
+          "label": "QA427 code-only-lookalike v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQW4KJF07A7P0BCQ18NXV",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: QA427_UNKNOWN_CODE_ONLY",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:34.867Z",
+        "startedAt": "2026-11-21T08:49:34.878Z",
+        "finishedAt": "2026-11-21T08:49:35.665Z",
+        "finalizedAt": "2026-11-21T08:49:35.674Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "events": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:34.867Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 code-only-lookalike",
+              "label": "QA427 code-only-lookalike v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQW4KJF07A7P0BCQ18NXT",
+                "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+                "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQW4KJF07A7P0BCQ18NXV",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:34.867Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:34.882Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:34.902Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:34.911Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:34.909Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:34.909Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:34.933Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:34.945Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:35.449Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:35.510Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:35.652Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:35.656Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:35.663Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_DELIVERY_UNCERTAIN",
+              "message": "harness turn failed: QA427_UNKNOWN_CODE_ONLY",
+              "nodeId": "infer",
+              "resumable": true,
+              "details": {
+                "adapterCode": "HARNESS_TURN_FAILED"
+              },
+              "inference": {
+                "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+                "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "mcpGet": {
+      "isError": false,
+      "body": {
+        "id": "01M7YMQW4KJF07A7P0BCQ18NXT",
+        "ownerId": "local",
+        "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+        "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA427 code-only-lookalike",
+          "label": "QA427 code-only-lookalike v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7YMQW4KJF07A7P0BCQ18NXV",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: QA427_UNKNOWN_CODE_ONLY",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97"
+          }
+        },
+        "createdAt": "2026-11-21T08:49:34.867Z",
+        "startedAt": "2026-11-21T08:49:34.878Z",
+        "finishedAt": "2026-11-21T08:49:35.665Z",
+        "finalizedAt": "2026-11-21T08:49:35.674Z",
+        "lastEventSeq": 11,
+        "recovery": {
+          "observedSeq": 11,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Controlled local native turn",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Controlled local native turn",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      }
+    },
+    "mcpWait": {
+      "isError": false,
+      "body": {
+        "run": {
+          "id": "01M7YMQW4KJF07A7P0BCQ18NXT",
+          "ownerId": "local",
+          "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+          "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA427 code-only-lookalike",
+            "label": "QA427 code-only-lookalike v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7YMQW4KJF07A7P0BCQ18NXV",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "HARNESS_DELIVERY_UNCERTAIN",
+            "message": "harness turn failed: QA427_UNKNOWN_CODE_ONLY",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "adapterCode": "HARNESS_TURN_FAILED"
+            },
+            "inference": {
+              "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+              "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+              "submission": "delivery-uncertain",
+              "promptKind": "authored",
+              "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97"
+            }
+          },
+          "createdAt": "2026-11-21T08:49:34.867Z",
+          "startedAt": "2026-11-21T08:49:34.878Z",
+          "finishedAt": "2026-11-21T08:49:35.665Z",
+          "finalizedAt": "2026-11-21T08:49:35.674Z",
+          "lastEventSeq": 11,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "infer",
+                "label": "Controlled local native turn",
+                "action": {
+                  "allowed": true
+                },
+                "effects": [
+                  {
+                    "nodeId": "infer",
+                    "label": "Controlled local native turn",
+                    "kind": "inference"
+                  }
+                ]
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                },
+                "effects": []
+              }
+            ]
+          }
+        },
+        "finished": true
+      }
+    },
+    "mcpEvents": {
+      "isError": false,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 1,
+            "ts": "2026-11-21T08:49:34.867Z",
+            "type": "run.queued",
+            "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "QA427 code-only-lookalike",
+              "label": "QA427 code-only-lookalike v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7YMQW4KJF07A7P0BCQ18NXT",
+                "loopId": "01M7YMQW3GFQCX4SX42W46FXVM",
+                "versionId": "01M7YMQW3GFQCX4SX42W46FXVN",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7YMQW4KJF07A7P0BCQ18NXV",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "user",
+                  "id": "local"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T08:49:34.867Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 2,
+            "ts": "2026-11-21T08:49:34.882Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 3,
+            "ts": "2026-11-21T08:49:34.902Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 4,
+            "ts": "2026-11-21T08:49:34.911Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:34.909Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T08:49:34.909Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 5,
+            "ts": "2026-11-21T08:49:34.933Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "c4e37b1c87a4d6f6"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 6,
+            "ts": "2026-11-21T08:49:34.945Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "Synthetic QA427 public interface fixture. Use no tools. Reply QA427_PUBLIC_SUPPORTED_OK."
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 7,
+            "ts": "2026-11-21T08:49:35.449Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 8,
+            "ts": "2026-11-21T08:49:35.510Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "submitted",
+            "marker": "codex.turn.started"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 9,
+            "ts": "2026-11-21T08:49:35.652Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 10,
+            "ts": "2026-11-21T08:49:35.656Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+            "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "01M7YMQW4KJF07A7P0BCQ18NXT",
+            "seq": 11,
+            "ts": "2026-11-21T08:49:35.663Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_DELIVERY_UNCERTAIN",
+              "message": "harness turn failed: QA427_UNKNOWN_CODE_ONLY",
+              "nodeId": "infer",
+              "resumable": true,
+              "details": {
+                "adapterCode": "HARNESS_TURN_FAILED"
+              },
+              "inference": {
+                "visitId": "01M7YMQW4KJF07A7P0BCQ18NXT:5",
+                "turnId": "01M7YMQW71PN5FJAWDQ33JWVC1",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "01a1fd4b-f296-78f1-927c-815e22e95b97"
+              }
+            }
+          }
+        ],
+        "nextAfter": 11,
+        "hasMore": false
+      }
+    },
+    "requests": 1,
+    "harnessCalls": [
+      {
+        "action": "start",
+        "model": "gpt-6-luna"
+      }
+    ]
+  }
+]
