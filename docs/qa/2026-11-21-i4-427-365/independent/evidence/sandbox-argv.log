@@ -1,0 +1,160 @@
+{
+  "node": "v22.23.4",
+  "sdkFile": "G:\\ggq\\gg-i4-427-qa\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex-sdk@0.160.0_p_56da03884d25c71a9b0d2eb5965ec750\\node_modules\\@openai\\codex-sdk\\dist\\index.js",
+  "sdkSha256": "ae27616562385faf2c4540833d27761f348ab035c4f722076f5d7de45d9390e3",
+  "typesFile": "G:\\ggq\\gg-i4-427-qa\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex-sdk@0.160.0_p_56da03884d25c71a9b0d2eb5965ec750\\node_modules\\@openai\\codex-sdk\\dist\\index.d.ts",
+  "typesSha256": "954d28bec3db17316c2f6acbbd157210ded9f75143c50827215739110327c7ac",
+  "recorderSha256": "594daeb4c927f7448a8f2604676bffcd888c4c80195d478f92b33982e7f3c9fd",
+  "results": [
+    {
+      "name": "inherited-backend",
+      "clientConfig": {
+        "features": {
+          "apps": false,
+          "memories": false,
+          "hooks": false,
+          "multi_agent": false,
+          "goals": false
+        },
+        "notify": []
+      },
+      "threadOptions": {
+        "model": "gpt-6-luna",
+        "modelReasoningEffort": "low",
+        "sandboxMode": "read-only",
+        "approvalPolicy": "never",
+        "networkAccessEnabled": false,
+        "webSearchMode": "disabled",
+        "skipGitRepoCheck": true
+      },
+      "args": [
+        "--experimental-json",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false",
+        "--config",
+        "notify=[]",
+        "--model",
+        "gpt-6-luna",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--config",
+        "model_reasoning_effort=\"low\"",
+        "--config",
+        "sandbox_workspace_write.network_access=false",
+        "--config",
+        "web_search=\"disabled\"",
+        "--config",
+        "approval_policy=\"never\""
+      ],
+      "events": [
+        {
+          "type": "thread.started",
+          "thread_id": "synthetic-sdk-argv-thread"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "turn.completed",
+          "usage": {
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0,
+            "cache_write_input_tokens": 0
+          }
+        }
+      ],
+      "observation": "No windows.sandbox config is emitted; the authored permission level is explicit."
+    },
+    {
+      "name": "explicit-backend",
+      "clientConfig": {
+        "features": {
+          "apps": false,
+          "memories": false,
+          "hooks": false,
+          "multi_agent": false,
+          "goals": false
+        },
+        "notify": [],
+        "windows": {
+          "sandbox": "unelevated"
+        },
+        "sandbox_mode": "danger-full-access",
+        "approval_policy": "on-request"
+      },
+      "threadOptions": {
+        "model": "gpt-6-luna",
+        "modelReasoningEffort": "low",
+        "sandboxMode": "read-only",
+        "approvalPolicy": "never",
+        "networkAccessEnabled": false,
+        "webSearchMode": "disabled",
+        "skipGitRepoCheck": true
+      },
+      "args": [
+        "--experimental-json",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false",
+        "--config",
+        "notify=[]",
+        "--config",
+        "windows.sandbox=\"unelevated\"",
+        "--config",
+        "sandbox_mode=\"danger-full-access\"",
+        "--config",
+        "approval_policy=\"on-request\"",
+        "--model",
+        "gpt-6-luna",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--config",
+        "model_reasoning_effort=\"low\"",
+        "--config",
+        "sandbox_workspace_write.network_access=false",
+        "--config",
+        "web_search=\"disabled\"",
+        "--config",
+        "approval_policy=\"never\""
+      ],
+      "events": [
+        {
+          "type": "thread.started",
+          "thread_id": "synthetic-sdk-argv-thread"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "turn.completed",
+          "usage": {
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0,
+            "cache_write_input_tokens": 0
+          }
+        }
+      ],
+      "observation": "Explicit windows.sandbox override is emitted before the distinct --sandbox permission option. Same-key approval override precedes the authored thread value."
+    }
+  ],
+  "tier": "Real candidate options + actual pinned SDK serialization + controlled Node argv-recorder process. Static inheritance conclusion only; no owner Windows backend experiment and no permission weakening claimed."
+}
