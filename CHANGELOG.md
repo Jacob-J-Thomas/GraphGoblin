@@ -20,6 +20,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
   as a failed kill, is no longer taken for a refused start. No store, export or contract change.
 
+- Codex structured calls create short scratch names with exclusive `mkdir` in at most four
+  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
+  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
+  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI
+  verification at the measured 226-character Windows temp root observes a 249-character adapter
+  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI
+  limits remain. Request/configured working directories and cleanup precedence are unchanged.
+  **Upgrade:** reinstall dependencies from the updated frozen lockfile, then rebuild the API.
+  No SDK version, dependency, stored schema/format or reset change.
+
 - Clarify that an enabled Codex model and a ready preflight do not establish current access
   for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
   the provider's explanation; LLM decisions retain only a safe failure category. The guide

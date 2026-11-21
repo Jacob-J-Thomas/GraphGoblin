@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-363-structured/GraphGoblin/packages/adapter-codex
+
+ ❯ src/structured.test.ts (11 tests | 1 failed | 10 skipped) 42ms
+   × starts the fake harness under a real 226-character temp root and cleans its scratch 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/structured.test.ts > starts the fake harness under a real 226-character temp root and cleans its scratch
+AssertionError: promise rejected "Error: ENAMETOOLONG: name too long, mkdte… { …(4) }" instead of resolving
+ ❯ src/structured.test.ts:57:6
+     55|     await expect(
+     56|       createCodexStructured(harness).complete({ prompt: 'p', schema },…
+     57|     ).resolves.toMatchObject({ value: {} });
+       |      ^
+     58|     expect(harness.started).toHaveLength(1);
+     59|     const directory = harness.started[0]?.workingDirectory ?? '';
+ ❯ withTempRoot src/structured.test.ts:30:5
+ ❯ src/structured.test.ts:42:3
+
+Caused by: Error: ENAMETOOLONG: name too long, mkdtemp 'C:\Users\98jak\AppData\Local\Temp\gg-structured-case-gOoCgc\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\xxxxxxxxxxxxxx\graphgoblin-structured-XXXXXX'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  02:39:31
+   Duration  4.64s (transform 53%, import 46%, tests 1%)
+
+  Transform  transforming modules took 2.18s · 53% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Serialized Error: { errno: -4064, code: 'ENAMETOOLONG', syscall: 'mkdtemp', path: 'C:\Users\98jak\AppData\Local\Temp\gg-structured-case-gOoCgc\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\segment-abcdefghij\xxxxxxxxxxxxxx\graphgoblin-structured-XXXXXX' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-363-
+  │ structured\GraphGoblin\packages\adapter-codex
+

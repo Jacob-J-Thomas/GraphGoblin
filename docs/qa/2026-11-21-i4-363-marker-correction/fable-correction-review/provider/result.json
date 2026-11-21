@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 469972,
+  "stop_reason": "end_turn",
+  "session_id": "ddcd81bb-b528-4883-97e1-102200736203",
+  "total_cost_usd": 4.5091246,
+  "usage": {
+    "input_tokens": 34,
+    "cache_creation_input_tokens": 145364,
+    "cache_read_input_tokens": 1198743,
+    "output_tokens": 48582,
+    "output_tokens_details": {
+      "thinking_tokens": 38076
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 145364,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 13414,
+        "cache_read_input_tokens": 142841,
+        "cache_creation_input_tokens": 5235,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 5235
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 34,
+      "outputTokens": 48582,
+      "cacheReadInputTokens": 1198743,
+      "cacheCreationInputTokens": 145364,
+      "webSearchRequests": 0,
+      "costUSD": 4.5091246,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 38076,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 145364,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 83,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**ACCEPT FIX** for F3 at head `b1cdd20463f6dbbd4e55cae0109395db724a778f` (parent `55c9a549`), limited to the three frozen files. I found no introduced blocking finding. This was a static review with Read/Glob/Grep only: I ran no commands or tests and recomputed no hashes.\n\n## Source binding\n\n- The three checkout files read identically to the root-freeze `git show b1cdd204:…` records (13–15) and to the post-image of `source.patch`, which matches `candidate.diff`.\n- The worktree's branch ref file reads `b1cdd204…`.\n- Tree `65443d7d…`, the clean status and the three SHA-256 values are as recorded in the freeze receipt and author bindings, not recomputed by me.\n- The `before/` bytes carry the same recorded hashes and line numbers (11, 48, 51) as the final audit's `marker-race-source.json`.\n\n## Assessment (static)\n\n- **Atomic publication** (`schema-cli.mjs` 22–67): the record is written to a sibling named with PID and UUID, opened `wx`, closed, then renamed to the final path. Ownership starts only after the exclusive open, and a failure before the rename removes only that sibling.\n- **Pause metadata** (45–56): uses the same write/close/rename, so the barrier does not reintroduce the race.\n- **No parse before full publication** (`sdk-schema-case.mjs`): the observer parses three files, and each is complete when read.\n  - The pause file is published by rename.\n  - The sibling is closed before the pause file appears, and the child is blocked until release.\n  - The final marker exists only after the rename.\n- **Abort and settlement on failure** (53–91): every statement that can throw after the SDK work starts sits inside the `try`. The `finally` aborts and awaits the work, which cannot reject. In the installed patched SDK, abort kills the child and the turn settles after its stdout closes, then schema cleanup runs.\n- **Original fault preserved** (85–86, 119–125, 130): the same error object is serialised into state and rethrown after settlement.\n- **Barrier is deterministic** (57–67): the child cannot publish without the release, and the release is written only from inside the observer's wait loop. Ordering comes from the handshake; the 3000 ms deadlines only fail loudly.\n- **Old assertions intact** (`sdk-schema.test.ts`): the six original cases keep every assertion and the 3000/6000/10000 ms limits, and gain settlement and child-absence checks. The empty-stderr check is replaced only for the two fault controls, by exit code 1 plus the original message in stderr.\n\n## Candidates considered and refuted\n\n1. **`observerWaiting: true` is a constant.** The proof is carried by the in-loop capture, the re-probed `finalMarkerExists: false`, `workSettled: false`, and the sibling record equalling the final record with the sibling gone afterwards.\n2. **A second failure after settlement could pre-empt the rethrow.** The liveness probe, directory listing or state write could throw first. Abort and settlement are already complete by then, and the exit is still non-zero.\n3. **Rename adds a Windows sharing-violation failure mode.** It would fail loudly (child exits 1, non-abort rejection, test fails), with the sibling removed and no partial marker. Rename is the mechanism D190 selected.\n4. **The fault controls inject from inside the observer.** They fail at the real observation statement (line 78) with a real `ENOENT` and a real `SyntaxError`, and the retained stderr stacks point to 78:27 and 78:21.\n5. **Abort mode no longer re-reads the record after settlement.** Passing paths are equivalent, and a record missing at the deadline still fails the test.\n\n## Author-native records (read, not re-executed)\n\n- **Focused suite:** `focused-02.log` shows 9/9.\n- **Adapter coverage:** 678 passed, 4 skipped, 99.41% lines, 95.50% branches.\n- **Typecheck, lint, format check:** each exited 0.\n- **Publication-window and fault states:** the three retained state files match the test assertions.\n- **Counterfactual, first attempt:** `replay-01.log` fails at harness line 160, after the zero-byte marker, exit 1, `SyntaxError` and no-state assertions had passed.\n- **Counterfactual, old-only rerun:** exit 1 with the `SyntaxError` at line 48:25 and the child absent; the nine corrected cases were re-read from retained state, not rerun.\n- **Process absence:** 13 PIDs listed, none matching.\n\nThese runs were on the uncommitted worktree at `55c9` and bind to `b1cdd204` only through the recorded hashes; the logs carry no in-log source hash.\n\n## Not established here\n\nIndependent Opus behaviour QA, current-head CI, native artifact verification and coordinator completion remain required. No natural race or orphan is claimed. This is not a fourth general scan, a renewed Astra sign-off, a merge, an issue closure or owner acceptance, and the original scan 3 CHANGES_REQUIRED stands as recorded.",
+  "ttft_ms": 2551,
+  "type": "result",
+  "duration_ms": 493365,
+  "uuid": "89b65393-84cb-4de1-af0d-5c48ae47b38f",
+  "ttft_stream_ms": 1045,
+  "time_to_request_ms": 276,
+  "first_content_frame_ms": 1046,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 34,
+      "outputTokens": 48582,
+      "cacheReadInputTokens": 1198743,
+      "cacheCreationInputTokens": 145364,
+      "webSearchRequests": 0,
+      "costUSD": 4.5091246,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 38076,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 145364,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}
