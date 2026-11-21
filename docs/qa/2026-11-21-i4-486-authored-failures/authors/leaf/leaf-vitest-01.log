@@ -1,0 +1,132 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/handlers/heartbeat-visit.test.ts (25 tests | 5 failed) 703ms
+   ❯ heartbeat authored boundaries (#486) (24)
+     × renders script arguments before resolving the workspace or running a probe 6ms
+     × preserves external http exception policy 1ms
+     × preserves external script exception policy 1ms
+     × preserves external workspace exception policy 0ms
+     × keeps probe overflow and post-response conversion separate from authored rendering 1ms
+ ❯ src/handlers/flow.test.ts (77 tests | 5 failed) 3155ms
+   ❯ authored leaf preparation failures (#486) (22)
+     × checks an unresolved previous dispatch before workspace, secrets or arguments 5ms
+     × keeps external secret errors outside authored attribution (TemplateError: PRIVATE_EXTERNAL) 32ms
+     × keeps external secret errors outside authored attribution (ExpressionError: PRIVATE_EXTERNAL) 30ms
+     × keeps external secret errors outside authored attribution (TemplateError: PRIVATE_EXTERNAL) 31ms
+     × keeps external secret errors outside authored attribution ({ code: 'TEMPLATE_ERROR', …(1) }) 32ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/flow.test.ts > authored leaf preparation failures (#486) > checks an unresolved previous dispatch before workspace, secrets or arguments
+RunFailureError: Generated run event could not be recorded: dispatchId: must be a ULID
+ ❯ validateGeneratedEvent src/event-validation.ts:18:9
+     16|     .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+     17|     .join('; ');
+     18|   throw new RunFailureError(
+       |         ^
+     19|     'EVENT_INVALID',
+     20|     `Generated run event could not be recorded: ${reason}`,
+ ❯ src/testing/fakes.ts:175:7
+ ❯ InMemoryEventStore.append src/testing/fakes.ts:174:27
+ ❯ src/handlers/flow.test.ts:895:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/handlers/flow.test.ts > authored leaf preparation failures (#486) > keeps external secret errors outside authored attribution (TemplateError: PRIVATE_EXTERNAL)
+ FAIL  src/handlers/flow.test.ts > authored leaf preparation failures (#486) > keeps external secret errors outside authored attribution (ExpressionError: PRIVATE_EXTERNAL)
+ FAIL  src/handlers/flow.test.ts > authored leaf preparation failures (#486) > keeps external secret errors outside authored attribution (TemplateError: PRIVATE_EXTERNAL)
+ FAIL  src/handlers/flow.test.ts > authored leaf preparation failures (#486) > keeps external secret errors outside authored attribution ({ code: 'TEMPLATE_ERROR', …(1) })
+TypeError: .toHaveProperty() expects to receive a valid object, but got undefined
+ ❯ src/handlers/flow.test.ts:1178:40
+    1176|         nodeId: 'script',
+    1177|       });
+    1178|       expect(run.failure?.details).not.toHaveProperty('boundary');
+       |                                        ^
+    1179|       expect(run.failure?.details).not.toHaveProperty('cause');
+    1180|       expect(e.ports.scripts.calls).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > renders script arguments before resolving the workspace or running a probe
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "nodes",
+      1,
+      "config"
+    ],
+    "message": "heartbeat needs at least one of until, maxBeats, or deadline"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/handlers/heartbeat-visit.test.ts:241:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > preserves external http exception policy
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > preserves external script exception policy
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > preserves external workspace exception policy
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "nodes",
+      1,
+      "config"
+    ],
+    "message": "heartbeat needs at least one of until, maxBeats, or deadline"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/handlers/heartbeat-visit.test.ts:424:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > keeps probe overflow and post-response conversion separate from authored rendering
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "nodes",
+      1,
+      "config"
+    ],
+    "message": "heartbeat needs at least one of until, maxBeats, or deadline"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/handlers/heartbeat-visit.test.ts:447:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 92 passed (102)
+   Start at  05:45:35
+   Duration  5.73s (tests 45%, import 35%, transform 20%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

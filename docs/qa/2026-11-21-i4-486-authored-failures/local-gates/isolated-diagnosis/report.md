@@ -1,0 +1,26 @@
+# Isolated diagnosis of the #486 combined gate
+
+The original repository check exited 1 at 2026-11-21T12:20:54Z. Its preserved output identifies four failed tests. Each exact case passed once on the candidate and once on the clean detached base in sequential focused runs. The candidate still matches all 52 hashes in the root gate snapshot. The detached base remains clean. No product, test, assertion, coverage setting or timeout was edited.
+
+| Case | Original combined run | Isolated candidate | Isolated base |
+| --- | --- | --- | --- |
+| Domain, 10 nested failing evaluations in a 128 MB child | Expected native child status 0, observed null. The case took 11,493 ms. | Exit 0, signal null, error null, empty stderr. Child-wall 925.42 ms, expression 7.25 ms, reported message length 27. | Exit 0, signal null, error null, empty stderr. Child-wall 894.59 ms, expression 6.85 ms, reported message length 27. |
+| Engine, checkpoint with 10,000 completions | Reported failed after 8,641 ms total. The engine runner was interrupted before it printed an assertion diff. | Run succeeded, exact thread equality passed. Measured interval 1,250.17 ms. | Run succeeded, exact thread equality passed. Measured interval 1,230.05 ms. |
+| Engine, timers during a fast graph cycle | Reported failed after 427 ms total. | 235 ms total, decision count greater than one after the 200 ms timer and final state cancelled. | 245 ms total, identical assertions passed. |
+| Engine, delayed child wake at the next visit of the same subloop | Reported failed after 1,077 ms total. | 337 ms total. Verified two child identities, the second waiting, one earlier completion, eventual success and both distinct completions. | 349 ms total, identical assertions passed. |
+
+## Interpretation
+
+The domain gate printed the failed status comparison only. It did not record the original child PID, spawn error, signal or streams. Its native timeout was 10,000 ms. The 11,493 ms wall time and successful deeper 20/30 cases in the same combined run are consistent with a child delayed during concurrent coverage. They do not establish the original errno or prove whether the child reached expression evaluation. An out-of-memory abort or any particular signal is unverified. The isolated child records preserve the available status, error, signal, stdout and stderr for this comparison.
+
+The recovery test has a 30,000 ms outer timeout, three assertions, and a 2,000 ms limit on the specific provideInput-to-settle interval. The 8,641 ms reported for the whole original test includes fixture construction and a full reconstruction for comparison. It cannot be substituted for the timed interval. Only the two isolated operands are available. The cycle control uses a wall-clock timer and the stale-wake control uses default vi.waitFor deadlines. Original gate output records neither the failing statement nor a decision count or state for those engine cases. Their isolated passes establish original test expectations on these bytes.
+
+The observed change in outcomes when run without concurrent coverage, similar candidate/base numbers and unchanged assertion bodies support a timing/resource-contention explanation. Serializing tests and removing coverage instrumentation are both environmental differences. This experiment does not isolate either factor or prove a root cause for the earlier failures. It yielded no evidence calling for a source fix, assertion rewrite or change to the configured limits. The original combined gate remains failed. CI's coverage job already uses package-level Turbo concurrency 1 at .github/workflows/ci.yml:176.
+
+## Method and evidence
+
+Node v22.23.4 and pnpm.cmd ran with the original gate TEMP/TMP path on C:. Every target ran singly on candidate then base. Domain commands used the original test itself and its unchanged native arguments, 128 MB heap cap, 40 ms evaluator timeout, maximum depth 200, 10,000 ms spawn timeout and 500 ms result-time assertion. A passive preload records the actual spawnSync return after it settles. Command source hashes differ between checkouts because the fixture embeds absolute URLs of the module and TypeScript compiler. The relevant test source hashes match after normalizing line endings.
+
+For the engine checkpoint case a process-local performance.now observer forwards the original timestamp and records the two values returned to the existing lines 667 and 674. Its small stack-inspection overhead before the second clock read is included in the measured interval. The clock observer wrote its record after the second timestamp was obtained. An initial diagnostic attempt using an unsupported Vitest --setupFiles option exited before running tests. Both engine measurements used the supported Node --import preload. The two other engine cases ran with the ordinary Vitest verbose reporter.
+
+source-readback.json binds candidate/base, original logs, the full gate snapshot, all four test fragments and the four matching failure lines. commands.json includes all nine diagnostic commands and return codes, including the unsupported invocation. The per-case logs, native child JSON records and clock JSON records retain the direct observations. No full coverage or build was run for this diagnosis.

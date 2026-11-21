@@ -1,0 +1,3068 @@
+{
+  "b17": {
+    "rest": {
+      "id": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+      "ownerId": "local",
+      "loopId": "01M7ZHXB5T4GFGXC1A2ZSZA1S6",
+      "versionId": "01M7ZHXB5T4GFGXC1A2ZSZA1S7",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 canonical",
+        "label": "D205 canonical v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXB7Y8RP3X51MQ2E0068Q",
+      "status": "failed",
+      "currentNodeId": "respond",
+      "iteration": 1,
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "nodeId": "respond",
+        "resumable": true
+      },
+      "createdAt": "2026-11-21T17:19:22.878Z",
+      "startedAt": "2026-11-21T17:19:22.900Z",
+      "finishedAt": "2026-11-21T17:19:22.977Z",
+      "finalizedAt": "2026-11-21T17:19:22.983Z",
+      "lastEventSeq": 6,
+      "recovery": {
+        "observedSeq": 6,
+        "resume": {
+          "allowed": true
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "chat-input",
+            "label": "Chat input",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "respond",
+                "label": "Respond",
+                "kind": "inference"
+              },
+              {
+                "nodeId": "chat-return",
+                "label": "Chat response",
+                "kind": "delivery"
+              }
+            ]
+          },
+          {
+            "nodeId": "respond",
+            "label": "Respond",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "respond",
+                "label": "Respond",
+                "kind": "inference"
+              },
+              {
+                "nodeId": "chat-return",
+                "label": "Chat response",
+                "kind": "delivery"
+              }
+            ]
+          },
+          {
+            "nodeId": "chat-envelope",
+            "label": "Package chat response",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": [
+              {
+                "nodeId": "chat-return",
+                "label": "Chat response",
+                "kind": "delivery"
+              }
+            ]
+          },
+          {
+            "nodeId": "chat-return",
+            "label": "Chat response",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": [
+              {
+                "nodeId": "chat-return",
+                "label": "Chat response",
+                "kind": "delivery"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+      "ownerId": "local",
+      "loopId": "01M7ZHXB5T4GFGXC1A2ZSZA1S6",
+      "versionId": "01M7ZHXB5T4GFGXC1A2ZSZA1S7",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 canonical",
+        "label": "D205 canonical v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXB7Y8RP3X51MQ2E0068Q",
+      "status": "failed",
+      "currentNodeId": "respond",
+      "iteration": 1,
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "nodeId": "respond",
+        "resumable": true
+      },
+      "createdAt": "2026-11-21T17:19:22.878Z",
+      "startedAt": "2026-11-21T17:19:22.900Z",
+      "finishedAt": "2026-11-21T17:19:22.977Z",
+      "finalizedAt": "2026-11-21T17:19:22.983Z",
+      "lastEventSeq": 6
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:22.878Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXB5T4GFGXC1A2ZSZA1S7",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 canonical",
+          "label": "D205 canonical v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+            "loopId": "01M7ZHXB5T4GFGXC1A2ZSZA1S6",
+            "versionId": "01M7ZHXB5T4GFGXC1A2ZSZA1S7",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXB7Y8RP3X51MQ2E0068Q",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "chat-input",
+              "kind": "manual",
+              "payload": {
+                "protocol": "graphgoblin.chat.v1",
+                "conversationId": "01M7ZG0000000000000000QA17",
+                "requestId": "9772f27a-1078-4eb4-8070-d7c5d5de8469",
+                "turn": 3,
+                "history": [
+                  {
+                    "role": "user",
+                    "text": "D205-OLDEST user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "D205-OLDEST assistant"
+                  },
+                  {
+                    "role": "user",
+                    "text": "recent user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "recent assistant"
+                  }
+                ],
+                "input": {
+                  "kind": "text",
+                  "text": "D205 current message"
+                }
+              },
+              "receivedAt": "2026-11-21T17:19:22.878Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:22.907Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:22.913Z",
+        "type": "node.started",
+        "nodeId": "chat-input",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "5021facbfce2e14a"
+      },
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:22.923Z",
+        "type": "node.finished",
+        "nodeId": "chat-input",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/chat-input",
+            "value": {
+              "nodeId": "chat-input",
+              "value": {
+                "protocol": "graphgoblin.chat.v1",
+                "conversationId": "01M7ZG0000000000000000QA17",
+                "requestId": "9772f27a-1078-4eb4-8070-d7c5d5de8469",
+                "turn": 3,
+                "history": [
+                  {
+                    "role": "user",
+                    "text": "D205-OLDEST user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "D205-OLDEST assistant"
+                  },
+                  {
+                    "role": "user",
+                    "text": "recent user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "recent assistant"
+                  }
+                ],
+                "input": {
+                  "kind": "text",
+                  "text": "D205 current message"
+                }
+              },
+              "at": "2026-11-21T17:19:22.920Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "chat-input",
+              "value": {
+                "protocol": "graphgoblin.chat.v1",
+                "conversationId": "01M7ZG0000000000000000QA17",
+                "requestId": "9772f27a-1078-4eb4-8070-d7c5d5de8469",
+                "turn": 3,
+                "history": [
+                  {
+                    "role": "user",
+                    "text": "D205-OLDEST user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "D205-OLDEST assistant"
+                  },
+                  {
+                    "role": "user",
+                    "text": "recent user"
+                  },
+                  {
+                    "role": "assistant",
+                    "text": "recent assistant"
+                  }
+                ],
+                "input": {
+                  "kind": "text",
+                  "text": "D205 current message"
+                }
+              },
+              "at": "2026-11-21T17:19:22.920Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:22.949Z",
+        "type": "node.started",
+        "nodeId": "respond",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "9f9fba977f7a9f19"
+      },
+      {
+        "runId": "01M7ZHXB7Y8RP3X51MQ2E0068P",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:22.974Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "respond",
+          "resumable": true
+        }
+      }
+    ]
+  },
+  "ws-invalid": {
+    "rest": {
+      "id": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEK",
+      "versionId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEM",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 fresh workspace invalid",
+        "label": "D205 fresh workspace invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBKXXPX62HE2RYRPRMC9",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+          }
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.261Z",
+      "startedAt": "2026-11-21T17:19:23.270Z",
+      "finishedAt": "2026-11-21T17:19:23.319Z",
+      "finalizedAt": "2026-11-21T17:19:23.325Z",
+      "lastEventSeq": 6,
+      "recovery": {
+        "observedSeq": 6,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEK",
+      "versionId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEM",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 fresh workspace invalid",
+        "label": "D205 fresh workspace invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBKXXPX62HE2RYRPRMC9",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+          }
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.261Z",
+      "startedAt": "2026-11-21T17:19:23.270Z",
+      "finishedAt": "2026-11-21T17:19:23.319Z",
+      "finalizedAt": "2026-11-21T17:19:23.325Z",
+      "lastEventSeq": 6
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.261Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEM",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 fresh workspace invalid",
+          "label": "D205 fresh workspace invalid v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+            "loopId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEK",
+            "versionId": "01M7ZHXBK1ZMMJE8ZEJMJ52FEM",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXBKXXPX62HE2RYRPRMC9",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.261Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.273Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.277Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.282Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.281Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.281Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.306Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXBKXXPX62HE2RYRPRMC8",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:23.317Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "ws-empty": {
+    "rest": {
+      "id": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBQQFGVQ71JRF1BHG40Z",
+      "versionId": "01M7ZHXBQQFGVQ71JRF1BHG410",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 fresh workspace empty",
+        "label": "D205 fresh workspace empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBRGWB6F9JJ01BV8X8A4",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.408Z",
+      "startedAt": "2026-11-21T17:19:23.416Z",
+      "finishedAt": "2026-11-21T17:19:23.454Z",
+      "finalizedAt": "2026-11-21T17:19:23.459Z",
+      "lastEventSeq": 6,
+      "recovery": {
+        "observedSeq": 6,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBQQFGVQ71JRF1BHG40Z",
+      "versionId": "01M7ZHXBQQFGVQ71JRF1BHG410",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 fresh workspace empty",
+        "label": "D205 fresh workspace empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBRGWB6F9JJ01BV8X8A4",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.408Z",
+      "startedAt": "2026-11-21T17:19:23.416Z",
+      "finishedAt": "2026-11-21T17:19:23.454Z",
+      "finalizedAt": "2026-11-21T17:19:23.459Z",
+      "lastEventSeq": 6
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.408Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXBQQFGVQ71JRF1BHG410",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 fresh workspace empty",
+          "label": "D205 fresh workspace empty v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+            "loopId": "01M7ZHXBQQFGVQ71JRF1BHG40Z",
+            "versionId": "01M7ZHXBQQFGVQ71JRF1BHG410",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXBRGWB6F9JJ01BV8X8A4",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.408Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.419Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.423Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.429Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.427Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.427Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.445Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXBRGWB6F9JJ01BV8X8A3",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:23.452Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template rendered to an empty path. Supply a nonempty directory."
+            }
+          }
+        }
+      }
+    ]
+  },
+  "prior-definitely-not-submitted-invalid": {
+    "rest": {
+      "id": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBVXKW59EDEAJFH9QKS3",
+      "versionId": "01M7ZHXBVXKW59EDEAJFH9QKS4",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior definitely-not-submitted invalid",
+        "label": "D205 natural prior definitely-not-submitted invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBWM7DN7ESZRJSX4N46D",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+          "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.540Z",
+      "startedAt": "2026-11-21T17:19:23.548Z",
+      "finishedAt": "2026-11-21T17:19:24.306Z",
+      "finalizedAt": "2026-11-21T17:19:24.312Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBVXKW59EDEAJFH9QKS3",
+      "versionId": "01M7ZHXBVXKW59EDEAJFH9QKS4",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior definitely-not-submitted invalid",
+        "label": "D205 natural prior definitely-not-submitted invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXBWM7DN7ESZRJSX4N46D",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+          "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.540Z",
+      "startedAt": "2026-11-21T17:19:23.548Z",
+      "finishedAt": "2026-11-21T17:19:24.306Z",
+      "finalizedAt": "2026-11-21T17:19:24.312Z",
+      "lastEventSeq": 12
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.540Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXBVXKW59EDEAJFH9QKS4",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 natural prior definitely-not-submitted invalid",
+          "label": "D205 natural prior definitely-not-submitted invalid v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+            "loopId": "01M7ZHXBVXKW59EDEAJFH9QKS3",
+            "versionId": "01M7ZHXBVXKW59EDEAJFH9QKS4",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXBWM7DN7ESZRJSX4N46D",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.540Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.552Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.556Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.562Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.560Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.560Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.585Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:23.593Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+        "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "D205 exact original task"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 7,
+        "ts": "2026-11-21T17:19:23.596Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+        "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+        "submission": "definitely-not-submitted"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 8,
+        "ts": "2026-11-21T17:19:23.598Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+        "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+        "submission": "definitely-not-submitted"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 9,
+        "ts": "2026-11-21T17:19:23.605Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: D205 genuine prior definitely-not-submitted",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+            "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 10,
+        "ts": "2026-11-21T17:19:24.277Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+        }
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 11,
+        "ts": "2026-11-21T17:19:24.294Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 2,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXBWM7DN7ESZRJSX4N46C",
+        "seq": 12,
+        "ts": "2026-11-21T17:19:24.304Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+            }
+          },
+          "inference": {
+            "visitId": "01M7ZHXBWM7DN7ESZRJSX4N46C:5",
+            "turnId": "01M7ZHXBY9MFD8MGA4S0YRQQEN",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    ]
+  },
+  "prior-definitely-not-submitted-empty": {
+    "rest": {
+      "id": "01M7ZHXC0G7B8HK294B2EGW273",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBZRZYY8BC4R3V452K8W",
+      "versionId": "01M7ZHXBZRZYY8BC4R3V452K8X",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior definitely-not-submitted empty",
+        "label": "D205 natural prior definitely-not-submitted empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC0G7B8HK294B2EGW274",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+          "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.664Z",
+      "startedAt": "2026-11-21T17:19:23.675Z",
+      "finishedAt": "2026-11-21T17:19:24.410Z",
+      "finalizedAt": "2026-11-21T17:19:24.416Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXC0G7B8HK294B2EGW273",
+      "ownerId": "local",
+      "loopId": "01M7ZHXBZRZYY8BC4R3V452K8W",
+      "versionId": "01M7ZHXBZRZYY8BC4R3V452K8X",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior definitely-not-submitted empty",
+        "label": "D205 natural prior definitely-not-submitted empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC0G7B8HK294B2EGW274",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+          "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.664Z",
+      "startedAt": "2026-11-21T17:19:23.675Z",
+      "finishedAt": "2026-11-21T17:19:24.410Z",
+      "finalizedAt": "2026-11-21T17:19:24.416Z",
+      "lastEventSeq": 12
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.664Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXBZRZYY8BC4R3V452K8X",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 natural prior definitely-not-submitted empty",
+          "label": "D205 natural prior definitely-not-submitted empty v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXC0G7B8HK294B2EGW273",
+            "loopId": "01M7ZHXBZRZYY8BC4R3V452K8W",
+            "versionId": "01M7ZHXBZRZYY8BC4R3V452K8X",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXC0G7B8HK294B2EGW274",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.664Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.678Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.695Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.701Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.699Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.699Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.711Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:23.720Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+        "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "D205 exact original task"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 7,
+        "ts": "2026-11-21T17:19:23.724Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+        "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+        "submission": "definitely-not-submitted"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 8,
+        "ts": "2026-11-21T17:19:23.726Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+        "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+        "submission": "definitely-not-submitted"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 9,
+        "ts": "2026-11-21T17:19:23.732Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: D205 genuine prior definitely-not-submitted",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+            "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 10,
+        "ts": "2026-11-21T17:19:24.388Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+        }
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 11,
+        "ts": "2026-11-21T17:19:24.401Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 2,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC0G7B8HK294B2EGW273",
+        "seq": 12,
+        "ts": "2026-11-21T17:19:24.409Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template rendered to an empty path. Supply a nonempty directory."
+            }
+          },
+          "inference": {
+            "visitId": "01M7ZHXC0G7B8HK294B2EGW273:5",
+            "turnId": "01M7ZHXC282BYZQRCR5A41V1H6",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        }
+      }
+    ]
+  },
+  "prior-delivery-uncertain-invalid": {
+    "rest": {
+      "id": "01M7ZHXC4NT572BEJW6A1DFAEG",
+      "ownerId": "local",
+      "loopId": "01M7ZHXC3WRW0W5ZNCED54C7F9",
+      "versionId": "01M7ZHXC3WRW0W5ZNCED54C7FA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior delivery-uncertain invalid",
+        "label": "D205 natural prior delivery-uncertain invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC4NT572BEJW6A1DFAEH",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+          "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-4"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.797Z",
+      "startedAt": "2026-11-21T17:19:23.809Z",
+      "finishedAt": "2026-11-21T17:19:24.521Z",
+      "finalizedAt": "2026-11-21T17:19:24.527Z",
+      "lastEventSeq": 14,
+      "recovery": {
+        "observedSeq": 14,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXC4NT572BEJW6A1DFAEG",
+      "ownerId": "local",
+      "loopId": "01M7ZHXC3WRW0W5ZNCED54C7F9",
+      "versionId": "01M7ZHXC3WRW0W5ZNCED54C7FA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior delivery-uncertain invalid",
+        "label": "D205 natural prior delivery-uncertain invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC4NT572BEJW6A1DFAEH",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+          "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-4"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.797Z",
+      "startedAt": "2026-11-21T17:19:23.809Z",
+      "finishedAt": "2026-11-21T17:19:24.521Z",
+      "finalizedAt": "2026-11-21T17:19:24.527Z",
+      "lastEventSeq": 14
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.797Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXC3WRW0W5ZNCED54C7FA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 natural prior delivery-uncertain invalid",
+          "label": "D205 natural prior delivery-uncertain invalid v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXC4NT572BEJW6A1DFAEG",
+            "loopId": "01M7ZHXC3WRW0W5ZNCED54C7F9",
+            "versionId": "01M7ZHXC3WRW0W5ZNCED54C7FA",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXC4NT572BEJW6A1DFAEH",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.797Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.813Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.821Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.827Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.825Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.825Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.852Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:23.861Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+        "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "D205 exact original task"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 7,
+        "ts": "2026-11-21T17:19:23.866Z",
+        "type": "harness.session",
+        "nodeId": "infer",
+        "harness": "codex",
+        "sessionId": "fake-session-4",
+        "mode": "fresh",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 8,
+        "ts": "2026-11-21T17:19:23.868Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+        "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 9,
+        "ts": "2026-11-21T17:19:23.870Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+        "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+        "submission": "delivery-uncertain"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 10,
+        "ts": "2026-11-21T17:19:23.872Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+        "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+        "submission": "delivery-uncertain"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 11,
+        "ts": "2026-11-21T17:19:23.877Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: D205 genuine prior delivery-uncertain",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+            "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-4"
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 12,
+        "ts": "2026-11-21T17:19:24.493Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+        }
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 13,
+        "ts": "2026-11-21T17:19:24.510Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 2,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC4NT572BEJW6A1DFAEG",
+        "seq": 14,
+        "ts": "2026-11-21T17:19:24.519Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template could not be rendered at line 1, column 39. Check its filters and input values.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template could not be rendered at line 1, column 39. Check its filters and input values."
+            }
+          },
+          "inference": {
+            "visitId": "01M7ZHXC4NT572BEJW6A1DFAEG:5",
+            "turnId": "01M7ZHXC6NP0MQ05Y9SJMGY004",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-4"
+          }
+        }
+      }
+    ]
+  },
+  "prior-delivery-uncertain-empty": {
+    "rest": {
+      "id": "01M7ZHXC96PES3JY8JB4XE9A0C",
+      "ownerId": "local",
+      "loopId": "01M7ZHXC8C28CHC3NXDPH42XPW",
+      "versionId": "01M7ZHXC8C28CHC3NXDPH42XPX",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior delivery-uncertain empty",
+        "label": "D205 natural prior delivery-uncertain empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC96PES3JY8JB4XE9A0D",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+          "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-5"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.942Z",
+      "startedAt": "2026-11-21T17:19:23.955Z",
+      "finishedAt": "2026-11-21T17:19:24.627Z",
+      "finalizedAt": "2026-11-21T17:19:24.632Z",
+      "lastEventSeq": 14,
+      "recovery": {
+        "observedSeq": 14,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXC96PES3JY8JB4XE9A0C",
+      "ownerId": "local",
+      "loopId": "01M7ZHXC8C28CHC3NXDPH42XPW",
+      "versionId": "01M7ZHXC8C28CHC3NXDPH42XPX",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 natural prior delivery-uncertain empty",
+        "label": "D205 natural prior delivery-uncertain empty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXC96PES3JY8JB4XE9A0D",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "TEMPLATE_ERROR",
+        "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "settings.workingDirectory.template",
+          "cause": {
+            "code": "TEMPLATE_ERROR",
+            "message": "The template rendered to an empty path. Supply a nonempty directory."
+          }
+        },
+        "inference": {
+          "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+          "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-5"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:23.942Z",
+      "startedAt": "2026-11-21T17:19:23.955Z",
+      "finishedAt": "2026-11-21T17:19:24.627Z",
+      "finalizedAt": "2026-11-21T17:19:24.632Z",
+      "lastEventSeq": 14
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:23.942Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXC8C28CHC3NXDPH42XPX",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 natural prior delivery-uncertain empty",
+          "label": "D205 natural prior delivery-uncertain empty v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXC96PES3JY8JB4XE9A0C",
+            "loopId": "01M7ZHXC8C28CHC3NXDPH42XPW",
+            "versionId": "01M7ZHXC8C28CHC3NXDPH42XPX",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXC96PES3JY8JB4XE9A0D",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:23.942Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:23.958Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:23.978Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:23.984Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.982Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:23.982Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 2
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:23.993Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:24.001Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+        "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "D205 exact original task"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 7,
+        "ts": "2026-11-21T17:19:24.005Z",
+        "type": "harness.session",
+        "nodeId": "infer",
+        "harness": "codex",
+        "sessionId": "fake-session-5",
+        "mode": "fresh",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 8,
+        "ts": "2026-11-21T17:19:24.007Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+        "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 9,
+        "ts": "2026-11-21T17:19:24.009Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+        "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+        "submission": "delivery-uncertain"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 10,
+        "ts": "2026-11-21T17:19:24.011Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+        "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+        "submission": "delivery-uncertain"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 11,
+        "ts": "2026-11-21T17:19:24.017Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: D205 genuine prior delivery-uncertain",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+            "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-5"
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 12,
+        "ts": "2026-11-21T17:19:24.596Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+        }
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 13,
+        "ts": "2026-11-21T17:19:24.619Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 2,
+        "configHash": "48512fef081e6cd4"
+      },
+      {
+        "runId": "01M7ZHXC96PES3JY8JB4XE9A0C",
+        "seq": 14,
+        "ts": "2026-11-21T17:19:24.626Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "TEMPLATE_ERROR",
+          "message": "Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "settings.workingDirectory.template",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template rendered to an empty path. Supply a nonempty directory."
+            }
+          },
+          "inference": {
+            "visitId": "01M7ZHXC96PES3JY8JB4XE9A0C:5",
+            "turnId": "01M7ZHXCB18A3JFDBSRHXVXE1X",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-5"
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "rest": {
+      "id": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+      "ownerId": "local",
+      "loopId": "01M7ZHXD07TD17967SC613BFWQ",
+      "versionId": "01M7ZHXD07TD17967SC613BFWR",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 A2 genuine authored",
+        "label": "D205 A2 genuine authored v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXD14EMWGPM0GXXR3F6YH",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "MUTATION_ERROR",
+        "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "inference.output.transforms",
+          "operationIndex": 0,
+          "operationKind": "set",
+          "cause": {
+            "code": "EXPRESSION_ERROR",
+            "message": "The expression could not evaluate this input. Check its input type and mapping."
+          },
+          "phase": "after-result"
+        },
+        "inference": {
+          "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+          "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:24.708Z",
+      "startedAt": "2026-11-21T17:19:24.722Z",
+      "finishedAt": "2026-11-21T17:19:24.778Z",
+      "finalizedAt": "2026-11-21T17:19:24.783Z",
+      "lastEventSeq": 12,
+      "recovery": {
+        "observedSeq": 12,
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "infer",
+            "label": "Infer",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "infer",
+                "label": "Infer",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Done",
+            "action": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "effects": []
+          }
+        ]
+      }
+    },
+    "row": {
+      "id": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+      "ownerId": "local",
+      "loopId": "01M7ZHXD07TD17967SC613BFWQ",
+      "versionId": "01M7ZHXD07TD17967SC613BFWR",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "D205 A2 genuine authored",
+        "label": "D205 A2 genuine authored v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M7ZHXD14EMWGPM0GXXR3F6YH",
+      "status": "failed",
+      "currentNodeId": "infer",
+      "iteration": 1,
+      "failure": {
+        "code": "MUTATION_ERROR",
+        "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "boundary": "inference.output.transforms",
+          "operationIndex": 0,
+          "operationKind": "set",
+          "cause": {
+            "code": "EXPRESSION_ERROR",
+            "message": "The expression could not evaluate this input. Check its input type and mapping."
+          },
+          "phase": "after-result"
+        },
+        "inference": {
+          "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+          "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fake-session-1"
+        }
+      },
+      "createdAt": "2026-11-21T17:19:24.708Z",
+      "startedAt": "2026-11-21T17:19:24.722Z",
+      "finishedAt": "2026-11-21T17:19:24.778Z",
+      "finalizedAt": "2026-11-21T17:19:24.783Z",
+      "lastEventSeq": 12
+    },
+    "events": [
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 1,
+        "ts": "2026-11-21T17:19:24.708Z",
+        "type": "run.queued",
+        "versionId": "01M7ZHXD07TD17967SC613BFWR",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "D205 A2 genuine authored",
+          "label": "D205 A2 genuine authored v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+            "loopId": "01M7ZHXD07TD17967SC613BFWQ",
+            "versionId": "01M7ZHXD07TD17967SC613BFWR",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M7ZHXD14EMWGPM0GXXR3F6YH",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M7ZHXAMZDW5YNP3JK1B29JYS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-11-21T17:19:24.708Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 2,
+        "ts": "2026-11-21T17:19:24.724Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 3,
+        "ts": "2026-11-21T17:19:24.729Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 4,
+        "ts": "2026-11-21T17:19:24.736Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:24.734Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-11-21T17:19:24.734Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 5,
+        "ts": "2026-11-21T17:19:24.745Z",
+        "type": "node.started",
+        "nodeId": "infer",
+        "kind": "inference",
+        "attempt": 1,
+        "configHash": "058061cbe0572899"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 6,
+        "ts": "2026-11-21T17:19:24.755Z",
+        "type": "harness.turn",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+        "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+        "harness": "codex",
+        "promptKind": "authored",
+        "prompt": "D205 exact original task"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 7,
+        "ts": "2026-11-21T17:19:24.758Z",
+        "type": "harness.session",
+        "nodeId": "infer",
+        "harness": "codex",
+        "sessionId": "fake-session-1",
+        "mode": "fresh",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 8,
+        "ts": "2026-11-21T17:19:24.760Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+        "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 9,
+        "ts": "2026-11-21T17:19:24.762Z",
+        "type": "node.progress",
+        "nodeId": "infer",
+        "progress": {
+          "item": {
+            "id": "i1",
+            "summary": "OK",
+            "type": "message"
+          }
+        }
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 10,
+        "ts": "2026-11-21T17:19:24.763Z",
+        "type": "harness.usage",
+        "nodeId": "infer",
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 11,
+        "ts": "2026-11-21T17:19:24.770Z",
+        "type": "harness.submission",
+        "nodeId": "infer",
+        "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+        "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+        "submission": "delivery-uncertain"
+      },
+      {
+        "runId": "01M7ZHXD14EMWGPM0GXXR3F6YG",
+        "seq": 12,
+        "ts": "2026-11-21T17:19:24.776Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "MUTATION_ERROR",
+          "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "inference.output.transforms",
+            "operationIndex": 0,
+            "operationKind": "set",
+            "cause": {
+              "code": "EXPRESSION_ERROR",
+              "message": "The expression could not evaluate this input. Check its input type and mapping."
+            },
+            "phase": "after-result"
+          },
+          "inference": {
+            "visitId": "01M7ZHXD14EMWGPM0GXXR3F6YG:5",
+            "turnId": "01M7ZHXD2K1KSHTKQ5SAB4YZ7B",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -6,7 +6,11 @@ import {
   SYSTEM_CHAT_SCRIPT_PROMPT,
   SYSTEM_CHAT_SUBLOOP_PROMPT,
 } from '@graphgoblin/domain';
-import { InternalRunFailureError, INTERNAL_FAILURE_MESSAGE } from '../failure-publication.js';
+import {
+  errorDiagnostic,
+  InternalRunFailureError,
+  INTERNAL_FAILURE_MESSAGE,
+} from '../failure-publication.js';
 import { RunFailureError } from '../errors.js';
 import type { HarnessPort } from '../ports.js';
 
@@ -27,8 +31,12 @@ function overflow(): never {
 
 function renderCanonical(template: string, thread: ContextThread): Promise<string> {
   const view = { ...threadView(thread) };
-  return renderTemplate(template, view).catch(() => {
-    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, { resumable: true });
+  return renderTemplate(template, view).catch((error: unknown) => {
+    throw new InternalRunFailureError(
+      INTERNAL_FAILURE_MESSAGE,
+      { resumable: true },
+      errorDiagnostic(error),
+    );
   });
 }
 

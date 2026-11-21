@@ -1,0 +1,13 @@
+# L — bounded leaf-handler implementation brief
+
+**CONDITIONAL / DO NOT DISPATCH until actual Fable 03 verdict, root selection, exact admission and A's explicit frozen interfaces.** This document does not authorize code/tests now.
+
+Owner: root-selected performant **GPT Sol xhigh**, exact model recorded at dispatch. Root + A + W + L exhaust four slots. No helper agents/provider processes.
+
+Own exactly packages/engine/src/handlers/{script,heartbeat,decision,wait}.ts and {flow,heartbeat-visit}.test.ts. A alone owns common.ts, concrete domain observation/exports, cause formatter, handler.ts, ports.ts and RunManager. Consume their frozen APIs; use file-local fixtures instead of editing shared test helpers/fakes.
+
+Apply the existing B01-B06/B21-B24 definitions and B26 script/probe local-workspace-result consumption. Use concrete render/evaluator calls with prepared views; keep ports and coercion/conversion outside authored catches. Preserve script historical-dispatch check before preparation, secret reads, explicit consent and uncertain-dispatch evidence. Heartbeat URL/body render must finish before fetch, args before workspace/runner, predicate/deadline after the one actual beat; successful until bypasses deadline. Fixed bad-timestamp branches become false with safe cause. Header ordinals follow Object.entries string-key order, without publishing names. Decision instructions/question render before provider and context selector failure retains exact field/item. Keep B20 primitive evaluation policy unchanged. Wait failure is before first park; wake never rerenders.
+
+Tests must cover ordinary success for every affected arm, exact fixed positive fields/correction/index/recovery, malformed expression/template/NaN branches, zero inappropriate dispatch/fetch/beat/park effects and unchanged counts after actual refused Resume. Distinguish same-class and name/code lookalikes from real evaluator errors at secret/workspace/HTTP/runner/provider callbacks. Preserve HTTP overflow, response conversion, script consent/termination, decision provider response/refusal and wait timeout controls. A owns inference/provenance and T owns child/API cases; do not expand there.
+
+Use focused leaf tests from routing.md with project Node 22/pnpm. Return exact owned-file list, source/patch hashes, tests/results, boundary coverage and any external/control gaps. Report a shared-helper issue to A via root; no independent signature or message-vocabulary changes. No unrelated docs/UI/schema/index/Git/provider/owner-state changes. These implementation tests do not satisfy independent native/API/MCP/browser QA.

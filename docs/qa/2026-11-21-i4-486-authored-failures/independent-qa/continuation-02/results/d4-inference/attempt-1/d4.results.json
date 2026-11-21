@@ -1,0 +1,2259 @@
+{
+ "summary": {
+  "name": "d4",
+  "total": 92,
+  "passed": 89,
+  "failed": [
+   "FRESH-unsaved-setup fixture publishes (setup)",
+   "RETRY-1 intent append and reconcile both faulted: failure carries inference.retry with exact prompt, definitely-not-submitted, no harness call, no harness.turn",
+   "RETRY-3 after restart and repair: exact retry from the first event (same prompt, same turnId, start not resume), one harness call, succeeded"
+  ],
+  "driverPid": 29700,
+  "apiPort": 5873,
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d4-inference-1\\data\\d4"
+ },
+ "rows": [
+  {
+   "id": "B14-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":1,\"operationKind\":\"set\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 2 (set) failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 1,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 2 (set) failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 1,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 2 (set) failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 1,
+       "operationKind": "set",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 2 (set) failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 1,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-append-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"append-message\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (append-message) failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "append-message",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-append-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-append-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (append-message) failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "append-message",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 1 (append-message) failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 0,
+       "operationKind": "append-message",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (append-message) failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "append-message",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-append-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-append-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-truncate-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"truncate\",\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (truncate), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "truncate",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-truncate-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-truncate-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (truncate), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "truncate",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 1 (truncate), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 0,
+       "operationKind": "truncate",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (truncate), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "truncate",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-truncate-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-truncate-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-drop-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"drop\",\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (drop), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "drop",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-drop-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-drop-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (drop), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "drop",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 1 (drop), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 0,
+       "operationKind": "drop",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (drop), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "drop",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-drop-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-drop-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-replace-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"replace\",\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (replace), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "replace",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-replace-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-replace-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (replace), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "replace",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 1 (replace), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 0,
+       "operationKind": "replace",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (replace), item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "replace",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-replace-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-replace-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-setT-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"set\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (set) failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-setT-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B14-setT-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (set) failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference input transform 1 (set) failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.input",
+       "operationIndex": 0,
+       "operationKind": "set",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (set) failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B14-setT-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B14-setT-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B14-regex-shape",
+   "description": "MUTATION_ERROR inference.input {\"operationIndex\":0,\"operationKind\":\"replace\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference input transform 1 (replace) failed. The regular expression is invalid or unsafe. Check the pattern and flags.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.input",
+      "operationIndex": 0,
+      "operationKind": "replace",
+      "cause": {
+       "code": "MUTATION_ERROR",
+       "message": "The regular expression is invalid or unsafe. Check the pattern and flags."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B15-shape",
+   "description": "TEMPLATE_ERROR inference.contextFiles.template {\"fileIndex\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference context file template 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.contextFiles.template",
+      "fileIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B15-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B15-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference context file template 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.contextFiles.template",
+      "fileIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Inference context file template 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.contextFiles.template",
+       "fileIndex": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference context file template 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.contextFiles.template",
+      "fileIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B15-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B15-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B15-native",
+   "description": "first context file written byte-exact; failing and later files absent",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "a": "A-ctx-ok",
+    "b": false,
+    "c": false
+   }
+  },
+  {
+   "id": "B16-shape",
+   "description": "TEMPLATE_ERROR inference.prompt.template {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference prompt template failed. The template could not be rendered at line 1, column 4. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.prompt.template",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 4. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B16-harness",
+   "description": "SCRIPTED harness starts +0, resumes +0, harness.turn events 0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 0,
+    "resumes": 0,
+    "turns": 0
+   }
+  },
+  {
+   "id": "B16-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference prompt template failed. The template could not be rendered at line 1, column 4. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.prompt.template",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 4. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Inference prompt template failed. The template could not be rendered at line 1, column 4. Check its filters and input values.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.prompt.template",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 4. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference prompt template failed. The template could not be rendered at line 1, column 4. Check its filters and input values.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.prompt.template",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 4. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B16-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B16-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 0,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 0,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B18-shape",
+   "description": "TEMPLATE_ERROR inference.output.schema.repair.prompt {\"attempt\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference schema repair prompt, attempt 1 failed. The template could not be rendered at line 1, column 5. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.schema.repair.prompt",
+      "attempt": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 5. Check its filters and input values."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCPWV6FWM5Y8AS1EAGJ51:5",
+      "turnId": "01M7ZFCPYH2AM0WJ3V95G7RF8T",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "B18-harness",
+   "description": "SCRIPTED harness starts +1, resumes +0, harness.turn events 1",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 1,
+    "resumes": 0,
+    "turns": 1
+   }
+  },
+  {
+   "id": "B18-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference schema repair prompt, attempt 1 failed. The template could not be rendered at line 1, column 5. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.schema.repair.prompt",
+      "attempt": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 5. Check its filters and input values."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCPWV6FWM5Y8AS1EAGJ51:5",
+      "turnId": "01M7ZFCPYH2AM0WJ3V95G7RF8T",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Inference schema repair prompt, attempt 1 failed. The template could not be rendered at line 1, column 5. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.output.schema.repair.prompt",
+       "attempt": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 5. Check its filters and input values."
+       },
+       "phase": "after-result"
+      },
+      "inference": {
+       "visitId": "01M7ZFCPWV6FWM5Y8AS1EAGJ51:5",
+       "turnId": "01M7ZFCPYH2AM0WJ3V95G7RF8T",
+       "submission": "delivery-uncertain",
+       "promptKind": "authored",
+       "sessionId": "qa-codex-session-1"
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Inference schema repair prompt, attempt 1 failed. The template could not be rendered at line 1, column 5. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.schema.repair.prompt",
+      "attempt": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 5. Check its filters and input values."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCPWV6FWM5Y8AS1EAGJ51:5",
+      "turnId": "01M7ZFCPYH2AM0WJ3V95G7RF8T",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "B18-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B18-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 1,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 1,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B18-inference",
+   "description": "failure.inference names the last actual (authored) turn; no repair turn; no uncertainty suffix",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "inference": {
+     "visitId": "01M7ZFCPWV6FWM5Y8AS1EAGJ51:5",
+     "turnId": "01M7ZFCPYH2AM0WJ3V95G7RF8T",
+     "submission": "delivery-uncertain",
+     "promptKind": "authored",
+     "sessionId": "qa-codex-session-1"
+    }
+   }
+  },
+  {
+   "id": "B19-shape",
+   "description": "MUTATION_ERROR inference.output.transforms {\"operationIndex\":0,\"operationKind\":\"set\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQBNYVBN4M908Y32BRBP:5",
+      "turnId": "01M7ZFCQD4Z974XFP33BWTV4BH",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-2"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19-harness",
+   "description": "SCRIPTED harness starts +1, resumes +0, harness.turn events 1",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 1,
+    "resumes": 0,
+    "turns": 1
+   }
+  },
+  {
+   "id": "B19-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQBNYVBN4M908Y32BRBP:5",
+      "turnId": "01M7ZFCQD4Z974XFP33BWTV4BH",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-2"
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.output.transforms",
+       "operationIndex": 0,
+       "operationKind": "set",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       },
+       "phase": "after-result"
+      },
+      "inference": {
+       "visitId": "01M7ZFCQBNYVBN4M908Y32BRBP:5",
+       "turnId": "01M7ZFCQD4Z974XFP33BWTV4BH",
+       "submission": "delivery-uncertain",
+       "promptKind": "authored",
+       "sessionId": "qa-codex-session-2"
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQBNYVBN4M908Y32BRBP:5",
+      "turnId": "01M7ZFCQD4Z974XFP33BWTV4BH",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-2"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B19-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 1,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 1,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B19-inference",
+   "description": "failure.inference = the actual turn (turnId/visitId/kind/session); provider text absent from the new cause",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "inference": {
+     "visitId": "01M7ZFCQBNYVBN4M908Y32BRBP:5",
+     "turnId": "01M7ZFCQD4Z974XFP33BWTV4BH",
+     "submission": "delivery-uncertain",
+     "promptKind": "authored",
+     "sessionId": "qa-codex-session-2"
+    }
+   }
+  },
+  {
+   "id": "B19-ns-shape",
+   "description": "MUTATION_ERROR inference.output.transforms {\"operationIndex\":0,\"operationKind\":\"set\"} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQSW2ZG0ECNTDEE9P33Y:5",
+      "turnId": "01M7ZFCQV2MCPE3YVZ6ZHS4M2R",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19-ns-harness",
+   "description": "SCRIPTED harness starts +1, resumes +0, harness.turn events 1",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "starts": 1,
+    "resumes": 0,
+    "turns": 1
+   }
+  },
+  {
+   "id": "B19-ns-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQSW2ZG0ECNTDEE9P33Y:5",
+      "turnId": "01M7ZFCQV2MCPE3YVZ6ZHS4M2R",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+      "nodeId": "inf",
+      "resumable": false,
+      "details": {
+       "boundary": "inference.output.transforms",
+       "operationIndex": 0,
+       "operationKind": "set",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       },
+       "phase": "after-result"
+      },
+      "inference": {
+       "visitId": "01M7ZFCQSW2ZG0ECNTDEE9P33Y:5",
+       "turnId": "01M7ZFCQV2MCPE3YVZ6ZHS4M2R",
+       "submission": "delivery-uncertain",
+       "promptKind": "authored"
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQSW2ZG0ECNTDEE9P33Y:5",
+      "turnId": "01M7ZFCQV2MCPE3YVZ6ZHS4M2R",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19-ns-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B19-ns-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "starts": 1,
+     "resumes": 0
+    },
+    "afterEffects": {
+     "starts": 1,
+     "resumes": 0
+    }
+   }
+  },
+  {
+   "id": "B19-ns-sub",
+   "description": "no session/acceptance: submission delivery-uncertain, no sessionId, no unusable-session suffix, resumable false",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCQSW2ZG0ECNTDEE9P33Y:5",
+      "turnId": "01M7ZFCQV2MCPE3YVZ6ZHS4M2R",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19-art",
+   "description": "schema mismatch with repair disabled keeps OUTPUT_SCHEMA_MISMATCH, no phase/received sentence",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "OUTPUT_SCHEMA_MISMATCH",
+     "message": "harness output does not match the required schema: / must be object",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "errors": [
+       "/ must be object"
+      ],
+      "value": "not-json"
+     },
+     "inference": {
+      "visitId": "01M7ZFCR8XH4WAFVBMCY4EXNA1:5",
+      "turnId": "01M7ZFCRAGHHD9K9R0X5RJH5D4",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-4"
+     }
+    }
+   }
+  },
+  {
+   "id": "B19c",
+   "description": "valid output transform control succeeds",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "status": "succeeded",
+    "result": "ok-OK"
+   }
+  },
+  {
+   "id": "TERM",
+   "description": "termination-unconfirmed cleanup evidence wins over B19: own code, no after-result phase/sentence, resumable false",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_TERMINATION_UNCONFIRMED",
+     "message": "QA486-HAR-TERM cleanup",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "adapterCode": "HARNESS_TERMINATION_UNCONFIRMED",
+      "interruptedByStop": false
+     },
+     "inference": {
+      "visitId": "01M7ZFCRHMZTCZ24503AMB8RG7:5",
+      "turnId": "01M7ZFCRJYFWA5P3ECAP3YRATK",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-6"
+     }
+    },
+    "cancels": 1
+   }
+  },
+  {
+   "id": "WEAK",
+   "description": "weak generic cleanup failure is secondary: B19 authored cause wins, cleanup text not appended, cleanup logged privately",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Inference output transform 1 (set) failed. The expression could not evaluate this input. Check its input type and mapping. GraphGoblin received the provider result before this step failed.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "boundary": "inference.output.transforms",
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      },
+      "phase": "after-result"
+     },
+     "inference": {
+      "visitId": "01M7ZFCRNZTTR4C3G4C47331E8:5",
+      "turnId": "01M7ZFCRQE9JY4KYSMK2KDZ13D",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-7"
+     }
+    },
+    "logged": true
+   }
+  },
+  {
+   "id": "STRONG-cancel",
+   "description": "explicit cancel during held provider result wins: cancelled, no run.failed, no after-result failure",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "cancel": 200,
+    "status": "cancelled",
+    "types": [
+     "run.queued",
+     "run.started",
+     "node.started",
+     "node.finished",
+     "node.started",
+     "harness.turn",
+     "harness.session",
+     "harness.submission",
+     "node.progress",
+     "harness.usage",
+     "run.cancel_requested",
+     "harness.submission",
+     "run.cancelled"
+    ]
+   }
+  },
+  {
+   "id": "STRONG-timeout",
+   "description": "node timeout wins over B19: existing timeout code, no after-result phase",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "INFERENCE_TIMEOUT",
+     "message": "inference exceeded 1s",
+     "nodeId": "inf",
+     "resumable": true,
+     "inference": {
+      "visitId": "01M7ZFCRZTWDVK7K1N3A1XQ2VZ:5",
+      "turnId": "01M7ZFCS1C44CEF03JQBJV4T8F",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-9"
+     }
+    }
+   }
+  },
+  {
+   "id": "H-D-plain",
+   "description": "sync start throw before handle: HARNESS_TURN_FAILED, definitely-not-submitted, adapter text public (established), resumable true, no authored boundary",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_TURN_FAILED",
+     "message": "harness turn failed: QA486-HAR-D1 adapter text",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "adapterCode": "QA_ADAPTER"
+     },
+     "inference": {
+      "visitId": "01M7ZFCT33EV9GME3A2HTWTXQR:5",
+      "turnId": "01M7ZFCT499FP00CGQA6QNDWFR",
+      "submission": "definitely-not-submitted",
+      "promptKind": "authored"
+     }
+    },
+    "turns": 1
+   }
+  },
+  {
+   "id": "H-D-plain-resume",
+   "description": "Resume submits the exact stored prompt with the same turnId via start (no resume), succeeds",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "resume": 200,
+    "status": "succeeded",
+    "prompt": "QA prompt hd-plain",
+    "stored": "QA prompt hd-plain",
+    "turnIds": [
+     "01M7ZFCT499FP00CGQA6QNDWFR",
+     "01M7ZFCT499FP00CGQA6QNDWFR"
+    ]
+   }
+  },
+  {
+   "id": "H-D-domain",
+   "description": "sync start throw before handle: HARNESS_TURN_FAILED, definitely-not-submitted, adapter text public (established), resumable true, no authored boundary",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_TURN_FAILED",
+     "message": "harness turn failed: QA486-HAR-D2 domain lookalike",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "adapterCode": "TEMPLATE_ERROR"
+     },
+     "inference": {
+      "visitId": "01M7ZFCTASCNCWG60HJQ5D2YK5:5",
+      "turnId": "01M7ZFCTBYAWMK9HSEHEGV3XDW",
+      "submission": "definitely-not-submitted",
+      "promptKind": "authored"
+     }
+    },
+    "turns": 1
+   }
+  },
+  {
+   "id": "H-D-domain-resume",
+   "description": "Resume submits the exact stored prompt with the same turnId via start (no resume), succeeds",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "resume": 200,
+    "status": "succeeded",
+    "prompt": "QA prompt hd-domain",
+    "stored": "QA prompt hd-domain",
+    "turnIds": [
+     "01M7ZFCTBYAWMK9HSEHEGV3XDW",
+     "01M7ZFCTBYAWMK9HSEHEGV3XDW"
+    ]
+   }
+  },
+  {
+   "id": "H-D-name",
+   "description": "sync start throw before handle: HARNESS_TURN_FAILED, definitely-not-submitted, adapter text public (established), resumable true, no authored boundary",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_TURN_FAILED",
+     "message": "harness turn failed: QA486-HAR-D3 name spoof",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "adapterCode": "HARNESS_TURN_FAILED"
+     },
+     "inference": {
+      "visitId": "01M7ZFCTJB7GW6H1EPC5GZGC7V:5",
+      "turnId": "01M7ZFCTMC6N6NVFE3EYVSE8XS",
+      "submission": "definitely-not-submitted",
+      "promptKind": "authored"
+     }
+    },
+    "turns": 1
+   }
+  },
+  {
+   "id": "H-D-name-resume",
+   "description": "Resume submits the exact stored prompt with the same turnId via start (no resume), succeeds",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "resume": 200,
+    "status": "succeeded",
+    "prompt": "QA prompt hd-name",
+    "stored": "QA prompt hd-name",
+    "turnIds": [
+     "01M7ZFCTMC6N6NVFE3EYVSE8XS",
+     "01M7ZFCTMC6N6NVFE3EYVSE8XS"
+    ]
+   }
+  },
+  {
+   "id": "H-Q",
+   "description": "after-handle rejection with usable accepted session: HARNESS_DELIVERY_UNCERTAIN, resumable true (H&&U), raw adapter text public",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_DELIVERY_UNCERTAIN",
+     "message": "harness turn failed: QA486-HAR-Q after handle",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "adapterCode": "QA_Q"
+     },
+     "inference": {
+      "visitId": "01M7ZFCTSSCXJVQVJ2CZT3119D:5",
+      "turnId": "01M7ZFCTV0V70ZAYAZJFPEM0KA",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-13"
+     }
+    }
+   }
+  },
+  {
+   "id": "H-Q-resume",
+   "description": "Resume continues the usable session (harness.resume with that session id), no new start, succeeds",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "resume": 200,
+    "status": "succeeded",
+    "call": {
+     "kind": "resume",
+     "resumeId": "qa-codex-session-13",
+     "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d4-inference-1\\data\\d4\\workspaces\\01M7ZFCTSSCXJVQVJ2CZT3119D",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278924751
+    }
+   }
+  },
+  {
+   "id": "H-Qn",
+   "description": "after-handle rejection without usable session: HARNESS_DELIVERY_UNCERTAIN, resumable false, existing uncertainty suffix present",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_DELIVERY_UNCERTAIN",
+     "message": "harness turn failed: QA486-HAR-QN after handle. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+     "nodeId": "inf",
+     "resumable": false,
+     "details": {
+      "adapterCode": "QA_QN"
+     },
+     "inference": {
+      "visitId": "01M7ZFCV1ESH5VES5H35C9J851:5",
+      "turnId": "01M7ZFCV2QJBJ5WG27FRK0P9F3",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    }
+   }
+  },
+  {
+   "id": "H-Qn-refused",
+   "description": "Resume refused; zero harness calls",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "resume": 409,
+    "code": "FAILURE_NOT_RESUMABLE"
+   }
+  },
+  {
+   "id": "B17h",
+   "description": "contextWindow throw keeps generic harness mapping (HARNESS_TURN_FAILED), not INTERNAL_ERROR/authored; no turn/start",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_TURN_FAILED",
+     "message": "harness turn failed: QA486-HAR-CW domain-shaped",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "adapterCode": "EXPRESSION_ERROR"
+     }
+    },
+    "cw": 1
+   }
+  },
+  {
+   "id": "RES",
+   "description": "disabled model: restorable resolver failure EVALUATION_UNAVAILABLE resumable true, no harness.turn/start",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "off": 200,
+    "failure": {
+     "code": "EVALUATION_UNAVAILABLE",
+     "message": "The selected model is disabled",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "code": "MODEL_DISABLED",
+      "path": "model"
+     }
+    }
+   }
+  },
+  {
+   "id": "RES-restore",
+   "description": "re-enabled model: Resume succeeds with one start",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "status": "succeeded"
+   }
+  },
+  {
+   "id": "H-UG-crash",
+   "description": "SCRIPTED-STORAGE: node failure append faulted once; executor-crash path records ordinary INTERNAL_ERROR resumable true",
+   "pass": true,
+   "class": "SCRIPTED-STORAGE",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "resumable": true
+    },
+    "fired": 1,
+    "log": [
+     {
+      "runId": "01M7ZFCVP881GM65MR90XH2737",
+      "types": [
+       "run.failed"
+      ],
+      "afterCommit": false
+     }
+    ]
+   }
+  },
+  {
+   "id": "H-UG",
+   "description": "unusable-Q guard fires before resolver and prep: HARNESS_DELIVERY_UNCERTAIN (not EVALUATION_UNAVAILABLE despite disabled model), false, 0 harness calls, context file not rewritten",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED+NATIVE",
+   "actual": {
+    "resume": 200,
+    "failure": {
+     "code": "HARNESS_DELIVERY_UNCERTAIN",
+     "message": "Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZFCVP881GM65MR90XH2737:5",
+      "turnId": "01M7ZFCVQCMHYNJV50QVMKK6A5",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored"
+     }
+    },
+    "aExists": false
+   }
+  },
+  {
+   "id": "RES-SM-1",
+   "description": "missing-session classification append faulted -> ordinary INTERNAL_ERROR resumable true",
+   "pass": true,
+   "class": "SCRIPTED-STORAGE",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "resumable": true
+    }
+   }
+  },
+  {
+   "id": "RES-SM-2",
+   "description": "resolver unavailable keeps its own code/resumability; prior turn provenance informational (same turnId); no harness call",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_UNAVAILABLE",
+     "message": "The selected model is disabled",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "code": "MODEL_DISABLED",
+      "path": "model"
+     },
+     "inference": {
+      "visitId": "01M7ZFCVXX9JD9H19V25534NCK:5",
+      "turnId": "01M7ZFCW22YDW7PW2A40HD3QH5",
+      "submission": "session-missing",
+      "promptKind": "continuation",
+      "sessionId": "qa-codex-session-17"
+     }
+    },
+    "counters": {
+     "starts": 0,
+     "resumes": 0,
+     "syncThrows": 0,
+     "resultsResolved": 0,
+     "resultsRejected": 0,
+     "cancels": 0,
+     "cancelRejects": 0,
+     "contextWindow": 0
+    }
+   }
+  },
+  {
+   "id": "RES-SM-3",
+   "description": "restored resolver reaches actionable HARNESS_SESSION_MISSING (false, missingSession) without a harness call",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "HARNESS_SESSION_MISSING",
+     "message": "The codex session \"qa-codex-session-17\" from current-visit is missing. Choose Start fresh session for node \"inf\" to continue without its prior provider conversation.",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZFCVXX9JD9H19V25534NCK:5",
+      "turnId": "01M7ZFCW22YDW7PW2A40HD3QH5",
+      "submission": "session-missing",
+      "promptKind": "continuation",
+      "sessionId": "qa-codex-session-17"
+     },
+     "missingSession": {
+      "visitId": "01M7ZFCVXX9JD9H19V25534NCK:5",
+      "harness": "codex",
+      "sessionId": "qa-codex-session-17",
+      "origin": "current-visit",
+      "model": "gpt-6-luna",
+      "effort": "low"
+     }
+    }
+   }
+  },
+  {
+   "id": "FRESH-saved",
+   "description": "explicit fresh session submits the saved authored prompt via start (no resume), succeeds",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "rec": 200,
+    "status": "succeeded",
+    "call": {
+     "kind": "start",
+     "prompt": "QA prompt sm",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d4-inference-1\\data\\d4\\workspaces\\01M7ZFCVXX9JD9H19V25534NCK",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278926153
+    },
+    "storedPrompt": "QA prompt sm"
+   }
+  },
+  {
+   "id": "FRESH-unsaved-setup",
+   "description": "fixture publishes (setup)",
+   "pass": false,
+   "class": "SETUP",
+   "actual": {
+    "type": "https://graphgoblin.dev/problems/loop-invalid",
+    "title": "loop invalid",
+    "status": 422,
+    "code": "LOOP_INVALID",
+    "detail": "the draft has structural errors",
+    "errors": [
+     {
+      "code": "PORT_UNCONNECTED",
+      "severity": "error",
+      "message": "port \"limit-reached\" of node \"dec\" is not connected",
+      "nodeId": "dec",
+      "path": "config.maxPasses"
+     }
+    ]
+   }
+  },
+  {
+   "id": "RETRY-1",
+   "description": "intent append and reconcile both faulted: failure carries inference.retry with exact prompt, definitely-not-submitted, no harness call, no harness.turn",
+   "pass": false,
+   "class": "SCRIPTED-STORAGE",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "inf",
+     "resumable": true,
+     "inference": {
+      "visitId": "01M7ZFCWEGJ2N438M5NG28XST0:5",
+      "turnId": "01M7ZFCWFV5CJHHHCMPGY1T6ZZ",
+      "submission": "definitely-not-submitted",
+      "promptKind": "authored"
+     }
+    },
+    "fired": 3,
+    "turns": 1
+   }
+  },
+  {
+   "id": "RETRY-2",
+   "description": "later resumable prep failure: EVALUATION_UNAVAILABLE true, same turnId, no re-emitted retry object, no harness call",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_UNAVAILABLE",
+     "message": "The selected model is disabled",
+     "nodeId": "inf",
+     "resumable": true,
+     "details": {
+      "code": "MODEL_DISABLED",
+      "path": "model"
+     },
+     "inference": {
+      "visitId": "01M7ZFCWEGJ2N438M5NG28XST0:5",
+      "turnId": "01M7ZFCWFV5CJHHHCMPGY1T6ZZ",
+      "submission": "definitely-not-submitted",
+      "promptKind": "authored"
+     }
+    }
+   }
+  },
+  {
+   "id": "LOG",
+   "description": "no captured log record contains QA486-LIT/IN/PATH",
+   "pass": true,
+   "class": "SCRIPTED-LOGGER",
+   "actual": {
+    "hits": []
+   }
+  },
+  {
+   "id": "RESTART",
+   "description": "authenticated drain and close before reopening the same store",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:35:26.450Z",
+     "choiceAt": "2026-11-21T16:35:56.450Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [
+      "01M7ZFCRHMZTCZ24503AMB8RG7"
+     ],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "0b1b0bd1-3983-419f-a95f-1857f9e7eb86:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true
+   }
+  },
+  {
+   "id": "RETRY-3",
+   "description": "after restart and repair: exact retry from the first event (same prompt, same turnId, start not resume), one harness call, succeeded",
+   "pass": false,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "status": "succeeded",
+    "call": {
+     "kind": "start",
+     "prompt": "QA prompt retry",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d4-inference-1\\data\\d4\\workspaces\\01M7ZFCWEGJ2N438M5NG28XST0",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278926722
+    },
+    "turnIds": [
+     "01M7ZFCWFV5CJHHHCMPGY1T6ZZ",
+     "01M7ZFCWFV5CJHHHCMPGY1T6ZZ"
+    ],
+    "evidence": {
+     "visitId": "01M7ZFCWEGJ2N438M5NG28XST0:5",
+     "turnId": "01M7ZFCWFV5CJHHHCMPGY1T6ZZ",
+     "submission": "definitely-not-submitted",
+     "promptKind": "authored"
+    }
+   }
+  },
+  {
+   "id": "CLEANUP",
+   "description": "authenticated drain accepted; API port refuses connections",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:35:26.801Z",
+     "choiceAt": "2026-11-21T16:35:56.801Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "937dbfb7-f273-493e-9edc-ee15fce73d8b:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true
+   }
+  }
+ ]
+}

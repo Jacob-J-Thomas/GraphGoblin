@@ -1,0 +1,2322 @@
+{
+ "summary": {
+  "name": "d2",
+  "total": 104,
+  "passed": 100,
+  "failed": [
+   "B21c-setup fixture publishes (setup)",
+   "EXT-C-real-setup fixture publishes (setup)",
+   "EXT-C-name-setup fixture publishes (setup)",
+   "EXT-C-code-setup fixture publishes (setup)"
+  ],
+  "driverPid": 40280,
+  "apiPort": 5871,
+  "listenerPort": 61590,
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d2-leaf-1\\data\\d2",
+  "harness": 0,
+  "deciderCalls": 1,
+  "classifierCalls": 0,
+  "inject": {
+   "probeCalls": 11,
+   "probeInjected": 3,
+   "scriptCalls": 6,
+   "scriptInjected": 3
+  }
+ },
+ "rows": [
+  {
+   "id": "L-PUB-compile",
+   "description": "top-level compile expression refused at publish",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": 422,
+    "body": {
+     "type": "https://graphgoblin.dev/problems/loop-invalid",
+     "title": "loop invalid",
+     "status": 422,
+     "code": "LOOP_INVALID",
+     "detail": "the draft has structural errors",
+     "errors": [
+      {
+       "code": "EXPRESSION_INVALID",
+       "severity": "error",
+       "message": "expression at node \"h\" until: expression failed to compile: Unexpected end of expression",
+       "nodeId": "h",
+       "path": "config.until"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "L-PUB-unsafe",
+   "description": "top-level unsafe expression refused at publish",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": 422,
+    "body": {
+     "type": "https://graphgoblin.dev/problems/loop-invalid",
+     "title": "loop invalid",
+     "status": 422,
+     "code": "LOOP_INVALID",
+     "detail": "the draft has structural errors",
+     "errors": [
+      {
+       "code": "EXPRESSION_INVALID",
+       "severity": "error",
+       "message": "expression at node \"h\" until: expression uses the regular expression /(a+)+$/, which can run without bound: a repeated group contains another repetition",
+       "nodeId": "h",
+       "path": "config.until"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "L-PUB-liquid",
+   "description": "Liquid parse error refused at publish",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": 422,
+    "body": {
+     "type": "https://graphgoblin.dev/problems/loop-invalid",
+     "title": "loop invalid",
+     "status": 422,
+     "code": "LOOP_INVALID",
+     "detail": "the draft has structural errors",
+     "errors": [
+      {
+       "code": "TEMPLATE_INVALID",
+       "severity": "error",
+       "message": "template at node \"s\" args.2: invalid value expression: \"\", line:1, col:6",
+       "nodeId": "s",
+       "path": "config.args.2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "L-PUB-runs",
+   "description": "no runs created by refused publications",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "before": 0,
+    "after": 0
+   }
+  },
+  {
+   "id": "B01-shape",
+   "description": "TEMPLATE_ERROR script.args {\"argumentIndex\":3} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Script argument 4 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "s",
+     "resumable": false,
+     "details": {
+      "boundary": "script.args",
+      "argumentIndex": 3,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B01-effects",
+   "description": "native counter +0 and zero script.dispatched",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "lines": 0,
+    "dispatched": 0
+   }
+  },
+  {
+   "id": "B01-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Script argument 4 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "s",
+     "resumable": false,
+     "details": {
+      "boundary": "script.args",
+      "argumentIndex": 3,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Script argument 4 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "s",
+      "resumable": false,
+      "details": {
+       "boundary": "script.args",
+       "argumentIndex": 3,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Script argument 4 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "s",
+     "resumable": false,
+     "details": {
+      "boundary": "script.args",
+      "argumentIndex": 3,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B01-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B01-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "lines": 0
+    },
+    "afterEffects": {
+     "lines": 0
+    }
+   }
+  },
+  {
+   "id": "B01c",
+   "description": "valid args: succeeded, native counter +1 with exact args, one script.dispatched, cwd = temp workspace",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "status": "succeeded",
+    "lines": [
+     {
+      "pid": 45176,
+      "args": [
+       "QA-B01C",
+       "ctrl-value"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d2-leaf-1\\data\\d2\\workspaces\\01M7ZEZA0J19R3K87NB6Z0HBDE",
+      "t": 1795278481562
+     }
+    ],
+    "ws": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d2-leaf-1\\data\\d2\\workspaces\\01M7ZEZA0J19R3K87NB6Z0HBDE"
+   }
+  },
+  {
+   "id": "B01u",
+   "description": "nonexistent command keeps existing script start/uncertain policy (no authored boundary)",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "failure": {
+     "code": "SCRIPT_START_FAILED",
+     "message": "The script process could not start. Resume tries to start it again.",
+     "nodeId": "s",
+     "resumable": true,
+     "script": {
+      "visitId": "01M7ZEZA99KANFX4AGZ79ZSZVX:5",
+      "dispatchId": "01M7ZEZAAWJTGMWXJRHRPPKW8D",
+      "state": "definitely-not-started"
+     }
+    }
+   }
+  },
+  {
+   "id": "EXT-W",
+   "description": "missing secret keeps SECRET_MISSING; counter +0",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "failure": {
+     "code": "SECRET_MISSING",
+     "message": "secret \"qa486-missing\" referenced by env QA is not configured",
+     "nodeId": "s",
+     "resumable": true
+    }
+   }
+  },
+  {
+   "id": "B02-shape",
+   "description": "TEMPLATE_ERROR heartbeat.probe.headers {\"headerIndex\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe header 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.headers",
+      "headerIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B02-effects",
+   "description": "listener +0, heartbeat.beat 0, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 0,
+    "beats": 0,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B02-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe header 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.headers",
+      "headerIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat probe header 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.probe.headers",
+       "headerIndex": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe header 2 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.headers",
+      "headerIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B02-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B02-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 0
+    },
+    "afterEffects": {
+     "listener": 0
+    }
+   }
+  },
+  {
+   "id": "B03u-shape",
+   "description": "TEMPLATE_ERROR heartbeat.probe.url {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe URL failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.url",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B03u-effects",
+   "description": "listener +0, heartbeat.beat 0, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 0,
+    "beats": 0,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B03u-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe URL failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.url",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat probe URL failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.probe.url",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe URL failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.url",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B03u-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B03u-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 0
+    },
+    "afterEffects": {
+     "listener": 0
+    }
+   }
+  },
+  {
+   "id": "B03b-shape",
+   "description": "TEMPLATE_ERROR heartbeat.probe.body {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe body failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.body",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B03b-effects",
+   "description": "listener +0, heartbeat.beat 0, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 0,
+    "beats": 0,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B03b-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe body failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.body",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat probe body failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.probe.body",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe body failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.body",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B03b-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B03b-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 0
+    },
+    "afterEffects": {
+     "listener": 0
+    }
+   }
+  },
+  {
+   "id": "B03c",
+   "description": "valid probe: succeeded, listener +1 with rendered header/body, one beat",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "status": "succeeded",
+    "delta": 1,
+    "req": {
+     "url": "/b03c",
+     "h": "hdr-ctrl",
+     "body": "body-hdr-ctrl"
+    },
+    "beats": 1
+   }
+  },
+  {
+   "id": "B04-shape",
+   "description": "TEMPLATE_ERROR heartbeat.probe.args {\"argumentIndex\":2} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe argument 3 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.args",
+      "argumentIndex": 2,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B04-effects",
+   "description": "listener +0, heartbeat.beat 0, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 0,
+    "beats": 0,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B04-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe argument 3 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.args",
+      "argumentIndex": 2,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat probe argument 3 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.probe.args",
+       "argumentIndex": 2,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat probe argument 3 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.probe.args",
+      "argumentIndex": 2,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B04-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B04-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 1
+    },
+    "afterEffects": {
+     "listener": 1
+    }
+   }
+  },
+  {
+   "id": "B04-native",
+   "description": "script-probe counter +0 and no temp workspace resolved for the run",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "lines": 0,
+    "wsExists": false
+   }
+  },
+  {
+   "id": "B04c",
+   "description": "valid script probe: succeeded, counter +1, cwd = temp workspace",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "status": "succeeded",
+    "lines": [
+     {
+      "pid": 48556,
+      "args": [
+       "probe-ok"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d2-leaf-1\\data\\d2\\workspaces\\01M7ZEZCK0YTZK4AFN5YXKXZX7",
+      "t": 1795278484177
+     }
+    ]
+   }
+  },
+  {
+   "id": "B05-shape",
+   "description": "EXPRESSION_ERROR heartbeat.until {\"beat\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05-effects",
+   "description": "listener +1, heartbeat.beat 1, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 1,
+    "beats": 1,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B05-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.until",
+       "beat": 1,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B05-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 2
+    },
+    "afterEffects": {
+     "listener": 2
+    }
+   }
+  },
+  {
+   "id": "B05b-shape",
+   "description": "EXPRESSION_ERROR heartbeat.until {\"beat\":2} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 2,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05b-effects",
+   "description": "listener +2, heartbeat.beat 2, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 2,
+    "beats": 2,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B05b-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 2,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Heartbeat until predicate, beat 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.until",
+       "beat": 2,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 2,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05b-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B05b-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 4
+    },
+    "afterEffects": {
+     "listener": 4
+    }
+   }
+  },
+  {
+   "id": "B05d-shape",
+   "description": "EXPRESSION_ERROR heartbeat.until {\"beat\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05d-effects",
+   "description": "listener +1, heartbeat.beat 1, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 1,
+    "beats": 1,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B05d-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.until",
+       "beat": 1,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.until",
+      "beat": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B05d-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B05d-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 5
+    },
+    "afterEffects": {
+     "listener": 5
+    }
+   }
+  },
+  {
+   "id": "B06t-shape",
+   "description": "TEMPLATE_ERROR heartbeat.deadline {\"beat\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B06t-effects",
+   "description": "listener +1, heartbeat.beat 1, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 1,
+    "beats": 1,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B06t-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat deadline, beat 1 failed. The value must render to a timestamp. Check the template and date format.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.deadline",
+       "beat": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The value must render to a timestamp. Check the template and date format."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B06t-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B06t-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 6
+    },
+    "afterEffects": {
+     "listener": 6
+    }
+   }
+  },
+  {
+   "id": "B06l-shape",
+   "description": "TEMPLATE_ERROR heartbeat.deadline {\"beat\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B06l-effects",
+   "description": "listener +1, heartbeat.beat 1, not waiting",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "listenerDelta": 1,
+    "beats": 1,
+    "status": "failed"
+   }
+  },
+  {
+   "id": "B06l-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Heartbeat deadline, beat 1 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+      "nodeId": "h",
+      "resumable": false,
+      "details": {
+       "boundary": "heartbeat.deadline",
+       "beat": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Heartbeat deadline, beat 1 failed. The template could not be rendered at line 1, column 1. Check its filters and input values.",
+     "nodeId": "h",
+     "resumable": false,
+     "details": {
+      "boundary": "heartbeat.deadline",
+      "beat": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B06l-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B06l-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "listener": 7
+    },
+    "afterEffects": {
+     "listener": 7
+    }
+   }
+  },
+  {
+   "id": "B06c",
+   "description": "until true wins: invalid deadline never rendered, succeeded",
+   "pass": true,
+   "class": "NATIVE",
+   "actual": {
+    "status": "succeeded"
+   }
+  },
+  {
+   "id": "B21l-shape",
+   "description": "TEMPLATE_ERROR decision.instructions {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Decision instructions failed. The template could not be rendered at line 1, column 6. Check its filters and input values.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.instructions",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 6. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B21l-provider",
+   "description": "SCRIPTED decider/classifier calls +0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "decider": 0,
+    "classifier": 0
+   }
+  },
+  {
+   "id": "B21l-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Decision instructions failed. The template could not be rendered at line 1, column 6. Check its filters and input values.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.instructions",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 6. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Decision instructions failed. The template could not be rendered at line 1, column 6. Check its filters and input values.",
+      "nodeId": "d",
+      "resumable": false,
+      "details": {
+       "boundary": "decision.instructions",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 6. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Decision instructions failed. The template could not be rendered at line 1, column 6. Check its filters and input values.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.instructions",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 6. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B21l-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B21l-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "B21c-setup",
+   "description": "fixture publishes (setup)",
+   "pass": false,
+   "class": "SETUP",
+   "actual": {
+    "type": "https://graphgoblin.dev/problems/loop-invalid",
+    "title": "loop invalid",
+    "status": 422,
+    "code": "LOOP_INVALID",
+    "detail": "the draft has structural errors",
+    "errors": [
+     {
+      "code": "CLASSIFIER_SECRET_MISSING",
+      "severity": "warning",
+      "nodeId": "d",
+      "path": "config.model",
+      "message": "Decision 'D' (d), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked."
+     }
+    ]
+   }
+  },
+  {
+   "id": "B22-shape",
+   "description": "EXPRESSION_ERROR decision.context.messages.where {\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Decision context message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.context.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B22-provider",
+   "description": "SCRIPTED decider/classifier calls +0",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "decider": 0,
+    "classifier": 0
+   }
+  },
+  {
+   "id": "B22-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Decision context message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.context.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Decision context message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "d",
+      "resumable": false,
+      "details": {
+       "boundary": "decision.context.messages.where",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Decision context message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "boundary": "decision.context.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B22-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B22-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "B22c",
+   "description": "valid selector: succeeded, decider called once",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "status": "succeeded"
+   }
+  },
+  {
+   "id": "B20",
+   "description": "route expression keeps EVALUATION_EXPRESSION_FAILED fixed copy, false, no boundary, literal absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_EXPRESSION_FAILED",
+     "message": "The evaluation expression could not be evaluated",
+     "nodeId": "d",
+     "resumable": false
+    }
+   }
+  },
+  {
+   "id": "B20-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EVALUATION_EXPRESSION_FAILED",
+     "message": "The evaluation expression could not be evaluated",
+     "nodeId": "d",
+     "resumable": false
+    },
+    "event": [
+     {
+      "code": "EVALUATION_EXPRESSION_FAILED",
+      "message": "The evaluation expression could not be evaluated",
+      "nodeId": "d",
+      "resumable": false
+     }
+    ],
+    "rest": {
+     "code": "EVALUATION_EXPRESSION_FAILED",
+     "message": "The evaluation expression could not be evaluated",
+     "nodeId": "d",
+     "resumable": false
+    }
+   }
+  },
+  {
+   "id": "B20-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B20-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "EXT-C-real-setup",
+   "description": "fixture publishes (setup)",
+   "pass": false,
+   "class": "SETUP",
+   "actual": {
+    "type": "https://graphgoblin.dev/problems/loop-invalid",
+    "title": "loop invalid",
+    "status": 422,
+    "code": "LOOP_INVALID",
+    "detail": "the draft has structural errors",
+    "errors": [
+     {
+      "code": "CLASSIFIER_SECRET_MISSING",
+      "severity": "warning",
+      "nodeId": "d",
+      "path": "config.model",
+      "message": "Decision 'D' (d), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked."
+     }
+    ]
+   }
+  },
+  {
+   "id": "EXT-C-name-setup",
+   "description": "fixture publishes (setup)",
+   "pass": false,
+   "class": "SETUP",
+   "actual": {
+    "type": "https://graphgoblin.dev/problems/loop-invalid",
+    "title": "loop invalid",
+    "status": 422,
+    "code": "LOOP_INVALID",
+    "detail": "the draft has structural errors",
+    "errors": [
+     {
+      "code": "CLASSIFIER_SECRET_MISSING",
+      "severity": "warning",
+      "nodeId": "d",
+      "path": "config.model",
+      "message": "Decision 'D' (d), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked."
+     }
+    ]
+   }
+  },
+  {
+   "id": "EXT-C-code-setup",
+   "description": "fixture publishes (setup)",
+   "pass": false,
+   "class": "SETUP",
+   "actual": {
+    "type": "https://graphgoblin.dev/problems/loop-invalid",
+    "title": "loop invalid",
+    "status": 422,
+    "code": "LOOP_INVALID",
+    "detail": "the draft has structural errors",
+    "errors": [
+     {
+      "code": "CLASSIFIER_SECRET_MISSING",
+      "severity": "warning",
+      "nodeId": "d",
+      "path": "config.model",
+      "message": "Decision 'D' (d), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked."
+     }
+    ]
+   }
+  },
+  {
+   "id": "B23-shape",
+   "description": "TEMPLATE_ERROR wait.prompt {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait input prompt failed. The template could not be rendered at line 1, column 8. Check its filters and input values.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.prompt",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 8. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B23-effects",
+   "description": "never parked: no run.waiting/wait events, status failed",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "types": [
+     "run.queued",
+     "run.started",
+     "node.started",
+     "node.finished",
+     "node.started",
+     "run.failed"
+    ]
+   }
+  },
+  {
+   "id": "B23-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait input prompt failed. The template could not be rendered at line 1, column 8. Check its filters and input values.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.prompt",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 8. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Wait input prompt failed. The template could not be rendered at line 1, column 8. Check its filters and input values.",
+      "nodeId": "w",
+      "resumable": false,
+      "details": {
+       "boundary": "wait.prompt",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 8. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait input prompt failed. The template could not be rendered at line 1, column 8. Check its filters and input values.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.prompt",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 8. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B23-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B23-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "B24-shape",
+   "description": "TEMPLATE_ERROR wait.timestamp {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait timestamp failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.timestamp",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B24-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait timestamp failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.timestamp",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Wait timestamp failed. The value must render to a timestamp. Check the template and date format.",
+      "nodeId": "w",
+      "resumable": false,
+      "details": {
+       "boundary": "wait.timestamp",
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The value must render to a timestamp. Check the template and date format."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Wait timestamp failed. The value must render to a timestamp. Check the template and date format.",
+     "nodeId": "w",
+     "resumable": false,
+     "details": {
+      "boundary": "wait.timestamp",
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The value must render to a timestamp. Check the template and date format."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B24-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B24-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "B25",
+   "description": "rejected signal: HTTP 400 EXPRESSION_ERROR request copy; run still waiting with same waitId; zero added events",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "sig": {
+     "type": "https://graphgoblin.dev/problems/expression-error",
+     "title": "expression error",
+     "status": 400,
+     "code": "EXPRESSION_ERROR",
+     "detail": "expression failed: QA486-LIT-B25",
+     "errors": {
+      "expression": "$error(\"QA486-LIT-B25\")"
+     }
+    },
+    "sigStatus": 400,
+    "status": "waiting",
+    "waitId": "01M7ZEZJS2AN5DP8J7NZHRDWVP:5",
+    "waitId2": "01M7ZEZJS2AN5DP8J7NZHRDWVP:5",
+    "added": 0,
+    "literalInRequestCopy": [
+     "QA486-LIT-B25"
+    ]
+   }
+  },
+  {
+   "id": "B25c",
+   "description": "valid filter: signal wakes and run succeeds",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "sig": true,
+    "status": "succeeded"
+   }
+  },
+  {
+   "id": "P01",
+   "description": "Mutate keeps MUTATION_ERROR \"Mutation operation 1 (set) failed: <bounded authored text>\" with literal present, false",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "failure": {
+     "code": "MUTATION_ERROR",
+     "message": "Mutation operation 1 (set) failed: expression failed: QA486-LIT-P01",
+     "nodeId": "m",
+     "resumable": false,
+     "details": {
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "expression failed: QA486-LIT-P01"
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "P01-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "MUTATION_ERROR",
+     "message": "Mutation operation 1 (set) failed: expression failed: QA486-LIT-P01",
+     "nodeId": "m",
+     "resumable": false,
+     "details": {
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "expression failed: QA486-LIT-P01"
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "MUTATION_ERROR",
+      "message": "Mutation operation 1 (set) failed: expression failed: QA486-LIT-P01",
+      "nodeId": "m",
+      "resumable": false,
+      "details": {
+       "operationIndex": 0,
+       "operationKind": "set",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "expression failed: QA486-LIT-P01"
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "MUTATION_ERROR",
+     "message": "Mutation operation 1 (set) failed: expression failed: QA486-LIT-P01",
+     "nodeId": "m",
+     "resumable": false,
+     "details": {
+      "operationIndex": 0,
+      "operationKind": "set",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "expression failed: QA486-LIT-P01"
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "P01-privacy",
+   "description": "new authored projection omits canaries QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "P01-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true
+   }
+  },
+  {
+   "id": "P02",
+   "description": "Exit keeps EXPRESSION_ERROR with bounded expression message (literal present), false, no boundary",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "expression failed: QA486-LIT-P02",
+     "nodeId": "done",
+     "resumable": false
+    }
+   }
+  },
+  {
+   "id": "EXT-H-real",
+   "description": "probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "h",
+     "resumable": true
+    },
+    "beats": 0,
+    "privateLogRecordsWithMarker": 1
+   }
+  },
+  {
+   "id": "EXT-H-name",
+   "description": "probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "h",
+     "resumable": true
+    },
+    "beats": 0,
+    "privateLogRecordsWithMarker": 2
+   }
+  },
+  {
+   "id": "EXT-H-code",
+   "description": "probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "h",
+     "resumable": true
+    },
+    "beats": 0,
+    "privateLogRecordsWithMarker": 3
+   }
+  },
+  {
+   "id": "EXT-S-real",
+   "description": "runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "SCRIPT_OUTCOME_UNCERTAIN",
+     "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+     "nodeId": "s",
+     "resumable": true,
+     "script": {
+      "visitId": "01M7ZEZMGS8B7NSZYWF9CNYQ6G:5",
+      "dispatchId": "01M7ZEZMHZR6J2A555TK8P85AB",
+      "state": "outcome-uncertain"
+     }
+    },
+    "dispatched": 1,
+    "recovery": {
+     "allowed": false,
+     "code": "SCRIPT_CONSENT_REQUIRED",
+     "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+    }
+   }
+  },
+  {
+   "id": "EXT-S-name",
+   "description": "runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "SCRIPT_OUTCOME_UNCERTAIN",
+     "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+     "nodeId": "s",
+     "resumable": true,
+     "script": {
+      "visitId": "01M7ZEZMMH043YVKT3CTZ4VH9F:5",
+      "dispatchId": "01M7ZEZMNS1P6JTPMAJX1PDRXJ",
+      "state": "outcome-uncertain"
+     }
+    },
+    "dispatched": 1,
+    "recovery": {
+     "allowed": false,
+     "code": "SCRIPT_CONSENT_REQUIRED",
+     "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+    }
+   }
+  },
+  {
+   "id": "EXT-S-code",
+   "description": "runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED-INJECT",
+   "actual": {
+    "failure": {
+     "code": "SCRIPT_OUTCOME_UNCERTAIN",
+     "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+     "nodeId": "s",
+     "resumable": true,
+     "script": {
+      "visitId": "01M7ZEZMRHPNKVM7RXY6VMV9ZX:5",
+      "dispatchId": "01M7ZEZMSK6QY6TH2YQZDNY7WS",
+      "state": "outcome-uncertain"
+     }
+    },
+    "dispatched": 1,
+    "recovery": {
+     "allowed": false,
+     "code": "SCRIPT_CONSENT_REQUIRED",
+     "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+    }
+   }
+  },
+  {
+   "id": "LOG",
+   "description": "no captured log record contains QA486-LIT/IN/PATH (P01/P02 literal excluded only if present by established contract)",
+   "pass": true,
+   "class": "SCRIPTED-LOGGER",
+   "actual": {
+    "hits": [
+     {
+      "level": "error",
+      "msg": "node failed",
+      "obj": "{\"runId\":\"01M7ZEZKHBGKNA98TB9MAN1X9T\",\"nodeId\":\"m\",\"failure\":{\"code\":\"MUTATION_ERROR\",\"message\":\"Mutation operation 1 (set) failed: expression failed: QA486-LIT-P01\",\"resumable\":false,\"nodeId\":\"m\",\"details\":{\"operationIndex\":0,\"operationKind\":\"set\",\"cause\":{\"code\":\"EXPRESSION_ERROR\",\"message\":\"expression failed: QA486-LIT-P01\"}}}}"
+     },
+     {
+      "level": "error",
+      "msg": "node failed",
+      "obj": "{\"runId\":\"01M7ZEZKZX7PE3Y8HBG2DGP9SC\",\"nodeId\":\"done\",\"failure\":{\"code\":\"EXPRESSION_ERROR\",\"message\":\"expression failed: QA486-LIT-P02\",\"resumable\":false,\"nodeId\":\"done\"}}"
+     }
+    ],
+    "authoredLogCount": 14,
+    "totalLines": 25
+   }
+  },
+  {
+   "id": "CLEANUP",
+   "description": "authenticated drain accepted, API port and probe listener refuse connections after shutdown",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:28:12.547Z",
+     "choiceAt": "2026-11-21T16:28:42.547Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "cc2687e6-6522-4274-b854-bddeae1ba1d4:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true,
+    "listenerPort": 61590,
+    "listenerGone": true
+   }
+  }
+ ]
+}

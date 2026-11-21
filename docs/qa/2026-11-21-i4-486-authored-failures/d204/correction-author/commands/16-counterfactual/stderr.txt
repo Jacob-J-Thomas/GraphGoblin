@@ -1,0 +1,113 @@
+$ vitest run src/handlers/inference-context.test.ts -t 'privately logs canonical rerender'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-context.test.ts > privately logs canonical rerender 1 on the current inference node before provider invocation
+AssertionError: expected [ { level: 'error', …(2) } ] to deep equally contain { level: 'error', …(2) }
+
+- Expected:
+{
+  "level": "error",
+  "msg": "node failed",
+  "obj": {
+    "error": ObjectContaining {
+      "message": "private renderer diagnostic",
+    },
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "An unexpected error interrupted the run. See the server logs for this run.",
+      "nodeId": "respond",
+      "resumable": true,
+    },
+    "nodeId": "respond",
+    "runId": "00000000000000000000000001",
+  },
+}
+
++ Received:
+[
+  {
+    "level": "error",
+    "msg": "node failed",
+    "obj": {
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "nodeId": "respond",
+        "resumable": true,
+      },
+      "nodeId": "respond",
+      "runId": "00000000000000000000000001",
+    },
+  },
+]
+
+ ❯ src/handlers/inference-context.test.ts:221:41
+    219|         'private renderer diagnostic',
+    220|       );
+    221|       expect(engine.ports.logger.lines).toContainEqual({
+       |                                         ^
+    222|         level: 'error',
+    223|         msg: 'node failed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/handlers/inference-context.test.ts > privately logs canonical rerender 2 on the current inference node before provider invocation
+AssertionError: expected [ { level: 'error', …(2) } ] to deep equally contain { level: 'error', …(2) }
+
+- Expected:
+{
+  "level": "error",
+  "msg": "node failed",
+  "obj": {
+    "error": ObjectContaining {
+      "message": "private renderer diagnostic",
+    },
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "An unexpected error interrupted the run. See the server logs for this run.",
+      "nodeId": "respond",
+      "resumable": true,
+    },
+    "nodeId": "respond",
+    "runId": "00000000000000000000000001",
+  },
+}
+
++ Received:
+[
+  {
+    "level": "error",
+    "msg": "node failed",
+    "obj": {
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "nodeId": "respond",
+        "resumable": true,
+      },
+      "nodeId": "respond",
+      "runId": "00000000000000000000000001",
+    },
+  },
+]
+
+ ❯ src/handlers/inference-context.test.ts:221:41
+    219|         'private renderer diagnostic',
+    220|       );
+    221|       expect(engine.ports.logger.lines).toContainEqual({
+       |                                         ^
+    222|         level: 'error',
+    223|         msg: 'node failed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-486-review-
+  │ fixes\GraphGoblin\packages\engine
+
+$ vitest run src/handlers/inference-workspace.test.ts -t 'inference workspace preparation|retains stored|keeps the earlier'
+$ vitest run src/handlers/inference-context.test.ts -t 'privately logs canonical rerender'
+$ vitest run src/handlers/inference-workspace.test.ts -t 'inference workspace preparation|retains stored|keeps the earlier'

@@ -1,0 +1,163 @@
+{
+  "cwd": "G:/ggq/gg-i4-486-authored-errors/GraphGoblin",
+  "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+  "node": "v22.23.4",
+  "nodeDirectory": "C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64",
+  "TEMP": "G:/ggq/qa-scratch/i4-486-core",
+  "TMP": "G:/ggq/qa-scratch/i4-486-core",
+  "NO_COLOR": "1",
+  "freezeSource": "freeze-v1-source.json",
+  "finalSource": "core-final-source.json",
+  "commands": [
+    {
+      "log": "freeze-format-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd exec prettier --write packages/domain/src/expression.ts packages/domain/src/expression.test.ts packages/domain/src/template.ts packages/domain/src/template.test.ts packages/domain/src/mutations.ts packages/domain/src/mutations.test.ts packages/domain/src/index.ts packages/engine/src/handlers/common.ts packages/engine/src/authored-failure.ts packages/engine/src/authored-failure.test.ts packages/engine/src/handler.ts packages/engine/src/ports.ts"
+    },
+    {
+      "log": "freeze-domain-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec vitest run src/expression.test.ts src/mutations.test.ts src/template.test.ts"
+    },
+    {
+      "log": "freeze-helper-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/authored-failure.test.ts"
+    },
+    {
+      "log": "freeze-domain-typecheck-01.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "freeze-format-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd exec prettier --write packages/domain/src/expression.ts packages/domain/src/mutations.ts packages/engine/src/authored-failure.ts"
+    },
+    {
+      "log": "freeze-domain-typecheck-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "freeze-domain-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec vitest run src/expression.test.ts src/mutations.test.ts src/template.test.ts"
+    },
+    {
+      "log": "freeze-helper-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/authored-failure.test.ts"
+    },
+    {
+      "log": "freeze-engine-typecheck-01.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "inference-integration-smoke-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference.test.ts src/handlers/inference-context.test.ts src/handlers/mutation-failures.test.ts src/prompt-recovery.test.ts src/prompt-provenance.test.ts"
+    },
+    {
+      "log": "child-old-controls-01.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-creation.test.ts src/awaited-children.test.ts src/child-failure-parity.test.ts src/adversarial.test.ts"
+    },
+    {
+      "log": "typed-inference-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference.test.ts"
+    },
+    {
+      "log": "pre-turn-controls-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference-context.test.ts src/prompt-recovery.test.ts"
+    },
+    {
+      "log": "retry-controls-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference-evidence-matrix.test.ts -t 'retains initial'"
+    },
+    {
+      "log": "stronger-winner-controls-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference-boundaries.test.ts"
+    },
+    {
+      "log": "core-engine-typecheck-02.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "fresh-controls-01.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/prompt-provenance.test.ts"
+    },
+    {
+      "log": "repair-retry-controls-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference-evidence-matrix.test.ts -t 'reconciles .* repair'"
+    },
+    {
+      "log": "core-format-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd exec prettier --write CHANGELOG.md docs/04-node-catalog.md docs/05-execution-engine.md docs/06-harness-integration.md docs/guide/03-run-and-observe.md docs/decisions/ADR-0088-authored-execution-failures.md packages/engine/src/handlers/subloop.ts packages/engine/src/handlers/inference.ts packages/engine/src/handlers/inference-context.ts packages/engine/src/handlers/inference-boundaries.test.ts packages/engine/src/handlers/inference-context.test.ts packages/engine/src/handlers/inference-evidence-matrix.test.ts packages/engine/src/handlers/inference.test.ts packages/engine/src/prompt-provenance.test.ts packages/engine/src/prompt-recovery.test.ts packages/engine/src/run-manager.ts"
+    },
+    {
+      "log": "core-domain-lint-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec eslint src/expression.ts src/expression.test.ts src/mutations.ts src/mutations.test.ts src/template.ts src/template.test.ts src/index.ts"
+    },
+    {
+      "log": "core-engine-lint-01.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec eslint src/authored-failure.ts src/authored-failure.test.ts src/handler.ts src/ports.ts src/handlers/common.ts src/handlers/inference.ts src/handlers/inference-context.ts src/handlers/subloop.ts src/handlers/inference.test.ts src/handlers/inference-context.test.ts src/handlers/inference-boundaries.test.ts src/handlers/inference-evidence-matrix.test.ts src/prompt-recovery.test.ts src/prompt-provenance.test.ts src/run-manager.ts"
+    },
+    {
+      "log": "combined-core-focused-01.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/authored-failure.test.ts src/handlers/inference.test.ts src/handlers/inference-context.test.ts src/handlers/inference-boundaries.test.ts src/handlers/inference-refusal.test.ts src/handlers/inference-failure.test.ts src/handlers/inference-evidence-matrix.test.ts src/handlers/mutation-failures.test.ts src/prompt-recovery.test.ts src/prompt-provenance.test.ts src/artifact-failure.test.ts"
+    },
+    {
+      "log": "core-engine-lint-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec eslint src/handlers/inference.test.ts src/handlers/inference-boundaries.test.ts"
+    },
+    {
+      "log": "core-engine-typecheck-03.log",
+      "exit": 1,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "core-changed-fixture-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference.test.ts src/handlers/inference-boundaries.test.ts"
+    },
+    {
+      "log": "tests-format-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd exec prettier --write packages/domain/src/mutations.test.ts packages/engine/src/handlers/inference.test.ts packages/engine/src/handlers/inference-boundaries.test.ts"
+    },
+    {
+      "log": "core-domain-final-03.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec vitest run src/expression.test.ts src/mutations.test.ts src/template.test.ts"
+    },
+    {
+      "log": "core-domain-typecheck-03.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec tsc -p tsconfig.json"
+    },
+    {
+      "log": "core-domain-lint-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/domain exec eslint src/mutations.test.ts"
+    },
+    {
+      "log": "core-engine-final-02.log",
+      "exit": 0,
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/authored-failure.test.ts src/handlers/inference.test.ts src/handlers/inference-context.test.ts src/handlers/inference-boundaries.test.ts src/handlers/inference-refusal.test.ts src/handlers/inference-failure.test.ts src/handlers/inference-evidence-matrix.test.ts src/handlers/mutation-failures.test.ts src/prompt-recovery.test.ts src/prompt-provenance.test.ts src/artifact-failure.test.ts"
+    }
+  ]
+}

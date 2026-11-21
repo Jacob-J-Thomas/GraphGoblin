@@ -1,0 +1,94 @@
+diff --git a/jsonata.js b/jsonata.js
+index cb7dab0b9fae4623680ba432b6945ba0571c7ab6..9bbe4af65ee68efaeb502eb549feca999f2b45b0 100644
+--- a/jsonata.js
++++ b/jsonata.js
+@@ -3996,13 +3996,10 @@ var jsonata = (function() {
+             case '[':
+                 // array constructor - evaluate each item
+                 result = [];
+-                let generators = await Promise.all(expr.expressions
+-                    .map(async (item, idx) => {
+-                        environment.isParallelCall = idx > 0
+-                        return [item, await evaluate(item, input, environment)]
+-                    }));
+-                for (let generator of generators) {
+-                    var [item, value] = generator;
++                // Siblings share a depth counter with their caller. Finish each before
++                // starting the next so the counter measures the stack, not array width.
++                for (const item of expr.expressions) {
++                    const value = await evaluate(item, input, environment);
+                     if (typeof value !== 'undefined') {
+                         if(item.value === '[') {
+                             result.push(value);
+@@ -4438,7 +4435,7 @@ var jsonata = (function() {
+         }
+ 
+         // iterate over the groups to evaluate the 'value' expression
+-        let generators = await Promise.all(utils.keys(groups).map(async (key, idx) => {
++        for (const key of utils.keys(groups)) {
+             let entry = groups[key];
+             var context = entry.data;
+             var env = environment;
+@@ -4448,12 +4445,7 @@ var jsonata = (function() {
+                 delete tuple['@'];
+                 env = createFrameFromTuple(environment, tuple);
+             }
+-            environment.isParallelCall = idx > 0
+-            return [key, await evaluate(expr.lhs[entry.exprIndex][1], context, env)];
+-        }));
+-
+-        for (let generator of generators) {
+-            var [key, value] = await generator;
++            const value = await evaluate(expr.lhs[entry.exprIndex][1], context, env);
+             if(typeof value !== 'undefined') {
+                 result[key] = value;
+             }
+@@ -5595,14 +5587,6 @@ var jsonata = (function() {
+         }
+         var environment = createFrame(staticFrame);
+ 
+-        var timestamp = new Date(); // will be overridden on each call to evalute()
+-        environment.bind('now', defineFunction(function(picture, timezone) {
+-            return datetime.fromMillis(timestamp.getTime(), picture, timezone);
+-        }, '<s?s?:s>'));
+-        environment.bind('millis', defineFunction(function() {
+-            return timestamp.getTime();
+-        }, '<:n>'));
+-
+         return {
+             evaluate: async function (input, bindings, callback) {
+                 // throw if the expression compiled with syntax errors
+@@ -5616,10 +5600,21 @@ var jsonata = (function() {
+                 }
+ 
+                 const exec_env = createFrame(environment);
+-
+-                // add any variable bindings may have been passed in
+-                for (const v of utils.keys(bindings)) {
+-                    exec_env.bind(v, bindings[v]);
++                const timestamp = new Date();
++                exec_env.bind('now', defineFunction(function(picture, timezone) {
++                    return datetime.fromMillis(timestamp.getTime(), picture, timezone);
++                }, '<s?s?:s>'));
++                exec_env.bind('millis', defineFunction(function() {
++                    return timestamp.getTime();
++                }, '<:n>'));
++
++                // Include symbol-keyed evaluator hooks in the invocation's own frame.
++                if (bindings) {
++                    for (const name of Reflect.ownKeys(bindings)) {
++                        if (Object.prototype.propertyIsEnumerable.call(bindings, name)) {
++                            exec_env.bind(name, bindings[name]);
++                        }
++                    }
+                 }
+ 
+                 // put the input document into the environment as the root object
+@@ -5627,7 +5622,6 @@ var jsonata = (function() {
+ 
+                 // capture the timestamp and put it in the execution environment
+                 // the $now() and $millis() functions will return this value - whenever it is called
+-                timestamp = new Date();
+                 exec_env.timestamp = timestamp;
+                 exec_env.options = options;
+ 

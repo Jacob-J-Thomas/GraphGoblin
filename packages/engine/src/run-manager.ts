@@ -2670,11 +2670,15 @@ export class RunManager {
         ) {
           const prior = visitTurn(events, nodeId).pending;
           if (failure instanceof InternalRunFailureError) {
-            failure = new InternalRunFailureError(failure.message, {
-              ...failure.options,
-              nodeId: failure.options.nodeId ?? nodeId,
-              ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
-            });
+            failure = new InternalRunFailureError(
+              failure.message,
+              {
+                ...failure.options,
+                nodeId: failure.options.nodeId ?? nodeId,
+                ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
+              },
+              failure.diagnostic,
+            );
           } else if (prior && !failure.inference) {
             failure = { ...failure, inference: provenance(prior) };
           }
@@ -2690,9 +2694,11 @@ export class RunManager {
               runId,
               nodeId,
               failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
-              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
-                ? { error: errorDiagnostic(error) }
-                : {}),
+              ...(failure instanceof InternalRunFailureError && failure.diagnostic
+                ? { error: failure.diagnostic }
+                : failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+                  ? { error: errorDiagnostic(error) }
+                  : {}),
             },
             'node failed',
           );

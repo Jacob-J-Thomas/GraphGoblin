@@ -1,0 +1,257 @@
+
+  private async workingDirectory(
+    run: RunRecord,
+    def: LoopDefinition,
+    thread: ContextThread,
+  ): Promise<WorkingDirectoryResult> {
+    const cached = this.directories.get(run.id);
+    if (cached !== undefined) return { ok: true, directory: cached };
+    let spec = def.settings.workingDirectory;
+    if (spec.kind === 'template') {
+      const rendered = await observeTemplate(spec.template, { ...threadView(thread) });
+      if (!rendered.ok) return { ok: false, reason: rendered.fact };
+      const path = rendered.value.trim();
+      if (!path) return { ok: false, reason: 'empty-path' };
+      spec = { kind: 'fixed', path };
+    }
+    const directory = await this.ports.workspace.resolve(spec, run.id);
+    this.directories.set(run.id, directory);
+    return { ok: true, directory };
+  }
+
+  /** Execution and public reads share the same verified-checkpoint reconstruction. */
+  private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
+    const checkpoint = await this.ports.runs.getThreadCheckpoint(run.id, events.at(-1)?.seq ?? 0);
+    const initial = await this.ports.runs.getInitialThread(run.id);
+    if (!initial) throw new Error(`run ${run.id} has no initial thread`);
+    return reconcileThread(initial, events, checkpoint);
+  }
+
+  private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {
+    const version = input.versionId
+      ? await this.ports.loops.getVersion(input.versionId)
+      : await this.ports.loops.getLatestPublished(input.loopId);
+    if (!version || version.loopId !== input.loopId) {
+      throw new EngineRequestError(
+        'LOOP_NOT_FOUND',
+        `loop ${input.loopId} has no ${input.versionId ? `version ${input.versionId}` : 'published version'}`,
+      );
+    }
+    if (version.status === 'snapshot') {
+      // A snapshot belongs to the draft runs that pinned it; it is never started again.
+      throw new EngineRequestError(
+        'VERSION_NOT_PUBLISHED',
+        `version ${version.id} is a draft run's snapshot; start the loop's draft or a published version`,
+      );
+    }
+    if (version.status !== 'published' && !input.allowDraft) {
+      throw new EngineRequestError('VERSION_NOT_PUBLISHED', `version ${version.id} is a draft`);
+    }
+    // A definition stored before ADR-0044 can still publish an Event: refuse it at admission.
+    assertCurrentDefinition(version);
+    return version;
+  }
+
+  private resolveTrigger(
+    def: LoopDefinition,
+    triggerNodeId: string | undefined,
+  ): Extract<Node, { kind: 'trigger' }> {
+    const triggers = nodesOfKind(def, 'trigger');
+    if (triggerNodeId) {
+      const found = triggers.find((t) => t.id === triggerNodeId);
+      if (!found)
+        throw new EngineRequestError(
+          'TRIGGER_NOT_FOUND',
+          `trigger node ${triggerNodeId} not found`,
+packages/engine/src/run-manager.ts:121:    readonly details?: unknown,
+packages/engine/src/run-manager.ts:354:  private pinLock: Promise<unknown> = Promise.resolve();
+packages/engine/src/run-manager.ts:356:  private readonly runLocks = new Map<string, Promise<unknown>>();
+packages/engine/src/run-manager.ts:388:    // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
+packages/engine/src/run-manager.ts:390:      this.onTimer(runId, key).catch((error: unknown) => {
+packages/engine/src/run-manager.ts:394:            'timer acknowledged for unreadable history; inspect run diagnostics',
+packages/engine/src/run-manager.ts:495:        const now = this.ports.clock.now().getTime();
+packages/engine/src/run-manager.ts:497:        if (deadline <= now) await this.onTimer(id, RUN_DEADLINE_TIMER);
+packages/engine/src/run-manager.ts:506:        if (timeout <= now) await this.onTimer(id, 'timeout@' + wait.waitId);
+packages/engine/src/run-manager.ts:507:        else if (timer <= now) await this.onTimer(id, wait.kind + '@' + wait.waitId);
+packages/engine/src/run-manager.ts:515:        nextWakeAt <= this.ports.clock.now().getTime()
+packages/engine/src/run-manager.ts:686:    const now = this.now();
+packages/engine/src/run-manager.ts:692:      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;
+packages/engine/src/run-manager.ts:716:          receivedAt: now,
+packages/engine/src/run-manager.ts:738:      createdAt: now,
+packages/engine/src/run-manager.ts:923:          (saved.nextAttemptAt && saved.nextAttemptAt > this.now())
+packages/engine/src/run-manager.ts:952:            : new Date(this.ports.clock.now().getTime() + delay * 1000).toISOString(),
+packages/engine/src/run-manager.ts:964:  /** Acknowledge the durable claim; dispatch and execution never delay the caller. */
+packages/engine/src/run-manager.ts:996:        // Confirm a lost claim acknowledgement by its allocated identity. Never acknowledge an
+packages/engine/src/run-manager.ts:1037:        if (saved.nextAttemptAt && saved.nextAttemptAt > this.now()) return undefined;
+packages/engine/src/run-manager.ts:1059:    error: unknown,
+packages/engine/src/run-manager.ts:1070:        new Date(this.ports.clock.now().getTime() + delay * 1000).toISOString(),
+packages/engine/src/run-manager.ts:1089:        const round = this.eventRecoveryRound ?? { cutoff: this.now() };
+packages/engine/src/run-manager.ts:1110:        const due = await this.ports.admission.due(this.now(), 5);
+packages/engine/src/run-manager.ts:1175:    const claimed = await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now());
+packages/engine/src/run-manager.ts:1177:      // Already requested (by a concurrent call, which may have finished it by now): the same
+packages/engine/src/run-manager.ts:1203:      pausedAt: this.now(),
+packages/engine/src/run-manager.ts:1287:  private readonly recoveryLocks = new Map<string, Promise<unknown>>();
+packages/engine/src/run-manager.ts:1690:        // wake repairs that acknowledgement, then rejects without appending this signal.
+packages/engine/src/run-manager.ts:1831:      createdAt: this.now(),
+packages/engine/src/run-manager.ts:1863:        // The commit may have succeeded before its acknowledgement was lost. The unique
+packages/engine/src/run-manager.ts:1982:        .catch(async (error: unknown) => {
+packages/engine/src/run-manager.ts:2008:        .catch((error: unknown) => {
+packages/engine/src/run-manager.ts:2055:          await this.finalizeTerminal(run.id).catch((error: unknown) => {
+packages/engine/src/run-manager.ts:2072:          await this.ports.runs.claimCancel(run.id, ACTIVE_STATUSES, this.now());
+packages/engine/src/run-manager.ts:2078:        // A paused Resume committed before its projection/acknowledgement was interrupted.
+packages/engine/src/run-manager.ts:2135:      const stop = watchRunDeadline(run, controller, () => this.ports.clock.now());
+packages/engine/src/run-manager.ts:2140:  /** Active work must settle after abort before capacity is released. Parked work can fail now. */
+packages/engine/src/run-manager.ts:2146:    if (at.getTime() > this.ports.clock.now().getTime()) return false;
+packages/engine/src/run-manager.ts:2194:      // acknowledge a due row while its park has yet to become visible.
+packages/engine/src/run-manager.ts:2204:      // A previous delivery committed the wake but lost the status acknowledgement.
+packages/engine/src/run-manager.ts:2217:      // A pause can win after the read. Acknowledge its row; resume/recovery re-arm the deadline.
+packages/engine/src/run-manager.ts:2395:      startedAt: this.now(),
+packages/engine/src/run-manager.ts:2408:        run = await this.ports.runs.update(runId, { startedAt: this.now() });
+packages/engine/src/run-manager.ts:2433:          ...(threadView(thread) as unknown as Record<string, unknown>),
+packages/engine/src/run-manager.ts:2511:      now: () => this.now(),
+packages/engine/src/run-manager.ts:2524:          (runDeadline(run)?.getTime() ?? Infinity) <= this.ports.clock.now().getTime())
+packages/engine/src/run-manager.ts:2588:      const startedAt = Date.now();
+packages/engine/src/run-manager.ts:2722:        (runDeadline(run)?.getTime() ?? Infinity) <= this.ports.clock.now().getTime()
+packages/engine/src/run-manager.ts:2727:      const durationMs = Date.now() - startedAt;
+packages/engine/src/run-manager.ts:2742:        // wake it; now that the wait is recorded, deliver its outcome here.
+packages/engine/src/run-manager.ts:2873:      finishedAt: this.now(),
+packages/engine/src/run-manager.ts:2894:      finishedAt: this.now(),
+packages/engine/src/run-manager.ts:2913:    knownDef?: LoopDefinition,
+packages/engine/src/run-manager.ts:2914:    knownThread?: ContextThread,
+import { Liquid, LiquidError } from 'liquidjs';
+import { TemplateError } from './errors.js';
+
+/**
+ * LiquidJS rendering with no filesystem access and a bounded template cache.
+ * Templates are user-authored; they never execute code.
+ */
+
+const noFs = {
+  readFile: () => Promise.reject(new TemplateError('template includes are disabled')),
+  readFileSync: (): string => {
+    throw new TemplateError('template includes are disabled');
+  },
+  exists: () => Promise.resolve(false),
+  existsSync: () => false,
+  resolve: (_root: string, file: string) => file,
+  contains: () => Promise.resolve(false),
+  dirname: (file: string) => file,
+  sep: '/',
+};
+
+const engine = new Liquid({
+  cache: 256,
+  strictFilters: true,
+  strictVariables: false,
+  lenientIf: true,
+  relativeReference: false,
+  fs: noFs,
+  jsTruthy: true,
+});
+
+export interface TemplateFact {
+  phase: 'parse' | 'render';
+  line?: number;
+  column?: number;
+}
+
+/** Parse and render with the runtime dialect. Keep source and Liquid diagnostics out of the fact. */
+export async function observeTemplate(template: string, view: Record<string, unknown>) {
+  let phase: TemplateFact['phase'] = 'parse';
+  try {
+    const parsed = engine.parse(template);
+    phase = 'render';
+    const out: unknown = await engine.render(parsed, view);
+    return { ok: true as const, value: typeof out === 'string' ? out : String(out) };
+  } catch (error) {
+    const fact: TemplateFact = { phase };
+    if (error instanceof LiquidError && error.token.input === template) {
+      const [line, column] = error.token.getPosition();
+      if (
+        line !== undefined &&
+        column !== undefined &&
+        Number.isSafeInteger(line) &&
+        Number.isSafeInteger(column) &&
+        line > 0 &&
+        column > 0
+      ) {
+        fact.line = line;
+        fact.column = column;
+      }
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false as const,
+      fact,
+      error:
+        error instanceof TemplateError
+          ? error
+          : new TemplateError(`template failed: ${message}`, { template: template.slice(0, 200) }),
+    };
+  }
+}
+
+/** Render a template against a view. Throws TemplateError with the Liquid message on failure. */
+export async function renderTemplate(
+  template: string,
+  view: Record<string, unknown>,
+): Promise<string> {
+  const result = await observeTemplate(template, view);
+  if (!result.ok) throw result.error;
+  return result.value;
+}
+
+/** Parse only, to surface syntax errors at authoring time. Returns null when valid. */
+export function checkTemplate(template: string): string | null {
+  try {
+    engine.parse(template);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
+/** Parse using the runtime dialect, without rendering or loading partials. */
+export function parseAuthoredTemplate(source: string) {
+  return { engine, templates: engine.parse(source) };
+}
+packages/engine/src/prompt-recovery.test.ts:90:              const stored = await events.append(runId, drafts, options);
+packages/engine/src/prompt-recovery.test.ts:153:              return events.append(id, drafts, options);
+packages/engine/src/prompt-recovery.test.ts:251:            const stored = await events.append(id, drafts, options);
+packages/engine/src/run-manager.test.ts:785:    await ports.events.append(runId, [
+packages/engine/src/run-manager.test.ts:909:  it('replays the thread from the log when the snapshot is missing', async () => {
+    this.current = Date.parse(iso);
+  }
+}
+
+export class FakeIds implements IdPort {
+  private counter = 0;
+  next(): string {
+    this.counter += 1;
+    const digits = this.counter.toString(32).toUpperCase().padStart(10, '0');
+    const encoded = [...digits].map((c) => ULID_ALPHABET[parseInt(c, 32)] ?? '0').join('');
+    return `0000000000000000${encoded}`;
+  }
+}
+
+export class CapturingLogger implements Logger {
+  readonly lines: { level: string; msg: string; obj: Record<string, unknown> }[] = [];
+  debug(obj: Record<string, unknown>, msg: string): void {
+    this.lines.push({ level: 'debug', msg, obj });
+  }
+  info(obj: Record<string, unknown>, msg: string): void {
+    this.lines.push({ level: 'info', msg, obj });
+  }
+  warn(obj: Record<string, unknown>, msg: string): void {
+    this.lines.push({ level: 'warn', msg, obj });
+  }
+  error(obj: Record<string, unknown>, msg: string): void {
+    this.lines.push({ level: 'error', msg, obj });
+  }
+}
+
+export class InMemoryEventStore implements EventStorePort {
+  private readonly logs = new Map<string, RunEvent[]>();
+  private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
+  constructor(
+    private readonly clock: ClockPort,

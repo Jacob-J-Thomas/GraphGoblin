@@ -1,0 +1,90 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/child-creation.test.ts (7 tests | 1 failed) 987ms
+   ❯ child creation and finish across a process death (#320) (7)
+     × retrying the parent output mapping does not record an unchanged child outcome again 101ms
+ ❯ src/adversarial.test.ts (42 tests | 2 failed) 2658ms
+   ❯ adversarial engine invariants (42)
+     × ADV-014: custom mapping rejects engine-owned writes at path "/counters/nodeVisits" 76ms
+     × ADV-014: custom mapping rejects engine-owned writes at from "/counters/nodeVisits/start" 53ms
+ ❯ src/awaited-children.test.ts (28 tests | 1 failed) 4272ms
+   ❯ awaiting a child across failures and restarts (#242) (16)
+     × the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398) 92ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-014: custom mapping rejects engine-owned writes at path "/counters/nodeVisits"
+AssertionError: expected 'Subloop output patch expression faile…' to contain 'path "/counters/nodeVisits"'
+
+Expected: "path "/counters/nodeVisits""
+Received: "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target."
+
+ ❯ src/adversarial.test.ts:510:34
+    508|       expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+    509|       expect(r.failure?.message).toMatch(/outside the mutable regions/…
+    510|       expect(r.failure?.message).toContain(location);
+       |                                  ^
+    511|     },
+    512|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-014: custom mapping rejects engine-owned writes at from "/counters/nodeVisits/start"
+AssertionError: expected 'Subloop output patch expression faile…' to contain 'from "/counters/nodeVisits/start"'
+
+Expected: "from "/counters/nodeVisits/start""
+Received: "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target."
+
+ ❯ src/adversarial.test.ts:510:34
+    508|       expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+    509|       expect(r.failure?.message).toMatch(/outside the mutable regions/…
+    510|       expect(r.failure?.message).toContain(location);
+       |                                  ^
+    511|     },
+    512|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/awaited-children.test.ts:1023:39
+    1021|       ).loopId,
+    1022|     );
+    1023|     expect(parent.failure?.resumable).toBe(true);
+       |                                       ^
+    1024|     const [kid] = await e.ports.runs.listChildren(parent.id);
+    1025|     expect(kid?.status).toBe('succeeded');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/child-creation.test.ts > child creation and finish across a process death (#320) > retrying the parent output mapping does not record an unchanged child outcome again
+RecoveryRefusedError: This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.
+ ❯ src/run-manager.ts:1335:17
+    1333|           )
+    1334|         )
+    1335|           throw new RecoveryRefusedError(recovery.resume.code, recover…
+       |                 ^
+    1336|         try {
+    1337|           return await this.resumeRun(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  4 failed | 87 passed (91)
+   Start at  05:33:22
+   Duration  7.66s (tests 46%, import 36%, transform 18%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

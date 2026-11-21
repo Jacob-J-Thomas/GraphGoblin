@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/prompt-provenance.test.ts (23 tests | 1 failed) 1321ms
+   × renders the current transient view on an explicit fresh session with no prior authored prompt 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-provenance.test.ts > renders the current transient view on an explicit fresh session with no prior authored prompt
+AssertionError: expected undefined to match object { …(2) }
+
+- Expected:
+{
+  "code": "HARNESS_SESSION_MISSING",
+  "missingSession": {
+    "origin": "resume-own",
+  },
+}
+
++ Received:
+undefined
+
+ ❯ src/prompt-provenance.test.ts:418:23
+    416|   e.ports.sessions.forNodeAttempt = () => Promise.resolve(undefined);
+    417|   const run = await e.runToIdle(e.publish(def).loopId);
+    418|   expect(run.failure).toMatchObject({code:'HARNESS_SESSION_MISSING',mi…
+       |                       ^
+    419|   const seq = e.events(run.id).findLast(event => event.type === 'run.f…
+    420|   flag = true;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  05:38:44
+   Duration  4.00s (import 40%, tests 35%, transform 24%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

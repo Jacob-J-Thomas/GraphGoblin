@@ -1,0 +1,411 @@
+2509:      workingDirectory: () => this.workingDirectory(run, def, thread),
+3035:            const directory = await this.workingDirectory(run, def, thread);
+3362:  private async workingDirectory(
+          const restorable = issues.every(
+            (issue) => issue.resolution.code === 'MODEL_NOT_IN_CATALOG',
+          );
+          // The same details shape as a node's own selection ({code, path}), naming where the
+          // default lives as well, so every source reads the same way (#205).
+          const { level, harness: defaultHarness, resolution } = issues[0]!;
+          throw new RunFailureError(
+            restorable ? 'EVALUATION_UNAVAILABLE' : 'EVALUATION_INVALID_CONFIGURATION',
+            resolution.message,
+            {
+              resumable: restorable,
+              details: {
+                code: resolution.code,
+                path: resolution.path,
+                level,
+                harness: defaultHarness,
+              },
+            },
+          );
+        }
+        const resolution = resolveHarnessModel({
+          harness,
+          ...(model !== undefined ? { model } : {}),
+          ...(effort !== undefined ? { effort } : {}),
+          loopDefaults: def.settings.defaults,
+          ownerDefaults,
+          processDefaults,
+          catalog,
+        });
+        if (resolution.status !== 'ready') {
+          const restorable =
+            resolution.status === 'unavailable' || resolution.code === 'MODEL_NOT_IN_CATALOG';
+          throw new RunFailureError(
+            restorable ? 'EVALUATION_UNAVAILABLE' : 'EVALUATION_INVALID_CONFIGURATION',
+            resolution.message,
+            { resumable: restorable, details: { code: resolution.code, path: resolution.path } },
+          );
+        }
+        return { model: resolution.model, effort: resolution.effort };
+      },
+      startChild: async (request) => {
+        const childRunId = await this.startChild(run, request, pinnedSubloops(events));
+        // The child's admission committed this run's `child_run.started` with it (#320).
+        const linked = await this.ports.events.read(runId, (events.at(-1) as RunEvent).seq);
+        events.push(
+          target = await this.ports.loops.getLatestPublished(loopId);
+          if (target) pins[loopId] = target.id;
+        }
+        if (target && !walked.has(target.id)) {
+          versions?.set(target.id, target);
+          walked.add(target.id);
+          pending.push(target.definition);
+        }
+      }
+    }
+    return pins;
+  }
+
+  /**
+   * Bring the run's cursor up to the log. When the log's last node event is the `node.finished`
+   * of the node the cursor still points at, that node completed but the process died before the
+   * cursor moved: advance along the recorded edge instead of executing it again. A finished exit has its `run.finished` in the same
+   * append and is completed from the log before this runs. Returns the updated run, or undefined
+   * when the cursor already agrees with the log.
+   */
+  private async catchUpCursor(
+    run: RunRecord,
+    def: LoopDefinition,
+    events: readonly RunEvent[],
+  ): Promise<{ run: RunRecord } | undefined> {
+    const last = lastFinishedNode(events);
+    const route = last?.event.route;
+    if (!last || !route || last.event.nodeId !== run.currentNodeId) return undefined;
+    const { event } = last;
+    const edge = outgoingEdge(def, event.nodeId, route);
+    if (!edge) return undefined;
+    const updated = await this.ports.runs.update(run.id, {
+      currentNodeId: edge.to.node,
+      waiting: undefined,
+    });
+    return { run: updated };
+  }
+
+  private async childOutcome(childRunId: string): Promise<ChildOutcome> {
+    const child = await this.mustGet(childRunId);
+    const events = await this.ports.events.read(childRunId);
+    const terminal = terminalEvent(events);
+    const thread = await this.loadThread(child, events);
+    // Identity, outcome and thread come from one log snapshot. A resume can change the row while
+    // this is read; its previous terminal fields must never be paired with the new outcome seq.
+    const status =
+      terminal?.type === 'run.finished'
+        ? terminal.status
+        : terminal?.type === 'run.failed'
+          ? 'failed'
+          : terminal?.type === 'run.cancelled'
+            ? 'cancelled'
+            : isTerminal(child.status)
+              ? 'running'
+              : child.status;
+    return {
+      runId: childRunId,
+      status,
+      ...(terminal ? { terminalSeq: terminal.seq } : {}),
+      ...(terminal?.type === 'run.finished'
+        ? {
+            outcome: terminal.outcome,
+            ...(terminal.result !== undefined ? { result: terminal.result } : {}),
+          }
+        : {}),
+      ...(terminal?.type === 'run.failed' ? { failure: terminal.failure } : {}),
+      thread,
+    };
+  }
+
+  /**
+   * Resume only the child observation accepted with this parent's command (#251). A changed
+   * observation is refused by the shared policy; its outcome is surfaced without forwarding
+   * older consent, so the next parent failure can be reviewed instead of leaving it stuck.
+   */
+  private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
+    try {
+      const target = (await this.ports.events.recoveryFacts(parent.id, [])).resumed?.childRecovery;
+      if (target?.runId !== childRunId) return this.childOutcome(childRunId);
+      await this.resume(
+        childRunId,
+        { kind: 'run', id: parent.id },
+        {
+          observedSeq: target.observedSeq,
+          ...(target.retryUncertainScript ? { retryUncertainScript: true } : {}),
+        },
+      );
+    } catch (error) {
+      if (!(error instanceof EngineRequestError) && !(error instanceof RecoveryRefusedError))
+        throw error;
+      this.ports.logger.info(
+        { parentRunId: parent.id, childRunId, code: error.code },
+        'parent child recovery refused; observing current child outcome',
+      );
+    }
+    return this.childOutcome(childRunId);
+  }
+
+  /**
+   * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
+   * cancels the run doing it (#251). The request is recorded as the child's.
+   */
+  private async cancelForChild(
+    runId: string,
+    childRunId: string,
+    records: readonly EventDraft[] = [],
+  ): Promise<void> {
+    // Journal first, then claim (#398): the child's completion and the request it causes are one
+    // append, so a process that dies before it re-executes the visit, and one that dies after it
+    // finds the request as the log's last event and completes the cancellation at recovery.
+    const run = await this.mustGet(runId);
+    if (!run.cancelRequestedAt)
+      await this.ports.events.append(runId, [
+        ...records,
+        { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
+import { describe, expect, it } from 'vitest';
+import type { PromptSubmission } from '@graphgoblin/contracts';
+import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+import { RunManager } from './run-manager.js';
+
+const authored = 'Keep the entire authored task: {{ run.id }}';
+const continuation =
+  'The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.';
+const policies = ['fresh', 'resume-previous', 'resume-named'] as const;
+
+async function scenario(
+  policy: (typeof policies)[number],
+  classification: PromptSubmission,
+  options: { announce?: boolean; accepted?: boolean } = {},
+) {
+  const e = await createTestEngine();
+  const v = e.publish(
+    singleNodeLoop('provenance-' + policy, {
+      id: 'infer',
+      kind: 'inference',
+      label: 'Infer',
+      config: {
+        prompt: { template: authored },
+        session: policy === 'resume-named' ? { policy, key: 'shared' } : { policy },
+      },
+    }),
+  );
+  e.ports.harness.script([
+    {
+      items: [],
+      announceSession: options.announce ?? false,
+      accepted: options.accepted ?? false,
+      submission: classification,
+      error: {
+        code:
+          classification === 'session-missing' ? 'HARNESS_SESSION_MISSING' : 'HARNESS_TURN_FAILED',
+        message: 'controlled failure',
+        retriable: false,
+      },
+    },
+  ]);
+  const run = await e.start(v.loopId);
+  // Public repository port seeds the selected prior conversation before the executor's first yield.
+  await e.ports.sessions.upsert({
+    runId: run.id,
+    nodeId: 'prior',
+    attempt: 1,
+    harness: 'codex',
+    sessionId: 'prior-session',
+    status: 'finished',
+    updatedAt: '2026-10-20T00:00:00.000Z',
+    scopeKey: v.loopId + ':shared',
+  });
+  return { e, v, run: await e.settle(run.id) };
+}
+
+describe('prompt provenance through RunManager and the fake harness', () => {
+  it('records observed submission truthfully on a successful turn', async () => {
+    const e = await createTestEngine();
+    const v = e.publish(
+      singleNodeLoop('successful submission', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: { prompt: { template: 'task' } },
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    expect(e.events(run.id).filter((x) => x.type === 'harness.submission')).toEqual([
+      expect.objectContaining({ submission: 'submitted', marker: 'fake.accepted' }),
+    ]);
+    e.manager.stop();
+  });
+  it.each(policies)(
+    'resends the exact authored task after proven refusal under %s',
+    async (policy) => {
+      const { e, run } = await scenario(policy, 'definitely-not-submitted', { announce: true });
+      expect(run.failure?.inference).toMatchObject({
+        submission: 'definitely-not-submitted',
+        promptKind: 'authored',
+      });
+      const original =
+        policy === 'fresh' ? e.ports.harness.started[0]! : e.ports.harness.resumed[0]!.request;
+      const originalTurn = e.events(run.id).find((x) => x.type === 'harness.turn');
+      await e.manager.resume(run.id);
+import { describe, expect, it, vi } from 'vitest';
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+import { RunManager } from './run-manager.js';
+
+const policies = ['resume-previous', 'resume-named'] as const;
+function twoNodes(policy: (typeof policies)[number]): LoopDefinitionInput {
+  const session = policy === 'resume-named' ? { policy, key: 'shared' } : { policy };
+  return {
+    schemaVersion: 4,
+    name: 'inherited-' + policy,
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      {
+        id: 'a',
+        kind: 'inference',
+        label: 'A',
+        config: {
+          prompt: { template: 'Task A' },
+          session: { policy: 'resume-named', key: 'shared' },
+        },
+      },
+      {
+        id: 'b',
+        kind: 'inference',
+        label: 'B',
+        config: { prompt: { template: 'Task B' }, session },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: {} },
+    ],
+    edges: [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'a' } },
+      { id: 'b', from: { node: 'a', port: 'out' }, to: { node: 'b' } },
+      { id: 'done', from: { node: 'b', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+
+describe('D-022 inherited-session recovery', () => {
+  it.each(policies)(
+    'blocks explicit resume of unaccepted authored work under %s',
+    async (policy) => {
+      const e = await createTestEngine();
+      const v = e.publish(twoNodes(policy));
+      e.ports.harness.script([
+        { finalText: 'A completed' },
+        {
+          items: [],
+          announceSession: true,
+          accepted: false,
+          error: {
+            code: 'HARNESS_TURN_FAILED',
+            message: 'output lost before acceptance',
+            retriable: false,
+          },
+        },
+      ]);
+      const run = await e.runToIdle(v.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'HARNESS_DELIVERY_UNCERTAIN',
+        nodeId: 'b',
+        resumable: false,
+        inference: {
+          promptKind: 'authored',
+          submission: 'delivery-uncertain',
+          sessionId: 'fake-session-1',
+        },
+      });
+      await expect(e.manager.resume(run.id)).rejects.toThrow();
+      expect(e.ports.harness.resumed.map((x) => x.request.turn.prompt)).toEqual(['Task B']);
+      expect((await e.manager.getThread(run.id))?.outputs['b']).toBeUndefined();
+      e.manager.stop();
+    },
+  );
+  it.each(policies)(
+    'blocks restart after authored intent but before adapter events under %s',
+    async (policy) => {
+      const e = await createTestEngine();
+      e.manager.stop();
+      const events = e.ports.events;
+      let held!: () => void;
+      const durable = new Promise<void>((resolve) => {
+        held = resolve;
+      });
+      const manager = new RunManager(
+        {
+          ...e.ports,
+          events: {
+            append: async (runId, drafts, options) => {
+              const stored = await events.append(runId, drafts, options);
+              if (drafts.some((x) => x.type === 'harness.turn' && x.nodeId === 'b')) {
+                held();
+                return new Promise(() => undefined);
+              }
+              return stored;
+            },
+            recoveryFacts: (...args) => events.recoveryFacts(...args),
+            read: (id, after, limit) => events.read(id, after, limit),
+            subscribe: (id, listener) => events.subscribe(id, listener),
+          },
+        },
+        e.settings,
+      );
+      const v = e.publish(twoNodes(policy));
+      await manager.start();
+      const run = await manager.startRun({
+        ownerId: 'local',
+        loopId: v.loopId,
+        source: 'manual.api',
+      });
+      await durable;
+      manager.stop();
+      const catalogue = vi
+        .spyOn(e.ports.modelCatalog, 'list')
+        .mockRejectedValue(new Error('unavailable'));
+      const workspace = vi.spyOn(e.ports.workspace, 'resolve');
+      const restarted = new RunManager(e.ports, e.settings);
+      await restarted.start();
+      await restarted.waitForIdle();
+      expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+        code: 'HARNESS_DELIVERY_UNCERTAIN',
+        nodeId: 'b',
+        resumable: false,
+      });
+      expect(e.ports.harness.resumed).toHaveLength(0);
+      expect(e.ports.harness.started).toHaveLength(1);
+      expect((await restarted.getThread(run.id))?.outputs['b']).toBeUndefined();
+      expect(catalogue).not.toHaveBeenCalled();
+      expect(workspace).not.toHaveBeenCalled();
+      restarted.stop();
+    },
+  );
+  it.each(policies)(
+    'does not authorize inherited %s continuation when persisting acceptance fails',
+    async (policy) => {
+      const e = await createTestEngine();
+      e.manager.stop();
+      const events = e.ports.events;
+      const manager = new RunManager(
+        {
+packages/engine/src/run-manager.ts:304:export function attemptFor(events: readonly RunEvent[], nodeId: string): number {
+packages/engine/src/run-manager.ts:314:/** Fresh entries into a node so far: its `node.started` events with attempt 1. */
+packages/engine/src/run-manager.ts:318:    if (event.type === 'node.started' && event.nodeId === nodeId && event.attempt === 1) {
+packages/engine/src/run-manager.ts:574:        attempt: started?.attempt ?? 0,
+packages/engine/src/run-manager.ts:912:  private async dispatchEvent(receipt: Pick<EventReceipt, 'id' | 'attempts'>): Promise<void> {
+packages/engine/src/run-manager.ts:941:              : current.attempts >= 7
+packages/engine/src/run-manager.ts:946:        const delay = Math.min(300, 5 * 2 ** Math.min(current.attempts, 6));
+packages/engine/src/run-manager.ts:1029:  private async dispatchWebhook(receipt: Pick<WebhookReceipt, 'id' | 'attempts'>): Promise<void> {
+packages/engine/src/run-manager.ts:1058:    receipt: Pick<WebhookReceipt, 'id' | 'attempts'>,
+packages/engine/src/run-manager.ts:1066:      const delay = Math.min(300, 5 * 2 ** Math.min(receipt.attempts, 6));
+packages/engine/src/run-manager.ts:1667:    for (let attempt = 0; attempt < 10; attempt += 1) {
+packages/engine/src/run-manager.ts:2256:    for (let attempt = 0; attempt < 10; attempt += 1) {
+packages/engine/src/run-manager.ts:2399:      await append({ type: 'run.started', attempt: 1 });
+packages/engine/src/run-manager.ts:2409:        await append({ type: 'run.started', attempt: 1 });
+packages/engine/src/run-manager.ts:2412:        await append({ type: 'run.started', attempt: previousStarts + 1 });
+packages/engine/src/run-manager.ts:2423:      thread = { ...thread, run: { ...thread.run, iteration: run.iteration } };
+packages/engine/src/run-manager.ts:2548:      const attempt = attemptFor(events, nodeId);
+packages/engine/src/run-manager.ts:2549:      // Visit cap (docs/05): a fresh entry (attempt 1; wakes, retries, and resumes re-enter with a
+packages/engine/src/run-manager.ts:2550:      // higher attempt) beyond `maxNodeVisits` fails the run, which bounds graph cycles that never
+packages/engine/src/run-manager.ts:2554:        attempt === 1 &&
+packages/engine/src/run-manager.ts:2572:          attempt,
+packages/engine/src/run-manager.ts:2598:          attempt,
+packages/engine/src/run-manager.ts:2908:   * recorded. Webhooks journal each attempt and recover uncertainty with the same identity

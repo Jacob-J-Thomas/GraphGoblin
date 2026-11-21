@@ -1,0 +1,1739 @@
+{
+ "summary": {
+  "name": "d3",
+  "total": 71,
+  "passed": 68,
+  "failed": [
+   "B07a-shape EXPRESSION_ERROR subloop.input.artifacts.where {\"itemIndex\":0} resumable false, fixed cause/message",
+   "CH-INF-1 depth 1: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents",
+   "CH-INF-2 depth 2: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents"
+  ],
+  "driverPid": 26772,
+  "apiPort": 5872,
+  "listenerPort": 60345,
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3",
+  "harness": {
+   "starts": 3,
+   "resumes": 0,
+   "syncThrows": 0,
+   "resultsResolved": 3,
+   "resultsRejected": 0,
+   "cancels": 3,
+   "cancelRejects": 0,
+   "contextWindow": 0,
+   "calls": [
+    {
+     "kind": "start",
+     "prompt": "QA prompt QA486-IN-B07a",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF451E3V11SJM5XXJJX8HR",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278640245
+    },
+    {
+     "kind": "start",
+     "prompt": "QA prompt QA486-IN-CHINF",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF4BGEYFPV9EBYPRETGSFM",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278646882
+    },
+    {
+     "kind": "start",
+     "prompt": "QA prompt QA486-IN-CHINF",
+     "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF4BTWN61TKGVKP9MH999F",
+     "model": "gpt-6-luna",
+     "effort": "low",
+     "outputSchema": false,
+     "behaviour": "ok",
+     "t": 1795278647232
+    }
+   ]
+  }
+ },
+ "rows": [
+  {
+   "id": "B07-shape",
+   "description": "EXPRESSION_ERROR subloop.input.messages.where {\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B07-nochild",
+   "description": "zero child runs and zero child_run.started",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": 0,
+    "started": 0
+   }
+  },
+  {
+   "id": "B07-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop input message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.input.messages.where",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B07-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B07-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": 0
+    },
+    "afterEffects": {
+     "kids": 0
+    }
+   }
+  },
+  {
+   "id": "B07a-shape",
+   "description": "EXPRESSION_ERROR subloop.input.artifacts.where {\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": false,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [
+     "code EVENT_INVALID",
+     "nodeId inf",
+     "boundary undefined",
+     "itemIndex undefined",
+     "cause ",
+     "message Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\""
+    ],
+    "failure": {
+     "code": "EVENT_INVALID",
+     "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZF451E3V11SJM5XXJJX8HR:5",
+      "turnId": "01M7ZF453GXY87JW7AZCKW1FHW",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "B07a-nochild",
+   "description": "zero child runs and zero child_run.started",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": 0,
+    "started": 0
+   }
+  },
+  {
+   "id": "B07a-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EVENT_INVALID",
+     "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZF451E3V11SJM5XXJJX8HR:5",
+      "turnId": "01M7ZF453GXY87JW7AZCKW1FHW",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    },
+    "event": [
+     {
+      "code": "EVENT_INVALID",
+      "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+      "nodeId": "inf",
+      "resumable": false,
+      "inference": {
+       "visitId": "01M7ZF451E3V11SJM5XXJJX8HR:5",
+       "turnId": "01M7ZF453GXY87JW7AZCKW1FHW",
+       "submission": "delivery-uncertain",
+       "promptKind": "authored",
+       "sessionId": "qa-codex-session-1"
+      }
+     }
+    ],
+    "rest": {
+     "code": "EVENT_INVALID",
+     "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZF451E3V11SJM5XXJJX8HR:5",
+      "turnId": "01M7ZF453GXY87JW7AZCKW1FHW",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "B07a-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B07a-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": 0
+    },
+    "afterEffects": {
+     "kids": 0
+    }
+   }
+  },
+  {
+   "id": "B07c",
+   "description": "built-in selection all: child created and succeeded, parent succeeded",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": "succeeded",
+    "kids": [
+     "succeeded"
+    ]
+   }
+  },
+  {
+   "id": "B08-shape",
+   "description": "EXPRESSION_ERROR subloop.input.vars {\"mapIndex\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B08-nochild",
+   "description": "zero child runs and zero child_run.started",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": 0,
+    "started": 0
+   }
+  },
+  {
+   "id": "B08-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop input variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.input.vars",
+       "mapIndex": 1,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop input variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B08-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B08-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": 0
+    },
+    "afterEffects": {
+     "kids": 0
+    }
+   }
+  },
+  {
+   "id": "B09-shape",
+   "description": "TEMPLATE_ERROR subloop.input.inject.content {\"messageIndex\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Subloop injected message 2 failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.inject.content",
+      "messageIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B09-nochild",
+   "description": "zero child runs and zero child_run.started",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": 0,
+    "started": 0
+   }
+  },
+  {
+   "id": "B09-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Subloop injected message 2 failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.inject.content",
+      "messageIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "TEMPLATE_ERROR",
+      "message": "Subloop injected message 2 failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.input.inject.content",
+       "messageIndex": 1,
+       "cause": {
+        "code": "TEMPLATE_ERROR",
+        "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "TEMPLATE_ERROR",
+     "message": "Subloop injected message 2 failed. The template could not be rendered at line 1, column 3. Check its filters and input values.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.inject.content",
+      "messageIndex": 1,
+      "cause": {
+       "code": "TEMPLATE_ERROR",
+       "message": "The template could not be rendered at line 1, column 3. Check its filters and input values."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B09-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B09-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": 0
+    },
+    "afterEffects": {
+     "kids": 0
+    }
+   }
+  },
+  {
+   "id": "B10-shape",
+   "description": "EXPRESSION_ERROR subloop.input.trigger.payload {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop trigger payload expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.trigger.payload",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B10-nochild",
+   "description": "zero child runs and zero child_run.started",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": 0,
+    "started": 0
+   }
+  },
+  {
+   "id": "B10-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop trigger payload expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.trigger.payload",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop trigger payload expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.input.trigger.payload",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop trigger payload expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.input.trigger.payload",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B10-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B10-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": 0
+    },
+    "afterEffects": {
+     "kids": 0
+    }
+   }
+  },
+  {
+   "id": "B11e-shape",
+   "description": "EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11e-child",
+   "description": "exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": [
+     {
+      "id": "01M7ZF47CGS0BMMHQBN40MDGD0",
+      "status": "succeeded"
+     }
+    ],
+    "finish": [
+     {
+      "seq": 10,
+      "status": "succeeded"
+     }
+    ],
+    "failedSeq": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "B11e-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop output patch expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.output.custom.patch",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11e-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B11e-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    },
+    "afterEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    }
+   }
+  },
+  {
+   "id": "B11e-CH-DET",
+   "description": "after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "childResumeStatus": 409,
+    "childResumeCode": "RUN_FINISHED"
+   }
+  },
+  {
+   "id": "B11s-shape",
+   "description": "EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The result is not a JSON patch. Return an array of valid patch operations.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The result is not a JSON patch. Return an array of valid patch operations."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11s-child",
+   "description": "exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": [
+     {
+      "id": "01M7ZF47YG16DSG6646FRPF1TR",
+      "status": "succeeded"
+     }
+    ],
+    "finish": [
+     {
+      "seq": 10,
+      "status": "succeeded"
+     }
+    ],
+    "failedSeq": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "B11s-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The result is not a JSON patch. Return an array of valid patch operations.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The result is not a JSON patch. Return an array of valid patch operations."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop output patch expression failed. The result is not a JSON patch. Return an array of valid patch operations.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.output.custom.patch",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The result is not a JSON patch. Return an array of valid patch operations."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The result is not a JSON patch. Return an array of valid patch operations.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The result is not a JSON patch. Return an array of valid patch operations."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11s-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B11s-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    },
+    "afterEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    }
+   }
+  },
+  {
+   "id": "B11s-CH-DET",
+   "description": "after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "childResumeStatus": 409,
+    "childResumeCode": "RUN_FINISHED"
+   }
+  },
+  {
+   "id": "B11r-shape",
+   "description": "EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The patch writes outside the mutable regions. Change the patch target."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11r-child",
+   "description": "exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": [
+     {
+      "id": "01M7ZF48JXSH65HCT9YWMM03S4",
+      "status": "succeeded"
+     }
+    ],
+    "finish": [
+     {
+      "seq": 10,
+      "status": "succeeded"
+     }
+    ],
+    "failedSeq": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "B11r-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The patch writes outside the mutable regions. Change the patch target."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.output.custom.patch",
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The patch writes outside the mutable regions. Change the patch target."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.custom.patch",
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The patch writes outside the mutable regions. Change the patch target."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B11r-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B11r-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    },
+    "afterEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    }
+   }
+  },
+  {
+   "id": "B11r-CH-DET",
+   "description": "after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "childResumeStatus": 409,
+    "childResumeCode": "RUN_FINISHED"
+   }
+  },
+  {
+   "id": "B12-shape",
+   "description": "EXPRESSION_ERROR subloop.output.vars {\"mapIndex\":1} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B12-child",
+   "description": "exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": [
+     {
+      "id": "01M7ZF49626CND455Z4WYQ2MNN",
+      "status": "succeeded"
+     }
+    ],
+    "finish": [
+     {
+      "seq": 10,
+      "status": "succeeded"
+     }
+    ],
+    "failedSeq": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "B12-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop output variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.output.vars",
+       "mapIndex": 1,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.vars",
+      "mapIndex": 1,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B12-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B12-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    },
+    "afterEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    }
+   }
+  },
+  {
+   "id": "B12-CH-DET",
+   "description": "after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "childResumeStatus": 409,
+    "childResumeCode": "RUN_FINISHED"
+   }
+  },
+  {
+   "id": "B13-shape",
+   "description": "EXPRESSION_ERROR subloop.output.messages.where {\"itemIndex\":0} resumable false, fixed cause/message",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "problems": [],
+    "failure": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B13-child",
+   "description": "exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "kids": [
+     {
+      "id": "01M7ZF49RTYDYF1N7R3K7WXC9C",
+      "status": "succeeded"
+     }
+    ],
+    "finish": [
+     {
+      "seq": 10,
+      "status": "succeeded"
+     }
+    ],
+    "failedSeq": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "B13-parity",
+   "description": "stored row failure == run.failed failure == REST snapshot failure (canonical JSON)",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "row": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    },
+    "event": [
+     {
+      "code": "EXPRESSION_ERROR",
+      "message": "Subloop output message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+      "nodeId": "sub",
+      "resumable": false,
+      "details": {
+       "boundary": "subloop.output.messages.where",
+       "itemIndex": 0,
+       "cause": {
+        "code": "EXPRESSION_ERROR",
+        "message": "The expression could not evaluate this input. Check its input type and mapping."
+       }
+      }
+     }
+    ],
+    "rest": {
+     "code": "EXPRESSION_ERROR",
+     "message": "Subloop output message selector, item 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "nodeId": "sub",
+     "resumable": false,
+     "details": {
+      "boundary": "subloop.output.messages.where",
+      "itemIndex": 0,
+      "cause": {
+       "code": "EXPRESSION_ERROR",
+       "message": "The expression could not evaluate this input. Check its input type and mapping."
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "B13-privacy",
+   "description": "new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "leaks": []
+   }
+  },
+  {
+   "id": "B13-resume-refused",
+   "description": "recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it",
+   "pass": true,
+   "class": "PUBLIC-API+SQLITE",
+   "actual": {
+    "allowed": false,
+    "resumeStatus": 409,
+    "resumeBody": {
+     "type": "https://graphgoblin.dev/problems/failure-not-resumable",
+     "title": "failure not resumable",
+     "status": 409,
+     "code": "FAILURE_NOT_RESUMABLE",
+     "detail": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+    },
+    "eventsUnchanged": true,
+    "beforeEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    },
+    "afterEffects": {
+     "kids": [
+      "succeeded"
+     ],
+     "finishes": 1
+    }
+   }
+  },
+  {
+   "id": "B13-CH-DET",
+   "description": "after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "childResumeStatus": 409,
+    "childResumeCode": "RUN_FINISHED"
+   }
+  },
+  {
+   "id": "B11c",
+   "description": "valid custom patch control succeeds and carries child result",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": "succeeded",
+    "result": "QA486-IN-CHILD"
+   }
+  },
+  {
+   "id": "CH-NEST-parity",
+   "description": "leaf code/boundary/beat/resumable/message/node identical inline, depth 1 and depth 2",
+   "pass": true,
+   "class": "PUBLIC-API+NATIVE",
+   "actual": {
+    "s0": {
+     "code": "EXPRESSION_ERROR",
+     "boundary": "heartbeat.until",
+     "beat": 1,
+     "resumable": false,
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "node": "h"
+    },
+    "s1": {
+     "code": "EXPRESSION_ERROR",
+     "boundary": "heartbeat.until",
+     "beat": 1,
+     "resumable": false,
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "node": "h"
+    },
+    "s2": {
+     "code": "EXPRESSION_ERROR",
+     "boundary": "heartbeat.until",
+     "beat": 1,
+     "resumable": false,
+     "message": "Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
+     "node": "h"
+    }
+   }
+  },
+  {
+   "id": "CH-NEST-links",
+   "description": "parents use the existing wrapper (childRunId/childNodeId/childDetails), chain length 1 and 2, no inference copied into parents",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "links": [
+     {
+      "run": "01M7ZF4ARVTX5PWWVBMWRG9K75",
+      "code": "EXPRESSION_ERROR",
+      "resumable": false,
+      "keys": [
+       "childRunId",
+       "childNodeId",
+       "childDetails"
+      ],
+      "hasInference": false,
+      "message": "subloop child 01M7ZF4ATQGCQ533N69PGYJKR9 failed: Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping."
+     },
+     {
+      "run": "01M7ZF4B0YK2JX14X9RR5HNMKP",
+      "code": "EXPRESSION_ERROR",
+      "resumable": false,
+      "keys": [
+       "childRunId",
+       "childNodeId",
+       "childDetails"
+      ],
+      "hasInference": false,
+      "message": "subloop child 01M7ZF4B2AFC9Q3HV0KVFZ63SW failed: subloop child 01M7ZF4B409G3QH4XACXZG7GT6 failed: Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping."
+     },
+     {
+      "run": "01M7ZF4B2AFC9Q3HV0KVFZ63SW",
+      "code": "EXPRESSION_ERROR",
+      "resumable": false,
+      "keys": [
+       "childRunId",
+       "childNodeId",
+       "childDetails"
+      ],
+      "hasInference": false,
+      "message": "subloop child 01M7ZF4B409G3QH4XACXZG7GT6 failed: Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input. Check its input type and mapping."
+     }
+    ]
+   }
+  },
+  {
+   "id": "CH-NEST-privacy",
+   "description": "leaf/parent failures omit QA486-LIT-NEST",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {}
+  },
+  {
+   "id": "CH-INF-1",
+   "description": "depth 1: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents",
+   "pass": false,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "parents": [
+     {
+      "id": "01M7ZF4BEWWM7JW5M1PXQ0M9SD",
+      "failure": {
+       "code": "EVENT_INVALID",
+       "message": "subloop child 01M7ZF4BGEYFPV9EBYPRETGSFM failed: Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+       "nodeId": "sub",
+       "resumable": false,
+       "details": {
+        "childRunId": "01M7ZF4BGEYFPV9EBYPRETGSFM",
+        "childNodeId": "inf"
+       }
+      }
+     }
+    ],
+    "leaf": {
+     "code": "EVENT_INVALID",
+     "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZF4BGEYFPV9EBYPRETGSFM:5",
+      "turnId": "01M7ZF4BJZDD2SPCTHMEQMCEA3",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-2"
+     }
+    }
+   }
+  },
+  {
+   "id": "CH-INF-1-privacy",
+   "description": "leaf and parents omit QA486-LIT-CHINF / QA486-IN-CHINF",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {}
+  },
+  {
+   "id": "CH-INF-2",
+   "description": "depth 2: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents",
+   "pass": false,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "parents": [
+     {
+      "id": "01M7ZF4BQ0K42A2JAVHCZQPY22",
+      "failure": {
+       "code": "EVENT_INVALID",
+       "message": "subloop child 01M7ZF4BRJNQ39XWMN06Q5EZZ8 failed: subloop child 01M7ZF4BTWN61TKGVKP9MH999F failed: Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+       "nodeId": "sub",
+       "resumable": false,
+       "details": {
+        "childRunId": "01M7ZF4BRJNQ39XWMN06Q5EZZ8",
+        "childNodeId": "sub",
+        "childDetails": {
+         "childRunId": "01M7ZF4BTWN61TKGVKP9MH999F",
+         "childNodeId": "inf"
+        }
+       }
+      }
+     },
+     {
+      "id": "01M7ZF4BRJNQ39XWMN06Q5EZZ8",
+      "failure": {
+       "code": "EVENT_INVALID",
+       "message": "subloop child 01M7ZF4BTWN61TKGVKP9MH999F failed: Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+       "nodeId": "sub",
+       "resumable": false,
+       "details": {
+        "childRunId": "01M7ZF4BTWN61TKGVKP9MH999F",
+        "childNodeId": "inf"
+       }
+      }
+     }
+    ],
+    "leaf": {
+     "code": "EVENT_INVALID",
+     "message": "Generated run event could not be recorded: usage: Unrecognized key: \"reasoningTokens\"",
+     "nodeId": "inf",
+     "resumable": false,
+     "inference": {
+      "visitId": "01M7ZF4BTWN61TKGVKP9MH999F:5",
+      "turnId": "01M7ZF4BXWFDNA9Z3PHY8RXMXY",
+      "submission": "delivery-uncertain",
+      "promptKind": "authored",
+      "sessionId": "qa-codex-session-3"
+     }
+    }
+   }
+  },
+  {
+   "id": "CH-INF-2-privacy",
+   "description": "leaf and parents omit QA486-LIT-CHINF / QA486-IN-CHINF",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {}
+  },
+  {
+   "id": "CH-DEDUP-A-first",
+   "description": "ordinary mapping conversion fault: INTERNAL_ERROR safe copy, resumable true, one succeeded child, run.failed adjacent to child_run.finished",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "f1": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "sub",
+     "resumable": true
+    },
+    "kids": [
+     "succeeded"
+    ],
+    "fin": [
+     10
+    ],
+    "failed": [
+     11
+    ],
+    "recovery": {
+     "allowed": true
+    }
+   }
+  },
+  {
+   "id": "CH-DEDUP-A-resume",
+   "description": "Resume accepted; recurrence fails again; still one child; child_run.finished not re-recorded (1); run.failed 2; one run.woken; child never resumed and its events unchanged",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "resumeStatus": 200,
+    "status": "failed",
+    "kids": 1,
+    "finishes": 1,
+    "failed": 2,
+    "woken": 1,
+    "childResumed": 0,
+    "types": [
+     "run.queued",
+     "run.started",
+     "node.started",
+     "node.finished",
+     "node.started",
+     "child_run.started",
+     "run.waiting",
+     "run.woken",
+     "node.started",
+     "child_run.finished",
+     "run.failed",
+     "run.resumed",
+     "node.started",
+     "run.failed"
+    ]
+   }
+  },
+  {
+   "id": "CH-DEDUP-A-privlog",
+   "description": "raw conversion text is only in private log, not public failure",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "privateLog": 2
+   }
+  },
+  {
+   "id": "CH-DEDUP-B-first",
+   "description": "transient mapping fault: INTERNAL_ERROR resumable true; one succeeded child; run.failed.seq = child_run.finished.seq + 1",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED-CLOCK",
+   "actual": {
+    "fired": 1,
+    "f1": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "sub",
+     "resumable": true
+    },
+    "kids": [
+     "succeeded"
+    ],
+    "fin": [
+     10
+    ],
+    "failed": [
+     11
+    ]
+   }
+  },
+  {
+   "id": "CH-DEDUP-B-resume",
+   "description": "Resume succeeds; one child; one child_run.finished (terminal seq reused); one run.woken; one run.failed; child never resumed and its events unchanged",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED-CLOCK",
+   "actual": {
+    "resumeStatus": 200,
+    "status": "succeeded",
+    "kids": 1,
+    "finishes": 1,
+    "woken": 1,
+    "types": [
+     "run.queued",
+     "run.started",
+     "node.started",
+     "node.finished",
+     "node.started",
+     "child_run.started",
+     "run.waiting",
+     "run.woken",
+     "node.started",
+     "child_run.finished",
+     "run.failed",
+     "run.resumed",
+     "node.started",
+     "node.finished",
+     "node.started",
+     "exit.evaluated",
+     "node.finished",
+     "run.finished",
+     "return.delivered"
+    ]
+   }
+  },
+  {
+   "id": "LOG",
+   "description": "no captured log record contains QA486-LIT/IN/PATH",
+   "pass": true,
+   "class": "SCRIPTED-LOGGER",
+   "actual": {
+    "hits": []
+   }
+  },
+  {
+   "id": "CLEANUP",
+   "description": "authenticated drain accepted; API port and listener refuse connections",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:30:48.274Z",
+     "choiceAt": "2026-11-21T16:31:18.274Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "957cd23d-b3f8-48a0-a126-25dd49ebc833:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true
+   }
+  }
+ ]
+}

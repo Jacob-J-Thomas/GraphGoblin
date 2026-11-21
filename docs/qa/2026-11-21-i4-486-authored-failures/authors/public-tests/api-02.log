@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/apps/api
+
+ ❯ src/prompt-provenance.test.ts (13 tests | 1 failed) 7228ms
+   × #486 a synthetic canonical rerender fault is safe, engine-owned and resumable over HTTP 326ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-provenance.test.ts > #486 a synthetic canonical rerender fault is safe, engine-owned and resumable over HTTP
+AssertionError: expected 400 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 400
+
+ ❯ src/prompt-provenance.test.ts:123:32
+    121|       },
+    122|     });
+    123|     expect(started.statusCode).toBe(202);
+       |                                ^
+    124|     const id = started.json<{ run: RunRecord }>().run.id;
+    125|     await test.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 41 passed (42)
+   Start at  06:04:57
+   Duration  17.46s (tests 56%, import 30%, transform 14%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\apps\api
+

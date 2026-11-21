@@ -1,0 +1,227 @@
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import {
+  ChatRepositoryError,
+  SystemChatStorageError,
+  InvalidStoredRunEventError,
+  InvalidLoopNameError,
+  LoopNameConflictError,
+  LoopNotFoundError,
+} from '@graphgoblin/infrastructure/sqlite';
+import { ChatError, CHAT_ERROR_STATUS } from '../chat/errors.js';
+import { DomainError } from '@graphgoblin/domain';
+import { TemplateError } from '../templates/errors.js';
+import {
+  ArtifactStoreError,
+  ChatAdmissionError,
+  EngineRequestError,
+  RecoveryRefusedError,
+  LoopUpgradeRequiredError,
+  UnreadableRunHistoryError,
+} from '@graphgoblin/engine';
+import {
+  hasZodFastifySchemaValidationErrors,
+  isResponseSerializationError,
+} from 'fastify-type-provider-zod';
+import { hasRequestSchemaValidationErrors } from './request-validation.js';
+
+const pointerSegment = (segment: PropertyKey) =>
+  String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
+
+/** RFC 9457 Problem Details with a stable machine-readable `code`. */
+export interface ProblemDetails {
+  type: string;
+  title: string;
+  status: number;
+  detail?: string;
+  code: string;
+  errors?: unknown;
+  [extension: string]: unknown;
+}
+
+export function problem(
+  reply: FastifyReply,
+  status: number,
+  code: string,
+  detail?: string,
+  errors?: unknown,
+  /** RFC 9457 extension members, such as the server's `draftToken` on a draft conflict. */
+  extensions: Record<string, unknown> = {},
+): FastifyReply {
+  const body: ProblemDetails = {
+    ...extensions,
+    type: `https://graphgoblin.dev/problems/${code.toLowerCase().replace(/_/g, '-')}`,
+    title: code.replace(/_/g, ' ').toLowerCase(),
+    status,
+    code,
+    ...(detail ? { detail } : {}),
+    ...(errors !== undefined ? { errors } : {}),
+  };
+  return reply.status(status).type('application/problem+json').send(body);
+}
+
+const ENGINE_STATUS: Record<EngineRequestError['code'], number> = {
+  SHUTTING_DOWN: 503,
+  LOOP_NOT_FOUND: 404,
+  RUN_NOT_FOUND: 404,
+  TRIGGER_NOT_FOUND: 404,
+  VERSION_NOT_PUBLISHED: 409,
+  INVALID_STATE: 409,
+  WAIT_MISMATCH: 409,
+  INVALID_INPUT: 400,
+  REPLAY_NODE_NOT_REACHED: 409,
+};
+
+/**
+ * Stable codes for the request errors Fastify raises itself, so clients never see framework
+ * internals such as `FST_ERR_CTP_INVALID_JSON_BODY` in a problem's `code` or `type`.
+ */
+const FASTIFY_CODES: Record<string, string> = {
+  FST_ERR_CTP_INVALID_JSON_BODY: 'MALFORMED_BODY',
+  FST_ERR_CTP_EMPTY_JSON_BODY: 'MALFORMED_BODY',
+  FST_ERR_CTP_INVALID_CONTENT_LENGTH: 'MALFORMED_BODY',
+  FST_ERR_CTP_BODY_TOO_LARGE: 'BODY_TOO_LARGE',
+  FST_ERR_CTP_INVALID_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+  FST_ERR_CTP_INVALID_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+};
+
+function stableCode(code: string | undefined): string {
+  if (!code) return 'BAD_REQUEST';
+  return FASTIFY_CODES[code] ?? (code.startsWith('FST_') ? 'BAD_REQUEST' : code);
+}
+
+export function registerErrorHandler(app: FastifyInstance): void {
+  app.setNotFoundHandler((request, reply) =>
+    problem(reply, 404, 'NOT_FOUND', `${request.method} ${request.url} does not exist`),
+  );
+
+  app.setErrorHandler(
+    (error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) => {
+      if (error instanceof InvalidLoopNameError)
+        return problem(reply, 400, 'LOOP_NAME_INVALID', error.message);
+      if (error instanceof LoopNameConflictError)
+        return problem(reply, 409, 'LOOP_NAME_CONFLICT', error.message, undefined, {
+          suggestedName: error.suggestedName,
+        });
+      if (error instanceof ChatError)
+        return problem(reply, error.status, error.code, error.message);
+      if (error instanceof SystemChatStorageError)
+        return problem(
+          reply,
+          error.code === 'SYSTEM_LOOP_PROTECTED' || error.code === 'VOICE_DRAFT_STALE' ? 409 : 400,
+          error.code,
+          error.message,
+        );
+      if (error instanceof ChatRepositoryError || error instanceof ChatAdmissionError)
+        return problem(
+          reply,
+          CHAT_ERROR_STATUS[error.code] ??
+            (error.code === 'CHAT_DEVICE_REVOKED'
+              ? 401
+              : error.code === 'SYSTEM_CHAT_CONTRACT_INVALID'
+                ? 400
+                : 409),
+          error.code,
+          error.message,
+        );
+      if (hasRequestSchemaValidationErrors(error) || hasZodFastifySchemaValidationErrors(error)) {
+        return problem(
+          reply,
+          400,
+          'VALIDATION_FAILED',
+          'the request did not match the schema',
+          error.validation.flatMap((v) => {
+            const keys = v.params['keys'];
+            if (v.keyword === 'unrecognized_keys' && Array.isArray(keys)) {
+              const base = v.instancePath === '/' ? '' : v.instancePath;
+              return keys
+                .filter((key): key is string => typeof key === 'string')
+                .map((key) => ({
+                  path: `${base}/${pointerSegment(key)}`,
+                  message: `Unrecognized key ${JSON.stringify(key)}`,
+                }));
+            }
+            return [{ path: v.instancePath, message: v.message }];
+          }),
+        );
+      }
+      if (isResponseSerializationError(error)) {
+        request.log.error({ err: error }, 'response failed schema validation');
+        return problem(
+          reply,
+          500,
+          'RESPONSE_INVALID',
+          'the server produced a response that does not match its schema',
+        );
+      }
+      if (error instanceof RecoveryRefusedError) {
+        return problem(
+          reply,
+          error.code === 'SHUTTING_DOWN' ? 503 : 409,
+          error.code,
+          error.message,
+          undefined,
+          error.replayRunId ? { replayRunId: error.replayRunId } : {},
+        );
+      }
+      if (error instanceof EngineRequestError) {
+        return problem(reply, ENGINE_STATUS[error.code], error.code, error.message, error.details);
+      }
+      if (error instanceof LoopUpgradeRequiredError) {
+        // A stored definition that predates ADR-0044 (an exit publishing an Event): per-loop and
+        // actionable, never a generic response-validation 500.
+        const { loopId, versionId, version, paths } = error;
+        return problem(reply, 409, error.code, error.message, undefined, {
+          loopId,
+          versionId,
+          version,
+          paths,
+        });
+      }
+      if (error instanceof ArtifactStoreError) {
+        return problem(reply, 500, error.code, error.message);
+      }
+      if (error instanceof InvalidStoredRunEventError) {
+        return problem(reply, 500, 'STORED_EVENT_INVALID', error.message);
+      }
+      if (error instanceof UnreadableRunHistoryError) {
+        return problem(reply, 500, 'STORED_RUN_INVALID', error.message);
+      }
+      if (error instanceof LoopNotFoundError) {
+        return problem(reply, 404, 'LOOP_NOT_FOUND', error.message);
+      }
+      if (error instanceof DomainError) {
+        return problem(reply, 400, error.code, error.message, error.details);
+      }
+      if (error instanceof TemplateError && error.code === 'TEMPLATE_PACKAGE_INVALID') {
+        return problem(
+          reply,
+          503,
+          'TEMPLATE_PACKAGE_INVALID',
+          'The installed template catalog is invalid; reinstall the package.',
+        );
+      }
+      const fastifyError = error as FastifyError;
+      if (
+        typeof fastifyError.statusCode === 'number' &&
+        fastifyError.statusCode >= 400 &&
+        fastifyError.statusCode < 500
+      ) {
+        return problem(
+          reply,
+          fastifyError.statusCode,
+          stableCode(fastifyError.code),
+          error.message,
+        );
+      }
+      // Database drivers may attach SQL parameters, including enrollment/token hashes. Chat
+      // diagnostics deliberately omit raw causes and request bodies from this boundary.
+      if (
+        (request.url.split('?')[0] ?? '').startsWith('/chat/') ||
+        /^Bearer\s+ggd_/i.test(request.headers.authorization ?? '')
+      )
+        request.log.error({ code: 'CHAT_OPERATION_FAILED' }, 'chat operation failed');
+      else request.log.error({ err: error }, 'unhandled error');
+      return problem(reply, 500, 'INTERNAL_ERROR', 'something went wrong on the server');
+    },
+  );
+}
