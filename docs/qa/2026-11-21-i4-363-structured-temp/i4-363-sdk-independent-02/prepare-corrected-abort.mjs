@@ -1,0 +1,28 @@
+// Two corrected abort fixtures only. Original run and native correction stay immutable.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+const packet = path.dirname(fileURLToPath(import.meta.url));
+const directory = path.join(packet, 'abort-corrected-01');
+assert.equal(fs.existsSync(directory), false);
+fs.mkdirSync(directory); fs.mkdirSync(path.join(directory, 'raw')); fs.mkdirSync(path.join(directory, 'sources'));
+let fake = fs.readFileSync(path.join(packet, 'harmless-cli-v1.mjs'), 'utf8');
+assert(fake.includes("{ setInterval(() => {}, 1000); }"));
+fake = fake.replace("{ setInterval(() => {}, 1000); }", "{ setInterval(() => {}, 1000); await new Promise(() => {}); }");
+fs.writeFileSync(path.join(packet, 'harmless-cli-v3.mjs'), fake);
+let child = fs.readFileSync(path.join(packet, 'source-case-v2.mjs'), 'utf8');
+child = child.replace("controller.abort(new Error('Independent caller abort after actual schema read'));", 'controller.abort();');
+fs.writeFileSync(path.join(packet, 'source-case-v3.mjs'), child);
+let driver = fs.readFileSync(path.join(packet, 'run-qa-v1.mjs'), 'utf8');
+driver = driver.replace("const out = path.dirname(fileURLToPath(import.meta.url));", "const out = path.join(path.dirname(fileURLToPath(import.meta.url)), 'abort-corrected-01');");
+driver = driver.replace('const q = path.dirname(out);', 'const q = path.dirname(path.dirname(out));');
+driver = driver.replace("case: path.join(out, 'source-case-v1.mjs')", "case: path.join(path.dirname(out), 'source-case-v3.mjs')");
+driver = driver.replace("fakeCli: path.join(out, 'harmless-cli-v1.mjs')", "fakeCli: path.join(path.dirname(out), 'harmless-cli-v3.mjs')");
+const harmless = "for (const root of ['short', '226']) for (const mode of ['success', 'error', 'abort']) predictions.push({ id: `harmless-${root}-${mode}`, tier: 'harmless', root, mode, expected: 'Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits.' });";
+const native = "for (const root of ['short', '226']) predictions.push({ id: `native-${root}-success`, tier: 'native', root, mode: 'success', expected: 'Actual bundled Codex native CLI accepts SDK schema and cwd and sends one local Responses request with matching JSON schema; returns synthetic structured proof; schema/scratch removed, sentinels preserved, all observed children exit. No live entitlement claim.' });";
+assert(driver.includes(harmless) && driver.includes(native));
+driver = driver.replace(harmless, "for (const root of ['short', '226']) predictions.push({ id: `harmless-${root}-abort-corrected`, tier: 'harmless', root, mode: 'abort', expected: 'Corrected preload remains pending after schema read. Abort occurs while schema and scratch exist; public AbortError, both directories removed, sentinels preserved, child termination observed.' });").replace(native, '// No native CLI rerun in this correction.');
+driver = driver.replace('expectedCases: 8', 'expectedCases: 2').replace('expected: 8', 'expected: 2').replace('executed !== 8', 'executed !== 2');
+fs.writeFileSync(path.join(packet, 'run-abort-corrected-v3.mjs'), driver);
+console.log('Prepared two corrected abort cases only; no success/error/native behavior repetition.');

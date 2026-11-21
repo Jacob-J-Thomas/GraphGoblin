@@ -1,7 +1,16 @@
 diff --git a/dist/index.js b/dist/index.js
-index 062039c2610107095bd7a254bdebd6fcf7e15fc6..a10fda46b19d1ddb8fe0a5e2fda3ef9b0d8b685a 100644
+index 062039c2610107095bd7a254bdebd6fcf7e15fc6..fc6416eaf3c73265a1dfc2f121cd8f3820976269 100644
 --- a/dist/index.js
 +++ b/dist/index.js
+@@ -10,7 +10,7 @@ async function createOutputSchemaFile(schema) {
+   if (!isJsonObject(schema)) {
+     throw new Error("outputSchema must be a plain JSON object");
+   }
+-  const schemaDir = await fs.mkdtemp(path.join(os.tmpdir(), "codex-output-schema-"));
++  const schemaDir = await fs.mkdtemp(path.join(os.tmpdir(), "gg-schema-"));
+   const schemaPath = path.join(schemaDir, "schema.json");
+   const cleanup = async () => {
+     try {
 @@ -262,7 +262,8 @@ var CodexExec = class {
      }
      const child = spawn(this.executablePath, commandArgs, {

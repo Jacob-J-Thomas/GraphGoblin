@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1612094,
+  "stop_reason": "end_turn",
+  "session_id": "911b360d-a56f-49bb-83cb-6ed037805413",
+  "total_cost_usd": 10.389897999999997,
+  "usage": {
+    "input_tokens": 212,
+    "cache_creation_input_tokens": 343427,
+    "cache_read_input_tokens": 20116470,
+    "output_tokens": 180917,
+    "output_tokens_details": {
+      "thinking_tokens": 86264
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 343427,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1801,
+        "cache_read_input_tokens": 346884,
+        "cache_creation_input_tokens": 1317,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1317
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 212,
+      "outputTokens": 180917,
+      "cacheReadInputTokens": 20116470,
+      "cacheCreationInputTokens": 343427,
+      "webSearchRequests": 0,
+      "costUSD": 10.389897999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 86264,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 343427,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 137,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## #442 UI/browser QA: CONDITIONAL, no product defect found\n\nI found no defect in the Settings Codex notice. All 24 planned cases ran in the final attempt (`run-03`): 20 passed, 1 static check passed, and the 3 control cases failed exactly where predicted. Of 596 individual checks, 588 passed; the other 8 are those predicted control failures.\n\n**Why it's CONDITIONAL rather than PASS:** the candidate commit `39304c07` isn't in the QA checkout, and fetching was prohibited, so `git checkout --detach` was impossible. I didn't fetch or copy Git objects. Instead I read the 4 changed files' committed bytes from the read-only author checkout and wrote them into the QA checkout. Each file matches the candidate's Git hash and the root receipt's SHA-256, and `git status` shows exactly those 4 files changed. So the checkout's content equals candidate tree `f5d9abae`, but HEAD is still `5b0d806c`. The root needs to decide whether this way of tying the evidence to the source is acceptable. `git checkout -- <4 paths>` undoes it.\n\n**Results against the selected contract (D175/D189/docs09):**\n- **Notice content and placement:** the text exactly matches the shared domain constant, with the two commands rendered as `<code>`. It's a muted 12 px paragraph with no live-region role. It appears after the problems, outside the problems list, as the last item in the Codex row.\n- **Every Codex state, through the real backend:** Ready, sign-in needed, usage limit, connection failed, unknown, CLI update needed and CLI not found all show the notice. The Claude and Ollama rows never do, and it's absent when there's no Codex row.\n- **Ready and sign-in views unchanged:** with the notice removed, the card's HTML is byte-identical to the old 5b build in both states. The loading and request-error views are identical to the old build too.\n- **Retry:** one request and the 4 expected CLI checks per click, \"Rechecking…\" in the existing status region, and still one notice. The server's request log agrees with the browser's counts in all 3 sessions.\n- **Offline:** the last result and the one status region stay; nothing is requested while offline, and exactly one request goes out on reconnect.\n- **Request failure and loading:** no false Ready anywhere.\n- **Read-only:** every browser request was a GET, settings were the same before and after, there were no plugin or MCP inventory commands, and Settings never called `/system/preflight`.\n- **Layout:** no overflow at 1440, 375 and 320 px or the 200%-zoom equivalent, in dark and light themes. Notice contrast is 9.98:1 (dark) and 7.68:1 (light). Reduced motion doesn't affect it.\n- **Build:** the one incremental build matched my prediction: 12 tasks, 9 cache hits, web rebuilt. The CSS output is byte-identical to the old build.\n\n**Observation, not fixed:** at 375 px and the 200%-zoom width, one command's code span wraps mid-command. Nothing overflows, but you may want to keep the commands unbroken.\n\n**Failed attempts, all kept:** run-01 had one false failure caused by my driver leaving a second browser tab open, not by the product. I overwrote that driver before saving a copy, so its retained copy is a reconstruction I can't prove byte-exact. Run-02 crashed at startup from my own ordering bug before anything launched.\n\n**Limits:**\n- Edge 158 headless only; no other browsers.\n- Service workers were blocked to keep request counts exact, which produced harmless console warnings.\n- Zoom was simulated by viewport size, not the browser's zoom control.\n- The accessibility check reads the DOM and accessibility tree; it isn't a screen-reader test.\n- No real Codex CLI or account was used.\n\n**Cleanup:** all 3 gateways shut down through authenticated drain with exit 0, and their ports and PIDs were confirmed gone. The browser's processes went from 6 to 0. Ports 4747/4748 were never used. The one other matching process, PID 29204, is your runner that launched this session, and I left it alone. The prior backend packet and the root freeze are byte-identical before and after. No key material was found in the evidence.\n\nThis is not CI, a final audit or owner acceptance. No commits, pushes, provider turns or plugin repair were made.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-442-ui-independent-02` (scratch is at `G:/ggq/qa-scratch/i4-442-ui-qa`); open `REPORT.md` first:\n- `REPORT.md`\n- `PLAN.md`\n- `MANIFEST.sha256.json`\n- `binding/`\n- `run-01/`\n- `run-02/`\n- `run-03/`",
+  "ttft_ms": 1362,
+  "type": "result",
+  "duration_ms": 1969950,
+  "uuid": "7ceea876-7eb4-4393-b1b0-52016d2cdcfd",
+  "ttft_stream_ms": 1023,
+  "time_to_request_ms": 160,
+  "first_content_frame_ms": 1023,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 212,
+      "outputTokens": 180917,
+      "cacheReadInputTokens": 20116470,
+      "cacheCreationInputTokens": 343427,
+      "webSearchRequests": 0,
+      "costUSD": 10.389897999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 86264,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 343427,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

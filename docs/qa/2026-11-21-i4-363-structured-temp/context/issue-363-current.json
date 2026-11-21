@@ -1,0 +1,71 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "id": 5938303888,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363",
+      "title": "adapter-codex structured calls fail with ENAMETOOLONG under long temp roots (mkdtemp)",
+      "issue_number": 363,
+      "body": "Found by WP-F5 (#102 launch diagnosis) and confirmed by its independent GPT-6.1 Sol review on 2026-10-19. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\n`packages/adapter-codex/src/structured.ts:15` creates its working directory with `mkdtemp(join(tmpdir(), 'graphgoblin-structured-'))`. On Windows `mkdtemp` fails with `ENAMETOOLONG` once the final path reaches 248 characters (247 passes), so under a long temp root the public `CodexStructured.complete()` fails before any harness start.\n\n## Steps\n\n1. Point `TEMP`/`TMP` at a directory whose path is 226 characters long.\n2. Call `CodexStructured.complete()` (no real turn is needed to reach the failure).\n\nExpected: the structured call starts the harness.\n\nActual: `ENAMETOOLONG` with zero harness starts.\n\n## Fix shape\n\nUse the same pattern WP-F5 introduced for the Claude probe directory in `packages/infrastructure/src/claude/harness.ts` (`probeDirectory()`: `mkdir` of a short random-suffix name with a bounded `EEXIST` retry). WP-F1's unmerged branch adds a similar `mkdtemp(..., 'gg-codex-probe-')` at `packages/adapter-codex/src/cli.ts:92`, which reaches exactly 248 characters under a 226-character root; the orchestrator resolves that one when F1 integrates.\n\n## Related\n\n#102, WP-F5 record `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`.\n\n\n## Intent 4 delivery admission — November 21\n\nAdmitted after [intent 3 engineering delivery](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448) on signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`, under the owner's ordered batch and delegated blocker-decision authority. [D171 and its alternatives](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) distinguish coordinator selection from human plan approval. Historical parking text above remains history.\n\nCorrect the current structured-call temporary-directory defect using bounded exclusive short-name creation with safe collision and cancellation/cleanup behavior. Preserve unrelated/colliding paths and working-directory precedence.\n\nImplementation and opposite-family review use the named routing models at xhigh. **Independent QA agent (planned):** `i4_363_behavior_qa`, a separate context and checkout; actual provider/session/build/evidence will be recorded when dispatched. GPT owns architecture; Claude Code contributes implementation, design critique, QA and adversarial review. Preserve touched-system positive/negative QA, unchanged coverage, current-head/current-target CI, fresh independent Astra MAX final audit and the three-general-scan cap. No implementation, QA or acceptance is implied by admission. Owner-only closure obligations and held460/Mac501 remain separate.",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:harness",
+          "color": "BFDADC",
+          "description": "Harness and model adapters"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 2,
+      "created_at": "2026-10-20T08:13:19Z",
+      "updated_at": "2026-11-21T10:04:45Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363",
+      "display_title": "adapter-codex structured calls fail with ENAMETOOLONG under long temp roots (mkdtemp)"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363",
+    "title": "adapter-codex structured calls fail with ENAMETOOLONG under long temp roots (mkdtemp)",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363",
+    "display_title": "adapter-codex structured calls fail with ENAMETOOLONG under long temp roots (mkdtemp)"
+  },
+  "isError": false
+}

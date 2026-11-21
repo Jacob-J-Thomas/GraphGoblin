@@ -1,0 +1,116 @@
+{
+  "provenance": "Reconstructed from recorded tool inputs and results after execution. Runtime calls are verbatim in run-native-01.ps1; fixture-side git/child commands and native operations are retained in the immutable fixture and raw traces. Initial read-only discovery stdout remains in the agent tool history; copied source and current issue JSON provide durable relevant inputs.",
+  "behaviorRuns": 1,
+  "failedBehaviorDriverRuns": 0,
+  "postExecutionFixtureCorrections": [],
+  "preExecutionRefinements": [
+    "Before first execution, path padding was simplified to ensure a nonempty last segment, and teardown read the existing root directly.",
+    "Before readback/seal first execution, the expected synthetic residue count was corrected during authoring to 6."
+  ],
+  "commands": [
+    {
+      "id": "discovery-memory",
+      "cwd": "G:/ggq/gg-i4-363-qa/GraphGoblin",
+      "command": "rg -n \"five-intents|363|independent|Node 22|qa\" C:\\Users\\98jak\\.codex\\memories\\MEMORY.md",
+      "exitCode": 0
+    },
+    {
+      "id": "read-instructions",
+      "command": "Get-Content AGENTS.md; Get-Content docs/README.md; Get-Content docs/15-issue-workflow.md",
+      "exitCode": 0
+    },
+    {
+      "id": "inspect-initial-state-and-claims",
+      "command": "git status --porcelain=v1; git rev-parse HEAD; git rev-parse 'HEAD^{tree}'; git rev-list --parents -n 1 HEAD; git remote -v; Get-Content C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-author-01/REPORT.md",
+      "exitCode": 0
+    },
+    {
+      "id": "locate-sources",
+      "command": "Get-Content C:/Users/98jak/.codex/memories/MEMORY.md -TotalCount 43; rg --files -g '*structured*' -g '*363*' -g package.json -g pnpm-workspace.yaml -g AGENTS.md",
+      "exitCode": 0
+    },
+    {
+      "id": "runtime-and-source-inspection",
+      "command": "$env:PATH = \"$env:USERPROFILE\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64;$env:PATH\"\nnode --version\npnpm.cmd --version\ngit status --porcelain=v1\ngit rev-parse HEAD\ngit rev-parse 'HEAD^{tree}'\ngit rev-list --parents -n 1 HEAD\ngit remote -v\nGet-Content packages/adapter-codex/src/structured.ts\nGet-Content packages/adapter-codex/package.json\nGet-Content package.json\nTest-Path node_modules\nTest-Path C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01",
+      "exitCode": 0,
+      "resultSummary": "Node v22.23.4 / pnpm 12.8.1; no node_modules; evidence directory absent."
+    },
+    {
+      "id": "claims-tests-diff",
+      "command": "Get-Content C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-author-01/REPORT.md\nGet-Content packages/adapter-codex/src/structured.test.ts\nGet-Content docs/12-implementation-plan.md -TotalCount 80\ngit diff 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD --stat\ngit diff 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD -- packages/adapter-codex/src/structured.ts docs/06-harness-integration.md CHANGELOG.md",
+      "exitCode": 0
+    },
+    {
+      "id": "evidence-directory-setup",
+      "command": "Exclusive creation of evidence/sources/raw with New-Item -ErrorAction Stop; Copy-Item candidate source/test, AGENTS, issue-workflow, and author report; Get-FileHash SHA256. Full inputs in recorded tool call.",
+      "exitCode": 0
+    },
+    {
+      "id": "issue-current",
+      "tool": "mcp__codex_apps__github_fetch_issue",
+      "args": {
+        "repository_full_name": "Jacob-J-Thomas/GraphGoblin",
+        "issue_number": 363
+      },
+      "result": "Read twice; second tool response preserved in raw/current-issue-363.json; no writes."
+    },
+    {
+      "id": "focused-source-read",
+      "command": "Get-Content packages/adapter-codex/src/structured.test.ts -TotalCount 245",
+      "exitCode": 0
+    },
+    {
+      "id": "runtime",
+      "command": "& 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/run-native-01.ps1'",
+      "exitCode": 0,
+      "raw": "raw/run-native-01.tool-output.json",
+      "driver": "fixture-v1.mjs"
+    },
+    {
+      "id": "runtime-script",
+      "command": "$ErrorActionPreference = 'Stop'\n$env:PATH = \"$env:USERPROFILE\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64;$env:PATH\"\n$taskEvidence = 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01'\nSet-Location -LiteralPath 'G:/ggq/gg-i4-363-qa/GraphGoblin'\nStart-Transcript -LiteralPath \"$taskEvidence/raw/run-native-01.transcript.txt\" -NoClobber\nnode --version\npnpm.cmd --version\nnode --experimental-transform-types \"$taskEvidence/fixture-v1.mjs\"\n$taskRunExit = $LASTEXITCODE\nWrite-Output \"NATIVE_RUN_EXIT=$taskRunExit\"\nStop-Transcript\nexit $taskRunExit",
+      "exitCode": 0
+    },
+    {
+      "id": "runtime-internal-git",
+      "source": "fixture-v1.mjs exact arguments",
+      "commands": [
+        "git show <base>:packages/adapter-codex/src/structured.ts",
+        "git rev-parse HEAD",
+        "git rev-parse HEAD^{tree}",
+        "git rev-list --parents -n 1 HEAD",
+        "git status --porcelain=v1",
+        "git show <base>:packages/adapter-codex/src/cli.ts",
+        "git branch --show-current",
+        "git rev-parse HEAD:packages/adapter-codex/src/structured.ts",
+        "git rev-parse <base>:packages/adapter-codex/src/structured.ts",
+        "git diff --name-status <base> <head>",
+        "git diff --binary <base> <head>"
+      ],
+      "exitCode": 0
+    },
+    {
+      "id": "runtime-native-child",
+      "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "-e",
+        "process.stdout.write(JSON.stringify({cwd:process.cwd(),version:process.version,platform:process.platform}))"
+      ],
+      "cwd": "Exact 249-character path in observations.json/candidate-226-native-child",
+      "exitCode": 0
+    },
+    {
+      "id": "readback",
+      "command": "Get-Content .../raw/run-native-01.transcript.txt\nGet-Content .../source-binding.json\n$taskObservations = Get-Content -Raw .../observations.json | ConvertFrom-Json\n$taskObservations.cases | Select-Object id,status,tier,@{Name='mkdir';Expression={$_.mkdirCalls.Count}},@{Name='cleanup';Expression={$_.rmCalls.Count}},@{Name='recovered';Expression={$_.residueBeforeQaRecovery.Count}} | Format-Table -AutoSize\n$taskObservations.cases[0].observedRejection | ConvertTo-Json -Depth 6\n$taskObservations.cases[1].nativeChild | ConvertTo-Json -Depth 6\n$taskObservations.final | ConvertTo-Json -Depth 8\ngit status --porcelain=v1\ngit diff --exit-code\ngit diff --cached --exit-code",
+      "exitCode": 0,
+      "resultSummary": "Native stdout absent from transcript; copied original tool-result text to separate provenance-labelled JSON. All native errors/control traces independently retained in direct runtime JSONL."
+    },
+    {
+      "id": "seal",
+      "command": "$env:PATH = \"$env:USERPROFILE\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64;$env:PATH\"\nnode C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/seal-evidence.mjs",
+      "purpose": "Read saved evidence and Git state; assert counts/ownership/hash bindings; write manifest. No behavior execution."
+    }
+  ],
+  "filesWritten": "Only evidence directory via apply_patch, WriteAllText, fixture logging, and owned fixture native fs operations. No checkout modifications.",
+  "memory": "MEMORY.md lines 33-34 used to recall batch gates, then verified live issue/workflow and coordinator constraints."
+}

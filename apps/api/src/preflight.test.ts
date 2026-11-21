@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeHarness } from '@graphgoblin/engine/testing';
+import { CODEX_PLUGIN_OBSERVABILITY_NOTICE } from '@graphgoblin/domain';
 import {
   DEFAULT_MODEL_CATALOG,
   openDatabase,
@@ -179,10 +180,72 @@ describe('runPreflight', () => {
       ['master-key', 'ok'],
       ['database', 'ok'],
       ['harness.codex', 'ok'],
+      ['plugins.codex', 'warn'],
       ['jev', 'ok'],
       ['default-model', 'ok'],
     ]);
     expect(byId(report, 'harness.codex')?.message).toBe('codex fake is installed and logged in');
+  });
+
+  it('reports plugin observability separately without another probe or provider turn', async () => {
+    const harness = new FakeHarness();
+    const readiness = structuredClone(harness.preflightResult);
+    const preflight = vi.spyOn(harness, 'preflight');
+    const start = vi.spyOn(harness, 'start');
+    const resume = vi.spyOn(harness, 'resume');
+    const input = sources({ harnesses: { codex: harness } });
+    const facts = [
+      vi.spyOn(input, 'pendingMigrations'),
+      vi.spyOn(input, 'jevKey'),
+      vi.spyOn(input, 'jevEnabled'),
+      vi.spyOn(input, 'catalog'),
+    ];
+
+    const report = await runPreflight(input);
+    expect(report.ok).toBe(true);
+    expect(byId(report, 'harness.codex')).toMatchObject({ state: 'ready', status: 'ok' });
+    expect(byId(report, 'plugins.codex')).toEqual({
+      id: 'plugins.codex',
+      label: 'Codex plugins',
+      status: 'warn',
+      message: CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+    });
+    expect(harness.preflightResult).toEqual(readiness);
+    expect(preflight).toHaveBeenCalledExactlyOnceWith();
+    for (const fact of facts) expect(fact).toHaveBeenCalledExactlyOnceWith();
+    expect(start).not.toHaveBeenCalled();
+    expect(resume).not.toHaveBeenCalled();
+  });
+
+  it.each(['cli-missing', 'cli-incompatible', 'auth', 'quota', 'transport', 'unknown'] as const)(
+    'keeps a Codex %s failure separate from the plugin scope notice',
+    async (state) => {
+      const harness = new FakeHarness();
+      harness.preflightResult = {
+        state,
+        ok: false,
+        ...(state === 'auth' ? { authenticated: false } : {}),
+        problems: ['Controlled Codex prerequisite failure'],
+      };
+      const report = await runPreflight(sources({ harnesses: { codex: harness } }));
+      expect(report.ok).toBe(false);
+      expect(byId(report, 'harness.codex')).toMatchObject({
+        state,
+        status: 'fail',
+        message: 'Controlled Codex prerequisite failure',
+      });
+      expect(byId(report, 'plugins.codex')).toBeUndefined();
+    },
+  );
+
+  it('does not attach the Codex plugin notice to another harness or an absent adapter', async () => {
+    const claude = await runPreflight(
+      sources({ harnesses: { claude: new FakeHarness([], 'claude') } }),
+    );
+    expect(byId(claude, 'harness.claude')?.status).toBe('ok');
+    expect(byId(claude, 'plugins.codex')).toBeUndefined();
+    const absent = await runPreflight(sources({ harnesses: {} }));
+    expect(byId(absent, 'plugins.codex')).toBeUndefined();
   });
 
   it('warns about a database that is missing or behind, and skips checks that need it', async () => {
@@ -374,7 +437,7 @@ describe('runPreflight', () => {
     const text = formatPreflight(report);
     expect(text).toContain('STATUS  CHECK');
     expect(text).toMatch(/WARN\s+Jev\s+no API key/);
-    expect(text).toContain('0 failed, 1 warning(s): ready to start');
+    expect(text).toContain('0 failed, 2 warning(s): ready to start');
     const failed = formatPreflight({ ok: false, checks: [] });
     expect(failed).toContain('fix the failed checks');
   });
@@ -414,6 +477,10 @@ describe('graphgoblin-api --preflight', () => {
     expect(out).toMatch(/WARN\s+Data directory/);
     expect(out).toMatch(/WARN\s+Master key/);
     expect(out).toMatch(/WARN\s+Database\s+the database does not exist yet/);
+    expect(out).toMatch(
+      /WARN\s+Codex plugins\s+Loaded plugin tools are not verified by this check/,
+    );
+    expect(out).toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
     await expect(rm(dataDir)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
@@ -431,7 +498,8 @@ describe('graphgoblin-api --preflight', () => {
 
     const ready = await cli(env);
     expect(ready.code).toBe(0);
-    expect(ready.out).toContain('0 failed, 0 warning(s)');
+    expect(ready.out).toContain('0 failed, 1 warning(s)');
+    expect(ready.out).toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
     expect(ready.out).toContain('API key set (secret "jev-api-key") (disabled in Settings)');
 
     const harness = new FakeHarness();
@@ -444,6 +512,7 @@ describe('graphgoblin-api --preflight', () => {
     const notLoggedIn = await cli(env, harness);
     expect(notLoggedIn.code).toBe(1);
     expect(notLoggedIn.out).toMatch(/FAIL\s+Harness codex\s+not logged in/);
+    expect(notLoggedIn.out).not.toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
 
     // Without the master key the Jev secret cannot be read.
     await rm(join(dir, 'master.key'));
@@ -600,6 +669,10 @@ describe('GET /system/preflight', () => {
       const report = response.json<PreflightReport>();
       expect(byId(report, 'database')?.status).toBe('ok');
       expect(byId(report, 'harness.codex')?.status).toBe('ok');
+      expect(byId(report, 'plugins.codex')).toMatchObject({
+        status: 'warn',
+        message: CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+      });
       expect(byId(report, 'master-key')?.status).toBe('ok');
       expect(byId(report, 'jev')?.status).toBe('warn');
       expect(byId(report, 'default-model')?.status).toBe('ok');
@@ -619,6 +692,52 @@ describe('GET /system/preflight', () => {
       expect((await strict.app.inject('/system/preflight')).statusCode).toBe(401);
     } finally {
       await strict.close();
+    }
+  });
+
+  it('preserves harness readiness and authentication while exposing the system scope notice', async () => {
+    const t = await createTestApp();
+    try {
+      const probe = vi.spyOn(t.harness, 'preflight');
+      const started = vi.spyOn(t.harness, 'start');
+      const readyResponse = await t.app.inject('/harness/preflight');
+      expect(readyResponse.statusCode).toBe(200);
+      expect(readyResponse.json()).toEqual({
+        items: [{ harness: 'codex', ...t.harness.preflightResult }],
+      });
+      expect(probe).toHaveBeenCalledTimes(1);
+      const systemResponse = await t.app.inject('/system/preflight');
+      expect(systemResponse.statusCode).toBe(200);
+      const report = systemResponse.json<PreflightReport>();
+      expect(report.ok).toBe(true);
+      expect(byId(report, 'harness.codex')).toMatchObject({ state: 'ready', status: 'ok' });
+      expect(byId(report, 'plugins.codex')?.message).toBe(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
+      expect(probe).toHaveBeenCalledTimes(2);
+      expect(started).not.toHaveBeenCalled();
+
+      t.harness.preflightResult = {
+        state: 'auth',
+        ok: false,
+        authenticated: false,
+        problems: ['Controlled sign-in needed'],
+      };
+      const refusedHarness = await t.app.inject('/harness/preflight');
+      expect(refusedHarness.json()).toEqual({
+        items: [{ harness: 'codex', ...t.harness.preflightResult }],
+      });
+      const refusedSystem = await t.app.inject('/system/preflight');
+      const refusedReport = refusedSystem.json<PreflightReport>();
+      expect(refusedReport.ok).toBe(false);
+      expect(byId(refusedReport, 'harness.codex')).toMatchObject({
+        state: 'auth',
+        status: 'fail',
+        message: 'Controlled sign-in needed',
+      });
+      expect(byId(refusedReport, 'plugins.codex')).toBeUndefined();
+      expect(probe).toHaveBeenCalledTimes(4);
+      expect(started).not.toHaveBeenCalled();
+    } finally {
+      await t.close();
     }
   });
 });

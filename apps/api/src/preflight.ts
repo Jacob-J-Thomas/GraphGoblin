@@ -1,4 +1,8 @@
-import { readinessDetail, readinessMessage } from '@graphgoblin/domain';
+import {
+  CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+  readinessDetail,
+  readinessMessage,
+} from '@graphgoblin/domain';
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -34,7 +38,7 @@ import { dataDirArgument, RESET_COMMAND } from './store-refusal.js';
 
 /**
  * First-run preflight (docs/11): is this machine ready to run GraphGoblin? Each check reports
- * `ok`, `warn` (works, but something is missing or will be set up on first start), or `fail`
+ * `ok`, `warn` (works, but something is missing, deferred, or outside this check's scope), or `fail`
  * (runs will not work until it is fixed). Served at `GET /system/preflight` and printed by
  * `graphgoblin-api --preflight`. Nothing here spawns a Codex session or changes any state.
  */
@@ -231,6 +235,10 @@ async function checkHarnesses(
                 result.problems.join(' ') || readinessMessage(id, result.state),
               )),
         });
+        if (id === 'codex' && result.ok)
+          checks.push(
+            check('plugins.codex', 'Codex plugins', 'warn', CODEX_PLUGIN_OBSERVABILITY_NOTICE),
+          );
       } catch {
         checks.push({
           state: 'unknown',

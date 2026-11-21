@@ -1,5 +1,9 @@
 import type { HarnessPreflight, HarnessReadinessState } from '@graphgoblin/contracts';
 
+/** The no-turn readiness check does not establish loaded plugin/tool health. */
+export const CODEX_PLUGIN_OBSERVABILITY_NOTICE =
+  'Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.';
+
 /** Classify bounded CLI diagnostics ephemerally; never return executable output to a client. */
 export function cliFailureState(text: string): HarnessReadinessState {
   // Version components and arbitrary numbers are not HTTP status evidence.

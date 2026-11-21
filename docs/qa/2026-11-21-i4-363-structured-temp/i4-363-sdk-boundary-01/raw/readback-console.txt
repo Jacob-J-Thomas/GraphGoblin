@@ -1,0 +1,50 @@
+{
+  "at": "2026-11-21T09:14:36.995Z",
+  "behaviorRunCount": 1,
+  "behaviorCasesExecuted": 2,
+  "readbackOnly": true,
+  "originalDriverExit": 1,
+  "originalDriverPass": 0,
+  "originalDriverFail": 2,
+  "finding": "CONFIRMED: real pinned SDK output-schema mkdtemp blocks long-root completion after successful adapter allocation and MCP listing.",
+  "cases": [
+    {
+      "id": "short-control",
+      "readback": "CONFIRMED",
+      "originalDriverStatus": "FAIL",
+      "originalFailure": "Overbroad TEMP-empty assertion included the tsx loader cache",
+      "productOutcome": "resolved",
+      "listingMarker": true,
+      "turnMarker": true,
+      "scratchRemoved": true,
+      "remainingTempEntries": [
+        "tsx-98jak"
+      ],
+      "cacheSourceEvidence": "tsx-source-snippets.json",
+      "behaviorRerun": false
+    },
+    {
+      "id": "long-226",
+      "readback": "CONFIRMED",
+      "originalDriverStatus": "FAIL",
+      "originalFailure": "Overbroad TEMP-empty assertion included the tsx loader cache",
+      "productOutcome": "rejected",
+      "listingMarker": true,
+      "turnMarker": false,
+      "scratchRemoved": true,
+      "remainingTempEntries": [
+        "tsx-98jak"
+      ],
+      "cacheSourceEvidence": "tsx-source-snippets.json",
+      "behaviorRerun": false
+    }
+  ],
+  "sourceAndFixtureNotModifiedAfterRun": true,
+  "originalQaManifestUnchanged": "e4047b7378b612194b3f47ed11e19aac3f2c4d8f80f81c1b46524116ee844c9b",
+  "ownerRemoved": true,
+  "limitations": [
+    "Harness normalizes the native error; native errno text and path survive, but native syscall properties and original SDK stack are not retained by the public harness result.",
+    "Filesystem before/after and fake-CLI markers are native observations; no fs/builtin/SDK monkeypatch or syscall tracing was used.",
+    "The loader cache was identified after execution from installed tsx source; raw failed guard and predictions are unaltered."
+  ]
+}
