@@ -32,6 +32,7 @@ const window = (limit: number) => ({
   profile: 'test/byte-ceiling',
   fits: (prompt: string) => Buffer.byteLength(prompt) <= limit,
 });
+
 async function options() {
   const thread = fixture();
   return {
@@ -176,39 +177,60 @@ it.each([1, 2])(
       expect(render).toHaveBeenCalledTimes(call);
       expect(error).toMatchObject({ code: 'INTERNAL_ERROR', options: { resumable: true } });
       expect(JSON.stringify(error)).not.toContain('private canonical failure');
+      expect(JSON.stringify(Object.assign({}, error))).not.toContain('private canonical failure');
     } finally {
       render.mockRestore();
     }
   },
 );
 
-it('publishes a canonical rerender fault on the current inference node before provider invocation', async () => {
-  const engine = await createTestEngine();
-  const harness: HarnessPort = engine.ports.harness;
-  const version = engine.publish(
-    domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
-  );
-  // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
-  const render = vi.spyOn(domain, 'renderTemplate');
-  try {
-    harness.contextWindow = () => {
-      render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
-      return Promise.resolve(window(400));
-    };
-    const run = await engine.runToIdle(version.loopId, payload);
-    expect(render).toHaveBeenCalled();
-    expect(run.failure).toEqual({
-      code: 'INTERNAL_ERROR',
-      nodeId: 'respond',
-      resumable: true,
-      message: 'An unexpected error interrupted the run. See the server logs for this run.',
-    });
-    expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
-      { failure: run.failure },
-    ]);
-    expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
-    expect(engine.ports.harness.started).toHaveLength(0);
-  } finally {
-    render.mockRestore();
-  }
-});
+it.each([1, 2])(
+  'privately logs canonical rerender %i on the current inference node before provider invocation',
+  async (call) => {
+    const engine = await createTestEngine();
+    const harness: HarnessPort = engine.ports.harness;
+    const version = engine.publish(
+      domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
+    );
+    // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
+    const original = domain.renderTemplate;
+    const render = vi.spyOn(domain, 'renderTemplate');
+    try {
+      harness.contextWindow = () => {
+        if (call === 2) render.mockImplementationOnce(original);
+        render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
+        return Promise.resolve(window(400));
+      };
+      const run = await engine.runToIdle(version.loopId, payload);
+      expect(render).toHaveBeenCalled();
+      expect(run.failure).toEqual({
+        code: 'INTERNAL_ERROR',
+        nodeId: 'respond',
+        resumable: true,
+        message: 'An unexpected error interrupted the run. See the server logs for this run.',
+      });
+      expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
+        { failure: run.failure },
+      ]);
+      expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
+      expect(engine.ports.harness.started).toHaveLength(0);
+      expect(engine.ports.harness.resumed).toHaveLength(0);
+      expect(JSON.stringify([run, engine.events(run.id)])).not.toContain(
+        'private renderer diagnostic',
+      );
+      expect(engine.ports.logger.lines).toContainEqual({
+        level: 'error',
+        msg: 'node failed',
+        obj: {
+          runId: run.id,
+          nodeId: 'respond',
+          failure: run.failure,
+          error: expect.objectContaining({ message: 'private renderer diagnostic' }),
+        },
+      });
+    } finally {
+      render.mockRestore();
+      engine.manager.stop();
+    }
+  },
+);
