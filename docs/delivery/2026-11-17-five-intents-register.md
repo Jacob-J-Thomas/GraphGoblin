@@ -301,3 +301,27 @@ review obligations, not waived requirements. D164 admits the bounded evidence to
 merge approval, visual acceptance or personal plan approval. Opposite-family review, exact-head
 and current-target CI, the fresh independent final audit and signed merge remain required. D160's
 consolidated owner decision review and any rework stay before owner QA, and PR #460 remains held.
+
+## November 21 amendment: D166, #459 final-audit corrections
+
+The independent Astra MAX second general scan held PR #541 at `2164cd11` for two introduced
+findings: malformed or duplicate-name ownership responses could authorize a startup attempt,
+and cleanup first observed at or after the two-second deadline could count as timely confirmation.
+The coordinator accepted both as in-scope corrections under the delegated blocker-decision
+authority. The separate API store lock remains intact; no store mutation was established.
+[Original audit](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/541#issuecomment-7056864776)
+and [D166 correction contract](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7056880570).
+
+The corrected source at `37803eee` validates raw ownership output with a strict, ownership-only
+JSON parser and samples monotonic elapsed time after the complete cleanup observation pass.
+The [correction archive](../qa/2026-11-21-windows-helper-corrections/README.md) retains the
+independent held-source characterization, the exact corrected-source replay, author regressions,
+original failures and evidence limits. Independent Claude Code QA establishes 16/16 corrected
+ownership cases with 176/176 controls, eight shared cleanup-decision cases and three grouped
+native controls. The timing seam does not establish a kernel race or the unconfirmed-cleanup
+runtime mappings; those mappings remain source integration evidence. D164's visual limit stands.
+
+This checkpoint records correction and bounded QA, not final acceptance. Corrected-head CI,
+bounded opposite-family corrective review and the fresh independent final audit remain required.
+The general-scan budget remains two of three consumed. #543 and #544 stay separately parked,
+PR #460 stays held, and owner decision review and any rework remain before owner QA.

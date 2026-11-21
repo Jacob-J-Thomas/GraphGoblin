@@ -1,0 +1,119 @@
+{
+  "schema": "qa459n-native-run/1",
+  "runId": "native-20261121T050530Z-3875a5",
+  "startUtc": "2026-11-21T05:05:30.532Z",
+  "node": "v22.23.4",
+  "execPath": "<home>\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "setupFaults": [],
+  "entries": [
+    {
+      "id": "N1",
+      "mode": "--bounded-log-checks",
+      "expectation": "exit 0 and stdout matches /bounded log, closed outcome and NUL stdio checks passed/",
+      "pid": 40308,
+      "startedUtc": "2026-11-21T05:05:33.147Z",
+      "exit": 0,
+      "signal": null,
+      "spawnError": null,
+      "timedOut": false,
+      "ms": 976,
+      "stdout": "Native bounded log, closed outcome and NUL stdio checks passed.\r\n",
+      "stderr": "",
+      "verdict": "PASS"
+    },
+    {
+      "id": "N2",
+      "mode": "--helper-checks",
+      "expectation": "exit 0 and stdout matches /Native helper job, pipe and deadline checks passed/",
+      "pid": 9564,
+      "startedUtc": "2026-11-21T05:05:34.126Z",
+      "exit": 0,
+      "signal": null,
+      "spawnError": null,
+      "timedOut": false,
+      "ms": 33385,
+      "stdout": "helper-fixture both cleanup-confirmed elapsed-ms=2621\r\nhelper-fixture stdout cleanup-confirmed elapsed-ms=2616\r\nhelper-fixture stderr cleanup-confirmed elapsed-ms=2677\r\nhelper-fixture neither cleanup-confirmed elapsed-ms=2690\r\nNative helper job, pipe and deadline checks passed.\r\n",
+      "stderr": "",
+      "verdict": "PASS"
+    },
+    {
+      "id": "N3",
+      "mode": "--cleanup-deadline-checks",
+      "expectation": "exit 0 and trimmed stdout equals 'Deterministic cleanup decision checks passed (no kernel fault injected).'",
+      "pid": 22328,
+      "startedUtc": "2026-11-21T05:06:07.513Z",
+      "exit": 0,
+      "signal": null,
+      "spawnError": null,
+      "timedOut": false,
+      "ms": 106,
+      "stdout": "Deterministic cleanup decision checks passed (no kernel fault injected).\r\n",
+      "stderr": "",
+      "verdict": "PASS"
+    }
+  ],
+  "checkout": {
+    "head": "37803eeef9f55c2a316289aa502798025a7873be",
+    "tree": "647d297990837f7f21e0054c5be15a0109fab2f1",
+    "trackedChanges": 0,
+    "sourcesMatchHead": true,
+    "expectedHead": "37803eeef9f55c2a316289aa502798025a7873be",
+    "expectedTree": "647d297990837f7f21e0054c5be15a0109fab2f1"
+  },
+  "sources": {
+    "apps/windows-launcher/Launcher.cs": {
+      "sha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520",
+      "gitBlob": "f3a4f314703033c7deecece51ed3c8278d08a5a9"
+    },
+    "apps/windows-launcher/NativeChecks.cs": {
+      "sha256": "416ab74fedbd29907302519c4291dd00bbab9e1d959a9eb8341d1d49b2f677d0",
+      "gitBlob": "eb431a9e1b3b0f4278cf9258ce62b74628503cd8"
+    },
+    "tooling/scripts/windows-launcher.acceptance.mjs": {
+      "sha256": "4c0c3318236d55ae809f8433a4602edc1e56a98175ac2cb2213579d3429d4790"
+    }
+  },
+  "driver": {
+    "qa459n-native.mjs": "4aa94c7c37d43878c7b64d03ee2b1dea9d19ba69dea14d758f7042b748bd35ac",
+    "README.md": "23d4f6e4fd5e88ecb7446dc0516d8a0548d1b895f923192a181369093d9a4718"
+  },
+  "privateInstall": {
+    "whoamiExit": 0,
+    "icaclsExit": 0
+  },
+  "compile": {
+    "compiler": {
+      "path": "C:\\WINDOWS\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
+      "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+    },
+    "args": [
+      "/nologo",
+      "/target:exe",
+      "/platform:x64",
+      "/main:NativeChecks",
+      "/reference:System.Windows.Forms.dll",
+      "/reference:System.Web.Extensions.dll",
+      "/out:<scratch>\\native\\native-20261121T050530Z-3875a5\\install α\\NativeChecks.exe",
+      "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+      "<checkout>\\apps\\windows-launcher\\NativeChecks.cs"
+    ],
+    "exit": 0,
+    "signal": null,
+    "ms": 519,
+    "stdout": "",
+    "stderr": ""
+  },
+  "assembly": {
+    "sha256": "e07a36ae525e6990ad5b62353143f49ed52215b63f01d098b5316eaf127dd048",
+    "bytes": 95232
+  },
+  "isolatedTempManagedLogNames": [],
+  "summary": {
+    "entries": 3,
+    "passed": 3,
+    "failed": 0,
+    "isolatedTempClean": true
+  },
+  "status": "COMPLETED-ALL-PASS",
+  "endUtc": "2026-11-21T05:06:07.621Z"
+}

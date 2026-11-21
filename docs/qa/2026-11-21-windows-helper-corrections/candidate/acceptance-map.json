@@ -1,0 +1,208 @@
+{
+  "schema": "qa459c-candidate-acceptance-map/1",
+  "candidate": {
+    "head": "37803eeef9f55c2a316289aa502798025a7873be",
+    "tree": "647d297990837f7f21e0054c5be15a0109fab2f1",
+    "parent": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "target": "47ca4640793a81efa5bec661dba25627de314774"
+  },
+  "rule": "Candidate F3 acceptance requires every case correctedContract CONFORMS, all 11 per-case controls passing and no setup fault. Raw status still compares with baseline predictions; Q08-Q13 and Q15 are expected DIFFERED-FROM-PREDICTION corrections.",
+  "f3": [
+    {
+      "id": "F3-1",
+      "claim": "All 16 frozen cases conform to the D166 corrected contract",
+      "evidence": "16/16 CONFORMS",
+      "verdict": "PASS",
+      "tier": "native public Gateway.Ensure path"
+    },
+    {
+      "id": "F3-2",
+      "claim": "All 11 controls pass in every case",
+      "evidence": "176/176",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-3",
+      "claim": "No setup fault",
+      "evidence": "run COMPLETED; setupFaults 0; raw SETUP-FAULT 0",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-4",
+      "claim": "Exactly Q08-Q13 and Q15 differ from baseline predictions (intended corrections); the other nine match and conform",
+      "evidence": "differed Q08,Q09,Q10,Q11,Q12,Q13,Q15",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-5",
+      "claim": "Malformed responses no longer reach the gateway-start path",
+      "evidence": "start path 4 (Q01-Q04 valid only); malformed starts 0",
+      "verdict": "PASS",
+      "tier": "native; marker = start-path admission, not readiness"
+    },
+    {
+      "id": "F3-6",
+      "claim": "Q15 invalid escape now refuses as helper-invalid after one sample",
+      "evidence": "code helper-invalid, samples 1",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-7",
+      "claim": "Q10 duplicate-name held retry retains store-held, lock and guidance",
+      "evidence": "code store-held",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-8",
+      "claim": "Actual producer output stays compatible (Q04 free, Q06 held/unverified)",
+      "evidence": "Q04 unknown-exit; Q06 store-unverified with 2 producer samples",
+      "verdict": "PASS",
+      "tier": "native"
+    },
+    {
+      "id": "F3-9",
+      "claim": "Q09 replays the exact escaped-name payload",
+      "evidence": "37 bytes, sha256 9fb5d4511478937a531fcb52fe399c2d424b54b50dae94afac971a4ea3da6889",
+      "verdict": "PASS",
+      "tier": "byte identity"
+    },
+    {
+      "id": "F3-10",
+      "claim": "Privacy, record and resource preservation",
+      "evidence": "canary leaks 0; stores not preserved 0",
+      "verdict": "PASS",
+      "tier": "native text/file evidence; not visual dialog QA"
+    }
+  ],
+  "f4": [
+    {
+      "id": "F4-T1",
+      "claim": "A complete observation sampled at 1,999 ms (strictly below the deadline) is credited.",
+      "evidence": "returned true, order OE, samples 1999",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T2",
+      "claim": "A complete observation sampled exactly at 2,000 ms is not credited.",
+      "evidence": "returned false, order OE, samples 2000",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T3",
+      "claim": "A complete observation sampled at 2,001 ms is not credited.",
+      "evidence": "returned false, order OE, samples 2001",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T4",
+      "claim": "The clock reads 1,999 ms when the observation pass starts; the pass itself advances it to 2,001 ms and completes. The sample must be taken after the full pass, so the late completion is not credited.",
+      "evidence": "returned false, order OE, samples 2001",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T5",
+      "claim": "First pass incomplete at 1,999 ms; the next pass completes but is sampled at 2,001 ms. Eventual completion does not credit timely confirmation.",
+      "evidence": "returned false, order OEOE, samples 1999,2001",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T6",
+      "claim": "First pass incomplete at 1,998 ms; the next pass completes sampled at 1,999 ms and is credited.",
+      "evidence": "returned true, order OEOE, samples 1998,1999",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T7",
+      "claim": "An incomplete pass sampled at 2,000 ms returns false without starting another observation pass.",
+      "evidence": "returned false, order OE, samples 2000",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-T8",
+      "claim": "With a real Stopwatch, a complete observation pass that takes at least 2,050 ms is sampled at or after 2,000 ms and is not credited.",
+      "evidence": "returned false, order OE, samples 2065",
+      "verdict": "PASS",
+      "tier": "deterministic shared-decision observation through the product seam"
+    },
+    {
+      "id": "F4-bind",
+      "claim": "Seam is the product method compiled from the committed source; source/harness/assembly bound",
+      "evidence": "Launcher.cs 2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520; harness f43d09f8791375e0374f8cdf4386eb2330c1dde337b6e97705b20395cb9a1244; assembly e7003f753c0264a9ef26f9c3dc68ea4a327db8f8e0008452fe24bd24d7746287",
+      "verdict": "PASS",
+      "tier": "binding"
+    }
+  ],
+  "native": [
+    {
+      "id": "NATIVE-N1",
+      "claim": "Maintained NativeChecks --bounded-log-checks",
+      "evidence": "exit 0, 976 ms",
+      "verdict": "PASS",
+      "tier": "grouped native control"
+    },
+    {
+      "id": "NATIVE-N2",
+      "claim": "Maintained NativeChecks --helper-checks",
+      "evidence": "exit 0, 33385 ms",
+      "verdict": "PASS",
+      "tier": "grouped native control"
+    },
+    {
+      "id": "NATIVE-N3",
+      "claim": "Maintained NativeChecks --cleanup-deadline-checks",
+      "evidence": "exit 0, 106 ms",
+      "verdict": "PASS",
+      "tier": "grouped native control"
+    }
+  ],
+  "sourceIntegrationOnly": [
+    {
+      "id": "SRC-1",
+      "claim": "false from AwaitCleanup maps to helper-cleanup-unconfirmed",
+      "source": "Launcher.cs:986-1000",
+      "tier": "SOURCE-ONLY (not observed; no fault seam authorized)"
+    },
+    {
+      "id": "SRC-2",
+      "claim": "held guidance retained when an inconclusive retry ends helper-cleanup-unconfirmed",
+      "source": "Launcher.cs:1241-1247",
+      "tier": "SOURCE-ONLY for the cleanup-unconfirmed branch; the store-held retention branch was observed natively in F3 Q07/Q10"
+    },
+    {
+      "id": "SRC-3",
+      "claim": "job disposal, child disposal and pending-I/O completion transfer follow the recorded decision and cannot upgrade it",
+      "source": "Launcher.cs:995-1000",
+      "tier": "SOURCE-ONLY"
+    },
+    {
+      "id": "SRC-4",
+      "claim": "ownership is parsed once, from raw decoded output before Trim, by the strict reader",
+      "source": "Launcher.cs:953-960, 1254-1332, 1337",
+      "tier": "source plus native F3 outcomes"
+    },
+    {
+      "id": "SRC-5",
+      "claim": "identity keeps its existing padding behavior",
+      "source": "Launcher.cs:1161-1162",
+      "tier": "source plus native F3 Q03 and N2"
+    }
+  ],
+  "verdict": "PASS",
+  "counts": {
+    "f3Replay": 16,
+    "f4Timing": 8,
+    "native": 3
+  }
+}

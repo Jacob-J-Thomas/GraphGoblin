@@ -1,0 +1,1391 @@
+{
+  "schema": "qa459i-case-results/1",
+  "phase": "independent #459 D166 correction BASELINE QA (held head); not candidate QA",
+  "held": {
+    "head": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "tree": "0b1a84d1c881518b4744e2565a2874ec481921fc",
+    "target": "47ca4640793a81efa5bec661dba25627de314774",
+    "parent": "11214dadbde049af01dd0280b9b701ad10a0f50a"
+  },
+  "sources": {
+    "apps/windows-launcher/Launcher.cs": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078",
+    "apps/api/src/instance-identity.ts": "7afbe98ded3e89d4241c88726b832d1a0f483ad5ef7a359d5afb22d696088d9e",
+    "apps/api/src/data-dir-lock.ts": "5f3ab443bcc4e91bc4a97b444000f85801c6276f2a2deb63a004e277f4cc5d3f",
+    "apps/api/dist/instance-identity.js": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+    "apps/api/dist/data-dir-lock.js": "dfc4e59a48e65191b85cc2508507070c98dc7d14b00f3291651ab60d5b0d9c71"
+  },
+  "assemblies": {
+    "launcher": "febd02c1ad43814b2bed19d74ac6eb1ae8d409b607449117731f3501428c8a20",
+    "harness": "346a225c0cebc996abe1edf4439c91a17c7aabf0be724d4d4944cfd3456a8fc1",
+    "launcherSource": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078"
+  },
+  "driverManifests": {
+    "v1": "a9e9ec110e202592ac4aedf2024f52165e76cefeae4f36b1cdab4ba6b73d62d3",
+    "v2": "766811a8076395f172127dea170220b8827b009ef828de26678d8768a178076e"
+  },
+  "runs": [
+    {
+      "runId": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "startUtc": "2026-11-21T04:29:51.922Z",
+      "endUtc": "2026-11-21T04:30:24.748Z",
+      "status": "COMPLETED",
+      "setupFaults": 0,
+      "summary": {
+        "cases": 16,
+        "matchedPrediction": 15,
+        "differedFromPrediction": 1,
+        "setupFault": 0,
+        "conformsToCorrectedContract": 8,
+        "violatesCorrectedContract": 8,
+        "authorizedFreshGateway": 10
+      },
+      "driverHashes": {
+        "qa459i-driver.mjs": "e4b6a9e0c0981ebb2055788e35cbc1894f0346abb1db6fa7ea1bb18793fb8a87",
+        "qa459i-cases.mjs": "62b73f97558b69fdf48119303377817a59b230d9c4bbf350fb51098e74ea1466",
+        "qa459i-build.mjs": "648d201f00228297db8c7e891a80fd8e4b4bbea0f817c60b551d60fb510bbf2a",
+        "harness/Qa459iHarness.cs": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+      }
+    },
+    {
+      "runId": "baseline-20261121T043159Z-5ff66d",
+      "driver": "v2",
+      "startUtc": "2026-11-21T04:31:59.503Z",
+      "endUtc": "2026-11-21T04:32:04.666Z",
+      "status": "COMPLETED",
+      "setupFaults": 0,
+      "summary": {
+        "cases": 1,
+        "matchedPrediction": 1,
+        "differedFromPrediction": 0,
+        "setupFault": 0,
+        "conformsToCorrectedContract": 1,
+        "violatesCorrectedContract": 0,
+        "authorizedFreshGateway": 0
+      },
+      "driverHashes": {
+        "qa459i-driver.mjs": "e4b6a9e0c0981ebb2055788e35cbc1894f0346abb1db6fa7ea1bb18793fb8a87",
+        "qa459i-cases.mjs": "387b10317e5ac63abb3988548598e23570391ea68c82b1eddba8565b2145c2eb",
+        "qa459i-build.mjs": "648d201f00228297db8c7e891a80fd8e4b4bbea0f817c60b551d60fb510bbf2a",
+        "harness/Qa459iHarness.cs": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+      },
+      "purpose": "single corrective re-execution of Q06 after the v2 expectation correction"
+    }
+  ],
+  "counts": {
+    "casesDefined": 16,
+    "caseExecutions": 17,
+    "runLevelSetupFaults": 0,
+    "driverAssumptionCorrections": 1,
+    "authorizedFreshGatewayStartPath": 10,
+    "refusedBeforeGatewayStart": 6,
+    "matchedPrediction": 16,
+    "conformsToCorrectedContract": 9,
+    "violatesCorrectedContract": 7,
+    "malformedAuthorizedFreshGateway": 6,
+    "privacyCanaryLeaksAcrossExecutions": 0,
+    "storeNotPreservedAcrossExecutions": 0,
+    "distinctClosedMessages": [
+      "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <case>\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+      "Store ownership could not be verified (malformed or incomplete owner record): <case>\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+      "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+    ]
+  },
+  "cases": [
+    {
+      "id": "Q01",
+      "name": "valid-free-producer-shape",
+      "category": "control: valid free",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 17,
+            "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          2
+        ],
+        "ensureElapsedMs": 570,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q02",
+      "name": "valid-free-legal-json-whitespace-and-escapes",
+      "category": "control: legal JSON whitespace/escaping",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 43,
+            "sha256": "074ef8ee1ea40dd2177ba4cd85d891e0c6bfd968cc6ba99e4efa3375cb2a1c1e"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          4
+        ],
+        "ensureElapsedMs": 575,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q03",
+      "name": "identity-padding-with-valid-free",
+      "category": "control: identity helper padding preserved",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 68,
+          "sha256": "2fe89c489f62b070d15570e66cef0a35b3f4974af6fa944729f0b50b46a44533"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 17,
+            "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          1
+        ],
+        "ensureElapsedMs": 575,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q04",
+      "name": "real-producer-free",
+      "category": "control: actual unmodified ownership producer (free)",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "real-producer"
+          }
+        ],
+        "realProducerOutputs": [
+          {
+            "file": "real-producer-1.stdout.bin",
+            "bytes": 17,
+            "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+          }
+        ]
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          2089
+        ],
+        "ensureElapsedMs": 2753,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q05",
+      "name": "valid-held-reordered-unicode-escaped-path",
+      "category": "control: valid held, field order and path escaping",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 221,
+            "sha256": "3da9f9a13faf64d86828452b8be2f5a8484736394ac3e7b107803377e8ae1e25"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          60
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          60
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "store-held",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 16,
+        "ownershipSampleMs": [
+          3,
+          3,
+          3,
+          2,
+          2,
+          17,
+          2,
+          4,
+          4,
+          3,
+          2,
+          2,
+          3,
+          6,
+          4,
+          3
+        ],
+        "ensureElapsedMs": 6221,
+        "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q05\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+        "lockReported": true,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q06",
+      "name": "real-producer-held-driver-record",
+      "category": "control: actual producer (held) and byte-preserved driver-owned owner record",
+      "run": "baseline-20261121T043159Z-5ff66d",
+      "driver": "v2",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "real-producer"
+          }
+        ],
+        "realProducerOutputs": [
+          {
+            "file": "real-producer-1.stdout.bin",
+            "bytes": 223,
+            "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005"
+          },
+          {
+            "file": "real-producer-2.stdout.bin",
+            "bytes": 223,
+            "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005"
+          }
+        ]
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "store-unverified",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          1,
+          60
+        ],
+        "messageIncludes": [
+          "Store ownership could not be verified (malformed or incomplete owner record)",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "store-unverified",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          1,
+          60
+        ],
+        "messageIncludes": [
+          "Store ownership could not be verified (malformed or incomplete owner record)",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "store-unverified",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 2,
+        "ownershipSampleMs": [
+          1689,
+          1869
+        ],
+        "ensureElapsedMs": 4305,
+        "message": "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\runs\\baseline-20261121T043159Z-5ff66d\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+        "lockReported": true,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q07",
+      "name": "held-then-inconclusive-retry-retains-guidance",
+      "category": "control: inconclusive retry after held keeps held guidance",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 217,
+            "sha256": "e075a5f96107ab42480f3a6605a5053b2870d1cc0d61a537ba6528404c530646"
+          },
+          {
+            "call": 2,
+            "source": "bytes",
+            "bytes": 44,
+            "sha256": "259517b017eb63e34e146755af95c45754a94a5476a3359754516b8f62a71ea6"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          2
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          2
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "store-held",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 2,
+        "ownershipSampleMs": [
+          3,
+          13
+        ],
+        "ensureElapsedMs": 866,
+        "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q07\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+        "lockReported": true,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q08",
+      "name": "malformed-javascript-syntax-multiline-free",
+      "category": "F3 malformed syntax (JavaScript-only)",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 20,
+            "sha256": "895885c3e9316335d7aac4047ce55141295abbabed2e31464ac60b69f66252b9"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          3
+        ],
+        "ensureElapsedMs": 706,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q09",
+      "name": "duplicate-decoded-name-held-then-free",
+      "category": "F3 duplicate decoded name",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 37,
+            "sha256": "9fb5d4511478937a531fcb52fe399c2d424b54b50dae94afac971a4ea3da6889"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          2
+        ],
+        "ensureElapsedMs": 777,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q10",
+      "name": "held-then-duplicate-free-retry",
+      "category": "F3 duplicate name on the held retry path",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 217,
+            "sha256": "f7bbdf1b121137deb4d72dc251197e06b55ee88602b8bf3da7ee1f217214372a"
+          },
+          {
+            "call": 2,
+            "source": "bytes",
+            "bytes": 32,
+            "sha256": "3a65b38585373b5282b31ed8ba614e69394975071d61d368b724ed471b090a1b"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          2,
+          2
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          2
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 2,
+        "ownershipSampleMs": [
+          2,
+          6
+        ],
+        "ensureElapsedMs": 1290,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "lock location",
+        "message includes: another GraphGoblin process holds this store; check its port",
+        "message includes: No second gateway was started. Do not stop an unrelated proc"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q11",
+      "name": "outer-leading-no-break-space",
+      "category": "F3 outer non-JSON whitespace",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 19,
+            "sha256": "73ea02950d6c1a2c0cca72799823fda9b8e8cac9f24f7ea3c334ecd5efcf373d"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          3
+        ],
+        "ensureElapsedMs": 641,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q12",
+      "name": "outer-trailing-form-feed",
+      "category": "F3 outer non-JSON whitespace / trailing material",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 18,
+            "sha256": "1499713cabc92f24e8f7787aa2733edac5f2c665b1f3170892e4b812dff1effe"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          7
+        ],
+        "ensureElapsedMs": 787,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q13",
+      "name": "internal-line-separator-whitespace",
+      "category": "F3 malformed syntax (non-JSON whitespace between tokens)",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 20,
+            "sha256": "13d4ca84a8bcaab599dc883e3dd305bd7db1564382d1fd4808b77af0354c1f8d"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": true,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "ownershipCalls": [
+          1,
+          1
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": true,
+        "gatewayMainMarkers": 1,
+        "code": "unknown-exit",
+        "childExit": 54,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          2
+        ],
+        "ensureElapsedMs": 1575,
+        "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "authorizes fresh gateway start",
+        "closed code",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q14",
+      "name": "unknown-field-with-free",
+      "category": "F3 unknown field",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 51,
+            "sha256": "60126b65025f24a08742216cced3e6aca60054c0121eac8446bde0156ebeae27"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "helper-invalid",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          3
+        ],
+        "ensureElapsedMs": 718,
+        "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    },
+    {
+      "id": "Q15",
+      "name": "invalid-string-escape-in-held",
+      "category": "F3 invalid string escape",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 220,
+            "sha256": "1af8e1582dfe635850b55271a825cebf0bab79bc29e8a71703c09dbf972e4443"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "store-held",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          60
+        ],
+        "messageIncludes": [
+          "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "store-held",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 12,
+        "ownershipSampleMs": [
+          4,
+          4,
+          3,
+          3,
+          14,
+          3,
+          2,
+          3,
+          9,
+          4,
+          3,
+          3
+        ],
+        "ensureElapsedMs": 5614,
+        "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q15\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+        "lockReported": true,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [
+        "closed code",
+        "ownership calls",
+        "message includes: The read-only launcher check returned an invalid or oversize"
+      ],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "VIOLATES"
+    },
+    {
+      "id": "Q16",
+      "name": "trailing-second-record",
+      "category": "F3 trailing material",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "bytes",
+            "bytes": 34,
+            "sha256": "6bf3c12c75f4b6b9c551935f7d6cc1fc45d0c9812d3f40b71b5d705e63b8cf15"
+          }
+        ],
+        "realProducerOutputs": []
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "helper-invalid",
+        "ownershipCalls": [
+          1,
+          1
+        ],
+        "messageIncludes": [
+          "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "helper-invalid",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          4
+        ],
+        "ensureElapsedMs": 375,
+        "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+        "lockReported": false,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [],
+      "failedContractChecks": [],
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS"
+    }
+  ],
+  "supersededExecutions": [
+    {
+      "id": "Q06",
+      "name": "real-producer-held-driver-record",
+      "category": "control: actual producer (held) and byte-preserved driver-owned owner record",
+      "run": "baseline-20261121T042951Z-e1e0e8",
+      "driver": "v1",
+      "responses": {
+        "identity": {
+          "bytes": 65,
+          "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+        },
+        "ownership": [
+          {
+            "call": 1,
+            "source": "real-producer"
+          }
+        ],
+        "realProducerOutputs": [
+          {
+            "file": "real-producer-1.stdout.bin",
+            "bytes": 223,
+            "sha256": "54a06d4259e8beb20acfb7eea152b89eaa22c6f75a024e54e1b5a101c1a51a9f"
+          }
+        ]
+      },
+      "baselinePrediction": {
+        "authorizes": false,
+        "code": "store-unverified",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          60
+        ],
+        "messageIncludes": [
+          "Store ownership could not be verified (malformed or incomplete owner record)",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "correctedExpectation": {
+        "authorizes": false,
+        "code": "store-unverified",
+        "lock": "lockPath",
+        "ownershipCalls": [
+          2,
+          60
+        ],
+        "messageIncludes": [
+          "Store ownership could not be verified (malformed or incomplete owner record)",
+          "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+        ]
+      },
+      "observed": {
+        "authorizedFreshGateway": false,
+        "gatewayMainMarkers": 0,
+        "code": "store-unverified",
+        "childExit": 0,
+        "identityCalls": 1,
+        "ownershipCalls": 1,
+        "ownershipSampleMs": [
+          3375
+        ],
+        "ensureElapsedMs": 3930,
+        "message": "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+        "lockReported": true,
+        "canariesFound": [],
+        "storePreserved": true,
+        "ownerRecordPreserved": true,
+        "logFolderEmptyAfter": true,
+        "helperRootsExitedNaturallyZero": true,
+        "portFreeAfter": true,
+        "sentinelAlive": true,
+        "port": 25840
+      },
+      "controlsPassed": "11/11",
+      "failedPredictionChecks": [
+        "ownership calls"
+      ],
+      "failedContractChecks": [
+        "ownership calls"
+      ],
+      "status": "DIFFERED-FROM-PREDICTION",
+      "correctedContract": "VIOLATES",
+      "note": "v1 expectation required >=2 ownership samples; observed 1 because the actual producer sample took 3,375 ms. Retained unchanged; superseded for the expectation only by the v2 re-execution."
+    }
+  ]
+}

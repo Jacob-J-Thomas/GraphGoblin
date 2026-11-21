@@ -1,0 +1,260 @@
+{
+  "id": "Q03",
+  "name": "identity-padding-with-valid-free",
+  "category": "control: identity helper padding preserved",
+  "purpose": "The identity helper response keeps its existing trimmed padding behavior (space and CRLF around 64 hex digits); ownership is producer-shaped free.",
+  "responses": {
+    "identity": {
+      "bytes": 68,
+      "sha256": "2fe89c489f62b070d15570e66cef0a35b3f4974af6fa944729f0b50b46a44533",
+      "text": " db7ae8e80a43b6f650695b2ae212566ddedcaa900e4dc8c60b747d34be200341 \r\n"
+    },
+    "ownership": [
+      {
+        "call": 1,
+        "source": "bytes",
+        "bytes": 17,
+        "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb",
+        "text": "{\"state\":\"free\"}\n"
+      }
+    ],
+    "repeatsLast": true,
+    "realProducerOutputs": []
+  },
+  "baselinePrediction": {
+    "authorizes": true,
+    "code": "unknown-exit",
+    "childExit": 54,
+    "ownershipCalls": [
+      1,
+      1
+    ]
+  },
+  "correctedExpectation": {
+    "authorizes": true,
+    "code": "unknown-exit",
+    "childExit": 54,
+    "ownershipCalls": [
+      1,
+      1
+    ]
+  },
+  "observed": {
+    "harnessPid": 28116,
+    "harnessExit": 0,
+    "harnessWatchdog": false,
+    "harnessMs": 1078,
+    "setup": "ok",
+    "outcome": "launcher-failure",
+    "code": "unknown-exit",
+    "childExit": 54,
+    "lock": null,
+    "logFolder": "<scratch>\\runs\\candidate-20261121T045534Z-624fab\\Q03\\launcher-log",
+    "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+    "presented": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.\r\n\r\nLog folder: <scratch>\\runs\\candidate-20261121T045534Z-624fab\\Q03\\launcher-log\r\n\r\nConfiguration: <scratch>\\runs\\candidate-20261121T045534Z-624fab\\Q03\\launcher-log\\GraphGoblin.exe.json",
+    "logRecord": "{\"time\":\"2026-11-21T04:55:38.5109158Z\",\"pid\":28116,\"outcome\":\"refused\",\"stage\":\"gateway\",\"code\":\"unknown-exit\",\"childExit\":54,\"message\":\"GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\\\api\\\\dist\\\\main.js from the checkout in a terminal to see the error.\",\"config\":\"<scratch>\\\\runs\\\\candidate-20261121T045534Z-624fab\\\\Q03\\\\launcher-log\\\\GraphGoblin.exe.json\",\"logFolder\":\"<scratch>\\\\runs\\\\candidate-20261121T045534Z-624fab\\\\Q03\\\\launcher-log\"}\n",
+    "exceptionType": null,
+    "ensureElapsedMs": 742,
+    "authorizedFreshGateway": true,
+    "gatewayMarkers": [
+      {
+        "pid": 22100,
+        "ppidIsHarness": true,
+        "port": "25840",
+        "logDirProvided": true,
+        "at": 1795236938386
+      }
+    ],
+    "identityCalls": 1,
+    "ownershipCalls": 1,
+    "helperRuns": [
+      {
+        "kind": "identity",
+        "index": 1,
+        "pid": 43112,
+        "startAt": 1795236938023,
+        "exitAt": 1795236938025,
+        "exitCode": 0,
+        "ms": 2
+      },
+      {
+        "kind": "ownership",
+        "index": 1,
+        "pid": 2668,
+        "startAt": 1795236938233,
+        "exitAt": 1795236938235,
+        "exitCode": 0,
+        "ms": 2
+      }
+    ],
+    "helperRootsExitedNaturallyZero": true,
+    "realProducer": [],
+    "realProducerEvents": [],
+    "canariesChecked": [
+      "QA459I_STDERR_CANARY_Q03"
+    ],
+    "canariesFound": [],
+    "storeBefore": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "9c8c480a981366d072fd249615d29dda1a6c064fbc32b240fc38457a922663b3"
+      }
+    ],
+    "storeAfter": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "9c8c480a981366d072fd249615d29dda1a6c064fbc32b240fc38457a922663b3"
+      }
+    ],
+    "storePreserved": true,
+    "ownerRecordPreserved": true,
+    "logDirAfter": [],
+    "portFreeAfter": true,
+    "port": 25840,
+    "sentinelAlive": true
+  },
+  "controls": [
+    {
+      "name": "harness completed without watchdog",
+      "pass": true
+    },
+    {
+      "name": "closed LauncherFailure (no unexpected exception)",
+      "pass": true
+    },
+    {
+      "name": "no private canary in message, presentation or log record",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "store bytes and names preserved",
+      "pass": true
+    },
+    {
+      "name": "driver-owned owner record state preserved",
+      "pass": true
+    },
+    {
+      "name": "no gateway.log or launcher.log written in log folder",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "helper roots exited naturally with 0",
+      "pass": true
+    },
+    {
+      "name": "gateway markers parented by harness",
+      "pass": true
+    },
+    {
+      "name": "gateway-start marker agrees with launcher-observed exit 54",
+      "pass": true
+    },
+    {
+      "name": "owned port free after case",
+      "pass": true
+    },
+    {
+      "name": "unrelated sentinel alive",
+      "pass": true
+    }
+  ],
+  "predictionChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": true,
+        "observed": true
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "unknown-exit",
+        "observed": "unknown-exit"
+      }
+    },
+    {
+      "name": "launcher-observed gateway exit",
+      "pass": true,
+      "detail": {
+        "expected": 54,
+        "observed": 54
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    }
+  ],
+  "correctedContractChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": true,
+        "observed": true
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "unknown-exit",
+        "observed": "unknown-exit"
+      }
+    },
+    {
+      "name": "launcher-observed gateway exit",
+      "pass": true,
+      "detail": {
+        "expected": 54,
+        "observed": 54
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    }
+  ],
+  "status": "MATCHED-PREDICTION",
+  "correctedContract": "CONFORMS"
+}

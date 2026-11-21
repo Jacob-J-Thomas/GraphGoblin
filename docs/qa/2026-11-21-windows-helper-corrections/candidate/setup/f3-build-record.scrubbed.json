@@ -1,0 +1,76 @@
+{
+  "schema": "qa459i-build-record/1",
+  "startUtc": "2026-11-21T04:55:17.801Z",
+  "node": "v22.23.4",
+  "checkout": {
+    "head": "37803eeef9f55c2a316289aa502798025a7873be",
+    "tree": "647d297990837f7f21e0054c5be15a0109fab2f1",
+    "trackedChanges": 0
+  },
+  "compiler": {
+    "path": "C:\\WINDOWS\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
+    "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+  },
+  "steps": [
+    {
+      "label": "production-launcher",
+      "args": [
+        "/nologo",
+        "/target:winexe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\f3\\bin\\GraphGoblin.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 482,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "independent-harness",
+      "args": [
+        "/nologo",
+        "/target:exe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:<scratch>\\f3\\bin\\GraphGoblin.exe",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\f3\\bin\\Qa459iHarness.exe",
+        "<baseline>\\driver\\v2\\harness\\Qa459iHarness.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 598,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "inputs": {
+    "launcherSource": {
+      "path": "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+      "sha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520",
+      "gitBlob": "f3a4f314703033c7deecece51ed3c8278d08a5a9"
+    },
+    "harnessSource": {
+      "path": "<baseline>\\driver\\v2\\harness\\Qa459iHarness.cs",
+      "sha256": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+    }
+  },
+  "outputs": {
+    "launcherAssembly": {
+      "path": "<scratch>\\f3\\bin\\GraphGoblin.exe",
+      "sha256": "aa3f63bd42726133b62be5af61cc5baf551309bab6b81abf8de6f6f56e40f4ed",
+      "bytes": 65536
+    },
+    "harnessAssembly": {
+      "path": "<scratch>\\f3\\bin\\Qa459iHarness.exe",
+      "sha256": "8df22105dd8ca78e892c238e40fee343772142b9e51b90af70575ae53546bc3b",
+      "bytes": 7168
+    }
+  },
+  "endUtc": "2026-11-21T04:55:19.234Z"
+}
