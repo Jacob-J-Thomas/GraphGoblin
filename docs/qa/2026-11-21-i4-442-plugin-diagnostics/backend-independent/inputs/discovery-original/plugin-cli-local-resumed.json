@@ -1,0 +1,215 @@
+{
+  "name": "local-resumed",
+  "provenance": "local-path-source",
+  "scenario": {
+    "name": "local-resumed",
+    "provenance": "local",
+    "variant": "healthy",
+    "resume": true
+  },
+  "id": "01a1fd5c-0ed2-7eb1-8a2a-542fa628f09e",
+  "value": {
+    "finalText": "GG442_CONTROL_OK",
+    "usage": {
+      "inputTokens": 4,
+      "outputTokens": 4,
+      "cachedInputTokens": 0,
+      "reasoningOutputTokens": 0
+    },
+    "items": [
+      {
+        "id": "item_0",
+        "type": "tool-call",
+        "summary": "gg442_local_healthy.echo_fixture",
+        "status": "ok",
+        "detail": {
+          "id": "item_0",
+          "type": "mcp_tool_call",
+          "server": "gg442_local_healthy",
+          "tool": "echo_fixture",
+          "arguments": {},
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "GG442_PLUGIN_OK"
+              }
+            ],
+            "structured_content": null
+          },
+          "error": null,
+          "status": "completed"
+        }
+      },
+      {
+        "id": "item_1",
+        "type": "message",
+        "summary": "GG442_CONTROL_OK",
+        "detail": {
+          "id": "item_1",
+          "type": "agent_message",
+          "text": "GG442_CONTROL_OK"
+        }
+      }
+    ]
+  },
+  "events": [
+    {
+      "type": "submitted",
+      "marker": "codex.turn.started"
+    },
+    {
+      "type": "item",
+      "item": {
+        "id": "item_0",
+        "type": "tool-call",
+        "summary": "gg442_local_healthy.echo_fixture",
+        "status": "ok",
+        "detail": {
+          "id": "item_0",
+          "type": "mcp_tool_call",
+          "server": "gg442_local_healthy",
+          "tool": "echo_fixture",
+          "arguments": {},
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "GG442_PLUGIN_OK"
+              }
+            ],
+            "structured_content": null
+          },
+          "error": null,
+          "status": "completed"
+        }
+      }
+    },
+    {
+      "type": "item",
+      "item": {
+        "id": "item_1",
+        "type": "message",
+        "summary": "GG442_CONTROL_OK",
+        "detail": {
+          "id": "item_1",
+          "type": "agent_message",
+          "text": "GG442_CONTROL_OK"
+        }
+      }
+    },
+    {
+      "type": "usage",
+      "usage": {
+        "inputTokens": 4,
+        "outputTokens": 4,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    },
+    {
+      "type": "turn-complete"
+    },
+    {
+      "type": "session",
+      "sessionId": "01a1fd5c-0ed2-7eb1-8a2a-542fa628f09e",
+      "mode": "resumed"
+    }
+  ],
+  "outputs": [
+    "Script completed\nWall time 0.0 seconds\nOutput:\n",
+    "{\"available\":[\"mcp__gg442_local_healthy__echo_fixture\"]}",
+    "{\"content\":[{\"type\":\"text\",\"text\":\"GG442_PLUGIN_OK\"}]}"
+  ],
+  "available": [
+    "mcp__gg442_local_healthy__echo_fixture"
+  ],
+  "expected": [
+    "mcp__gg442_local_healthy__echo_fixture"
+  ],
+  "elapsedMs": 1277,
+  "modelRequests": 2,
+  "terminalSpawnSnapshot": [
+    {
+      "case": "local-resumed",
+      "pid": 31700,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-plugin-diagnostics\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex@0.160.0\\node_modules\\@openai\\codex\\bin\\codex.js",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "started": "2026-11-21T09:09:29.345Z",
+      "closed": true,
+      "exited": true,
+      "exitCode": 0,
+      "exitSignal": null,
+      "exitedAt": "2026-11-21T09:09:29.476Z",
+      "code": 0,
+      "signal": null,
+      "ended": "2026-11-21T09:09:29.476Z"
+    },
+    {
+      "case": "local-resumed",
+      "pid": 40348,
+      "command": "G:\\ggq\\gg-i4-442-plugin-diagnostics\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex@0.160.0-win32-x64\\node_modules\\@openai\\codex\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+      "args": [
+        "exec",
+        "--experimental-json",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false",
+        "--config",
+        "notify=[]",
+        "--model",
+        "gpt-6-luna",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        "G:\\ggq\\gg442-plugin-cli-CsXayT\\work",
+        "--skip-git-repo-check",
+        "--config",
+        "model_reasoning_effort=\"low\"",
+        "--config",
+        "sandbox_workspace_write.network_access=false",
+        "--config",
+        "web_search=\"disabled\"",
+        "--config",
+        "approval_policy=\"never\"",
+        "resume",
+        "01a1fd5c-0ed2-7eb1-8a2a-542fa628f09e"
+      ],
+      "started": "2026-11-21T09:09:29.485Z",
+      "closed": false,
+      "exited": true,
+      "exitCode": 0,
+      "exitSignal": null,
+      "exitedAt": "2026-11-21T09:09:30.004Z"
+    }
+  ],
+  "cleanup": {
+    "code": 0,
+    "stdout": "[]\r\n",
+    "stderr": ""
+  }
+}

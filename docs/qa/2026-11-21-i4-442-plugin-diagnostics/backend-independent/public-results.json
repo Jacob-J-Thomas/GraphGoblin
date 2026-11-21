@@ -1,0 +1,2152 @@
+{
+  "repo": "G:/ggq/gg-i4-442-qa/GraphGoblin",
+  "source": "5b0d806c75d409c33a57ea54ffda45e2f89bc500",
+  "node": "v22.23.4",
+  "records": [
+    {
+      "label": "CLI ready warning exit0",
+      "status": "PASS",
+      "detail": {
+        "exitCode": 0,
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "storeHashesUnchanged": true
+      }
+    },
+    {
+      "label": "CLI unauthenticated exit1 no notice",
+      "status": "PASS",
+      "detail": {
+        "exitCode": 1,
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "storeHashesUnchanged": true
+      }
+    },
+    {
+      "label": "CLI incompatible exit1 no notice",
+      "status": "PASS",
+      "detail": {
+        "exitCode": 1,
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ]
+        ],
+        "storeHashesUnchanged": true
+      }
+    },
+    {
+      "label": "CLI unknown failure exit1 no notice",
+      "status": "PASS",
+      "detail": {
+        "exitCode": 1,
+        "argv": [
+          [
+            "--version"
+          ]
+        ],
+        "storeHashesUnchanged": true
+      }
+    },
+    {
+      "label": "CLI missing binary exit1 no notice",
+      "status": "PASS",
+      "detail": {
+        "exitCode": 1,
+        "argv": [],
+        "storeHashesUnchanged": true
+      }
+    },
+    {
+      "label": "built method absent Codex no notice",
+      "status": "PASS",
+      "detail": {
+        "ok": false,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.23.4"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "warn",
+            "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store does not exist yet; it is created on first start"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "taken from GG_MASTER_KEY"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "warn",
+            "message": "the database does not exist yet; it is created and migrated on first start"
+          },
+          {
+            "id": "harness",
+            "label": "Harness",
+            "status": "fail",
+            "message": "no harness adapter is configured"
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "warn",
+            "message": "not checked until the database is migrated; Jev is optional"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the default catalog seeded on first start"
+          }
+        ]
+      }
+    },
+    {
+      "label": "built method nonCodex ready no notice",
+      "status": "PASS",
+      "detail": {
+        "ok": true,
+        "checks": [
+          {
+            "id": "node",
+            "label": "Node.js",
+            "status": "ok",
+            "message": "Node 22.23.4"
+          },
+          {
+            "id": "data-dir",
+            "label": "Data directory",
+            "status": "warn",
+            "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store does not exist yet; it is created on first start"
+          },
+          {
+            "id": "master-key",
+            "label": "Master key",
+            "status": "ok",
+            "message": "taken from GG_MASTER_KEY"
+          },
+          {
+            "id": "database",
+            "label": "Database",
+            "status": "warn",
+            "message": "the database does not exist yet; it is created and migrated on first start"
+          },
+          {
+            "state": "ready",
+            "id": "harness.claude",
+            "label": "Harness claude",
+            "status": "ok",
+            "message": "claude 2.1.287 is installed and logged in"
+          },
+          {
+            "id": "jev",
+            "label": "Jev",
+            "status": "warn",
+            "message": "not checked until the database is migrated; Jev is optional"
+          },
+          {
+            "id": "default-model",
+            "label": "Default model",
+            "status": "ok",
+            "message": "gpt-6-luna (codex) is in the default catalog seeded on first start"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "an API key is required"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/system/preflight missing authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "an API key is required"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "the API key is missing, malformed, or revoked"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/system/preflight wrong authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "the API key is missing, malformed, or revoked"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 403,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/forbidden",
+          "title": "forbidden",
+          "status": 403,
+          "code": "FORBIDDEN",
+          "detail": "this key lacks the \"system:read\" scope"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/system/preflight insufficient authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 403,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/forbidden",
+          "title": "forbidden",
+          "status": 403,
+          "code": "FORBIDDEN",
+          "detail": "this key lacks the \"system:read\" scope"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /harness/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "an API key is required"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/harness/preflight missing authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "an API key is required"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /harness/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "the API key is missing, malformed, or revoked"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/harness/preflight wrong authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 401,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/unauthorized",
+          "title": "unauthorized",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "detail": "the API key is missing, malformed, or revoked"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /harness/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 403,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/forbidden",
+          "title": "forbidden",
+          "status": 403,
+          "code": "FORBIDDEN",
+          "detail": "this key lacks the \"system:read\" scope"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "/harness/preflight insufficient authorization",
+      "status": "PASS",
+      "detail": {
+        "status": 403,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/forbidden",
+          "title": "forbidden",
+          "status": 403,
+          "code": "FORBIDDEN",
+          "detail": "this key lacks the \"system:read\" scope"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "ready",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "ok",
+              "message": "codex 0.160.0 is installed and logged in"
+            },
+            {
+              "id": "plugins.codex",
+              "label": "Codex plugins",
+              "status": "warn",
+              "message": "Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 45424,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:19.951Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 696,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.031Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 2836,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.123Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 11116,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.212Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP system ready plus one warning",
+      "status": "PASS",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "ready",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "ok",
+              "message": "codex 0.160.0 is installed and logged in"
+            },
+            {
+              "id": "plugins.codex",
+              "label": "Codex plugins",
+              "status": "warn",
+              "message": "Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 45424,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:19.951Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 696,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.031Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 2836,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.123Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 11116,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-db87cb83",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.212Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /harness/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "state": "ready",
+              "ok": true,
+              "version": "0.160.0",
+              "authenticated": true,
+              "problems": [],
+              "harness": "codex"
+            },
+            {
+              "state": "cli-missing",
+              "ok": false,
+              "problems": [
+                "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+              ],
+              "authMethod": null,
+              "supportedPolicies": [
+                {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "builtin-tools",
+                  "network": "unconfined"
+                },
+                {
+                  "sandbox": "danger-full-access",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep",
+                    "Edit",
+                    "Write",
+                    "Bash"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "unconfined",
+                  "network": "unconfined"
+                }
+              ],
+              "models": [
+                {
+                  "model": "claude-opus-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-fable-5-1",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-sonnet-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-haiku-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                }
+              ],
+              "harness": "claude"
+            },
+            {
+              "state": "unknown",
+              "ok": false,
+              "problems": [
+                "Ollama is off in Settings"
+              ],
+              "harness": "ollama"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 43228,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.314Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 40480,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.392Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 17128,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.478Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 21120,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.567Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP harness exact ready authentication shape",
+      "status": "PASS",
+      "detail": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "state": "ready",
+              "ok": true,
+              "version": "0.160.0",
+              "authenticated": true,
+              "problems": [],
+              "harness": "codex"
+            },
+            {
+              "state": "cli-missing",
+              "ok": false,
+              "problems": [
+                "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+              ],
+              "authMethod": null,
+              "supportedPolicies": [
+                {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "builtin-tools",
+                  "network": "unconfined"
+                },
+                {
+                  "sandbox": "danger-full-access",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep",
+                    "Edit",
+                    "Write",
+                    "Bash"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "unconfined",
+                  "network": "unconfined"
+                }
+              ],
+              "models": [
+                {
+                  "model": "claude-opus-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-fable-5-1",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-sonnet-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-haiku-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                }
+              ],
+              "harness": "claude"
+            },
+            {
+              "state": "unknown",
+              "ok": false,
+              "problems": [
+                "Ollama is off in Settings"
+              ],
+              "harness": "ollama"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 43228,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.314Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 40480,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.392Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 17128,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.478Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 21120,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-4194df36",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:20.567Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": false,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "auth",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "fail",
+              "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 7460,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.679Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 18312,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.760Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 37804,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.843Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 7172,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.928Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP system auth failure omits warning",
+      "status": "PASS",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": false,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "auth",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "fail",
+              "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 7460,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.679Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 18312,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.760Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 37804,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.843Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 7172,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-a8445892",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:20.928Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /harness/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "state": "auth",
+              "ok": false,
+              "version": "0.160.0",
+              "authenticated": false,
+              "problems": [
+                "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+              ],
+              "harness": "codex"
+            },
+            {
+              "state": "cli-missing",
+              "ok": false,
+              "problems": [
+                "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+              ],
+              "authMethod": null,
+              "supportedPolicies": [
+                {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "builtin-tools",
+                  "network": "unconfined"
+                },
+                {
+                  "sandbox": "danger-full-access",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep",
+                    "Edit",
+                    "Write",
+                    "Bash"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "unconfined",
+                  "network": "unconfined"
+                }
+              ],
+              "models": [
+                {
+                  "model": "claude-opus-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-fable-5-1",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-sonnet-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-haiku-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                }
+              ],
+              "harness": "claude"
+            },
+            {
+              "state": "unknown",
+              "ok": false,
+              "problems": [
+                "Ollama is off in Settings"
+              ],
+              "harness": "ollama"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 42764,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.030Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 30948,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.142Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 43736,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.252Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 39868,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.338Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP harness auth facts preserved",
+      "status": "PASS",
+      "detail": {
+        "status": 200,
+        "body": {
+          "items": [
+            {
+              "state": "auth",
+              "ok": false,
+              "version": "0.160.0",
+              "authenticated": false,
+              "problems": [
+                "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+              ],
+              "harness": "codex"
+            },
+            {
+              "state": "cli-missing",
+              "ok": false,
+              "problems": [
+                "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+              ],
+              "authMethod": null,
+              "supportedPolicies": [
+                {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "builtin-tools",
+                  "network": "unconfined"
+                },
+                {
+                  "sandbox": "danger-full-access",
+                  "approval": "never",
+                  "permissionMode": "dontAsk",
+                  "tools": [
+                    "Read",
+                    "Glob",
+                    "Grep",
+                    "Edit",
+                    "Write",
+                    "Bash"
+                  ],
+                  "authMethod": "claude.ai",
+                  "boundary": "unconfined",
+                  "network": "unconfined"
+                }
+              ],
+              "models": [
+                {
+                  "model": "claude-opus-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-fable-5-1",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-sonnet-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                },
+                {
+                  "model": "claude-haiku-5-5",
+                  "efforts": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                }
+              ],
+              "harness": "claude"
+            },
+            {
+              "state": "unknown",
+              "ok": false,
+              "problems": [
+                "Ollama is off in Settings"
+              ],
+              "harness": "ollama"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 42764,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.030Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 30948,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.142Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 43736,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.252Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 39868,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-00c1d62d",
+            "mode": "auth",
+            "timestamp": "2026-11-21T10:13:21.338Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /system/preflight",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "ready",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "ok",
+              "message": "codex 0.160.0 is installed and logged in"
+            },
+            {
+              "id": "plugins.codex",
+              "label": "Codex plugins",
+              "status": "warn",
+              "message": "Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 3764,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.447Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 22764,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.532Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 5000,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.618Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 30564,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.719Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP explicit retry after sign-in repair",
+      "status": "PASS",
+      "detail": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "checks": [
+            {
+              "id": "node",
+              "label": "Node.js",
+              "status": "ok",
+              "message": "Node 22.23.4"
+            },
+            {
+              "id": "data-dir",
+              "label": "Data directory",
+              "status": "ok",
+              "message": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\store is writable"
+            },
+            {
+              "id": "master-key",
+              "label": "Master key",
+              "status": "ok",
+              "message": "taken from GG_MASTER_KEY"
+            },
+            {
+              "id": "database",
+              "label": "Database",
+              "status": "ok",
+              "message": "reachable and migrated"
+            },
+            {
+              "state": "unknown",
+              "id": "harness.ollama",
+              "label": "Harness ollama",
+              "status": "warn",
+              "message": "Ollama is off in Settings"
+            },
+            {
+              "state": "cli-missing",
+              "id": "harness.claude",
+              "label": "Harness claude",
+              "status": "warn",
+              "message": "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."
+            },
+            {
+              "state": "ready",
+              "id": "harness.codex",
+              "label": "Harness codex",
+              "status": "ok",
+              "message": "codex 0.160.0 is installed and logged in"
+            },
+            {
+              "id": "plugins.codex",
+              "label": "Codex plugins",
+              "status": "warn",
+              "message": "Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it."
+            },
+            {
+              "id": "jev",
+              "label": "Jev",
+              "status": "warn",
+              "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+            },
+            {
+              "id": "default-model",
+              "label": "Default model",
+              "status": "ok",
+              "message": "gpt-6-luna (codex) is in the model catalog"
+            }
+          ]
+        },
+        "argv": [
+          [
+            "--version"
+          ],
+          [
+            "exec",
+            "--help"
+          ],
+          [
+            "exec",
+            "resume",
+            "--help"
+          ],
+          [
+            "login",
+            "status"
+          ]
+        ],
+        "calls": [
+          {
+            "pid": 3764,
+            "parentPid": 9760,
+            "args": [
+              "--version"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.447Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 22764,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.532Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 5000,
+            "parentPid": 9760,
+            "args": [
+              "exec",
+              "resume",
+              "--help"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.618Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          },
+          {
+            "pid": 30564,
+            "parentPid": 9760,
+            "args": [
+              "login",
+              "status"
+            ],
+            "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\temp\\gg-codex-probe-7d1d22b5",
+            "mode": "ready",
+            "timestamp": "2026-11-21T10:13:21.719Z",
+            "codeHome": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home",
+            "home": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-442-independent-01\\public-fixture\\home"
+          }
+        ]
+      }
+    },
+    {
+      "label": "HTTP GET /system/shutdown",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 200,
+        "body": {
+          "phase": "running",
+          "graceMs": 300000,
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "controlToken": "adac21fb-a48a-4ecb-997c-c039c83e660c:0:running"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "HTTP POST /system/shutdown",
+      "status": "OBSERVED",
+      "detail": {
+        "status": 202,
+        "body": {
+          "phase": "draining",
+          "graceMs": 300000,
+          "startedAt": "2026-11-21T10:13:21.756Z",
+          "choiceAt": "2026-11-21T10:18:21.756Z",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "controlToken": "adac21fb-a48a-4ecb-997c-c039c83e660c:1:draining"
+        },
+        "argv": [],
+        "calls": []
+      }
+    },
+    {
+      "label": "no additional native inventory/provider commands",
+      "status": "PASS",
+      "detail": {
+        "nativeCalls": 31,
+        "workerCommands": 0,
+        "inventoryCommands": 0,
+        "providerRequests": 0,
+        "probeTempClean": true
+      }
+    }
+  ],
+  "processes": [
+    {
+      "label": "cli-ready",
+      "pid": 29780,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--preflight"
+      ],
+      "started": "2026-11-21T10:12:58.421Z",
+      "exitCode": 0,
+      "signal": null,
+      "exited": "2026-11-21T10:13:00.473Z"
+    },
+    {
+      "label": "cli-auth",
+      "pid": 22396,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--preflight"
+      ],
+      "started": "2026-11-21T10:13:00.489Z",
+      "exitCode": 1,
+      "signal": null,
+      "exited": "2026-11-21T10:13:02.426Z"
+    },
+    {
+      "label": "cli-incompatible",
+      "pid": 18636,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--preflight"
+      ],
+      "started": "2026-11-21T10:13:02.437Z",
+      "exitCode": 1,
+      "signal": null,
+      "exited": "2026-11-21T10:13:04.175Z"
+    },
+    {
+      "label": "cli-unknown",
+      "pid": 37448,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--preflight"
+      ],
+      "started": "2026-11-21T10:13:04.187Z",
+      "exitCode": 1,
+      "signal": null,
+      "exited": "2026-11-21T10:13:06.340Z"
+    },
+    {
+      "label": "cli-missing",
+      "pid": 25792,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--preflight"
+      ],
+      "started": "2026-11-21T10:13:06.354Z",
+      "exitCode": 1,
+      "signal": null,
+      "exited": "2026-11-21T10:13:08.365Z"
+    },
+    {
+      "label": "key-create-admin",
+      "pid": 15848,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--create-api-key",
+        "QA disposable"
+      ],
+      "started": "2026-11-21T10:13:10.086Z",
+      "exitCode": 0,
+      "signal": null,
+      "exited": "2026-11-21T10:13:13.092Z"
+    },
+    {
+      "label": "key-create-limited",
+      "pid": 29700,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js",
+        "--create-api-key",
+        "QA loops only",
+        "--scopes",
+        "loops:read"
+      ],
+      "started": "2026-11-21T10:13:13.102Z",
+      "exitCode": 0,
+      "signal": null,
+      "exited": "2026-11-21T10:13:16.415Z"
+    },
+    {
+      "label": "gateway",
+      "pid": 9760,
+      "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "G:\\ggq\\gg-i4-442-qa\\GraphGoblin\\apps\\api\\dist\\main.js"
+      ],
+      "started": "2026-11-21T10:13:16.463Z",
+      "port": 55078,
+      "exitCode": 0,
+      "signal": null,
+      "exited": "2026-11-21T10:13:21.805Z"
+    }
+  ],
+  "failures": []
+}

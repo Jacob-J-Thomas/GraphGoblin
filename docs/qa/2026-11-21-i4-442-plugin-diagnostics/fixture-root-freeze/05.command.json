@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "git",
+    "diff",
+    "--",
+    "apps/web/src/settings/sections/PreflightSection.test.tsx"
+  ],
+  "exitCode": 0,
+  "stdout": "diff --git a/apps/web/src/settings/sections/PreflightSection.test.tsx b/apps/web/src/settings/sections/PreflightSection.test.tsx\nindex d3a6bd8b..84566b78 100644\n--- a/apps/web/src/settings/sections/PreflightSection.test.tsx\n+++ b/apps/web/src/settings/sections/PreflightSection.test.tsx\n@@ -46,7 +46,8 @@ function codex(state: keyof typeof LABELS): FakeApi['preflight'][number] {\n     state,\n     ok: state === 'ready',\n     ...(state === 'cli-missing' ? {} : { version: '0.160.0' }),\n-    authenticated: state === 'ready',\n+    // As the adapter reports: false only for a confirmed sign-out, absent when login is unknown.\n+    ...(state === 'ready' || state === 'auth' ? { authenticated: state === 'ready' } : {}),\n     problems: state === 'ready' ? [] : [readinessMessage('codex', state)],\n   };\n }\n",
+  "stderr": ""
+}
