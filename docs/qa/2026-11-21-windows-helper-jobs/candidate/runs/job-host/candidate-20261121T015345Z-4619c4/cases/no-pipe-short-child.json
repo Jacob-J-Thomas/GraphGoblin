@@ -1,0 +1,323 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T015345Z-4619c4",
+  "label": "candidate",
+  "case": "no-pipe-short-child",
+  "title": "Quiescence: root exits at once, a short detached child with no launcher pipe lives 2 s",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Wait for normal short-lived members to quiesce",
+  "startedAtMs": 1795226049311,
+  "durationMs": 5415,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 41088,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 2390,
+      "osElapsedMs": 2381,
+      "osCreatedAtMs": 1795226049318,
+      "osExitedAtMs": 1795226051699,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:54:11.6797131Z",
+          "pid": 41088,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 26784 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\no-pipe-short-child\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 340,
+      "stdoutBytes": 0,
+      "stderrBytes": 340,
+      "stdoutText": "",
+      "stderrText": "Port 26784 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\no-pipe-short-child\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "no-pipe-short-child/launcher-click/41088",
+      "case": "no-pipe-short-child",
+      "role": "launcher-click",
+      "pid": 41088,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226049325,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 29896,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226049318,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226049318,
+          "exitedAtMs": 1795226051699
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226049318,
+          "exitedAtMs": 1795226051699
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226049318,
+          "exitedAtMs": 1795226051699
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226049318,
+          "exitedAtMs": 1795226051699
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "no-pipe-short-child/identity-1/9760",
+      "case": "no-pipe-short-child",
+      "role": "identity-1",
+      "pid": 9760,
+      "source": "handshake",
+      "self": {
+        "case": "no-pipe-short-child",
+        "role": "identity-1",
+        "pid": 9760,
+        "ppid": 41088,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226049528,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 41088,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226049432,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226049432,
+          "exitedAtMs": 1795226049610
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226049432,
+          "exitedAtMs": 1795226049610
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226049432,
+          "exitedAtMs": 1795226049610
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "no-pipe-short-child/short-none/36988",
+      "case": "no-pipe-short-child",
+      "role": "short-none",
+      "pid": 36988,
+      "source": "handshake",
+      "self": {
+        "case": "no-pipe-short-child",
+        "role": "short-none",
+        "pid": 36988,
+        "ppid": 9760,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "char"
+        },
+        "lifetimeMs": 2000
+      },
+      "openedAtMs": 1795226049601,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 9760,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226049534,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226049534,
+          "exitedAtMs": 1795226051605
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226049534,
+          "exitedAtMs": 1795226051605
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226049534,
+          "exitedAtMs": 1795226051605
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226049523,
+      "pid": 9760,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226049604,
+      "pid": 9760,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226049604,
+      "pid": 9760,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795226049605,
+      "pid": 9760,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795226049316,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795226049325,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226051707,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "control",
+      "text": "identity accepted",
+      "expected": "foreign-listener",
+      "actual": "foreign-listener",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "short-child-quiesced-before-exit",
+      "kind": "requirement",
+      "text": "launcher waits for the short no-pipe member to quiesce naturally before success",
+      "expected": {
+        "classification": "natural",
+        "exitedBeforeLauncherExit": true
+      },
+      "actual": {
+        "role": "short-none",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 41,
+        "exitedRelativeToLauncherExitMs": -94,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "short-child-natural",
+      "kind": "control",
+      "text": "short no-pipe member exits naturally (41) within the grace window",
+      "expected": 41,
+      "actual": 41,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

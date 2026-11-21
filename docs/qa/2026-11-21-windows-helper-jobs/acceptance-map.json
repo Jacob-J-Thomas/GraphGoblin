@@ -1,0 +1,554 @@
+{
+  "schema": "gg541-combined-acceptance-map/1",
+  "source": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+  "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+  "base": "47ca4640793a81efa5bec661dba25627de314774",
+  "baseline": {
+    "run": "baseline-20261121T013403Z-b281ea",
+    "source": "47ca4640793a81efa5bec661dba25627de314774",
+    "cases": 20,
+    "controls": 10,
+    "expectedFailures": 10,
+    "setupFaults": 0,
+    "originalCountError": "9/11 original headline retained privately; raw case/summary recount is10/10."
+  },
+  "candidate": {
+    "verdict": "PASS for bounded independent native QA",
+    "criteriaCounts": {
+      "PASS": 23,
+      "FAIL": 0,
+      "LIMIT": 8
+    },
+    "notAll31IndependentlyPassed": true,
+    "terminalReportSha256": "86c4337ada17cc4b41a0ec8b190b9f20f50e65ff6b10b35429a8f7ab85ab9209",
+    "originalPrivateManifestSha256": "286fd7566a3f690f17ed15f826066f48cb2790b65b032d342ce65419dc7b9bbb",
+    "originalPublicAcceptanceMap": "candidate/acceptance-map.json",
+    "originalPublicAcceptanceMapSha256": "549d181dab98a795cee18f3a77fb489bcdef49111aa1b6b7009aea6c27e7c5ec",
+    "independentReportSha256": "2cf5c892eab0e6b763c8251d24fb228a73b5df1901e61c2274c1cd6bbf0ee531"
+  },
+  "formalRuns": {
+    "baseline-formal": {
+      "runId": "baseline-20261121T013403Z-b281ea",
+      "source": "47ca4640793a81efa5bec661dba25627de314774",
+      "tree": "c0ff3509016ce0db415fd1f35939ad39a7a9ac9d",
+      "verdicts": {
+        "baseline-control-pass": 10,
+        "expected-baseline-failure-observed": 10
+      },
+      "cases": 20
+    },
+    "matched": {
+      "runId": "candidate-20261121T014803Z-3edac9",
+      "source": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+      "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+      "verdicts": {
+        "candidate-pass": 20
+      },
+      "cases": 20
+    },
+    "job-host": {
+      "runId": "candidate-20261121T015345Z-4619c4",
+      "source": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+      "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+      "verdicts": {
+        "candidate-pass": 20
+      },
+      "cases": 20
+    },
+    "ext": {
+      "runId": "candidate-20261121T020839Z-081d57",
+      "source": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+      "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+      "verdicts": {
+        "candidate-pass": 11
+      },
+      "cases": 11
+    },
+    "ext-baseline": {
+      "runId": "baseline-20261121T021033Z-3c576e",
+      "source": "47ca4640793a81efa5bec661dba25627de314774",
+      "tree": "c0ff3509016ce0db415fd1f35939ad39a7a9ac9d",
+      "verdicts": {
+        "unexpected-baseline-behaviour": 1,
+        "expected-baseline-failure-observed": 9,
+        "baseline-control-pass": 1
+      },
+      "cases": 11
+    }
+  },
+  "developmentRuns": [
+    {
+      "runId": "candidate-20261121T020409Z-77d3d7",
+      "verdicts": {
+        "candidate-pass": 9,
+        "setup-fault": 2
+      },
+      "setupFaultCases": [
+        "ext-incompatible-job-cold",
+        "ext-incompatible-job-warm-click"
+      ]
+    },
+    {
+      "runId": "candidate-20261121T020717Z-f694f9",
+      "verdicts": {
+        "candidate-pass": 2
+      },
+      "setupFaultCases": []
+    }
+  ],
+  "extendedBaselineVerdicts": {
+    "unexpected-baseline-behaviour": 1,
+    "expected-baseline-failure-observed": 9,
+    "baseline-control-pass": 1
+  },
+  "matchedCaseComparison": [
+    {
+      "case": "quick-success-fixture-gateway",
+      "title": "Clean quick completion: identity + free store sample, one detached fixture gateway, warm reuse",
+      "lane": "fixture",
+      "planRow": "Clean quick completion; independent gateway (fixture lane)",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/quick-success-fixture-gateway.json"
+    },
+    {
+      "case": "delayed-success",
+      "title": "Slow successful work: valid identity after 3 s",
+      "lane": "fixture",
+      "planRow": "Clean quick completion, ordinary delayed exit (slow successful work witness)",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/delayed-success.json"
+    },
+    {
+      "case": "stderr-flood-success",
+      "title": "Flood: 1 MiB stderr then a valid identity and natural exit 0",
+      "lane": "fixture",
+      "planRow": "Blocking/full pipes: a large stderr flood that completes in time succeeds",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "identity-accepted",
+        "root-natural-zero",
+        "within-work-budget"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/stderr-flood-success.json"
+    },
+    {
+      "case": "eof-short-child",
+      "title": "Both EOF: root exits at once, a short detached child holds stdout+stderr for 2 s",
+      "lane": "fixture",
+      "planRow": "Ordinary delayed console/child exit; both EOF",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/eof-short-child.json"
+    },
+    {
+      "case": "no-pipe-short-child",
+      "title": "Quiescence: root exits at once, a short detached child with no launcher pipe lives 2 s",
+      "lane": "fixture",
+      "planRow": "Wait for normal short-lived members to quiesce",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "short-child-quiesced-before-exit"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/no-pipe-short-child.json"
+    },
+    {
+      "case": "deadline-running-root",
+      "title": "Helper deadline: running root, real PowerShell query with nested child, detached stdout holder",
+      "lane": "fixture",
+      "planRow": "Running Node, real PowerShell query fixture and nested child",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "ps-nested-terminated-by-launcher",
+        "held-stdout-terminated-by-launcher",
+        "caller-eof-at-launcher-exit"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/deadline-running-root.json"
+    },
+    {
+      "case": "held-stdout-root-exits",
+      "title": "Held pipe: root exits at once with a valid identity, detached child holds stdout for 25 s",
+      "lane": "fixture",
+      "planRow": "Immediate Node exit and a member holding stdout only",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "first-check-bound",
+        "helper-timeout",
+        "held-stdout-terminated-by-launcher"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/held-stdout-root-exits.json"
+    },
+    {
+      "case": "held-stderr-root-exits",
+      "title": "Held pipe: root exits at once with a valid identity, detached child holds stderr for 40 s",
+      "lane": "fixture",
+      "planRow": "Immediate Node exit and a member holding stderr only",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "helper-timeout",
+        "held-stderr-terminated-by-launcher",
+        "caller-eof-at-launcher-exit"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/held-stderr-root-exits.json"
+    },
+    {
+      "case": "no-pipe-root-exits",
+      "title": "No-pipe descendant: root exits at once with a valid identity, detached child without launcher pipes lives 40 s",
+      "lane": "fixture",
+      "planRow": "Immediate Node exit and a member holding neither pipe",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "helper-timeout",
+        "held-none-terminated-by-launcher",
+        "caller-eof-at-launcher-exit"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/no-pipe-root-exits.json"
+    },
+    {
+      "case": "privacy-refused",
+      "title": "Stderr sentinel privacy with a nonzero helper exit",
+      "lane": "fixture",
+      "planRow": "Nonzero exit; synthetic privacy sentinels on stderr, bounded log and typed evidence",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/privacy-refused.json"
+    },
+    {
+      "case": "privacy-success",
+      "title": "Stderr sentinel privacy with a valid identity",
+      "lane": "fixture",
+      "planRow": "Synthetic privacy sentinels on stderr with a successful helper",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/privacy-success.json"
+    },
+    {
+      "case": "malformed-stdout",
+      "title": "Malformed stdout with exit 0",
+      "lane": "fixture",
+      "planRow": "Invalid protocol returns helper-invalid",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "helper-invalid"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/malformed-stdout.json"
+    },
+    {
+      "case": "invalid-utf8-stdout",
+      "title": "Invalid UTF-8 stdout with exit 0",
+      "lane": "fixture",
+      "planRow": "Invalid UTF-8 returns helper-invalid",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "helper-invalid"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/invalid-utf8-stdout.json"
+    },
+    {
+      "case": "creation-failure",
+      "title": "Creation failure: configured Node path is an existing non-executable file",
+      "lane": "fixture",
+      "planRow": "helper-unavailable covers a distinct known runtime-start failure",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/creation-failure.json"
+    },
+    {
+      "case": "held-store-recheck-stalls",
+      "title": "Held store, enough room for a recheck that stalls inside a PowerShell query (9 s release wait)",
+      "lane": "fixture",
+      "planRow": "Held store with enough room for a shortened final recheck that stalls inside a query",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "store-held-retained",
+        "release-wait-bound"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/held-store-recheck-stalls.json"
+    },
+    {
+      "case": "held-store-too-little-time",
+      "title": "Held store, each ownership sample takes 4 s (6 s release wait): no room for a recheck",
+      "lane": "fixture",
+      "planRow": "Held store with too little time to start a recheck",
+      "baselineVerdict": "expected-baseline-failure-observed",
+      "baselineFailedIds": [
+        "single-ownership-sample",
+        "no-unbudgeted-final-query",
+        "prompt-after-single-sample"
+      ],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/held-store-too-little-time.json"
+    },
+    {
+      "case": "held-store-to-free",
+      "title": "Held store then a conclusive free sample permits exactly one cold start",
+      "lane": "fixture",
+      "planRow": "Clean held-to-free transition",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/held-store-to-free.json"
+    },
+    {
+      "case": "real-helper-direct-timing",
+      "title": "Unmodified built helper invoked directly: identity x3, free store x2, live owner x2",
+      "lane": "real",
+      "planRow": "Real WMI identity: first checks and warm repeats (fresh-process measurement; prior WMI use unknown, not cold)",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/real-helper-direct-timing.json"
+    },
+    {
+      "case": "real-cold-warm-reuse",
+      "title": "Unmodified built API/helper: real gateway cold start, detached lifetime and warm reuse",
+      "lane": "real",
+      "planRow": "Independent gateway: cold-starts, stays healthy after launcher exit/caller EOF, same PID on warm reuse",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/real-cold-warm-reuse.json"
+    },
+    {
+      "case": "real-held-store",
+      "title": "Unmodified built API/helper with real WMI: a live owner holds the store",
+      "lane": "real",
+      "planRow": "Real WMI identity and refusal (matching live owner); bounded collection, no second spawn",
+      "baselineVerdict": "baseline-control-pass",
+      "baselineFailedIds": [],
+      "matchedCandidateVerdict": "candidate-pass",
+      "compatibleJobCandidateVerdict": "candidate-pass",
+      "baselineRecord": "baseline/cases/real-held-store.json"
+    }
+  ],
+  "criterionIndex": [
+    {
+      "id": "C01",
+      "criterion": "Baseline evidence intact: all 345 manifest entries match; formal summary is 10 controls / 10 expected baseline failures / 0 setup faults (coordinator recount; original 9/11 headline preserved)",
+      "status": "PASS"
+    },
+    {
+      "id": "C02",
+      "criterion": "Unchanged baseline driver on the candidate (detached host, --job-exit-code 3762750553): every requirement and control passes; every expected baseline failure flips",
+      "status": "PASS"
+    },
+    {
+      "id": "C03",
+      "criterion": "Compatible enclosing job via the existing --launcher-host job option (driver libuv job: kill-on-close, silent breakaway)",
+      "status": "PASS"
+    },
+    {
+      "id": "C04",
+      "criterion": "Compatible explicit enclosing job (kill-on-close, no breakaway, no UI limits, verified nestable from inside): nested helper succeeds; helper tree is a member of the enclosing job",
+      "status": "PASS"
+    },
+    {
+      "id": "C05",
+      "criterion": "Helper owns a private kill-on-close job assigned at creation: every helper root is already in a job at its first witnessed instruction (handshake); detached, PowerShell-created and nested descendants are collected with it",
+      "status": "PASS"
+    },
+    {
+      "id": "C06",
+      "criterion": "Selected 15,000 ms initial work cap: deadline refusals return helper-timeout after the full window and within 15 s + 2 s + slack",
+      "status": "PASS"
+    },
+    {
+      "id": "C07",
+      "criterion": "Two-second cleanup allowance and explicit termination code 0xE0470459 whenever the launcher terminates its job",
+      "status": "PASS"
+    },
+    {
+      "id": "C08",
+      "criterion": "Both EOFs and zero active processes required for success; ordinary short-lived members (pipe-holding and no-pipe) quiesce inside the window",
+      "status": "PASS"
+    },
+    {
+      "id": "C09",
+      "criterion": "Caller stdio is never held by the helper tree (explicit handle list: NUL stdin and two private pipe writers only)",
+      "status": "PASS"
+    },
+    {
+      "id": "C10",
+      "criterion": "Creator death at acknowledged points (helper-ready; root-exited with descendants ready): exact launcher handle terminated, harness job held open, helper tree ends within 2 s by the private job, before any harness teardown",
+      "status": "PASS"
+    },
+    {
+      "id": "C11",
+      "criterion": "Job accounting with observer handles retained and after they close (open harness job; the private job's own accounting is launcher self-observation)",
+      "status": "PASS"
+    },
+    {
+      "id": "C12",
+      "criterion": "Incompatible enclosing job (in-job probe: nested and plain creation refused with 1816): refusal before the first helper exists, actionable helper-containment diagnostic, unrelated sentinel and job sibling survive",
+      "status": "PASS"
+    },
+    {
+      "id": "C13",
+      "criterion": "Warm click on an incompatible host refuses even with a live matching gateway; the existing gateway stays directly callable",
+      "status": "PASS"
+    },
+    {
+      "id": "C14",
+      "criterion": "Outer job with a verified effective UI restriction that prevents nesting",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C15",
+      "criterion": "Concurrent drain: unread-stderr deadlock removed (1 MiB stderr flood then valid result succeeds); stderr is discarded and never forwarded",
+      "status": "PASS"
+    },
+    {
+      "id": "C16",
+      "criterion": "Stdout retention capped at 256 KiB: exactly 262,144 bytes accepted; 262,145 refused helper-invalid; oversize from a running root refused inside the work window with job termination",
+      "status": "PASS"
+    },
+    {
+      "id": "C17",
+      "criterion": "Strict UTF-8 and complete stage-protocol validation inside the work window (helper-invalid)",
+      "status": "PASS"
+    },
+    {
+      "id": "C18",
+      "criterion": "Held retry reserve: stalled recheck keeps the held reason and full advice inside the release wait; no recheck or unbudgeted final query when the 2 s reserve cannot fit the measured sample; clean held-to-free start",
+      "status": "PASS"
+    },
+    {
+      "id": "C19",
+      "criterion": "Closed outcome taxonomy observed natively: helper-containment, helper-unavailable, helper-timeout, helper-refused (natural nonzero, child exit retained), helper-invalid",
+      "status": "PASS"
+    },
+    {
+      "id": "C20",
+      "criterion": "Stderr privacy: synthetic sentinel never reaches launcher stdout/stderr, launcher.log(.1) or gateway.log; diagnostics carry no exception text",
+      "status": "PASS"
+    },
+    {
+      "id": "C21",
+      "criterion": "Gateway independence: separate detached launch survives its launcher, warm reuse keeps the same PID, caller EOF prompt, untouched by helper cleanup",
+      "status": "PASS"
+    },
+    {
+      "id": "C22",
+      "criterion": "Sentinel survival: the same-executable sentinel (also the WMI-queried process) and unrelated job siblings survive every case",
+      "status": "PASS"
+    },
+    {
+      "id": "C23",
+      "criterion": "Real unmodified API/helper and WMI controls: direct identity/free/held outputs, cold gateway start, warm reuse, held refusal for a live owner",
+      "status": "PASS"
+    },
+    {
+      "id": "C24",
+      "criterion": "Maintained native control NativeChecks --helper-checks (unmodified, compiled into scratch): clean, slow, flood, short-member, invalid/oversize/nonzero/perpetual-flood outcomes, four stream modes cleanup-confirmed with 0xE0470459, four sequential 5 s probes refuse at the 15 s cap",
+      "status": "PASS"
+    },
+    {
+      "id": "C25",
+      "criterion": "helper-cleanup-unconfirmed at the 2 s expiry and transfer of SafeHandle/OVERLAPPED/event/buffer to a completion owner",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C26",
+      "criterion": "Full decision-point precedence (cleanup-unconfirmed, retained held guidance, expired work, natural nonzero, invalid)",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C27",
+      "criterion": "Other containment setup-failure branches: CreateJobObject/SetInformationJobObject, attribute-list, pipe ACL/creation/connect, client-PID mismatch, remote-client rejection, EntryPointNotFound on pre-Windows 10; atomic assignment before user code",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C28",
+      "criterion": "Staged installation validates attribute capability before replacing configuration or shortcuts",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C29",
+      "criterion": "Native dialog rendering, concurrent clicks, oversized/flood diagnostics in the dialog, Windows Server and fresh-runner hosts, replacement-owner lock identity, store-acquiring/store-unverified via the launcher, real-WMI mismatch/missing/unverified identities",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C30",
+      "criterion": "First-WMI-after-boot (cold WMI) measurement",
+      "status": "LIMIT"
+    },
+    {
+      "id": "C31",
+      "criterion": "WMI service and provider sessions stay outside the helper job",
+      "status": "LIMIT"
+    }
+  ],
+  "independentLimitSummary": {
+    "C14": "UI restrictions were effective but permitted nesting on this tested build. Active-process-quota refusal and compatible UI-restricted success are separate observations accepted underD163; the original UI-only refusal remains unestablished.",
+    "C25": "Cleanup-unconfirmed at2-second expiry and pending-read completion-owner transfer were not natively exercised; source and cleanup-confirmed maintained control only.",
+    "C26": "Individual outcomes were observed; full precedence when causes coincide remains source evidence.",
+    "C27": "Additional Win32 fault seams and atomicity before the first machine instruction remain source/API evidence.58/58 first helper handshakes observed job membership; that measurement is not instruction-level proof.",
+    "C28": "The independent pass did not run --validate-install at all. Supplemental hosted compatible-host positive validation is separate and does not prove capability-failure publication ordering.",
+    "C29": "Independent pass omitted dialog rendering, concurrency, other hosts and remaining replacement/store/WMI-negative scenarios. Supplemental maintained/hosted observations cover only their named subsets. UI bootstrap attempts opened no fixture or application.",
+    "C30": "Cold/first-WMI-after-boot provenance remains unknown; fresh process or first corpus record is not first machine WMI use.",
+    "C31": "The WMI service/provider process was not enumerated or witnessed. Queried process/gateway survival is a separate observation."
+  },
+  "supplemental": {
+    "role": "Author-supplied parent-verified evidence map, not new independent QA; never upgrades original independent LIMIT rows",
+    "report": "supplemental/REPORT.md",
+    "map": "supplemental/map.json",
+    "mapSha256": "71b0c5990d8def3c75c95f764646ad4b13142f9eb90c3a05b01975703ef49e4c",
+    "uiBootstrap": "supplemental/ui-bootstrap-result.json",
+    "visualPerformed": false
+  },
+  "timingInterpretation": {
+    "exitSlackMs": 32,
+    "boolean": "exitedBeforeLauncherExit permits exit<=launcher OS exit+32ms; not strict chronological-before proof",
+    "numericEvidence": "Use exitedRelativeToLauncherExitMs. Creator-death helper-ready sample includes+5ms with booleantrue, consistent with cleanup after creator death."
+  },
+  "initialCi": "initial-ci-summary.json",
+  "retainedLocalFailures": "local-checks-summary.json",
+  "pendingGates": "Final QA publication head unknown; parent-owned exact-publication-head/current-target checks, opposite-family review, fresh final audit, signed merge and D160 consolidated owner decision/QA remain separate. D163 and D164 preserve the original LIMIT rows and technical gates. No formal scan consumed by this integration.",
+  "dispositions": [
+    {
+      "id": "D163",
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7055986230",
+      "scope": "Actual active-process-quota refusal plus effective-but-compatible UI control; C14 stays LIMIT."
+    },
+    {
+      "id": "D164",
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7056081015",
+      "scope": "Proceed through technical gates with scoped native/hosted and compiled shared-message privacy proof; visual dialog NOT PERFORMED retained for consolidated owner review/QA, source-only limits remain review obligations and no gate waived."
+    }
+  ]
+}

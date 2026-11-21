@@ -1,0 +1,257 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T015345Z-4619c4",
+  "label": "candidate",
+  "case": "real-held-store",
+  "title": "Unmodified built API/helper with real WMI: a live owner holds the store",
+  "lane": "real",
+  "category": "positive-control",
+  "planRow": "Real WMI identity and refusal (matching live owner); bounded collection, no second spawn",
+  "startedAtMs": 1795226189182,
+  "durationMs": 7923,
+  "prepared": {
+    "repo": "checkout",
+    "timeoutSeconds": 3,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 12916,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 4057,
+      "osElapsedMs": 4049,
+      "osCreatedAtMs": 1795226189929,
+      "osExitedAtMs": 1795226193978,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "store-held",
+      "diagnostic": "store-held",
+      "diagnosticFinal": "store-held",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:56:33.9592048Z",
+          "pid": 12916,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\real-held-store\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<RUN>\\cases\\real-held-store\\launcher.json",
+          "lock": "<RUN>\\cases\\real-held-store\\data\\graphgoblin.lock"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 455,
+      "stdoutBytes": 0,
+      "stderrBytes": 455,
+      "stdoutText": "",
+      "stderrText": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\real-held-store\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <RUN>\\cases\\real-held-store\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "real-held-store/contender/35144",
+      "case": "real-held-store",
+      "role": "contender",
+      "pid": 35144,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226189926,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 29896,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226189189,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [
+        {
+          "status": "acquired",
+          "pid": 35144
+        },
+        {
+          "status": "released"
+        }
+      ],
+      "samples": {
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795226189189,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795226189189,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226189189,
+          "exitedAtMs": 1795226196999
+        }
+      },
+      "teardown": {
+        "action": "stdin-release",
+        "atMs": 1795226196992
+      },
+      "finalClassification": "exited"
+    },
+    {
+      "tag": "real-held-store/launcher-click/12916",
+      "case": "real-held-store",
+      "role": "launcher-click",
+      "pid": 12916,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226189934,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 29896,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226189929,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226189929,
+          "exitedAtMs": 1795226193978
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226189929,
+          "exitedAtMs": 1795226193978
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226189929,
+          "exitedAtMs": 1795226193978
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226189929,
+          "exitedAtMs": 1795226193978
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795226189185,
+      "event": "prepared",
+      "repo": "checkout",
+      "port": "disposable",
+      "timeoutSeconds": 3,
+      "marker": false
+    },
+    {
+      "atMs": 1795226189926,
+      "event": "contender-acquired"
+    },
+    {
+      "atMs": 1795226189933,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226193984,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "store-held",
+      "kind": "control",
+      "text": "real helper refuses with store-held for a live matching owner",
+      "expected": "store-held",
+      "actual": "store-held",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "lock-unchanged",
+      "kind": "control",
+      "text": "store lock bytes and file identity are read back unchanged (never deleted or replaced)",
+      "expected": {
+        "exists": true,
+        "sha256": "a5a90e425fa1e78693bd49e1e94a54cdcc213060aa915d7ed10df923ba50fcee",
+        "size": 142,
+        "fileId": "810877956:281474978826960"
+      },
+      "actual": {
+        "exists": true,
+        "sha256": "a5a90e425fa1e78693bd49e1e94a54cdcc213060aa915d7ed10df923ba50fcee",
+        "size": 142,
+        "fileId": "810877956:281474978826960"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway was started (no gateway.log created)",
+      "expected": false,
+      "actual": false,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "owner-alive",
+      "kind": "control",
+      "text": "the live owner process is untouched",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "real-timings",
+      "kind": "info",
+      "text": "real WMI refusal timing (prior WMI use unknown)",
+      "expected": null,
+      "actual": {
+        "elapsedMs": 4049,
+        "timeoutSeconds": 3
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

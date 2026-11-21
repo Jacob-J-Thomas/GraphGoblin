@@ -1,0 +1,2126 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T021033Z-3c576e",
+  "label": "baseline",
+  "case": "ext-strict-utf8-ownership",
+  "title": "Strict UTF-8: an otherwise valid held ownership answer with one invalid byte inside its path string",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Strict UTF-8 validation of the stage protocol (a lenient decoder would accept this as held)",
+  "startedAtMs": 1795227145112,
+  "durationMs": 9599,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 5520,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 6559,
+      "osElapsedMs": 6552,
+      "osCreatedAtMs": 1795227145120,
+      "osExitedAtMs": 1795227151672,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "store-held",
+      "diagnostic": "store-held",
+      "diagnosticFinal": "store-held",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:12:31.6535451Z",
+          "pid": 5520,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\ext-strict-utf8-ownership\\data\\graphgoblin.lockÿ. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<RUN>\\cases\\ext-strict-utf8-ownership\\launcher.json",
+          "lock": "<RUN>\\cases\\ext-strict-utf8-ownership\\data\\graphgoblin.lockÿ"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 475,
+      "stdoutBytes": 0,
+      "stderrBytes": 475,
+      "stdoutText": "",
+      "stderrText": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\ext-strict-utf8-ownership\\data\\graphgoblin.lockÿ. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <RUN>\\cases\\ext-strict-utf8-ownership\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-strict-utf8-ownership/launcher-click/5520",
+      "case": "ext-strict-utf8-ownership",
+      "role": "launcher-click",
+      "pid": 5520,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795227145125,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 38516,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227145120,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227145120,
+          "exitedAtMs": 1795227151672
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227145120,
+          "exitedAtMs": 1795227151672
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227145120,
+          "exitedAtMs": 1795227151672
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227145120,
+          "exitedAtMs": 1795227151672
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/identity-1/30180",
+      "case": "ext-strict-utf8-ownership",
+      "role": "identity-1",
+      "pid": 30180,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "identity-1",
+        "pid": 30180,
+        "ppid": 5520,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795227145306,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227145215,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145215,
+          "exitedAtMs": 1795227145314
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145215,
+          "exitedAtMs": 1795227145314
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145215,
+          "exitedAtMs": 1795227145314
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-1/24644",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-1",
+      "pid": 24644,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-1",
+        "pid": 24644,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 1
+      },
+      "openedAtMs": 1795227145425,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227145335,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145335,
+          "exitedAtMs": 1795227145434
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145335,
+          "exitedAtMs": 1795227145434
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145335,
+          "exitedAtMs": 1795227145434
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-2/39920",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-2",
+      "pid": 39920,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-2",
+        "pid": 39920,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 2
+      },
+      "openedAtMs": 1795227145739,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227145646,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145646,
+          "exitedAtMs": 1795227145748
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145646,
+          "exitedAtMs": 1795227145748
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145646,
+          "exitedAtMs": 1795227145748
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-3/6576",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-3",
+      "pid": 6576,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-3",
+        "pid": 6576,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 3
+      },
+      "openedAtMs": 1795227146061,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227145972,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145972,
+          "exitedAtMs": 1795227146071
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145972,
+          "exitedAtMs": 1795227146071
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227145972,
+          "exitedAtMs": 1795227146071
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-4/44616",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-4",
+      "pid": 44616,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-4",
+        "pid": 44616,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 4
+      },
+      "openedAtMs": 1795227146377,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227146285,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146285,
+          "exitedAtMs": 1795227146387
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146285,
+          "exitedAtMs": 1795227146387
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146285,
+          "exitedAtMs": 1795227146387
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-5/19344",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-5",
+      "pid": 19344,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-5",
+        "pid": 19344,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 5
+      },
+      "openedAtMs": 1795227146715,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227146613,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146613,
+          "exitedAtMs": 1795227146725
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146613,
+          "exitedAtMs": 1795227146725
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146613,
+          "exitedAtMs": 1795227146725
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-6/688",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-6",
+      "pid": 688,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-6",
+        "pid": 688,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 6
+      },
+      "openedAtMs": 1795227147040,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227146944,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146944,
+          "exitedAtMs": 1795227147050
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146944,
+          "exitedAtMs": 1795227147050
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227146944,
+          "exitedAtMs": 1795227147050
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-7/32288",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-7",
+      "pid": 32288,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-7",
+        "pid": 32288,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 7
+      },
+      "openedAtMs": 1795227147357,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227147268,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147268,
+          "exitedAtMs": 1795227147366
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147268,
+          "exitedAtMs": 1795227147366
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147268,
+          "exitedAtMs": 1795227147366
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-8/24632",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-8",
+      "pid": 24632,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-8",
+        "pid": 24632,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 8
+      },
+      "openedAtMs": 1795227147671,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227147577,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147577,
+          "exitedAtMs": 1795227147682
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147577,
+          "exitedAtMs": 1795227147682
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147577,
+          "exitedAtMs": 1795227147682
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-9/41900",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-9",
+      "pid": 41900,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-9",
+        "pid": 41900,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 9
+      },
+      "openedAtMs": 1795227148002,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227147906,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147906,
+          "exitedAtMs": 1795227148012
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147906,
+          "exitedAtMs": 1795227148012
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227147906,
+          "exitedAtMs": 1795227148012
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-10/7232",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-10",
+      "pid": 7232,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-10",
+        "pid": 7232,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 10
+      },
+      "openedAtMs": 1795227148330,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227148232,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148232,
+          "exitedAtMs": 1795227148341
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148232,
+          "exitedAtMs": 1795227148341
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148232,
+          "exitedAtMs": 1795227148341
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-11/26676",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-11",
+      "pid": 26676,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-11",
+        "pid": 26676,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 11
+      },
+      "openedAtMs": 1795227148648,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227148561,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148561,
+          "exitedAtMs": 1795227148659
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148561,
+          "exitedAtMs": 1795227148659
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148561,
+          "exitedAtMs": 1795227148659
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-12/16884",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-12",
+      "pid": 16884,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-12",
+        "pid": 16884,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 12
+      },
+      "openedAtMs": 1795227148972,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227148873,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148873,
+          "exitedAtMs": 1795227148983
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148873,
+          "exitedAtMs": 1795227148983
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227148873,
+          "exitedAtMs": 1795227148983
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-13/8748",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-13",
+      "pid": 8748,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-13",
+        "pid": 8748,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 13
+      },
+      "openedAtMs": 1795227149297,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227149199,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149199,
+          "exitedAtMs": 1795227149306
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149199,
+          "exitedAtMs": 1795227149306
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149199,
+          "exitedAtMs": 1795227149306
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-14/44580",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-14",
+      "pid": 44580,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-14",
+        "pid": 44580,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 14
+      },
+      "openedAtMs": 1795227149620,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227149531,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149531,
+          "exitedAtMs": 1795227149631
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149531,
+          "exitedAtMs": 1795227149631
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149531,
+          "exitedAtMs": 1795227149631
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-15/12832",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-15",
+      "pid": 12832,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-15",
+        "pid": 12832,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 15
+      },
+      "openedAtMs": 1795227149942,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227149852,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149852,
+          "exitedAtMs": 1795227149952
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149852,
+          "exitedAtMs": 1795227149952
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227149852,
+          "exitedAtMs": 1795227149952
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-16/44820",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-16",
+      "pid": 44820,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-16",
+        "pid": 44820,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 16
+      },
+      "openedAtMs": 1795227150281,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227150176,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150176,
+          "exitedAtMs": 1795227150291
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150176,
+          "exitedAtMs": 1795227150291
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150176,
+          "exitedAtMs": 1795227150291
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-17/20060",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-17",
+      "pid": 20060,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-17",
+        "pid": 20060,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 17
+      },
+      "openedAtMs": 1795227150604,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227150515,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150515,
+          "exitedAtMs": 1795227150613
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150515,
+          "exitedAtMs": 1795227150613
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150515,
+          "exitedAtMs": 1795227150613
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-18/15164",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-18",
+      "pid": 15164,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-18",
+        "pid": 15164,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 18
+      },
+      "openedAtMs": 1795227150914,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227150828,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150828,
+          "exitedAtMs": 1795227150923
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150828,
+          "exitedAtMs": 1795227150923
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227150828,
+          "exitedAtMs": 1795227150923
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-19/45972",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-19",
+      "pid": 45972,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-19",
+        "pid": 45972,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 19
+      },
+      "openedAtMs": 1795227151230,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227151145,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151145,
+          "exitedAtMs": 1795227151239
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151145,
+          "exitedAtMs": 1795227151239
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151145,
+          "exitedAtMs": 1795227151239
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-20/43604",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-20",
+      "pid": 43604,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-20",
+        "pid": 43604,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 20
+      },
+      "openedAtMs": 1795227151538,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227151453,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151453,
+          "exitedAtMs": 1795227151547
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151453,
+          "exitedAtMs": 1795227151547
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151453,
+          "exitedAtMs": 1795227151547
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-21/7684",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-21",
+      "pid": 7684,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-21",
+        "pid": 7684,
+        "ppid": 5520,
+        "helper": "store-state",
+        "index": 21
+      },
+      "openedAtMs": 1795227151638,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 5520,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227151555,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151555,
+          "exitedAtMs": 1795227151646
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151555,
+          "exitedAtMs": 1795227151646
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227151555,
+          "exitedAtMs": 1795227151646
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795227145302,
+      "pid": 30180,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227145307,
+      "pid": 30180,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227145308,
+      "pid": 30180,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795227145308,
+      "pid": 30180,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    },
+    {
+      "at": 1795227145423,
+      "pid": 24644,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795227145428,
+      "pid": 24644,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795227145429,
+      "pid": 24644,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "store-state-1",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227145430,
+      "pid": 24644,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "store-state-1",
+      "code": 0
+    },
+    {
+      "at": 1795227145737,
+      "pid": 39920,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 2,
+      "role": "store-state-2"
+    },
+    {
+      "at": 1795227145741,
+      "pid": 39920,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 2,
+      "role": "store-state-2"
+    },
+    {
+      "at": 1795227145742,
+      "pid": 39920,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 2,
+      "role": "store-state-2",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227145743,
+      "pid": 39920,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 2,
+      "role": "store-state-2",
+      "code": 0
+    },
+    {
+      "at": 1795227146059,
+      "pid": 6576,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 3,
+      "role": "store-state-3"
+    },
+    {
+      "at": 1795227146064,
+      "pid": 6576,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 3,
+      "role": "store-state-3"
+    },
+    {
+      "at": 1795227146065,
+      "pid": 6576,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 3,
+      "role": "store-state-3",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227146066,
+      "pid": 6576,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 3,
+      "role": "store-state-3",
+      "code": 0
+    },
+    {
+      "at": 1795227146373,
+      "pid": 44616,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 4,
+      "role": "store-state-4"
+    },
+    {
+      "at": 1795227146380,
+      "pid": 44616,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 4,
+      "role": "store-state-4"
+    },
+    {
+      "at": 1795227146380,
+      "pid": 44616,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 4,
+      "role": "store-state-4",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227146381,
+      "pid": 44616,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 4,
+      "role": "store-state-4",
+      "code": 0
+    },
+    {
+      "at": 1795227146712,
+      "pid": 19344,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 5,
+      "role": "store-state-5"
+    },
+    {
+      "at": 1795227146718,
+      "pid": 19344,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 5,
+      "role": "store-state-5"
+    },
+    {
+      "at": 1795227146718,
+      "pid": 19344,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 5,
+      "role": "store-state-5",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227146719,
+      "pid": 19344,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 5,
+      "role": "store-state-5",
+      "code": 0
+    },
+    {
+      "at": 1795227147037,
+      "pid": 688,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 6,
+      "role": "store-state-6"
+    },
+    {
+      "at": 1795227147042,
+      "pid": 688,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 6,
+      "role": "store-state-6"
+    },
+    {
+      "at": 1795227147042,
+      "pid": 688,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 6,
+      "role": "store-state-6",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227147043,
+      "pid": 688,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 6,
+      "role": "store-state-6",
+      "code": 0
+    },
+    {
+      "at": 1795227147353,
+      "pid": 32288,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 7,
+      "role": "store-state-7"
+    },
+    {
+      "at": 1795227147359,
+      "pid": 32288,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 7,
+      "role": "store-state-7"
+    },
+    {
+      "at": 1795227147359,
+      "pid": 32288,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 7,
+      "role": "store-state-7",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227147360,
+      "pid": 32288,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 7,
+      "role": "store-state-7",
+      "code": 0
+    },
+    {
+      "at": 1795227147666,
+      "pid": 24632,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 8,
+      "role": "store-state-8"
+    },
+    {
+      "at": 1795227147672,
+      "pid": 24632,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 8,
+      "role": "store-state-8"
+    },
+    {
+      "at": 1795227147673,
+      "pid": 24632,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 8,
+      "role": "store-state-8",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227147675,
+      "pid": 24632,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 8,
+      "role": "store-state-8",
+      "code": 0
+    },
+    {
+      "at": 1795227147999,
+      "pid": 41900,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 9,
+      "role": "store-state-9"
+    },
+    {
+      "at": 1795227148004,
+      "pid": 41900,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 9,
+      "role": "store-state-9"
+    },
+    {
+      "at": 1795227148005,
+      "pid": 41900,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 9,
+      "role": "store-state-9",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227148006,
+      "pid": 41900,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 9,
+      "role": "store-state-9",
+      "code": 0
+    },
+    {
+      "at": 1795227148328,
+      "pid": 7232,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 10,
+      "role": "store-state-10"
+    },
+    {
+      "at": 1795227148333,
+      "pid": 7232,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 10,
+      "role": "store-state-10"
+    },
+    {
+      "at": 1795227148334,
+      "pid": 7232,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 10,
+      "role": "store-state-10",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227148335,
+      "pid": 7232,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 10,
+      "role": "store-state-10",
+      "code": 0
+    },
+    {
+      "at": 1795227148646,
+      "pid": 26676,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 11,
+      "role": "store-state-11"
+    },
+    {
+      "at": 1795227148651,
+      "pid": 26676,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 11,
+      "role": "store-state-11"
+    },
+    {
+      "at": 1795227148652,
+      "pid": 26676,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 11,
+      "role": "store-state-11",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227148654,
+      "pid": 26676,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 11,
+      "role": "store-state-11",
+      "code": 0
+    },
+    {
+      "at": 1795227148969,
+      "pid": 16884,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 12,
+      "role": "store-state-12"
+    },
+    {
+      "at": 1795227148974,
+      "pid": 16884,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 12,
+      "role": "store-state-12"
+    },
+    {
+      "at": 1795227148976,
+      "pid": 16884,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 12,
+      "role": "store-state-12",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227148977,
+      "pid": 16884,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 12,
+      "role": "store-state-12",
+      "code": 0
+    },
+    {
+      "at": 1795227149294,
+      "pid": 8748,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 13,
+      "role": "store-state-13"
+    },
+    {
+      "at": 1795227149299,
+      "pid": 8748,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 13,
+      "role": "store-state-13"
+    },
+    {
+      "at": 1795227149300,
+      "pid": 8748,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 13,
+      "role": "store-state-13",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227149300,
+      "pid": 8748,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 13,
+      "role": "store-state-13",
+      "code": 0
+    },
+    {
+      "at": 1795227149618,
+      "pid": 44580,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 14,
+      "role": "store-state-14"
+    },
+    {
+      "at": 1795227149624,
+      "pid": 44580,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 14,
+      "role": "store-state-14"
+    },
+    {
+      "at": 1795227149625,
+      "pid": 44580,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 14,
+      "role": "store-state-14",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227149626,
+      "pid": 44580,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 14,
+      "role": "store-state-14",
+      "code": 0
+    },
+    {
+      "at": 1795227149939,
+      "pid": 12832,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 15,
+      "role": "store-state-15"
+    },
+    {
+      "at": 1795227149945,
+      "pid": 12832,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 15,
+      "role": "store-state-15"
+    },
+    {
+      "at": 1795227149946,
+      "pid": 12832,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 15,
+      "role": "store-state-15",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227149947,
+      "pid": 12832,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 15,
+      "role": "store-state-15",
+      "code": 0
+    },
+    {
+      "at": 1795227150278,
+      "pid": 44820,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 16,
+      "role": "store-state-16"
+    },
+    {
+      "at": 1795227150283,
+      "pid": 44820,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 16,
+      "role": "store-state-16"
+    },
+    {
+      "at": 1795227150284,
+      "pid": 44820,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 16,
+      "role": "store-state-16",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227150285,
+      "pid": 44820,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 16,
+      "role": "store-state-16",
+      "code": 0
+    },
+    {
+      "at": 1795227150601,
+      "pid": 20060,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 17,
+      "role": "store-state-17"
+    },
+    {
+      "at": 1795227150606,
+      "pid": 20060,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 17,
+      "role": "store-state-17"
+    },
+    {
+      "at": 1795227150607,
+      "pid": 20060,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 17,
+      "role": "store-state-17",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227150608,
+      "pid": 20060,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 17,
+      "role": "store-state-17",
+      "code": 0
+    },
+    {
+      "at": 1795227150910,
+      "pid": 15164,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 18,
+      "role": "store-state-18"
+    },
+    {
+      "at": 1795227150915,
+      "pid": 15164,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 18,
+      "role": "store-state-18"
+    },
+    {
+      "at": 1795227150916,
+      "pid": 15164,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 18,
+      "role": "store-state-18",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227150917,
+      "pid": 15164,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 18,
+      "role": "store-state-18",
+      "code": 0
+    },
+    {
+      "at": 1795227151226,
+      "pid": 45972,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 19,
+      "role": "store-state-19"
+    },
+    {
+      "at": 1795227151231,
+      "pid": 45972,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 19,
+      "role": "store-state-19"
+    },
+    {
+      "at": 1795227151232,
+      "pid": 45972,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 19,
+      "role": "store-state-19",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227151232,
+      "pid": 45972,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 19,
+      "role": "store-state-19",
+      "code": 0
+    },
+    {
+      "at": 1795227151536,
+      "pid": 43604,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 20,
+      "role": "store-state-20"
+    },
+    {
+      "at": 1795227151541,
+      "pid": 43604,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 20,
+      "role": "store-state-20"
+    },
+    {
+      "at": 1795227151541,
+      "pid": 43604,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 20,
+      "role": "store-state-20",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227151542,
+      "pid": 43604,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 20,
+      "role": "store-state-20",
+      "code": 0
+    },
+    {
+      "at": 1795227151635,
+      "pid": 7684,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 21,
+      "role": "store-state-21"
+    },
+    {
+      "at": 1795227151640,
+      "pid": 7684,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 21,
+      "role": "store-state-21"
+    },
+    {
+      "at": 1795227151640,
+      "pid": 7684,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 21,
+      "role": "store-state-21",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795227151641,
+      "pid": 7684,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 21,
+      "role": "store-state-21",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "data",
+      "type": "directory"
+    },
+    {
+      "path": "data/graphgoblin.lock",
+      "type": "file",
+      "size": 84,
+      "fileId": "810877956:281474978827515",
+      "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb"
+    },
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 10823,
+      "fileId": "810877956:281474978827516",
+      "sha256": "e7255eaf62f65e117e334928304602e408c2274865e6b2015bab8da1e6242452"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 466,
+      "fileId": "810877956:281474978827513",
+      "sha256": "7ce33244b44469fb737ff8da895963a5245ea46124c875b12da3635d782da5f2"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 755,
+      "fileId": "810877956:281474978827517",
+      "sha256": "077efd523e8c9b407971755002857d216f1aeba10c597cd556042b0020f0d01f"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 384,
+      "fileId": "810877956:281474978827512",
+      "sha256": "c3905798a040652107309c213b1694e7c346c6e7c2adf97f7c37b3972a9bcf9f"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795227145116,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795227145125,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795227151678,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "invalid UTF-8 inside a JSON string refuses with helper-invalid (strict decoding), not store-held",
+      "expected": "helper-invalid",
+      "actual": {
+        "code": "store-held",
+        "storeStateCalls": 21
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "lock-unchanged",
+      "kind": "control",
+      "text": "store lock bytes and file identity unchanged",
+      "expected": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978827515"
+      },
+      "actual": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978827515"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

@@ -1,0 +1,314 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T020409Z-77d3d7",
+  "label": "candidate",
+  "case": "ext-stdout-cap-plus-one",
+  "title": "Stdout one byte over the cap: the same valid identity padded to 262145 bytes, natural exit 0",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Stdout retention bound: 256 KiB + 1 refuses as invalid",
+  "startedAtMs": 1795226707425,
+  "durationMs": 3770,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 45980,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 740,
+      "osElapsedMs": 725,
+      "osCreatedAtMs": 1795226707438,
+      "osExitedAtMs": 1795226708163,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-invalid",
+      "diagnostic": "helper-invalid",
+      "diagnosticFinal": "helper-invalid",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:05:08.1426090Z",
+          "pid": 45980,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-invalid",
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "config": "<RUN>\\cases\\ext-stdout-cap-plus-one\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 236,
+      "stdoutBytes": 0,
+      "stderrBytes": 236,
+      "stdoutText": "",
+      "stderrText": "The read-only launcher check returned an invalid or oversized response. No gateway was started.\r\n\r\nConfiguration: <RUN>\\cases\\ext-stdout-cap-plus-one\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-stdout-cap-plus-one/launcher-click/45980",
+      "case": "ext-stdout-cap-plus-one",
+      "role": "launcher-click",
+      "pid": 45980,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226707445,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 19624,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226707438,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226707438,
+          "exitedAtMs": 1795226708163
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226707438,
+          "exitedAtMs": 1795226708163
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226707438,
+          "exitedAtMs": 1795226708163
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226707438,
+          "exitedAtMs": 1795226708163
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-stdout-cap-plus-one/identity-1/44928",
+      "case": "ext-stdout-cap-plus-one",
+      "role": "identity-1",
+      "pid": 44928,
+      "source": "handshake",
+      "self": {
+        "case": "ext-stdout-cap-plus-one",
+        "role": "identity-1",
+        "pid": 44928,
+        "ppid": 45980,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226707642,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 45980,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226707548,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226707548,
+          "exitedAtMs": 1795226708131
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226707548,
+          "exitedAtMs": 1795226708131
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226707548,
+          "exitedAtMs": 1795226708131
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226707637,
+      "pid": 44928,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226707643,
+      "pid": 44928,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226708125,
+      "pid": 44928,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity-padded"
+    },
+    {
+      "at": 1795226708126,
+      "pid": 44928,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 468,
+      "fileId": "810877956:281474978827098",
+      "sha256": "acbd40d68db224c5209c3f1b6e7587fe45d8f83554e5d1dde63325256dbb971c"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 466,
+      "fileId": "810877956:281474978827097",
+      "sha256": "8ca5ac38730f7a5d399a2a154f6a8f847823d2fcb56d07c3080023eb4076ab05"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 362,
+      "fileId": "810877956:281474978827099",
+      "sha256": "1c42ed4a85641ae33dd8e07c0cfbc01522e6b858ae330f7902126691e4299bc3"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 356,
+      "fileId": "810877956:281474978827096",
+      "sha256": "54d9fa162bfa6ab4459ed6f883144d6af7c9d9991c46970284fec3035fb1ce3c"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795226707428,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795226707444,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226708169,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "one byte over the cap refuses with helper-invalid",
+      "expected": "helper-invalid",
+      "actual": "helper-invalid",
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "prompt",
+      "kind": "requirement",
+      "text": "refusal comes from the bound, not the deadline (< 10000 ms)",
+      "expected": "< 10000",
+      "actual": 725,
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "root-ended-before-launcher-exit",
+      "kind": "requirement",
+      "text": "the root ended (naturally or by the launcher's job) before the launcher exited",
+      "expected": {
+        "exitedBeforeLauncherExit": true
+      },
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 0,
+        "exitedRelativeToLauncherExitMs": -32,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

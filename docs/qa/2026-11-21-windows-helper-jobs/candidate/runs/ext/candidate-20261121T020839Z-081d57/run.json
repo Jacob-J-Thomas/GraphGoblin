@@ -1,0 +1,84 @@
+{
+  "schema": "gg459-native-qa-run/1",
+  "runId": "candidate-20261121T020839Z-081d57",
+  "label": "candidate",
+  "startedAt": "2026-11-21T02:08:40.775Z",
+  "checkout": {
+    "head": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+    "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+    "trackedChanges": "",
+    "launcherSourceSha256": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078",
+    "launcherSourceBlob": "76d695fd3db94dbbfc2ab2022cd302941b09b105",
+    "dist": {
+      "apps/api/dist/instance-identity.js": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/windows-process-identity.js": "06be670fd2587da19751cf2e73a563246c6f59697d22d246ff82f5222d77d09b",
+      "apps/api/dist/data-dir-lock.js": "dfc4e59a48e65191b85cc2508507070c98dc7d14b00f3291651ab60d5b0d9c71",
+      "apps/api/dist/windows-log/guard.js": "cba6e1d032fd09f1d3e19f9772f65b4776510860669ffb45e78ac7a41475355c"
+    },
+    "evidenceModuleSha256": "760ba51eb2a3729bdcf8a06cfb64e5af5093f2b24d7680673fdef159d681da94"
+  },
+  "build": {
+    "compiler": "Framework64/v4.0.30319/csc.exe",
+    "launcherFlags": "/nologo /target:winexe /optimize+ /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll",
+    "launcherExeSha256": "aa9c34f854afe75a2a891022108e351353d7e1b76853af6e9ac2eb55495c5947",
+    "compilerOutput": "<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(1187,48): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.state' is never assigned to, and will always have its default value null\r\n<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(1187,55): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.path' is never assigned to, and will always have its default value null\r\n<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(1187,61): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.detail' is never assigned to, and will always have its default value null",
+    "witnessExeSha256": "f75a13db0bf7a601861f538d0784e8e3ffc0aa6525a6dd0103c861f21781f741"
+  },
+  "runtime": {
+    "node": "v22.23.4",
+    "nodeExecutableSha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26300",
+      "version": "Windows 11 Pro",
+      "arch": "x64"
+    },
+    "clr": "4.0.30319.42000",
+    "witnessOs": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "driver": {
+    "qa459-driver.mjs": "87d92c569cb7e7e4edc3b341f78b4b8d24500ebf34be25db2635d4cf884bdaf0",
+    "qa459-cases.mjs": "963fcfeaddc41f4eca59cc5a4ede2f85bdb7d17bc1d41eba3d34c0819a381753",
+    "qa459-ext-cases.mjs": "a9e28614aa39b3b2081026c1db57670a9cd84bc42f6891c8feedba736154cef4",
+    "README.md": "727ad703ff15023341c2462f16dc27a5ea5d152a2a26a3477036519e3092d94b",
+    "witness/QaWitness.cs": "32e226cfdbcc737c9435f8fd6c0f9591756477e7e08ac393831e92c995b9f4ac",
+    "fixtures/gateway.mjs": "eedb44b91fe918d1b97a672318f6ec62f4a58666657ab7a3202b59146579dd5f",
+    "fixtures/handshake.mjs": "e3c2143fb2747981f4111af6a5ae79b35620acf21b2cb9642c3b930724d95dda",
+    "fixtures/helper.mjs": "c192098d39d5ac4cb342eead9daf8ddc31782771631e12986c224064f6ba45cb",
+    "fixtures/member.mjs": "d806da9709a946bebd705514e5594d4dcc674973b75d3b1177b90947e37ef535",
+    "fixtures/ps-query.ps1": "d7f5de1e98ac34e64169e781ff08a680a159cd07ef5f191458762b070672198b"
+  },
+  "driverVersion": "qa459-ext/1",
+  "suite": "ext",
+  "constants": {
+    "WATCHDOG_CODE": 42073,
+    "DOTNET_KILL_CODE": 4294967295,
+    "CREATOR_KILL_CODE": 17820,
+    "NEVER_RAN_CODE": 42078,
+    "CODES": {
+      "member": 41,
+      "psQuery": 43,
+      "gatewayDrained": 44,
+      "gatewayMaxLife": 45,
+      "sentinel": 46,
+      "released": 47,
+      "driverGone": 48,
+      "rootMaxLife": 49,
+      "setupFault": 97
+    },
+    "GRACE_MS": 3000,
+    "EXIT_SLACK_MS": 32,
+    "jobExitCode": 3762750553
+  },
+  "launcherHost": "detached",
+  "driverProcess": {
+    "image": "node.exe",
+    "inAnyJob": true
+  },
+  "invocation": "<launcher.exe> --config <case>\\launcher.json --ensure-gateway (quiet; no dialog, no PWA)",
+  "sentinel": {
+    "pid": 39644,
+    "image": "node.exe"
+  }
+}

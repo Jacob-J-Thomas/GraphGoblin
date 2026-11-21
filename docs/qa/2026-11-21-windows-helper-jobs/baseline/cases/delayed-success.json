@@ -1,0 +1,262 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "delayed-success",
+  "title": "Slow successful work: valid identity after 3 s",
+  "lane": "fixture",
+  "category": "positive-control",
+  "planRow": "Clean quick completion, ordinary delayed exit (slow successful work witness)",
+  "startedAtMs": 1795224849378,
+  "durationMs": 6309,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 28652,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 3279,
+      "osElapsedMs": 3271,
+      "osCreatedAtMs": 1795224849387,
+      "osExitedAtMs": 1795224852658,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:34:12.6412916Z",
+          "pid": 28652,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 4872 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\delayed-success\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 329,
+      "stdoutBytes": 0,
+      "stderrBytes": 329,
+      "stdoutText": "",
+      "stderrText": "Port 4872 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\delayed-success\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "delayed-success/launcher-click/28652",
+      "case": "delayed-success",
+      "role": "launcher-click",
+      "pid": 28652,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224849394,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224849387,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224849387,
+          "exitedAtMs": 1795224852658
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224849387,
+          "exitedAtMs": 1795224852658
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224849387,
+          "exitedAtMs": 1795224852658
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224849387,
+          "exitedAtMs": 1795224852658
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "delayed-success/identity-1/43132",
+      "case": "delayed-success",
+      "role": "identity-1",
+      "pid": 43132,
+      "source": "handshake",
+      "self": {
+        "case": "delayed-success",
+        "role": "identity-1",
+        "pid": 43132,
+        "ppid": 28652,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795224849568,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 28652,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224849484,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224849484,
+          "exitedAtMs": 1795224852581
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224849484,
+          "exitedAtMs": 1795224852581
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224849484,
+          "exitedAtMs": 1795224852581
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795224849564,
+      "pid": 43132,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224849568,
+      "pid": 43132,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224852575,
+      "pid": 43132,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795224852576,
+      "pid": 43132,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795224849385,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795224849393,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795224852665,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "control",
+      "text": "identity accepted (next stage refuses the plain-health marker listener)",
+      "expected": "foreign-listener",
+      "actual": "foreign-listener",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "root-natural-zero",
+      "kind": "control",
+      "text": "helper root exits naturally with 0",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 0,
+        "exitedRelativeToLauncherExitMs": -77,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "elapsed-reflects-slow-work",
+      "kind": "control",
+      "text": "launcher waited for slow valid work and stayed inside the 15 s budget",
+      "expected": "3000..15000 ms",
+      "actual": 3271,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "baseline-control-pass"
+}

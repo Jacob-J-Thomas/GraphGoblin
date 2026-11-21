@@ -1,0 +1,57 @@
+{
+  "schema": "gg541-retained-local-check-summary/1",
+  "source": "11214dadbde049af01dd0280b9b701ad10a0f50a",
+  "base": "47ca4640793a81efa5bec661dba25627de314774",
+  "tree": "409fc7e0fcefd23b68541926ad72cfbfe70d5244",
+  "overallLocalCheck": "FAILED",
+  "overallToolingCoverage": "FAILED; numerical package coverage not established",
+  "sourceHashes": {
+    "D162": "23dca21e25d5571bd71a4fb51a8ae954e3ed2e5cf1bfdd0a7b306217bca535f9",
+    "authorReport": "e4616019bc55cd694e51ddb79fa1db53f2142a63cc5bb73e7e1496fa17141a2c",
+    "authorSourceBinding": "e12aa9d983dafad39e8ad6ead88769fea2e18c288a81f647a2e8ecf120819995"
+  },
+  "attempts": [
+    {
+      "attempt": "First parallel full pnpm check",
+      "status": "failed",
+      "observed": "Five unchanged Claude plugin tests timed out at 5 seconds, with follow-on ENOTEMPTY. Isolated unchanged plugin then passed 8/8, 95.00% lines/95.23% branches.",
+      "causalLimit": "Later isolated pass does not establish the original failure cause."
+    },
+    {
+      "attempt": "Serial Turbo coverage",
+      "status": "failed",
+      "observed": "Unchanged engine timing 4236.217 ms against 2000 ms. Quiet isolated engine passed 1814 tests, 96.94% lines/91.22% branches.",
+      "causalLimit": "Original timing failure remains failed; no timeout or assertion was changed."
+    },
+    {
+      "attempt": "Quiet infrastructure coverage",
+      "status": "failed",
+      "passed": 1106,
+      "failed": 52,
+      "failureClasses": {
+        "symlinkCreationEPERM": 47,
+        "Windows0666VersusPosix0600ModeAssertions": 2,
+        "sqliteCleanupUnlinkEBUSY": 2,
+        "chatAudioOrphanFixtureOpenENOENT": 1
+      },
+      "causalLimit": "Symlink/mode cases expose platform-capability differences; the three cleanup/fixture outcomes remain unresolved. No single host cause is established for all52."
+    },
+    {
+      "attempt": "Local Windows launcher suite",
+      "status": "failed",
+      "passed": 24,
+      "failedIncludingParent": 2,
+      "observed": "Symlink fixture creation EPERM plus its parent, before that launcher invocation. Ordinary launcher/realWMI/contention and seven bounded-log subcases passed.",
+      "sourceLimit": "Earlier installer/ordinary executables are mixed-source development controls. Only final bounded-log binaries/subcases were compiled after the frozen commit; this is not a whole exact-final-head native acceptance claim."
+    },
+    {
+      "attempt": "Full local tooling coverage",
+      "status": "failed",
+      "passed": 220,
+      "failed": 2,
+      "observed": "Perf CLI timed out after PERF_BROWSER complete; unchanged launcher-identity child failed without diagnostic. Independent exact-source unchanged identity file later passed 2/2 in 27.07 seconds.",
+      "causalLimit": "Perf and original identity-child failure causes remain unresolved. The later2/2does not erase the failed aggregate run."
+    }
+  ],
+  "unchangedPolicy": "No coverage threshold, timeout, test exclusion, privilege or native assertion was relaxed. Initial hosted CI and independent QA retain separate evidence authority. No all-host-cause explanation is claimed."
+}

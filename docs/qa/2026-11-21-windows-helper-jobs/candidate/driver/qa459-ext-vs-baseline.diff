@@ -1,0 +1,1440 @@
+diff -ruN baseline/README.md qa459-ext/README.md
+--- baseline/README.md	2026-11-20 20:17:12.218681900 -0600
++++ qa459-ext/README.md	2026-11-20 20:17:12.291336500 -0600
+@@ -87,3 +87,37 @@
+ `control` for behaviour that must hold on both baseline and candidate; state the expected
+ baseline result. Keep new fixtures bounded (natural lifetimes) and announced through the
+ handshake.
++
++## Extension qa459-ext/1 (`--suite ext`)
++
++A separately hashed copy of the baseline driver. `qa459-cases.mjs` is byte-identical to the
++baseline; the base suite (default `--suite base`) behaves as before. `--suite ext` runs
++`qa459-ext-cases.mjs` for the remaining ADR-0086 native acceptance:
++
++- **Harness jobs.** The witness creates a disposable job (`job`, `joblimit`), places processes
++  in it (`jobspawn`: created suspended with NUL stdin and two private capture pipes as the only
++  inherited handles, assigned, then resumed), reports basic accounting and the job's own
++  process-ID list (`jobquery`), job membership of an exact handle (`injob`) and closes the job
++  only at teardown (`jobclose`). It never enumerates processes outside its own disposable jobs.
++- **In-job probe.** `QaWitness.exe --nest-probe <file> [innerUi]` runs inside the harness job and
++  reports the job's effective UI restrictions read from inside, and whether a nested
++  `CreateProcess` with `PROC_THREAD_ATTRIBUTE_JOB_LIST` and an `AssignProcessToJobObject` into a
++  fresh job actually succeed. Probe children are created suspended and terminated with 42078
++  before they ever run.
++- **Creator death.** At an acknowledged boundary (helper-ready, or root-exited with descendants
++  ready) the exact launcher handle is terminated with 17820 (0x459C) while the harness job stays
++  open; descendant completion is sampled 2 s after the launcher's exit, before harness teardown.
++  Kill-on-close completion carries an OS-assigned code (0 on this host), so no 0xE0470459
++  assertion is made there.
++- **Incompatible host.** On the QA host no UI restriction prevents nesting (see the setup
++  exploration). The incompatible job is limited to the processes the harness placed in it plus
++  one free slot; console hosts appear in accounting but are not counted by the active-process
++  limit on this host. The in-job probe verifies the refusal before the launcher uses the slot.
++- **Observer handles.** After the grace sample the witness closes its handles to exited
++  processes and the open harness job's accounting is read again.
++- **Filesystem state.** Every case writes a private case-folder inventory (`filesystem.json`).
++
++| Code | Meaning (ext) |
++| --- | --- |
++| 17820 (0x459C) | creator-death TerminateProcess of the exact launcher handle |
++| 42078 (0xA45E) | never-resumed probe child or refused assignment |
+diff -ruN baseline/fixtures/helper.mjs qa459-ext/fixtures/helper.mjs
+--- baseline/fixtures/helper.mjs	2026-11-20 20:17:12.226714300 -0600
++++ qa459-ext/fixtures/helper.mjs	2026-11-20 20:17:12.287819500 -0600
+@@ -114,6 +114,18 @@
+   malformed: () => 'QA459-not-a-protocol-value\n',
+   'invalid-utf8': () => Buffer.from([0xff, 0xfe, 0x41, 0x0a]),
+   none: () => '',
++  // qa459-ext/1: exact stdout sizes and strict UTF-8 inside an otherwise valid ownership answer.
++  'identity-padded': () => {
++    const head = Buffer.from(scenario.identityValue + '\n');
++    return Buffer.concat([head, Buffer.alloc(spec.padTo - head.length, 0x20)]);
++  },
++  filler: () => Buffer.alloc(spec.bytes, 0x78),
++  'held-bad-utf8': () => {
++    const path = join(process.env.GG_DATA_DIR, 'graphgoblin.lock');
++    const text = JSON.stringify({ state: 'held', path: `${path}#MARK`, detail: 'another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish' }) + '\n';
++    const [before, after] = text.split('#MARK');
++    return Buffer.concat([Buffer.from(before), Buffer.from([0xff]), Buffer.from(after)]);
++  },
+ };
+ const output = outputs[spec.stdout ?? 'none']();
+ if (output.length) process.stdout.write(output);
+diff -ruN baseline/qa459-driver.mjs qa459-ext/qa459-driver.mjs
+--- baseline/qa459-driver.mjs	2026-11-20 20:17:12.215161000 -0600
++++ qa459-ext/qa459-driver.mjs	2026-11-20 20:17:12.290328200 -0600
+@@ -10,7 +10,12 @@
+ //
+ // Usage (Node 22 first on PATH):
+ //   node qa459-driver.mjs --checkout <repo> --scratch <dir> --out <dir> [--label baseline|candidate]
+-//        [--cases id,id] [--job-exit-code <n>] [--port-start 4871]
++//        [--cases id,id] [--job-exit-code <n>] [--port-start 4871] [--suite base|ext|all]
++//
++// qa459-ext/1: a separately hashed copy of the baseline driver. The base case table and its
++// helpers are unchanged; `--suite ext` runs qa459-ext-cases.mjs (disposable harness jobs created
++// by the extended witness, creator death at acknowledged boundaries, enclosing-job refusal, job
++// accounting, stdout cap and strict UTF-8). The default suite stays `base`.
+ import { execFileSync, spawn } from 'node:child_process';
+ import { createHash, randomBytes } from 'node:crypto';
+ import {
+@@ -31,8 +36,11 @@
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { parseArgs } from 'node:util';
+ import { CASES } from './qa459-cases.mjs';
++import { EXT_CASES } from './qa459-ext-cases.mjs';
+ 
+ export const WATCHDOG_CODE = 0xa459; // 42073: driver watchdog TerminateProcess on an exact handle
++export const CREATOR_KILL_CODE = 0x459c; // 17820: ext creator-death TerminateProcess of the exact launcher handle
++export const NEVER_RAN_CODE = 0xa45e; // 42078: ext probe child or refused assignment, never resumed
+ export const DOTNET_KILL_CODE = 0xffffffff; // .NET Framework Process.Kill => TerminateProcess(-1)
+ export const CODES = {
+   member: 41,
+@@ -60,8 +68,13 @@
+     // detached: launcher outside the driver's libuv job, like an Explorer shortcut click.
+     // job: launcher inside the driver's libuv job (KILL_ON_JOB_CLOSE + silent breakaway).
+     'launcher-host': { type: 'string', default: 'detached' },
++    suite: { type: 'string', default: 'base' },
+   },
+ });
++if (!['base', 'ext', 'all'].includes(args.suite)) {
++  console.error('--suite must be base, ext or all');
++  process.exit(2);
++}
+ if (!['detached', 'job'].includes(args['launcher-host'])) {
+   console.error('--launcher-host must be detached or job');
+   process.exit(2);
+@@ -205,8 +218,32 @@
+   if (role.startsWith('identity-') || role.startsWith('store-state-')) return [];
+   if (role === 'real-gateway' || role === 'contender') return [];
+   if (role.startsWith('real-helper-')) return [0];
++  if (role.startsWith('nest-probe-')) return [0];
+   return [CODES.member];
+ }
++const b64 = (value) => Buffer.from(JSON.stringify(value)).toString('base64');
++const KILL_ON_CLOSE = 0x2000;
++
++/** ext: a private case-folder inventory (relative path, size, sha256), never outside the case. */
++function inventory(root) {
++  const entries = [];
++  const walk = (directory, prefix) => {
++    if (!existsSync(directory)) return;
++    for (const name of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
++      const path = join(directory, name.name);
++      const relative = prefix ? `${prefix}/${name.name}` : name.name;
++      if (name.isDirectory()) {
++        entries.push({ path: relative, type: 'directory' });
++        walk(path, relative);
++      } else {
++        const stats = statSync(path, { bigint: true });
++        entries.push({ path: relative, type: name.isFile() ? 'file' : 'other', size: Number(stats.size), fileId: `${stats.dev}:${stats.ino}`, sha256: name.isFile() && stats.size < 16n << 20n ? fileHash(path) : null });
++      }
++    }
++  };
++  walk(root, '');
++  return entries;
++}
+ 
+ class Registry {
+   constructor(witness, token) {
+@@ -283,8 +320,44 @@
+   }
+   async state(record) {
+     if (!record.opened.ok) return { error: 'not-opened' };
++    if (record.observerClosed) return { error: 'observer-closed' };
+     return pickState(await this.witness.call('state', record.tag));
+   }
++  /** ext: a process the witness itself created (suspended, assigned, resumed) and retains. */
++  adopt(caseId, role, tag, reply, source = 'jobspawn') {
++    const record = {
++      tag,
++      case: caseId,
++      role,
++      pid: reply.pid ?? null,
++      source,
++      self: null,
++      openedAtMs: Date.now(),
++      opened: {
++        ok: reply.ok === true,
++        image: reply.image ?? null,
++        parentPid: reply.parentPid ?? null,
++        inAnyJob: reply.inAnyJob ?? null,
++        preAssignInAnyJob: reply.preAssignInAnyJob ?? null,
++        inHarnessJob: reply.inHarnessJob ?? null,
++        ...pickState(reply),
++      },
++      naturalCodes: naturalCodes(role),
++      messages: [],
++      samples: {},
++      teardown: null,
++      socket: null,
++    };
++    this.records.push(record);
++    return record;
++  }
++  /** ext: close the observer handle of an already exited process (accounting comparison). */
++  async closeObserver(record) {
++    const reply = await this.witness.call('close', record.tag);
++    record.observerClosed = reply.ok === true;
++    record.observerClosedAtMs = Date.now();
++    return record.observerClosed;
++  }
+ }
+ 
+ // ---------------------------------------------------------------- shared run state
+@@ -340,8 +413,247 @@
+     this.privacy = shared.privacy;
+     this.notNode = shared.notNode;
+     this.sleep = sleep;
++    this.creatorKillCode = CREATOR_KILL_CODE;
++    this.neverRanCode = NEVER_RAN_CODE;
++    this.killOnClose = KILL_ON_CLOSE;
++    this.ext = { jobs: [], accounting: [], probes: [], observersClosed: [] };
+     mkdirSync(join(this.dir, 'ready'), { recursive: true });
+   }
++  // ------------------------------------------------------------ ext: disposable harness jobs
++  /** A job the witness creates and holds open until teardown; its settings are read back. */
++  async harnessJob(name, { limitFlags = KILL_ON_CLOSE, uiFlags = 0, activeLimit = 0 } = {}) {
++    const tag = `${this.id}:${name}`;
++    const reply = await shared.witness.call('job', tag, limitFlags, uiFlags, activeLimit);
++    if (!reply.ok) {
++      this.fault('harness-job-failed', { error: reply.error ?? null, message: reply.message ?? null });
++      throw new Error('harness job failed');
++    }
++    const job = { tag, name, requested: { limitFlags, uiFlags, activeLimit }, readBack: reply.readBack, open: true, createdAtMs: Date.now() };
++    this.ext.jobs.push(job);
++    this.mark('harness-job-created', { name, readBack: reply.readBack });
++    return job;
++  }
++  /**
++   * Limit the job to the processes the harness placed in it plus one free slot (the probe, then
++   * the launcher). Setup evidence (explore/quota-1, ext-dev run 1): on this host console hosts
++   * appear in job accounting but are not counted by JOB_OBJECT_LIMIT_ACTIVE_PROCESS, so the limit
++   * is derived from placed processes, not from ActiveProcesses.
++   */
++  async restrictToOneFreeSlot(job, placed) {
++    const occupied = await this.jobAccounting(job, 'before:restrict');
++    const limit = placed + 1;
++    const flags = job.requested.limitFlags | 0x8; // JOB_OBJECT_LIMIT_ACTIVE_PROCESS
++    const reply = await shared.witness.call('joblimit', job.tag, flags, limit);
++    if (!reply.ok) this.fault('job-limit-failed', { win32: reply.win32 ?? null, error: reply.error ?? null });
++    job.restricted = { placed, activeBefore: occupied.activeProcesses ?? null, activeLimit: limit, readBack: reply.readBack ?? null };
++    this.mark('harness-job-restricted', job.restricted);
++    return job.restricted;
++  }
++  async jobAccounting(job, label) {
++    const reply = await shared.witness.call('jobquery', job.tag);
++    const entry = { job: job.name, label, ...(reply.ok ? reply.accounting : { error: reply.error ?? 'unavailable' }) };
++    this.ext.accounting.push(entry);
++    return entry;
++  }
++  /** In-job probe: the job's effective UI restrictions read from inside, and actual nesting attempts. */
++  async nestProbe(job, name = 'probe') {
++    const report = join(this.dir, `${name}.nest-probe.json`);
++    const tag = `${this.id}/nest-probe-${name}/job`;
++    const before = await this.jobAccounting(job, `before:${name}`);
++    const reply = await shared.witness.call('jobspawn', tag, job.tag, b64({
++      app: shared.witnessExe, args: ['--nest-probe', report], cwd: this.dir, env: baseEnvironment(),
++      stdoutPath: join(this.dir, `${name}.probe.stdout.bin`), stderrPath: join(this.dir, `${name}.probe.stderr.bin`),
++    }));
++    let result;
++    if (!reply.ok) result = { name, job: job.name, spawned: false, createError: reply.createError ?? null, assignError: reply.assignError ?? null, error: reply.error ?? null };
++    else {
++      const record = shared.registry.adopt(this.id, `nest-probe-${name}`, tag, reply);
++      let state = pickState(reply);
++      for (let i = 0; i < 400 && state.alive; i++) {
++        await sleep(25);
++        state = await shared.registry.state(record);
++      }
++      record.samples.exit = state;
++      const after = await this.jobAccounting(job, `after:${name}`);
++      result = {
++        name, job: job.name, spawned: true, inHarnessJob: reply.inHarnessJob ?? null, exitCode: state.exitCode ?? null,
++        report: existsSync(report) ? JSON.parse(readFileSync(report, 'utf8')) : null,
++        totalProcessesAdded: (after.totalProcesses ?? 0) - (before.totalProcesses ?? 0),
++      };
++      result.nestingSupported = result.report?.jobListCreateProcess === true && result.report?.jobListChildInNestedJob === true;
++    }
++    this.ext.probes.push(result);
++    this.mark('nest-probe-done', { name, nestingSupported: result.nestingSupported ?? null });
++    return result;
++  }
++  /** An unrelated member placed in the same harness job; it is witnessed through its own handshake. */
++  async spawnInJob(job, role, lifetimeMs = 90_000) {
++    const tag = `${this.id}/spawned-${role}/job`;
++    const encoded = Buffer.from(JSON.stringify({ role, lifetimeMs, caseDir: this.dir })).toString('base64url');
++    const reply = await shared.witness.call('jobspawn', tag, job.tag, b64({
++      app: process.execPath, args: [join(shared.fixtureRepo, 'qa', 'member.mjs'), encoded], cwd: this.dir,
++      env: { ...baseEnvironment(), QA459_PIPE: shared.pipe, QA459_TOKEN: shared.token, QA459_CASE: this.id },
++      stdoutPath: join(this.dir, `${role}.stdout.bin`), stderrPath: join(this.dir, `${role}.stderr.bin`),
++    }));
++    if (!reply.ok) {
++      this.fault('job-member-spawn-failed', { role, createError: reply.createError ?? null, assignError: reply.assignError ?? null });
++      return null;
++    }
++    for (let i = 0; i < 300 && !existsSync(join(this.dir, 'ready', role)); i++) await sleep(25);
++    const record = this.process(role);
++    if (!record?.opened.ok) this.fault('job-member-handshake-missing', role);
++    else record.spawnedIntoJob = { job: job.name, inHarnessJob: reply.inHarnessJob ?? null };
++    return record;
++  }
++  async waitFor(check, timeoutMs, stepMs = 20) {
++    const deadline = Date.now() + timeoutMs;
++    while (Date.now() < deadline) {
++      const value = await check();
++      if (value) return value;
++      await sleep(stepMs);
++    }
++    return null;
++  }
++  /**
++   * The compiled launcher started by the witness inside a harness job: created suspended with NUL
++   * stdin and two private capture pipes, assigned, then resumed. An optional boundary terminates
++   * the exact launcher handle (CREATOR_KILL_CODE) once its check reports the acknowledged point.
++   */
++  async launchJob(name, job, { watchdogMs = 45_000, boundary = null } = {}) {
++    const { configPath, env } = this.prepared;
++    const before = this.launcherLogRecords().length;
++    const tag = `${this.id}/launcher-${name}/job`;
++    const stdoutPath = join(this.dir, `${name}.capture.stdout.bin`);
++    const stderrPath = join(this.dir, `${name}.capture.stderr.bin`);
++    const accountingBefore = await this.jobAccounting(job, `before:${name}`);
++    const startedAtMs = Date.now();
++    const t0 = performance.now();
++    const reply = await shared.witness.call('jobspawn', tag, job.tag, b64({
++      app: shared.launcherExe, args: ['--config', configPath, '--ensure-gateway'], cwd: dirname(shared.launcherExe), env, stdoutPath, stderrPath,
++    }));
++    this.mark('launcher-resumed', { name, job: job.name, ok: reply.ok === true, resumedAtMs: reply.resumedAtMs ?? null });
++    if (!reply.ok) {
++      this.fault('job-launch-failed', { createError: reply.createError ?? null, assignError: reply.assignError ?? null, error: reply.error ?? null, message: reply.message ?? null });
++      throw new Error('job launch failed');
++    }
++    const record = shared.registry.adopt(this.id, `launcher-${name}`, tag, reply);
++    if (!/^GraphGoblin\.exe$/i.test(record.opened.image ?? '') || record.opened.inHarnessJob !== true || record.opened.preAssignInAnyJob !== false)
++      this.fault('launcher-job-unverified', record.opened);
++    let boundaryResult = boundary ? { name: boundary.name, reached: false } : null;
++    let killed = null;
++    let watchdog = null;
++    let exitPerf = null;
++    const deadline = Date.now() + watchdogMs;
++    for (;;) {
++      const state = await shared.registry.state(record);
++      if (!state.alive) {
++        exitPerf = performance.now();
++        break;
++      }
++      if (boundary && !killed) {
++        const reached = await boundary.check(this);
++        if (reached) {
++          boundaryResult = { name: boundary.name, reached: true, atMs: Date.now(), detail: reached };
++          this.mark('boundary-reached', { name: boundary.name });
++          await this.snapshot(`boundary:${name}`);
++          await this.jobAccounting(job, `boundary:${name}`);
++          const kill = await shared.witness.call('terminate', record.tag, CREATOR_KILL_CODE);
++          killed = { code: CREATOR_KILL_CODE, terminateAtMs: kill.terminateAtMs ?? null, terminateCalled: kill.terminateCalled ?? null, alreadyExited: kill.alreadyExited ?? null, ...pickState(kill) };
++          this.mark('launcher-terminated-at-boundary', { name: boundary.name, terminateCalled: kill.terminateCalled ?? null, alreadyExited: kill.alreadyExited ?? null });
++          continue;
++        }
++      }
++      if (Date.now() > deadline) {
++        this.mark('launcher-watchdog', { name });
++        watchdog = await shared.witness.call('terminate', record.tag, WATCHDOG_CODE);
++        exitPerf = performance.now();
++        break;
++      }
++      await sleep(20);
++    }
++    const exitState = await shared.registry.state(record);
++    record.samples.exit = exitState;
++    this.mark('launcher-exited', { name, exitCode: exitState.exitCode });
++    await this.snapshot(`atExit:${name}`);
++    const accountingAtExit = await this.jobAccounting(job, `atExit:${name}`);
++    let stdio = await shared.witness.call('stdio', tag);
++    for (let i = 0; i < 75 && (stdio.stdoutEofAtMs == null || stdio.stderrEofAtMs == null); i++) {
++      await sleep(20);
++      stdio = await shared.witness.call('stdio', tag);
++    }
++    const eofAt = stdio.stdoutEofAtMs != null && stdio.stderrEofAtMs != null ? Math.max(stdio.stdoutEofAtMs, stdio.stderrEofAtMs) : null;
++    const after = this.launcherLogRecords();
++    const records = after.slice(before);
++    const invocation = {
++      name,
++      tag,
++      pid: record.pid,
++      startedAtMs,
++      exitCode: exitState.exitCode,
++      exitKind: watchdog ? 'driver-watchdog' : killed ? 'creator-death-kill' : 'launcher-natural',
++      watchdog: watchdog ? pickState(watchdog) : null,
++      elapsedMs: exitPerf === null ? null : Math.round(exitPerf - t0),
++      osCreatedAtMs: exitState.createdAtMs,
++      osExitedAtMs: exitState.exitedAtMs,
++      osElapsedMs: exitState.exitedAtMs && exitState.createdAtMs ? exitState.exitedAtMs - exitState.createdAtMs : null,
++      callerEofAfterExitMs: eofAt === null || exitState.exitedAtMs == null ? null : Math.max(0, eofAt - exitState.exitedAtMs),
++      code: records.length ? (records.at(-1).code ?? null) : exitState.exitCode === 0 ? 'success' : null,
++      diagnostic: null,
++      launcherLogRecords: records,
++      captureTag: tag,
++      capturePaths: { stdoutPath, stderrPath },
++      ext: {
++        host: { job: job.name, preAssignInAnyJob: record.opened.preAssignInAnyJob, inHarnessJob: record.opened.inHarnessJob },
++        boundary: boundaryResult,
++        killed,
++        stdioAtExit: { stdoutEofAtMs: stdio.stdoutEofAtMs ?? null, stderrEofAtMs: stdio.stderrEofAtMs ?? null, stdoutBytes: stdio.stdoutBytes ?? null, stderrBytes: stdio.stderrBytes ?? null },
++        accountingBefore,
++        accountingAtExit,
++      },
++      stdoutChunks: [],
++      stderrChunks: [],
++    };
++    this.refreshCapture(invocation);
++    invocation.stdoutBytes = Buffer.concat(invocation.stdoutChunks);
++    invocation.stderrBytes = Buffer.concat(invocation.stderrChunks);
++    invocation.diagnostic = shared.classifyDiagnostic(invocation.stderrBytes.toString('utf8'));
++    invocation.closed = (async () => {
++      for (let i = 0; i < 6000; i++) {
++        const now = await shared.witness.call('stdio', tag);
++        if (now.stdoutEofAtMs != null && now.stderrEofAtMs != null) return performance.now();
++        await sleep(20);
++      }
++      return new Promise(() => {});
++    })();
++    this.invocations.push(invocation);
++    return invocation;
++  }
++  async stateOf(record) {
++    return record ? shared.registry.state(record) : { error: 'no-record' };
++  }
++  /** Whether an exact retained handle's process is (or was) a member of the harness job. */
++  async inJob(record, job) {
++    if (!record?.opened.ok || record.observerClosed) return null;
++    const reply = await shared.witness.call('injob', record.tag, job.tag);
++    return reply.ok ? reply.inJob : null;
++  }
++  refreshCapture(invocation) {
++    const read = (path) => (existsSync(path) ? [readFileSync(path)] : []);
++    invocation.stdoutChunks = read(invocation.capturePaths.stdoutPath);
++    invocation.stderrChunks = read(invocation.capturePaths.stderrPath);
++  }
++  /** Close observer handles of exited processes only, so accounting can be compared afterwards. */
++  async closeExitedObservers() {
++    const closed = [];
++    for (const record of shared.registry.forCase(this.id)) {
++      if (!record.opened.ok || record.observerClosed) continue;
++      const state = await shared.registry.state(record);
++      if (state.alive === false && (await shared.registry.closeObserver(record))) closed.push(record.role);
++    }
++    this.ext.observersClosed.push({ atMs: Date.now(), roles: closed });
++    this.mark('observers-closed', { roles: closed });
++    return closed;
++  }
+   /** Where the synthetic privacy sentinel appeared: launcher streams and managed logs. */
+   privacyLeaks() {
+     const leaks = [];
+@@ -738,6 +1050,10 @@
+   async teardown() {
+     const records = shared.registry.forCase(this.id).filter((record) => record.opened.ok);
+     for (const record of records) {
++      if (record.observerClosed) {
++        record.teardown = { action: 'none-already-exited' };
++        continue;
++      }
+       const state = await shared.registry.state(record);
+       if (!state.alive) {
+         record.teardown = { action: 'none-already-exited' };
+@@ -788,6 +1104,16 @@
+       const closedAt = await Promise.race([invocation.closed, sleep(3000).then(() => null)]);
+       invocation.callerEofAfterTeardown = closedAt === null ? 'still-open-3000ms' : Math.round(Math.max(0, closedAt - t));
+     }
++    // ext: harness teardown, after release and watchdog; recorded separately from collection.
++    for (const job of this.ext.jobs.filter((item) => item.open)) {
++      const before = await this.jobAccounting(job, 'teardown:before-close');
++      const reply = await shared.witness.call('jobclose', job.tag);
++      job.open = false;
++      job.closedAtMs = reply.closedAtMs ?? Date.now();
++      job.closeOk = reply.ok === true;
++      this.mark('harness-job-closed', { name: job.name, activeBeforeClose: before.activeProcesses ?? null });
++    }
++    for (const invocation of this.invocations) if (invocation.captureTag) this.refreshCapture(invocation);
+   }
+ }
+ 
+@@ -839,7 +1165,7 @@
+ }
+ 
+ function driverHashes() {
+-  const files = ['qa459-driver.mjs', 'qa459-cases.mjs', 'README.md', 'witness/QaWitness.cs',
++  const files = ['qa459-driver.mjs', 'qa459-cases.mjs', 'qa459-ext-cases.mjs', 'README.md', 'witness/QaWitness.cs',
+     ...readdirSync(join(driverDir, 'fixtures')).map((name) => `fixtures/${name}`)];
+   return Object.fromEntries(files.filter((file) => existsSync(join(driverDir, file))).map((file) => [file, fileHash(join(driverDir, file))]));
+ }
+@@ -875,6 +1201,11 @@
+   }
+   for (const name of ['events.ndjson', 'launcher.log', 'launcher.log.1', 'gateway.log', 'scenario.json', 'launcher.json'])
+     if (existsSync(join(context.dir, name))) copyFileSync(join(context.dir, name), join(rawDir, name));
++  // ext: in-job probe reports and the private case-folder inventory (filesystem state).
++  if (existsSync(context.dir))
++    for (const name of readdirSync(context.dir)) if (name.endsWith('.nest-probe.json')) copyFileSync(join(context.dir, name), join(rawDir, name));
++  const filesystem = inventory(context.dir);
++  writeFileSync(join(rawDir, 'filesystem.json'), JSON.stringify(filesystem, null, 2) + '\n');
+   const leaks = context.privacyLeaks();
+   const result = {
+     schema: 'gg459-native-qa-case/1',
+@@ -912,10 +1243,13 @@
+       stderrBytes: Buffer.concat(invocation.stderrChunks).length,
+       stdoutText: Buffer.concat(invocation.stdoutChunks).toString('utf8'),
+       stderrText: Buffer.concat(invocation.stderrChunks).toString('utf8'),
++      ext: invocation.ext ?? null,
+     })),
+     processes: shared.registry.forCase(context.id).map(serialiseRecord),
+     helperEvents: context.events(),
+     privacy: { checked: true, leaks },
++    ext: context.ext,
++    filesystem,
+     timeline: context.timeline,
+     assertions: context.assertions,
+     setupFaults: context.setupFaults,
+@@ -957,6 +1291,7 @@
+   shared.notNode = join(runDir, 'bin', 'not-node.exe');
+   writeFileSync(shared.notNode, 'QA459 fixture: not an executable image\r\n');
+ 
++  shared.witnessExe = witnessExe;
+   shared.witness = new Witness(witnessExe);
+   shared.registry = new Registry(shared.witness, shared.token);
+   await shared.registry.listen(shared.pipe);
+@@ -1014,7 +1349,9 @@
+       witnessOs: witnessInfo.os,
+     },
+     driver: driverHashes(),
+-    constants: { WATCHDOG_CODE, DOTNET_KILL_CODE, CODES, GRACE_MS, EXIT_SLACK_MS, jobExitCode },
++    driverVersion: 'qa459-ext/1',
++    suite: args.suite,
++    constants: { WATCHDOG_CODE, DOTNET_KILL_CODE, CREATOR_KILL_CODE, NEVER_RAN_CODE, CODES, GRACE_MS, EXIT_SLACK_MS, jobExitCode },
+     launcherHost: args['launcher-host'],
+     driverProcess: { image: driverSelf.opened.image, inAnyJob: driverSelf.opened.inAnyJob },
+     invocation: '<launcher.exe> --config <case>\\launcher.json --ensure-gateway (quiet; no dialog, no PWA)',
+@@ -1026,7 +1363,8 @@
+   const selected = args.cases ? new Set(args.cases.split(',')) : null;
+   const summary = [];
+   try {
+-    for (const def of CASES) {
++    const suiteCases = args.suite === 'base' ? CASES : args.suite === 'ext' ? EXT_CASES : [...CASES, ...EXT_CASES];
++    for (const def of suiteCases) {
+       if (selected && !selected.has(def.id)) continue;
+       const context = new CaseContext(def);
+       const startedAtMs = Date.now();
+diff -ruN baseline/qa459-ext-cases.mjs qa459-ext/qa459-ext-cases.mjs
+--- baseline/qa459-ext-cases.mjs	1969-12-31 18:00:00.000000000 -0600
++++ qa459-ext/qa459-ext-cases.mjs	2026-11-20 20:17:12.293842400 -0600
+@@ -0,0 +1,473 @@
++// GraphGoblin #459 independent native QA, extension qa459-ext/1: remaining ADR-0086 native acceptance.
++//
++// Same conventions as qa459-cases.mjs: `requirement` = reviewed #459 / ADR-0086 semantics,
++// `control` = must hold on baseline and candidate, `info` = recorded observation only; `baseline`
++// states the expectation on unmodified main (pass | fail | observe).
++//
++// Harness jobs are disposable jobs the extended witness creates and holds open until teardown.
++// A launcher placed in one is created suspended with NUL stdin and two private capture pipes,
++// assigned to the job, then resumed. Creator death terminates the exact launcher handle with
++// CREATOR_KILL_CODE at an acknowledged boundary while the harness job stays open, so descendant
++// completion before harness teardown can only come from the launcher's own private job. An
++// OS-assigned kill-on-close code is expected there; the 0xE0470459 assertion applies only where
++// the launcher itself terminates its job (deadline, invalid output).
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { join } from 'node:path';
++
++const WORK_MS = 15_000;
++const CLEANUP_MS = 2_000;
++const SLACK_MS = 1_500;
++const FIRST_CHECK_BOUND_MS = WORK_MS + CLEANUP_MS + SLACK_MS;
++const EXIT_SLACK_MS = 32;
++const CAP = 262_144;
++const ALL_UI = 0xff;
++
++const accepted = (invocation) => invocation.code === 'foreign-listener';
++const spawnsOf = (ctx) => ctx.events().filter((event) => event.event === 'gateway-start').length;
++const helperStarts = (ctx, kind) => ctx.events().filter((event) => event.event === 'helper-start' && (!kind || event.kind === kind)).length;
++
++function rootNatural(ctx, role, invocation, code, sample = 'afterGrace') {
++  const relation = ctx.relation(ctx.process(role), invocation, sample);
++  return { relation, pass: relation.classification === 'natural' && relation.exitCode === code && relation.exitedBeforeLauncherExit };
++}
++
++function memberTerminated(ctx, invocation, role, baseline, text) {
++  const result = ctx.terminatedByLauncher(ctx.process(role), invocation, 'afterGrace');
++  ctx.check(`${role}-terminated-by-launcher`, {
++    kind: 'requirement',
++    text: text ?? `${role} is terminated by the launcher's job before the launcher exits${ctx.jobExitCode === null ? '' : ` with ${ctx.jobExitCode}`}`,
++    expected: { exitedBeforeLauncherExit: true, classification: 'terminated-*', exitCode: ctx.jobExitCode ?? 'non-natural' },
++    actual: result.relation,
++    pass: result.pass,
++    baseline,
++  });
++}
++
++/** Creator death: the process ended within the cleanup allowance after the launcher died, with a non-natural, non-driver code. */
++function diedWithCreator(ctx, invocation, role, baseline) {
++  const record = ctx.process(role);
++  const relation = ctx.relation(record, invocation, 'afterCleanup');
++  const delta = relation.exitedRelativeToLauncherExitMs;
++  const pass = relation.alive === false && relation.classification === 'terminated-other' && delta !== null &&
++    delta >= -EXIT_SLACK_MS && delta <= CLEANUP_MS;
++  ctx.check(`${role}-ended-with-creator`, {
++    kind: 'requirement',
++    text: `${role} ends within ${CLEANUP_MS} ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded`,
++    expected: { alive: false, classification: 'terminated-other', exitedRelativeToLauncherExitMs: `0..${CLEANUP_MS}` },
++    actual: relation,
++    pass,
++    baseline,
++  });
++  return relation;
++}
++
++function sentinelControl(ctx) {
++  ctx.check('sentinel-alive', {
++    kind: 'control',
++    text: 'same-executable run sentinel outside every launcher and job remains alive',
++    expected: true,
++    actual: ctx.sentinelAlive(),
++    pass: ctx.sentinelAlive(),
++    baseline: 'pass',
++  });
++}
++
++function siblingControl(ctx, sample = 'afterGrace') {
++  const sibling = ctx.process('job-sibling');
++  const state = sibling?.samples?.[sample];
++  ctx.check('job-sibling-alive', {
++    kind: 'control',
++    text: 'an unrelated same-executable member of the same enclosing job remains alive after the launcher exits',
++    expected: true,
++    actual: state ?? null,
++    pass: state?.alive === true,
++    baseline: 'pass',
++  });
++}
++
++function noSpawn(ctx) {
++  const spawns = spawnsOf(ctx);
++  ctx.check('no-gateway-spawn', { kind: 'control', text: 'no gateway process is spawned', expected: 0, actual: spawns, pass: spawns === 0, baseline: 'pass' });
++}
++
++function callerEof(ctx, invocation, baseline, kind = 'requirement') {
++  ctx.check('caller-eof-at-launcher-exit', {
++    kind,
++    text: 'the caller\'s launcher stdout/stderr reach EOF within 1500 ms of launcher exit',
++    expected: '<= 1500',
++    actual: { afterExitMs: invocation.callerEofAfterExitMs, afterDriverTeardown: invocation.callerEofAfterTeardown ?? 'pending' },
++    pass: invocation.callerEofAfterExitMs !== null && invocation.callerEofAfterExitMs <= 1500,
++    baseline,
++  });
++}
++
++/** Accounting of the open harness job with observer handles retained, then after they close. */
++async function accountingWithObservers(ctx, job, baseline, label) {
++  const retained = await ctx.jobAccounting(job, `${label}:observers-retained`);
++  const closed = await ctx.closeExitedObservers();
++  const after = await ctx.jobAccounting(job, `${label}:observers-closed`);
++  const actual = {
++    observersRetained: { active: retained.activeProcesses ?? null, total: retained.totalProcesses ?? null, activePids: retained.activePids ?? null },
++    observersClosed: { active: after.activeProcesses ?? null, total: after.totalProcesses ?? null, activePids: after.activePids ?? null, closedRoles: closed },
++    harnessJobOpen: job.open,
++  };
++  return { retained, after, actual };
++}
++
++function lockFixture(ctx) {
++  mkdirSync(ctx.prepared.dataDir, { recursive: true });
++  const path = join(ctx.prepared.dataDir, 'graphgoblin.lock');
++  writeFileSync(path, JSON.stringify({ pid: 4, windowsCreationTime: '134000000000000000', token: 'qa459-synthetic-owner' }));
++  return { path, before: ctx.lockSnapshot(path) };
++}
++
++function probeInfo(ctx, probe) {
++  ctx.check('in-job-probe', {
++    kind: 'info',
++    text: 'in-job probe: own job UI restrictions read from inside, nested CreateProcess(JOB_LIST) and AssignProcessToJobObject outcomes',
++    expected: null,
++    actual: probe,
++    pass: true,
++    baseline: 'observe',
++  });
++}
++
++const EXT_DEADLINE_SCENARIO = {
++  hang: true,
++  maxLifeMs: 90_000,
++  members: [
++    { role: 'held-stdout', stdio: 'stdout', lifetimeMs: 60_000 },
++    { role: 'held-none', stdio: 'none', lifetimeMs: 60_000 },
++  ],
++  psQuery: { role: 'ps-query', lifetimeMs: 60_000, nested: { role: 'ps-nested', lifetimeMs: 60_000 } },
++};
++const DEADLINE_TREE = ['identity-1', 'ps-query', 'ps-nested', 'held-stdout', 'held-none'];
++
++export const EXT_CASES = [
++  {
++    id: 'ext-compatible-job-success',
++    title: 'Compatible enclosing job (kill-on-close, no breakaway, no UI limits): nested helper, short members quiesce, accounting with observers',
++    lane: 'fixture',
++    category: 'enclosing-job',
++    planRow: 'Compatible enclosing jobs; ordinary short members quiesce; job accounting with observer handles retained and closed',
++    async run(ctx) {
++      await ctx.prepare({ marker: true, scenario: { identity: { stdout: 'identity', members: [{ role: 'short-both', stdio: 'both', lifetimeMs: 2000 }, { role: 'short-none', stdio: 'none', lifetimeMs: 2000 }] } } });
++      const job = await ctx.harnessJob('harness', { limitFlags: ctx.killOnClose });
++      const probe = await ctx.nestProbe(job);
++      if (!probe.nestingSupported) ctx.fault('harness-job-not-compatible', probe);
++      const invocation = await ctx.launchJob('click', job);
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const root = ctx.process('identity-1');
++      const membership = {
++        launcherInHarness: invocation.ext.host.inHarnessJob,
++        launcherInAnyJobBeforeAssignment: invocation.ext.host.preAssignInAnyJob,
++        rootInHarness: await ctx.inJob(root, job),
++        shortBothInHarness: await ctx.inJob(ctx.process('short-both'), job),
++        shortNoneInHarness: await ctx.inJob(ctx.process('short-none'), job),
++      };
++      const accounting = await accountingWithObservers(ctx, job, 'pass', 'afterGrace');
++      probeInfo(ctx, probe);
++      ctx.check('identity-accepted', { kind: 'requirement', text: 'identity accepted inside a compatible enclosing job (next stage refuses the plain-health marker)', expected: 'foreign-listener', actual: invocation.code, pass: accepted(invocation), baseline: 'pass' });
++      ctx.check('helper-nested-in-enclosing-job', { kind: 'requirement', text: 'the launcher ran inside the harness job and its helper root and members are members of that job (private job nested under it)', expected: { launcherInHarness: true, launcherInAnyJobBeforeAssignment: false, rootInHarness: true, shortBothInHarness: true, shortNoneInHarness: true }, actual: membership, pass: membership.launcherInHarness === true && membership.launcherInAnyJobBeforeAssignment === false && membership.rootInHarness === true && membership.shortBothInHarness === true && membership.shortNoneInHarness === true, baseline: 'pass' });
++      const rootResult = rootNatural(ctx, 'identity-1', invocation, 0);
++      ctx.check('root-natural-zero', { kind: 'requirement', text: 'helper root exits naturally with 0 before the launcher exits', expected: 'natural 0', actual: rootResult.relation, pass: rootResult.pass, baseline: 'pass' });
++      for (const role of ['short-both', 'short-none']) {
++        const relation = ctx.relation(ctx.process(role), invocation, 'afterGrace');
++        ctx.check(`${role}-quiesced-before-exit`, { kind: 'requirement', text: `${role} exits naturally (41) before the launcher accepts`, expected: { classification: 'natural', exitCode: 41, exitedBeforeLauncherExit: true }, actual: relation, pass: relation.classification === 'natural' && relation.exitCode === 41 && relation.exitedBeforeLauncherExit, baseline: role === 'short-none' ? 'fail' : 'pass' });
++      }
++      ctx.check('accounting-empty-with-and-without-observers', {
++        kind: 'requirement',
++        text: 'open harness job reports zero active processes after the launcher exits, with witness handles retained and again after they close (observer handles do not keep members active)',
++        expected: { observersRetained: { active: 0 }, observersClosed: { active: 0, total: 'unchanged' }, harnessJobOpen: true },
++        actual: accounting.actual,
++        pass: accounting.retained.activeProcesses === 0 && accounting.after.activeProcesses === 0 && accounting.after.totalProcesses === accounting.retained.totalProcesses && job.open === true,
++        baseline: 'pass',
++      });
++      callerEof(ctx, invocation, 'observe', 'control');
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-compatible-job-deadline',
++    title: 'Compatible enclosing job held open: running root, real PowerShell query with nested child, stdout holder and no-pipe member reach the 15 s deadline',
++    lane: 'fixture',
++    category: 'enclosing-job',
++    planRow: '15 s work budget, 2 s cleanup allowance and 0xE0470459 job termination inside a compatible enclosing job',
++    async run(ctx) {
++      await ctx.prepare({ marker: false, scenario: { identity: EXT_DEADLINE_SCENARIO } });
++      const job = await ctx.harnessJob('harness', { limitFlags: ctx.killOnClose });
++      const probe = await ctx.nestProbe(job);
++      if (!probe.nestingSupported) ctx.fault('harness-job-not-compatible', probe);
++      const invocation = await ctx.launchJob('click', job, { watchdogMs: 45_000 });
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const accounting = await accountingWithObservers(ctx, job, 'fail', 'afterGrace');
++      ctx.check('helper-timeout', { kind: 'requirement', text: 'identity stage refuses with helper-timeout', expected: 'helper-timeout', actual: invocation.code, pass: invocation.code === 'helper-timeout', baseline: 'pass' });
++      ctx.check('work-window-honoured', { kind: 'requirement', text: `launcher returned after the full 15 s work window and within ${FIRST_CHECK_BOUND_MS} ms`, expected: `${WORK_MS}..${FIRST_CHECK_BOUND_MS}`, actual: invocation.osElapsedMs, pass: invocation.osElapsedMs >= WORK_MS && invocation.osElapsedMs <= FIRST_CHECK_BOUND_MS, baseline: 'pass' });
++      for (const role of DEADLINE_TREE) memberTerminated(ctx, invocation, role, role === 'identity-1' || role === 'ps-query' ? 'pass' : 'fail');
++      const exits = DEADLINE_TREE.map((role) => ctx.process(role)?.samples?.afterGrace).filter((state) => state && !state.alive && state.exitedAtMs);
++      const first = exits.length ? Math.min(...exits.map((state) => state.exitedAtMs)) : null;
++      const last = exits.length ? Math.max(...exits.map((state) => state.exitedAtMs)) : null;
++      const created = invocation.osCreatedAtMs;
++      const cleanup = { terminatedCount: exits.length, firstTerminationAfterLauncherStartMs: first === null ? null : first - created, launcherExitAfterFirstTerminationMs: first === null ? null : invocation.osExitedAtMs - first, terminationSpreadMs: first === null ? null : last - first };
++      ctx.check('cleanup-within-allowance', { kind: 'requirement', text: `all ${DEADLINE_TREE.length} helper-tree processes end after the work window and the launcher exits within the ${CLEANUP_MS} ms cleanup allowance of the first termination`, expected: { terminatedCount: DEADLINE_TREE.length, firstTerminationAfterLauncherStartMs: `>= ${WORK_MS}`, launcherExitAfterFirstTerminationMs: `<= ${CLEANUP_MS}` }, actual: cleanup, pass: exits.length === DEADLINE_TREE.length && cleanup.firstTerminationAfterLauncherStartMs >= WORK_MS && cleanup.launcherExitAfterFirstTerminationMs <= CLEANUP_MS, baseline: 'fail' });
++      ctx.check('accounting-empty-harness-open', { kind: 'requirement', text: 'open harness job reports zero active processes after collection, with observer handles retained and after they close', expected: { observersRetained: { active: 0 }, observersClosed: { active: 0 }, harnessJobOpen: true }, actual: accounting.actual, pass: accounting.retained.activeProcesses === 0 && accounting.after.activeProcesses === 0 && job.open === true, baseline: 'fail' });
++      callerEof(ctx, invocation, 'fail');
++      const query = ctx.process('ps-query')?.messages.find((message) => message.event === 'query-done');
++      ctx.check('real-query-ran', { kind: 'control', text: 'the PowerShell fixture completed one real WMI query of the sentinel before stalling', expected: true, actual: query ?? null, pass: query?.queried === true, baseline: 'pass' });
++      probeInfo(ctx, probe);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-creator-death-helper-ready',
++    title: 'Creator death at helper-ready: running root with real PowerShell query, nested child, stdout holder and no-pipe member; exact launcher handle terminated; harness job held open',
++    lane: 'fixture',
++    category: 'creator-death',
++    planRow: 'Creator death at an acknowledged point (helper and descendants ready)',
++    async run(ctx) {
++      await ctx.prepare({ marker: false, scenario: { identity: EXT_DEADLINE_SCENARIO } });
++      const job = await ctx.harnessJob('harness', { limitFlags: ctx.killOnClose });
++      const probe = await ctx.nestProbe(job);
++      if (!probe.nestingSupported) ctx.fault('harness-job-not-compatible', probe);
++      const boundary = {
++        name: 'helper-ready',
++        async check(context) {
++          const ready = context.events().find((event) => event.event === 'helper-members-ready' && event.role === 'identity-1');
++          if (!ready) return null;
++          const state = await context.stateOf(context.process('identity-1'));
++          return state.alive === true ? { rootAlive: true, membersReadyAt: ready.at } : null;
++        },
++      };
++      const invocation = await ctx.launchJob('click', job, { watchdogMs: 45_000, boundary });
++      await ctx.sleep(Math.max(0, invocation.osExitedAtMs + CLEANUP_MS - Date.now()));
++      await ctx.snapshot('afterCleanup');
++      const cleanupAccounting = await ctx.jobAccounting(job, 'afterCleanup');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const accounting = await accountingWithObservers(ctx, job, 'fail', 'afterGrace');
++      ctx.check('boundary-reached-launcher-killed', { kind: 'requirement', text: 'the helper-ready boundary was reached while the launcher was alive and the exact launcher handle was terminated with the creator-kill code', expected: { reached: true, launcherExitCode: ctx.creatorKillCode }, actual: { boundary: invocation.ext.boundary, killed: invocation.ext.killed, launcherExitCode: invocation.exitCode }, pass: invocation.ext.boundary?.reached === true && invocation.ext.killed?.terminateCalled === true && invocation.exitCode === ctx.creatorKillCode, baseline: 'pass' });
++      const relations = DEADLINE_TREE.map((role) => diedWithCreator(ctx, invocation, role, 'fail'));
++      ctx.check('harness-open-and-empty-after-cleanup', { kind: 'requirement', text: `${CLEANUP_MS} ms after the launcher died the still-open harness job reports zero active processes (completion observed before any harness teardown)`, expected: { active: 0, harnessJobOpen: true }, actual: { cleanup: cleanupAccounting, harnessJobOpen: job.open }, pass: cleanupAccounting.activeProcesses === 0 && job.open === true, baseline: 'fail' });
++      ctx.check('accounting-observers', { kind: 'info', text: 'harness accounting after grace with observer handles retained, then closed', expected: null, actual: accounting.actual, pass: true, baseline: 'observe' });
++      ctx.check('creator-death-exit-codes', { kind: 'info', text: 'OS-assigned exit codes of the helper tree after creator death (no 0xE0470459 assertion: the launcher never called TerminateJobObject)', expected: null, actual: relations.map((relation) => ({ role: relation.role, exitCode: relation.exitCode, deltaMs: relation.exitedRelativeToLauncherExitMs })), pass: true, baseline: 'observe' });
++      callerEof(ctx, invocation, 'fail');
++      probeInfo(ctx, probe);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-creator-death-root-exited',
++    title: 'Creator death after the root exited naturally: stdout holder and no-pipe member ready; exact launcher handle terminated; harness job held open',
++    lane: 'fixture',
++    category: 'creator-death',
++    planRow: 'Creator death at an acknowledged point (root exited, descendants ready)',
++    async run(ctx) {
++      await ctx.prepare({ marker: true, scenario: { identity: { stdout: 'identity', members: [{ role: 'held-stdout', stdio: 'stdout', lifetimeMs: 60_000 }, { role: 'held-none', stdio: 'none', lifetimeMs: 60_000 }] } } });
++      const job = await ctx.harnessJob('harness', { limitFlags: ctx.killOnClose });
++      const probe = await ctx.nestProbe(job);
++      if (!probe.nestingSupported) ctx.fault('harness-job-not-compatible', probe);
++      const boundary = {
++        name: 'root-exited-descendants-ready',
++        async check(context) {
++          const exited = context.events().find((event) => event.event === 'helper-exit' && event.role === 'identity-1');
++          const ready = ['held-stdout', 'held-none'].every((role) => context.process(role)?.opened.ok);
++          if (!exited || !ready) return null;
++          const state = await context.stateOf(context.process('identity-1'));
++          if (state.alive !== false) return null;
++          const members = await Promise.all(['held-stdout', 'held-none'].map((role) => context.stateOf(context.process(role))));
++          return members.every((member) => member.alive === true) ? { rootExitCode: state.exitCode, rootExitedAtMs: state.exitedAtMs } : null;
++        },
++      };
++      const invocation = await ctx.launchJob('click', job, { watchdogMs: 45_000, boundary });
++      await ctx.sleep(Math.max(0, invocation.osExitedAtMs + CLEANUP_MS - Date.now()));
++      await ctx.snapshot('afterCleanup');
++      const cleanupAccounting = await ctx.jobAccounting(job, 'afterCleanup');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const accounting = await accountingWithObservers(ctx, job, 'fail', 'afterGrace');
++      ctx.check('boundary-reached-launcher-killed', { kind: 'requirement', text: 'the root-exited boundary was reached while the launcher was alive and the exact launcher handle was terminated with the creator-kill code', expected: { reached: true, launcherExitCode: ctx.creatorKillCode }, actual: { boundary: invocation.ext.boundary, killed: invocation.ext.killed, launcherExitCode: invocation.exitCode }, pass: invocation.ext.boundary?.reached === true && invocation.ext.killed?.terminateCalled === true && invocation.exitCode === ctx.creatorKillCode, baseline: 'pass' });
++      const root = rootNatural(ctx, 'identity-1', invocation, 0);
++      ctx.check('root-keeps-natural-exit', { kind: 'control', text: 'the root exited naturally with 0 before the launcher was killed', expected: 'natural 0', actual: root.relation, pass: root.pass, baseline: 'pass' });
++      for (const role of ['held-stdout', 'held-none']) diedWithCreator(ctx, invocation, role, 'fail');
++      ctx.check('harness-open-and-empty-after-cleanup', { kind: 'requirement', text: `${CLEANUP_MS} ms after the launcher died the still-open harness job reports zero active processes`, expected: { active: 0, harnessJobOpen: true }, actual: { cleanup: cleanupAccounting, harnessJobOpen: job.open }, pass: cleanupAccounting.activeProcesses === 0 && job.open === true, baseline: 'fail' });
++      ctx.check('accounting-observers', { kind: 'info', text: 'harness accounting after grace with observer handles retained, then closed', expected: null, actual: accounting.actual, pass: true, baseline: 'observe' });
++      callerEof(ctx, invocation, 'fail');
++      probeInfo(ctx, probe);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-ui-restricted-job',
++    title: 'Enclosing job with all eight UI restrictions (read back from inside): launcher outcome follows the host\'s verified nesting capability',
++    lane: 'fixture',
++    category: 'enclosing-job',
++    planRow: 'Outer job with a UI restriction (incompatible host refusal only where nesting is actually refused)',
++    async run(ctx) {
++      await ctx.prepare({ marker: true, scenario: { identity: { stdout: 'identity' } } });
++      const job = await ctx.harnessJob('ui-restricted', { limitFlags: ctx.killOnClose, uiFlags: ALL_UI });
++      await ctx.spawnInJob(job, 'job-sibling');
++      const probe = await ctx.nestProbe(job);
++      const invocation = await ctx.launchJob('click', job);
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const rootInHarness = await ctx.inJob(ctx.process('identity-1'), job);
++      const accounting = await ctx.jobAccounting(job, 'afterGrace');
++      probeInfo(ctx, probe);
++      const effective = { readBack: job.readBack?.uiRestrictions ?? null, fromInside: probe.report?.ownJobUiRestrictions ?? null };
++      ctx.check('ui-restriction-effective', { kind: 'control', text: 'all UI restrictions are effective: read back on the job and from a process inside it', expected: { readBack: ALL_UI, fromInside: ALL_UI }, actual: effective, pass: effective.readBack === ALL_UI && effective.fromInside === ALL_UI, baseline: 'pass' });
++      ctx.check('ui-restriction-prevents-nesting', { kind: 'info', text: 'whether this UI-restricted job actually refuses a nested job (in-job CreateProcess with JOB_LIST); the brief\'s premise', expected: null, actual: { nestingSupported: probe.nestingSupported ?? null, error: probe.report?.jobListCreateProcessError ?? null }, pass: true, baseline: 'observe' });
++      const outcome = probe.nestingSupported
++        ? { expected: 'foreign-listener (nested helper ran)', pass: accepted(invocation) && rootInHarness === true }
++        : { expected: 'helper-containment before any helper', pass: invocation.code === 'helper-containment' && helperStarts(ctx) === 0 };
++      ctx.check('outcome-matches-host-capability', { kind: 'requirement', text: 'the launcher refuses only when the enclosing job actually refuses nesting; otherwise its nested helper runs normally', expected: outcome.expected, actual: { code: invocation.code, exitCode: invocation.exitCode, helperStarts: helperStarts(ctx), rootInHarness, nestingSupported: probe.nestingSupported ?? null, accounting }, pass: outcome.pass, baseline: 'pass' });
++      siblingControl(ctx);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-incompatible-job-cold',
++    title: 'Incompatible enclosing job (verified from inside: nested and plain creation refused): cold click refuses with helper-containment before any helper exists',
++    lane: 'fixture',
++    category: 'enclosing-job',
++    planRow: 'Refusal on an incompatible host before the first helper executes; actionable containment diagnostic; unrelated sentinel survival',
++    async run(ctx) {
++      await ctx.prepare({ marker: true, scenario: { identity: { stdout: 'identity' } } });
++      const job = await ctx.harnessJob('incompatible', { limitFlags: ctx.killOnClose });
++      await ctx.spawnInJob(job, 'job-sibling');
++      await ctx.restrictToOneFreeSlot(job, 1); // the sibling + one free slot
++      const probe = await ctx.nestProbe(job);
++      const verified = probe.spawned === true && probe.report?.jobListCreateProcess === false;
++      if (!verified) ctx.fault('incompatible-job-not-verified', probe);
++      const invocation = await ctx.launchJob('click', job);
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      const before = invocation.ext.accountingBefore;
++      const atExit = invocation.ext.accountingAtExit;
++      probeInfo(ctx, probe);
++      ctx.check('helper-containment', { kind: 'requirement', text: 'an enclosing job that refuses the helper\'s job-assigned creation refuses with helper-containment (exit 1, launcher.log code)', expected: { code: 'helper-containment', exitCode: 1 }, actual: { code: invocation.code, exitCode: invocation.exitCode }, pass: invocation.code === 'helper-containment' && invocation.exitCode === 1, baseline: 'fail' });
++      const added = (atExit.totalProcesses ?? 0) - (before.totalProcesses ?? 0);
++      ctx.check('refused-before-first-helper', { kind: 'requirement', text: 'no helper process ever existed: no helper-start event, no helper handshake, and the enclosing job gained exactly one process (the launcher) across the click', expected: { helperStarts: 0, helperHandshakes: 0, processesAddedToJob: 1 }, actual: { helperStarts: helperStarts(ctx), helperHandshakes: ctx.processes('identity-').length, processesAddedToJob: added, before, atExit }, pass: helperStarts(ctx) === 0 && ctx.processes('identity-').length === 0 && added === 1, baseline: 'pass' });
++      const stderr = Buffer.concat(invocation.stderrChunks).toString('utf8');
++      const guidance = {
++        classified: invocation.diagnostic,
++        namesIsolation: /Windows could not start an isolated launcher check/.test(stderr),
++        namesRuntimeAndJobPolicy: /Verify the configured runtime and the host's job policy/.test(stderr),
++        namesRequirement: /Windows 10 or Windows Server 2016 or later with compatible nested jobs is required/.test(stderr),
++        noGatewayStarted: /No gateway was started/.test(stderr),
++        noExceptionText: !/Exception|\bat [A-Za-z_.]+\(/.test(stderr),
++        noSentinel: !stderr.includes(ctx.privacy),
++      };
++      ctx.check('actionable-containment-diagnostic', { kind: 'requirement', text: 'the closed containment diagnostic names isolation, runtime and host job policy, the Windows/nesting requirement and that no gateway started, without exception text', expected: { classified: 'helper-containment', namesIsolation: true, namesRuntimeAndJobPolicy: true, namesRequirement: true, noGatewayStarted: true, noExceptionText: true, noSentinel: true }, actual: { ...guidance, stderr }, pass: guidance.classified === 'helper-containment' && Object.entries(guidance).every(([key, value]) => key === 'classified' || value === true), baseline: 'fail' });
++      ctx.check('prompt-refusal', { kind: 'requirement', text: 'refusal is prompt (< 5000 ms)', expected: '< 5000', actual: invocation.osElapsedMs, pass: invocation.osElapsedMs < 5000, baseline: 'pass' });
++      noSpawn(ctx);
++      siblingControl(ctx);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-incompatible-job-warm-click',
++    title: 'Incompatible enclosing job, warm click: a live reusable gateway exists, yet the click refuses with helper-containment; the gateway stays directly callable',
++    lane: 'fixture',
++    category: 'enclosing-job',
++    planRow: 'Every click starts the identity helper before reuse, so an incompatible host refuses even a warm click; an existing gateway remains callable directly',
++    async run(ctx) {
++      await ctx.prepare({ timeoutSeconds: 10, scenario: { identity: { stdout: 'identity' }, storeStateDefault: { stdout: 'free' } } });
++      const cold = await ctx.launch('cold');
++      const coldHealth = await ctx.health();
++      const gateway = ctx.process('gateway-1');
++      const job = await ctx.harnessJob('incompatible', { limitFlags: ctx.killOnClose });
++      await ctx.spawnInJob(job, 'job-sibling');
++      await ctx.restrictToOneFreeSlot(job, 1); // the sibling + one free slot
++      const probe = await ctx.nestProbe(job);
++      if (!(probe.spawned === true && probe.report?.jobListCreateProcess === false)) ctx.fault('incompatible-job-not-verified', probe);
++      const startsBefore = helperStarts(ctx, 'identity');
++      const warm = await ctx.launchJob('warm', job);
++      const warmHealth = await ctx.health();
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      probeInfo(ctx, probe);
++      ctx.check('cold-exit-zero', { kind: 'control', text: 'detached cold click outside the job exits 0 and starts one gateway', expected: { exitCode: 0, spawns: 1 }, actual: { exitCode: cold.exitCode, spawns: spawnsOf(ctx) }, pass: cold.exitCode === 0 && spawnsOf(ctx) === 1, baseline: 'pass' });
++      const added = (warm.ext.accountingAtExit.totalProcesses ?? 0) - (warm.ext.accountingBefore.totalProcesses ?? 0);
++      ctx.check('warm-click-refuses', { kind: 'requirement', text: 'the warm click in the incompatible job refuses with helper-containment before any identity helper runs, although a matching gateway is listening', expected: { code: 'helper-containment', exitCode: 1, newIdentityHelpers: 0, processesAddedToJob: 1 }, actual: { code: warm.code, exitCode: warm.exitCode, newIdentityHelpers: helperStarts(ctx, 'identity') - startsBefore, processesAddedToJob: added, diagnostic: warm.diagnostic }, pass: warm.code === 'helper-containment' && warm.exitCode === 1 && helperStarts(ctx, 'identity') === startsBefore && added === 1, baseline: 'fail' });
++      const direct = { coldPid: coldHealth.pid, warmPid: warmHealth.pid, status: warmHealth.status, identityMatchesFixture: warmHealth.identityMatchesFixture, gatewayAliveAfterGrace: gateway?.samples.afterGrace?.alive ?? null, spawns: spawnsOf(ctx) };
++      ctx.check('gateway-still-callable', { kind: 'control', text: 'the existing gateway is untouched and answers directly with the same PID after the refused click', expected: { status: 200, samePid: true, gatewayAliveAfterGrace: true, spawns: 1 }, actual: direct, pass: direct.status === 200 && direct.coldPid !== null && direct.coldPid === direct.warmPid && direct.gatewayAliveAfterGrace === true && direct.spawns === 1, baseline: 'pass' });
++      siblingControl(ctx);
++      sentinelControl(ctx);
++    },
++  },
++  {
++    id: 'ext-stdout-over-cap-running',
++    title: 'Stdout over the 256 KiB cap from a still-running root (300 KiB then hang)',
++    lane: 'fixture',
++    category: 'outcome-taxonomy',
++    planRow: 'Stdout retention capped at 256 KiB; oversized output refuses inside the work window',
++    async run(ctx) {
++      await ctx.prepare({ marker: false, scenario: { identity: { stdout: 'filler', bytes: 300 * 1024, hang: true, maxLifeMs: 60_000 } } });
++      const invocation = await ctx.launch('click');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      ctx.check('helper-invalid', { kind: 'requirement', text: 'oversized stdout refuses with helper-invalid', expected: 'helper-invalid', actual: invocation.code, pass: invocation.code === 'helper-invalid', baseline: 'fail' });
++      ctx.check('refused-before-deadline', { kind: 'requirement', text: 'the cap is enforced while reading: refusal well before the 15 s work window ends (root still running)', expected: '< 10000 ms', actual: invocation.osElapsedMs, pass: invocation.osElapsedMs < 10_000, baseline: 'fail' });
++      memberTerminated(ctx, invocation, 'identity-1', 'pass');
++      const stdout = Buffer.concat(invocation.stdoutChunks).length;
++      const stderr = Buffer.concat(invocation.stderrChunks).toString('utf8');
++      ctx.check('no-helper-bytes-forwarded', { kind: 'control', text: 'helper output never reaches launcher stdout/stderr', expected: { launcherStdoutBytes: 0, fillerInStderr: false }, actual: { launcherStdoutBytes: stdout, fillerInStderr: stderr.includes('xxxxxxxxxxxxxxxx') }, pass: stdout === 0 && !stderr.includes('xxxxxxxxxxxxxxxx'), baseline: 'pass' });
++      callerEof(ctx, invocation, 'pass', 'control');
++      noSpawn(ctx);
++    },
++  },
++  {
++    id: 'ext-stdout-at-cap-valid',
++    title: 'Stdout exactly at the 256 KiB cap: a valid identity line padded with spaces to 262144 bytes, natural exit 0',
++    lane: 'fixture',
++    category: 'outcome-taxonomy',
++    planRow: 'Stdout retention bound: exactly 256 KiB is retained and validated',
++    async run(ctx) {
++      await ctx.prepare({ marker: true, scenario: { identity: { stdout: 'identity-padded', padTo: CAP } } });
++      const invocation = await ctx.launch('click');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      ctx.check('identity-accepted', { kind: 'requirement', text: 'a valid result of exactly 262144 bytes is retained, trimmed and accepted', expected: 'foreign-listener', actual: invocation.code, pass: accepted(invocation), baseline: 'fail' });
++      const root = rootNatural(ctx, 'identity-1', invocation, 0);
++      ctx.check('root-natural-zero', { kind: 'requirement', text: 'the root completes its 256 KiB write and exits naturally with 0', expected: 'natural 0', actual: root.relation, pass: root.pass, baseline: 'fail' });
++    },
++  },
++  {
++    id: 'ext-stdout-cap-plus-one',
++    title: 'Stdout one byte over the cap: the same valid identity padded to 262145 bytes, natural exit 0',
++    lane: 'fixture',
++    category: 'outcome-taxonomy',
++    planRow: 'Stdout retention bound: 256 KiB + 1 refuses as invalid',
++    async run(ctx) {
++      await ctx.prepare({ marker: false, scenario: { identity: { stdout: 'identity-padded', padTo: CAP + 1 } } });
++      const invocation = await ctx.launch('click');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      ctx.check('helper-invalid', { kind: 'requirement', text: 'one byte over the cap refuses with helper-invalid', expected: 'helper-invalid', actual: invocation.code, pass: invocation.code === 'helper-invalid', baseline: 'fail' });
++      ctx.check('prompt', { kind: 'requirement', text: 'refusal comes from the bound, not the deadline (< 10000 ms)', expected: '< 10000', actual: invocation.osElapsedMs, pass: invocation.osElapsedMs < 10_000, baseline: 'fail' });
++      const relation = ctx.relation(ctx.process('identity-1'), invocation, 'afterGrace');
++      ctx.check('root-ended-before-launcher-exit', { kind: 'requirement', text: 'the root ended (naturally or by the launcher\'s job) before the launcher exited', expected: { exitedBeforeLauncherExit: true }, actual: relation, pass: relation.exitedBeforeLauncherExit === true, baseline: 'pass' });
++      noSpawn(ctx);
++    },
++  },
++  {
++    id: 'ext-strict-utf8-ownership',
++    title: 'Strict UTF-8: an otherwise valid held ownership answer with one invalid byte inside its path string',
++    lane: 'fixture',
++    category: 'outcome-taxonomy',
++    planRow: 'Strict UTF-8 validation of the stage protocol (a lenient decoder would accept this as held)',
++    async run(ctx) {
++      await ctx.prepare({ timeoutSeconds: 6, scenario: { identity: { stdout: 'identity' }, storeStateDefault: { stdout: 'held-bad-utf8' } } });
++      const lock = lockFixture(ctx);
++      const invocation = await ctx.launch('click');
++      await ctx.sleep(ctx.grace);
++      await ctx.snapshot('afterGrace');
++      ctx.check('helper-invalid', { kind: 'requirement', text: 'invalid UTF-8 inside a JSON string refuses with helper-invalid (strict decoding), not store-held', expected: 'helper-invalid', actual: { code: invocation.code, storeStateCalls: helperStarts(ctx, 'store-state') }, pass: invocation.code === 'helper-invalid', baseline: 'fail' });
++      const after = ctx.lockSnapshot(lock.path);
++      ctx.check('lock-unchanged', { kind: 'control', text: 'store lock bytes and file identity unchanged', expected: lock.before, actual: after, pass: after.exists && after.sha256 === lock.before.sha256 && after.fileId === lock.before.fileId, baseline: 'pass' });
++      noSpawn(ctx);
++    },
++  },
++];
+diff -ruN baseline/witness/QaWitness.cs qa459-ext/witness/QaWitness.cs
+--- baseline/witness/QaWitness.cs	2026-11-20 20:17:12.220681400 -0600
++++ qa459-ext/witness/QaWitness.cs	2026-11-20 20:17:12.281221300 -0600
+@@ -5,13 +5,20 @@
+ // and terminates only an exact retained handle when the driver's watchdog asks. It never
+ // enumerates processes and never opens a PID it was not given by an owned handshake/spawn.
+ //
++// Extension (qa459 ext, candidate native acceptance): disposable harness jobs it creates itself
++// (job, jobspawn, jobquery, injob, jobclose, stdio). A harness job's process-ID list only covers
++// processes inside that disposable job. `--nest-probe <file>` runs this executable as an in-job
++// probe that reports its own job's effective UI restrictions and whether nesting works.
++//
+ // Protocol: one command per stdin line "<seq> <op> [args...]", one JSON reply per stdout line.
+ using System;
+ using System.Collections.Generic;
+ using System.IO;
+ using System.Runtime.InteropServices;
+ using System.Text;
++using System.Threading;
+ using System.Web.Script.Serialization;
++using Microsoft.Win32.SafeHandles;
+ 
+ public static class QaWitness
+ {
+@@ -28,11 +35,42 @@
+     [DllImport("kernel32.dll", SetLastError = true)] static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result);
+     [DllImport("kernel32.dll", SetLastError = true)] static extern int GetProcessId(IntPtr handle);
+ 
++    // ---- extension: disposable harness jobs and in-job creation
++    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern IntPtr CreateJobObjectW(IntPtr security, string name);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetInformationJobObject(IntPtr job, int kind, IntPtr info, uint size);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool QueryInformationJobObject(IntPtr job, int kind, IntPtr info, uint size, out uint returned);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern uint ResumeThread(IntPtr thread);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool CreatePipe(out IntPtr read, out IntPtr write, ref SecurityAttributes security, uint size);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags);
++    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern IntPtr CreateFileW(string name, uint access, uint share, ref SecurityAttributes security, uint creation, uint flags, IntPtr template);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool InitializeProcThreadAttributeList(IntPtr list, int count, int flags, ref IntPtr size);
++    [DllImport("kernel32.dll", SetLastError = true)] static extern bool UpdateProcThreadAttribute(IntPtr list, uint flags, IntPtr attribute, IntPtr value, IntPtr size, IntPtr previous, IntPtr returned);
++    [DllImport("kernel32.dll")] static extern void DeleteProcThreadAttributeList(IntPtr list);
++    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool CreateProcessW(string app, StringBuilder command, IntPtr processAttributes, IntPtr threadAttributes, bool inherit, uint flags, IntPtr environment, string directory, ref StartupInfoEx startup, out ProcessInformation information);
++
++    [StructLayout(LayoutKind.Sequential)] struct SecurityAttributes { public int size; public IntPtr descriptor; public int inherit; }
++    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] struct StartupInfo {
++        public int cb; public string reserved, desktop, title; public int x, y, xSize, ySize, xCount, yCount, fill, flags;
++        public short show, reservedBytes; public IntPtr reservedPointer, input, output, error;
++    }
++    [StructLayout(LayoutKind.Sequential)] struct StartupInfoEx { public StartupInfo startup; public IntPtr attributes; }
++    [StructLayout(LayoutKind.Sequential)] struct ProcessInformation { public IntPtr process, thread; public int pid, tid; }
++
+     [StructLayout(LayoutKind.Sequential)]
+     struct BasicInformation { public IntPtr ExitStatus, Peb, Affinity, Priority, UniqueId, ParentId; }
+     [DllImport("ntdll.dll")] static extern int NtQueryInformationProcess(IntPtr handle, int infoClass, ref BasicInformation info, int size, out int returned);
+ 
++    const int JobBasicAccounting = 1, JobBasicProcessIdList = 3, JobBasicUiRestrictions = 4, JobExtendedLimits = 9;
++    const int ExtendedLimitsSize = 144, LimitFlagsOffset = 16, ActiveProcessLimitOffset = 40; // x64 JOBOBJECT_EXTENDED_LIMIT_INFORMATION
++    const uint CreateSuspended = 0x4, UnicodeEnvironment = 0x400, ExtendedStartup = 0x80000, NoWindow = 0x08000000;
++    const int UseStdHandles = 0x100;
++    const uint NeverRanCode = 0xA45E; // a suspended probe or refused assignment that never resumed
++    static readonly IntPtr HandleListAttribute = new IntPtr(0x20002), JobListAttribute = new IntPtr(0x2000D);
++
+     static readonly Dictionary<string, IntPtr> handles = new Dictionary<string, IntPtr>();
++    static readonly Dictionary<string, IntPtr> jobs = new Dictionary<string, IntPtr>();
++    static readonly Dictionary<string, StdioCapture> captures = new Dictionary<string, StdioCapture>();
+     static readonly JavaScriptSerializer json = new JavaScriptSerializer();
+ 
+     static object UnixMs(long filetime)
+@@ -40,6 +78,7 @@
+         if (filetime == 0) return null;
+         return (filetime - 116444736000000000L) / 10000L;
+     }
++    static long NowMs() { return (DateTime.UtcNow.ToFileTimeUtc() - 116444736000000000L) / 10000L; }
+ 
+     static void Describe(IntPtr handle, Dictionary<string, object> reply)
+     {
+@@ -72,9 +111,269 @@
+         if (!handles.TryGetValue(tag, out handle)) throw new KeyNotFoundException("unknown tag");
+         return handle;
+     }
++    static IntPtr FindJob(string tag)
++    {
++        IntPtr job;
++        if (!jobs.TryGetValue(tag, out job)) throw new KeyNotFoundException("unknown job");
++        return job;
++    }
++
++    /// <summary>Drains one captured pipe into a private file and records the EOF time.</summary>
++    sealed class StdioCapture
++    {
++        public long Bytes; public object EofAtMs; public string Error;
++        public StdioCapture(IntPtr read, string path)
++        {
++            var handle = new SafeFileHandle(read, true);
++            var thread = new Thread(() => {
++                try {
++                    using (var input = new FileStream(handle, FileAccess.Read, 4096, false))
++                    using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write))
++                    {
++                        var buffer = new byte[8192];
++                        int count;
++                        while ((count = input.Read(buffer, 0, buffer.Length)) > 0) { output.Write(buffer, 0, count); output.Flush(); Interlocked.Add(ref Bytes, count); }
++                    }
++                } catch (IOException error) { Error = error.GetType().Name; }
++                EofAtMs = NowMs();
++            });
++            thread.IsBackground = true;
++            thread.Start();
++        }
++    }
++
++    static Dictionary<string, object> JobLimits(IntPtr job)
++    {
++        var result = new Dictionary<string, object>();
++        IntPtr buffer = Marshal.AllocHGlobal(ExtendedLimitsSize);
++        try {
++            for (int i = 0; i < ExtendedLimitsSize; i++) Marshal.WriteByte(buffer, i, 0);
++            uint returned;
++            bool limits = QueryInformationJobObject(job, JobExtendedLimits, buffer, ExtendedLimitsSize, out returned);
++            result["limitFlags"] = limits ? (object)(uint)Marshal.ReadInt32(buffer, LimitFlagsOffset) : null;
++            result["activeProcessLimit"] = limits ? (object)Marshal.ReadInt32(buffer, ActiveProcessLimitOffset) : null;
++            Marshal.WriteInt32(buffer, 0, 0);
++            result["uiRestrictions"] = QueryInformationJobObject(job, JobBasicUiRestrictions, buffer, 4, out returned) ? (object)(uint)Marshal.ReadInt32(buffer, 0) : null;
++        } finally { Marshal.FreeHGlobal(buffer); }
++        return result;
++    }
++
++    static Dictionary<string, object> JobAccounting(IntPtr job)
++    {
++        var result = new Dictionary<string, object>();
++        result["atMs"] = NowMs();
++        IntPtr buffer = Marshal.AllocHGlobal(48);
++        try {
++            uint returned;
++            if (QueryInformationJobObject(job, JobBasicAccounting, buffer, 48, out returned))
++            {
++                result["totalProcesses"] = (uint)Marshal.ReadInt32(buffer, 36);
++                result["activeProcesses"] = (uint)Marshal.ReadInt32(buffer, 40);
++                result["totalTerminatedProcesses"] = (uint)Marshal.ReadInt32(buffer, 44);
++            }
++            else result["accountingError"] = Marshal.GetLastWin32Error();
++        } finally { Marshal.FreeHGlobal(buffer); }
++        const int listCapacity = 128;
++        IntPtr list = Marshal.AllocHGlobal(8 + 8 * listCapacity);
++        try {
++            uint returned;
++            if (QueryInformationJobObject(job, JobBasicProcessIdList, list, (uint)(8 + 8 * listCapacity), out returned))
++            {
++                int listed = Marshal.ReadInt32(list, 4);
++                var pids = new List<long>();
++                for (int i = 0; i < listed; i++) pids.Add(Marshal.ReadInt64(list, 8 + 8 * i));
++                result["assignedProcesses"] = Marshal.ReadInt32(list, 0);
++                result["activePids"] = pids;
++            }
++            else result["pidListError"] = Marshal.GetLastWin32Error();
++        } finally { Marshal.FreeHGlobal(list); }
++        return result;
++    }
++
++    static IntPtr NewJob(uint limitFlags, uint uiFlags, int activeLimit = 0)
++    {
++        IntPtr job = CreateJobObjectW(IntPtr.Zero, null);
++        if (job == IntPtr.Zero) throw new InvalidOperationException("CreateJobObject " + Marshal.GetLastWin32Error());
++        if (limitFlags != 0)
++        {
++            IntPtr buffer = Marshal.AllocHGlobal(ExtendedLimitsSize);
++            try {
++                for (int i = 0; i < ExtendedLimitsSize; i++) Marshal.WriteByte(buffer, i, 0);
++                Marshal.WriteInt32(buffer, LimitFlagsOffset, unchecked((int)limitFlags));
++                Marshal.WriteInt32(buffer, ActiveProcessLimitOffset, activeLimit);
++                if (!SetInformationJobObject(job, JobExtendedLimits, buffer, ExtendedLimitsSize)) throw new InvalidOperationException("limits " + Marshal.GetLastWin32Error());
++            } finally { Marshal.FreeHGlobal(buffer); }
++        }
++        if (uiFlags != 0)
++        {
++            IntPtr buffer = Marshal.AllocHGlobal(4);
++            try {
++                Marshal.WriteInt32(buffer, 0, unchecked((int)uiFlags));
++                if (!SetInformationJobObject(job, JobBasicUiRestrictions, buffer, 4)) throw new InvalidOperationException("ui " + Marshal.GetLastWin32Error());
++            } finally { Marshal.FreeHGlobal(buffer); }
++        }
++        return job;
++    }
++
++    static string Quote(string value) { return "\"" + value + "\""; }
++
++    /// <summary>
++    /// Creates a process suspended with exactly NUL stdin and two private capture pipes as its
++    /// only inherited handles, assigns it to the harness job, then resumes it.
++    /// </summary>
++    static void JobSpawn(string tag, string jobTag, string encoded, Dictionary<string, object> reply)
++    {
++        if (handles.ContainsKey(tag)) throw new InvalidOperationException("duplicate tag");
++        var spec = json.Deserialize<Dictionary<string, object>>(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
++        string app = (string)spec["app"];
++        var command = new StringBuilder(Quote(app));
++        foreach (object item in (System.Collections.ArrayList)spec["args"]) command.Append(' ').Append(Quote((string)item));
++        var environment = (Dictionary<string, object>)spec["env"];
++        var keys = new List<string>(environment.Keys);
++        keys.Sort(StringComparer.OrdinalIgnoreCase);
++        var block = new StringBuilder();
++        foreach (string key in keys) block.Append(key).Append('=').Append((string)environment[key]).Append('\0');
++        block.Append('\0');
++        IntPtr job = jobTag == "-" ? IntPtr.Zero : FindJob(jobTag);
++
++        var inherit = new SecurityAttributes { size = Marshal.SizeOf(typeof(SecurityAttributes)), inherit = 1 };
++        IntPtr input = CreateFileW("NUL", 0x80000000, 3, ref inherit, 3, 0, IntPtr.Zero);
++        if (input == new IntPtr(-1)) throw new InvalidOperationException("NUL " + Marshal.GetLastWin32Error());
++        IntPtr outRead, outWrite, errRead, errWrite;
++        if (!CreatePipe(out outRead, out outWrite, ref inherit, 0)) throw new InvalidOperationException("CreatePipe " + Marshal.GetLastWin32Error());
++        if (!CreatePipe(out errRead, out errWrite, ref inherit, 0)) throw new InvalidOperationException("CreatePipe " + Marshal.GetLastWin32Error());
++        SetHandleInformation(outRead, 1, 0);
++        SetHandleInformation(errRead, 1, 0);
++        IntPtr size = IntPtr.Zero, list = IntPtr.Zero, values = IntPtr.Zero, env = IntPtr.Zero;
++        var created = new ProcessInformation();
++        bool ok = false, listReady = false;
++        int createError = 0;
++        try {
++            InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref size);
++            list = Marshal.AllocHGlobal(size);
++            if (!InitializeProcThreadAttributeList(list, 1, 0, ref size)) throw new InvalidOperationException("attributes " + Marshal.GetLastWin32Error());
++            listReady = true;
++            values = Marshal.AllocHGlobal(IntPtr.Size * 3);
++            Marshal.WriteIntPtr(values, 0, input);
++            Marshal.WriteIntPtr(values, IntPtr.Size, outWrite);
++            Marshal.WriteIntPtr(values, IntPtr.Size * 2, errWrite);
++            if (!UpdateProcThreadAttribute(list, 0, HandleListAttribute, values, new IntPtr(IntPtr.Size * 3), IntPtr.Zero, IntPtr.Zero))
++                throw new InvalidOperationException("handle list " + Marshal.GetLastWin32Error());
++            env = Marshal.StringToHGlobalUni(block.ToString());
++            var startup = new StartupInfoEx { attributes = list, startup = new StartupInfo {
++                cb = Marshal.SizeOf(typeof(StartupInfoEx)), flags = UseStdHandles, input = input, output = outWrite, error = errWrite } };
++            ok = CreateProcessW(app, command, IntPtr.Zero, IntPtr.Zero, true, CreateSuspended | UnicodeEnvironment | ExtendedStartup | NoWindow,
++                env, (string)spec["cwd"], ref startup, out created);
++            if (!ok) createError = Marshal.GetLastWin32Error();
++        } finally {
++            if (listReady) DeleteProcThreadAttributeList(list);
++            if (list != IntPtr.Zero) Marshal.FreeHGlobal(list);
++            if (values != IntPtr.Zero) Marshal.FreeHGlobal(values);
++            if (env != IntPtr.Zero) Marshal.FreeHGlobal(env);
++            CloseHandle(input); CloseHandle(outWrite); CloseHandle(errWrite);
++        }
++        if (!ok)
++        {
++            CloseHandle(outRead); CloseHandle(errRead);
++            reply["ok"] = false; reply["createError"] = createError;
++            return;
++        }
++        bool preAssignInAnyJob;
++        reply["preAssignInAnyJob"] = IsProcessInJob(created.process, IntPtr.Zero, out preAssignInAnyJob) ? (object)preAssignInAnyJob : null;
++        if (job != IntPtr.Zero)
++        {
++            bool assigned = AssignProcessToJobObject(job, created.process);
++            reply["assigned"] = assigned;
++            if (!assigned)
++            {
++                reply["assignError"] = Marshal.GetLastWin32Error();
++                TerminateProcess(created.process, NeverRanCode);
++                WaitForSingleObject(created.process, 5000);
++                CloseHandle(created.thread); CloseHandle(created.process);
++                CloseHandle(outRead); CloseHandle(errRead);
++                reply["ok"] = false;
++                return;
++            }
++            bool inHarness;
++            reply["inHarnessJob"] = IsProcessInJob(created.process, job, out inHarness) ? (object)inHarness : null;
++        }
++        handles[tag] = created.process;
++        captures[tag] = new StdioCapture(outRead, (string)spec["stdoutPath"]);
++        captures[tag + "#err"] = new StdioCapture(errRead, (string)spec["stderrPath"]);
++        reply["resumedAtMs"] = NowMs();
++        reply["resume"] = ResumeThread(created.thread);
++        CloseHandle(created.thread);
++        reply["ok"] = true;
++        reply["tag"] = tag;
++        Describe(created.process, reply);
++    }
++
++    /// <summary>In-job probe: effective UI restrictions of its own job and actual nesting attempts.</summary>
++    static int NestProbe(string output, uint innerUi)
++    {
++        var report = new Dictionary<string, object>();
++        report["innerUiRestrictions"] = innerUi;
++        bool inJob;
++        IntPtr self = System.Diagnostics.Process.GetCurrentProcess().Handle;
++        report["selfInAnyJob"] = IsProcessInJob(self, IntPtr.Zero, out inJob) ? (object)inJob : null;
++        IntPtr ui = Marshal.AllocHGlobal(4);
++        try {
++            Marshal.WriteInt32(ui, 0, 0);
++            uint returned;
++            // A NULL job handle queries the job that contains the calling process.
++            bool read = QueryInformationJobObject(IntPtr.Zero, JobBasicUiRestrictions, ui, 4, out returned);
++            report["ownJobUiRestrictions"] = read ? (object)(uint)Marshal.ReadInt32(ui, 0) : null;
++            if (!read) report["ownJobUiRestrictionsError"] = Marshal.GetLastWin32Error();
++        } finally { Marshal.FreeHGlobal(ui); }
++        string exe = System.Reflection.Assembly.GetExecutingAssembly().Location;
++        // 1. The candidate's creation shape: one CreateProcess with PROC_THREAD_ATTRIBUTE_JOB_LIST.
++        IntPtr nested = innerUi == 0 ? CreateJobObjectW(IntPtr.Zero, null) : NewJob(0, innerUi);
++        report["nestedJobCreated"] = nested != IntPtr.Zero;
++        IntPtr size = IntPtr.Zero;
++        InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref size);
++        IntPtr list = Marshal.AllocHGlobal(size), value = Marshal.AllocHGlobal(IntPtr.Size);
++        try {
++            InitializeProcThreadAttributeList(list, 1, 0, ref size);
++            Marshal.WriteIntPtr(value, nested);
++            report["jobListAttributeSet"] = UpdateProcThreadAttribute(list, 0, JobListAttribute, value, new IntPtr(IntPtr.Size), IntPtr.Zero, IntPtr.Zero);
++            var startup = new StartupInfoEx { attributes = list, startup = new StartupInfo { cb = Marshal.SizeOf(typeof(StartupInfoEx)) } };
++            ProcessInformation created;
++            bool ok = CreateProcessW(exe, new StringBuilder(Quote(exe) + " --noop"), IntPtr.Zero, IntPtr.Zero, false,
++                CreateSuspended | ExtendedStartup | NoWindow, IntPtr.Zero, null, ref startup, out created);
++            report["jobListCreateProcess"] = ok;
++            if (!ok) report["jobListCreateProcessError"] = Marshal.GetLastWin32Error();
++            else
++            {
++                bool member;
++                report["jobListChildInNestedJob"] = IsProcessInJob(created.process, nested, out member) ? (object)member : null;
++                TerminateProcess(created.process, NeverRanCode); WaitForSingleObject(created.process, 5000);
++                CloseHandle(created.thread); CloseHandle(created.process);
++            }
++        } finally { DeleteProcThreadAttributeList(list); Marshal.FreeHGlobal(list); Marshal.FreeHGlobal(value); }
++        // 2. Suspended creation followed by AssignProcessToJobObject into a fresh job.
++        IntPtr second = CreateJobObjectW(IntPtr.Zero, null);
++        var plain = new StartupInfoEx { startup = new StartupInfo { cb = Marshal.SizeOf(typeof(StartupInfoEx)) } };
++        ProcessInformation suspended;
++        if (CreateProcessW(exe, new StringBuilder(Quote(exe) + " --noop"), IntPtr.Zero, IntPtr.Zero, false, CreateSuspended | ExtendedStartup | NoWindow,
++            IntPtr.Zero, null, ref plain, out suspended))
++        {
++            bool assigned = AssignProcessToJobObject(second, suspended.process);
++            report["assignToFreshJob"] = assigned;
++            if (!assigned) report["assignToFreshJobError"] = Marshal.GetLastWin32Error();
++            TerminateProcess(suspended.process, NeverRanCode); WaitForSingleObject(suspended.process, 5000);
++            CloseHandle(suspended.thread); CloseHandle(suspended.process);
++        }
++        else report["plainCreateProcessError"] = Marshal.GetLastWin32Error();
++        if (nested != IntPtr.Zero) CloseHandle(nested);
++        if (second != IntPtr.Zero) CloseHandle(second);
++        File.WriteAllText(output, json.Serialize(report));
++        return 0;
++    }
+ 
+-    public static int Main()
++    public static int Main(string[] args)
+     {
++        if (args.Length == 1 && args[0] == "--noop") return 0;
++        if (args.Length >= 2 && args[0] == "--nest-probe") return NestProbe(args[1], args.Length > 2 ? uint.Parse(args[2]) : 0);
+         var output = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false));
+         output.AutoFlush = true;
+         string line;
+@@ -114,7 +413,7 @@
+                 }
+                 else if (op == "terminate")
+                 {
+-                    // Driver watchdog only: an exact retained handle, never a PID lookup.
++                    // Driver watchdog or creator-death boundary: an exact retained handle, never a PID lookup.
+                     IntPtr handle = Find(parts[2]);
+                     uint code = uint.Parse(parts[3]);
+                     reply["tag"] = parts[2];
+@@ -125,6 +424,7 @@
+                     }
+                     else
+                     {
++                        reply["terminateAtMs"] = NowMs();
+                         bool terminated = TerminateProcess(handle, code);
+                         reply["terminateCalled"] = terminated;
+                         if (!terminated) reply["win32"] = Marshal.GetLastWin32Error();
+@@ -151,7 +451,61 @@
+                 else if (op == "now")
+                 {
+                     reply["ok"] = true;
+-                    reply["nowMs"] = (DateTime.UtcNow.ToFileTimeUtc() - 116444736000000000L) / 10000L;
++                    reply["nowMs"] = NowMs();
++                }
++                else if (op == "job")
++                {
++                    // job <jobTag> <limitFlags> <uiFlags>: a disposable harness job, read back after setting.
++                    string tag = parts[2];
++                    if (jobs.ContainsKey(tag)) throw new InvalidOperationException("duplicate job");
++                    IntPtr job = NewJob(uint.Parse(parts[3]), uint.Parse(parts[4]), parts.Length > 5 ? int.Parse(parts[5]) : 0);
++                    jobs[tag] = job;
++                    reply["ok"] = true;
++                    reply["job"] = tag;
++                    reply["readBack"] = JobLimits(job);
++                }
++                else if (op == "joblimit")
++                {
++                    // joblimit <jobTag> <limitFlags> <activeLimit>: tighten an existing harness job, read back.
++                    IntPtr job = FindJob(parts[2]);
++                    IntPtr buffer = Marshal.AllocHGlobal(ExtendedLimitsSize);
++                    try {
++                        for (int i = 0; i < ExtendedLimitsSize; i++) Marshal.WriteByte(buffer, i, 0);
++                        Marshal.WriteInt32(buffer, LimitFlagsOffset, unchecked((int)uint.Parse(parts[3])));
++                        Marshal.WriteInt32(buffer, ActiveProcessLimitOffset, int.Parse(parts[4]));
++                        reply["ok"] = SetInformationJobObject(job, JobExtendedLimits, buffer, ExtendedLimitsSize);
++                        if (!(bool)reply["ok"]) reply["win32"] = Marshal.GetLastWin32Error();
++                    } finally { Marshal.FreeHGlobal(buffer); }
++                    reply["readBack"] = JobLimits(job);
++                }
++                else if (op == "jobspawn") JobSpawn(parts[2], parts[3], parts[4], reply);
++                else if (op == "jobquery")
++                {
++                    reply["ok"] = true;
++                    reply["job"] = parts[2];
++                    reply["accounting"] = JobAccounting(FindJob(parts[2]));
++                }
++                else if (op == "injob")
++                {
++                    bool member;
++                    reply["ok"] = IsProcessInJob(Find(parts[2]), FindJob(parts[3]), out member);
++                    reply["inJob"] = member;
++                }
++                else if (op == "jobclose")
++                {
++                    IntPtr job = FindJob(parts[2]);
++                    reply["closedAtMs"] = NowMs();
++                    reply["ok"] = CloseHandle(job);
++                    jobs.Remove(parts[2]);
++                }
++                else if (op == "stdio")
++                {
++                    StdioCapture captured;
++                    bool found = captures.TryGetValue(parts[2], out captured);
++                    if (found) { reply["stdoutBytes"] = Interlocked.Read(ref captured.Bytes); reply["stdoutEofAtMs"] = captured.EofAtMs; reply["stdoutError"] = captured.Error; }
++                    if (captures.TryGetValue(parts[2] + "#err", out captured)) { reply["stderrBytes"] = Interlocked.Read(ref captured.Bytes); reply["stderrEofAtMs"] = captured.EofAtMs; reply["stderrError"] = captured.Error; }
++                    else found = false;
++                    reply["ok"] = found;
+                 }
+                 else throw new ArgumentException("unknown op");
+             }
+@@ -159,10 +513,12 @@
+             {
+                 reply["ok"] = false;
+                 reply["error"] = error.GetType().Name;
++                reply["message"] = error.Message;
+             }
+             output.WriteLine(json.Serialize(reply));
+         }
+         foreach (var handle in handles.Values) CloseHandle(handle);
++        foreach (var job in jobs.Values) CloseHandle(job);
+         return 0;
+     }
+ }

@@ -1,0 +1,335 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "real-cold-warm-reuse",
+  "title": "Unmodified built API/helper: real gateway cold start, detached lifetime and warm reuse",
+  "lane": "real",
+  "category": "positive-control",
+  "planRow": "Independent gateway: cold-starts, stays healthy after launcher exit/caller EOF, same PID on warm reuse",
+  "startedAtMs": 1795225006273,
+  "durationMs": 11126,
+  "prepared": {
+    "repo": "checkout",
+    "timeoutSeconds": 60,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "cold",
+      "pid": 22140,
+      "exitCode": 0,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 6445,
+      "osElapsedMs": 6437,
+      "osCreatedAtMs": 1795225006277,
+      "osExitedAtMs": 1795225012714,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "success",
+      "diagnostic": "none",
+      "diagnosticFinal": "none",
+      "launcherLogRecords": [],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutText": "",
+      "stderrText": ""
+    },
+    {
+      "name": "warm",
+      "pid": 45996,
+      "exitCode": 0,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 1524,
+      "osElapsedMs": 1516,
+      "osCreatedAtMs": 1795225012730,
+      "osExitedAtMs": 1795225014246,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "success",
+      "diagnostic": "none",
+      "diagnosticFinal": "none",
+      "launcherLogRecords": [],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutText": "",
+      "stderrText": ""
+    }
+  ],
+  "processes": [
+    {
+      "tag": "real-cold-warm-reuse/launcher-cold/22140",
+      "case": "real-cold-warm-reuse",
+      "role": "launcher-cold",
+      "pid": 22140,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795225006284,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225006277,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225006277,
+          "exitedAtMs": 1795225012714
+        },
+        "atExit:cold": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225006277,
+          "exitedAtMs": 1795225012714
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225006277,
+          "exitedAtMs": 1795225012714
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225006277,
+          "exitedAtMs": 1795225012714
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225006277,
+          "exitedAtMs": 1795225012714
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "real-cold-warm-reuse/real-gateway/11852",
+      "case": "real-cold-warm-reuse",
+      "role": "real-gateway",
+      "pid": 11852,
+      "source": "health",
+      "self": null,
+      "openedAtMs": 1795225012726,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 22140,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225009181,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:warm": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795225009181,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795225009181,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225009181,
+          "exitedAtMs": 1795225017289
+        }
+      },
+      "teardown": {
+        "action": "http-drain",
+        "atMs": 1795225017281,
+        "response": 202
+      },
+      "verified": true,
+      "finalClassification": "exited"
+    },
+    {
+      "tag": "real-cold-warm-reuse/launcher-warm/45996",
+      "case": "real-cold-warm-reuse",
+      "role": "launcher-warm",
+      "pid": 45996,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795225012733,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225012730,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225012730,
+          "exitedAtMs": 1795225014246
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225012730,
+          "exitedAtMs": 1795225014246
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225012730,
+          "exitedAtMs": 1795225014246
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225012730,
+          "exitedAtMs": 1795225014246
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795225006276,
+      "event": "prepared",
+      "repo": "checkout",
+      "port": "disposable",
+      "timeoutSeconds": 60,
+      "marker": false
+    },
+    {
+      "atMs": 1795225006283,
+      "event": "launcher-spawned",
+      "name": "cold"
+    },
+    {
+      "atMs": 1795225012722,
+      "event": "launcher-exited",
+      "name": "cold",
+      "exitCode": 0
+    },
+    {
+      "atMs": 1795225012733,
+      "event": "launcher-spawned",
+      "name": "warm"
+    },
+    {
+      "atMs": 1795225014253,
+      "event": "launcher-exited",
+      "name": "warm",
+      "exitCode": 0
+    }
+  ],
+  "assertions": [
+    {
+      "id": "cold-exit-zero",
+      "kind": "control",
+      "text": "cold click exits 0",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "gateway-exact-handle",
+      "kind": "control",
+      "text": "gateway PID from health is witnessed by an exact live handle",
+      "expected": true,
+      "actual": {
+        "verified": true,
+        "image": "node.exe",
+        "parentIsColdLauncher": true,
+        "inAnyJob": true
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "warm-reuse-same-pid",
+      "kind": "control",
+      "text": "warm click exits 0 and the same gateway process stays alive after both launchers exit",
+      "expected": {
+        "warmExit": 0,
+        "samePid": true,
+        "aliveAfterWarm": true,
+        "aliveAfterGrace": true
+      },
+      "actual": {
+        "warmExit": 0,
+        "samePid": true,
+        "aliveAfterWarm": true,
+        "aliveAfterGrace": true
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "caller-eof-prompt",
+      "kind": "control",
+      "text": "caller pipes reach EOF within 1500 ms of the cold launcher exit",
+      "expected": "<= 1500",
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "real-timings",
+      "kind": "info",
+      "text": "real helper + gateway timings (WMI prior use unknown; not a cold measurement)",
+      "expected": null,
+      "actual": {
+        "coldMs": 6437,
+        "warmMs": 1516
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "baseline-control-pass"
+}

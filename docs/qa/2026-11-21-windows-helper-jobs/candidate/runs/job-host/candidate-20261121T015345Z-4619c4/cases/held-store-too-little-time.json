@@ -1,0 +1,386 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T015345Z-4619c4",
+  "label": "candidate",
+  "case": "held-store-too-little-time",
+  "title": "Held store, each ownership sample takes 4 s (6 s release wait): no room for a recheck",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Held store with too little time to start a recheck",
+  "startedAtMs": 1795226151646,
+  "durationMs": 7398,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 45424,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 4366,
+      "osElapsedMs": 4359,
+      "osCreatedAtMs": 1795226151652,
+      "osExitedAtMs": 1795226156011,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "store-held",
+      "diagnostic": "store-held",
+      "diagnosticFinal": "store-held",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:55:55.9916788Z",
+          "pid": 45424,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\held-store-too-little-time\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<RUN>\\cases\\held-store-too-little-time\\launcher.json",
+          "lock": "<RUN>\\cases\\held-store-too-little-time\\data\\graphgoblin.lock"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 477,
+      "stdoutBytes": 0,
+      "stderrBytes": 477,
+      "stdoutText": "",
+      "stderrText": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\held-store-too-little-time\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <RUN>\\cases\\held-store-too-little-time\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "held-store-too-little-time/launcher-click/45424",
+      "case": "held-store-too-little-time",
+      "role": "launcher-click",
+      "pid": 45424,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226151659,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 29896,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226151652,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226151652,
+          "exitedAtMs": 1795226156011
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226151652,
+          "exitedAtMs": 1795226156011
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226151652,
+          "exitedAtMs": 1795226156011
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226151652,
+          "exitedAtMs": 1795226156011
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-store-too-little-time/identity-1/41392",
+      "case": "held-store-too-little-time",
+      "role": "identity-1",
+      "pid": 41392,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-too-little-time",
+        "role": "identity-1",
+        "pid": 41392,
+        "ppid": 45424,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226151849,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 45424,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226151761,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151761,
+          "exitedAtMs": 1795226151857
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151761,
+          "exitedAtMs": 1795226151857
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151761,
+          "exitedAtMs": 1795226151857
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-store-too-little-time/store-state-1/27208",
+      "case": "held-store-too-little-time",
+      "role": "store-state-1",
+      "pid": 27208,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-too-little-time",
+        "role": "store-state-1",
+        "pid": 27208,
+        "ppid": 45424,
+        "helper": "store-state",
+        "index": 1
+      },
+      "openedAtMs": 1795226151966,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 45424,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226151881,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151881,
+          "exitedAtMs": 1795226155979
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151881,
+          "exitedAtMs": 1795226155979
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226151881,
+          "exitedAtMs": 1795226155979
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226151845,
+      "pid": 41392,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226151849,
+      "pid": 41392,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226151850,
+      "pid": 41392,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795226151851,
+      "pid": 41392,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    },
+    {
+      "at": 1795226151963,
+      "pid": 27208,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795226151968,
+      "pid": 27208,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795226155973,
+      "pid": 27208,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "store-state-1",
+      "stdout": "held"
+    },
+    {
+      "at": 1795226155974,
+      "pid": 27208,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "store-state-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795226151649,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795226151658,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226156018,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "single-ownership-sample",
+      "kind": "requirement",
+      "text": "no recheck starts when the window (remaining - 2 s reserve) cannot fit the measured 4 s sample",
+      "expected": 1,
+      "actual": {
+        "storeStateCalls": 1,
+        "startOffsetsMs": [
+          0
+        ]
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "no-unbudgeted-final-query",
+      "kind": "requirement",
+      "text": "no ownership helper starts after the release window minus the 2 s reserve",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "prompt-after-single-sample",
+      "kind": "requirement",
+      "text": "launcher exits within 1500 ms after the first (only) ownership sample completes",
+      "expected": "<= 1500 ms after first sample exit",
+      "actual": {
+        "launcherExitAfterFirstSampleExitMs": 32,
+        "firstSampleMs": 4098
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "store-held",
+      "kind": "control",
+      "text": "refuses with store-held guidance",
+      "expected": "store-held",
+      "actual": "store-held",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "lock-unchanged",
+      "kind": "control",
+      "text": "store lock bytes and file identity are read back unchanged (never deleted or replaced)",
+      "expected": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978826928"
+      },
+      "actual": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978826928"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

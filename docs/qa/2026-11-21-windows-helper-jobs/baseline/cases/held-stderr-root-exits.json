@@ -1,0 +1,362 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "held-stderr-root-exits",
+  "title": "Held pipe: root exits at once with a valid identity, detached child holds stderr for 40 s",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Immediate Node exit and a member holding stderr only",
+  "startedAtMs": 1795224932185,
+  "durationMs": 4988,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 43468,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 340,
+      "osElapsedMs": 331,
+      "osCreatedAtMs": 1795224932191,
+      "osExitedAtMs": 1795224932522,
+      "callerEofAfterExitMs": null,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:35:32.5018801Z",
+          "pid": 43468,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 4878 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\held-stderr-root-exits\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 336,
+      "stdoutBytes": 0,
+      "stderrBytes": 336,
+      "stdoutText": "",
+      "stderrText": "Port 4878 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\held-stderr-root-exits\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "held-stderr-root-exits/launcher-click/43468",
+      "case": "held-stderr-root-exits",
+      "role": "launcher-click",
+      "pid": 43468,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224932196,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224932191,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224932191,
+          "exitedAtMs": 1795224932522
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224932191,
+          "exitedAtMs": 1795224932522
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224932191,
+          "exitedAtMs": 1795224932522
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224932191,
+          "exitedAtMs": 1795224932522
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-stderr-root-exits/identity-1/34216",
+      "case": "held-stderr-root-exits",
+      "role": "identity-1",
+      "pid": 34216,
+      "source": "handshake",
+      "self": {
+        "case": "held-stderr-root-exits",
+        "role": "identity-1",
+        "pid": 34216,
+        "ppid": 43468,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795224932365,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 43468,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224932277,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224932277,
+          "exitedAtMs": 1795224932445
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224932277,
+          "exitedAtMs": 1795224932445
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224932277,
+          "exitedAtMs": 1795224932445
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-stderr-root-exits/held-stderr/16236",
+      "case": "held-stderr-root-exits",
+      "role": "held-stderr",
+      "pid": 16236,
+      "source": "handshake",
+      "self": {
+        "case": "held-stderr-root-exits",
+        "role": "held-stderr",
+        "pid": 16236,
+        "ppid": 34216,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "other"
+        },
+        "lifetimeMs": 40000
+      },
+      "openedAtMs": 1795224932434,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 34216,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224932370,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795224932370,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795224932370,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 47,
+          "createdAtMs": 1795224932370,
+          "exitedAtMs": 1795224937061
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795224937058
+      },
+      "finalClassification": "driver-release"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795224932362,
+      "pid": 34216,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224932439,
+      "pid": 34216,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224932440,
+      "pid": 34216,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795224932440,
+      "pid": 34216,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795224932189,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795224932196,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795224932529,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-timeout",
+      "kind": "requirement",
+      "text": "missing stderr EOF refuses with helper-timeout",
+      "expected": "helper-timeout",
+      "actual": "foreign-listener",
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "held-stderr-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "held-stderr is terminated by launcher collection before the launcher exits (non-natural, non-driver exit code)",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "held-stderr",
+        "sample": "afterGrace",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "caller-eof-at-launcher-exit",
+      "kind": "requirement",
+      "text": "the caller's launcher stdout/stderr reach EOF within 1500 ms of launcher exit (no helper descendant holds an inherited launcher stdio handle)",
+      "expected": "<= 1500",
+      "actual": {
+        "afterExitMs": null,
+        "afterDriverTeardown": "pending"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "first-check-bound",
+      "kind": "requirement",
+      "text": "launcher returns within 18500 ms",
+      "expected": "<= 18500",
+      "actual": 331,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "root-keeps-natural-exit",
+      "kind": "control",
+      "text": "immediately exited root retains its own natural exit code 0",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 0,
+        "exitedRelativeToLauncherExitMs": -77,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "sentinel-alive",
+      "kind": "control",
+      "text": "same-executable sentinel outside the launcher (also the PowerShell-queried process) remains alive",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

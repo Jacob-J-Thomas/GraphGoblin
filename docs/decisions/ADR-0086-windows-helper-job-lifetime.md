@@ -76,6 +76,14 @@ death. Job accounting is launcher self-observation; exact native handles indepen
 termination within the shared allowance. Cold WMI is claimed only with first-use-after-boot
 provenance; otherwise measurements are fresh-runner observations with prior use unknown.
 
+On the tested Windows 11 build, effective outer-job UI restrictions still permitted the
+launcher's nested creation shape. [D163](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7055986230)
+refines the original UI-incompatibility acceptance case into that measured compatibility
+control and a separate active-process limit that actually refuses creation. Cold and warm
+refusals occur before helper execution while unrelated processes and the existing gateway
+survive. UI-only nesting refusal remains unobserved on this host. This evidence refinement
+does not change the private job's flags or establish behavior on every supported Windows build.
+
 Microsoft references: [process attributes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute),
 [nested jobs](https://learn.microsoft.com/en-us/windows/win32/procthread/nested-jobs),
 [overlapped completion](https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-getoverlappedresult),

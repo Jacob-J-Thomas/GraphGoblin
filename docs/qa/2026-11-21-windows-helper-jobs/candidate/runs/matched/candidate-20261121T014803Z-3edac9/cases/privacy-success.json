@@ -1,0 +1,245 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T014803Z-3edac9",
+  "label": "candidate",
+  "case": "privacy-success",
+  "title": "Stderr sentinel privacy with a valid identity",
+  "lane": "fixture",
+  "category": "positive-control",
+  "planRow": "Synthetic privacy sentinels on stderr with a successful helper",
+  "startedAtMs": 1795225787099,
+  "durationMs": 3423,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 26976,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 392,
+      "osElapsedMs": 383,
+      "osCreatedAtMs": 1795225787106,
+      "osExitedAtMs": 1795225787489,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:49:47.4678020Z",
+          "pid": 26976,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 26720 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\privacy-success\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 336,
+      "stdoutBytes": 0,
+      "stderrBytes": 336,
+      "stdoutText": "",
+      "stderrText": "Port 26720 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\privacy-success\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "privacy-success/launcher-click/26976",
+      "case": "privacy-success",
+      "role": "launcher-click",
+      "pid": 26976,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795225787112,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 36688,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225787106,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225787106,
+          "exitedAtMs": 1795225787489
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225787106,
+          "exitedAtMs": 1795225787489
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225787106,
+          "exitedAtMs": 1795225787489
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225787106,
+          "exitedAtMs": 1795225787489
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "privacy-success/identity-1/28100",
+      "case": "privacy-success",
+      "role": "identity-1",
+      "pid": 28100,
+      "source": "handshake",
+      "self": {
+        "case": "privacy-success",
+        "role": "identity-1",
+        "pid": 28100,
+        "ppid": 26976,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795225787361,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 26976,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225787241,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225787241,
+          "exitedAtMs": 1795225787371
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225787241,
+          "exitedAtMs": 1795225787371
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225787241,
+          "exitedAtMs": 1795225787371
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795225787358,
+      "pid": 28100,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225787365,
+      "pid": 28100,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225787365,
+      "pid": 28100,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795225787367,
+      "pid": 28100,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795225787103,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795225787112,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795225787496,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "control",
+      "text": "identity accepted despite stderr text",
+      "expected": "foreign-listener",
+      "actual": "foreign-listener",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "stderr-sentinel-private",
+      "kind": "control",
+      "text": "synthetic stderr sentinel never reaches launcher stdout/stderr, launcher.log(.1) or gateway.log",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

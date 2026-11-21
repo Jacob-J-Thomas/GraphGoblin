@@ -1,0 +1,550 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T014803Z-3edac9",
+  "label": "candidate",
+  "case": "held-store-recheck-stalls",
+  "title": "Held store, enough room for a recheck that stalls inside a PowerShell query (9 s release wait)",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Held store with enough room for a shortened final recheck that stalls inside a query",
+  "startedAtMs": 1795225797751,
+  "durationMs": 10321,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 9,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 44820,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 7294,
+      "osElapsedMs": 7287,
+      "osCreatedAtMs": 1795225797758,
+      "osExitedAtMs": 1795225805045,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "store-held",
+      "diagnostic": "store-held",
+      "diagnosticFinal": "store-held",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:50:05.0268624Z",
+          "pid": 44820,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "store-held",
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\held-store-recheck-stalls\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "config": "<RUN>\\cases\\held-store-recheck-stalls\\launcher.json",
+          "lock": "<RUN>\\cases\\held-store-recheck-stalls\\data\\graphgoblin.lock"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 475,
+      "stdoutBytes": 0,
+      "stderrBytes": 475,
+      "stdoutText": "",
+      "stderrText": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <RUN>\\cases\\held-store-recheck-stalls\\data\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <RUN>\\cases\\held-store-recheck-stalls\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "held-store-recheck-stalls/launcher-click/44820",
+      "case": "held-store-recheck-stalls",
+      "role": "launcher-click",
+      "pid": 44820,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795225797764,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 36688,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225797758,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225797758,
+          "exitedAtMs": 1795225805045
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225797758,
+          "exitedAtMs": 1795225805045
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225797758,
+          "exitedAtMs": 1795225805045
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225797758,
+          "exitedAtMs": 1795225805045
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-store-recheck-stalls/identity-1/37316",
+      "case": "held-store-recheck-stalls",
+      "role": "identity-1",
+      "pid": 37316,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-recheck-stalls",
+        "role": "identity-1",
+        "pid": 37316,
+        "ppid": 44820,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795225797969,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 44820,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225797873,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225797873,
+          "exitedAtMs": 1795225797978
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225797873,
+          "exitedAtMs": 1795225797978
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225797873,
+          "exitedAtMs": 1795225797978
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-store-recheck-stalls/store-state-1/33496",
+      "case": "held-store-recheck-stalls",
+      "role": "store-state-1",
+      "pid": 33496,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-recheck-stalls",
+        "role": "store-state-1",
+        "pid": 33496,
+        "ppid": 44820,
+        "helper": "store-state",
+        "index": 1
+      },
+      "openedAtMs": 1795225798104,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 44820,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225798006,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225798006,
+          "exitedAtMs": 1795225798113
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225798006,
+          "exitedAtMs": 1795225798113
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795225798006,
+          "exitedAtMs": 1795225798113
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "held-store-recheck-stalls/store-state-2/34336",
+      "case": "held-store-recheck-stalls",
+      "role": "store-state-2",
+      "pid": 34336,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-recheck-stalls",
+        "role": "store-state-2",
+        "pid": 34336,
+        "ppid": 44820,
+        "helper": "store-state",
+        "index": 2
+      },
+      "openedAtMs": 1795225798433,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 44820,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225798349,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798349,
+          "exitedAtMs": 1795225805013
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798349,
+          "exitedAtMs": 1795225805013
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798349,
+          "exitedAtMs": 1795225805013
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    },
+    {
+      "tag": "held-store-recheck-stalls/ps-query/17756",
+      "case": "held-store-recheck-stalls",
+      "role": "ps-query",
+      "pid": 17756,
+      "source": "handshake",
+      "self": {
+        "case": "held-store-recheck-stalls",
+        "pid": 17756,
+        "role": "ps-query"
+      },
+      "openedAtMs": 1795225798778,
+      "opened": {
+        "ok": true,
+        "image": "powershell.exe",
+        "parentPid": 34336,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225798440,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        43
+      ],
+      "messages": [
+        {
+          "atMs": 1795225799109,
+          "queryMs": 277,
+          "queried": true,
+          "event": "query-done"
+        }
+      ],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798440,
+          "exitedAtMs": 1795225805013
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798440,
+          "exitedAtMs": 1795225805013
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225798440,
+          "exitedAtMs": 1795225805013
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795225797966,
+      "pid": 37316,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225797972,
+      "pid": 37316,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225797973,
+      "pid": 37316,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795225797974,
+      "pid": 37316,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    },
+    {
+      "at": 1795225798102,
+      "pid": 33496,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795225798107,
+      "pid": 33496,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795225798107,
+      "pid": 33496,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "store-state-1",
+      "stdout": "held"
+    },
+    {
+      "at": 1795225798108,
+      "pid": 33496,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "store-state-1",
+      "code": 0
+    },
+    {
+      "at": 1795225798431,
+      "pid": 34336,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 2,
+      "role": "store-state-2"
+    },
+    {
+      "at": 1795225798830,
+      "pid": 34336,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 2,
+      "role": "store-state-2"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795225797754,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 9,
+      "marker": false
+    },
+    {
+      "atMs": 1795225797764,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795225805050,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "recheck-had-room",
+      "kind": "info",
+      "text": "first sample duration left room for a recheck (window = remaining - 2 s reserve >= sample)",
+      "expected": null,
+      "actual": {
+        "firstSampleMs": 107,
+        "releaseMs": 9000
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "store-held-retained",
+      "kind": "requirement",
+      "text": "an inconclusive stalled recheck keeps the last held reason (store-held)",
+      "expected": "store-held",
+      "actual": "store-held",
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "release-wait-bound",
+      "kind": "requirement",
+      "text": "launcher exits within the 9 s release wait measured from the first ownership sample (+ slack)",
+      "expected": "exit <= first sample + 10500 ms",
+      "actual": {
+        "launcherExitAfterFirstSampleMs": 7039,
+        "storeStateCalls": 2
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "store-state-2-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "store-state-2 is terminated by launcher collection before the launcher exits (non-natural, non-driver exit code)",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "store-state-2",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -32,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "ps-query-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "stalled PowerShell query is terminated before the launcher exits; on baseline the predicted mechanism is the root Node's own libuv kill-on-close job",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "ps-query",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -32,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "lock-unchanged",
+      "kind": "control",
+      "text": "store lock bytes and file identity are read back unchanged (never deleted or replaced)",
+      "expected": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978826679"
+      },
+      "actual": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978826679"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "sentinel-alive",
+      "kind": "control",
+      "text": "same-executable sentinel outside the launcher (also the PowerShell-queried process) remains alive",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

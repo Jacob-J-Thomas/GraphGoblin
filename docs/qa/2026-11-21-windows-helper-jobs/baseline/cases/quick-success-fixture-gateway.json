@@ -1,0 +1,671 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "quick-success-fixture-gateway",
+  "title": "Clean quick completion: identity + free store sample, one detached fixture gateway, warm reuse",
+  "lane": "fixture",
+  "category": "positive-control",
+  "planRow": "Clean quick completion; independent gateway (fixture lane)",
+  "startedAtMs": 1795224845100,
+  "durationMs": 4273,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 10,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "cold",
+      "pid": 42464,
+      "exitCode": 0,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 819,
+      "osElapsedMs": 597,
+      "osCreatedAtMs": 1795224845343,
+      "osExitedAtMs": 1795224845940,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "success",
+      "diagnostic": "none",
+      "diagnosticFinal": "none",
+      "launcherLogRecords": [],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutText": "",
+      "stderrText": ""
+    },
+    {
+      "name": "warm",
+      "pid": 23928,
+      "exitCode": 0,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 252,
+      "osElapsedMs": 241,
+      "osCreatedAtMs": 1795224845969,
+      "osExitedAtMs": 1795224846210,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "success",
+      "diagnostic": "none",
+      "diagnosticFinal": "none",
+      "launcherLogRecords": [],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutText": "",
+      "stderrText": ""
+    }
+  ],
+  "processes": [
+    {
+      "tag": "quick-success-fixture-gateway/launcher-cold/42464",
+      "case": "quick-success-fixture-gateway",
+      "role": "launcher-cold",
+      "pid": 42464,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224845354,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224845343,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845343,
+          "exitedAtMs": 1795224845940
+        },
+        "atExit:cold": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845343,
+          "exitedAtMs": 1795224845940
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845343,
+          "exitedAtMs": 1795224845940
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845343,
+          "exitedAtMs": 1795224845940
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845343,
+          "exitedAtMs": 1795224845940
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "quick-success-fixture-gateway/identity-1/26564",
+      "case": "quick-success-fixture-gateway",
+      "role": "identity-1",
+      "pid": 26564,
+      "source": "handshake",
+      "self": {
+        "case": "quick-success-fixture-gateway",
+        "role": "identity-1",
+        "pid": 26564,
+        "ppid": 42464,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795224845537,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 42464,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224845443,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:cold": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845443,
+          "exitedAtMs": 1795224845543
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845443,
+          "exitedAtMs": 1795224845543
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845443,
+          "exitedAtMs": 1795224845543
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845443,
+          "exitedAtMs": 1795224845543
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "quick-success-fixture-gateway/store-state-1/20372",
+      "case": "quick-success-fixture-gateway",
+      "role": "store-state-1",
+      "pid": 20372,
+      "source": "handshake",
+      "self": {
+        "case": "quick-success-fixture-gateway",
+        "role": "store-state-1",
+        "pid": 20372,
+        "ppid": 42464,
+        "helper": "store-state",
+        "index": 1
+      },
+      "openedAtMs": 1795224845646,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 42464,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224845564,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:cold": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845564,
+          "exitedAtMs": 1795224845654
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845564,
+          "exitedAtMs": 1795224845654
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845564,
+          "exitedAtMs": 1795224845654
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845564,
+          "exitedAtMs": 1795224845654
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "quick-success-fixture-gateway/gateway-1/17868",
+      "case": "quick-success-fixture-gateway",
+      "role": "gateway-1",
+      "pid": 17868,
+      "source": "handshake",
+      "self": {
+        "case": "quick-success-fixture-gateway",
+        "role": "gateway-1",
+        "pid": 17868,
+        "ppid": 42464
+      },
+      "openedAtMs": 1795224845784,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 42464,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224845678,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        44,
+        45
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:cold": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795224845678,
+          "exitedAtMs": null
+        },
+        "atExit:warm": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795224845678,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795224845678,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 44,
+          "createdAtMs": 1795224845678,
+          "exitedAtMs": 1795224849255
+        }
+      },
+      "teardown": {
+        "action": "http-drain",
+        "atMs": 1795224849251,
+        "response": 202
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "quick-success-fixture-gateway/launcher-warm/23928",
+      "case": "quick-success-fixture-gateway",
+      "role": "launcher-warm",
+      "pid": 23928,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224845973,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224845969,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845969,
+          "exitedAtMs": 1795224846210
+        },
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845969,
+          "exitedAtMs": 1795224846210
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845969,
+          "exitedAtMs": 1795224846210
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224845969,
+          "exitedAtMs": 1795224846210
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "quick-success-fixture-gateway/identity-2/36656",
+      "case": "quick-success-fixture-gateway",
+      "role": "identity-2",
+      "pid": 36656,
+      "source": "handshake",
+      "self": {
+        "case": "quick-success-fixture-gateway",
+        "role": "identity-2",
+        "pid": 36656,
+        "ppid": 23928,
+        "helper": "identity",
+        "index": 2
+      },
+      "openedAtMs": 1795224846135,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 23928,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224846052,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:warm": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224846052,
+          "exitedAtMs": 1795224846142
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224846052,
+          "exitedAtMs": 1795224846142
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224846052,
+          "exitedAtMs": 1795224846142
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795224845531,
+      "pid": 26564,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224845537,
+      "pid": 26564,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224845537,
+      "pid": 26564,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795224845538,
+      "pid": 26564,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    },
+    {
+      "at": 1795224845642,
+      "pid": 20372,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795224845646,
+      "pid": 20372,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795224845647,
+      "pid": 20372,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "store-state-1",
+      "stdout": "free"
+    },
+    {
+      "at": 1795224845649,
+      "pid": 20372,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "store-state-1",
+      "code": 0
+    },
+    {
+      "at": 1795224845779,
+      "pid": 17868,
+      "kind": "gateway",
+      "event": "gateway-start",
+      "index": 1,
+      "logDirectoryProvided": true
+    },
+    {
+      "at": 1795224845802,
+      "pid": 17868,
+      "kind": "gateway",
+      "event": "gateway-listening",
+      "index": 1
+    },
+    {
+      "at": 1795224846131,
+      "pid": 36656,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 2,
+      "role": "identity-2"
+    },
+    {
+      "at": 1795224846136,
+      "pid": 36656,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 2,
+      "role": "identity-2"
+    },
+    {
+      "at": 1795224846137,
+      "pid": 36656,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 2,
+      "role": "identity-2",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795224846137,
+      "pid": 36656,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 2,
+      "role": "identity-2",
+      "code": 0
+    },
+    {
+      "at": 1795224849250,
+      "pid": 17868,
+      "kind": "gateway",
+      "event": "gateway-drain",
+      "index": 1
+    },
+    {
+      "at": 1795224849251,
+      "pid": 17868,
+      "kind": "gateway",
+      "event": "gateway-exit",
+      "index": 1,
+      "code": 44
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795224845128,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 10,
+      "marker": false
+    },
+    {
+      "atMs": 1795224845353,
+      "event": "launcher-spawned",
+      "name": "cold"
+    },
+    {
+      "atMs": 1795224845949,
+      "event": "launcher-exited",
+      "name": "cold",
+      "exitCode": 0
+    },
+    {
+      "atMs": 1795224845973,
+      "event": "launcher-spawned",
+      "name": "warm"
+    },
+    {
+      "atMs": 1795224846220,
+      "event": "launcher-exited",
+      "name": "warm",
+      "exitCode": 0
+    }
+  ],
+  "assertions": [
+    {
+      "id": "cold-exit-zero",
+      "kind": "control",
+      "text": "cold click exits 0",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "one-gateway-spawn",
+      "kind": "control",
+      "text": "exactly one fixture gateway spawn",
+      "expected": 1,
+      "actual": 1,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "warm-reuse-same-gateway",
+      "kind": "control",
+      "text": "warm click exits 0 and reuses the same live gateway (exact handle still alive)",
+      "expected": {
+        "warmExit": 0,
+        "coldPidMatchesHandle": true,
+        "warmPidSame": true,
+        "gatewayAliveAfterWarm": true,
+        "identityMatchesFixture": true
+      },
+      "actual": {
+        "warmExit": 0,
+        "coldPidMatchesHandle": true,
+        "warmPidSame": true,
+        "gatewayAliveAfterWarm": true,
+        "identityMatchesFixture": true
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "helper-roots-natural-zero",
+      "kind": "control",
+      "text": "each helper root exits naturally with 0 before its launcher exits",
+      "expected": "natural 0 x3",
+      "actual": [
+        {
+          "role": "identity-1",
+          "sample": "afterGrace",
+          "alive": false,
+          "exitCode": 0,
+          "exitedRelativeToLauncherExitMs": -397,
+          "exitedBeforeLauncherExit": true,
+          "classification": "natural"
+        },
+        {
+          "role": "store-state-1",
+          "sample": "afterGrace",
+          "alive": false,
+          "exitCode": 0,
+          "exitedRelativeToLauncherExitMs": -286,
+          "exitedBeforeLauncherExit": true,
+          "classification": "natural"
+        },
+        {
+          "role": "identity-2",
+          "sample": "afterGrace",
+          "alive": false,
+          "exitCode": 0,
+          "exitedRelativeToLauncherExitMs": -68,
+          "exitedBeforeLauncherExit": true,
+          "classification": "natural"
+        }
+      ],
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "caller-eof-prompt",
+      "kind": "control",
+      "text": "caller stdout/stderr reach EOF within 1500 ms of the cold launcher exit (gateway holds only NUL stdio)",
+      "expected": "<= 1500",
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "baseline-control-pass"
+}

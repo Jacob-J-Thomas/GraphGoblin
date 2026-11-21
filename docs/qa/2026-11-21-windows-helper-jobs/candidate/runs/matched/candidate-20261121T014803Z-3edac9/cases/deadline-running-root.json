@@ -1,0 +1,525 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T014803Z-3edac9",
+  "label": "candidate",
+  "case": "deadline-running-root",
+  "title": "Helper deadline: running root, real PowerShell query with nested child, detached stdout holder",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Running Node, real PowerShell query fixture and nested child",
+  "startedAtMs": 1795225711109,
+  "durationMs": 18193,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 19372,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 15163,
+      "osElapsedMs": 15157,
+      "osCreatedAtMs": 1795225711113,
+      "osExitedAtMs": 1795225726270,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-timeout",
+      "diagnostic": "helper-timeout",
+      "diagnosticFinal": "helper-timeout",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:48:46.2525522Z",
+          "pid": 19372,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-timeout",
+          "message": "The read-only identity check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started.",
+          "config": "<RUN>\\cases\\deadline-running-root\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 287,
+      "stdoutBytes": 0,
+      "stderrBytes": 287,
+      "stdoutText": "",
+      "stderrText": "The read-only identity check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started.\r\n\r\nConfiguration: <RUN>\\cases\\deadline-running-root\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "deadline-running-root/launcher-click/19372",
+      "case": "deadline-running-root",
+      "role": "launcher-click",
+      "pid": 19372,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795225711119,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 36688,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225711113,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225711113,
+          "exitedAtMs": 1795225726270
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225711113,
+          "exitedAtMs": 1795225726270
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225711113,
+          "exitedAtMs": 1795225726270
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795225711113,
+          "exitedAtMs": 1795225726270
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "deadline-running-root/identity-1/33088",
+      "case": "deadline-running-root",
+      "role": "identity-1",
+      "pid": 33088,
+      "source": "handshake",
+      "self": {
+        "case": "deadline-running-root",
+        "role": "identity-1",
+        "pid": 33088,
+        "ppid": 19372,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795225711311,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 19372,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225711218,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711218,
+          "exitedAtMs": 1795225726223
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711218,
+          "exitedAtMs": 1795225726223
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711218,
+          "exitedAtMs": 1795225726223
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    },
+    {
+      "tag": "deadline-running-root/held-stdout/25536",
+      "case": "deadline-running-root",
+      "role": "held-stdout",
+      "pid": 25536,
+      "source": "handshake",
+      "self": {
+        "case": "deadline-running-root",
+        "role": "held-stdout",
+        "pid": 25536,
+        "ppid": 33088,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "other",
+          "stderr": "char"
+        },
+        "lifetimeMs": 60000
+      },
+      "openedAtMs": 1795225711390,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 33088,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225711316,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711316,
+          "exitedAtMs": 1795225726223
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711316,
+          "exitedAtMs": 1795225726223
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711316,
+          "exitedAtMs": 1795225726223
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    },
+    {
+      "tag": "deadline-running-root/ps-query/40372",
+      "case": "deadline-running-root",
+      "role": "ps-query",
+      "pid": 40372,
+      "source": "handshake",
+      "self": {
+        "case": "deadline-running-root",
+        "pid": 40372,
+        "role": "ps-query"
+      },
+      "openedAtMs": 1795225711681,
+      "opened": {
+        "ok": true,
+        "image": "powershell.exe",
+        "parentPid": 33088,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225711325,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        43
+      ],
+      "messages": [
+        {
+          "atMs": 1795225712015,
+          "queryMs": 266,
+          "queried": true,
+          "event": "query-done"
+        }
+      ],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711325,
+          "exitedAtMs": 1795225726223
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711325,
+          "exitedAtMs": 1795225726223
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225711325,
+          "exitedAtMs": 1795225726223
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    },
+    {
+      "tag": "deadline-running-root/ps-nested/3588",
+      "case": "deadline-running-root",
+      "role": "ps-nested",
+      "pid": 3588,
+      "source": "handshake",
+      "self": {
+        "case": "deadline-running-root",
+        "role": "ps-nested",
+        "pid": 3588,
+        "ppid": 40372,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "char"
+        },
+        "lifetimeMs": 60000
+      },
+      "openedAtMs": 1795225712097,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 40372,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795225712009,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225712009,
+          "exitedAtMs": 1795225726223
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225712009,
+          "exitedAtMs": 1795225726223
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795225712009,
+          "exitedAtMs": 1795225726223
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795225711307,
+      "pid": 33088,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225712121,
+      "pid": 33088,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795225712121,
+      "pid": 33088,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "none"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795225711112,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795225711119,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795225726275,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-timeout",
+      "kind": "requirement",
+      "text": "identity stage refuses with helper-timeout",
+      "expected": "helper-timeout",
+      "actual": "helper-timeout",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "first-check-bound",
+      "kind": "requirement",
+      "text": "launcher returns within 18500 ms (15 s work + 2 s cleanup + slack)",
+      "expected": "<= 18500",
+      "actual": 15157,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "identity-1-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "identity-1 is terminated by launcher collection before the launcher exits (non-natural, non-driver exit code)",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -47,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "ps-query-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "ps-query (non-detached PowerShell child of the root) is terminated before the launcher exits; on baseline the predicted mechanism is the root Node's own libuv kill-on-close job, not launcher collection",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "ps-query",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -47,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "ps-nested-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "ps-nested is terminated by launcher collection before the launcher exits (non-natural, non-driver exit code)",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "ps-nested",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -47,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "held-stdout-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "held-stdout is terminated by launcher collection before the launcher exits (non-natural, non-driver exit code)",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*"
+      },
+      "actual": {
+        "role": "held-stdout",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -47,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "caller-eof-at-launcher-exit",
+      "kind": "requirement",
+      "text": "the caller's launcher stdout/stderr reach EOF within 1500 ms of launcher exit (no helper descendant holds an inherited launcher stdio handle)",
+      "expected": "<= 1500",
+      "actual": {
+        "afterExitMs": 0,
+        "afterDriverTeardown": "pending"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "real-query-ran",
+      "kind": "control",
+      "text": "the PowerShell fixture completed one real WMI query of the sentinel before stalling",
+      "expected": true,
+      "actual": {
+        "atMs": 1795225712015,
+        "queryMs": 266,
+        "queried": true,
+        "event": "query-done"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "sentinel-alive",
+      "kind": "control",
+      "text": "same-executable sentinel outside the launcher (also the PowerShell-queried process) remains alive",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

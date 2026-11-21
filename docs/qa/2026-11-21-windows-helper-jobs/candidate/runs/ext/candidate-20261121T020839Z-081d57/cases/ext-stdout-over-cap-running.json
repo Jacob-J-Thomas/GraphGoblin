@@ -1,0 +1,325 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T020839Z-081d57",
+  "label": "candidate",
+  "case": "ext-stdout-over-cap-running",
+  "title": "Stdout over the 256 KiB cap from a still-running root (300 KiB then hang)",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Stdout retention capped at 256 KiB; oversized output refuses inside the work window",
+  "startedAtMs": 1795226968907,
+  "durationMs": 3777,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 37404,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 756,
+      "osElapsedMs": 748,
+      "osCreatedAtMs": 1795226968915,
+      "osExitedAtMs": 1795226969663,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-invalid",
+      "diagnostic": "helper-invalid",
+      "diagnosticFinal": "helper-invalid",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:09:29.6442387Z",
+          "pid": 37404,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-invalid",
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "config": "<RUN>\\cases\\ext-stdout-over-cap-running\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 240,
+      "stdoutBytes": 0,
+      "stderrBytes": 240,
+      "stdoutText": "",
+      "stderrText": "The read-only launcher check returned an invalid or oversized response. No gateway was started.\r\n\r\nConfiguration: <RUN>\\cases\\ext-stdout-over-cap-running\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-stdout-over-cap-running/launcher-click/37404",
+      "case": "ext-stdout-over-cap-running",
+      "role": "launcher-click",
+      "pid": 37404,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226968925,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 45884,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226968915,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226968915,
+          "exitedAtMs": 1795226969663
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226968915,
+          "exitedAtMs": 1795226969663
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226968915,
+          "exitedAtMs": 1795226969663
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226968915,
+          "exitedAtMs": 1795226969663
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-stdout-over-cap-running/identity-1/28804",
+      "case": "ext-stdout-over-cap-running",
+      "role": "identity-1",
+      "pid": 28804,
+      "source": "handshake",
+      "self": {
+        "case": "ext-stdout-over-cap-running",
+        "role": "identity-1",
+        "pid": 28804,
+        "ppid": 37404,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226969132,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 37404,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226969042,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795226969042,
+          "exitedAtMs": 1795226969627
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795226969042,
+          "exitedAtMs": 1795226969627
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 3762750553,
+          "createdAtMs": 1795226969042,
+          "exitedAtMs": 1795226969627
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-other"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226969130,
+      "pid": 28804,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226969134,
+      "pid": 28804,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 216,
+      "fileId": "810877956:281474978827350",
+      "sha256": "04535456b542b37e2f49d4807ae69bc7db56a872af1d6dae2909c8277f27edf4"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 470,
+      "fileId": "810877956:281474978827349",
+      "sha256": "34f00e6cb096319525d149fd7c08db4a61a6a14a4e441000f9dcc75dc69ed1a7"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 366,
+      "fileId": "810877956:281474978827351",
+      "sha256": "2e01c04068674c4806156c68bc39a9cbb450988dd575feba1e9b8abd2f804580"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 385,
+      "fileId": "810877956:281474978827348",
+      "sha256": "1e45f0a9f4de8501ce8fc917a498bcd4e8269dbe9926a7205f7ef5988e8de540"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795226968911,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795226968924,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226969667,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "oversized stdout refuses with helper-invalid",
+      "expected": "helper-invalid",
+      "actual": "helper-invalid",
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "refused-before-deadline",
+      "kind": "requirement",
+      "text": "the cap is enforced while reading: refusal well before the 15 s work window ends (root still running)",
+      "expected": "< 10000 ms",
+      "actual": 748,
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "identity-1-terminated-by-launcher",
+      "kind": "requirement",
+      "text": "identity-1 is terminated by the launcher's job before the launcher exits with 3762750553",
+      "expected": {
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-*",
+        "exitCode": 3762750553
+      },
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 3762750553,
+        "exitedRelativeToLauncherExitMs": -36,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-other"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-helper-bytes-forwarded",
+      "kind": "control",
+      "text": "helper output never reaches launcher stdout/stderr",
+      "expected": {
+        "launcherStdoutBytes": 0,
+        "fillerInStderr": false
+      },
+      "actual": {
+        "launcherStdoutBytes": 0,
+        "fillerInStderr": false
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "caller-eof-at-launcher-exit",
+      "kind": "control",
+      "text": "the caller's launcher stdout/stderr reach EOF within 1500 ms of launcher exit",
+      "expected": "<= 1500",
+      "actual": {
+        "afterExitMs": 0,
+        "afterDriverTeardown": "pending"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

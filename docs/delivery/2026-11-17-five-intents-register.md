@@ -113,8 +113,13 @@ refused clearly, and authoring/API/MCP identity rules to agree.
 - **U3.1 / #459:** begin with the owned helper-descendant lifecycle design. Preserve its
   architecture decision record and genuine native process verification. The November 20
   D160 amendment below changes the timing of this issue's human plan review only.
-- **U3.2 / #471:** establish the actual Windows contention failure site and cause. Do not
-  call it a confirmed sharing violation or relax single-writer, record or cleanup assertions.
+- **U3.2 / #471:** complete the bounded Windows contention characterization and defensive
+  recovery engineering accepted in D161. The original incidents' failing code call site,
+  marker-identity relation, final owner-record readback and underlying Windows status remain
+  **NOT ESTABLISHED — dispositioned**. The captured Node `unlink` EPERM is not a confirmed
+  sharing violation. Preserve every single-writer, record and cleanup assertion; the conservative
+  present-path guard-removal residual is tracked separately in #542. See the
+  [D161 completion amendment](#november-21-amendment-d161-471-bounded-completion).
 - **U3.3 / #437:** the approved recommendation is to refuse secret-bearing launcher
   overrides, without another acknowledgement path and without echoing secret values.
 - **U3.4 / #434:** make reset manifests and completion/failure output accurately account for
@@ -241,3 +246,58 @@ QA, opposite-family review, the three-total-formal-scan cap, exact-head/current-
 fresh independent Astra MAX final audit remain required. PR #460 remains separately held.
 [Issue authority amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7054679201)
 and [batch authority amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7054680224).
+
+## November 21 amendment: D161, #471 bounded completion
+
+The coordinator closed #471 as completed bounded engineering and Windows characterization under
+the owner's catalogued blocker-decision authority. D161 explicitly supersedes the original U3.2
+historical-attribution demand and its earlier partial closure condition. The original logs captured
+Node `unlink`, EPERM and a UUID recovery-marker path; their missing call-site, marker-identity,
+final owner-record and Windows-status observations remain **NOT ESTABLISHED — dispositioned**.
+The finite native characterization and merged #529 engineering do not identify the cause of those
+two historical incidents. [Accepted disposition and completed closure](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471#issuecomment-7055233879)
+supersedes the [earlier partial disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471#issuecomment-7043540017).
+
+The conservative refusal when a guard pathname is present remains fail-closed and is accepted as a
+separate diagnostic limitation in parked [#542](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/542),
+outside the 26 core issues. Earlier failed runs and the naturally unobserved vanished-marker read
+branch keep their documented limits. No deletion retry, relaxed native assertion, new permission
+or race reproduction, or previously rejected instrumentation is authorized by this disposition.
+It admits no other issue or intent by itself. #459 engineering continues under D160 with its own
+delivery gates, and PR #460's separate hold remains in force.
+
+## November 21 amendment: D163, #459 platform refusal evidence
+
+Under D160's delegated engineering authority, D163 refines the reviewed plan's specific outer
+UI-restriction refusal fixture to match the observed platform capability. The independent probe
+read the outer UI restrictions back as effective, but the tested Windows 11 build still permitted
+the launcher's nested creation shape. That run is a compatible-host control; the original
+UI-specific incompatibility remains C14 **LIMIT**, not PASS.
+
+A separate outer job's verified active-process limit made process creation fail. Independent cold
+and warm clicks refused with `helper-containment` before any helper ran, while preserving the
+unrelated sibling, sentinel and existing warm gateway. This supplies the measured host-policy
+refusal evidence without adding UI restrictions to the production job or changing host policy.
+[Accepted D163 evidence amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7055986230)
+retains the original UI-specific limit and the other independent QA limits.
+
+This is an acceptance-evidence refinement, not personal human plan approval, a product change or
+a waiver of review, QA, exact-head/current-target CI, final audit or merge gates. D160's
+consolidated owner decision review and any requested rework remain before owner QA. The approved
+intent order and PR #460's separate hold continue to apply.
+
+## November 21 amendment: D164, #459 bounded dialog evidence
+
+Under D160's delegated authority, D164 permits proceeding through the technical gates with the
+scoped independent native observations, separately attributed hosted tests and compiled public-method
+privacy checks, plus the source's shared sanitized-message callsite for stderr and MessageBox.
+These are process, text and source evidence, not visual dialog QA. Two Computer Use bootstrap
+attempts failed before application initialization; no fixture or application opened. The visual
+dialog remains **NOT PERFORMED** for the consolidated owner review and QA.
+[Accepted D164 evidence disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7056081015).
+
+The original independent C14 and C25-C31 LIMIT entries remain unchanged. Source-only claims remain
+review obligations, not waived requirements. D164 admits the bounded evidence to review; it is not
+merge approval, visual acceptance or personal plan approval. Opposite-family review, exact-head
+and current-target CI, the fresh independent final audit and signed merge remain required. D160's
+consolidated owner decision review and any rework stay before owner QA, and PR #460 remains held.

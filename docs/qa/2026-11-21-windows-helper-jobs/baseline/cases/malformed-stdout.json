@@ -1,0 +1,254 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "malformed-stdout",
+  "title": "Malformed stdout with exit 0",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Invalid protocol returns helper-invalid",
+  "startedAtMs": 1795224948639,
+  "durationMs": 3225,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 42104,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 198,
+      "osElapsedMs": 191,
+      "osCreatedAtMs": 1795224948645,
+      "osExitedAtMs": 1795224948836,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-refused",
+      "diagnostic": "helper-refused",
+      "diagnosticFinal": "helper-refused",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:35:48.8201064Z",
+          "pid": 42104,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-refused",
+          "message": "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.",
+          "config": "<RUN>\\cases\\malformed-stdout\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 305,
+      "stdoutBytes": 0,
+      "stderrBytes": 305,
+      "stdoutText": "",
+      "stderrText": "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.\r\n\r\nConfiguration: <RUN>\\cases\\malformed-stdout\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "malformed-stdout/launcher-click/42104",
+      "case": "malformed-stdout",
+      "role": "launcher-click",
+      "pid": 42104,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224948650,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224948645,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224948645,
+          "exitedAtMs": 1795224948836
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224948645,
+          "exitedAtMs": 1795224948836
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224948645,
+          "exitedAtMs": 1795224948836
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224948645,
+          "exitedAtMs": 1795224948836
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "malformed-stdout/identity-1/36984",
+      "case": "malformed-stdout",
+      "role": "identity-1",
+      "pid": 36984,
+      "source": "handshake",
+      "self": {
+        "case": "malformed-stdout",
+        "role": "identity-1",
+        "pid": 36984,
+        "ppid": 42104,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795224948805,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 42104,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224948728,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224948728,
+          "exitedAtMs": 1795224948812
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224948728,
+          "exitedAtMs": 1795224948812
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795224948728,
+          "exitedAtMs": 1795224948812
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795224948802,
+      "pid": 36984,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224948807,
+      "pid": 36984,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224948808,
+      "pid": 36984,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "malformed"
+    },
+    {
+      "at": 1795224948808,
+      "pid": 36984,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795224948643,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795224948650,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795224948841,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "malformed protocol refuses with helper-invalid (reviewed plan taxonomy)",
+      "expected": "helper-invalid",
+      "actual": "helper-refused",
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "refused",
+      "kind": "control",
+      "text": "malformed protocol is refused (exit 1)",
+      "expected": 1,
+      "actual": 1,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}
