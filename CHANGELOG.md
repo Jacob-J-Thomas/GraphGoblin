@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Codex structured calls create short scratch names with exclusive `mkdir`, retrying at most
+  four `EEXIST` collisions and preserving every colliding directory (#363). This avoids the
+  Windows `mkdtemp` failure under the tested 226-character temp root; OS/CLI path limits remain.
+  Request/configured working directories and cancellation/error cleanup precedence are unchanged.
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds

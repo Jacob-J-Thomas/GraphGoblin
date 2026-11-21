@@ -591,6 +591,16 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+
+The request's working directory takes precedence over the adapter's configured directory;
+neither configured directory is removed. Without either, the adapter exclusively creates a
+short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+limit. It tries at most four names on `EEXIST`; other creation errors propagate before the
+harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+to a directory this call created. Cancellation and primary failures keep their existing
+cleanup precedence. This supports the tested 226-character temporary root; ordinary OS/CLI
+path limits still apply, including paths the harness later creates inside that directory.
+
 Configured plugins are inherited through the common harness, including their tools; the
 read-only sandbox controls local commands rather than the authority of plugin services.
 The engine's LLM decision and coerce-repair callers supply neither a working directory
