@@ -1,0 +1,207 @@
+diff --git a/apps/api/src/preflight-catalog.test.ts b/apps/api/src/preflight-catalog.test.ts
+index 582e28ee..a187acae 100644
+--- a/apps/api/src/preflight-catalog.test.ts
++++ b/apps/api/src/preflight-catalog.test.ts
+@@ -1,4 +1,4 @@
+-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
++import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { basename, dirname, join } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+@@ -42,6 +42,7 @@ function env(dbFile: string, defaults: HarnessDefaults): Record<string, string>
+     GG_DB_URL: pathToFileURL(dbFile).href,
+     GG_MASTER_KEY: KEY,
+     GG_DEFAULTS: JSON.stringify(defaults),
++    GG_OLLAMA_ENABLED: 'false',
+   };
+ }
+ 
+@@ -84,6 +85,23 @@ async function storeBytes(dbFile: string) {
+   );
+ }
+ 
++function expectStoreUnchanged(
++  dbFile: string,
++  before: Record<string, Buffer>,
++  after: Record<string, Buffer>,
++) {
++  const dbName = basename(dbFile);
++  expect(after[dbName]?.equals(before[dbName]!)).toBe(true);
++  const walName = `${dbName}-wal`;
++  const existingWal = before[walName];
++  if (existingWal !== undefined) {
++    expect(after[walName]?.equals(existingWal)).toBe(true);
++  } else {
++    // A reader may create an empty WAL, but cannot add frames to stored data.
++    expect(after[walName]?.length ?? 0).toBe(0);
++  }
++}
++
+ async function storedCatalog(dbFile: string) {
+   const client = openReadOnlyDatabaseClient(dbFile);
+   try {
+@@ -93,6 +111,15 @@ async function storedCatalog(dbFile: string) {
+   }
+ }
+ 
++async function storedMigrations(dbFile: string) {
++  const client = openReadOnlyDatabaseClient(dbFile);
++  try {
++    return (await client.execute('SELECT * FROM __drizzle_migrations ORDER BY id')).rows;
++  } finally {
++    client.close();
++  }
++}
++
+ describe('offline startup catalog admission', () => {
+   it.each([
+     ['codex', 'gpt-6.1-terra', 'medium'],
+@@ -122,7 +149,7 @@ describe('offline startup catalog admission', () => {
+           ? /ok\s+Default model\s+gpt-6.1-terra \(codex\) is in the model catalog/
+           : /ok\s+Claude default model\s+Exact Claude model and effort are configured/,
+       );
+-      expect(await storeBytes(dbFile)).toEqual(before);
++      expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
+       expect(
+         (await storedCatalog(dbFile)).some((row) => row.harness === harness && row.model === model),
+       ).toBe(false);
+@@ -243,7 +270,7 @@ describe('offline startup catalog admission', () => {
+           (a, b) => a.harness.localeCompare(b.harness) || a.model.localeCompare(b.model),
+         ),
+       );
+-      expect(await storeBytes(dbFile)).toEqual(before);
++      expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
+       if (test.refusal) {
+         const outcome: unknown = await createContainer(loadConfig(environment), adapters()).then(
+           async (unexpected) => {
+@@ -256,7 +283,7 @@ describe('offline startup catalog admission', () => {
+           code: 'EVALUATION_INVALID_CONFIGURATION',
+           details: { code: test.refusal, harness: test.harness },
+         });
+-        expect(await storeBytes(dbFile)).toEqual(before);
++        expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
+       } else {
+         // A disabled model is unavailable to execution, but is not malformed configuration:
+         // ordinary boot must leave Settings available for correcting the selection.
+@@ -276,6 +303,43 @@ describe('offline startup catalog admission', () => {
+     },
+   );
+ 
++  it.each(['absent', 'empty'] as const)(
++    'preserves rows and migrations with an initially %s WAL',
++    async (initialWal) => {
++      const dbFile = join(dir, 'gateway.db');
++      const rows = DEFAULT_MODEL_CATALOG.filter((entry) => entry.model !== 'gpt-6.1-terra');
++      const original = join(dir, 'source.db');
++      await fixture(original, rows);
++      const migrations = await storedMigrations(original);
++      // Copy only the checkpointed DB to a fresh path with no previous SQLite connections.
++      // Native cleanup of the source's closed clients cannot create or remove these sidecars.
++      await copyFile(original, dbFile);
++      const walFile = `${dbFile}-wal`;
++      if (initialWal === 'empty') await writeFile(walFile, Buffer.alloc(0));
++      const before = await storeBytes(dbFile);
++      if (initialWal === 'absent') {
++        expect(before['gateway.db-wal']).toBeUndefined();
++      } else {
++        expect(before['gateway.db-wal']).toEqual(Buffer.alloc(0));
++      }
++
++      const report = await cli(
++        env(dbFile, { byHarness: { codex: { model: 'gpt-6.1-terra', effort: 'medium' } } }),
++      );
++      expect(report.code, report.out).toBe(0);
++      expect(report.out).toMatch(/ok\s+Database\s+reachable and migrated/);
++      expect(report.out).toMatch(/ok\s+Default model\s+gpt-6.1-terra/);
++      expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
++      expect(await storedCatalog(dbFile)).toEqual(
++        [...rows].sort(
++          (a, b) => a.harness.localeCompare(b.harness) || a.model.localeCompare(b.model),
++        ),
++      );
++      expect(await storedMigrations(dbFile)).toEqual(migrations);
++      expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
++    },
++  );
++
+   it('projects a missing seed from a WAL-backed store without checkpointing or writing it', async () => {
+     const original = join(dir, 'gateway.db');
+     await fixture(original);
+@@ -295,17 +359,76 @@ describe('offline startup catalog admission', () => {
+     const dbFile = join(copy, 'gateway.db');
+     const before = await storeBytes(dbFile);
+     expect(Object.keys(before)).toContain('gateway.db-wal');
++    expect(before['gateway.db-wal']!.length).toBeGreaterThan(0);
+     const report = await cli(
+       env(dbFile, { byHarness: { codex: { model: 'gpt-6.1-terra', effort: 'medium' } } }),
+     );
+     expect(report.code, report.out).toBe(0);
+     expect(report.out).toMatch(/ok\s+Default model\s+gpt-6.1-terra/);
+     expect((await storedCatalog(dbFile)).some((row) => row.model === 'gpt-6.1-terra')).toBe(false);
+-    expect(await storeBytes(dbFile)).toEqual(before);
++    expectStoreUnchanged(dbFile, before, await storeBytes(dbFile));
+     expect((await readdir(copy)).sort()).toEqual([
+       'gateway.db',
+       'gateway.db-shm',
+       'gateway.db-wal',
+     ]);
+   });
++
++  it('rejects database changes, existing WAL changes or removal, and new WAL frames', async () => {
++    const dbFile = join(dir, 'gateway.db');
++    const original = join(dir, 'source.db');
++    await fixture(original);
++    await copyFile(original, dbFile);
++    const walFile = `${dbFile}-wal`;
++    const absent = await storeBytes(dbFile);
++    expect(absent['gateway.db-wal']).toBeUndefined();
++
++    const changedDb = Buffer.from(absent['gateway.db']!);
++    changedDb[0] = changedDb[0]! ^ 1;
++    await writeFile(dbFile, changedDb);
++    const databaseMutation = await storeBytes(dbFile);
++    expect(() => expectStoreUnchanged(dbFile, absent, databaseMutation)).toThrow();
++    await writeFile(dbFile, absent['gateway.db']!);
++
++    await writeFile(walFile, Buffer.alloc(0));
++    const empty = await storeBytes(dbFile);
++    expectStoreUnchanged(dbFile, absent, empty);
++    await rm(walFile);
++    const removedEmpty = await storeBytes(dbFile);
++    expect(() => expectStoreUnchanged(dbFile, empty, removedEmpty)).toThrow();
++
++    // Produce genuine SQLite frames while keeping the checkpointed database bytes fixed.
++    const writer = openDatabase({ url: pathToFileURL(dbFile).href });
++    try {
++      await writer.client.execute('PRAGMA journal_mode = WAL');
++      await writer.client.execute(
++        "DELETE FROM model_catalog WHERE harness = 'codex' AND model = 'gpt-6.1-terra'",
++      );
++      const frames = await storeBytes(dbFile);
++      expect(frames['gateway.db']).toEqual(absent['gateway.db']);
++      expect(frames['gateway.db-wal']!.length).toBeGreaterThan(0);
++      expect(() => expectStoreUnchanged(dbFile, absent, frames)).toThrow();
++      expect(() => expectStoreUnchanged(dbFile, empty, frames)).toThrow();
++
++      const frozenFile = join(dir, 'frozen', 'gateway.db');
++      await mkdir(dirname(frozenFile));
++      for (const suffix of ['', '-wal', '-shm'])
++        await copyFile(`${dbFile}${suffix}`, `${frozenFile}${suffix}`);
++      const frozen = await storeBytes(frozenFile);
++      const frozenWal = `${frozenFile}-wal`;
++      const changedWal = Buffer.from(frozen['gateway.db-wal']!);
++      changedWal[changedWal.length - 1] = changedWal[changedWal.length - 1]! ^ 1;
++      await writeFile(frozenWal, changedWal);
++      const walMutation = await storeBytes(frozenFile);
++      expect(() => expectStoreUnchanged(frozenFile, frozen, walMutation)).toThrow();
++      await rm(frozenWal);
++      const removedWal = await storeBytes(frozenFile);
++      expect(() => expectStoreUnchanged(frozenFile, frozen, removedWal)).toThrow();
++      await writeFile(frozenWal, Buffer.alloc(0));
++      const truncatedWal = await storeBytes(frozenFile);
++      expect(() => expectStoreUnchanged(frozenFile, frozen, truncatedWal)).toThrow();
++    } finally {
++      writer.close();
++    }
++  });
+ });

@@ -1,0 +1,9 @@
+Erratum for 00c-checkout.txt (record left unedited).
+
+The echoed command line in 00c-checkout.txt reads:
+  $ git -c core.longpaths=true checkout --detach 446da9ce32b2304f17c53b5ff09af559f35dd3cf
+The command actually executed in the same shell invocation was:
+  git -c gc.auto=0 checkout --detach 446da9ce32b2304f17c53b5ff09af559f35dd3cf
+(environment GIT_OPTIONAL_LOCKS=0, cwd G:/ggq/gg-i4-448-qa/GraphGoblin). The echo text was a typing error in my
+wrapper; the verification lines that follow in 00c (HEAD, tree, parent, branch, file hash, empty status) are the
+outputs of the executed command.

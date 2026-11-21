@@ -1,0 +1,1020 @@
+{
+  "formalAudit": {
+    "number": 3,
+    "cap": 3,
+    "verdict": "CHANGES_REQUIRED",
+    "asDispatchedModel": "GPT-6.2 Astra MAX",
+    "reviewerRole": "fresh independent final auditor",
+    "scope": "read-only source, Git histories, GitHub metadata, retained executions and artifacts",
+    "head": "cc0a52cffe7e0bffb197c3f3342d370e2b1b9794",
+    "base": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "tree": "0a66cc140df841089751801703376dac537fb897",
+    "testedSyntheticMerge": "230071badafb3a250667083ae5dc3718e95c3359",
+    "ownerClosureIssue": 448,
+    "runtimeVerdict": "accepted within D172",
+    "selectedD186Prose": "four exact passages accepted",
+    "findings": [
+      {
+        "id": "F1",
+        "priority": "P2",
+        "path": "apps/api/src/preflight-catalog.test.ts",
+        "line": 39,
+        "subject": "New unit test starts discovery at the host-default Ollama endpoint.",
+        "evidence": "New test and configuration/service/startup source. Retained three-file fetch-guard log does not assign each request to a file.",
+        "correction": "Disable Ollama in this fixture or inject an isolated service. Confirm single-file execution makes zero requests to port 11434."
+      },
+      {
+        "id": "F2",
+        "priority": "P2",
+        "path": "apps/api/src/preflight-catalog.test.ts",
+        "line": 73,
+        "subject": "Unconditional file-map equality rejects allowed empty-WAL creation.",
+        "evidence": "New test assertions and retained P01, P03 and P18 snapshots. Hosted tests passed on their fixtures.",
+        "correction": "Compare database and existing WAL bytes/presence exactly. Allow absence or a new zero-byte file after an initial absent WAL and exercise that precondition."
+      }
+    ],
+    "deferred": [
+      "545",
+      "546",
+      "262"
+    ],
+    "limits": [
+      "Windows behavior QA, fake CLIs and local metadata recorder",
+      "No base binary for C09/C10",
+      "Owner provider, #448 browser, non-Windows, restricted filesystem and later-writer behavior unmeasured",
+      "Historical incomplete author output",
+      "CI does not alter local failed tiers",
+      "This audit read retained canonical replay materials without running the replay helper, product tests, builds or a provider."
+    ]
+  },
+  "snapshotUtc": "2026-11-21T12:20:55.910821+00:00",
+  "gitHub": {
+    "ownerRepo": "Jacob-J-Thomas/GraphGoblin",
+    "draft": true,
+    "state": "open",
+    "head": "cc0a52cffe7e0bffb197c3f3342d370e2b1b9794",
+    "target": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "tree": "0a66cc140df841089751801703376dac537fb897",
+    "synthetic": "230071badafb3a250667083ae5dc3718e95c3359",
+    "changedFiles": 396,
+    "closingIssueReferences": 0,
+    "nativeReviewThreads": 0,
+    "nativeSubmittedReviews": 0,
+    "trackingIssues": {
+      "448": {
+        "state": "open",
+        "labels": [
+          "aidlc-ready",
+          "qa:touched-systems",
+          "impl:gpt-6.1-sol",
+          "review:claude-opus-5.5",
+          "type:bug",
+          "area:harness"
+        ],
+        "bodySha256": "9cd49dd72d852c7d8b2a0218ef849fd7a260b47c2c6d5c52111db781724ecbba"
+      },
+      "545": {
+        "state": "open",
+        "labels": [
+          "qa:touched-systems",
+          "impl:gpt-6.1-sol",
+          "review:claude-opus-5.5",
+          "type:bug",
+          "area:api",
+          "area:harness",
+          "backlog"
+        ],
+        "bodySha256": "b3c08f290fad36bdb7e88d952c955cd60b1b606a760ddab18eac4a6aeb3423ba"
+      },
+      "546": {
+        "state": "open",
+        "labels": [
+          "qa:touched-systems",
+          "impl:gpt-6.1-sol",
+          "review:claude-opus-5.5",
+          "type:bug",
+          "area:api",
+          "area:harness",
+          "backlog"
+        ],
+        "bodySha256": "5326a8156ecee6bdef3a92f798d8bdad2cad5057c04356f969c2bf818d36a59c"
+      }
+    },
+    "publishedComments": {
+      "QA_PR": {
+        "id": 7062005567,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/551#issuecomment-7062005567",
+        "bodySha256": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56"
+      },
+      "QA_issue": {
+        "id": 7062005873,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7062005873",
+        "bodySha256": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56"
+      },
+      "CIcomment": {
+        "id": 7062348753,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/551#issuecomment-7062348753",
+        "bodySha256": "1a5b3dc1401b1b5532e98c4c8ae00e79b92cbafb32400e44c3d64be745009568"
+      },
+      "D186comment": {
+        "id": 7061732566,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7061732566",
+        "bodySha256": "b2b565cee6a6fc18c027f71f716a9c058185b28bcfd9f1bdcbff39bd58da6568"
+      }
+    },
+    "reviewCommentBindings": {
+      "review1": {
+        "id": 7060237320,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320",
+        "publishedBodySha256": "a2f54975b58ca4f9e3ad75843f2e99c33498bd9248f50fe8d8ddfdf1ed1e22de",
+        "providerSha256": "8ed3188529547183466384be24e350e260c78d92600cd98e1bbc754e25e917fc",
+        "reportIsExactBody": false,
+        "fullReportInBody": true,
+        "opening": "Actual Claude Code Opus 5.5 at xhigh completed formal review 1 at `b45807f033601a53919f2c9e16e0de751971a518` with **APPROVE**. The original provider report below is reproduced verbatim (SHA-256 `8ed31"
+      },
+      "review2": {
+        "id": 7060697996,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/547#issuecomment-7060697996",
+        "publishedBodySha256": "e4a58fa3cb77df6d1d38f71c25c7b8f4c5e043636537dc01a54621bb201c6f00",
+        "providerSha256": "e4a58fa3cb77df6d1d38f71c25c7b8f4c5e043636537dc01a54621bb201c6f00",
+        "reportIsExactBody": true,
+        "fullReportInBody": true,
+        "opening": "# Targeted correction review 2: A is accepted, B is accepted\n\nI reviewed both correction deltas statically and read-only, using Read, Glob and Grep only. Neither delta adds a misleading claim, and nei"
+      }
+    }
+  },
+  "hostedCI": {
+    "run": 44899676928,
+    "attempt": 1,
+    "conclusion": "success",
+    "testedMerge": "230071badafb3a250667083ae5dc3718e95c3359",
+    "testedTree": "0a66cc140df841089751801703376dac537fb897",
+    "jobs": {
+      "Coverage": {
+        "id": 136832739686,
+        "numberOfSteps": 14,
+        "nonExecuted": []
+      },
+      "Template image": {
+        "id": 136832739852,
+        "numberOfSteps": 6,
+        "nonExecuted": []
+      },
+      "Browser": {
+        "id": 136832739901,
+        "numberOfSteps": 14,
+        "nonExecuted": [
+          "Upload browser failure evidence"
+        ]
+      },
+      "Windows launcher": {
+        "id": 136832739935,
+        "numberOfSteps": 14,
+        "nonExecuted": []
+      },
+      "Repository checks": {
+        "id": 136832740031,
+        "numberOfSteps": 29,
+        "nonExecuted": []
+      },
+      "Gates": {
+        "id": 136836521032,
+        "numberOfSteps": 3,
+        "nonExecuted": []
+      }
+    },
+    "retainedCiHashesVerified": 15,
+    "passedUnit": 10045,
+    "skippedUnit": 52,
+    "passingBrowser": 488,
+    "passingNative": 27,
+    "dependencyAudit": {
+      "low": 7,
+      "moderate": 13,
+      "high": 0,
+      "critical": 0
+    },
+    "coverageTurboTasksPassed": 22,
+    "coverageArtifact": 14705918045,
+    "coverageSha256": "6fbb64bb89270756b373791ad46a72915423aba7eb8f26429af52e69d041f0da",
+    "coverage": {
+      "packages/adapter-codex": {
+        "lines": 99.21,
+        "statements": 98.07,
+        "functions": 99.31,
+        "branches": 95.25
+      },
+      "packages/adapter-jev": {
+        "lines": 98.8,
+        "statements": 97.75,
+        "functions": 100,
+        "branches": 96.77
+      },
+      "packages/api-client": {
+        "lines": 100,
+        "statements": 99.43,
+        "functions": 100,
+        "branches": 97.3
+      },
+      "packages/contracts": {
+        "lines": 99.42,
+        "statements": 99.26,
+        "functions": 97.05,
+        "branches": 95.1
+      },
+      "packages/domain": {
+        "lines": 98.75,
+        "statements": 97.88,
+        "functions": 98.3,
+        "branches": 96
+      },
+      "packages/engine": {
+        "lines": 96.94,
+        "statements": 95.62,
+        "functions": 97.7,
+        "branches": 91.22
+      },
+      "packages/infrastructure": {
+        "lines": 97.8,
+        "statements": 96.35,
+        "functions": 98.11,
+        "branches": 93.18
+      },
+      "apps/api": {
+        "lines": 95.28,
+        "statements": 93.92,
+        "functions": 91.42,
+        "branches": 90.96
+      },
+      "apps/mcp": {
+        "lines": 96.95,
+        "statements": 95.87,
+        "functions": 94.68,
+        "branches": 94.65
+      },
+      "apps/plugin-claude": {
+        "lines": 95,
+        "statements": 95.23,
+        "functions": 100,
+        "branches": 95.23
+      },
+      "apps/plugin-codex": {
+        "lines": 95.58,
+        "statements": 95.89,
+        "functions": 100,
+        "branches": 91.66
+      },
+      "apps/web": {
+        "lines": 98.63,
+        "statements": 97.72,
+        "functions": 97.23,
+        "branches": 94.39
+      },
+      "tooling": {
+        "lines": 97.48,
+        "statements": 96.55,
+        "functions": 94.17,
+        "branches": 93.57
+      }
+    }
+  },
+  "nativeEvidence": {
+    "artifact": 14705995694,
+    "zipBytes": 9193,
+    "zipSha256": "7ff0d91f0258189f84ed1f1c53829e2c488330b08fdd6469a90ec53293924231",
+    "memberHashes": {
+      "manifest.json": "dd6d031a71add39fed43d4a4d31e10a05a23ddd07cef4735ea0a053bd51787e2",
+      "result.json": "5fb968fe09613c33b6343a5ca10d7f31e684dbd963806f8c347b46b2cfb4a7af",
+      "observations.ndjson": "41fd5eb1d8e046127b115aa4ca448c40c63c298f5fa06d84c81ecd5e117d58c5"
+    },
+    "evidenceId": "6d33be33-a942-4bd5-8174-8a27f5f00492",
+    "observationBytes": 91652,
+    "observationCount": 338,
+    "recordCounters": {
+      "recorder-open": 1,
+      "case-start": 27,
+      "fixture": 9,
+      "child": 219,
+      "cleanup": 15,
+      "case-end": 27,
+      "alias-round": 4,
+      "alias": 2,
+      "ownership-result": 15,
+      "contention": 3,
+      "ownership-check": 3,
+      "ownership-cleanup": 3,
+      "fixture-state": 9,
+      "recorder-closed": 1
+    },
+    "canonicalReplayResultMatchesIgnoringFields": [],
+    "canonicalReplayReportedExact": true,
+    "checkedHelperSha256": "a6699139e0ac185967416889578f2a3501a2272da81f3839ffe20be713edf449",
+    "downloadedArchiveComparedToExtractedFilesAndRetainedReplay": true,
+    "nativeProductRerunByReviewer": false
+  },
+  "sourceAndArchive": {
+    "checkedAtUtc": "2026-11-21T12:18:45.227687+00:00",
+    "references": [
+      {
+        "sha": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+        "tree": "d289bb12b943557584c5659bc33447d1baebc2f6",
+        "parents": [
+          "47ca4640793a81efa5bec661dba25627de314774",
+          "2854c5f0df468199083142ee10dda9fc2e2d6a8b"
+        ]
+      },
+      {
+        "sha": "b45807f033601a53919f2c9e16e0de751971a518",
+        "tree": "8e5c0998e40ecf51394ea2fc1d23260cb67c75ec",
+        "parents": [
+          "02351e2fb932b3be44e7cc3fb3943a61d568226c"
+        ]
+      },
+      {
+        "sha": "083d7264ffaeaadba44ebd2f929efb4ac526a127",
+        "tree": "485df640b90c94ac9a79bc8fe682b311748dd876",
+        "parents": [
+          "b45807f033601a53919f2c9e16e0de751971a518"
+        ]
+      },
+      {
+        "sha": "8ca66df21490e72fd65c63b10471ccc225925f12",
+        "tree": "fa0077d9a33c68fe45149e21b0e36351ba0162af",
+        "parents": [
+          "083d7264ffaeaadba44ebd2f929efb4ac526a127"
+        ]
+      },
+      {
+        "sha": "ffffb1e84a3910801c37b0889465ae84378cfb3e",
+        "tree": "dc0c5668cde2c03fb345ab67ee8427c90de5d647",
+        "parents": [
+          "8ca66df21490e72fd65c63b10471ccc225925f12"
+        ]
+      },
+      {
+        "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+        "tree": "b0de2af3f1aab4bdd0552076091a6082db6e94fb",
+        "parents": [
+          "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+          "598b8f4b02e39e9389cef45acf936dffc17256cb"
+        ]
+      },
+      {
+        "sha": "cc0a52cffe7e0bffb197c3f3342d370e2b1b9794",
+        "tree": "0a66cc140df841089751801703376dac537fb897",
+        "parents": [
+          "ffffb1e84a3910801c37b0889465ae84378cfb3e",
+          "a84f988b89e456b0e2270e3c4750afb250b6c68f"
+        ]
+      }
+    ],
+    "treeFromMainChanged": 396,
+    "changedOutsideArchive": [
+      ".gitattributes",
+      ".prettierignore",
+      "CHANGELOG.md",
+      "apps/api/src/container.ts",
+      "apps/api/src/preflight-catalog.test.ts",
+      "apps/api/src/preflight.ts",
+      "docs/11-security-and-distribution.md",
+      "packages/infrastructure/src/sqlite/catalog-projection.test.ts",
+      "packages/infrastructure/src/sqlite/settings.ts"
+    ],
+    "runtimeAndTestPathsAtCandidate": [
+      "apps/api/src/container.ts",
+      "apps/api/src/preflight-catalog.test.ts",
+      "apps/api/src/preflight.ts",
+      "packages/infrastructure/src/sqlite/catalog-projection.test.ts",
+      "packages/infrastructure/src/sqlite/settings.ts"
+    ],
+    "lockBlobAllSevenReferences": "92a751dbb2c4ead02c57adadbf1afcbd4d63aca5",
+    "sealedGitTree": {
+      "sealSha256": "27ec15542860e9d8272963ddb5bee1c0cd2198d3ea9550321dfcd70459e2d9e0",
+      "filesIncludingSeal": 387,
+      "exactGitBlobCheckoutPairs": 387,
+      "exactGitBlobOriginals": 378,
+      "sourcePathsVerified": 392,
+      "selection": {
+        "published": 378,
+        "retained-local-only": 14
+      },
+      "metadataAndREADME": [
+        "README.md",
+        "archive-seal.json",
+        "archive-selection.json",
+        "case-accounting.json",
+        "ignored-log-paths.json",
+        "original-hash-verification.json",
+        "privacy-context-review.json",
+        "provenance.json",
+        "source-binding.json"
+      ],
+      "publishedOriginalBytes": 11124885,
+      "retainedLocalBytes": 3068360,
+      "sourceChecks": 51,
+      "checksByType": {
+        "author-candidate-source": 7,
+        "qa-candidate-source": 7,
+        "original-SHA256SUMS": 19,
+        "retained-built-artifact-binding": 10,
+        "author-vs-qa-complete-diff": 1,
+        "baseline retained source snapshot": 3,
+        "candidate retained source snapshot": 3,
+        "shared correction review B patch equals exact doc-child diff": 1
+      },
+      "forceIncludedIgnoredLogs": 29,
+      "preservedEarlierPaths": 321,
+      "documentedPrelaunchBriefDelta": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-independent-02\\BRIEF.md",
+        "oldSha256": "d9078562bd902302484768f7dc7361a3cd203db4268ca7b5a0e1037b106b22c5",
+        "newSha256": "df30b05103d3dd4afd9cdeff8f58e0109587942ada29d13583b6e19a96750b18",
+        "preservedPath": true,
+        "bytesUnchanged": false,
+        "expectedMutableContinuationInput": true,
+        "selectionUnchanged": true
+      },
+      "privacyCheck": {
+        "boundedExpressions": 5,
+        "populatedPathsChecked": 378,
+        "hits": 0,
+        "syntheticFixtureKeyContextRecorded": true
+      }
+    },
+    "integration": {
+      "externalSealSha256": "1eda27f3840b81534879a047fea4c1ed5d6975affb401ae4550c68fcdfd0063b",
+      "verifiedMemberCount": 223,
+      "inheritedBlobCount": 243,
+      "bothConflictBlocksPresent": [
+        ".gitattributes",
+        ".prettierignore",
+        "CHANGELOG.md"
+      ],
+      "protectedEntriesInRootProof": 1572,
+      "totalComparedOtherThanThreeEditorial": 34491,
+      "outsideDocsQaCount": 1742,
+      "inheritedCommentOnlyResult": {
+        "compiler": "6.0.3",
+        "files": [
+          {
+            "path": "packages/adapter-codex/src/isolation.ts",
+            "nonTriviaTokens": 310,
+            "tokensEqual": true
+          },
+          {
+            "path": "packages/adapter-codex/src/options.ts",
+            "nonTriviaTokens": 444,
+            "tokensEqual": true
+          }
+        ],
+        "commentOnly": true
+      }
+    }
+  },
+  "qaEvidence": {
+    "providerRecords": {
+      "general1": {
+        "packet": "i4-448-opus-review-01",
+        "configured": {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        },
+        "sessionId": "35b5ef3f-0d5b-494a-81b0-18f5925eda66",
+        "actualModelUsage": [
+          "claude-opus-5-5"
+        ],
+        "terminal": "completed",
+        "apiStatus": null,
+        "exit": 0,
+        "started": "2026-11-21T08:39:05.956Z",
+        "finished": "2026-11-21T08:44:29.027Z",
+        "eventCount": 316,
+        "countsByType": {
+          "system": 169,
+          "assistant": 83,
+          "user": 50,
+          "rate_limit_event": 13,
+          "result": 1
+        },
+        "providerFinalSha256": "8ed3188529547183466384be24e350e260c78d92600cd98e1bbc754e25e917fc",
+        "filesSha256": {
+          "launch.json": "44b2335937066e8b14308e71108a2b0805735896dd61466c6ba2914a85065b0a",
+          "exit.json": "9c455f48360d9b56ff01aecab2b9a89b64ecfcf2d1d16d11ffc76fe0347533f5",
+          "events.jsonl": "ce204d554c4fa2acdc7ecf697a54eee0964bc350962f8106596382f18a672b4f",
+          "result.json": "8b613a15c09d22c70fcd3112908e46920e4fdc427d3d5a58f8ab535adcc03805",
+          "provider-final-message.md": "8ed3188529547183466384be24e350e260c78d92600cd98e1bbc754e25e917fc"
+        }
+      },
+      "general2": {
+        "packet": "i4-doc-correction-review-02",
+        "configured": {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        },
+        "sessionId": "fd328a9a-d888-4a86-b1a7-dcd0a0e70d0e",
+        "actualModelUsage": [
+          "claude-opus-5-5"
+        ],
+        "terminal": "completed",
+        "apiStatus": null,
+        "exit": 0,
+        "started": "2026-11-21T08:59:26.908Z",
+        "finished": "2026-11-21T09:04:07.542Z",
+        "eventCount": 335,
+        "countsByType": {
+          "system": 176,
+          "assistant": 94,
+          "user": 58,
+          "rate_limit_event": 6,
+          "result": 1
+        },
+        "providerFinalSha256": "e4a58fa3cb77df6d1d38f71c25c7b8f4c5e043636537dc01a54621bb201c6f00",
+        "filesSha256": {
+          "launch.json": "af5adc4e8d4b289043cfb24fb4f05677c6de51b3b51cfd7e95388b061a2c6045",
+          "exit.json": "b98fb7573493801261fecd3594ac60d2972bb67dc90f1853a39e1357bfccf7ad",
+          "events.jsonl": "eebae3b01eec11b4fafa7cf87357147002fe879c6ff679a76002103c7b7c103a",
+          "result.json": "77369c101be3eec722fb186fba7a2c6045c80abef3ed85bf671e710c4f38fdd5",
+          "provider-final-message.md": "e4a58fa3cb77df6d1d38f71c25c7b8f4c5e043636537dc01a54621bb201c6f00"
+        }
+      },
+      "behaviorExecution": {
+        "packet": "i4-448-independent-01",
+        "configured": {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        },
+        "sessionId": "6b459e32-2a58-40a0-9e2c-97c861348444",
+        "actualModelUsage": [
+          "claude-opus-5-5"
+        ],
+        "terminal": "api_error",
+        "apiStatus": 429,
+        "exit": 1,
+        "started": "2026-11-21T08:43:54.153Z",
+        "finished": "2026-11-21T09:17:59.897Z",
+        "eventCount": 2034,
+        "countsByType": {
+          "system": 1504,
+          "assistant": 329,
+          "user": 160,
+          "rate_limit_event": 30,
+          "tool_progress": 10,
+          "result": 1
+        },
+        "providerFinalSha256": "b606fa5198c9b091707124f7ca96219de1cc4db5868b4976b343ed657fd09bc7",
+        "filesSha256": {
+          "launch.json": "185fd5433a2ae6fdf92184b3a214ccc955dd5ca127fb0d67f5134cd244eec113",
+          "exit.json": "2dfea2d14c830e9864c36228671b5a85bffe47c478b0918f02acbd2688e58d2f",
+          "events.jsonl": "04559f6aea1ed70f2d7a8e9422efd26efef47aefe74fa93a76ffa449bfe10d01",
+          "result.json": "e6022c5cd80363ffbd95d2bb74f68f31d4c4799a941f7ac47e3ef7b92c662b7b",
+          "provider-final-message.md": "b606fa5198c9b091707124f7ca96219de1cc4db5868b4976b343ed657fd09bc7"
+        }
+      },
+      "behaviorFinal": {
+        "packet": "i4-448-independent-02",
+        "configured": {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        },
+        "sessionId": "b93ac062-5c62-4b4c-9767-4c457d4ae95a",
+        "actualModelUsage": [
+          "claude-opus-5-5"
+        ],
+        "terminal": "completed",
+        "apiStatus": null,
+        "exit": 0,
+        "started": "2026-11-21T11:00:05.172Z",
+        "finished": "2026-11-21T11:08:35.871Z",
+        "eventCount": 526,
+        "countsByType": {
+          "system": 270,
+          "assistant": 143,
+          "user": 95,
+          "rate_limit_event": 17,
+          "result": 1
+        },
+        "providerFinalSha256": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56",
+        "filesSha256": {
+          "launch.json": "2b19ea8eea8f8391b3e08d7f071e1347015da7235ca3b825ecd6421e07705fa4",
+          "exit.json": "73c318a2982bb203294835a4bf4d1ff5979ac2320a9ee68a7e235d4998fa3dd3",
+          "events.jsonl": "292b53de7d4dcc08fbabf0751244184154b2c2054842c9f5a3ed87e344633161",
+          "result.json": "e158463ffa3fc16bc2452129243ab3f8dad022f4bdd1d6cafc01b8705b1b50ef",
+          "provider-final-message.md": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56"
+        }
+      }
+    },
+    "fourClaudePassagesAtFinalTrees": {
+      "7a": {
+        "bytes": 587,
+        "sha256": "a8f8ba3c0c74885d1275daaf9625dbee7300bef1d7f286dc71cd90bcd69af243",
+        "path": "CHANGELOG.md"
+      },
+      "7b": {
+        "bytes": 657,
+        "sha256": "96c9da8ce4f528b9cf25166dca2ae19634a476f406f3ffb6844777ed1588de2f",
+        "path": "docs/11-security-and-distribution.md"
+      },
+      "7cFail": {
+        "bytes": 142,
+        "sha256": "105fa14baa41a1e24f01eaf713da9e49d11d8dca2dc8695c97ae76089d83c122",
+        "path": "docs/11-security-and-distribution.md"
+      },
+      "7cOk": {
+        "bytes": 150,
+        "sha256": "57a47a6574d2a3d977d399420f8ef4d08fee10bcc1bc2db8738b983cd7cf2d1c",
+        "path": "docs/11-security-and-distribution.md"
+      }
+    },
+    "runs": {
+      "run-01": {
+        "totals": {
+          "cases": 40,
+          "passed": 18,
+          "failed": 22,
+          "checks": 515,
+          "failedChecks": 49
+        },
+        "caseKinds": {
+          "built-ordinary-startup": 12,
+          "fixture-variant": 7,
+          "built-cli-preflight": 17,
+          "built-public-method": 3,
+          "native-cleanup-probe": 1
+        },
+        "failedCases": [
+          "P01",
+          "P02",
+          "P04",
+          "P05",
+          "P06",
+          "P07",
+          "P08",
+          "P09",
+          "P10",
+          "P11",
+          "P12",
+          "P15",
+          "P17",
+          "M02",
+          "S05",
+          "S06",
+          "S07",
+          "S08",
+          "S09",
+          "S10",
+          "S11",
+          "M04"
+        ],
+        "children": 29,
+        "startups": 12,
+        "exitCounts": {
+          "0": 13,
+          "1": 16
+        },
+        "timedOut": 0,
+        "driverStillRunning": 0,
+        "ownedPid35168": [],
+        "start": "2026-11-21T09:00:19.493Z",
+        "finish": "2026-11-21T09:01:59.426Z",
+        "summarySha256": "dd172865708e59337f29c3cbe9a8253aa2dd04287d9526abd3f0f6f6e7bc8f5c",
+        "fakeProbeInvocations": 147,
+        "localOllamaRequests": 21
+      },
+      "run-02": {
+        "totals": {
+          "cases": 42,
+          "passed": 41,
+          "failed": 1,
+          "checks": 580,
+          "failedChecks": 1
+        },
+        "caseKinds": {
+          "built-ordinary-startup": 12,
+          "fixture-variant": 7,
+          "built-cli-preflight": 18,
+          "built-public-method": 3,
+          "native-cleanup-probe": 1,
+          "native-isolation-probe": 1
+        },
+        "failedCases": [
+          "M04"
+        ],
+        "children": 30,
+        "startups": 12,
+        "exitCounts": {
+          "0": 14,
+          "1": 16
+        },
+        "timedOut": 0,
+        "driverStillRunning": 0,
+        "ownedPid35168": [
+          {
+            "name": "S01",
+            "pid": 35168,
+            "argv": [],
+            "exit": {
+              "code": 0,
+              "signal": null
+            },
+            "timedOut": false
+          }
+        ],
+        "start": "2026-11-21T09:04:29.486Z",
+        "finish": "2026-11-21T09:06:08.121Z",
+        "summarySha256": "8efeffe94ebb560ff7170e1a118fd84c1f1242472c745d42d21cd7d157943f23",
+        "fakeProbeInvocations": 154,
+        "localOllamaRequests": 22,
+        "nonexistentToEmptyWalOffline": [
+          "P01",
+          "P02",
+          "P04",
+          "P05",
+          "P06",
+          "P07",
+          "P08",
+          "P09",
+          "P10",
+          "P11",
+          "P12",
+          "P15",
+          "P17"
+        ],
+        "totalNewEmptyWalEntries": 21
+      }
+    },
+    "nativeSpotChecks": {
+      "P01": {
+        "pass": true,
+        "sha256": "8d316c25d3a2507bd28c80a448eb7ede028ebceacf0bb36f092cd28b1257399b",
+        "databaseAndWalPresencePlusBytesEqual": false,
+        "databaseBytesEqual": true,
+        "walBefore": null,
+        "walAfter": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shmAfterBytes": 32768,
+        "rowsBefore": 11,
+        "rowsAfter": 11
+      },
+      "P03": {
+        "pass": true,
+        "sha256": "48bad90e8c8b096b57cf7181563c400f588ac9b96ff94df568f52a0665ebf504",
+        "databaseAndWalPresencePlusBytesEqual": true,
+        "databaseBytesEqual": true,
+        "walBefore": {
+          "size": 16512,
+          "sha256": "aa534a97c6c9bf33f3c139cedc26499590e266b9d1e708c70fac6efe512275f4"
+        },
+        "walAfter": {
+          "size": 16512,
+          "sha256": "aa534a97c6c9bf33f3c139cedc26499590e266b9d1e708c70fac6efe512275f4"
+        },
+        "shmAfterBytes": 32768,
+        "rowsBefore": 11,
+        "rowsAfter": 11
+      },
+      "P18": {
+        "pass": true,
+        "sha256": "f849eafcadd87fa61baf3e12781bd575dbbbbdfdadbe32d7cbaf4a2c04b157ae",
+        "databaseAndWalPresencePlusBytesEqual": true,
+        "databaseBytesEqual": true,
+        "walBefore": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "walAfter": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shmAfterBytes": 32768,
+        "rowsBefore": 11,
+        "rowsAfter": 11
+      },
+      "S01": {
+        "pass": true,
+        "sha256": "26bef01ff786215df222a79c89af74cd3f8191ee6bcf685b5b7cadc0258546d7",
+        "databaseAndWalPresencePlusBytesEqual": false,
+        "databaseBytesEqual": true,
+        "walBefore": null,
+        "walAfter": {
+          "size": 28872,
+          "sha256": "305234df3f45942c7ee9d5f917b348a1582dc97b16b755c79ba2f7ac30694ebb"
+        },
+        "shmAfterBytes": 32768,
+        "rowsBefore": 11,
+        "rowsAfter": 13
+      },
+      "S02": {
+        "pass": true,
+        "sha256": "f75868a0c58e116f31f36566fd8dff46da0e5cd4207f060a01d3dac5f021d4e9",
+        "databaseAndWalPresencePlusBytesEqual": false,
+        "databaseBytesEqual": true,
+        "walBefore": {
+          "size": 16512,
+          "sha256": "aa534a97c6c9bf33f3c139cedc26499590e266b9d1e708c70fac6efe512275f4"
+        },
+        "walAfter": {
+          "size": 45352,
+          "sha256": "93370f4c8b865f7378fd598835621aae10b5779f147bdb5f4fbc34f79509ff74"
+        },
+        "shmAfterBytes": 32768,
+        "rowsBefore": 11,
+        "rowsAfter": 13
+      },
+      "M04": {
+        "pass": false,
+        "sha256": "3d73b21ca7b5c568932212f2267f225a401e1e99c1991d5d9ee6a31b1d15a76b"
+      },
+      "M05": {
+        "pass": true,
+        "sha256": "450a6ddeddbc2b4cd04d16e101a6e224a4ff180c87177d7e7a7d8fa8de96ddad"
+      }
+    },
+    "originalStrictP01FailedChecks": [
+      {
+        "name": "WAL bytes/presence unchanged",
+        "expected": null,
+        "actual": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "pass": false
+      },
+      {
+        "name": "listing \"caseDir\" names unchanged (excluding -shm)",
+        "expected": [
+          "external store/",
+          "external store/gateway.db"
+        ],
+        "actual": [
+          "external store/",
+          "external store/gateway.db",
+          "external store/gateway.db-wal"
+        ],
+        "pass": false
+      },
+      {
+        "name": "listing \"storeDir\" names unchanged (excluding -shm)",
+        "expected": [
+          "gateway.db"
+        ],
+        "actual": [
+          "gateway.db",
+          "gateway.db-wal"
+        ],
+        "pass": false
+      }
+    ],
+    "focusedAPI": {
+      "passed": 61,
+      "exit": 0,
+      "guardedCombinedFiles": 3,
+      "default11434AttemptsBlocked": 10,
+      "groupedByWorkerPid": {
+        "12020": 6,
+        "35168": 4
+      },
+      "first": {
+        "pid": 12020,
+        "url": "http://127.0.0.1:11434/api/tags",
+        "utc": "2026-11-21T09:07:56.916Z",
+        "blocked": true
+      },
+      "last": {
+        "pid": 35168,
+        "url": "http://127.0.0.1:11434/api/tags",
+        "utc": "2026-11-21T09:08:07.360Z",
+        "blocked": true
+      },
+      "requestLogNamesTestFile": false
+    },
+    "focusedInfrastructure": {
+      "passed": 55,
+      "failed": 1,
+      "class": "EBUSY",
+      "baselineCaseFailed": 1,
+      "baselineCaseSkipped": 9
+    },
+    "rootProtectedPathsCheckedDirectlyInGit": 1572,
+    "introducedTest": {
+      "path": "apps/api/src/preflight-catalog.test.ts",
+      "sha256": "14b1532ec5bbf1d3257883c1ef57798600840db50a282161ffd07ba3166c4b71",
+      "inBase": false,
+      "startTestLines": [
+        133,
+        265
+      ],
+      "testEnvironmentLine": 39,
+      "rawFileSetHelperLine": 73,
+      "absenceSensitiveAssertions": [
+        125,
+        246,
+        259
+      ],
+      "existingWalOnlyAssertion": 304,
+      "ordinarySetupContainsExternalQaFetchGuard": false
+    }
+  },
+  "closingReadback": {
+    "sourceAnchors": [
+      {
+        "path": "packages/infrastructure/src/sqlite/settings.ts",
+        "line": 458,
+        "anchor": "export function projectStartupModelCatalog"
+      },
+      {
+        "path": "packages/infrastructure/src/sqlite/settings.ts",
+        "line": 490,
+        "anchor": "async seed("
+      },
+      {
+        "path": "packages/infrastructure/src/sqlite/settings.ts",
+        "line": 517,
+        "anchor": "async list(): Promise<ModelCatalogEntry[]>"
+      },
+      {
+        "path": "apps/api/src/preflight.ts",
+        "line": 645,
+        "anchor": "catalog: async () => projectStartupModelCatalog"
+      },
+      {
+        "path": "apps/api/src/preflight.ts",
+        "line": 366,
+        "anchor": "const catalog = migrated"
+      },
+      {
+        "path": "apps/api/src/container.ts",
+        "line": 222,
+        "anchor": "startupCatalog = projectStartupModelCatalog"
+      },
+      {
+        "path": "apps/api/src/container.ts",
+        "line": 560,
+        "anchor": "if (!admissionClosed) ollama.start"
+      },
+      {
+        "path": "packages/infrastructure/src/ollama/discovery.ts",
+        "line": 80,
+        "anchor": "'/api/tags'"
+      },
+      {
+        "path": "packages/infrastructure/src/ollama/discovery.ts",
+        "line": 109,
+        "anchor": "'/api/version'"
+      },
+      {
+        "path": "packages/infrastructure/src/ollama/discovery.ts",
+        "line": 146,
+        "anchor": "'/api/show'"
+      },
+      {
+        "path": "apps/api/src/config.ts",
+        "line": 36,
+        "anchor": "GG_OLLAMA_ENABLED:"
+      },
+      {
+        "path": "packages/infrastructure/src/ollama/services.ts",
+        "line": 25,
+        "anchor": "const fetcher = options.fetcher"
+      },
+      {
+        "path": "docs/11-security-and-distribution.md",
+        "line": 157,
+        "anchor": "SQLite's read-only open"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "line": 7,
+        "anchor": "Offline `--preflight` admits"
+      },
+      {
+        "path": "apps/api/src/preflight-catalog.test.ts",
+        "line": 39,
+        "anchor": "function env("
+      },
+      {
+        "path": "apps/api/src/preflight-catalog.test.ts",
+        "line": 73,
+        "anchor": "async function storeBytes("
+      }
+    ],
+    "p03WAL": {
+      "size": 16512,
+      "pageSize": 4096,
+      "existingFrames": 4,
+      "sha256": "aa534a97c6c9bf33f3c139cedc26499590e266b9d1e708c70fac6efe512275f4"
+    },
+    "allThreeNativeReplayFilesEqualInBytes": true,
+    "finalBuildInputs": {
+      "apiSetupHash": "af078ab752778b1dfdbbaef79f204565e072922cabe40e68157c5e35f1e69b6b",
+      "repoClean": true,
+      "indexAndWorktreeAgainstExpectedHead": true
+    },
+    "liveRefs": [
+      "a84f988b89e456b0e2270e3c4750afb250b6c68f\trefs/heads/main",
+      "cc0a52cffe7e0bffb197c3f3342d370e2b1b9794\trefs/pull/551/head",
+      "230071badafb3a250667083ae5dc3718e95c3359\trefs/pull/551/merge"
+    ],
+    "checkedAtUtc": "2026-11-21T12:23:38.708831+00:00"
+  }
+}

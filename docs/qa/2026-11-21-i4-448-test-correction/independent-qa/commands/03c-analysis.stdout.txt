@@ -1,0 +1,26 @@
+== 03a-ordinary-file-guard-only: vitest 14/14 success=true; outbound attempts=0; guard installed in 12608<-46348, 13340<-12608; tcp rows=0, tracked=7
+== 03b-ordinary-file-guard-observers: vitest 14/14 success=true; outbound attempts=0; guard installed in 21068<-17276, 6248<-21068; tcp rows=0, tracked=5
+   startup paths: 4: accepts a missing shipped codex seed without storing it | accepts a missing shipped claude seed without storing it | preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN) | preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)
+   helper reads consistent with independent snapshots: 81/81
+   [accepts a missing shipped codex seed without storing it] before wal=0B shm=present db#c749672c walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present)
+   [accepts a missing shipped claude seed without storing it] before wal=0B shm=present db#adba7146 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)] before wal=0B shm=present db#7db1aeef walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)] before wal=0B shm=present db#48aec8fc walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves codex unknown-model defaults (effort=low, status=FAIL)] before wal=0B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)] before wal=0B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves claude gpt-6-luna defaults (effort=low, status=FAIL)] before wal=0B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)] before wal=0B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)] before wal=0B shm=present db#ce675817 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves codex gpt-5.5 defaults (effort=none, status=ok)] before wal=0B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves rows and migrations with an initially absent WAL] before wal=absent shm=absent db#c749672c walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [preserves rows and migrations with an initially empty WAL] before wal=0B shm=absent db#c749672c walModeHeader=true; afters: ACCEPT (wal=0B#e3b0c4, shm=present), ACCEPT (wal=0B#e3b0c4, shm=present)
+   [projects a missing seed from a WAL-backed store without checkpointing or writing it] before wal=8272B shm=present db#7bd5d622 walModeHeader=true; afters: ACCEPT (wal=8272B#ad6829, shm=present), ACCEPT (wal=8272B#ad6829, shm=present)
+   [rejects database changes, existing WAL changes or removal, and new WAL frames]
+      absent -> databaseMutation: expectedAccept=false mine=false agrees=true database bytes changed
+      absent -> empty: expectedAccept=true mine=true agrees=true 
+      empty -> removedEmpty: expectedAccept=false mine=false agrees=true existing WAL removed
+      absent -> realFrames: expectedAccept=false mine=false agrees=true new nonempty WAL
+      empty -> realFrames: expectedAccept=false mine=false agrees=true existing WAL bytes changed
+      frozenNonempty -> walMutation: expectedAccept=false mine=false agrees=true existing WAL bytes changed
+      frozenNonempty -> removedWal: expectedAccept=false mine=false agrees=true existing WAL removed
+      frozenNonempty -> truncatedWal: expectedAccept=false mine=false agrees=true existing WAL bytes changed

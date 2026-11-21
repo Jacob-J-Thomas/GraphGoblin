@@ -1,0 +1,141 @@
+{
+  "layers": [
+    "L1",
+    "L2"
+  ],
+  "honeypotPort": 64940,
+  "udpHoneypotPort": 64237,
+  "parent": {
+    "fetch": {
+      "outcome": "rejected",
+      "code": "QA448_BLOCKED",
+      "message": "fetch failed",
+      "cause": "QA448 guard blocked fetch http://127.0.0.1:64940/qa448-control before network access"
+    },
+    "httpGet": {
+      "outcome": "rejected",
+      "code": "QA448_BLOCKED",
+      "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+    },
+    "netConnect": {
+      "outcome": "rejected",
+      "code": "QA448_BLOCKED",
+      "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+    },
+    "tlsConnect": {
+      "outcome": "rejected",
+      "code": "QA448_BLOCKED",
+      "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+    },
+    "dnsLookup": {
+      "outcome": "rejected",
+      "code": "ENOTFOUND",
+      "message": "QA448 guard blocked dns.lookup localhost before network access"
+    },
+    "dnsPromisesLookup": {
+      "outcome": "rejected",
+      "code": "ENOTFOUND",
+      "message": "QA448 guard blocked dns.promises.lookup localhost before network access"
+    },
+    "udpSend": {
+      "outcome": "rejected",
+      "code": "QA448_BLOCKED",
+      "message": "QA448 guard blocked dgram send before network access"
+    }
+  },
+  "dataFetch": {
+    "outcome": "resolved",
+    "value": "qa448-ok"
+  },
+  "pipeConnect": {
+    "outcome": "resolved",
+    "value": "pipe-ok"
+  },
+  "child": {
+    "outcome": "resolved",
+    "value": {
+      "child": {
+        "fetch": {
+          "outcome": "rejected",
+          "code": "QA448_BLOCKED",
+          "message": "fetch failed",
+          "cause": "QA448 guard blocked fetch http://127.0.0.1:64940/qa448-control before network access"
+        },
+        "httpGet": {
+          "outcome": "rejected",
+          "code": "QA448_BLOCKED",
+          "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+        },
+        "netConnect": {
+          "outcome": "rejected",
+          "code": "QA448_BLOCKED",
+          "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+        },
+        "tlsConnect": {
+          "outcome": "rejected",
+          "code": "QA448_BLOCKED",
+          "message": "QA448 guard blocked socket 127.0.0.1:64940 before network access"
+        },
+        "dnsLookup": {
+          "outcome": "rejected",
+          "code": "ENOTFOUND",
+          "message": "QA448 guard blocked dns.lookup localhost before network access"
+        },
+        "dnsPromisesLookup": {
+          "outcome": "rejected",
+          "code": "ENOTFOUND",
+          "message": "QA448 guard blocked dns.promises.lookup localhost before network access"
+        },
+        "udpSend": {
+          "outcome": "rejected",
+          "code": "QA448_BLOCKED",
+          "message": "QA448 guard blocked dgram send before network access"
+        }
+      },
+      "guard": {
+        "blocked": 7,
+        "attemptObserved": 2,
+        "forwarded": 0,
+        "byKind": {
+          "L1-fetch": 1,
+          "L1-http-get": 1,
+          "L1-socket": 3,
+          "L1-tls-connect": 1,
+          "L1-dns-lookup": 1,
+          "L1-dns-promises-lookup": 1,
+          "L1-dgram-send": 1
+        }
+      }
+    }
+  },
+  "honeypotTcpAccepted": 0,
+  "honeypotUdpReceived": 0,
+  "guardCounts": {
+    "blocked": 7,
+    "attemptObserved": 2,
+    "forwarded": 8,
+    "byKind": {
+      "L1-server-listen": 2,
+      "L1-dns-lookup-ip-literal": 2,
+      "L1-fetch": 1,
+      "L1-http-get": 1,
+      "L1-socket": 3,
+      "L1-tls-connect": 1,
+      "L1-dns-lookup": 1,
+      "L1-dns-promises-lookup": 1,
+      "L1-dgram-send": 1,
+      "L1-fetch-local-scheme": 1,
+      "L1-socket-ipc": 1,
+      "L2-pipe-connect": 1,
+      "L1-child-spawn": 1
+    }
+  },
+  "expectations": {
+    "parentAllRejected": true,
+    "childAllRejected": true,
+    "honeypotsUntouched": true,
+    "dataFetchForwarded": true,
+    "pipeForwarded": true
+  },
+  "pass": true
+}
