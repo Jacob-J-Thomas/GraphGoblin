@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import * as domain from '@graphgoblin/domain';
+import { describe, expect, it, vi } from 'vitest';
 import { RunEventSchema } from '@graphgoblin/contracts';
 import { visitTurn, provenance } from './inference-turn.js';
 import { sampleThread, fakeUlid } from '@graphgoblin/contracts/testing';
 import { renderTemplate, threadView, SYSTEM_CHAT_TEXT_PROMPT } from '@graphgoblin/domain';
+import type { HarnessPort } from '../ports.js';
+import { createTestEngine } from '../testing/scenario.js';
 import { admitInferencePrompt } from './inference-context.js';
 
 const payload = {
@@ -158,4 +161,54 @@ describe('rendered prompt admission and whole-pair history', () => {
       await expect(admitInferencePrompt(input)).rejects.toThrow(/complete prompt exceeds/);
     }
   });
+});
+
+it.each([1, 2])(
+  'keeps a synthetic failure in canonical rerender %i engine-owned and pre-turn resumable',
+  async (call) => {
+    const input = await options();
+    const original = domain.renderTemplate;
+    const render = vi.spyOn(domain, 'renderTemplate');
+    try {
+      if (call === 2) render.mockImplementationOnce(original);
+      render.mockRejectedValueOnce(new domain.TemplateError('private canonical failure'));
+      const error: unknown = await admitInferencePrompt(input).catch((fault: unknown) => fault);
+      expect(render).toHaveBeenCalledTimes(call);
+      expect(error).toMatchObject({ code: 'INTERNAL_ERROR', options: { resumable: true } });
+      expect(JSON.stringify(error)).not.toContain('private canonical failure');
+    } finally {
+      render.mockRestore();
+    }
+  },
+);
+
+it('publishes a canonical rerender fault on the current inference node before provider invocation', async () => {
+  const engine = await createTestEngine();
+  const harness: HarnessPort = engine.ports.harness;
+  const version = engine.publish(
+    domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
+  );
+  // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
+  const render = vi.spyOn(domain, 'renderTemplate');
+  try {
+    harness.contextWindow = () => {
+      render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
+      return Promise.resolve(window(400));
+    };
+    const run = await engine.runToIdle(version.loopId, payload);
+    expect(render).toHaveBeenCalled();
+    expect(run.failure).toEqual({
+      code: 'INTERNAL_ERROR',
+      nodeId: 'respond',
+      resumable: true,
+      message: 'An unexpected error interrupted the run. See the server logs for this run.',
+    });
+    expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
+      { failure: run.failure },
+    ]);
+    expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
+    expect(engine.ports.harness.started).toHaveLength(0);
+  } finally {
+    render.mockRestore();
+  }
 });

@@ -7,6 +7,7 @@ import {
 } from '@graphgoblin/contracts';
 import { decisionPortId, decisionRouteDeclarations, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
+import { renderAuthored } from '../authored-failure.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { pinnedBinding } from '../definition-pin.js';
 import { evaluateClassifier, evaluateRoute } from '../primitive-evaluator.js';
@@ -17,7 +18,10 @@ async function decisionContext(
   context: DecisionContext,
 ): Promise<JsonValue> {
   const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-  const messages = await selectMessages(ctx.thread.messages, context.messages, view);
+  const messages = await selectMessages(ctx.thread.messages, context.messages, view, {
+    nodeId: ctx.node.id,
+    boundary: 'decision.context.messages.where',
+  });
   const vars: Record<string, JsonValue> = {};
   for (const name of context.vars ?? Object.keys(ctx.thread.vars)) {
     if (name in ctx.thread.vars) vars[name] = ctx.thread.vars[name] as JsonValue;
@@ -36,6 +40,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
   kind: 'decision',
   async execute(ctx) {
     const config = ctx.config;
+    const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
     const common = {
       nodeId: ctx.node.id,
       ownerId: ctx.run.ownerId,
@@ -52,11 +57,15 @@ export const decisionHandler: NodeHandler<'decision'> = {
       case 'llm': {
         const result =
           config.kind === 'expression'
-            ? await evaluateRoute({ ...common, config, expressionView: threadView(ctx.thread) })
+            ? await evaluateRoute({ ...common, config, expressionView: view })
             : await evaluateRoute({
                 ...common,
                 config,
-                instructions: await ctx.services.render(config.instructions),
+                instructions: await renderAuthored(
+                  { nodeId: ctx.node.id, boundary: 'decision.instructions' },
+                  config.instructions,
+                  view,
+                ),
                 context: await decisionContext(ctx, config.context),
               });
         if (result.observation.kind !== 'route')
@@ -69,7 +78,11 @@ export const decisionHandler: NodeHandler<'decision'> = {
           ...common,
           config,
           binding: pinnedBinding(ctx.run.pinned.classifiers, config.model),
-          question: await ctx.services.render(config.question),
+          question: await renderAuthored(
+            { nodeId: ctx.node.id, boundary: 'decision.question' },
+            config.question,
+            view,
+          ),
           context: await decisionContext(ctx, config.context),
         });
         const answer =

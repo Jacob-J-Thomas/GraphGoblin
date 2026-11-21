@@ -118,6 +118,10 @@ it.each(matrix)(
         resumable: expected.resumable,
         inference: { promptKind: 'repair', submission: expected.state },
       });
+      expect(run.failure?.details ?? {}).not.toHaveProperty('phase');
+      expect(run.failure?.message).not.toContain(
+        'GraphGoblin received the provider result before this step failed.',
+      );
       if (storage !== 'ok') {
         expect.soft(fired).toBe(true);
         expect.soft(run.failure?.details).toMatchObject({ recording: expect.any(Array) });

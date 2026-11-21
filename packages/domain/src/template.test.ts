@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TemplateError } from './errors.js';
-import { checkTemplate, renderTemplate } from './template.js';
+import { checkTemplate, renderTemplate, observeTemplate } from './template.js';
 
 describe('renderTemplate', () => {
   it('renders variables, filters, and control flow', async () => {
@@ -39,5 +39,16 @@ describe('checkTemplate', () => {
   it('returns null for valid templates and a message otherwise', () => {
     expect(checkTemplate('{{ a }}')).toBeNull();
     expect(checkTemplate('{% if %}')).toMatch(/invalid value expression/i);
+  });
+});
+
+it('takes position and phase from concrete Liquid parsing or rendering', async () => {
+  expect(await observeTemplate('first\n{% invalid_private %}', {})).toMatchObject({
+    ok: false,
+    fact: { phase: 'parse', line: 2, column: 1 },
+  });
+  expect(await observeTemplate('first\n{% include "private" %}', {})).toMatchObject({
+    ok: false,
+    fact: { phase: 'render', line: 2, column: 1 },
   });
 });

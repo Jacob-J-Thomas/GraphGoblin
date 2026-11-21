@@ -10,6 +10,7 @@ import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { EventDraft, EventStorePort, ScriptRunResult } from './ports.js';
 import { RunManager } from './run-manager.js';
+import { defaultHandlers, subloopHandler } from './handlers/index.js';
 import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
 
 const result = (exitCode: number): ScriptRunResult => ({
@@ -174,20 +175,61 @@ describe('child creation and finish across a process death (#320)', () => {
     expect(calls).toBe(2);
   });
 
-  it('retrying the parent output mapping does not record an unchanged child outcome again', async () => {
-    const e = await createTestEngine({ maxConcurrentRuns: 2 });
-    const child = e.publish(scriptChild('mapping child'));
-    const definition = parentLoop('mapping parent', child.loopId);
-    const sub = definition.nodes.find((node) => node.kind === 'subloop')!;
-    if (sub.kind !== 'subloop') throw new Error('missing subloop');
-    sub.config.output = { mode: 'custom', custom: { patch: '"bad patch"' } };
-    const failed = await e.runToIdle(e.publish(definition).loopId);
-    expect(failed.status).toBe('failed');
-    await e.manager.resume(failed.id);
-    expect((await e.settle(failed.id)).status).toBe('failed');
-    expect(ofType(e, failed.id, 'child_run.finished')).toHaveLength(1);
-    expect(await e.ports.runs.listChildren(failed.id)).toHaveLength(1);
-  });
+  it.each(['authored', 'unexpected'] as const)(
+    '%s parent mapping failure preserves the child outcome and its recovery policy',
+    async (kind) => {
+      let broken = true;
+      const handlers = defaultHandlers();
+      handlers.subloop = {
+        kind: 'subloop',
+        execute: (ctx) =>
+          subloopHandler.execute({
+            ...ctx,
+            services: {
+              ...ctx.services,
+              now: () => {
+                if (kind === 'unexpected' && broken) throw new Error('unexpected mapping clock');
+                return ctx.services.now();
+              },
+            },
+          }),
+      };
+      const e = await createTestEngine({ maxConcurrentRuns: 2 }, { handlers });
+      const child = e.publish(scriptChild('mapping child'));
+      const definition = parentLoop('mapping parent', child.loopId);
+      const sub = definition.nodes.find((node) => node.kind === 'subloop')!;
+      if (sub.kind !== 'subloop') throw new Error('missing subloop');
+      if (kind === 'authored')
+        sub.config.output = { mode: 'custom', custom: { patch: '"bad patch"' } };
+      const failed = await e.runToIdle(e.publish(definition).loopId);
+      expect(failed.status).toBe('failed');
+      expect(failed.failure).toMatchObject({
+        code: kind === 'authored' ? 'EXPRESSION_ERROR' : 'INTERNAL_ERROR',
+        nodeId: 'sub',
+        resumable: kind === 'unexpected',
+      });
+      const [kid] = await e.ports.runs.listChildren(failed.id);
+      const terminal = e.events(kid!.id).find((event) => event.type === 'run.finished')!;
+      const before = JSON.stringify(e.events(failed.id));
+      if (kind === 'authored') {
+        await expect(e.manager.resume(failed.id)).rejects.toMatchObject({
+          code: 'FAILURE_NOT_RESUMABLE',
+        });
+        expect(JSON.stringify(e.events(failed.id))).toBe(before);
+      } else {
+        broken = false;
+        await e.manager.resume(failed.id);
+        expect((await e.settle(failed.id)).status).toBe('succeeded');
+      }
+      expect(ofType(e, failed.id, 'child_run.finished')).toHaveLength(1);
+      expect(await e.ports.runs.listChildren(failed.id)).toHaveLength(1);
+      expect(ofType(e, kid!.id, 'run.resumed')).toHaveLength(0);
+      expect(ofType(e, failed.id, 'run.woken')).toMatchObject([
+        { payload: { childRunId: kid!.id, childFinishedSeq: terminal.seq } },
+      ]);
+      e.manager.stop();
+    },
+  );
 
   it('an explicit retry records a second failed outcome of the same child', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });

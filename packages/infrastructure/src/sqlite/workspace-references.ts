@@ -52,7 +52,7 @@ export class SqliteWorkspaceReferences {
       }[] = [];
       for (const row of rows.slice(offset, offset + 32)) {
         if (signal?.aborted) return;
-        // Pending paths are literal Liquid templates; WorkspacePort trims their rendered value.
+        // Pending paths are literal Liquid templates; the engine trims their rendered value.
         // An empty literal can only fail resolution, so it has no possible future workspace use.
         const path = row.id.startsWith('pending:') ? row.path?.trim() : row.path;
         if (row.id.startsWith('pending:') && row.path !== null && path === '') {

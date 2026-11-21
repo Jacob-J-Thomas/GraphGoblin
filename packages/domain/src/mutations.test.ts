@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ContextThread, MutationOperation } from '@graphgoblin/contracts';
 import { MutationOperationSchema } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
-import { MutationError } from './errors.js';
+import { observeExpression } from './expression.js';
+import { ExpressionError, MutationError } from './errors.js';
 import { applyMutations, completeRepair, planMutation, type MutationContext } from './mutations.js';
 
 function ctx(): MutationContext {
@@ -240,4 +241,76 @@ describe('coerce and repair', () => {
       run(sampleThread(), [{ op: 'coerce', source: '/vars/x', jsonSchema: {}, target: '/run/id' }]),
     ).rejects.toBeInstanceOf(MutationError);
   });
+});
+
+it('delivers facts to the inference mapper at the immediate operation while the legacy mapper keeps three arguments', async () => {
+  const operation = op({
+    op: 'set',
+    path: '/vars/x',
+    value: { kind: 'expression', jsonata: '$error("secret")' },
+  });
+  const seen: unknown[][] = [];
+  const projected = new Error('projected');
+  await expect(
+    applyMutations(sampleThread(), [operation], ctx(), 0, (...args) => {
+      seen.push(args);
+      return args[0];
+    }),
+  ).rejects.toBeInstanceOf(Error);
+  expect(seen).toEqual([[expect.objectContaining({ code: 'EXPRESSION_ERROR' }), 0, 'set']]);
+  await expect(
+    applyMutations(sampleThread(), [operation], ctx(), 0, undefined, (...args) => {
+      seen.push(args);
+      return projected;
+    }),
+  ).rejects.toBe(projected);
+  expect(seen[1]).toEqual([{ kind: 'expression', reason: 'evaluation-rejected' }, 0, 'set']);
+});
+
+it('preserves the original predicate coercion rejection for the legacy mapper without authoring an inference fact', async () => {
+  const thread = await run(sampleThread(), [{ op: 'append-message', content: 'one' }]);
+  // A synthetic JavaScript value exercises the public domain API outside stored run data.
+  const external = new ExpressionError('ownKeys from caller');
+  const value = new Proxy(
+    {},
+    {
+      ownKeys() {
+        throw external;
+      },
+    },
+  );
+  thread.vars['value'] = value;
+  const where = '$thread.vars.value';
+  const evaluated = await observeExpression(where, thread.messages[0], {
+    bindings: { thread, index: 0 },
+  });
+  if (!evaluated.ok) throw new Error('fixture must reach coercion');
+  expect(evaluated.value).toBe(value);
+  const operation = op({ op: 'drop', target: 'messages', where });
+  const legacy = vi.fn((e: unknown) => e);
+  const observed = vi.fn();
+  await expect(planMutation(thread, operation, ctx(), 2, legacy, observed)).rejects.toBe(external);
+  expect(legacy.mock.calls).toEqual([[external, 2, 'drop']]);
+  expect(observed).not.toHaveBeenCalled();
+});
+
+it('leaves serialization after a successful expression outside both operation mappers', async () => {
+  const thread = sampleThread();
+  const external = new MutationError('toJSON from caller');
+  const value = Object.defineProperty({}, 'toJSON', {
+    value: () => {
+      throw external;
+    },
+  });
+  thread.vars['value'] = value;
+  const operation = op({
+    op: 'set',
+    path: '/vars/result',
+    value: { kind: 'expression', jsonata: 'vars.value' },
+  });
+  const legacy = vi.fn();
+  const observed = vi.fn();
+  await expect(planMutation(thread, operation, ctx(), 0, legacy, observed)).rejects.toBe(external);
+  expect(legacy).not.toHaveBeenCalled();
+  expect(observed).not.toHaveBeenCalled();
 });

@@ -6,6 +6,7 @@ import {
   SYSTEM_CHAT_SCRIPT_PROMPT,
   SYSTEM_CHAT_SUBLOOP_PROMPT,
 } from '@graphgoblin/domain';
+import { InternalRunFailureError, INTERNAL_FAILURE_MESSAGE } from '../failure-publication.js';
 import { RunFailureError } from '../errors.js';
 import type { HarnessPort } from '../ports.js';
 
@@ -22,6 +23,13 @@ function overflow(): never {
     'The complete prompt exceeds this Ollama context allocation, including instructions and reply reserve. Shorten the current message or workflow prompt, start a new conversation, or choose another qualified model. Required input was not submitted or truncated.',
     { resumable: false },
   );
+}
+
+function renderCanonical(template: string, thread: ContextThread): Promise<string> {
+  const view = { ...threadView(thread) };
+  return renderTemplate(template, view).catch(() => {
+    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, { resumable: true });
+  });
 }
 
 /** Trim only a known history slot, never an arbitrary rendered prompt or the stored thread. */
@@ -55,7 +63,7 @@ export async function admitInferencePrompt(options: {
     ...parsed.data,
     history: [],
   });
-  let prompt = await renderTemplate(options.template, { ...threadView(candidateThread) });
+  let prompt = await renderCanonical(options.template, candidateThread);
   // Authored instructions and required current/normalized input must fit on their own.
   if (!window.fits(prompt)) overflow();
   let retained = 0;
@@ -64,7 +72,7 @@ export async function admitInferencePrompt(options: {
       ...parsed.data,
       history: parsed.data.history.slice(-count * 2),
     });
-    const candidate = await renderTemplate(options.template, { ...threadView(candidateThread) });
+    const candidate = await renderCanonical(options.template, candidateThread);
     if (!window.fits(candidate)) break;
     prompt = candidate;
     retained = count;

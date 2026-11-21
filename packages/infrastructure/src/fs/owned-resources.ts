@@ -92,7 +92,7 @@ export class OwnedRunResources {
     const workspace = new FsWorkspace(dataDir);
     const artifactStore = async () => new FsArtifactStore(await this.physicalDataDir());
     this.workspace = {
-      resolve: (spec, view, runId) =>
+      resolve: (spec, runId) =>
         this.exclusive(async () => {
           let path: string;
           if (spec.kind === 'temp') {
@@ -106,8 +106,7 @@ export class OwnedRunResources {
             } catch (error) {
               if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
             }
-            if (!created)
-              await new FsWorkspace(await this.physicalDataDir()).resolve(spec, view, runId);
+            if (!created) await new FsWorkspace(await this.physicalDataDir()).resolve(spec, runId);
             if (created)
               await this.journal.claim({
                 key: `workspace:${canonical(path)}`,
@@ -116,7 +115,7 @@ export class OwnedRunResources {
                 path,
                 identity: identity(await info(path)),
               });
-          } else path = await workspace.resolve(spec, view, runId);
+          } else path = await workspace.resolve(spec, runId);
           // Record canonical use even for a user-owned/shared directory, without claiming it.
           const actual = await realpath(path);
           await this.journal.use(runId, `workspace:${canonical(actual)}`, canonical(actual));

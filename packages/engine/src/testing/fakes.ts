@@ -18,7 +18,6 @@ import type {
   RunRecord,
   RunStatus,
   Usage,
-  WorkingDirectorySpec,
   WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 import {
@@ -766,15 +765,10 @@ export class FakeScripts implements ScriptPort {
 
 export class FakeWorkspace implements WorkspacePort {
   readonly files = new Map<string, string>();
-  readonly resolved: { spec: WorkingDirectorySpec; runId: string }[] = [];
-  resolve(
-    spec: WorkingDirectorySpec,
-    _view: Record<string, unknown>,
-    runId: string,
-  ): Promise<string> {
+  readonly resolved: { spec: Parameters<WorkspacePort['resolve']>[0]; runId: string }[] = [];
+  resolve(spec: Parameters<WorkspacePort['resolve']>[0], runId: string): Promise<string> {
     this.resolved.push({ spec, runId });
     if (spec.kind === 'fixed') return Promise.resolve(spec.path);
-    if (spec.kind === 'template') return Promise.resolve(spec.template);
     return Promise.resolve(`/tmp/graphgoblin/${runId}`);
   }
   writeFile(dir: string, path: string, content: string): Promise<string> {

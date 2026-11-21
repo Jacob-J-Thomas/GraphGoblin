@@ -166,6 +166,57 @@ interface Scenario {
 
 const scenarios: Scenario[] = [
   {
+    name: 'an authored repair prompt fails after receiving the result',
+    kind: 'authored',
+    work: {
+      id: 'work',
+      kind: 'inference',
+      label: 'Work',
+      config: {
+        prompt: { template: 'go' },
+        output: {
+          schema: {
+            jsonSchema: { type: 'number' },
+            repair: { enabled: true, maxAttempts: 1, prompt: '{% if %}' },
+          },
+        },
+      },
+    },
+    arrange(e) {
+      e.ports.harness.script([{ finalText: 'invalid' }, { finalText: 'invalid' }]);
+      return () => undefined;
+    },
+    code: 'TEMPLATE_ERROR',
+    resumable: false,
+  },
+  {
+    name: 'an authored output transform fails after receiving the result',
+    kind: 'authored',
+    work: {
+      id: 'work',
+      kind: 'inference',
+      label: 'Work',
+      config: {
+        prompt: { template: 'go' },
+        output: {
+          transforms: [
+            {
+              op: 'set',
+              path: '/vars/value',
+              value: { kind: 'expression', jsonata: '$error("private-output")' },
+            },
+          ],
+        },
+      },
+    },
+    arrange(e) {
+      e.ports.harness.script([{ finalText: 'actual result' }, { finalText: 'actual result' }]);
+      return () => undefined;
+    },
+    code: 'MUTATION_ERROR',
+    resumable: false,
+  },
+  {
     name: 'script exits non-zero',
     kind: 'transient',
     work: { id: 'work', kind: 'script', label: 'Work', config: { command: 'job' } },
@@ -302,6 +353,21 @@ describe('child failures follow the inline rules (#251)', () => {
       });
       expect(parent.failure?.message).toContain(inline.failure!.message);
       expect(parent.failure?.message).toContain(child!.id);
+      if (
+        inline.failure?.details &&
+        typeof inline.failure.details === 'object' &&
+        'phase' in inline.failure.details
+      ) {
+        expect(inline.failure.details['phase']).toBe('after-result');
+        expect(child?.failure?.details).toEqual(inline.failure.details);
+        expect(parent.failure?.details).toMatchObject({ childDetails: child?.failure?.details });
+        expect(parent.failure).not.toHaveProperty('inference');
+        expect(parent.failure?.details).not.toHaveProperty('phase');
+        expect(inline.failure.message).toContain(
+          'GraphGoblin received the provider result before this step failed.',
+        );
+        expect(ofType(e, child!.id, 'harness.turn')).toHaveLength(1);
+      }
       expect(startsOf(e, parent.id, 'after')).toEqual([]);
       expect(ofType(e, parent.id, 'child_run.finished')).toMatchObject([
         { childRunId: child!.id, status: 'failed' },

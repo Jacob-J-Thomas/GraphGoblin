@@ -270,6 +270,8 @@ A subloop creates a separate child run with its own version, thread, and log. Th
 
 ## Act on failure reasons
 
+For an authored template, expression or inference transform failure, open the reported node and edit the field named in the message. Item and operation numbers start at one. Correct the field, publish the corrected version and start a new run. Resume is unavailable for a deterministic fault in the pinned version. Check the timeline before running again. A heartbeat may already have probed, an earlier context file may already exist, or a child may already have finished. A message saying that GraphGoblin received the provider result means that the reported repair prompt or transform failed afterwards. [Execution and recovery](../05-execution-engine.md#resiliency-model-decided)
+
 `SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.
 
 A handler failure looks like this inside the run snapshot's `failure` field:

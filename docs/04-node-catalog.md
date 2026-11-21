@@ -4,6 +4,8 @@ Every node has an `id`, `kind`, `label`, `config`, canvas position, and ports. E
 
 There are **no error ports** in 1.0. Failures are handled by the engine's resiliency model (05). Nodes that legitimately produce different outcomes express them as labelled routes, which is a routing concept, not an error concept.
 
+A failed authored field identifies the field and, where applicable, its entry or item number. This covers script arguments, HTTP or script heartbeat probe templates, heartbeat conditions and deadlines, decision questions, instructions and message selectors, wait prompts and timestamps, and templated working directories. It also covers subloop input and output mappings and inference preparation, repair prompts and transforms. An earlier probe, completed context-file write or child completion remains visible when a later field fails. A terminal file-return failure is recorded in the delivery receipt. [Execution and recovery](05-execution-engine.md#resiliency-model-decided)
+
 ## Trigger (Decided)
 
 Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape. The strict config discriminator is `type`; both webhook signing variants use `type: 'webhook'`.

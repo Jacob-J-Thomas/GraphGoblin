@@ -1,5 +1,12 @@
 import type { JsonValue, RunEvent } from '@graphgoblin/contracts';
-import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
+import { threadView } from '@graphgoblin/domain';
+import {
+  authoredFailure,
+  nodeWorkingDirectory,
+  predicateAuthored,
+  renderAuthored,
+  type AuthoredSite,
+} from '../authored-failure.js';
 import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
@@ -16,16 +23,33 @@ async function probe(
       return null;
     case 'http': {
       const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(spec.headers ?? {}))
-        headers[k] = await renderTemplate(v, view);
+      for (const [headerIndex, [k, v]] of Object.entries(spec.headers ?? {}).entries())
+        headers[k] = await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'heartbeat.probe.headers', headerIndex },
+          v,
+          view,
+        );
+      const url = await renderAuthored(
+        { nodeId: ctx.node.id, boundary: 'heartbeat.probe.url' },
+        spec.url,
+        view,
+      );
+      const body =
+        spec.body === undefined
+          ? undefined
+          : await renderAuthored(
+              { nodeId: ctx.node.id, boundary: 'heartbeat.probe.body' },
+              spec.body,
+              view,
+            );
       let response: ProbeResponse;
       try {
         response = await ctx.ports.probes.fetch(
           {
             method: spec.method,
-            url: await renderTemplate(spec.url, view),
+            url,
             headers,
-            ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
+            ...(body !== undefined ? { body } : {}),
             timeoutMs: spec.timeoutSeconds * 1000,
           },
           ctx.signal,
@@ -48,8 +72,15 @@ async function probe(
     }
     case 'script': {
       const args: string[] = [];
-      for (const arg of spec.args) args.push(await renderTemplate(arg, view));
-      const cwd = await ctx.services.workingDirectory();
+      for (const [argumentIndex, arg] of spec.args.entries())
+        args.push(
+          await renderAuthored(
+            { nodeId: ctx.node.id, boundary: 'heartbeat.probe.args', argumentIndex },
+            arg,
+            view,
+          ),
+        );
+      const cwd = nodeWorkingDirectory(await ctx.services.workingDirectory(), ctx.node.id);
       // Preserve the first abort cause while native cleanup returns. An authored probe
       // timeout remains predicate input; an unconfirmed stop interruption owns a veto.
       const timeout = withTimeout(
@@ -135,7 +166,14 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
     });
 
     const probeView = { probe: result, thread: view, beat, now: nowIso };
-    if (config.until !== undefined && (await evaluatePredicate(config.until, probeView))) {
+    if (
+      config.until !== undefined &&
+      (await predicateAuthored(
+        { nodeId: ctx.node.id, boundary: 'heartbeat.until', beat },
+        config.until,
+        probeView,
+      ))
+    ) {
       return {
         kind: 'done',
         patch: outputPatch(
@@ -150,14 +188,11 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
 
     let deadline: number | undefined;
     if (config.deadline !== undefined) {
-      const rendered = await renderTemplate(config.deadline, view);
+      const site: AuthoredSite = { nodeId: ctx.node.id, boundary: 'heartbeat.deadline', beat };
+      const rendered = await renderAuthored(site, config.deadline, view);
       deadline = Date.parse(rendered.trim());
       if (Number.isNaN(deadline)) {
-        throw new RunFailureError(
-          'TEMPLATE_ERROR',
-          `heartbeat deadline rendered "${rendered}", which is not a timestamp`,
-          { nodeId: ctx.node.id },
-        );
+        throw authoredFailure(site, { kind: 'timestamp' });
       }
     }
     const exhausted =

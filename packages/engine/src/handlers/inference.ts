@@ -11,11 +11,17 @@ import {
 } from '@graphgoblin/contracts';
 import {
   applyPatch,
-  renderTemplate,
+  observeTemplate,
   threadView,
   validateJson,
   systemChatIssues,
 } from '@graphgoblin/domain';
+import {
+  authoredFailure,
+  nodeWorkingDirectory,
+  renderAuthored,
+  transformFailure,
+} from '../authored-failure.js';
 import { ArtifactStoreError, RunCancelledError, RunFailureError, isAbortError } from '../errors.js';
 import {
   errorDiagnostic,
@@ -294,28 +300,15 @@ export const inferenceHandler: NodeHandler<'inference'> = {
   async execute(ctx) {
     const { config } = ctx;
     const visit = visitTurn(await ctx.services.events(), ctx.node.id);
+    let pending = visit.pending;
+    if (pending?.submission === 'delivery-uncertain' && !canContinueTurn(pending))
+      throw recoveryFailure(pending, ctx.node.id);
     const harness: HarnessPort | undefined = ctx.ports.harnesses[config.harness];
     const { model, effort } = await ctx.services.resolveModel(
       config.harness,
       visit.freshSession?.model ?? config.model,
       visit.freshSession?.effort ?? config.effort,
     );
-    const workingDirectory = await ctx.services.workingDirectory();
-
-    // Input transforms shape only the view the prompt sees; they are not persisted.
-    const viewThread: ContextThread = config.input.length
-      ? (await runMutations(ctx, ctx.thread, config.input)).thread
-      : ctx.thread;
-    const view = threadView(viewThread) as unknown as Record<string, unknown>;
-
-    for (const file of config.contextFiles ?? []) {
-      await ctx.ports.workspace.writeFile(
-        workingDirectory,
-        file.path,
-        await renderTemplate(file.template, view),
-      );
-    }
-
     // Provenance comes from this run's open logical visit, never a session repository row.
     const missingFailure = (task?: PendingTurn): RunFailureError => {
       const origin: MissingSession['origin'] =
@@ -343,14 +336,38 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         },
       );
     };
-    let pending = visit.pending;
+    if (pending?.submission === 'session-missing') throw missingFailure(pending);
+    const workingDirectory = nodeWorkingDirectory(
+      await ctx.services.workingDirectory(),
+      ctx.node.id,
+    );
+
+    // Input transforms shape only the view the prompt sees; they are not persisted.
+    const viewThread: ContextThread = config.input.length
+      ? (
+          await runMutations(ctx, ctx.thread, config.input, undefined, (fact, index, kind) =>
+            transformFailure(ctx.node.id, 'inference.input', fact, index, kind),
+          )
+        ).thread
+      : ctx.thread;
+    const view = threadView(viewThread) as unknown as Record<string, unknown>;
+
+    for (const [fileIndex, file] of (config.contextFiles ?? []).entries()) {
+      await ctx.ports.workspace.writeFile(
+        workingDirectory,
+        file.path,
+        await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'inference.contextFiles.template', fileIndex },
+          file.template,
+          view,
+        ),
+      );
+    }
+
     let resumeId: string | undefined;
     let prompt: string;
     let promptKind: PendingTurn['turn']['promptKind'] = 'authored';
     if (pending) {
-      if (pending.submission === 'session-missing') throw missingFailure(pending);
-      if (pending.submission === 'delivery-uncertain' && !canContinueTurn(pending))
-        throw recoveryFailure(pending, ctx.node.id);
       if (pending.submission === 'definitely-not-submitted') {
         prompt = pending.turn.prompt;
         promptKind = pending.turn.promptKind;
@@ -361,7 +378,13 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         promptKind = 'continuation';
       }
     } else {
-      prompt = visit.freshSession?.prompt ?? (await renderTemplate(config.prompt.template, view));
+      prompt =
+        visit.freshSession?.prompt ??
+        (await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'inference.prompt.template' },
+          config.prompt.template,
+          view,
+        ));
       if (visit.freshSession) {
         // This explicit choice applies only to this logical visit; the authored policy stays.
         resumeId = undefined;
@@ -515,6 +538,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       turn: next,
     });
 
+    let afterResultFailure: RunFailureError | undefined;
     let result: HarnessResult;
     let session: HarnessSession | undefined;
     let invoking = false;
@@ -605,13 +629,25 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           attempts += 1;
           const sessionId = row.sessionId;
           if (!sessionId) break;
-          const repairPrompt = await renderTemplate(schema.repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
+          const rendered = await observeTemplate(schema.repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
             ...view,
             schema: JSON.stringify(schema.jsonSchema, null, 2),
             value: JSON.stringify(candidate ?? null, null, 2),
             errors: validation.errors,
             attempt: attempts,
           });
+          if (!rendered.ok) {
+            afterResultFailure = authoredFailure(
+              {
+                nodeId: ctx.node.id,
+                boundary: 'inference.output.schema.repair.prompt',
+                attempt: attempts,
+              },
+              { kind: 'template', fact: rendered.fact },
+            );
+            throw afterResultFailure;
+          }
+          const repairPrompt = rendered.value;
           // Establish the repair task and release the completed handle before persistence:
           // an append can commit and then throw, without any repair invocation having started.
           session = undefined;
@@ -696,7 +732,22 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       working = applyPatch(working, patch);
 
       if (config.output.transforms.length) {
-        const transformed = await runMutations(ctx, working, config.output.transforms);
+        const transformed = await runMutations(
+          ctx,
+          working,
+          config.output.transforms,
+          undefined,
+          (fact, index, kind) => {
+            afterResultFailure = transformFailure(
+              ctx.node.id,
+              'inference.output.transforms',
+              fact,
+              index,
+              kind,
+            );
+            return afterResultFailure;
+          },
+        );
         patch.push(...transformed.patch);
       }
 
@@ -830,7 +881,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         const details = failure.options.details;
         const message = missing
           ? missingFailure(pending).message
-          : uncertain && !canContinueTurn(pending)
+          : failure !== afterResultFailure && uncertain && !canContinueTurn(pending)
             ? failure.message +
               (failure instanceof InternalRunFailureError ? ' ' : '. ') +
               recoveryFailure(pending, ctx.node.id).message

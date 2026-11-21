@@ -7,10 +7,14 @@ export * from './errors.js';
 export * from './chat.js';
 export * from './pointer.js';
 export * from './patch.js';
-export { checkTemplate, renderTemplate } from './template.js';
+export { checkTemplate, renderTemplate, observeTemplate, type TemplateFact } from './template.js';
 export * from './template-bundle.js';
 export {
   checkExpression,
+  observeExpression,
+  observePredicate,
+  type ExpressionReason,
+  type ExpressionObservation,
   evaluateExpression,
   evaluatePredicate,
   type ExpressionOptions,

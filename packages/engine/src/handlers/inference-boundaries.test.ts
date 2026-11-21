@@ -272,3 +272,148 @@ it.each(
     }
   },
 );
+
+const invalidOutput = {
+  transforms: [
+    {
+      op: 'set',
+      path: '/vars/value',
+      value: { kind: 'expression', jsonata: '$error("PRIVATE_AFTER_RESULT")' },
+    },
+  ],
+};
+
+it.each([
+  'HARNESS_ARGUMENTS_REJECTED',
+  'HARNESS_SESSION_MISSING',
+  'HARNESS_TERMINATION_UNCONFIRMED',
+  'SECONDARY_CLEANUP',
+] as const)(
+  'preserves the selected cause when cleanup reports %s after an output transform fault',
+  async (code) => {
+    const e = await createTestEngine();
+    const fake = e.ports.harness;
+    e.ports.harnesses.codex = {
+      id: 'codex',
+      preflight: () => fake.preflight(),
+      resume: (...args) => fake.resume(...args),
+      start(...args) {
+        const session = fake.start(...args);
+        return {
+          ...session,
+          async cancel() {
+            await session.cancel();
+            throw Object.assign(new Error('CLEANUP_MARKER'), { code });
+          },
+        };
+      },
+    };
+    const v = e.publish(
+      singleNodeLoop('stronger evidence', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          prompt: { template: 'main' },
+          output: invalidOutput,
+        },
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    expect(fake.started).toHaveLength(1);
+    expect(fake.cancelled).toHaveLength(1);
+    expect(fake.resumed).toHaveLength(0);
+    expect(run.failure?.inference?.promptKind).toBe('authored');
+    if (code === 'SECONDARY_CLEANUP') {
+      expect(run.failure).toMatchObject({
+        code: 'MUTATION_ERROR',
+        resumable: false,
+        details: { phase: 'after-result' },
+      });
+      expect(run.failure?.message).not.toContain('CLEANUP_MARKER');
+    } else {
+      expect(run.failure?.code).toBe(
+        code === 'HARNESS_ARGUMENTS_REJECTED' ? 'HARNESS_TURN_FAILED' : code,
+      );
+      expect(run.failure?.resumable).toBe(false);
+      expect(JSON.stringify(run.failure)).not.toMatch(
+        /after-result|received the provider result|PRIVATE_AFTER_RESULT/,
+      );
+    }
+  },
+);
+
+it.each(['user cancellation', 'force stop', 'run deadline', 'node timeout'] as const)(
+  'honors %s while cleaning up a received result with a failed repair template',
+  async (winner) => {
+    const e = await createTestEngine();
+    const fake = e.ports.harness;
+    fake.script([{ finalText: 'invalid' }]);
+    let entered!: () => void;
+    const cleaning = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    let aborted!: () => void;
+    const interrupted = new Promise<void>((resolve) => {
+      aborted = resolve;
+    });
+    e.ports.harnesses.codex = {
+      id: 'codex',
+      preflight: () => fake.preflight(),
+      resume: (...args) => fake.resume(...args),
+      start(request, signal) {
+        const session = fake.start(request, signal);
+        signal.addEventListener('abort', aborted, { once: true });
+        return {
+          ...session,
+          async cancel() {
+            await session.cancel();
+            entered();
+            await interrupted;
+          },
+        };
+      },
+    };
+    const def = singleNodeLoop('interrupted repair', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'Infer',
+      config: {
+        prompt: { template: 'main' },
+        ...(winner === 'node timeout' ? { timeoutSeconds: 1 } : {}),
+        output: {
+          schema: {
+            jsonSchema: { type: 'number' },
+            repair: { enabled: true, maxAttempts: 1, prompt: '{{ "x" | append }}' },
+          },
+        },
+      },
+    });
+    if (winner === 'run deadline') def.settings = { runDeadlineSeconds: 1 };
+    const v = e.publish(def);
+    const started = await e.start(v.loopId);
+    await cleaning;
+    if (winner === 'user cancellation')
+      await e.manager.cancel(started.id, { kind: 'user', id: 'tester' });
+    if (winner === 'force stop') await e.manager.forceStop();
+    if (winner === 'run deadline') {
+      e.ports.clock.advance(1100);
+      await e.ports.timers.fire(started.id, 'run-deadline');
+    }
+    const run = await e.settle(started.id);
+    if (winner === 'user cancellation') expect(run.status).toBe('cancelled');
+    else
+      expect(run.failure?.code).toBe(
+        winner === 'force stop'
+          ? 'RUN_INTERRUPTED_BY_STOP'
+          : winner === 'run deadline'
+            ? 'RUN_DEADLINE_EXCEEDED'
+            : 'INFERENCE_TIMEOUT',
+      );
+    expect(JSON.stringify(run.failure ?? {})).not.toMatch(
+      /after-result|received the provider result/,
+    );
+    expect(fake.resumed).toHaveLength(0);
+    expect(fake.cancelled).toHaveLength(1);
+  },
+);

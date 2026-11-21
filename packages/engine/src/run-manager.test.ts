@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
+import { describe, expect, it, vi } from 'vitest';
+import type { LoopDefinitionInput, RunEvent, WorkingDirectorySpec } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
 import {
   FIXTURE_IDS,
   FIXTURE_TS,
@@ -19,6 +20,7 @@ import {
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { FakeHarness, createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
 import { createInitialThread } from './thread.js';
+import { INTERNAL_FAILURE_MESSAGE } from './failure-publication.js';
 
 function barrier() {
   let resolve = () => {};
@@ -27,6 +29,249 @@ function barrier() {
   });
   return { promise, resolve };
 }
+
+describe('working directory preparation', () => {
+  it.each([
+    {
+      template: 'private-parse-marker\n{% invalid_private %}',
+      cause: 'The template could not be parsed at line 2, column 1. Check its Liquid syntax.',
+    },
+    {
+      template: 'private-render-marker\n{% include "private-path-marker" %}',
+      cause:
+        'The template could not be rendered at line 2, column 1. Check its filters and input values.',
+    },
+    {
+      template: '\t {{vars.missing}}\r\n',
+      cause: 'The template rendered to an empty path. Supply a nonempty directory.',
+    },
+  ])(
+    'rejects a local workspace template before resolution: $cause',
+    async ({ template, cause }) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop('invalid workspace template', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'unused', cwd: 'workspace' },
+      });
+      loop.settings = { workingDirectory: { kind: 'template', template } };
+      const run = await engine.runToIdle(engine.publish(loop).loopId);
+      expect(run.status).toBe('failed');
+      expect(run.failure).toEqual({
+        code: 'TEMPLATE_ERROR',
+        nodeId: 'script',
+        resumable: false,
+        message: `Working directory template failed. ${cause}`,
+        details: {
+          boundary: 'settings.workingDirectory.template',
+          cause: { code: 'TEMPLATE_ERROR', message: cause },
+        },
+      });
+      const failed = engine.events(run.id).find((event) => event.type === 'run.failed');
+      expect(failed).toMatchObject({ failure: run.failure });
+      expect(JSON.stringify([run.failure, failed])).not.toContain('private-');
+      await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.workspace.files.size).toBe(0);
+      expect(engine.ports.scripts.calls).toEqual([]);
+      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
+      engine.manager.stop();
+    },
+  );
+
+  it.each<WorkingDirectorySpec>([
+    { kind: 'fixed', path: 'relative/workspace' },
+    { kind: 'temp' },
+    { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' },
+  ])(
+    'passes only a resolved $kind spec and caches it across nodes and file delivery',
+    async (spec) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop(
+        'workspace cache',
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'unused', cwd: 'workspace' },
+        },
+        {
+          returns: '"returned bytes"',
+          destinations: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+        },
+      );
+      loop.settings = { workingDirectory: spec };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, {
+        path: 'relative/workspace',
+      });
+      const directory = spec.kind === 'temp' ? `/tmp/graphgoblin/${run.id}` : 'relative/workspace';
+      expect(run.status).toBe('succeeded');
+      expect(engine.ports.workspace.resolved).toEqual([
+        {
+          spec: spec.kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: directory },
+          runId: run.id,
+        },
+      ]);
+      expect(engine.ports.scripts.calls).toHaveLength(1);
+      expect(engine.ports.scripts.calls[0]?.cwd).toBe(directory);
+      expect(engine.ports.workspace.files.get(`${directory}/result.txt`)).toBe('returned bytes');
+      expect(engine.events(run.id)).toContainEqual(
+        expect.objectContaining({ type: 'return.delivered', target: `${directory}/result.txt` }),
+      );
+      engine.manager.stop();
+    },
+  );
+
+  it.each([
+    new TemplateError('private-external-template', {
+      boundary: 'settings.workingDirectory.template',
+    }),
+    new ExpressionError('private-external-expression'),
+    Object.assign(new Error('private-external-lookalike'), {
+      name: 'TemplateError',
+      code: 'TEMPLATE_ERROR',
+    }),
+    { name: 'TemplateError', code: 'TEMPLATE_ERROR', message: 'private-external-object' },
+  ])(
+    'keeps a workspace port rejection external and retries resolution after repair (%#)',
+    async (fault) => {
+      const engine = await createTestEngine();
+      const resolve = vi.spyOn(engine.ports.workspace, 'resolve').mockRejectedValueOnce(fault);
+      const loop = singleNodeLoop('external workspace failure', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'unused', cwd: 'workspace' },
+      });
+      loop.settings = {
+        workingDirectory: { kind: 'template', template: ' {{trigger.payload.path}} ' },
+      };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, { path: '/repaired' });
+      expect(run.failure).toEqual({
+        code: 'INTERNAL_ERROR',
+        nodeId: 'script',
+        message: INTERNAL_FAILURE_MESSAGE,
+        resumable: true,
+      });
+      expect(engine.events(run.id)).toContainEqual(
+        expect.objectContaining({ type: 'run.failed', failure: run.failure }),
+      );
+      expect(engine.ports.scripts.calls).toEqual([]);
+      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(JSON.stringify(run.failure)).not.toContain('private-external');
+      await engine.manager.resume(run.id);
+      expect((await engine.settle(run.id)).status).toBe('succeeded');
+      expect(resolve).toHaveBeenCalledTimes(2);
+      expect(resolve).toHaveBeenNthCalledWith(2, { kind: 'fixed', path: '/repaired' }, run.id);
+      expect(engine.ports.workspace.resolved).toEqual([
+        { spec: { kind: 'fixed', path: '/repaired' }, runId: run.id },
+      ]);
+      expect(engine.ports.scripts.calls).toHaveLength(1);
+      engine.manager.stop();
+    },
+  );
+
+  it('reuses a successful resolution when the script later fails and resumes', async () => {
+    const engine = await createTestEngine();
+    const resolve = vi.spyOn(engine.ports.workspace, 'resolve');
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 1,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+      state: 'completed',
+      timedOut: false,
+    }));
+    const loop = singleNodeLoop('cache survives later failure', {
+      id: 'script',
+      kind: 'script',
+      label: 'Script',
+      config: { command: 'unused', cwd: 'workspace' },
+    });
+    loop.settings = { workingDirectory: { kind: 'template', template: ' /cached ' } };
+    const run = await engine.runToIdle(engine.publish(loop).loopId);
+    expect(run.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+      state: 'completed',
+      timedOut: false,
+    }));
+    await engine.manager.resume(run.id);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
+    expect(resolve).toHaveBeenCalledExactlyOnceWith({ kind: 'fixed', path: '/cached' }, run.id);
+    expect(engine.ports.scripts.calls.map((call) => call.cwd)).toEqual(['/cached', '/cached']);
+    engine.manager.stop();
+  });
+
+  it.each(['\t\n', '{% include "private-receipt-marker" %}'])(
+    'keeps a local file-return workspace failure inside the terminal receipt catch (%#)',
+    async (template) => {
+      const engine = await createTestEngine();
+      const loop = minimalLoop();
+      loop.settings = { workingDirectory: { kind: 'template', template } };
+      loop.nodes[1] = {
+        id: 'done',
+        kind: 'exit',
+        label: 'Done',
+        config: { returns: '"file return payload"' },
+      };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
+        returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+      });
+      expect(run.status).toBe('succeeded');
+      expect(run.failure).toBeUndefined();
+      const failed = engine.events(run.id).filter((event) => event.type === 'return.failed');
+      expect(failed).toHaveLength(1);
+      expect(failed[0]).toMatchObject({
+        error: expect.stringMatching(/^Working directory template failed\./),
+      });
+      expect(JSON.stringify(failed)).not.toContain('private-receipt-marker');
+      expect(engine.eventTypes(run.id)).not.toContain('run.failed');
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.workspace.files.size).toBe(0);
+      engine.manager.stop();
+    },
+  );
+
+  it('retains the external exception text for a terminal file-return failure', async () => {
+    const engine = await createTestEngine();
+    const resolve = vi
+      .spyOn(engine.ports.workspace, 'resolve')
+      .mockRejectedValue(new TemplateError('private-external-receipt'));
+    const loop = minimalLoop();
+    loop.nodes[1] = {
+      id: 'done',
+      kind: 'exit',
+      label: 'Done',
+      config: { returns: '"file return payload"' },
+    };
+    const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
+      returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+    });
+    expect(run.status).toBe('succeeded');
+    expect(run.failure).toBeUndefined();
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(engine.events(run.id)).toContainEqual(
+      expect.objectContaining({ type: 'return.failed', error: 'private-external-receipt' }),
+    );
+    expect(engine.eventTypes(run.id)).not.toContain('run.failed');
+    expect(engine.ports.workspace.files.size).toBe(0);
+    engine.manager.stop();
+  });
+});
 
 describe('a minimal run', () => {
   it.each(['DECIDER_HTTP_ERROR', 'DECIDER_private-marker'])(

@@ -669,9 +669,9 @@ it('reclaims approved workspaces through the API with 1000 retained workspace us
       sampleThread(),
     );
     await api.container.repos.runs.markFinalized(id);
+    // This fixture represents the path already rendered by the engine from {{vars.path}}.
     await api.container.ports.workspace.resolve(
-      version.definition.settings.workingDirectory,
-      { vars: { path: paths[i % 75]! } },
+      { kind: 'fixed', path: i % 2 === 0 ? root : paths[i % 75]! },
       id,
     );
   }

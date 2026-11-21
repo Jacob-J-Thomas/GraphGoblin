@@ -438,8 +438,7 @@ export interface ScriptPort {
 export interface WorkspacePort {
   /** Resolve and ensure a run's working directory. */
   resolve(
-    spec: WorkingDirectorySpec,
-    view: Record<string, unknown>,
+    spec: Exclude<WorkingDirectorySpec, { kind: 'template' }>,
     runId: string,
   ): Promise<string>;
   /** Write a file; relative paths resolve against `dir`. Returns the absolute path. */

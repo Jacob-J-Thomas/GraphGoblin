@@ -9,13 +9,18 @@ import type {
   RepairPolicy,
   JsonSchema,
 } from '@graphgoblin/contracts';
-import { MutationError } from './errors.js';
-import { evaluateExpression, evaluatePredicate } from './expression.js';
+import { MutationError, PatchError } from './errors.js';
+import {
+  observeExpression,
+  observePredicate,
+  type ExpressionObservation,
+  type ExpressionReason,
+} from './expression.js';
 import { validateJson } from './json-schema.js';
 import { applyPatch, assertMutablePath } from './patch.js';
 import { getAtPointer } from './pointer.js';
 import { unsafeRegexReason } from './regex-safety.js';
-import { renderTemplate } from './template.js';
+import { observeTemplate, type TemplateFact } from './template.js';
 import { estimateMessageTokens, threadView } from './thread-view.js';
 
 export interface MutationContext {
@@ -48,14 +53,58 @@ export type MutationFailureMapper = (
   operation: MutationOperation['op'],
 ) => unknown;
 
-type Rethrow = (error: unknown) => never;
+export type MutationFact =
+  | { kind: 'expression'; reason: ExpressionReason; itemIndex?: number }
+  | { kind: 'template'; fact: TemplateFact; itemIndex?: number }
+  | { kind: 'regex' | 'target' | 'patch' | 'schema' };
 
-function authored<T>(operation: () => T, rethrow: Rethrow): T {
+export type MutationFactMapper = (
+  fact: MutationFact,
+  index: number,
+  operation: MutationOperation['op'],
+) => unknown;
+
+type Rethrow = (error: unknown, fact?: MutationFact) => never;
+
+function authored<T>(operation: () => T, rethrow: Rethrow, kind: 'target' | 'regex' | 'schema'): T {
   try {
     return operation();
   } catch (error) {
-    return rethrow(error);
+    return rethrow(
+      error,
+      error instanceof MutationError || error instanceof PatchError ? { kind } : undefined,
+    );
   }
+}
+
+async function renderValue(
+  source: string,
+  view: Record<string, unknown>,
+  rethrow: Rethrow,
+  itemIndex?: number,
+) {
+  const result = await observeTemplate(source, view);
+  return result.ok
+    ? result.value
+    : rethrow(result.error, {
+        kind: 'template',
+        fact: result.fact,
+        ...(itemIndex === undefined ? {} : { itemIndex }),
+      });
+}
+
+function evaluated<T>(result: ExpressionObservation<T>, rethrow: Rethrow, itemIndex?: number): T {
+  if (result.ok) return result.value;
+  return rethrow(
+    result.error,
+    result.reason
+      ? {
+          kind: 'expression',
+          reason: result.reason,
+          ...(itemIndex === undefined ? {} : { itemIndex }),
+        }
+      : undefined,
+  );
 }
 
 export interface MutationResult {
@@ -86,9 +135,11 @@ async function resolveValue(
     case 'literal':
       return source.value;
     case 'template':
-      return renderTemplate(source.template, view).catch(rethrow);
+      return renderValue(source.template, view, rethrow);
     case 'expression':
-      return asJson(await evaluateExpression(source.jsonata, view).catch(rethrow));
+      return asJson(
+        evaluated(await observeExpression(source.jsonata, view).catch(rethrow), rethrow),
+      );
   }
 }
 
@@ -116,8 +167,10 @@ async function selectIndices(
 ): Promise<number[]> {
   const out: number[] = [];
   for (const [index, item] of items.entries()) {
-    if (await evaluatePredicate(where, item, { bindings: { thread: view, index } }).catch(rethrow))
-      out.push(index);
+    const result = await observePredicate(where, item, { bindings: { thread: view, index } }).catch(
+      rethrow,
+    );
+    if (evaluated(result, rethrow, index)) out.push(index);
   }
   return out;
 }
@@ -164,27 +217,29 @@ export async function planMutation(
   ctx: MutationContext,
   opIndex = 0,
   mapFailure?: MutationFailureMapper,
+  mapFact?: MutationFactMapper,
 ): Promise<MutationPlan> {
   const view = threadView(thread) as unknown as Record<string, unknown>;
-  const rethrow = (error: unknown): never => {
+  const rethrow: Rethrow = (error, fact) => {
+    if (fact && mapFact) throw mapFact(fact, opIndex, op.op);
     throw mapFailure ? mapFailure(error, opIndex, op.op) : error;
   };
 
   switch (op.op) {
     case 'set': {
-      authored(() => assertMutablePath(op.path), rethrow);
+      authored(() => assertMutablePath(op.path), rethrow, 'target');
       const value = await resolveValue(op.value, view, rethrow);
-      const exists = authored(() => getAtPointer(thread, op.path), rethrow).found;
+      const exists = authored(() => getAtPointer(thread, op.path), rethrow, 'target').found;
       return { kind: 'patch', patch: [{ op: exists ? 'replace' : 'add', path: op.path, value }] };
     }
     case 'delete': {
-      authored(() => assertMutablePath(op.path), rethrow);
-      if (!authored(() => getAtPointer(thread, op.path), rethrow).found)
+      authored(() => assertMutablePath(op.path), rethrow, 'target');
+      if (!authored(() => getAtPointer(thread, op.path), rethrow, 'target').found)
         return { kind: 'patch', patch: [] };
       return { kind: 'patch', patch: [{ op: 'remove', path: op.path }] };
     }
     case 'append-message': {
-      const content = await renderTemplate(op.content, view).catch(rethrow);
+      const content = await renderValue(op.content, view, rethrow);
       const message = makeMessage(ctx, op.role, content, op.tags);
       return {
         kind: 'patch',
@@ -200,7 +255,7 @@ export async function planMutation(
             : Math.min(op.position, thread.messages.length);
       const patch: PatchOperation[] = [];
       for (const [offset, injected] of op.messages.entries()) {
-        const content = await renderTemplate(injected.content, view).catch(rethrow);
+        const content = await renderValue(injected.content, view, rethrow, offset);
         patch.push({
           op: 'add',
           path: `/messages/${index + offset}`,
@@ -236,7 +291,7 @@ export async function planMutation(
       return { kind: 'patch', patch: removeIndices(`/${op.target}`, indices) };
     }
     case 'replace': {
-      const re = authored(() => compileRegex(op.pattern, op.flags), rethrow);
+      const re = authored(() => compileRegex(op.pattern, op.flags), rethrow, 'regex');
       if (op.target === 'messages') {
         const indices = op.where
           ? await selectIndices(thread.messages, op.where, view, rethrow)
@@ -257,7 +312,7 @@ export async function planMutation(
     }
     case 'redact': {
       const regexes = op.patterns.map((pattern) =>
-        authored(() => compileRegex(pattern, 'g'), rethrow),
+        authored(() => compileRegex(pattern, 'g'), rethrow, 'regex'),
       );
       const redact = (s: string): string =>
         regexes.reduce((acc, re) => acc.replace(re, op.replacement), s);
@@ -278,12 +333,12 @@ export async function planMutation(
       return { kind: 'patch', patch };
     }
     case 'coerce': {
-      authored(() => assertMutablePath(op.target), rethrow);
-      const source = authored(() => getAtPointer(thread, op.source), rethrow);
+      authored(() => assertMutablePath(op.target), rethrow, 'target');
+      const source = authored(() => getAtPointer(thread, op.source), rethrow, 'target');
       const value = source.found ? source.value : undefined;
-      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow);
+      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow, 'schema');
       if (validation.ok) {
-        const exists = authored(() => getAtPointer(thread, op.target), rethrow).found;
+        const exists = authored(() => getAtPointer(thread, op.target), rethrow, 'target').found;
         return {
           kind: 'patch',
           patch: [{ op: exists ? 'replace' : 'add', path: op.target, value: asJson(value) }],
@@ -316,18 +371,20 @@ export async function applyMutations(
   ctx: MutationContext,
   startAt = 0,
   mapFailure?: MutationFailureMapper,
+  mapFact?: MutationFactMapper,
 ): Promise<MutationResult> {
   let current = thread;
   const combined: PatchOperation[] = [];
   for (let i = startAt; i < ops.length; i += 1) {
     const op = ops[i] as MutationOperation;
-    const plan = await planMutation(current, op, ctx, i, mapFailure);
+    const plan = await planMutation(current, op, ctx, i, mapFailure, mapFact);
     if (plan.kind === 'repair') {
       return { thread: current, patch: combined, pending: plan.request, appliedThrough: i };
     }
     try {
       current = applyPatch(current, plan.patch);
     } catch (error) {
+      if (mapFact && error instanceof PatchError) throw mapFact({ kind: 'patch' }, i, op.op);
       throw mapFailure ? mapFailure(error, i, op.op) : error;
     }
     combined.push(...plan.patch);

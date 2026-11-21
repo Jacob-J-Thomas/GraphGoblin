@@ -28,6 +28,101 @@ const subLoop = (name: string, loopId: string, output: Record<string, unknown> =
     config: { loopRef: { loopId }, output },
   });
 
+it.each(['bad-template', 'empty'] as const)(
+  '#486 file return %s remains a failed receipt on a successful run',
+  async (kind) => {
+    const e = await createTestEngine();
+    const resolve = vi.spyOn(e.ports.workspace, 'resolve');
+    const write = vi.spyOn(e.ports.workspace, 'writeFile');
+    const definition = minimalLoop();
+    definition.settings = {
+      workingDirectory: { kind: 'template', template: kind === 'empty' ? '  ' : '{% if %}' },
+    };
+    const done = definition.nodes.find((node) => node.kind === 'exit')!;
+    if (done.kind !== 'exit') throw new Error('missing exit');
+    done.config = {
+      returns: '42',
+      destinations: [{ kind: 'file', path: 'result.json' }, { kind: 'caller' }],
+    };
+    try {
+      const run = await e.runToIdle(e.publish(definition).loopId);
+      expect(run).toMatchObject({ status: 'succeeded', result: 42 });
+      expect(run.failure).toBeUndefined();
+      expect(resolve).not.toHaveBeenCalled();
+      expect(write).not.toHaveBeenCalled();
+      expect(e.events(run.id).filter((event) => event.type === 'return.failed')).toMatchObject([
+        {
+          channel: { kind: 'file' },
+          error:
+            kind === 'empty'
+              ? 'Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.'
+              : 'Working directory template failed. The template could not be parsed at line 1, column 6. Check its Liquid syntax.',
+        },
+      ]);
+      expect(e.eventTypes(run.id)).not.toContain('run.failed');
+      expect(e.eventTypes(run.id).filter((type) => type === 'run.finished')).toHaveLength(1);
+    } finally {
+      e.manager.stop();
+    }
+  },
+);
+
+it.each(['write', 'receipt-before', 'receipt-after'] as const)(
+  '#486 external file %s retains receipt behavior without a second write on recovery',
+  async (fault) => {
+    const e = await createTestEngine();
+    const write = vi.spyOn(e.ports.workspace, 'writeFile');
+    if (fault === 'write')
+      write.mockRejectedValue(new Error('external file marker ' + 'x'.repeat(4100)));
+    const append = e.ports.events.append.bind(e.ports.events);
+    let fired = false;
+    vi.spyOn(e.ports.events, 'append').mockImplementation(async (id, drafts, options) => {
+      if (
+        fault !== 'write' &&
+        !fired &&
+        drafts.some((draft) => draft.type === 'return.delivered' && draft.channel.kind === 'file')
+      ) {
+        fired = true;
+        if (fault === 'receipt-after') await append(id, drafts, options);
+        throw new Error('external success receipt marker');
+      }
+      return append(id, drafts, options);
+    });
+    const definition = minimalLoop();
+    const done = definition.nodes.find((node) => node.kind === 'exit')!;
+    if (done.kind !== 'exit') throw new Error('missing exit');
+    done.config = { returns: '42', destinations: [{ kind: 'file', path: 'result.json' }] };
+    try {
+      const run = await e.runToIdle(e.publish(definition).loopId);
+      expect(run).toMatchObject({ status: 'succeeded', result: 42 });
+      expect(write).toHaveBeenCalledTimes(1);
+      const receipts = e.events(run.id).filter((event) => event.type === 'return.failed');
+      expect(receipts).toHaveLength(1);
+      expect(receipts[0]?.error).toBe(
+        fault === 'write'
+          ? ('external file marker ' + 'x'.repeat(4100)).slice(0, 4000)
+          : 'external success receipt marker',
+      );
+      expect(e.events(run.id).filter((event) => event.type === 'return.delivered')).toHaveLength(
+        fault === 'receipt-after' ? 1 : 0,
+      );
+      const before = JSON.stringify(e.events(run.id));
+      e.manager.stop();
+      const recovered = new RunManager(e.ports, e.settings);
+      try {
+        await recovered.start();
+        await recovered.waitForIdle();
+      } finally {
+        recovered.stop();
+      }
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(e.events(run.id))).toBe(before);
+    } finally {
+      e.manager.stop();
+    }
+  },
+);
+
 describe('adversarial engine invariants', () => {
   it('1: queued pause, invalid resume, waiting cancel and terminal signals are typed', async () => {
     const e = await createTestEngine();
@@ -507,7 +602,20 @@ describe('adversarial engine invariants', () => {
       const r = await e.runToIdle(parent.loopId);
       expect(r.failure?.code).toBe('EXPRESSION_ERROR');
       expect(r.failure?.message).toMatch(/outside the mutable regions/);
-      expect(r.failure?.message).toContain(location);
+      expect(r.failure).toMatchObject({
+        nodeId: 'child',
+        resumable: false,
+        details: {
+          boundary: 'subloop.output.custom.patch',
+          cause: {
+            code: 'EXPRESSION_ERROR',
+            message: 'The patch writes outside the mutable regions. Change the patch target.',
+          },
+        },
+      });
+      expect(r.failure?.message).not.toContain(location);
+      expect(r.failure?.details).not.toHaveProperty('childRunId');
+      await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
     },
   );
 

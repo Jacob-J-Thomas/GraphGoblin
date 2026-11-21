@@ -160,6 +160,12 @@ silently fails over to another provider or retries a command. Text needs neither
 text precedes the transcript, and the protected canonical `{text}` check validates the combined
 input before inference or other workflow actions.
 
+### Inference preparation and authored failures
+
+A visit whose earlier prompt has uncertain delivery and no usable session stops before model resolution or preparation. A recorded missing session needs the resolved model and effort for the fresh-session action. If catalogue resolution temporarily fails, its own failure can be resumed. Preparation on an eligible visit may run earlier structured transforms and write context files in order. A preparation failure carries any previous task identity and submission as information. The existing turn and retry records supply the exact task when it is eligible to retry.
+
+An output transform or schema repair prompt can fail after GraphGoblin receives the provider result. The winning authored failure records `details.phase = "after-result"`, identifies the last actual turn and explains that the result arrived. GraphGoblin retains the conservative submission classification and refuses Resume. A provider result alone supplies no durable acceptance marker. A stronger cancellation, timeout, pinned refusal, lost session or unconfirmed termination keeps its own recovery rules. [Authored execution failures](decisions/ADR-0088-authored-execution-failures.md)
+
 ## The harness port (Decided)
 
 ```ts
