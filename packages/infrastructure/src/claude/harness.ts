@@ -103,6 +103,16 @@ async function probeDirectory(): Promise<string> {
 /** Windows starts no process in a working directory longer than this (#102, #364). */
 const WINDOWS_WORKING_DIRECTORY_LIMIT = 258;
 /**
+ * A check whose process the runner established as refused at start or whose output was lost
+ * (#364). It is not an option failure, so the help check keeps its fixed detail. Module-private:
+ * callers see an ordinary `HARNESS_TURN_FAILED` with the same message and retriability.
+ */
+class CheckProcessFailure extends ClaudeHarnessError {
+  constructor(message: string) {
+    super('HARNESS_TURN_FAILED', message);
+  }
+}
+/**
  * A refused start, worded from what the runner established (#364). A spawn `ENOENT` alone does not
  * say whether the executable or the working directory failed, so only an established absence is
  * reported as a missing CLI, and only the turn's own working directory is configuration; the
@@ -125,8 +135,7 @@ function startFailure(
   if (refusal) {
     const state = refusal === 'working-directory-missing' ? 'does not exist' : 'is not a folder';
     return probe
-      ? new ClaudeHarnessError(
-          'HARNESS_TURN_FAILED',
+      ? new CheckProcessFailure(
           `Claude CLI could not be started because its temporary check folder ${state}.`,
         )
       : new ClaudeHarnessError(
@@ -137,8 +146,7 @@ function startFailure(
   const limit = WINDOWS_WORKING_DIRECTORY_LIMIT;
   const long = resolve(cwd).length > limit;
   if (probe)
-    return new ClaudeHarnessError(
-      'HARNESS_TURN_FAILED',
+    return new CheckProcessFailure(
       long
         ? `Claude CLI could not be started (${code}) from its temporary check folder, whose path (from TEMP or TMP) is longer than the ${limit} characters Windows allows for a working directory.`
         : `Claude CLI could not be started (${code}).`,
@@ -183,6 +191,9 @@ function checkOutcome(
         : 'Claude process output exceeded the configured limit',
     );
   if (result.callbackError) throw result.callbackError;
+  // Lost check output is incomplete evidence: no state is inferred from its stdout or stderr.
+  if (probe && result.outputFailed)
+    throw new CheckProcessFailure('Claude CLI check output could not be read.');
   if (probe && result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
     const codes: Partial<
       Record<HarnessReadinessState, ConstructorParameters<typeof ClaudeHarnessError>[0]>
@@ -198,11 +209,6 @@ function checkOutcome(
       result.failureState === 'transport',
     );
   }
-  if (probe && result.outputFailed)
-    throw new ClaudeHarnessError(
-      'HARNESS_TURN_FAILED',
-      'Claude CLI check output could not be read.',
-    );
   if (probe && (result.stdinFailed || result.exitCode !== 0))
     throw new ClaudeHarnessError(
       'HARNESS_TURN_FAILED',
@@ -334,9 +340,11 @@ export class ClaudeHarness implements HarnessPort {
       try {
         help = await run([...SUPPRESSION_ARGS, '--max-turns', '1', '--help']);
       } catch (error) {
-        // A rejected or failing option check names the version; timeouts and causes keep their detail.
+        // A rejected or failing option check names the version; timeouts and causes keep their
+        // detail, as do a refused start and lost output, which say nothing about the options.
         if (
           error instanceof ClaudeHarnessError &&
+          !(error instanceof CheckProcessFailure) &&
           (error.code === 'HARNESS_CLI_INCOMPATIBLE' || error.code === 'HARNESS_TURN_FAILED')
         )
           throw new ClaudeHarnessError(

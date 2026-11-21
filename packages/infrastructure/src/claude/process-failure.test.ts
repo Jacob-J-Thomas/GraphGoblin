@@ -10,6 +10,7 @@ import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { killTree } from '../process/index.js';
 import { ClaudeHarnessError } from './errors.js';
+import { ClaudeHarness } from './harness.js';
 import { runClaudeProcess } from './process.js';
 
 vi.mock('node:child_process', async (importOriginal) => {
@@ -337,4 +338,89 @@ it('completes cancellation when tree acknowledgement precedes child close', asyn
   child.emit('close', null);
   expect(await pending).not.toHaveProperty('terminationUnconfirmed');
   expect(vi.getTimerCount()).toBe(0);
+});
+
+// Controlled child seam: the real runner and harness with scripted child processes. The pipe
+// fault is an emitted stream error, not a native observation (#364).
+describe('lost check output through the runner and harness (#364)', () => {
+  const flags =
+    '--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume';
+  const diagnosis = 'API Error: 401 PRIVATE_STDERR_BODY';
+  /** Version and help pass; the sign-in check child follows the given script. */
+  function scriptChecks(auth: (scripted: ChildProcess) => void): void {
+    vi.mocked(spawn).mockImplementation((_binary: string, args: readonly string[]) => {
+      const scripted = new ChildProcess();
+      Object.assign(scripted, { pid: 4243 });
+      scripted.stdin = new PassThrough();
+      scripted.stdout = new PassThrough();
+      scripted.stderr = new PassThrough();
+      // The runner attaches its listeners right after spawn returns; script the child after that.
+      void Promise.resolve().then(() => {
+        if (args.includes('auth')) {
+          auth(scripted);
+          return;
+        }
+        scripted.stdout?.emit('data', Buffer.from(args.includes('--version') ? '2.1.285' : flags));
+        scripted.emit('close', 0);
+      });
+      return scripted;
+    });
+  }
+  it.each([
+    ['stdout', 1],
+    ['stdout', null],
+    ['stderr', 1],
+    ['stderr', null],
+  ] as const)(
+    'keeps recognised auth stderr from signing out a check whose %s failed (close %s)',
+    async (stream, code) => {
+      scriptChecks((scripted) => {
+        scripted.stderr?.emit('data', Buffer.from(diagnosis));
+        scripted.stdout?.emit(
+          'data',
+          Buffer.from('{"authMethod":"claude.ai","email":"PRIVATE_STDOUT_BODY'),
+        );
+        scripted[stream]?.emit(
+          'error',
+          Object.assign(new Error('PRIVATE_PIPE_BODY'), { code: 'EPIPE' }),
+        );
+        scripted.emit('close', code);
+      });
+      const facts = await new ClaudeHarness({
+        platform: 'win32',
+        binary: 'synthetic-cli',
+      }).preflight();
+      expect(facts).toMatchObject({
+        state: 'unknown',
+        ok: false,
+        version: '2.1.285',
+        problems: [
+          'Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.',
+        ],
+      });
+      expect(facts).not.toHaveProperty('authenticated');
+      expect(killTree).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(facts)).not.toContain('PRIVATE');
+    },
+  );
+  it('still signs out on the same recognised auth stderr when the check output was complete', async () => {
+    scriptChecks((scripted) => {
+      scripted.stderr?.emit('data', Buffer.from(diagnosis));
+      scripted.emit('close', 1);
+    });
+    const facts = await new ClaudeHarness({
+      platform: 'win32',
+      binary: 'synthetic-cli',
+    }).preflight();
+    expect(facts).toMatchObject({
+      state: 'auth',
+      ok: false,
+      authenticated: false,
+      problems: [
+        'Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.',
+      ],
+    });
+    expect(killTree).not.toHaveBeenCalled();
+    expect(JSON.stringify(facts)).not.toContain('PRIVATE');
+  });
 });

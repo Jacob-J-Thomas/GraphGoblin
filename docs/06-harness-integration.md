@@ -461,6 +461,8 @@ over conflicting stdout because stderr is the CLI's primary error channel; stdou
 when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
 Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
 process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
+Lost check output comes next: a check whose stdout or stderr could not be read infers no state,
+sign-out included, from what it captured (#364).
 None of this inference applies to
 model-turn stdout or changes turn retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`

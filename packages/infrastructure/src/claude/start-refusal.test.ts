@@ -3,9 +3,9 @@
 // Windows refuses a missing, non-folder or overlong working directory with the same spawn ENOENT
 // as a missing executable, so these cases use real refusals of the current host.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, sep } from 'node:path';
+import { basename, dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { HarnessEvent } from '@graphgoblin/engine';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
@@ -297,4 +297,76 @@ describe('native Claude start refusals as run failures (#364)', () => {
     });
     expectPrivate(failure, root);
   }, 60_000);
+});
+
+describe('native Claude help-only check refusal (#364)', () => {
+  /**
+   * Version and sign-in checks start natively. For the help check only, the harness's own fresh,
+   * empty check folder is removed (or replaced by a file) before its real start and restored
+   * afterwards, so Windows refuses that one start and the runner observes the folder.
+   */
+  async function helpOnlyRefusal(file: boolean, detail: string) {
+    const checks: ClaudeProcessRequest[] = [];
+    const turns: ClaudeProcessRequest[] = [];
+    const claude = new ClaudeHarness({
+      platform: 'win32',
+      binary: process.execPath,
+      runner: async (request, onStdout) => {
+        (request.stdin === undefined ? checks : turns).push(request);
+        const refused = request.args.includes('--help');
+        if (refused) {
+          // Only the harness's own empty check folder directly under TEMP is ever changed.
+          expect(dirname(request.cwd)).toBe(tmpdir());
+          expect(basename(request.cwd)).toMatch(/^gg-claude-probe-[0-9a-f]{8}$/);
+          await rmdir(request.cwd);
+          if (file) await writeFile(request.cwd, 'not a folder');
+        }
+        try {
+          return await runClaudeProcess(
+            { ...request, args: [fixture, 'success', ...request.args] },
+            onStdout,
+          );
+        } finally {
+          if (refused) {
+            if (file) await rm(request.cwd);
+            await mkdir(request.cwd);
+          }
+        }
+      },
+    });
+    const facts = await claude.preflight();
+    expect(facts).toMatchObject({
+      state: 'unknown',
+      ok: false,
+      version: '2.1.287',
+      authenticated: true,
+      authMethod: 'claude.ai',
+      problems: [`${detail} ${CHECK}`],
+    });
+    const root = await ownedRoot();
+    const workingDirectory = join(root, 'workspace');
+    await mkdir(workingDirectory);
+    const { events, error } = await turn(claude, workingDirectory);
+    expectRefused(events, error, 'HARNESS_TURN_FAILED', detail);
+    expect(turns).toEqual([]);
+    expect(checks.filter((request) => request.args.includes('auth'))).toHaveLength(2);
+    const folders = checks.map((request) => basename(request.cwd));
+    expectPrivate([facts, events, error], root, process.execPath, ...folders);
+  }
+  it('keeps a missing check folder when only the help check is refused', async () => {
+    await helpOnlyRefusal(
+      false,
+      'Claude CLI could not be started because its temporary check folder does not exist.',
+    );
+  }, 60_000);
+  it.skipIf(!windows)(
+    'keeps a check folder that is a file when only the help check is refused',
+    async () => {
+      await helpOnlyRefusal(
+        true,
+        'Claude CLI could not be started because its temporary check folder is not a folder.',
+      );
+    },
+    60_000,
+  );
 });
