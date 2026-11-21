@@ -1,0 +1,76 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "id": 6072481866,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427",
+      "title": "Seeded gpt-5.5 is enabled although Codex refuses it for ChatGPT-account logins (model_not_found)",
+      "issue_number": 427,
+      "body": "Found on 2026-10-27 while verifying effort names with real turns through the product's bundled Codex CLI (0.160.0), logged in with the owner's ChatGPT account.\n\n## What happens\n\nEvery turn on `gpt-5.5`, at any effort, is refused by the provider before any work: HTTP 400 `invalid_request_error`, code `model_not_found`, message \"The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.\" The seeded model catalog offers `gpt-5.5` as an enabled Codex model, so a loop can select it and will fail on every turn with a pinned refusal.\n\n## Expected\n\nEither the seed does not enable `gpt-5.5` by default for ChatGPT-account logins (preflight knows the authentication source), or the catalog or guide says plainly that `gpt-5.5` needs an API-key login. A turn that fails this way should also be easy to recognise in the run record as \"model not available for this account\" rather than a generic argument refusal.\n\n## Evidence\n\nTwo real turns on 2026-10-28 04:11 UTC (`gpt-5.5` at `none` and at `minimal`), same refusal both times; `gpt-6-luna` at `none` completed in the same session.\n\n\n## Intent 4 delivery admission — November 21\n\nAdmitted after [intent 3 engineering delivery](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448) on signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`, under the owner's ordered batch and delegated blocker-decision authority. [D171 and its alternatives](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) distinguish coordinator selection from human plan approval. Historical parking text above remains history.\n\nD171 resolves refinement through explicit account/endpoint guidance and a disposable structured-refusal public proof. Static catalogue metadata is not current entitlement. A docs-only disposition requires actual recognition QA; correct a narrow proven diagnostic gap if necessary. No automatic model substitution, global seed disable or unsupported API-key-only claim.\n\nImplementation and opposite-family review use the named routing models at xhigh. **Independent QA agent (planned):** `i4_427_behavior_qa`, a separate context and checkout; actual provider/session/build/evidence will be recorded when dispatched. GPT owns architecture; Claude Code contributes implementation, design critique, QA and adversarial review. Preserve touched-system positive/negative QA, unchanged coverage, current-head/current-target CI, fresh independent Astra MAX final audit and the three-general-scan cap. No implementation, QA or acceptance is implied by admission. Owner-only closure obligations and held460/Mac501 remain separate.",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:settings",
+          "color": "BFDADC",
+          "description": "Settings screen"
+        },
+        {
+          "name": "area:harness",
+          "color": "BFDADC",
+          "description": "Harness and model adapters"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 2,
+      "created_at": "2026-10-28T04:12:56Z",
+      "updated_at": "2026-11-21T08:55:45Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427",
+      "display_title": "Seeded gpt-5.5 is enabled although Codex refuses it for ChatGPT-account logins (model_not_found)"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427",
+    "title": "Seeded gpt-5.5 is enabled although Codex refuses it for ChatGPT-account logins (model_not_found)",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427",
+    "display_title": "Seeded gpt-5.5 is enabled although Codex refuses it for ChatGPT-account logins (model_not_found)"
+  },
+  "isError": false
+}
