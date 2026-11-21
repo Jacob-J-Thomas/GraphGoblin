@@ -1,0 +1,280 @@
+{
+  "head": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+  "docBindings": [
+    {
+      "path": "docs/04-node-catalog.md",
+      "originalSha256": "2e6f1c81f07ca34839d3b53a913d490a3d9370bb11d77aff48b54f0286cb97e1",
+      "finalSha256": "fffee01d1e68409ec140bfc2f71ff132eec5e6a1baf58e24d88652547f39c830",
+      "gitBlob": "55b10795fea232830f4d4731c7e70e2661353860"
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "originalSha256": "2afe9c7dcdbbed16a29a1193804a96103b520c433582bd8a9e1068b62c3f13d9",
+      "finalSha256": "9b7329496f4e28b427d6389bcbf9b5affd2abccddcf7a9472edc19bea707075b",
+      "gitBlob": "9409b8d2f2cb3bba34edcb8f810b24363fd22666"
+    },
+    {
+      "path": "docs/guide/07-troubleshooting.md",
+      "originalSha256": "476d7811f23c518e4596214b017faee50c9407ea23562d9474af4aa3a0f9e426",
+      "finalSha256": "33bdd0b1b0ffcb7fa24c9dfd45f785b5be1ca99c4fd27fe7f3b948b638e85bc9",
+      "gitBlob": "ffaafde98be1092ef245dc58e586f34b99f77591"
+    }
+  ],
+  "changedParagraphs": [
+    {
+      "path": "docs/04-node-catalog.md",
+      "line": 154,
+      "prefix": "Commands use `shell: false`.",
+      "text": "Commands use `shell: false`. Windows `.cmd` and `.bat` files therefore require an explicitly\nauthored command processor; direct invocation is a proven `SCRIPT_START_FAILED`, not an\nautomatic shell fallback. Resume and Replay keep the pinned command, arguments and\nworking-directory configuration. To change them, start a fresh run from the corrected definition;\nneither Resume nor Replay applies the correction. The UI's **New run** uses a published version.\nTo test an unpublished saved draft, use `POST /loops/{id}/runs` with the editable draft's\n`versionId` and `allowDraft: true`; the run freezes a new snapshot without publication.\nPublishing can arm the new version's cron and webhook triggers and disable the earlier version's\nregistrations ([trigger arming](08-triggers-and-integrations.md#arming-decided-shipped-in-m6)). After an external prerequisite\nrepair, such as restoring a missing executable, ordinary Resume can retry the pinned definition. See\n[Windows batch commands](guide/07-troubleshooting.md#windows-batch-commands) for an example."
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "line": 175,
+      "prefix": "Editing the loop does not change",
+      "text": "Editing the loop does not change a failed run's pinned config. For a config or graph fix, start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there. To test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run freezes a new snapshot without publication. Publishing can arm the new version's cron and webhook triggers and disable the earlier version's registrations; see [trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6). Resume and Replay retain the original pin. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt."
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "line": 273,
+      "prefix": "`SCRIPT_START_FAILED` means",
+      "text": "`SCRIPT_START_FAILED` means the runner proved the command did not start. After restoring an external prerequisite, such as a missing executable, Resume can retry the pinned definition. If the command, arguments or working-directory configuration must change, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies that definition change: both retain the failed run's pinned version. See [Windows batch commands](07-troubleshooting.md#windows-batch-commands). `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`."
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "line": 289,
+      "prefix": "Read `code`, `message`,",
+      "text": "Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Start a fresh run from the corrected definition when the correction changes the pinned definition, using a published version in the UI or an explicit [API draft start](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead."
+    },
+    {
+      "path": "docs/guide/07-troubleshooting.md",
+      "line": 150,
+      "prefix": "For `SCRIPT_OUTCOME_UNCERTAIN`,",
+      "text": "For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start. Restore an external prerequisite, such as a missing executable, then explicitly Resume. To change the command, arguments or working-directory configuration, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](03-run-and-observe.md#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies the change because both keep the pinned version. See [Windows batch commands](#windows-batch-commands). Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code."
+    },
+    {
+      "path": "docs/guide/07-troubleshooting.md",
+      "line": 210,
+      "prefix": "To run a batch file, explicitly choose",
+      "text": "To run a batch file, explicitly choose `C:\\Windows\\System32\\cmd.exe` (use your Windows\ninstallation's actual path), set its arguments to `/d`, `/c` and the intended batch command,\nand choose the working directory deliberately. `/d` disables the command processor's AutoRun\ncommands. The command string after `/c` is interpreted by that shell; keep it authored and\nquote paths and arguments for `cmd.exe`, rather than inserting untrusted text. For example,\nwith a working directory containing `build.cmd`, the arguments are `[\"/d\", \"/c\", \"build.cmd\"]`.\nStart a fresh run from the corrected definition. The UI's **New run** uses a published version,\nso publish the correction before starting it there. To test an unpublished saved draft, use\n`POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run\nfreezes a new snapshot without publication. Publishing can arm the new version's cron and\nwebhook triggers and disable the earlier version's registrations; see\n[trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6).\nNeither Resume nor Replay applies a definition change; both retain the old batch-file command.\nIf only an external prerequisite changed, such as\nrestoring a missing executable, Resume can use the existing pinned definition."
+    }
+  ],
+  "checkedLinks": [
+    {
+      "source": "docs/04-node-catalog.md",
+      "target": "08-triggers-and-integrations.md#arming-decided-shipped-in-m6",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/04-node-catalog.md",
+      "target": "guide/07-troubleshooting.md#windows-batch-commands",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/03-run-and-observe.md",
+      "target": "../08-triggers-and-integrations.md#arming-decided-shipped-in-m6",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/03-run-and-observe.md",
+      "target": "#start-through-the-api",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/03-run-and-observe.md",
+      "target": "07-troubleshooting.md#windows-batch-commands",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/03-run-and-observe.md",
+      "target": "#start-through-the-api",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/07-troubleshooting.md",
+      "target": "03-run-and-observe.md#start-through-the-api",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/07-troubleshooting.md",
+      "target": "#windows-batch-commands",
+      "exists": true,
+      "anchorVerified": true
+    },
+    {
+      "source": "docs/guide/07-troubleshooting.md",
+      "target": "../08-triggers-and-integrations.md#arming-decided-shipped-in-m6",
+      "exists": true,
+      "anchorVerified": true
+    }
+  ],
+  "protectedSourceHashes": [
+    {
+      "path": "apps/api/src/routes/runs.ts",
+      "sha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1"
+    },
+    {
+      "path": "apps/api/src/routes/loops.ts",
+      "sha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f"
+    },
+    {
+      "path": "packages/engine/src/run-manager.ts",
+      "sha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8"
+    },
+    {
+      "path": "packages/engine/src/definition-pin.test.ts",
+      "sha256": "538b35e35a4b30823e16e8b961e66afade6d632939f137c428d0b0230b5a416c"
+    },
+    {
+      "path": "apps/api/src/definition-pins.test.ts",
+      "sha256": "9b868251661655d4ab788e323fd2d9b2c1b5ec7e40cdb5bb8a4df775453e54ff"
+    },
+    {
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "sha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8"
+    },
+    {
+      "path": "apps/web/src/runs/new/NewRunPage.tsx",
+      "sha256": "ab5f4fe9950c44e33a53a4745f8e1fc65f1e6155a5cca9c1d69f512014f68d63"
+    },
+    {
+      "path": "docs/08-triggers-and-integrations.md",
+      "sha256": "ab175aa8b8fdcb8debcb6074328e9cbc3a49e15f93185445e4718f435fd99d98"
+    }
+  ],
+  "traces": [
+    {
+      "claim": "Public API accepts editable draft versionId and allowDraft and forwards both to startRun.",
+      "path": "apps/api/src/routes/runs.ts",
+      "start": 72,
+      "end": 123,
+      "includes": [
+        "versionId: z.string().optional()",
+        "allowDraft: z.boolean().optional()",
+        "body.allowDraft ? { allowDraft: true }"
+      ],
+      "sourceSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+      "excerpt": "  app.post(\n    '/loops/:id/runs',\n    {\n      schema: {\n        tags: ['runs'],\n        summary: 'Start a run from a manual trigger',\n        params: IdParams,\n        body: z\n          .object({\n            triggerNodeId: z.string().optional(),\n            input: JsonValueSchema.optional(),\n            return: z.array(ReturnChannelSchema).optional(),\n            versionId: z.string().optional(),\n            allowDraft: z.boolean().optional(),\n          })\n          .default({}),\n        response: { 202: z.object({ run: RunRecordSchema }) },\n      },\n    },\n    async (request, reply) => {\n      const loop = await repos.loops.getLoop(request.params.id);\n      if (!loop || loop.ownerId !== request.auth.ownerId)\n        throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);\n      const body = request.body;\n      const versionId = body.versionId || loop.currentVersionId;\n      const readiness = readinessOperation(ports.harnesses);\n      try {\n        const run = await manager.startRun(\n          {\n            ownerId: request.auth.ownerId,\n            loopId: loop.id,\n            source: sourceFor(request),\n            caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },\n            ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),\n            ...(body.input !== undefined ? { payload: body.input } : {}),\n            ...(body.return ? { returnDefaults: body.return } : {}),\n            ...(versionId ? { versionId } : {}),\n            ...(body.allowDraft ? { allowDraft: true } : {}),\n          },\n          async (plan) => {\n            if (loop.system && systemChatIssues(plan.root.definition).length)\n              throw new ChatError(\n                'SYSTEM_CHAT_CONTRACT_INVALID',\n                400,\n                'the pinned system chat boundary must be valid before execution',\n              );\n            await assertRunReadiness(plan, readiness, await ports.modelCatalog.list());\n          },\n        );\n        reply.status(202);\n        return { run };\n      } catch (error) {"
+    },
+    {
+      "claim": "Draft start freezes the exact validated draft into a separate snapshot.",
+      "path": "packages/engine/src/run-manager.ts",
+      "start": 657,
+      "end": 730,
+      "includes": [
+        "source.status === 'draft' ? freezeDraft(source",
+        "const version = snapshot ?? source"
+      ],
+      "sourceSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+      "excerpt": "  private async prepareStart(input: StartRunInput): Promise<PreparedStart> {\n    const source = await this.resolveVersion(input);\n    const def = source.definition;\n    const systemChat = await this.ports.loops.getSystemChatBinding(input.loopId);\n    if (systemChat && systemChatIssues(def).length)\n      throw new ChatAdmissionError('CHAT_NOT_READY', 'The system chat boundary is invalid');\n    const trigger = this.resolveTrigger(def, input.triggerNodeId);\n    const payload: JsonValue = input.payload ?? null;\n    if (!input.conversationTurn && systemChat) {\n      const chatInput = validateJson(ChatTextInputJsonSchema, payload);\n      if (!chatInput.ok)\n        throw new EngineRequestError(\n          'INVALID_INPUT',\n          'System chat runs started outside Chat accept canonical text input only',\n        );\n    }\n    if (trigger.config.type === 'manual' && trigger.config.inputSchema) {\n      const validation = validateJson(trigger.config.inputSchema, payload);\n      if (!validation.ok) {\n        throw new EngineRequestError(\n          'INVALID_INPUT',\n          `trigger input is invalid: ${validation.errors.join('; ')}`,\n          { errors: validation.errors },\n        );\n      }\n    }\n    const now = this.now();\n    const runId = this.ports.ids.next();\n    const invocationId = this.ports.ids.next();\n    // The run's definition is immutable for its whole life (ADR-0041): a draft start pins a frozen\n    // copy of exactly the draft read and validated above, committed with the run.\n    const snapshot =\n      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;\n    const version = snapshot ?? source;\n    const pinned = pinnedFields(version, {\n      defaults: input.pinnedDefaults ?? (await this.startDefaults(input)),\n      classifiers: await bindClassifiers(\n        def,\n        input.ownerId,\n        this.ports.classifiers,\n        input.pinnedClassifiers,\n      ),\n    });\n    const thread = createInitialThread({\n      runId,\n      loopId: version.loopId,\n      versionId: version.id,\n      ...(input.parentRunId ? { parentRunId: input.parentRunId } : {}),\n      invocation: {\n        id: invocationId,\n        source: input.source,\n        ...(input.caller ? { caller: input.caller } : {}),\n        trigger: {\n          nodeId: trigger.id,\n          kind: input.triggerKind ?? triggerKindOf(trigger),\n          payload,\n          receivedAt: now,\n          ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),\n          ...(input.dedupeKey !== undefined ? { dedupeKey: input.dedupeKey } : {}),\n        },\n        ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),\n      },\n      ...(input.seed ? { seed: input.seed } : {}),\n    });\n    thread.gates = Object.fromEntries(\n      version.definition.nodes\n        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)\n        .map((node) => [node.id, { passes: 1 }]),\n    );\n    const run: RunRecord = {\n      id: runId,\n      ownerId: input.ownerId,\n      loopId: version.loopId,\n      ...pinned,"
+    },
+    {
+      "claim": "Version selection accepts explicit editable drafts only with allowDraft; snapshots cannot be started directly.",
+      "path": "packages/engine/src/run-manager.ts",
+      "start": 3362,
+      "end": 3384,
+      "includes": [
+        "input.versionId",
+        "version.status === 'snapshot'",
+        "version.status !== 'published' && !input.allowDraft"
+      ],
+      "sourceSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+      "excerpt": "  private async resolveVersion(input: StartRunInput): Promise<LoopVersionRecord> {\n    const version = input.versionId\n      ? await this.ports.loops.getVersion(input.versionId)\n      : await this.ports.loops.getLatestPublished(input.loopId);\n    if (!version || version.loopId !== input.loopId) {\n      throw new EngineRequestError(\n        'LOOP_NOT_FOUND',\n        `loop ${input.loopId} has no ${input.versionId ? `version ${input.versionId}` : 'published version'}`,\n      );\n    }\n    if (version.status === 'snapshot') {\n      // A snapshot belongs to the draft runs that pinned it; it is never started again.\n      throw new EngineRequestError(\n        'VERSION_NOT_PUBLISHED',\n        `version ${version.id} is a draft run's snapshot; start the loop's draft or a published version`,\n      );\n    }\n    if (version.status !== 'published' && !input.allowDraft) {\n      throw new EngineRequestError('VERSION_NOT_PUBLISHED', `version ${version.id} is a draft`);\n    }\n    // A definition stored before ADR-0044 can still publish an Event: refuse it at admission.\n    assertCurrentDefinition(version);\n    return version;"
+    },
+    {
+      "claim": "Replay reuses source versionId and pinned metadata.",
+      "path": "packages/engine/src/run-manager.ts",
+      "start": 1782,
+      "end": 1824,
+      "includes": [
+        "versionId: source.versionId",
+        "pinned: source.pinned"
+      ],
+      "sourceSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+      "excerpt": "    const version = await this.ports.loops.getVersion(source.versionId);\n    if (!version || !nodeById(version.definition, input.nodeId)) {\n      throw new EngineRequestError(\n        'INVALID_STATE',\n        `node ${input.nodeId} is not in loop version ${source.versionId}`,\n      );\n    }\n    assertCurrentDefinition(version);\n    const initial = await this.ports.runs.getInitialThread(source.id);\n    if (!initial) {\n      throw new EngineRequestError('INVALID_STATE', `run ${source.id} has no initial thread`);\n    }\n    const before = replayThread(initial, events, firstStart.seq - 1);\n    const runId = this.ports.ids.next();\n    const invocationId = this.ports.ids.next();\n    const replayOf = { runId: source.id, nodeId: input.nodeId };\n    // The fork keeps the trigger envelope (the input) but not the original caller's extra return\n    // channels: those belong to whoever started the source run.\n    const { returnDefaults: _dropped, ...invocation } = initial.invocation;\n    const thread: ContextThread = {\n      ...before,\n      run: {\n        id: runId,\n        loopId: source.loopId,\n        versionId: source.versionId,\n        iteration: before.run.iteration,\n      },\n      invocation: {\n        ...invocation,\n        id: invocationId,\n        ...(input.source ? { source: input.source } : {}),\n        ...(input.caller ? { caller: input.caller } : {}),\n        replayOf,\n      },\n    };\n    // The fork executes the source's pinned definition with the source's inherited defaults.\n    const run: RunRecord = {\n      id: runId,\n      ownerId: source.ownerId,\n      loopId: source.loopId,\n      versionId: source.versionId,\n      pinned: source.pinned,\n      invocationId,"
+    },
+    {
+      "claim": "Recovery reads the existing run version.",
+      "path": "packages/engine/src/run-manager.ts",
+      "start": 1213,
+      "end": 1221,
+      "includes": [
+        "getVersion(before.versionId)"
+      ],
+      "sourceSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+      "excerpt": "  ): Promise<{ run: RunRecord; recovery: RunRecovery }> {\n    let run: RunRecord | undefined;\n    try {\n      // Never attach a future history sequence to an older failure/consent target.\n      const before = await this.mustGet(runId);\n      const version = await this.ports.loops.getVersion(before.versionId);\n      const parsed = version ? LoopDefinitionSchema.safeParse(version.definition) : undefined;\n      const facts = await this.ports.events.recoveryFacts(\n        runId,"
+    },
+    {
+      "claim": "UI New run lists published versions and submits their versionId.",
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "start": 14,
+      "end": 97,
+      "includes": [
+        "versionId: version.id",
+        ".filter((v) => v.status === 'published')"
+      ],
+      "sourceSha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8",
+      "excerpt": "function StartForm({ loopId, version }: { loopId: string; version: LoopVersionRecord }) {\n  const client = useApi();\n  const navigate = useNavigate();\n  const queryClient = useQueryClient();\n  const triggers = version.definition.nodes.filter(\n    (n): n is Extract<typeof n, { kind: 'trigger' }> =>\n      n.kind === 'trigger' && n.config.type === 'manual',\n  );\n  const [triggerId, setTriggerId] = useState(triggers[0]?.id ?? '');\n  const start = useMutation({\n    mutationFn: (input: unknown) =>\n      runs.start(client, loopId, {\n        triggerNodeId: triggerId,\n        versionId: version.id,\n        ...(input !== undefined ? { input: input as never } : {}),\n      }),\n    onSuccess: (run) => {\n      void queryClient.invalidateQueries({ queryKey: ['runs'] });\n      void navigate(`/runs/${run.id}`);\n    },\n  });\n  if (triggers.length === 0) {\n    return (\n      <Alert tone=\"warn\">\n        Version {version.version} has no manual trigger, so it cannot be started from here.\n      </Alert>\n    );\n  }\n  const trigger = triggers.find((t) => t.id === triggerId);\n  const inputSchema = trigger?.config.type === 'manual' ? trigger.config.inputSchema : undefined;\n  return (\n    <>\n      <FieldGroup className=\"max-w-[440px]\">\n        <Label htmlFor=\"run-trigger\">Trigger</Label>\n        <Select id=\"run-trigger\" value={triggerId} onChange={(e) => setTriggerId(e.target.value)}>\n          {triggers.map((t) => (\n            <option key={t.id} value={t.id}>\n              {t.label} ({t.id})\n            </option>\n          ))}\n        </Select>\n      </FieldGroup>\n      <div>\n        <JsonSchemaForm\n          key={triggerId}\n          schema={inputSchema}\n          submitLabel=\"Start run\"\n          busy={start.isPending}\n          onSubmit={(input) => start.mutate(input)}\n        />\n      </div>\n      {start.isError ? (\n        <Alert title=\"Could not start the run\">{errorMessage(start.error)}</Alert>\n      ) : null}\n    </>\n  );\n}\n\n/**\n * Start a run of one of the loop's published versions (the current one unless another is chosen)\n * from a manual trigger, with an input form generated from the trigger's `inputSchema` and checked\n * against it before sending. Runs of a loop may run at the same time; nothing here waits for an\n * earlier one. A started run opens in the inspector.\n */\nexport function RunLauncher({\n  loopId,\n  currentVersionId,\n}: {\n  loopId: string;\n  currentVersionId: string;\n}) {\n  const query = useLoopVersions(loopId);\n  const [chosen, setChosen] = useState(currentVersionId);\n  return (\n    <QueryState query={query} what=\"Versions\">\n      {(items) => {\n        const published = items\n          .filter((v) => v.status === 'published')\n          .sort((a, b) => b.version - a.version);\n        const version = published.find((v) => v.id === chosen) ?? published[0];\n        if (!version) return <Alert tone=\"warn\">This loop has no published version yet.</Alert>;\n        return (\n          <section aria-label=\"Start a run\" className=\"grid gap-field\">\n            <FieldGroup className=\"max-w-[440px]\">"
+    },
+    {
+      "claim": "Publishing invokes trigger arming.",
+      "path": "apps/api/src/routes/loops.ts",
+      "start": 363,
+      "end": 394,
+      "includes": [
+        "await loops.publish(",
+        "await container.triggers.armVersion(loop, version)"
+      ],
+      "sourceSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+      "excerpt": "  app.post(\n    '/loops/:id/publish',\n    {\n      schema: {\n        tags: ['loops'],\n        summary: 'Validate the draft and freeze it as a new version',\n        params: IdParams,\n        response: {\n          200: z.object({ version: LoopVersionRecordSchema, issues: z.array(IssueSchema) }),\n        },\n      },\n    },\n    async (request, reply) => {\n      // Queued with the loop's draft saves, so a save never lands between the checks and the\n      // freeze (the storage also refuses to modify a row that is no longer a draft).\n      const outcome = await serializeDraftSave(request.params.id, async () => {\n        const loop = await ownedLoop(request, request.params.id);\n        if (!loop.draftVersionId) return { kind: 'no-draft' as const };\n        const draft = served(await loops.getVersion(loop.draftVersionId));\n        const boundaryIssues = loop.system && draft ? systemChatIssues(draft.definition) : [];\n        if (boundaryIssues.length)\n          return { kind: 'system-invalid' as const, issues: boundaryIssues };\n        const issues = draft\n          ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)\n          : [];\n        if (issues.some(blocksPublication)) return { kind: 'invalid' as const, issues };\n        const version = await loops.publish(loop.id, loop.system ? draft?.definition : undefined);\n        if (!version) return { kind: 'no-draft' as const };\n        // Schedules and webhook endpoints follow the published version (ADR-0008).\n        await container.triggers.armVersion(loop, version);\n        return { kind: 'published' as const, version, issues };\n      });"
+    },
+    {
+      "claim": "Trigger arming replaces schedule and webhook registrations for the new version.",
+      "path": "apps/api/src/triggers/trigger-service.ts",
+      "start": 210,
+      "end": 255,
+      "includes": [
+        "rows of earlier versions disabled",
+        "schedules.replaceForVersion",
+        "endpoints.replaceForVersion"
+      ],
+      "sourceSha256": "949d3988a90b5471923224196277e10bd3af7c8cf9d54556e6f35f8687fc65ea",
+      "excerpt": "  /**\n   * Make `version` the loop's armed version: one schedule per cron trigger node and one endpoint\n   * per webhook trigger node, with rows of earlier versions disabled. Idempotent for the same\n   * version, so boot can call it for every loop.\n   */\n  async armVersion(loop: LoopRecord, version: LoopVersionRecord): Promise<LoopTriggers> {\n    const now = this.deps.clock.now();\n    const triggers = nodesOfKind(version.definition, 'trigger');\n    const cronDrafts: ScheduleDraft[] = [];\n    const hookDrafts: WebhookEndpointDraft[] = [];\n    for (const node of triggers) {\n      const config = node.config;\n      if (config.type === 'cron') {\n        let next: Date | undefined;\n        try {\n          next = config.enabled\n            ? CronScheduler.nextFire(config.expression, config.timezone, now)\n            : undefined;\n        } catch (error) {\n          this.deps.logger.warn(\n            { loopId: loop.id, nodeId: node.id, error: describe(error) },\n            'cron trigger not armed',\n          );\n        }\n        cronDrafts.push({\n          ownerId: loop.ownerId,\n          triggerNodeId: node.id,\n          expression: config.expression,\n          timezone: config.timezone,\n          missedFirePolicy: config.missedFirePolicy,\n          enabled: config.enabled && next !== undefined,\n          nextFireAt: next?.toISOString(),\n        });\n      } else if (config.type === 'webhook') {\n        hookDrafts.push({\n          ownerId: loop.ownerId,\n          triggerNodeId: node.id,\n          authentication: config.authentication,\n        });\n      }\n    }\n    await this.deps.schedules.replaceForVersion(loop.id, version.id, cronDrafts);\n    await this.deps.endpoints.replaceForVersion(loop.id, version.id, hookDrafts, () =>\n      randomBytes(32).toString('base64url'),\n    );\n    this.deps.polls.arm(loop, version);"
+    },
+    {
+      "claim": "Published trigger contract explicitly describes disabling prior registrations.",
+      "path": "docs/08-triggers-and-integrations.md",
+      "start": 29,
+      "end": 37,
+      "includes": [
+        "Rows of earlier versions of the loop are disabled"
+      ],
+      "sourceSha256": "ab175aa8b8fdcb8debcb6074328e9cbc3a49e15f93185445e4718f435fd99d98",
+      "excerpt": "## Arming (Decided, shipped in M6)\n\nThe `TriggerService` in `apps/api/src/triggers/` owns everything between an external signal and `RunManager.startRun`.\n\n- `POST /loops/{id}/publish` arms the new version: one `schedules` row per cron trigger node and one `webhook_endpoints` row per webhook trigger node. Rows of earlier versions of the loop are disabled, not deleted, so `GET /loops/{id}/triggers` shows the history. Runs in flight are unaffected (ADR-0008).\n- Publishing is refused with 422 `LOOP_INVALID` (issue code `CRON_INVALID`) when a cron expression or timezone does not parse.\n- Boot re-arms every loop's current version. Arming is idempotent per version: existing rows keep their next fire time, so a restart still sees what it missed, and a restored database without trigger rows gets them back.\n- Deleting a loop disables its rows.\n- `GET /loops/{id}/triggers` lists schedules, webhook endpoints (as `path: /hooks/<token>`, never the secret), and armed poll triggers."
+    },
+    {
+      "claim": "Existing unmodified criterion observes old output from the original draft snapshot and new output from a fresh draft start.",
+      "path": "packages/engine/src/definition-pin.test.ts",
+      "start": 103,
+      "end": 149,
+      "includes": [
+        "result: 'old'",
+        "versionId: draft.id, allowDraft: true",
+        ".result).toBe('new')"
+      ],
+      "sourceSha256": "538b35e35a4b30823e16e8b961e66afade6d632939f137c428d0b0230b5a416c",
+      "excerpt": "describe('draft runs pin a snapshot of the draft', () => {\n  it('keeps the snapshot through an edit while waiting; a new draft run sees the edit', async () => {\n    const engine = await createTestEngine();\n    const { draft, run } = await startDraft(engine);\n    expect(run.status).toBe('waiting');\n    // The run does not reference the editable draft row, but a frozen copy of it.\n    expect(run.versionId).not.toBe(draft.id);\n    const snapshot = await engine.ports.loops.getVersion(run.versionId);\n    expect(snapshot).toMatchObject({\n      loopId: draft.loopId,\n      version: draft.version,\n      status: 'snapshot',\n      definition: draft.definition,\n    });\n    expect(snapshot?.publishedAt).toBeUndefined();\n    expect(run.pinned).toEqual({\n      source: 'draft',\n      version: 1,\n      name: 'Pinned',\n      label: 'Pinned draft v1',\n      defaults: { owner: { byHarness: {} }, process: engine.settings.defaults },\n      classifiers: {},\n      limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },\n    });\n    const thread = await engine.manager.getThread(run.id);\n    expect(thread?.run.versionId).toBe(run.versionId);\n    expect(engine.events(run.id)[0]).toMatchObject({\n      type: 'run.queued',\n      versionId: run.versionId,\n      pinned: run.pinned,\n    });\n\n    editDraft(engine, draft.id, waitThenMark('new'));\n    const done = await answer(engine, run);\n    expect(done).toMatchObject({ status: 'succeeded', result: 'old' });\n    // Identity and label are stable for the run's whole life.\n    expect(done.versionId).toBe(run.versionId);\n    expect(done.pinned).toEqual(run.pinned);\n    expect((await engine.ports.loops.getVersion(run.versionId))?.definition).toEqual(\n      snapshot?.definition,\n    );\n\n    const next = await engine.start(draft.loopId, null, { versionId: draft.id, allowDraft: true });\n    await engine.settle(next.id);\n    expect(next.versionId).not.toBe(run.versionId);\n    expect((await answer(engine, next)).result).toBe('new');\n  });"
+    }
+  ],
+  "sealedReportSha256": "11ea4ff863fc923388d0d19c26e3d7e4bed8d1e0a5a877626c80b6dbe30710f5",
+  "originalParagraphsOutsideSelectedBlocksUnchanged": true,
+  "indexUnchanged": true,
+  "authorChecksOnly": true,
+  "criterionTestExecuted": false
+}

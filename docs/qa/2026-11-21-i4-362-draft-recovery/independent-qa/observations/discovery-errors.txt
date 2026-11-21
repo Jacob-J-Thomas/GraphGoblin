@@ -1,0 +1,5 @@
+Read-only discovery errors retained from terminal tool outputs:
+1. Get-Content vitest.shared.ts at repository root: path did not exist. Actual package-export discovery later resolved tooling/vitest.shared.mjs.
+2. Get-Content tooling/vitest/index.ts: path did not exist. No file was written.
+3. rg on guessed packages/infrastructure/src/sqlite/schedules.ts and webhook-endpoints.ts: both paths did not exist; command exit 1. Trigger implementation path discovery uses rg --files/rg over the existing sqlite directory instead.
+These were path-discovery errors, not failed product tests. No test command has been retried. No assertion was weakened.
