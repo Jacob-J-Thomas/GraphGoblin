@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Document explicit Windows batch-file invocation and pinned-definition recovery for
+  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression
+  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.
+
 - Clarify that an enabled Codex model and a ready preflight do not establish current access
   for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
   the provider's explanation; LLM decisions retain only a safe failure category. The guide

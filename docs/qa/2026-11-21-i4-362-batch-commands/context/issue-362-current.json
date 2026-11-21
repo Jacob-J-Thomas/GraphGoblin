@@ -1,0 +1,71 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "id": 5938302786,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362",
+      "title": "Script commands ending in .cmd or .bat fail with INTERNAL_ERROR spawn EINVAL instead of PROCESS_START_FAILED",
+      "issue_number": 362,
+      "body": "Found by WP-F5 (#102 launch diagnosis) and confirmed by its independent GPT-6.1 Sol review on 2026-10-19 through the public engine interfaces. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\nA script node whose command is a Windows `.cmd` or `.bat` file (for example `npm.cmd`, bare or absolute) fails with `INTERNAL_ERROR: spawn EINVAL` instead of the typed `PROCESS_START_FAILED` result.\n\n## Steps\n\n1. On Windows, publish a loop with a script node whose command is `npm.cmd` (or any `.cmd`/`.bat` path) and run it.\n\nExpected: the node fails with the typed start failure `PROCESS_START_FAILED` and the documented resumability, as it does for a missing executable.\n\nActual: `ProcessScripts.run` rejects with a raw `spawn EINVAL`; through the engine the run fails `INTERNAL_ERROR: spawn EINVAL`, `resumable: true`, with no normal script progress event.\n\n## Cause\n\nAt `packages/infrastructure/src/process/scripts.ts:58`, Node's `spawn` throws synchronously inside the Promise executor for `.cmd`/`.bat` commands (Node refuses to spawn batch files without a shell), so the error never reaches the start-failure result path.\n\n## Fix shape\n\nNormalise synchronous start errors through the existing start-failure result path; keep `shell: false`. Explicit shell invocation by the author remains the supported way to run batch files; this issue is only about truthful failure containment.\n\n## Related\n\n#102 (WP-F5 record `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`), #224 (force-stop truthfulness, WP-C7).\n\n\n## Intent 4 delivery admission — November 21\n\nAdmitted after [intent 3 engineering delivery](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448) on signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`, under the owner's ordered batch and delegated blocker-decision authority. [D171 and its alternatives](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) distinguish coordinator selection from human plan approval. Historical parking text above remains history.\n\nReconcile the existing PR375 synchronous spawn/EINVAL fix and current SCRIPT_START_FAILED contract with independent native and composed public QA. An evidence-backed already-fixed disposition is valid; do not manufacture a replacement fix or restore retired naming.\n\nImplementation and opposite-family review use the named routing models at xhigh. **Independent QA agent (planned):** `i4_362_behavior_qa`, a separate context and checkout; actual provider/session/build/evidence will be recorded when dispatched. GPT owns architecture; Claude Code contributes implementation, design critique, QA and adversarial review. Preserve touched-system positive/negative QA, unchanged coverage, current-head/current-target CI, fresh independent Astra MAX final audit and the three-general-scan cap. No implementation, QA or acceptance is implied by admission. Owner-only closure obligations and held460/Mac501 remain separate.",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:engine",
+          "color": "BFDADC",
+          "description": "Engine and run manager"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-10-20T08:13:15Z",
+      "updated_at": "2026-11-21T08:18:15Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362",
+      "display_title": "Script commands ending in .cmd or .bat fail with INTERNAL_ERROR spawn EINVAL instead of PROCESS_START_FAILED"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362",
+    "title": "Script commands ending in .cmd or .bat fail with INTERNAL_ERROR spawn EINVAL instead of PROCESS_START_FAILED",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362",
+    "display_title": "Script commands ending in .cmd or .bat fail with INTERNAL_ERROR spawn EINVAL instead of PROCESS_START_FAILED"
+  },
+  "isError": false
+}
