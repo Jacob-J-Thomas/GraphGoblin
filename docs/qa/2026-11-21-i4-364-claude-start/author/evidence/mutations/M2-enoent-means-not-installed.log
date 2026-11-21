@@ -1,0 +1,459 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/harness.test.ts (72 tests | 9 failed) 695ms
+   ❯ unconfirmed native termination (9)
+     × keeps unexplained start refusal authoritative over positive auth-status text 20ms
+   ❯ Claude start refusal diagnostics (#364) (13)
+     × reports turn refusal { …(1) } in synthetic-workspace as HARNESS_INVALID_CONFIGURATION with fixed text and no submission 4ms
+     × reports turn refusal { …(1) } in synthetic-workspace as HARNESS_INVALID_CONFIGURATION with fixed text and no submission 3ms
+     × reports turn refusal {} in synthetic-workspace as HARNESS_TURN_FAILED with fixed text and no submission 3ms
+     × reports turn refusal {} in C:\Users\98jak\AppData\Local\Temp\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx as HARNESS_TURN_FAILED with fixed text and no submission 3ms
+     × reports check refusal { …(1) } as unknown without treating the check folder as configuration 8ms
+     × reports check refusal { …(1) } as unknown without treating the check folder as configuration 6ms
+     × reports check refusal {} as unknown without treating the check folder as configuration 8ms
+     × names the Windows limit for an unexplained refusal from a long temporary check folder 36ms
+ ❯ src/claude/start-refusal.test.ts (15 tests | 9 failed) 3275ms
+   ❯ native Claude start refusals (#364) (13)
+     × reports a missing working directory as configuration, starting nothing 317ms
+     × reports a working directory that is a file as configuration 340ms
+     × keeps an existing 259-character working directory truthful 339ms
+     × keeps an existing 260-character working directory truthful 338ms
+     × keeps an existing 300-character working directory truthful 321ms
+     × keeps preflight truthful when TEMP makes a 259-character check folder 26ms
+     × keeps preflight truthful when TEMP makes a 300-character check folder 29ms
+     × does not claim that an executable named without a path is missing 26ms
+   ❯ native Claude start refusals as run failures (#364) (2)
+     × keeps a missing working directory a non-resumable configuration failure that was not submitted 329ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > unconfirmed native termination > keeps unexplained start refusal authoritative over positive auth-status text
+AssertionError: expected { state: 'cli-missing', …(6) } to match object { state: 'unknown', ok: false }
+(5 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:885:22
+    883|       const harness = new ClaudeHarness({ platform: 'win32', runner });
+    884|       const result = await harness.preflight();
+    885|       expect(result).toMatchObject({ state, ok: false });
+       |                      ^
+    886|       expect(result).not.toHaveProperty('authenticated');
+    887|       await expect(
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports turn refusal { …(1) } in synthetic-workspace as HARNESS_INVALID_CONFIGURATION with fixed text and no submission
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_INVALID_CONFIGURATION",
+-     "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1074:22
+    1072|       const events = await drain(session.events);
+    1073|       const failure = { code, message, retriable: false };
+    1074|       expect(events).toEqual([{ type: 'error', ...failure, submission:…
+       |                      ^
+    1075|       await expect(session.result).rejects.toMatchObject(failure);
+    1076|       await expect(session.sessionId).rejects.toMatchObject({ code });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports turn refusal { …(1) } in synthetic-workspace as HARNESS_INVALID_CONFIGURATION with fixed text and no submission
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_INVALID_CONFIGURATION",
+-     "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1074:22
+    1072|       const events = await drain(session.events);
+    1073|       const failure = { code, message, retriable: false };
+    1074|       expect(events).toEqual([{ type: 'error', ...failure, submission:…
+       |                      ^
+    1075|       await expect(session.result).rejects.toMatchObject(failure);
+    1076|       await expect(session.sessionId).rejects.toMatchObject({ code });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports turn refusal {} in synthetic-workspace as HARNESS_TURN_FAILED with fixed text and no submission
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_TURN_FAILED",
+-     "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1074:22
+    1072|       const events = await drain(session.events);
+    1073|       const failure = { code, message, retriable: false };
+    1074|       expect(events).toEqual([{ type: 'error', ...failure, submission:…
+       |                      ^
+    1075|       await expect(session.result).rejects.toMatchObject(failure);
+    1076|       await expect(session.sessionId).rejects.toMatchObject({ code });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports turn refusal {} in C:\Users\98jak\AppData\Local\Temp\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx as HARNESS_TURN_FAILED with fixed text and no submission
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_TURN_FAILED",
+-     "message": "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1074:22
+    1072|       const events = await drain(session.events);
+    1073|       const failure = { code, message, retriable: false };
+    1074|       expect(events).toEqual([{ type: 'error', ...failure, submission:…
+       |                      ^
+    1075|       await expect(session.result).rejects.toMatchObject(failure);
+    1076|       await expect(session.sessionId).rejects.toMatchObject({ code });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown without treating the check folder as configuration
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', ok: false, …(1) }
+(3 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1139:21
+    1137|       const harness = new ClaudeHarness({ runner, platform: 'win32' });
+    1138|       const facts = await harness.preflight();
+    1139|       expect(facts).toMatchObject({ state, ok: false, problems: [`${de…
+       |                     ^
+    1140|       expect(facts).not.toHaveProperty('authenticated');
+    1141|       expect(calls.some((call) => call.args.includes('--print'))).toBe…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown without treating the check folder as configuration
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', ok: false, …(1) }
+(3 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder is not a folder. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1139:21
+    1137|       const harness = new ClaudeHarness({ runner, platform: 'win32' });
+    1138|       const facts = await harness.preflight();
+    1139|       expect(facts).toMatchObject({ state, ok: false, problems: [`${de…
+       |                     ^
+    1140|       expect(facts).not.toHaveProperty('authenticated');
+    1141|       expect(calls.some((call) => call.args.includes('--print'))).toBe…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal {} as unknown without treating the check folder as configuration
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', ok: false, …(1) }
+(3 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1139:21
+    1137|       const harness = new ClaudeHarness({ runner, platform: 'win32' });
+    1138|       const facts = await harness.preflight();
+    1139|       expect(facts).toMatchObject({ state, ok: false, problems: [`${de…
+       |                     ^
+    1140|       expect(facts).not.toHaveProperty('authenticated');
+    1141|       expect(calls.some((call) => call.args.includes('--print'))).toBe…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > names the Windows limit for an unexplained refusal from a long temporary check folder
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', …(1) }
+(4 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "problems": [
+-     "Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1180:21
+    1178|       const facts = await new ClaudeHarness({ runner, platform: 'win32…
+    1179|       expect(directories[0]?.length).toBeGreaterThan(258);
+    1180|       expect(facts).toMatchObject({
+       |                     ^
+    1181|         state: 'unknown',
+    1182|         problems: [
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports a missing working directory as configuration, starting nothing
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_INVALID_CONFIGURATION",
+-     "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ expectRefused src/claude/start-refusal.test.ts:83:18
+     81| function expectRefused(events: HarnessEvent[], error: unknown, code: s…
+     82|   const failure = { code, message, retriable: false };
+     83|   expect(events).toEqual([{ type: 'error', ...failure, submission: 'de…
+       |                  ^
+     84|   expect(error).toMatchObject(failure);
+     85| }
+ ❯ src/claude/start-refusal.test.ts:110:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports a working directory that is a file as configuration
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_INVALID_CONFIGURATION",
+-     "message": "Claude could not be started because the working directory is not a folder; check the working directory setting",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ expectRefused src/claude/start-refusal.test.ts:83:18
+     81| function expectRefused(events: HarnessEvent[], error: unknown, code: s…
+     82|   const failure = { code, message, retriable: false };
+     83|   expect(events).toEqual([{ type: 'error', ...failure, submission: 'de…
+       |                  ^
+     84|   expect(error).toMatchObject(failure);
+     85| }
+ ❯ src/claude/start-refusal.test.ts:123:7
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 259-character working directory truthful
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 260-character working directory truthful
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 300-character working directory truthful
+AssertionError: expected [ { type: 'error', …(4) } ] to deeply equal [ { type: 'error', …(4) } ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    {
+-     "code": "HARNESS_TURN_FAILED",
+-     "message": "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows",
++     "code": "HARNESS_NOT_INSTALLED",
++     "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
+      "retriable": false,
+      "submission": "definitely-not-submitted",
+
+ Test Files  2 failed (2)
+      Tests  18 failed | 69 passed (87)
+   Start at  02:49:00
+   Duration  6.50s (tests 40%, import 33%, transform 27%)
+      "type": "error",
+    },
+  ]
+System.Management.Automation.RemoteException
+ ❯ expectRefused src/claude/start-refusal.test.ts:83:18
+     81| function expectRefused(events: HarnessEvent[], error: unknown, code: s…
+     82|   const failure = { code, message, retriable: false };
+     83|   expect(events).toEqual([{ type: 'error', ...failure, submission: 'de…
+       |                  ^
+     84|   expect(error).toMatchObject(failure);
+     85| }
+ ❯ src/claude/start-refusal.test.ts:148:7
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps preflight truthful when TEMP makes a 259-character check folder
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps preflight truthful when TEMP makes a 300-character check folder
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', ok: false, …(1) }
+(3 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/start-refusal.test.ts:168:21
+    166|       const facts = await harness().preflight();
+    167|       vi.unstubAllEnvs();
+    168|       expect(facts).toMatchObject(
+       |                     ^
+    169|         length === 258
+    170|           ? { state: 'ready', ok: true, problems: [] }
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals (#364) > does not claim that an executable named without a path is missing
+AssertionError: expected { state: 'cli-missing', …(5) } to match object { state: 'unknown', ok: false, …(1) }
+(3 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.",
+    ],
+-   "state": "unknown",
+
+  Transform  transforming modules took 2.64s · 27% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
++   "state": "cli-missing",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/start-refusal.test.ts:225:19
+    223|   it('does not claim that an executable named without a path is missin…
+    224|     const facts = await harness(`gg-364-${CANARY}-claude`).preflight();
+    225|     expect(facts).toMatchObject({
+       |                   ^
+    226|       state: 'unknown',
+    227|       ok: false,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/start-refusal.test.ts > native Claude start refusals as run failures (#364) > keeps a missing working directory a non-resumable configuration failure that was not submitted
+AssertionError: expected { code: 'HARNESS_NOT_INSTALLED', …(4) } to match object { code: 'HARNESS_TURN_FAILED', …(4) }
+(1 matching property omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "code": "HARNESS_TURN_FAILED",
+-   "details": {
+-     "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+-   },
++   "code": "HARNESS_NOT_INSTALLED",
+    "inference": {
+      "submission": "definitely-not-submitted",
+    },
+-   "message": "harness turn failed: Claude could not be started because the working directory does not exist; check the working directory setting",
+-   "resumable": false,
++   "message": "The Claude executable was not found at its configured path; install the Claude CLI or correct its path",
++   "resumable": true,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/start-refusal.test.ts:275:21
+    273|     // The run's own records may keep its working directory; the failu…
+    274|     const failure = await run(harness(), join(root, `${CANARY}-missing…
+    275|     expect(failure).toMatchObject({
+       |                     ^
+    276|       code: 'HARNESS_TURN_FAILED',
+    277|       message: `harness turn failed: ${MISSING_DIRECTORY}`,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+System.Management.Automation.RemoteException
+vitest-exit=1
