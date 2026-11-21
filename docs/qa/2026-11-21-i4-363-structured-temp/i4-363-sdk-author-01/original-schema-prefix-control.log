@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-363-structured/GraphGoblin/packages/adapter-codex
+
+ ❯ src/sdk-schema.test.ts (6 tests | 1 failed | 5 skipped) 141ms
+   × 226-character root success preserves the SDK schema contract and removes only its directory 139ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sdk-schema.test.ts > 226-character root success preserves the SDK schema contract and removes only its directory
+AssertionError: expected { kind: 'rejected', …(2) } to deeply equal { kind: 'resolved', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "finalResponse": "{\"ok\":true}",
+-   "kind": "resolved",
++   "kind": "rejected",
++   "message": "ENAMETOOLONG: name too long, mkdtemp 'C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-sdk-schema-G3Btc6\\temp\\segmentsegmentsegmentsegmentsegment\\segmentsegmentsegmentsegmentsegment\\segmentsegmentsegmentsegmentsegment\\segmentsegmentsegmentsegmentsegment\\xxxxxxxxxxxxxxxxxxxxxx\\codex-output-schema-XXXXXX'",
++   "name": "Error",
+  }
+
+ ❯ src/sdk-schema.test.ts:116:29
+    114|     const { temp, state } = await fixture(mode, label === 'short' ? un…
+    115|     if (mode === 'success') {
+    116|       expect(state.outcome).toEqual({ kind: 'resolved', finalResponse:…
+       |                             ^
+    117|     } else {
+    118|       expect(state.outcome.kind).toBe('rejected');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  03:30:42
+   Duration  451ms (tests 65%, import 16%, transform 16%, worker 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-363-
+  │ structured\GraphGoblin\packages\adapter-codex
+

@@ -1,0 +1,96 @@
+{
+  "baseline": {
+    "durationSeconds": 4.64,
+    "failed": 1,
+    "nativeError": "ENAMETOOLONG",
+    "skipped": 10
+  },
+  "candidate": {
+    "durationSeconds": 5.95,
+    "failed": 0,
+    "passed": 21
+  },
+  "capture": "original merged PowerShell console output; logs not subsequently rewritten",
+  "changedFormatPaths": [
+    "CHANGELOG.md",
+    "docs/06-harness-integration.md",
+    "packages/adapter-codex/src/structured.test.ts",
+    "packages/adapter-codex/src/structured.ts"
+  ],
+  "node": "v22.23.4",
+  "pnpm": "12.8.1",
+  "results": [
+    {
+      "command": "pnpm.cmd install --offline --frozen-lockfile",
+      "exit": 0,
+      "log": "install.log",
+      "logBytes": 2214,
+      "logSha256": "8d435d317a51872f3e6e872143a53385fe4c54f55e185926ce9c940f7840d09d",
+      "name": "install",
+      "negativeControl": false
+    },
+    {
+      "command": "pnpm.cmd exec prettier --write [four changed files]",
+      "exit": 0,
+      "log": "format.log",
+      "logBytes": 195,
+      "logSha256": "6047a4814abb137605f66fae7e2d27d16d7928873a6ed248660a4ab968790fdd",
+      "name": "format",
+      "negativeControl": false
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/structured.test.ts -t '226-character temp root'",
+      "exit": 1,
+      "log": "baseline-long-root.log",
+      "logBytes": 2375,
+      "logSha256": "50b8bbe58222a3b624fb3e00e4038e0cd56048850a7f010f55e7b0e1cbd41e86",
+      "name": "baseline-long-root",
+      "negativeControl": true
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/structured.test.ts",
+      "exit": 0,
+      "log": "structured-tests.log",
+      "logBytes": 481,
+      "logSha256": "e874993bf6a8b00f93228bad48de10c07d9a1b18b4b034af22c2be594f56845c",
+      "name": "structured-tests",
+      "negativeControl": false
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex lint",
+      "exit": 0,
+      "log": "adapter-lint.log",
+      "logBytes": 12,
+      "logSha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc",
+      "name": "adapter-lint",
+      "negativeControl": false
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex typecheck",
+      "exit": 0,
+      "log": "adapter-typecheck.log",
+      "logBytes": 54,
+      "logSha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca",
+      "name": "adapter-typecheck",
+      "negativeControl": false
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check [four changed files]",
+      "exit": 0,
+      "log": "format-check.log",
+      "logBytes": 68,
+      "logSha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+      "name": "format-check",
+      "negativeControl": false
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "log": "diff-check.log",
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "diff-check",
+      "negativeControl": false
+    }
+  ]
+}

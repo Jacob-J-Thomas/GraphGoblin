@@ -1,4 +1,5 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Effort, JsonSchema, Usage } from '@graphgoblin/contracts';
@@ -12,8 +13,17 @@ export interface CodexStructuredOptions {
 }
 
 async function freshTempDir(): Promise<{ path: string; cleanup: () => Promise<void> }> {
-  const path = await mkdtemp(join(tmpdir(), 'graphgoblin-structured-'));
-  return { path, cleanup: () => rm(path, { recursive: true, force: true }) };
+  // Like readiness probes, avoid mkdtemp's lower Windows path limit. Only a successful
+  // exclusive mkdir grants cleanup ownership; a colliding directory is never reused.
+  for (let attempt = 1; ; attempt += 1) {
+    const path = join(tmpdir(), `gg-structured-${randomBytes(4).toString('hex')}`);
+    try {
+      await mkdir(path, { mode: 0o700 });
+      return { path, cleanup: () => rm(path, { recursive: true, force: true }) };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || attempt === 4) throw error;
+    }
+  }
 }
 
 function parseLoose(text: string): unknown {
