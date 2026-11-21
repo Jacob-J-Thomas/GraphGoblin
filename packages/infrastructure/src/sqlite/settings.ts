@@ -454,6 +454,19 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   })),
 ];
 
+/** Admission before startup seeds: stored rows win; missing shipped models exist in memory only. */
+export function projectStartupModelCatalog(
+  stored: readonly ModelCatalogEntry[],
+): ModelCatalogEntry[] {
+  return [
+    ...stored,
+    ...DEFAULT_MODEL_CATALOG.filter(
+      (seed) =>
+        !stored.some((entry) => entry.harness === seed.harness && entry.model === seed.model),
+    ),
+  ];
+}
+
 /** Startup-only inspection before pending schema migrations; no discovery tables or writes. */
 export async function readPreMigrationModelCatalog(db: Database): Promise<ModelCatalogEntry[]> {
   return db

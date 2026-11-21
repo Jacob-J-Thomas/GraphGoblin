@@ -20,6 +20,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
   as a failed kill, is no longer taken for a refused start. No store, export or contract change.
 
+- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
+  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
+  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
+  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's
+  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an
+  empty one (no frames, so no stored data).
+  **Upgrade:** rebuild the API. No schema, stored format or reset change.
+
+- Document explicit Windows batch-file invocation and pinned-definition recovery for
+  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression
+  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.
+
 - System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
   passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
   tools are not verified by this check. CLI inventory commands are useful for investigation,

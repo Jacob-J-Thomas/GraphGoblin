@@ -1,0 +1,83 @@
+{
+  "kind": "Material source-evidence distinctions for root; not a new formal review or QA acceptance decision.",
+  "items": [
+    {
+      "id": "COUNT-C14",
+      "status": "Precise external correction prepared; original unchanged",
+      "evidence": "count-correction-record.json",
+      "fact": "Raw run01=29 children (17 P + 11 S + G0); raw run02=30 (18 P + 11 S + G0), contrary to original 30-each prose. Final CIM/exit/cleanup records are separate from zero-timeout observations."
+    },
+    {
+      "id": "WAL-C04",
+      "status": "OPEN actual QA/prose/source-head disposition",
+      "evidence": [
+        "observations/run-02/P01.json..P18.json",
+        "observations/run-02/M05.json",
+        "observations/run-01/*.json",
+        "fixtures-run-02/SHA256SUMS",
+        "fixtures-run-02/reverify.json"
+      ],
+      "fact": "Read-only open may create zero-byte WAL and 32KiB SHM; DB/logical rows/existing WAL bytes remain unchanged in recorded cases. Preserve original strict failures and source-only baseline parity limit."
+    },
+    {
+      "id": "CLEANUP-C12-C13",
+      "status": "Original failed tiers retained",
+      "evidence": [
+        "commands/21-infra-focused.log",
+        "observations/run-01/M04.json",
+        "observations/run-02/M04.json",
+        "author baseline-catalog-single-case.log"
+      ],
+      "fact": "55 pass/1 EBUSY infrastructure; read-only native close needs GC in run02. Same-class baseline result does not identify cause or make the failed tier pass."
+    },
+    {
+      "id": "QA-TERMINAL",
+      "status": "OPEN actual continuation02 final",
+      "evidence": [
+        "provider/result.json",
+        "provider/exit.json"
+      ],
+      "fact": "QA01 is_error=true/exit1/session quota; subtype success alone is not a successful QA verdict. Actual continuation report absent at preparation."
+    },
+    {
+      "id": "DEFAULT-NETWORK-TEST-HYGIENE",
+      "status": "Recorded original observation",
+      "evidence": [
+        "commands/20-api-focused.fetch-guard.jsonl"
+      ],
+      "fact": "Ten default11434 test fetch attempts were recorded and blocked during the passing 61-test API suite; no live-owner success is claimed."
+    },
+    {
+      "id": "AUTHOR-RAW-LIMIT",
+      "status": "Original provenance limit retained",
+      "evidence": [
+        "author README original failures sections"
+      ],
+      "fact": "Complete raw output for the interrupted incorrectly scoped aggregate and first wrong-disabled-expectation run was not separately retained. Preserve the original checkpoint transcription and do not invent full logs."
+    }
+  ],
+  "followupSource": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-followup-readbacks.json",
+    "sha256": "474aa54af60867d5d5587c1f09da34e60c8af5cf619decd9ad705a36012e01d6"
+  },
+  "exactFollowups": [
+    {
+      "issue": 545,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+      "bodySha256": "152dc2beb0ebf8666222262b66c644fcf4fb1141e6c5148a7d67a93ce8398d76",
+      "walAcceptanceLines": [
+        "- Preserve read-only database/WAL behavior, stored enabled preferences, existing harness readiness separation and the documented SQLite SHM reader exception."
+      ],
+      "classification": "Saved text preserves read-only database/WAL behavior and SHM exception; it does not literally repeat #546 never-create clause. Any consistency clarification remains root-owned after QA."
+    },
+    {
+      "issue": 546,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+      "bodySha256": "21e2c5efce3b364614b322af0437fa3dbcf4af80891072d545dfd90f2a2ff35c",
+      "walAcceptanceLines": [
+        "- Never migrate, seed, refresh, create or alter the inspected database/WAL; preserve the SQLite SHM reader exception and failure closure of unsupported formats."
+      ],
+      "classification": "Explicit never-create-database/WAL acceptance text needs consistency correction after actual QA disposition."
+    }
+  ]
+}

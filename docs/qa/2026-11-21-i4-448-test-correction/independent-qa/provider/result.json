@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 1704031,
+  "stop_reason": "end_turn",
+  "session_id": "86e2902f-1b21-4823-9639-556da2d563fe",
+  "total_cost_usd": 9.3086962,
+  "usage": {
+    "input_tokens": 178,
+    "cache_creation_input_tokens": 320243,
+    "cache_read_input_tokens": 14345701,
+    "output_tokens": 193845,
+    "output_tokens_details": {
+      "thinking_tokens": 96790
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 320243,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1589,
+        "cache_read_input_tokens": 318178,
+        "cache_creation_input_tokens": 2065,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2065
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 178,
+      "outputTokens": 193845,
+      "cacheReadInputTokens": 14345701,
+      "cacheCreationInputTokens": 320243,
+      "webSearchRequests": 0,
+      "costUSD": 9.3086962,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 96790,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 320243,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 111,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Verdict: PASS on all four criteria** for the corrected test file at candidate `446da9ce`. This QA does not complete hosted CI, native verification, root completion or the owner-only #448 closure.\n\n| Criterion | Result | Basis |\n| --- | --- | --- |\n| C1: the new file is isolated and keeps its startup paths | PASS | **Guard:** blocks deliberate attempts with either layer alone. **Real Ollama path, enabled:** one blocked `/api/tags` request from `discovery.ts:80`. **Candidate's `false` setting:** zero attempts. **Ordinary single-file run, two replicates:** 14/14 pass, zero attempts in both Vitest processes, zero TCP rows. **Startup paths:** exactly 4, all through `container.start()`, two from the positive tests and two from the disabled-default tests. |\n| C2: storage contract on real SQLite files | PASS | **Actual candidate run:** absent WAL → 0 B, DB unchanged; empty WAL stays 0 B; the 8,272 B WAL stays byte-identical. My readings of these files match all 81 of the test's own reads byte for byte. **My own preflight scenarios:** DB, catalog rows and migrations unchanged in all four (absent, two empty, frozen nonempty). **19 real-file controls:** the test's helper, run verbatim, agrees with my independent check on every one. These include real SQLite-written frames, appended frames, a real checkpoint and a 32-byte header-only WAL. |\n| C3: the original strict check rejects the absent→empty case | PASS | The parent commit's exact assertion rejects all 4 captured absent→empty transitions: 2 from my scenario, 2 from the actual candidate run. It accepts the 6 unchanged cases. The new helper accepts all 10. On this host both the product reader and a `node:sqlite` reader really created the empty WAL; I measured the before and after states rather than assuming them. |\n| C4: scope, preservation and cleanup | PASS | **QA checkout:** clean and detached at the candidate, prior branch still at `b45807f0`. **Author checkout:** unchanged. **Original evidence:** author seal re-verifies 98/98, Astra seal 2/2. **Brief/spec:** unchanged. **Processes:** none of the 56 recorded PIDs is alive, and nothing is listening on 4747/4748/11434. **Scratch:** my own entries removed; only the runner's `claude/` folder remains. |\n\n**Failures and fixes:**\n- My first self-check (`01a`) failed because of a bug in my own guard: it blocked the IP-address lookup that `server.listen` does. One fix (v2) let those lookups through while still blocking every hostname lookup. That used 2 of the 3 allowed driver versions; the v1 code, output and error are kept.\n- My first attempt to load Vitest's `expect` used the wrong (CommonJS) entry and was refused. The second probe used the correct entry.\n- Two broken spec drafts were never run; they are kept and renamed.\n- One logged command line in `00c` doesn't match what actually ran. An erratum file records the correct command.\n- No test, threshold or product file was changed, and nothing was re-run to get a green result.\n\n**Limits:**\n- The network guard only covers Node processes. pnpm, cmd, esbuild and the product's lock-check PowerShell are covered only by the TCP poller, which polls rather than intercepts. It missed some short-lived children, including Vite's `cmd /c \"net use\"`, and it cannot attribute DNS done by Windows.\n- The handle-layer half of the guard relies on Node's deprecated `process.binding`, which works on Node 22.23.4.\n- All evidence is from one Windows host.\n- Some negative controls are file edits (byte flips, removal, truncation) rather than SQLite operations; the report marks which.\n- For C3, the old assertion was run on captured file contents. The parent's whole test file was not re-run, since no source changes were allowed.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-448-test-independent-01/`:\n- `report.md`\n- `PLAN.md`\n- `seal.json` (184 files sealed)",
+  "ttft_ms": 4146,
+  "type": "result",
+  "duration_ms": 2140206,
+  "uuid": "2a570db6-088d-4dc9-9f46-1d7478c15ca1",
+  "ttft_stream_ms": 3406,
+  "time_to_request_ms": 2964,
+  "first_content_frame_ms": 3406,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 178,
+      "outputTokens": 193845,
+      "cacheReadInputTokens": 14345701,
+      "cacheCreationInputTokens": 320243,
+      "webSearchRequests": 0,
+      "costUSD": 9.3086962,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 96790,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 320243,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:06.232Z"
+}

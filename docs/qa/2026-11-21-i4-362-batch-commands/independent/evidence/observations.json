@@ -1,0 +1,2604 @@
+{
+  "schema": "gg-qa-observations/1",
+  "issue": 362,
+  "worker": "i4_362_behavior_qa (Claude Opus 5.5, xhigh)",
+  "generatedAt": "2026-11-21T08:56:40.452Z",
+  "source": {
+    "repo": "G:/ggq/gg-i4-362-qa/GraphGoblin",
+    "branch": "codex/gg-i4-362-qa",
+    "head": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+    "tree": "d289bb12b943557584c5659bc33447d1baebc2f6",
+    "statusAtStartAndEnd": "clean",
+    "lockfileSha256": "3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df"
+  },
+  "runtime": {
+    "node": "v22.23.4",
+    "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+    "platform": "win32",
+    "arch": "x64",
+    "os": "Windows 11 Pro 10.0.26300 (ver: 10.0.26300.9974)",
+    "pnpm": "12.8.1"
+  },
+  "summary": {
+    "acceptance": {
+      "PASS": 33
+    },
+    "control": {
+      "PASS": 22
+    },
+    "discriminating-control": {
+      "PASS": 2
+    },
+    "adjacent-pre-existing-observation": {
+      "OBSERVED-AS-PREDICTED": 1
+    },
+    "supporting": {
+      "PASS": 6
+    }
+  },
+  "cases": [
+    {
+      "id": "N0-cmd-abs",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-cmd-abs",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 3.4907
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-bat-abs",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-bat-abs",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 3.7169
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmd-upper",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-cmd-upper",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 1.2383
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-bat-mixed",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-bat-mixed",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 1.3009
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmd-trailing-dot",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-cmd-trailing-dot",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 1.147
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmd-trailing-space",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-cmd-trailing-space",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 0.9129
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmd-with-args",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "acceptance",
+      "title": "raw spawn shell:false of batch file: N0-cmd-with-args",
+      "expected": "synchronous throw code EINVAL syscall spawn (errno -4071); no spawn event; marker never created",
+      "actual": {
+        "syncThrow": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "spawnEvent": false,
+        "errorEvent": null,
+        "exit": null,
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 1.2929
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-shim-extensionless",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "raw spawn shell:false: N0-shim-extensionless",
+      "expected": "no synchronous throw; async error ENOENT; no spawn event; no marker",
+      "actual": {
+        "syncThrow": null,
+        "spawnEvent": false,
+        "errorEvent": "ENOENT",
+        "exit": {
+          "code": -4058,
+          "signal": null
+        },
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 2.9553
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-missing-exe",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "raw spawn shell:false: N0-missing-exe",
+      "expected": "no synchronous throw; async error ENOENT; no spawn event; no marker",
+      "actual": {
+        "syncThrow": null,
+        "spawnEvent": false,
+        "errorEvent": "ENOENT",
+        "exit": {
+          "code": -4058,
+          "signal": null
+        },
+        "markerExists": false,
+        "markerContent": null,
+        "activeResourcesAfter": [],
+        "elapsedMs": 1.956
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmdexe-cmd",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "positive control: N0-cmdexe-cmd",
+      "expected": "spawn event; exit 0; marker created with \"effect\\r\\n\" (fixture body is effective when actually executed)",
+      "actual": {
+        "syncThrow": null,
+        "spawnEvent": true,
+        "errorEvent": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n",
+        "activeResourcesAfter": [],
+        "elapsedMs": 51.7534
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-cmdexe-bat",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "positive control: N0-cmdexe-bat",
+      "expected": "spawn event; exit 0; marker created with \"effect\\r\\n\" (fixture body is effective when actually executed)",
+      "actual": {
+        "syncThrow": null,
+        "spawnEvent": true,
+        "errorEvent": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n",
+        "activeResourcesAfter": [],
+        "elapsedMs": 47.742
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-node-marker",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "positive control: N0-node-marker",
+      "expected": "spawn event; exit 0; marker created with \"effect\\r\\n\" (fixture body is effective when actually executed)",
+      "actual": {
+        "syncThrow": null,
+        "spawnEvent": true,
+        "errorEvent": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n",
+        "activeResourcesAfter": [],
+        "elapsedMs": 93.6287
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N0-resources",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "kind": "control",
+      "title": "no active resources retained after any N0 case; fixture exits on its own",
+      "expected": "every activeResourcesAfter == []; final == []; process exit 0",
+      "actual": {
+        "exit": 0,
+        "final": [],
+        "perCaseNonEmpty": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n0-node-spawn-shape.json",
+        "raw/n0-node-spawn-shape.stdout.txt",
+        "raw/n0-node-spawn-shape.exit.txt",
+        "fixtures/n0-node-spawn-shape.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmd",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "built ProcessScripts.run with native batch file: N1-cmd",
+      "expected": "promise resolves (never rejects/throws) to exactly {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"spawn failed: PROCESS_START_FAILED\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; no terminationUnconfirmed; marker absent; no active resources (no leaked timer/pipe)",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "elapsedMs": 2.5068,
+        "markerExists": false,
+        "activeResourcesAfterSettle": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-bat",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "built ProcessScripts.run with native batch file: N1-bat",
+      "expected": "promise resolves (never rejects/throws) to exactly {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"spawn failed: PROCESS_START_FAILED\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; no terminationUnconfirmed; marker absent; no active resources (no leaked timer/pipe)",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "elapsedMs": 0.8537,
+        "markerExists": false,
+        "activeResourcesAfterSettle": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmd-upper",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "built ProcessScripts.run with native batch file: N1-cmd-upper",
+      "expected": "promise resolves (never rejects/throws) to exactly {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"spawn failed: PROCESS_START_FAILED\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; no terminationUnconfirmed; marker absent; no active resources (no leaked timer/pipe)",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "elapsedMs": 3.6662,
+        "markerExists": false,
+        "activeResourcesAfterSettle": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmd-timeout30s-stdin",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "built ProcessScripts.run with native batch file: N1-cmd-timeout30s-stdin",
+      "expected": "promise resolves (never rejects/throws) to exactly {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"spawn failed: PROCESS_START_FAILED\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; no terminationUnconfirmed; marker absent; no active resources (no leaked timer/pipe)",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "elapsedMs": 2.4697,
+        "markerExists": false,
+        "activeResourcesAfterSettle": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmd-maxStderrBytes0",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "built runner, native .cmd, caller stderr cap 0",
+      "expected": "resolves {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; marker absent",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "markerExists": false
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-missing-exe-timeout30s",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "control",
+      "title": "built runner, missing executable control (async ENOENT path), 30 s timeout armed",
+      "expected": "resolves {\"state\":\"definitely-not-started\",\"exitCode\":null,\"stdout\":\"\",\"stderr\":\"spawn failed: PROCESS_START_FAILED\",\"stdoutBytes\":0,\"stderrBytes\":0,\"timedOut\":false,\"stdoutOverflow\":false,\"stderrOverflow\":false}; timeout timer cleared (no active resources)",
+      "actual": {
+        "settled": "resolved",
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "timedOut": false,
+          "stdout": "",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stderrOverflow": false,
+          "stdoutOverflow": false
+        },
+        "activeResourcesAfterSettle": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmdexe-cmd",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "control",
+      "title": "built runner positive control: N1-cmdexe-cmd",
+      "expected": "state 'completed', exitCode 0, marker created",
+      "actual": {
+        "result": {
+          "state": "completed",
+          "exitCode": 0,
+          "timedOut": false,
+          "stdout": "",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "stderr": "",
+          "stderrOverflow": false,
+          "stdoutOverflow": false
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-node-marker",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "control",
+      "title": "built runner positive control: N1-node-marker",
+      "expected": "state 'completed', exitCode 0, marker created",
+      "actual": {
+        "result": {
+          "state": "completed",
+          "exitCode": 0,
+          "timedOut": false,
+          "stdout": "",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "stderr": "",
+          "stderrOverflow": false,
+          "stdoutOverflow": false
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-preaborted-node-marker",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "already-aborted signal with an effective node command (cancellation before spawn)",
+      "expected": "definitely-not-started without spawning; marker absent",
+      "actual": {
+        "result": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "markerExists": false,
+        "elapsedMs": 0.0147
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-cmd-repeat-200",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "acceptance",
+      "title": "200 consecutive native .cmd refusals with 60 s timeout armed each time",
+      "expected": "exactly one distinct result shape (the not-started shape); no active resources afterwards; marker absent",
+      "actual": {
+        "distinctShapes": 1,
+        "shape": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "elapsedMs": 171.5418,
+        "rssDeltaBytes": 2527232,
+        "activeResourcesAfterSettle": [],
+        "markerExists": false
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "N1-process-exit",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "kind": "control",
+      "title": "N1 fixture process exits on its own",
+      "expected": "exit 0; final active resources []",
+      "actual": {
+        "exit": 0,
+        "final": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/n1-process-scripts.json",
+        "raw/n1-process-scripts.stdout.txt",
+        "raw/n1-process-scripts.exit.txt",
+        "fixtures/n1-process-scripts.mjs"
+      ]
+    },
+    {
+      "id": "E1-cmd-first",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "built RunManager, real runner: E1-cmd first attempt",
+      "expected": "run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E2-bat-first",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "built RunManager, real runner: E2-bat first attempt",
+      "expected": "run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E3-missing-exe-first",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "control",
+      "title": "built RunManager, real runner: E3-missing-exe first attempt",
+      "expected": "run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E1-cmd-manager-restart",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "new RunManager.start() over the failed run (recovery)",
+      "expected": "no runner call; same single dispatch and failure; still SCRIPT_START_FAILED",
+      "actual": {
+        "runnerCallsDuringRestart": 0,
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E1-cmd-plain-resume",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "E1-cmd: explicit plain Resume (no retryUncertainScript)",
+      "expected": "resume accepted; exactly 1 runner call; second dispatch keeps visitId with new dispatchId; fails SCRIPT_START_FAILED again with the new dispatchId; marker absent",
+      "actual": {
+        "resumeResult": {
+          "ok": true,
+          "status": "running"
+        },
+        "runnerCallsDuringResume": 1,
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000004",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          },
+          {
+            "seq": 10,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000004"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 2,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed",
+          "8:run.resumed",
+          "9:node.started(script)",
+          "10:script.dispatched(script)",
+          "11:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E1-cmd-stale-resume",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "E1-cmd: Resume with the stale first observation",
+      "expected": "refused RECOVERY_STALE; no runner call",
+      "actual": {
+        "ok": false,
+        "code": "RECOVERY_STALE",
+        "message": "The run changed since it was shown. Refresh and review its current recovery choices.",
+        "runnerCallsDuringStaleResume": 0
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E2-bat-plain-resume",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "E2-bat: explicit plain Resume (no retryUncertainScript)",
+      "expected": "resume accepted; exactly 1 runner call; second dispatch keeps visitId with new dispatchId; fails SCRIPT_START_FAILED again with the new dispatchId; marker absent",
+      "actual": {
+        "resumeResult": {
+          "ok": true,
+          "status": "running"
+        },
+        "runnerCallsDuringResume": 1,
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000004",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          },
+          {
+            "seq": 10,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000004"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 2,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed",
+          "8:run.resumed",
+          "9:node.started(script)",
+          "10:script.dispatched(script)",
+          "11:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E2-bat-stale-resume",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "E2-bat: Resume with the stale first observation",
+      "expected": "refused RECOVERY_STALE; no runner call",
+      "actual": {
+        "ok": false,
+        "code": "RECOVERY_STALE",
+        "message": "The run changed since it was shown. Refresh and review its current recovery choices.",
+        "runnerCallsDuringStaleResume": 0
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E4-node-marker",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "control",
+      "title": "positive control E4-node-marker",
+      "expected": "run succeeded; script node.progress exitCode 0 and node.finished; marker created",
+      "actual": {
+        "status": "succeeded",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 1,
+        "scriptFinished": 1,
+        "runFailed": 0,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:node.progress(script)",
+          "8:node.finished(script)",
+          "9:node.started(done)",
+          "10:exit.evaluated(done)",
+          "11:node.finished(done)",
+          "12:run.finished"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": true,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E5-cmdexe-explicit-shell",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "control",
+      "title": "positive control E5-cmdexe-explicit-shell",
+      "expected": "run succeeded; script node.progress exitCode 0 and node.finished; marker created",
+      "actual": {
+        "status": "succeeded",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 1,
+        "scriptFinished": 1,
+        "runFailed": 0,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:node.progress(script)",
+          "8:node.finished(script)",
+          "9:node.started(done)",
+          "10:exit.evaluated(done)",
+          "11:node.finished(done)",
+          "12:run.finished"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": true,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E6-cancel-precedence-seam",
+      "tier": "E-seam",
+      "evidenceTier": "engine-public-methods+native-runner+timing-seam",
+      "kind": "acceptance",
+      "title": "real runner refuses natively, then RunManager.cancel() lands before the handler reads the result",
+      "expected": "runner result definitely-not-started (real EINVAL, not injected); run ends cancelled (run.cancel_requested, run.cancelled); no run.failed/SCRIPT_START_FAILED; marker absent",
+      "actual": {
+        "runnerResult": {
+          "state": "definitely-not-started",
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "stdoutBytes": 0,
+          "stderrBytes": 0,
+          "timedOut": false,
+          "stdoutOverflow": false,
+          "stderrOverflow": false
+        },
+        "signalAbortedOnEntry": false,
+        "signalAbortedAfterCancel": true,
+        "status": "cancelled",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 0,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.cancel_requested",
+          "8:run.cancelled"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_CANCELLED",
+          "message": "This run was cancelled; Resume is unavailable."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "schemasValid": [
+          true,
+          true,
+          true
+        ],
+        "cancelEvents": [
+          "run.cancel_requested",
+          "run.cancelled"
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "E-no-internal-error",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "acceptance",
+      "title": "no INTERNAL_ERROR, raw EINVAL or runner token in any engine-recorded run/event/recovery/log for E cases",
+      "expected": "counts 0; node failed log lines carry SCRIPT_START_FAILED only",
+      "actual": {
+        "INTERNAL_ERROR": 0,
+        "EINVAL": 0,
+        "PROCESS_START_FAILED_inEngineRecords": 0,
+        "nodeFailedCodes": [
+          "SCRIPT_START_FAILED"
+        ],
+        "exit": 0
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/e-engine-composition.json",
+        "raw/e-engine-composition.stdout.txt",
+        "raw/e-engine-composition.exit.txt",
+        "fixtures/e-engine-composition.mjs"
+      ]
+    },
+    {
+      "id": "A1-cmd-first",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "built API POST /loops, /publish, /runs then GET /runs/:id and /events: A1-cmd",
+      "expected": "HTTP 201/200/202; run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "http": {
+          "create": 201,
+          "publish": 200,
+          "run": 202
+        },
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\a\\a1-cmd\\refused.cmd",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMJZZX5P7574GY34R0VVVT:5",
+            "dispatchId": "01M7YMK039SGWG99Z7JY0JAFAE",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMJZZX5P7574GY34R0VVVT:5",
+            "dispatchId": "01M7YMK039SGWG99Z7JY0JAFAE"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A2-bat-first",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "built API POST /loops, /publish, /runs then GET /runs/:id and /events: A2-bat",
+      "expected": "HTTP 201/200/202; run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "http": {
+          "create": 201,
+          "publish": 200,
+          "run": 202
+        },
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\a\\a2-bat\\refused.bat",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMK41SF2HPSJ5V02DHPQ4E:5",
+            "dispatchId": "01M7YMK43FP1JWWBDPYY9FK0WP",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK41SF2HPSJ5V02DHPQ4E:5",
+            "dispatchId": "01M7YMK43FP1JWWBDPYY9FK0WP"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A3-missing-exe-first",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "control",
+      "title": "built API POST /loops, /publish, /runs then GET /runs/:id and /events: A3-missing-then-repaired-resume",
+      "expected": "HTTP 201/200/202; run failed with {code SCRIPT_START_FAILED, message \"The script process could not start. Resume tries to start it again.\", resumable true, nodeId script, script {visitId, dispatchId of the single script.dispatched, state definitely-not-started}, no exitCode, no details}; no node.progress/node.finished for script; recovery.resume allowed, no scriptConsent, replay(script) allowed; marker absent; schemas valid",
+      "actual": {
+        "http": {
+          "create": 201,
+          "publish": 200,
+          "run": 202
+        },
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\a\\a3-missing-then-repaired\\later.exe",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMK6B3YXRHVZGTQ3TQ2PRZ:5",
+            "dispatchId": "01M7YMK6CQG6188DKCQV1QEVTK",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK6B3YXRHVZGTQ3TQ2PRZ:5",
+            "dispatchId": "01M7YMK6CQG6188DKCQV1QEVTK"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A1-cmd-plain-resume",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "A1-cmd: POST /runs/:id/resume {observedSeq} without consent flag",
+      "expected": "HTTP 200; second dispatch same visitId new dispatchId; SCRIPT_START_FAILED again with new dispatchId; 2 run.failed; marker absent",
+      "actual": {
+        "resumeStatus": 200,
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMJZZX5P7574GY34R0VVVT:5",
+            "dispatchId": "01M7YMK18TW630VW2Y7NYDTJ21",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMJZZX5P7574GY34R0VVVT:5",
+            "dispatchId": "01M7YMK039SGWG99Z7JY0JAFAE"
+          },
+          {
+            "seq": 10,
+            "visitId": "01M7YMJZZX5P7574GY34R0VVVT:5",
+            "dispatchId": "01M7YMK18TW630VW2Y7NYDTJ21"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 2,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed",
+          "8:run.resumed",
+          "9:node.started(script)",
+          "10:script.dispatched(script)",
+          "11:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A2-bat-plain-resume",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "A2-bat: POST /runs/:id/resume {observedSeq} without consent flag",
+      "expected": "HTTP 200; second dispatch same visitId new dispatchId; SCRIPT_START_FAILED again with new dispatchId; 2 run.failed; marker absent",
+      "actual": {
+        "resumeStatus": 200,
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMK41SF2HPSJ5V02DHPQ4E:5",
+            "dispatchId": "01M7YMK56TXBHGZV6ZQ2YYHZ5G",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK41SF2HPSJ5V02DHPQ4E:5",
+            "dispatchId": "01M7YMK43FP1JWWBDPYY9FK0WP"
+          },
+          {
+            "seq": 10,
+            "visitId": "01M7YMK41SF2HPSJ5V02DHPQ4E:5",
+            "dispatchId": "01M7YMK56TXBHGZV6ZQ2YYHZ5G"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 2,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed",
+          "8:run.resumed",
+          "9:node.started(script)",
+          "10:script.dispatched(script)",
+          "11:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A1-cmd-stale-resume",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "POST /runs/:id/resume with the stale first observedSeq",
+      "expected": "HTTP 409 RECOVERY_STALE; lastEventSeq unchanged (no dispatch)",
+      "actual": {
+        "status": 409,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/recovery-stale",
+          "title": "recovery stale",
+          "status": 409,
+          "code": "RECOVERY_STALE",
+          "detail": "The run changed since it was shown. Refresh and review its current recovery choices."
+        },
+        "lastEventSeqAfter": 11
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A1-cmd-replay-no-consent",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "POST /runs/:id/replay {nodeId script, observedSeq} without retryUncertainScript",
+      "expected": "HTTP 202; new run records replayOf; it fails SCRIPT_START_FAILED (definitely-not-started) with its own single dispatch; marker absent",
+      "actual": {
+        "status": "failed",
+        "replayOf": {
+          "runId": "01M7YMJZZX5P7574GY34R0VVVT",
+          "nodeId": "script"
+        },
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M7YMK2X4K22VRTBEXB209K7S:3",
+            "dispatchId": "01M7YMK2Y66P1JY6W65K96EPME",
+            "state": "definitely-not-started"
+          }
+        },
+        "dispatches": [
+          {
+            "seq": 4,
+            "visitId": "01M7YMK2X4K22VRTBEXB209K7S:3",
+            "dispatchId": "01M7YMK2Y66P1JY6W65K96EPME"
+          }
+        ],
+        "scriptProgress": 0,
+        "scriptFinished": 0,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(script)",
+          "4:script.dispatched(script)",
+          "5:run.failed"
+        ],
+        "recoveryResume": {
+          "allowed": true
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": false,
+        "markerContent": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A3-repaired-explicit-resume",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "control",
+      "title": "missing executable failed SCRIPT_START_FAILED; owner places a real executable at that path; explicit POST resume",
+      "expected": "HTTP 200; run succeeds; effect happens exactly once, only after the explicit Resume; same visitId, new dispatch",
+      "actual": {
+        "resumeStatus": 200,
+        "status": "succeeded",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK6B3YXRHVZGTQ3TQ2PRZ:5",
+            "dispatchId": "01M7YMK6CQG6188DKCQV1QEVTK"
+          },
+          {
+            "seq": 10,
+            "visitId": "01M7YMK6B3YXRHVZGTQ3TQ2PRZ:5",
+            "dispatchId": "01M7YMK729GW3TSCAW6JAY1SEB"
+          }
+        ],
+        "scriptProgress": 1,
+        "scriptFinished": 1,
+        "runFailed": 1,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:run.failed",
+          "8:run.resumed",
+          "9:node.started(script)",
+          "10:script.dispatched(script)",
+          "11:node.progress(script)",
+          "12:node.finished(script)",
+          "13:node.started(done)",
+          "14:exit.evaluated(done)",
+          "15:node.finished(done)",
+          "16:run.finished"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n",
+        "copiedExecutableRemoved": true
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A4-node-marker",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "control",
+      "title": "positive control A4-node-marker",
+      "expected": "HTTP 201/200/202; run succeeded; script progress exitCode 0; marker created once",
+      "actual": {
+        "http": {
+          "create": 201,
+          "publish": 200,
+          "run": 202
+        },
+        "status": "succeeded",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK94ZTZVJ6VZQCRKCNSQS:5",
+            "dispatchId": "01M7YMK96X47FTVJHKDH3NP0MB"
+          }
+        ],
+        "scriptProgress": 1,
+        "scriptFinished": 1,
+        "runFailed": 0,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:node.progress(script)",
+          "8:node.finished(script)",
+          "9:node.started(done)",
+          "10:exit.evaluated(done)",
+          "11:node.finished(done)",
+          "12:run.finished"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A5-cmdexe-explicit-shell",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "control",
+      "title": "positive control A5-cmdexe-explicit-shell",
+      "expected": "HTTP 201/200/202; run succeeded; script progress exitCode 0; marker created once",
+      "actual": {
+        "http": {
+          "create": 201,
+          "publish": 200,
+          "run": 202
+        },
+        "status": "succeeded",
+        "failure": null,
+        "dispatches": [
+          {
+            "seq": 6,
+            "visitId": "01M7YMK9Y32FQ48X6B0VQ68HGC:5",
+            "dispatchId": "01M7YMK9ZNM2Q4R313FQ1K73SB"
+          }
+        ],
+        "scriptProgress": 1,
+        "scriptFinished": 1,
+        "runFailed": 0,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started(start)",
+          "4:node.finished(start)",
+          "5:node.started(script)",
+          "6:script.dispatched(script)",
+          "7:node.progress(script)",
+          "8:node.finished(script)",
+          "9:node.started(done)",
+          "10:exit.evaluated(done)",
+          "11:node.finished(done)",
+          "12:run.finished"
+        ],
+        "recoveryResume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "scriptConsent": null,
+        "replayScript": {
+          "allowed": true
+        },
+        "markerExists": true,
+        "markerContent": "effect\r\n"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A-server-log",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "acceptance",
+      "title": "API process log for all A cases",
+      "expected": "no INTERNAL_ERROR, EINVAL, runner token, stack frames, batch paths or provider activity; every node failed line is SCRIPT_START_FAILED with provenance",
+      "actual": {
+        "lines": 114,
+        "nonJson": 0,
+        "INTERNAL_ERROR": 0,
+        "EINVAL": 0,
+        "PROCESS_START_FAILED": 0,
+        "stackFrames": 0,
+        "batchPaths": 0,
+        "provider": 0,
+        "nodeFailed": 6,
+        "nodeFailedCodes": [
+          "SCRIPT_START_FAILED"
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs"
+      ]
+    },
+    {
+      "id": "A-cleanup",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "kind": "control",
+      "title": "API drained via POST /system/shutdown and released its port",
+      "expected": "shutdown 202 draining; exit code 0 without forced kill; port free; /healthz unreachable",
+      "actual": {
+        "shutdown": {
+          "status": 202,
+          "phase": "draining"
+        },
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "atMs": 15933
+        },
+        "forcedKill": null,
+        "portFreeAfterExit": true,
+        "healthAfterExit": "unreachable:ECONNREFUSED",
+        "port": 60554,
+        "apiPid": 18668,
+        "fixtureExit": 0
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a-api.json",
+        "raw/a-api.stdout.txt",
+        "raw/a-api.exit.txt",
+        "raw/a-api-server.log",
+        "fixtures/a-api.mjs",
+        "raw/90-cleanup-proof.txt"
+      ]
+    },
+    {
+      "id": "A6-A1-cmd",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "acceptance",
+      "title": "after real API restart on the same store: A1-cmd",
+      "expected": "status/lastEventSeq/failure/dispatchId unchanged; no new dispatch or run.failed; resume allowed; no scriptConsent",
+      "actual": {
+        "name": "A1-cmd",
+        "runId": "01M7YMJZZX5P7574GY34R0VVVT",
+        "before": {
+          "status": "failed",
+          "lastEventSeq": 11,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK18TW630VW2Y7NYDTJ21"
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "failed",
+          "lastEventSeq": 11,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK18TW630VW2Y7NYDTJ21",
+          "resume": {
+            "allowed": true
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 2,
+        "runFailedCount": 2,
+        "lastEventType": "run.failed"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-A1-cmd-replay",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "acceptance",
+      "title": "after real API restart on the same store: A1-cmd-replay",
+      "expected": "status/lastEventSeq/failure/dispatchId unchanged; no new dispatch or run.failed; resume allowed; no scriptConsent",
+      "actual": {
+        "name": "A1-cmd-replay",
+        "runId": "01M7YMK2X4K22VRTBEXB209K7S",
+        "before": {
+          "status": "failed",
+          "lastEventSeq": 5,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK2Y66P1JY6W65K96EPME"
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "failed",
+          "lastEventSeq": 5,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK2Y66P1JY6W65K96EPME",
+          "resume": {
+            "allowed": true
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 1,
+        "runFailedCount": 1,
+        "lastEventType": "run.failed"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-A2-bat",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "acceptance",
+      "title": "after real API restart on the same store: A2-bat",
+      "expected": "status/lastEventSeq/failure/dispatchId unchanged; no new dispatch or run.failed; resume allowed; no scriptConsent",
+      "actual": {
+        "name": "A2-bat",
+        "runId": "01M7YMK41SF2HPSJ5V02DHPQ4E",
+        "before": {
+          "status": "failed",
+          "lastEventSeq": 11,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK56TXBHGZV6ZQ2YYHZ5G"
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "failed",
+          "lastEventSeq": 11,
+          "failureCode": "SCRIPT_START_FAILED",
+          "dispatchId": "01M7YMK56TXBHGZV6ZQ2YYHZ5G",
+          "resume": {
+            "allowed": true
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 2,
+        "runFailedCount": 2,
+        "lastEventType": "run.failed"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-A3-missing-then-repaired-resume",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "control",
+      "title": "after real API restart on the same store: A3-missing-then-repaired-resume",
+      "expected": "status/lastEventSeq unchanged",
+      "actual": {
+        "name": "A3-missing-then-repaired-resume",
+        "runId": "01M7YMK6B3YXRHVZGTQ3TQ2PRZ",
+        "before": {
+          "status": "succeeded",
+          "lastEventSeq": 16,
+          "failureCode": null,
+          "dispatchId": null
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "succeeded",
+          "lastEventSeq": 16,
+          "failureCode": null,
+          "dispatchId": null,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 2,
+        "runFailedCount": 1,
+        "lastEventType": "run.finished"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-A4-node-marker",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "control",
+      "title": "after real API restart on the same store: A4-node-marker",
+      "expected": "status/lastEventSeq unchanged",
+      "actual": {
+        "name": "A4-node-marker",
+        "runId": "01M7YMK94ZTZVJ6VZQCRKCNSQS",
+        "before": {
+          "status": "succeeded",
+          "lastEventSeq": 12,
+          "failureCode": null,
+          "dispatchId": null
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "succeeded",
+          "lastEventSeq": 12,
+          "failureCode": null,
+          "dispatchId": null,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 1,
+        "runFailedCount": 0,
+        "lastEventType": "run.finished"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-A5-cmdexe-explicit-shell",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "control",
+      "title": "after real API restart on the same store: A5-cmdexe-explicit-shell",
+      "expected": "status/lastEventSeq unchanged",
+      "actual": {
+        "name": "A5-cmdexe-explicit-shell",
+        "runId": "01M7YMK9Y32FQ48X6B0VQ68HGC",
+        "before": {
+          "status": "succeeded",
+          "lastEventSeq": 12,
+          "failureCode": null,
+          "dispatchId": null
+        },
+        "after": {
+          "httpStatus": 200,
+          "status": "succeeded",
+          "lastEventSeq": 12,
+          "failureCode": null,
+          "dispatchId": null,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "scriptConsent": null
+        },
+        "dispatchCount": 1,
+        "runFailedCount": 0,
+        "lastEventType": "run.finished"
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs"
+      ]
+    },
+    {
+      "id": "A6-markers-log-cleanup",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "kind": "control",
+      "title": "restart left effects, log and resources clean",
+      "expected": "markers unchanged (refused runs none; controls once); log has no error-level lines, node failed or dispatch; exit 0 after drain; port free",
+      "actual": {
+        "markers": {
+          "a1-cmd": null,
+          "a2-bat": null,
+          "a3-missing-then-repaired": "effect\r\n",
+          "a4-node-marker": "effect\r\n",
+          "a5-cmdexe-explicit-shell": "effect\r\n"
+        },
+        "errorLines": 0,
+        "nodeFailed": 0,
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "atMs": 9414
+        },
+        "shutdown": {
+          "status": 202,
+          "phase": "draining"
+        },
+        "portFreeAfterExit": true,
+        "forcedKill": null
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/a6-api-restart.json",
+        "raw/a6-api-restart.stdout.txt",
+        "raw/a6-api-restart.exit.txt",
+        "raw/a6-api-restart-server.log",
+        "fixtures/a6-api-restart.mjs",
+        "raw/90-cleanup-proof.txt"
+      ]
+    },
+    {
+      "id": "M1-mutant-direct",
+      "tier": "M",
+      "evidenceTier": "mutant-control(non-production)+native-os-process",
+      "kind": "discriminating-control",
+      "title": "built runner copy WITHOUT the synchronous catch, native .cmd",
+      "expected": "promise REJECTS with real EINVAL (syscall spawn); marker absent: shows the native refusal is synchronous and the catch is what contains it",
+      "actual": {
+        "name": "M1-mutant-runner-direct-cmd",
+        "returnedPromise": true,
+        "settled": "rejected",
+        "rejection": {
+          "name": "Error",
+          "message": "spawn EINVAL",
+          "code": "EINVAL",
+          "errno": -4071,
+          "syscall": "spawn"
+        },
+        "markerExists": false
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/m-mutant-control.json",
+        "raw/m-mutant-control.stdout.txt",
+        "fixtures/m-mutant-control.mjs",
+        "work/m-mutant-scripts.mjs"
+      ]
+    },
+    {
+      "id": "M2-mutant-through-current-engine",
+      "tier": "M",
+      "evidenceTier": "mutant-control(non-production)+engine-public-methods",
+      "kind": "discriminating-control",
+      "title": "same mutant through the current built engine",
+      "expected": "SCRIPT_OUTCOME_UNCERTAIN (outcome-uncertain) with SCRIPT_CONSENT_REQUIRED and scriptConsent: proves fixtures distinguish the fixed runner (SCRIPT_START_FAILED) from its absence",
+      "actual": {
+        "name": "M2-mutant-runner-through-current-engine-cmd",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000001:5",
+            "dispatchId": "00000000000000000000000003",
+            "state": "outcome-uncertain"
+          }
+        },
+        "recoveryResume": {
+          "allowed": false,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        },
+        "scriptConsent": {
+          "failureSeq": 7,
+          "nodeId": "script"
+        },
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started",
+          "4:node.finished",
+          "5:node.started",
+          "6:script.dispatched",
+          "7:run.failed"
+        ],
+        "markerExists": false
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/m-mutant-control.json",
+        "raw/m-mutant-control.stdout.txt",
+        "fixtures/m-mutant-control.mjs",
+        "work/m-mutant-scripts.mjs"
+      ]
+    },
+    {
+      "id": "H1-heartbeat-script-probe-cmd",
+      "tier": "H",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "kind": "adjacent-pre-existing-observation",
+      "title": "heartbeat script probe whose command is a native .cmd (not the #362 script-node path)",
+      "expected": "prediction: no INTERNAL_ERROR; run succeeds; probe data exposes exitCode null and the internal token; marker absent",
+      "actual": {
+        "status": "succeeded",
+        "failure": null,
+        "beatResult": {
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "json": "",
+          "timedOut": false
+        },
+        "lastOutputProbe": {
+          "exitCode": null,
+          "stdout": "",
+          "stderr": "spawn failed: PROCESS_START_FAILED",
+          "json": "",
+          "timedOut": false
+        },
+        "markerExists": false,
+        "eventTypes": [
+          "1:run.queued",
+          "2:run.started",
+          "3:node.started",
+          "4:node.finished",
+          "5:node.started",
+          "6:heartbeat.beat",
+          "7:node.finished",
+          "8:node.started",
+          "9:exit.evaluated",
+          "10:node.finished",
+          "11:run.finished"
+        ]
+      },
+      "result": "OBSERVED-AS-PREDICTED",
+      "evidence": [
+        "raw/h-heartbeat-probe.json",
+        "raw/h-heartbeat-probe.stdout.txt",
+        "fixtures/h-heartbeat-probe.mjs"
+      ]
+    },
+    {
+      "id": "U1-infra-scripts",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0
+        ],
+        "tests": [
+          "46 passed (46)"
+        ],
+        "nativeLines": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-infra-scripts.log"
+      ]
+    },
+    {
+      "id": "U2-infra-script-recovery",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/infrastructure exec vitest run src/process/script-recovery.test.ts",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0
+        ],
+        "tests": [
+          "2 passed (2)"
+        ],
+        "nativeLines": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-infra-script-recovery.log"
+      ]
+    },
+    {
+      "id": "U3-engine-script-recovery",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/engine exec vitest run src/script-recovery.test.ts",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0
+        ],
+        "tests": [
+          "9 passed (9)"
+        ],
+        "nativeLines": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-engine-script-recovery.log"
+      ]
+    },
+    {
+      "id": "U4-engine-run-recovery",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/engine exec vitest run src/run-recovery.test.ts",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0
+        ],
+        "tests": [
+          "8 passed (8)"
+        ],
+        "nativeLines": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-engine-run-recovery.log"
+      ]
+    },
+    {
+      "id": "U5-contracts-script-provenance",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/contracts exec vitest run src/script-provenance.test.ts",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0
+        ],
+        "tests": [
+          "6 passed (6)"
+        ],
+        "nativeLines": []
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-contracts-script-provenance.log"
+      ]
+    },
+    {
+      "id": "U6-infra-native-verbose",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "kind": "supporting",
+      "title": "pnpm --filter @graphgoblin/infrastructure exec vitest run src/process/script-recovery.test.ts --reporter=verbose",
+      "expected": "exit 0; all selected tests pass; native win32 tests executed (not skipped) where present",
+      "actual": {
+        "exits": [
+          0,
+          0
+        ],
+        "tests": [
+          "2 passed (2)",
+          "4 passed | 42 skipped (46)"
+        ],
+        "nativeLines": [
+          "✓ src/process/script-recovery.test.ts > native script start disposition through the engine (#321) > a missing command is resumable, recovery preserves its proven refusal, and explicit resume can start the repaired command 1265ms",
+          "✓ src/process/script-recovery.test.ts > native script start disposition through the engine (#321) > a native .cmd refusal is SCRIPT_START_FAILED with no marker effect 40ms",
+          "✓ src/process/scripts.test.ts > ProcessScripts > reports spawn failures as a null exit code with a message 14ms",
+          "✓ src/process/scripts.test.ts > ProcessScripts > classifies a synchronous EINVAL refusal without leaking its command 3ms",
+          "✓ src/process/scripts.test.ts > ProcessScripts > proves the native .cmd EINVAL refusal never executes its marker 8ms",
+          "✓ src/process/scripts.test.ts > ProcessScripts > uses fixed spawn diagnostics without echoing a credential-bearing command 9ms"
+        ]
+      },
+      "result": "PASS",
+      "evidence": [
+        "raw/u-infra-verbose.log"
+      ]
+    }
+  ]
+}

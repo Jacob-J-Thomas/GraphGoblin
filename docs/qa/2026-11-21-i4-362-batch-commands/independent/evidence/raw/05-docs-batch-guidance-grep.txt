@@ -1,0 +1,81 @@
+# git grep -n -i -E 'cmd\.exe|\.cmd\b|\.bat\b|batch file|batch' -- docs README.md apps/web/src/catalog* ':!docs/qa' ':!docs/delivery' ':!docs/research' (HEAD 02351e2fb932b3be44e7cc3fb3943a61d568226c)
+README.md:13:Install Git, **Node.js 22.22.2 or newer in the 22.x series**, **pnpm 12.8.1**, and the Codex CLI. Run `codex login` as the user who will start GraphGoblin, then confirm `codex login status` reports that youâ
+README.md:34:The script installs the pinned dependencies, builds GraphGoblin, creates its data directory (by default `~/.graphgoblin`), and checks readiness. If preflight reports `FAIL`, correct the named check and rerun
+docs/05-execution-engine.md:499:Timer keys are `<kind>@<waitId>`. The opaque `waitId` combines the run ID and the durable `node.started` sequence for this park; it is recorded in the event and snapshot, rather than kept 
+docs/07-api-and-streaming.md:267:  for batching without another serialization. Browser history reads are documented above.
+docs/07-api-and-streaming.md:703:batches of at most 100 rows, stopping at the first unreadable event, which likewise
+docs/07-api-and-streaming.md:711:bounded batch memory; it never scans older runs. Out-of-band edits or repairs that
+docs/07-api-and-streaming.md:849:Workspace protection resolves configured fixed directories and recorded retained uses through native filesystem realpath, including junction/short-name aliases and aliases above missing d
+docs/08-triggers-and-integrations.md:194:A poll may add `items: {select, dedupeKey, maxRunsPerPoll}`. `select` evaluates over `{now,probe}` and returns at most 200 curated items. The per-item key evaluates over `{now,pro
+docs/08-triggers-and-integrations.md:198:`maxRunsPerPoll` is an integer from 1 to 25, default 5. Each run receives the selected item itself as its trigger payload, not the whole probe envelope. Seen keys do not consume t
+docs/08-triggers-and-integrations.md:202:Items mode alone rejects non-successful, timed-out or malformed-JSON probes. Script stdout is captured at the strict `PROBE_MAX_BODY_BYTES` bound of 65,536 bytes. The consumer che
+docs/09-frontend-and-pwa.md:540:### Bounded stream batches (#186 round 1)
+docs/09-frontend-and-pwa.md:542:`useRunEvents` retains the 100 ms batching window but flushes early at 256 events or
+docs/09-frontend-and-pwa.md:547:retention and exact payload loading are described below. A typed `SSE_SLOW_CONSUMER` or `SSE_REPLAY_FAILED` error flushes the old batch and shows
+docs/09-frontend-and-pwa.md:582:- **Coalesced refreshes.** A stream batch requests a refresh. The first request after a quiet interval refreshes at once; requests within the next **500 ms**, or while a refresh is still i
+docs/09-frontend-and-pwa.md:583:- **Only reads a change can affect.** Every refresh reads the run record. `/observation` is read only after a batch with a lifecycle, cancellation request, exit or decision event; the curr
+docs/09-frontend-and-pwa.md:585:While a selection's thread is read, the thread on screen just before it stays with its own label: the current thread when the reader leaves live following, not an older selection. Retentio
+docs/09-frontend-and-pwa.md:1249:The no-eligible notice requires a concluding server observation with no approved candidates; a bounded batch or an older run approved since the preceding pass does not justify that notice
+docs/10-testing-and-quality.md:211:pnpm.cmd build
+docs/10-testing-and-quality.md:216:pnpm.cmd exec playwright test --retries=0 --workers=1
+docs/10-testing-and-quality.md:309:resume cursor, visible retry reason and early batch flush. The tests were run red on the base.
+docs/10-testing-and-quality.md:343:Finding fixed while measuring: libsql's local client does its work in native code and settles its promises without returning to the event loop, so a run appending events back to back st
+docs/15-issue-workflow.md:18:A delivery batch may carry an additional pre-merge sign-off gate (for example, a designated independent review session that must approve each PR at an exact head). Such a gate is recorded in 
+docs/architecture/README.md:212:- **Inspect**: keyset reads use 500-row batches; canonical JSON spills merge in passes with at most 63 input files plus one output file and a binary heap, preserving UTF-16 order and the o
+docs/architecture/README.md:214:- **Apply**: one write transaction validates the approved manifest and source hash, archives original rows in batches, applies migrations, converts definitions and one indexed run history 
+docs/decisions/ADR-0024-github-trigger-admission.md:19:Optional poll `items` mode selects at most 200 curated JSON candidates, computes every unique nonblank item key before I/O, performs one indexed seen-key lookup and 
+docs/decisions/ADR-0050-bounded-sse-replay.md:101:- Flush browser held batches at 256 events or an estimated 1 MiB of UTF-16 JSON,
+docs/decisions/ADR-0050-bounded-sse-replay.md:142:whole gateway (D1, High). On every 100 ms stream batch the inspector refreshed the run record,
+docs/decisions/ADR-0050-bounded-sse-replay.md:177:  coverage: a fast loop completes several nodes between a stream batch and its read, so a lagging
+docs/decisions/ADR-0050-bounded-sse-replay.md:201:batches, so a node streaming progress costs the run-record read alone. No API route, contract,
+docs/decisions/ADR-0050-bounded-sse-replay.md:239:  live batch requested.
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:27:The component boundary deliberately conserves both sides of a recorded relationship, including replay provenance, rather than guessing which portions of
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:45:Measure once at startup after migration/recovery, before listening, without reclaiming resources. After the HTTP listener accepts connections, start tha
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:67:## Batches, interruption and accounting
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:89:A recorded path alone can become stale after an external alias change. Before workspace reclamation, a bounded sweep re-resolves at most **2,048 referen
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:93:**Remaining filesystem race:** an external actor can create/retarget an alias after its row was observed and before quarantine rename. The data-director
+docs/decisions/ADR-0060-explicit-history-deletion-eligibility.md:97:Root traversal fills its bounded batch by wrapping within the same pass, so a newly approved older run is not deferred merely for falling before the las
+docs/decisions/ADR-0063-loop-turns-without-personal-extensions.md:9:The final integrated check found every real Codex loop turn starting the machine's own Codex extensions inside the turn's process tree: `node_repl.exe`,
+docs/decisions/ADR-0068-chat-qa-repair.md:71:Generic settings writes and deletes reserve the entire voice namespace, and generic settings responses exclude internal operation, route and probe metadata. Per-run route meta
+docs/decisions/ADR-0079-poll-dedupe-key-identities.md:12:- Validate the complete selected set before lookup or admission. Preserve whole-batch failure for the existing invalid types, blank or overlong keys and duplicate 
+docs/decisions/ADR-0086-windows-helper-job-lifetime.md:12:D160 changes only the timing of that plan's human review; see the batch register.
+docs/guide/01-install-and-first-run.md:10:pnpm.cmd --version
+docs/guide/01-install-and-first-run.md:16:PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`.
+docs/guide/01-install-and-first-run.md:56:pnpm.cmd start
+docs/guide/01-install-and-first-run.md:169:pnpm.cmd install --frozen-lockfile
+docs/guide/01-install-and-first-run.md:170:pnpm.cmd build
+docs/guide/01-install-and-first-run.md:179:pnpm.cmd start
+docs/guide/01-install-and-first-run.md:187:pnpm.cmd start
+docs/guide/03-run-and-observe.md:372:The subtle storage notice links to Runs. If nothing eligible can be cleaned, it asks you to review history or free disk space; it never silently expands the selection or resets your s
+docs/guide/04-triggers.md:418:Every item key must be unique, nonblank and at most 512 characters; all keys are checked before any candidate starts. A batch may contain at most 200 candidates and admit 1â€“25 unseen items
+docs/guide/05-mcp-and-codex-plugin.md:102:pnpm.cmd --filter @graphgoblin/plugin-codex assemble
+docs/guide/07-troubleshooting.md:161:| PowerShell reports that `pnpm.ps1` cannot be loaded                                                                                                            | The execution policy
+docs/guide/07-troubleshooting.md:217:pnpm.cmd --filter @graphgoblin/api start
+exit=0
+
+# SCRIPT_START_FAILED user guidance lines
+apps/web/src/runs/RunInspectorPage.tsx:215:                ) : run.failure.code === 'SCRIPT_START_FAILED' ? (
+docs/03-domain-model.md:312:Script execution records `script.dispatched { nodeId, visitId, dispatchId }` before calling the process runner. A script failure's optional `script` provenance records `{ visitId, dispatchId?, state, exitCode? }`, where `state` is `definitely-not-started`, `outcome-uncertain`, or `completed`. `SCRIPT_START_FAILED` and `SCRIPT_OUTCOME_UNCERTAIN` are resumable failures; t
+docs/04-node-catalog.md:152:Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, with `failure.script.state: completed` and the exit code. A proven process-start refusal fails with resumable `SCRIPT_START_FAILED` (`definitely-not-started`). Before calling the process runner the engine durably records `script.dispatched { nodeId, visitId, dispatchId }`. A 
+docs/05-execution-engine.md:489:Before calling the process runner the script handler appends `script.dispatched { nodeId, visitId, dispatchId }` durably. `visitId` is `<runId>:<first node.started sequence since that node last finished>`; retries retain the visit and allocate a new dispatch ID. The runner distinguishes `definitely-not-started` (synchronous refusal, missing command or an already-abo
+docs/guide/03-run-and-observe.md:273:`SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay**
+docs/guide/07-troubleshooting.md:119:For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may
+# ScriptConfigSchema (packages/contracts/src/nodes.ts) command/args field metadata at HEAD
+packages/contracts/src/nodes.ts:430:export const ScriptConfigSchema = z
+  430  export const ScriptConfigSchema = z
+  431    .strictObject({
+  432      command: z.string().min(1).max(4096).meta(field('Program to run.')),
+  433      args: z
+  434        .array(TemplateSchema)
+  435        .max(256)
+  436        .default([])
+  437        .meta(field('Arguments; each may be a Liquid template.')),
+  438      cwd: z
+  439        .string()
+  440        .min(1)
+  441        .max(4096)
+  442        .default('workspace')
+  443        .meta(field('`workspace` for the run working directory, or a path.')),
+  444      env: z
+# docs/reference/nodes.md script command row
+docs/reference/nodes.md:128:| `command`        | string                                     | yes      |                 |          | Program to run.                                                         |

@@ -1,0 +1,208 @@
+{
+  "id": "M02",
+  "kind": "built-public-method",
+  "purpose": "counterfactual: same missing-seed store through built runPreflight with candidate vs stored-only catalog source",
+  "checks": [
+    {
+      "name": "candidate source: default-model ok, default-model.claude ok, report ok",
+      "expected": [
+        "ok",
+        "ok",
+        true
+      ],
+      "actual": [
+        "ok",
+        "ok",
+        true
+      ],
+      "pass": true
+    },
+    {
+      "name": "stored-only counterfactual: both fail, report not ok",
+      "expected": [
+        "fail",
+        "fail",
+        false
+      ],
+      "actual": [
+        "fail",
+        "fail",
+        false
+      ],
+      "pass": true
+    },
+    {
+      "name": "boot validator stored-only would refuse both (discrimination)",
+      "expected": [
+        "codex:MODEL_NOT_IN_CATALOG",
+        "claude:MODEL_NOT_IN_CATALOG"
+      ],
+      "actual": [
+        "codex:MODEL_NOT_IN_CATALOG",
+        "claude:MODEL_NOT_IN_CATALOG"
+      ],
+      "pass": true
+    },
+    {
+      "name": "boot validator with projection: no issues",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "pass": true
+    },
+    {
+      "name": "WAL absent before and after",
+      "expected": [
+        null,
+        null
+      ],
+      "actual": [
+        null,
+        {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "pass": false
+    }
+  ],
+  "startedUtc": "2026-11-21T09:01:13.729Z",
+  "boot": {
+    "storedOnly": [
+      "codex:MODEL_NOT_IN_CATALOG",
+      "claude:MODEL_NOT_IN_CATALOG"
+    ],
+    "projected": []
+  },
+  "observed": {
+    "candidate": [
+      {
+        "id": "node",
+        "label": "Node.js",
+        "status": "ok",
+        "message": "Node 22.23.4"
+      },
+      {
+        "id": "data-dir",
+        "label": "Data directory",
+        "status": "warn",
+        "message": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\M02\\data does not exist yet; it is created on first start"
+      },
+      {
+        "id": "master-key",
+        "label": "Master key",
+        "status": "ok",
+        "message": "taken from GG_MASTER_KEY"
+      },
+      {
+        "id": "database",
+        "label": "Database",
+        "status": "ok",
+        "message": "reachable and migrated"
+      },
+      {
+        "state": "ready",
+        "id": "harness.codex",
+        "label": "Harness codex",
+        "status": "ok",
+        "message": "codex is installed and logged in"
+      },
+      {
+        "state": "ready",
+        "id": "harness.claude",
+        "label": "Harness claude",
+        "status": "ok",
+        "message": "claude is installed and logged in"
+      },
+      {
+        "id": "jev",
+        "label": "Jev",
+        "status": "warn",
+        "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+      },
+      {
+        "id": "default-model",
+        "label": "Default model",
+        "status": "ok",
+        "message": "gpt-6.1-terra (codex) is in the model catalog"
+      },
+      {
+        "id": "default-model.claude",
+        "label": "Claude default model",
+        "status": "ok",
+        "message": "Exact Claude model and effort are configured"
+      }
+    ],
+    "storedOnly": [
+      {
+        "id": "node",
+        "label": "Node.js",
+        "status": "ok",
+        "message": "Node 22.23.4"
+      },
+      {
+        "id": "data-dir",
+        "label": "Data directory",
+        "status": "warn",
+        "message": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\M02\\data does not exist yet; it is created on first start"
+      },
+      {
+        "id": "master-key",
+        "label": "Master key",
+        "status": "ok",
+        "message": "taken from GG_MASTER_KEY"
+      },
+      {
+        "id": "database",
+        "label": "Database",
+        "status": "ok",
+        "message": "reachable and migrated"
+      },
+      {
+        "state": "ready",
+        "id": "harness.codex",
+        "label": "Harness codex",
+        "status": "ok",
+        "message": "codex is installed and logged in"
+      },
+      {
+        "state": "ready",
+        "id": "harness.claude",
+        "label": "Harness claude",
+        "status": "ok",
+        "message": "claude is installed and logged in"
+      },
+      {
+        "id": "jev",
+        "label": "Jev",
+        "status": "warn",
+        "message": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+      },
+      {
+        "id": "default-model",
+        "label": "Default model",
+        "status": "fail",
+        "message": "GG_DEFAULTS.byHarness.codex.model \"gpt-6.1-terra\" is not in the model catalog; pick a listed harness model and enable it in Settings"
+      },
+      {
+        "id": "default-model.claude",
+        "label": "Claude default model",
+        "status": "fail",
+        "message": "The configured Claude model is not in the catalog"
+      }
+    ]
+  },
+  "pass": false,
+  "finishedUtc": "2026-11-21T09:01:14.092Z"
+}

@@ -1,0 +1,2565 @@
+{
+  "03a-ordinary-file-guard-only": {
+    "label": "03a-ordinary-file-guard-only",
+    "vitest": {
+      "numTotalTests": 14,
+      "numPassedTests": 14,
+      "numFailedTests": 0,
+      "success": true
+    },
+    "tests": [
+      {
+        "name": "accepts a missing shipped codex seed without storing it",
+        "fullName": "offline startup catalog admission accepts a missing shipped codex seed without storing it",
+        "status": "passed",
+        "durationMs": 984.3953000000001
+      },
+      {
+        "name": "accepts a missing shipped claude seed without storing it",
+        "fullName": "offline startup catalog admission accepts a missing shipped claude seed without storing it",
+        "status": "passed",
+        "durationMs": 240.8829999999998
+      },
+      {
+        "name": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "fullName": "offline startup catalog admission preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "status": "passed",
+        "durationMs": 290.78470000000016
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "status": "passed",
+        "durationMs": 277.66229999999996
+      },
+      {
+        "name": "preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 215.09160000000065
+      },
+      {
+        "name": "preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "status": "passed",
+        "durationMs": 236.41020000000026
+      },
+      {
+        "name": "preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 227.88360000000011
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "status": "passed",
+        "durationMs": 190.45130000000063
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 226.63690000000042
+      },
+      {
+        "name": "preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "fullName": "offline startup catalog admission preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "status": "passed",
+        "durationMs": 186.29269999999997
+      },
+      {
+        "name": "preserves rows and migrations with an initially absent WAL",
+        "fullName": "offline startup catalog admission preserves rows and migrations with an initially absent WAL",
+        "status": "passed",
+        "durationMs": 145.40289999999914
+      },
+      {
+        "name": "preserves rows and migrations with an initially empty WAL",
+        "fullName": "offline startup catalog admission preserves rows and migrations with an initially empty WAL",
+        "status": "passed",
+        "durationMs": 150.54570000000058
+      },
+      {
+        "name": "projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "fullName": "offline startup catalog admission projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "status": "passed",
+        "durationMs": 177.33119999999872
+      },
+      {
+        "name": "rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "fullName": "offline startup catalog admission rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "status": "passed",
+        "durationMs": 1795.6106999999993
+      }
+    ],
+    "outboundAttempts": 0,
+    "outboundDetail": [],
+    "guardInstalled": [
+      {
+        "pid": 12608,
+        "ppid": 46348,
+        "entry": "G:\\ggq\\gg-i4-448-qa\\GraphGoblin\\apps\\api\\node_modules\\vitest\\vitest.mjs",
+        "layers": [
+          "L1",
+          "L2"
+        ]
+      },
+      {
+        "pid": 13340,
+        "ppid": 12608,
+        "entry": "G:\\ggq\\gg-i4-448-qa\\GraphGoblin\\node_modules\\.pnpm\\vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53\\node_modules\\vitest\\dist\\workers\\forks.js",
+        "layers": [
+          "L1",
+          "L2"
+        ]
+      }
+    ],
+    "childSpawns": [
+      {
+        "by": 12608,
+        "file": "C:\\WINDOWS\\system32\\cmd.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "\"net use\""
+        ]
+      },
+      {
+        "by": 12608,
+        "file": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "--experimental-import-meta-resolve",
+          "--require",
+          "G:/ggq/gg-i4-448-qa/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/suppress-warnings.cjs",
+          "--conditions",
+          "node"
+        ]
+      },
+      {
+        "by": 13340,
+        "file": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          "$ErrorActionPreference='Stop'; $owner=Get-CimInstance Win32_Process -Filter 'ProcessId = 13340'; if ($null -ne $owner.CreationDate) { $owner.CreationDate.ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture) }"
+        ]
+      }
+    ],
+    "forwarded": [
+      {
+        "pid": 12608,
+        "kind": "L1-child-spawn"
+      },
+      {
+        "pid": 12608,
+        "kind": "L1-child-spawn"
+      },
+      {
+        "pid": 13340,
+        "kind": "L1-child-spawn"
+      }
+    ],
+    "nativeTcpPoller": {
+      "tracked": [
+        "cmd.exe/46868<-9772",
+        "pnpm.exe/9668<-46868",
+        "cmd.exe/46348<-9668",
+        "node.exe/12608<-46348",
+        "node.exe/13340<-12608",
+        "powershell.exe/45164<-13340",
+        "conhost.exe/19080<-45164"
+      ],
+      "rows": [],
+      "stop": {
+        "utc": "2026-11-21T16:23:15.9922254Z",
+        "samples": 19,
+        "trackedPids": [
+          46868,
+          19080,
+          9772,
+          9668,
+          12608,
+          13340,
+          46348,
+          45164
+        ],
+        "event": "poller-stop",
+        "rowsWritten": 0
+      }
+    }
+  },
+  "03b-ordinary-file-guard-observers": {
+    "label": "03b-ordinary-file-guard-observers",
+    "vitest": {
+      "numTotalTests": 14,
+      "numPassedTests": 14,
+      "numFailedTests": 0,
+      "success": true
+    },
+    "tests": [
+      {
+        "name": "accepts a missing shipped codex seed without storing it",
+        "fullName": "offline startup catalog admission accepts a missing shipped codex seed without storing it",
+        "status": "passed",
+        "durationMs": 1078.5499
+      },
+      {
+        "name": "accepts a missing shipped claude seed without storing it",
+        "fullName": "offline startup catalog admission accepts a missing shipped claude seed without storing it",
+        "status": "passed",
+        "durationMs": 305.97509999999966
+      },
+      {
+        "name": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "fullName": "offline startup catalog admission preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "status": "passed",
+        "durationMs": 279.16250000000036
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "status": "passed",
+        "durationMs": 282.4432999999999
+      },
+      {
+        "name": "preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 321.9834000000001
+      },
+      {
+        "name": "preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "status": "passed",
+        "durationMs": 201.23919999999998
+      },
+      {
+        "name": "preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 205.71730000000025
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "status": "passed",
+        "durationMs": 241.1255000000001
+      },
+      {
+        "name": "preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "fullName": "offline startup catalog admission preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "status": "passed",
+        "durationMs": 227.97149999999965
+      },
+      {
+        "name": "preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "fullName": "offline startup catalog admission preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "status": "passed",
+        "durationMs": 201.22050000000036
+      },
+      {
+        "name": "preserves rows and migrations with an initially absent WAL",
+        "fullName": "offline startup catalog admission preserves rows and migrations with an initially absent WAL",
+        "status": "passed",
+        "durationMs": 218.98379999999906
+      },
+      {
+        "name": "preserves rows and migrations with an initially empty WAL",
+        "fullName": "offline startup catalog admission preserves rows and migrations with an initially empty WAL",
+        "status": "passed",
+        "durationMs": 211.64229999999952
+      },
+      {
+        "name": "projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "fullName": "offline startup catalog admission projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "status": "passed",
+        "durationMs": 211.0523000000012
+      },
+      {
+        "name": "rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "fullName": "offline startup catalog admission rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "status": "passed",
+        "durationMs": 1892.1983999999993
+      }
+    ],
+    "outboundAttempts": 0,
+    "outboundDetail": [],
+    "guardInstalled": [
+      {
+        "pid": 21068,
+        "ppid": 17276,
+        "entry": "G:\\ggq\\gg-i4-448-qa\\GraphGoblin\\apps\\api\\node_modules\\vitest\\vitest.mjs",
+        "layers": [
+          "L1",
+          "L2"
+        ]
+      },
+      {
+        "pid": 6248,
+        "ppid": 21068,
+        "entry": "G:\\ggq\\gg-i4-448-qa\\GraphGoblin\\node_modules\\.pnpm\\vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53\\node_modules\\vitest\\dist\\workers\\forks.js",
+        "layers": [
+          "L1",
+          "L2"
+        ]
+      }
+    ],
+    "childSpawns": [
+      {
+        "by": 21068,
+        "file": "C:\\WINDOWS\\system32\\cmd.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "\"net use\""
+        ]
+      },
+      {
+        "by": 21068,
+        "file": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "--experimental-import-meta-resolve",
+          "--require",
+          "G:/ggq/gg-i4-448-qa/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/suppress-warnings.cjs",
+          "--conditions",
+          "node"
+        ]
+      },
+      {
+        "by": 6248,
+        "file": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "guardInChildEnv": true,
+        "args": [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          "$ErrorActionPreference='Stop'; $owner=Get-CimInstance Win32_Process -Filter 'ProcessId = 6248'; if ($null -ne $owner.CreationDate) { $owner.CreationDate.ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture) }"
+        ]
+      }
+    ],
+    "forwarded": [
+      {
+        "pid": 21068,
+        "kind": "L1-child-spawn"
+      },
+      {
+        "pid": 21068,
+        "kind": "L1-child-spawn"
+      },
+      {
+        "pid": 6248,
+        "kind": "L1-child-spawn"
+      }
+    ],
+    "fixtureToTest": [
+      {
+        "fixture": "gg-preflight-catalog-nzY2OE",
+        "test": "accepts a missing shipped codex seed without storing it"
+      },
+      {
+        "fixture": "gg-preflight-catalog-JfdaTL",
+        "test": "accepts a missing shipped claude seed without storing it"
+      },
+      {
+        "fixture": "gg-preflight-catalog-WBQUmL",
+        "test": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-Jn1GSt",
+        "test": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-OiLSsc",
+        "test": "preserves codex unknown-model defaults (effort=low, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-tzlbXe",
+        "test": "preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-18j8M7",
+        "test": "preserves claude gpt-6-luna defaults (effort=low, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-9siMlw",
+        "test": "preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-61MDza",
+        "test": "preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-Clqxn5",
+        "test": "preserves codex gpt-5.5 defaults (effort=none, status=ok)"
+      },
+      {
+        "fixture": "gg-preflight-catalog-xDeZzo",
+        "test": "preserves rows and migrations with an initially absent WAL"
+      },
+      {
+        "fixture": "gg-preflight-catalog-mgEqiU",
+        "test": "preserves rows and migrations with an initially empty WAL"
+      },
+      {
+        "fixture": "gg-preflight-catalog-UYpKlA",
+        "test": "projects a missing seed from a WAL-backed store without checkpointing or writing it"
+      },
+      {
+        "fixture": "gg-preflight-catalog-ECME4W",
+        "test": "rejects database changes, existing WAL changes or removal, and new WAL frames"
+      }
+    ],
+    "startupPaths": [
+      {
+        "fixture": "gg-preflight-catalog-nzY2OE",
+        "test": "accepts a missing shipped codex seed without storing it",
+        "frames": [
+          "/packages/infrastructure/src/fs/chat-audio.ts:213:26",
+          "/packages/infrastructure/src/fs/chat-audio.ts:172:24",
+          "/apps/api/src/container.ts:267:25",
+          "/apps/api/src/container.ts:559:13",
+          "/apps/api/src/preflight-catalog.test.ts:160:9"
+        ]
+      },
+      {
+        "fixture": "gg-preflight-catalog-JfdaTL",
+        "test": "accepts a missing shipped claude seed without storing it",
+        "frames": [
+          "/packages/infrastructure/src/fs/chat-audio.ts:213:26",
+          "/packages/infrastructure/src/fs/chat-audio.ts:172:24",
+          "/apps/api/src/container.ts:267:25",
+          "/apps/api/src/container.ts:559:13",
+          "/apps/api/src/preflight-catalog.test.ts:160:9"
+        ]
+      },
+      {
+        "fixture": "gg-preflight-catalog-WBQUmL",
+        "test": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "frames": [
+          "/packages/infrastructure/src/fs/chat-audio.ts:213:26",
+          "/packages/infrastructure/src/fs/chat-audio.ts:172:24",
+          "/apps/api/src/container.ts:267:25",
+          "/apps/api/src/container.ts:559:13",
+          "/apps/api/src/preflight-catalog.test.ts:292:11"
+        ]
+      },
+      {
+        "fixture": "gg-preflight-catalog-Jn1GSt",
+        "test": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "frames": [
+          "/packages/infrastructure/src/fs/chat-audio.ts:213:26",
+          "/packages/infrastructure/src/fs/chat-audio.ts:172:24",
+          "/apps/api/src/container.ts:267:25",
+          "/apps/api/src/container.ts:559:13",
+          "/apps/api/src/preflight-catalog.test.ts:292:11"
+        ]
+      }
+    ],
+    "helperReadConsistency": {
+      "reads": 81,
+      "matchingIndependentSnapshot": 81,
+      "inconsistent": []
+    },
+    "perTest": [
+      {
+        "test": "accepts a missing shipped codex seed without storing it",
+        "fixture": "gg-preflight-catalog-nzY2OE",
+        "sequences": [
+          {
+            "dir": "\\external store",
+            "states": [
+              {
+                "seq": 4,
+                "utc": "2026-11-21T16:24:03.033Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "d568d382fe5792935448b6042b59b15d886f433de30754954434e8989100a435"
+                }
+              },
+              {
+                "seq": 7,
+                "utc": "2026-11-21T16:24:03.109Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "d568d382fe5792935448b6042b59b15d886f433de30754954434e8989100a435"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": "absent",
+          "wal": "absent",
+          "shm": "absent"
+        }
+      },
+      {
+        "test": "accepts a missing shipped claude seed without storing it",
+        "fixture": "gg-preflight-catalog-JfdaTL",
+        "sequences": [
+          {
+            "dir": "\\external store",
+            "states": [
+              {
+                "seq": 16,
+                "utc": "2026-11-21T16:24:03.985Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "adba7146176d9378cff89fbbb10eb1e376d2286e2195c42133ad68c62118d8c3",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fdbedcc1cdc563c047b491dd5270d4c859881829558a435be8edff34dc43a0e6"
+                }
+              },
+              {
+                "seq": 19,
+                "utc": "2026-11-21T16:24:04.046Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "adba7146176d9378cff89fbbb10eb1e376d2286e2195c42133ad68c62118d8c3",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fdbedcc1cdc563c047b491dd5270d4c859881829558a435be8edff34dc43a0e6"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": "absent",
+          "wal": "absent",
+          "shm": "absent"
+        }
+      },
+      {
+        "test": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "fixture": "gg-preflight-catalog-WBQUmL",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 26,
+                "utc": "2026-11-21T16:24:04.287Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7db1aeeff25ec7d5b8d83ecc9e914c5fa0813cec886bc79e7442ae8a9a74d3d5",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "0220b8d54fc768f9aa22dabecdbac60c2c5163aa7c33b08a24f1fda1a888017c"
+                }
+              },
+              {
+                "seq": 29,
+                "utc": "2026-11-21T16:24:04.356Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7db1aeeff25ec7d5b8d83ecc9e914c5fa0813cec886bc79e7442ae8a9a74d3d5",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "0220b8d54fc768f9aa22dabecdbac60c2c5163aa7c33b08a24f1fda1a888017c"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7db1aeeff25ec7d5b8d83ecc9e914c5fa0813cec886bc79e7442ae8a9a74d3d5",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 53592,
+            "sha256": "7946d9a202c6a297f1b58c11e97feb97ca4e1ce8bca5bfb9c5ee0c57f9bad447",
+            "frames": 13,
+            "validFramePrefix": 13,
+            "commitFrames": 3,
+            "pageSize": 4096,
+            "magic": "0x377f0682",
+            "headerChecksumValid": true
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "9e9480fe70b22f5d70cf4933a082567464ac1308ca04d3adf22b968fe7080500"
+          }
+        }
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fixture": "gg-preflight-catalog-Jn1GSt",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 35,
+                "utc": "2026-11-21T16:24:04.558Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "48aec8fca54c563f382205132d88164ce405c67b2c93bd44ef80d3ad3244fdc8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "693312eaf70d5746abf43c9381062169a765e713885e405651f9cf2dfb28e25d"
+                }
+              },
+              {
+                "seq": 38,
+                "utc": "2026-11-21T16:24:04.617Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "48aec8fca54c563f382205132d88164ce405c67b2c93bd44ef80d3ad3244fdc8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "693312eaf70d5746abf43c9381062169a765e713885e405651f9cf2dfb28e25d"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "48aec8fca54c563f382205132d88164ce405c67b2c93bd44ef80d3ad3244fdc8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 53592,
+            "sha256": "3be3117571d9cc168c95fa0aeadb2c9097803d13358f8b27064e355b7b6d1436",
+            "frames": 13,
+            "validFramePrefix": 13,
+            "commitFrames": 3,
+            "pageSize": 4096,
+            "magic": "0x377f0682",
+            "headerChecksumValid": true
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "4d8b4354aa5f7dcb4d8acdce1c8f97a23cfc833b1830b4ebfa15f5342d326c99"
+          }
+        }
+      },
+      {
+        "test": "preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "fixture": "gg-preflight-catalog-OiLSsc",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 44,
+                "utc": "2026-11-21T16:24:04.877Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+                }
+              },
+              {
+                "seq": 47,
+                "utc": "2026-11-21T16:24:04.980Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+                }
+              },
+              {
+                "seq": 50,
+                "utc": "2026-11-21T16:24:05.060Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+          }
+        }
+      },
+      {
+        "test": "preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "fixture": "gg-preflight-catalog-tzlbXe",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 55,
+                "utc": "2026-11-21T16:24:05.168Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+                }
+              },
+              {
+                "seq": 58,
+                "utc": "2026-11-21T16:24:05.222Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+                }
+              },
+              {
+                "seq": 61,
+                "utc": "2026-11-21T16:24:05.264Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+          }
+        }
+      },
+      {
+        "test": "preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "fixture": "gg-preflight-catalog-18j8M7",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 66,
+                "utc": "2026-11-21T16:24:05.366Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+                }
+              },
+              {
+                "seq": 69,
+                "utc": "2026-11-21T16:24:05.422Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+                }
+              },
+              {
+                "seq": 72,
+                "utc": "2026-11-21T16:24:05.467Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+          }
+        }
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "fixture": "gg-preflight-catalog-9siMlw",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 77,
+                "utc": "2026-11-21T16:24:05.583Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+                }
+              },
+              {
+                "seq": 80,
+                "utc": "2026-11-21T16:24:05.650Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+                }
+              },
+              {
+                "seq": 83,
+                "utc": "2026-11-21T16:24:05.702Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+          }
+        }
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "fixture": "gg-preflight-catalog-61MDza",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 88,
+                "utc": "2026-11-21T16:24:05.835Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+                }
+              },
+              {
+                "seq": 91,
+                "utc": "2026-11-21T16:24:05.895Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+                }
+              },
+              {
+                "seq": 94,
+                "utc": "2026-11-21T16:24:05.936Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+          }
+        }
+      },
+      {
+        "test": "preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "fixture": "gg-preflight-catalog-Clqxn5",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 99,
+                "utc": "2026-11-21T16:24:06.046Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+                }
+              },
+              {
+                "seq": 102,
+                "utc": "2026-11-21T16:24:06.100Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+                }
+              },
+              {
+                "seq": 105,
+                "utc": "2026-11-21T16:24:06.138Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+          }
+        }
+      },
+      {
+        "test": "preserves rows and migrations with an initially absent WAL",
+        "fixture": "gg-preflight-catalog-xDeZzo",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 110,
+                "utc": "2026-11-21T16:24:06.271Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": "absent",
+                "shm": "absent"
+              },
+              {
+                "seq": 112,
+                "utc": "2026-11-21T16:24:06.336Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+                }
+              },
+              {
+                "seq": 115,
+                "utc": "2026-11-21T16:24:06.356Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          }
+        }
+      },
+      {
+        "test": "preserves rows and migrations with an initially empty WAL",
+        "fixture": "gg-preflight-catalog-mgEqiU",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 120,
+                "utc": "2026-11-21T16:24:06.482Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": "absent"
+              },
+              {
+                "seq": 123,
+                "utc": "2026-11-21T16:24:06.544Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+                }
+              },
+              {
+                "seq": 126,
+                "utc": "2026-11-21T16:24:06.566Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          }
+        }
+      },
+      {
+        "test": "projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "fixture": "gg-preflight-catalog-UYpKlA",
+        "sequences": [
+          {
+            "dir": "\\copy",
+            "states": [
+              {
+                "seq": 131,
+                "utc": "2026-11-21T16:24:06.688Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+                  "frames": 2,
+                  "validFramePrefix": 2,
+                  "commitFrames": 1,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "90b28de37916295ab5b91be7339adbb1ba46e0ed56e2c6e29a42701bbc06fceb"
+                }
+              },
+              {
+                "seq": 134,
+                "utc": "2026-11-21T16:24:06.759Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+                  "frames": 2,
+                  "validFramePrefix": 2,
+                  "commitFrames": 1,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "f6ed52fbf46a5df250b998c620825cfff43ae705c4a0bfaaebaed0d9c4854677"
+                }
+              },
+              {
+                "seq": 137,
+                "utc": "2026-11-21T16:24:06.773Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+                  "frames": 2,
+                  "validFramePrefix": 2,
+                  "commitFrames": 1,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "f6ed52fbf46a5df250b998c620825cfff43ae705c4a0bfaaebaed0d9c4854677"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 8272,
+            "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+            "frames": 2,
+            "validFramePrefix": 2,
+            "commitFrames": 1,
+            "pageSize": 4096,
+            "magic": "0x377f0682",
+            "headerChecksumValid": true
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "90b28de37916295ab5b91be7339adbb1ba46e0ed56e2c6e29a42701bbc06fceb"
+          }
+        }
+      },
+      {
+        "test": "rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "fixture": "gg-preflight-catalog-ECME4W",
+        "sequences": [
+          {
+            "dir": ".",
+            "states": [
+              {
+                "seq": 140,
+                "utc": "2026-11-21T16:24:06.900Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": "absent",
+                "shm": "absent"
+              },
+              {
+                "seq": 142,
+                "utc": "2026-11-21T16:24:06.915Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "1cc7cbd633955f19d7af81c4f5dd1842475a12d4db20ac727162c8c4ad5bb4e5",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": "absent",
+                "shm": "absent"
+              },
+              {
+                "seq": 144,
+                "utc": "2026-11-21T16:24:06.932Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": "absent"
+              },
+              {
+                "seq": 147,
+                "utc": "2026-11-21T16:24:06.939Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": "absent",
+                "shm": "absent"
+              },
+              {
+                "seq": 149,
+                "utc": "2026-11-21T16:24:06.952Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "6d9cb7093f181c697e5c01b3778185839fa43d841482a3ecd934e95277e73cc6",
+                  "frames": 2,
+                  "validFramePrefix": 2,
+                  "commitFrames": 1,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "35595b4144f6be246d01b7811fc139884244ec8b970ad03466aa5e582374cd1e"
+                }
+              }
+            ]
+          },
+          {
+            "dir": "\\frozen",
+            "states": [
+              {
+                "seq": 152,
+                "utc": "2026-11-21T16:24:08.636Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "6d9cb7093f181c697e5c01b3778185839fa43d841482a3ecd934e95277e73cc6",
+                  "frames": 2,
+                  "validFramePrefix": 2,
+                  "commitFrames": 1,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "35595b4144f6be246d01b7811fc139884244ec8b970ad03466aa5e582374cd1e"
+                }
+              },
+              {
+                "seq": 155,
+                "utc": "2026-11-21T16:24:08.653Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 8272,
+                  "sha256": "990be8387c4788e378caaaf6b64c57b999e5bf2d15cfe6a9799e4ae7af6a09b7",
+                  "frames": 2,
+                  "validFramePrefix": 1,
+                  "commitFrames": 0,
+                  "pageSize": 4096,
+                  "magic": "0x377f0682",
+                  "headerChecksumValid": true
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "35595b4144f6be246d01b7811fc139884244ec8b970ad03466aa5e582374cd1e"
+                }
+              },
+              {
+                "seq": 158,
+                "utc": "2026-11-21T16:24:08.664Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": "absent",
+                "shm": {
+                  "size": 32768,
+                  "sha256": "35595b4144f6be246d01b7811fc139884244ec8b970ad03466aa5e582374cd1e"
+                }
+              },
+              {
+                "seq": 160,
+                "utc": "2026-11-21T16:24:08.668Z",
+                "db": {
+                  "size": 479232,
+                  "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                  "walModeHeader": true,
+                  "pageCount": 117,
+                  "fileChangeCounter": 2
+                },
+                "wal": {
+                  "size": 0,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                },
+                "shm": {
+                  "size": 32768,
+                  "sha256": "35595b4144f6be246d01b7811fc139884244ec8b970ad03466aa5e582374cd1e"
+                }
+              }
+            ]
+          }
+        ],
+        "finalBeforeRm": {
+          "db": {
+            "size": 479232,
+            "sha256": "9dba930f60144596b2706ee38143941263055991658ad703f6efed8cce3b47f1",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": "absent",
+          "shm": "absent"
+        }
+      }
+    ],
+    "contract": [
+      {
+        "test": "accepts a missing shipped codex seed without storing it",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "d568d382fe5792935448b6042b59b15d886f433de30754954434e8989100a435"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "d568d382fe5792935448b6042b59b15d886f433de30754954434e8989100a435"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "accepts a missing shipped claude seed without storing it",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "adba7146176d9378cff89fbbb10eb1e376d2286e2195c42133ad68c62118d8c3",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fdbedcc1cdc563c047b491dd5270d4c859881829558a435be8edff34dc43a0e6"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "adba7146176d9378cff89fbbb10eb1e376d2286e2195c42133ad68c62118d8c3",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "fdbedcc1cdc563c047b491dd5270d4c859881829558a435be8edff34dc43a0e6"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7db1aeeff25ec7d5b8d83ecc9e914c5fa0813cec886bc79e7442ae8a9a74d3d5",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "0220b8d54fc768f9aa22dabecdbac60c2c5163aa7c33b08a24f1fda1a888017c"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7db1aeeff25ec7d5b8d83ecc9e914c5fa0813cec886bc79e7442ae8a9a74d3d5",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "0220b8d54fc768f9aa22dabecdbac60c2c5163aa7c33b08a24f1fda1a888017c"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "48aec8fca54c563f382205132d88164ce405c67b2c93bd44ef80d3ad3244fdc8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "693312eaf70d5746abf43c9381062169a765e713885e405651f9cf2dfb28e25d"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "48aec8fca54c563f382205132d88164ce405c67b2c93bd44ef80d3ad3244fdc8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "693312eaf70d5746abf43c9381062169a765e713885e405651f9cf2dfb28e25d"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves codex unknown-model defaults (effort=low, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "e0b7247b65f7f838d42fc3d3e840b7ac17db22a786cf44df103baed7489c285d"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "52eb787c9ddcb2ead9a0f9463152dd77a945417feb67bee302709c3d779ba1df"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves claude gpt-6-luna defaults (effort=low, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "dee5e0c6122e81f90a7686adfb5c7be216adec25c23ebbd0c457a4e7b85c4dd4"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "f7d2ef98d96a81b26715fa4b9118c0659724f4ae722592d1f6f3972414e1f60e"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "ce675817a9c392d5ab3d63fd2f29cc2ddea310600965d05b15c4b62ec11e17a3",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "d21f7c63ba426a7f2fa2b68b79f4bd45d3ca14aec8fc922bf8942f2a65e56a75"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves codex gpt-5.5 defaults (effort=none, status=ok)",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "ca9633a5ca743d2be56100400121333faede608755848dd2c55436aed93c1323"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves rows and migrations with an initially absent WAL",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": "absent",
+          "shm": "absent"
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "preserves rows and migrations with an initially empty WAL",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": "absent"
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 0,
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "projects a missing seed from a WAL-backed store without checkpointing or writing it",
+        "before": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 8272,
+            "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+            "frames": 2,
+            "validFramePrefix": 2,
+            "commitFrames": 1,
+            "pageSize": 4096,
+            "magic": "0x377f0682",
+            "headerChecksumValid": true
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "90b28de37916295ab5b91be7339adbb1ba46e0ed56e2c6e29a42701bbc06fceb"
+          }
+        },
+        "afters": [
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 8272,
+                "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+                "frames": 2,
+                "validFramePrefix": 2,
+                "commitFrames": 1,
+                "pageSize": 4096,
+                "magic": "0x377f0682",
+                "headerChecksumValid": true
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "f6ed52fbf46a5df250b998c620825cfff43ae705c4a0bfaaebaed0d9c4854677"
+              }
+            }
+          },
+          {
+            "accept": true,
+            "reasons": [],
+            "state": {
+              "db": {
+                "size": 479232,
+                "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+                "walModeHeader": true,
+                "pageCount": 117,
+                "fileChangeCounter": 2
+              },
+              "wal": {
+                "size": 8272,
+                "sha256": "ad68297a79b0c7f9c7e083a49f0c44e2cc9e35388c8bdc08cf4c2d1574eba88f",
+                "frames": 2,
+                "validFramePrefix": 2,
+                "commitFrames": 1,
+                "pageSize": 4096,
+                "magic": "0x377f0682",
+                "headerChecksumValid": true
+              },
+              "shm": {
+                "size": 32768,
+                "sha256": "f6ed52fbf46a5df250b998c620825cfff43ae705c4a0bfaaebaed0d9c4854677"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "test": "rejects database changes, existing WAL changes or removal, and new WAL frames",
+        "pairs": [
+          {
+            "before": "absent",
+            "after": "databaseMutation",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "database bytes changed"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "absent",
+            "after": "empty",
+            "expectedAccept": true,
+            "myPredicateAccept": true,
+            "reasons": [],
+            "agrees": true
+          },
+          {
+            "before": "empty",
+            "after": "removedEmpty",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "existing WAL removed"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "absent",
+            "after": "realFrames",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "new nonempty WAL"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "empty",
+            "after": "realFrames",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "existing WAL bytes changed"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "frozenNonempty",
+            "after": "walMutation",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "existing WAL bytes changed"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "frozenNonempty",
+            "after": "removedWal",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "existing WAL removed"
+            ],
+            "agrees": true
+          },
+          {
+            "before": "frozenNonempty",
+            "after": "truncatedWal",
+            "expectedAccept": false,
+            "myPredicateAccept": false,
+            "reasons": [
+              "existing WAL bytes changed"
+            ],
+            "agrees": true
+          }
+        ]
+      }
+    ],
+    "nativeTcpPoller": {
+      "tracked": [
+        "cmd.exe/46616<-6852",
+        "pnpm.exe/27468<-46616",
+        "cmd.exe/17276<-27468",
+        "node.exe/21068<-17276",
+        "node.exe/6248<-21068"
+      ],
+      "rows": [],
+      "stop": {
+        "utc": "2026-11-21T16:24:10.3686749Z",
+        "samples": 18,
+        "trackedPids": [
+          27468,
+          6248,
+          21068,
+          17276,
+          46616,
+          6852
+        ],
+        "event": "poller-stop",
+        "rowsWritten": 0
+      }
+    }
+  }
+}

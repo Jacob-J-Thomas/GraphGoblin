@@ -1,0 +1,58 @@
+{
+  "schema": "graphgoblin-corrective-publication-preparation/1",
+  "status": "ROOT_ADMITTED_EXACT_SELECTION",
+  "issue": 448,
+  "archivePrefix": "docs/qa/2026-11-21-i4-448-test-correction",
+  "candidateDirectoryPrefix": "i4-448-test-publication-candidate-",
+  "inventory": "input-inventory.json",
+  "binding": "source-binding.json",
+  "requiredProviders": [
+    {
+      "id": "i4-448-test-fable-review-01",
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-fable-review-01",
+      "model": "claude-fable-5-2",
+      "effort": "xhigh",
+      "cwd": "G:/ggq/gg-i4-448-preflight/GraphGoblin",
+      "allowedVerdicts": [
+        "ACCEPT FIX"
+      ],
+      "completion": {
+        "rootAssessedAccepted": true,
+        "acceptedVerdict": "ACCEPT FIX",
+        "verdictFile": "provider/provider-final-message.md",
+        "verdictSha256": "17aefb50640ef27ca1aaff3975a68a03ac38aa079e5a6138a31996c1d2443552",
+        "verdictLineNumber": 1
+      }
+    },
+    {
+      "id": "i4-448-test-independent-01",
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01",
+      "model": "claude-opus-5-5",
+      "effort": "xhigh",
+      "cwd": "G:/ggq/gg-i4-448-qa/GraphGoblin",
+      "allowedVerdicts": [
+        "PASS"
+      ],
+      "completion": {
+        "rootAssessedAccepted": true,
+        "acceptedVerdict": "PASS",
+        "verdictFile": "report.md",
+        "verdictSha256": "66ae9207dbf39fd1e04d5f82c3d471926e5571243d40e7e6dad53cce23c5dd5a",
+        "verdictLineNumber": 3
+      }
+    }
+  ],
+  "credentialSelectionReview": {
+    "status": "approved-bounded",
+    "selectionSha256": "2dd38d270baf5e0057abfc4fb3bbbe82bc528c91b82166b2598636cbb47acd5d",
+    "rootDecision": "Root read the full Fable report, full separate Opus QA report and terminal envelopes, checked actual model/effort/exit/final bytes and all184 sealed QA members, and inspected command environment recording and selected scope. Records concern isolated test fixtures, synthetic canaries and known local paths, not owner stores or real provider authentication. The environment receipt records a bounded allowlist and no inherited GG variables. Five bounded token/private-key patterns found no candidates. Approve this exact text/record selection for publication; this is bounded disclosure review, not exhaustive assurance. Retain all75 binary originals locally with complete hashes:14 author fixtures and61 independent SQLite blobs, including damaged/empty .bin samples. No original is deleted or redacted."
+  },
+  "remainingRootGates": [
+    "Root final selection, bounded credential review, current README wording/format and exact new archive seal",
+    "Root byte-preserving policy entries, stage/commit approval and evidence-only publication",
+    "Current-main integration, exact-head/current-target CI and canonical native artifact verification",
+    "Explicit D035/D042 coordinator completion; all three general scans consumed; no renewed Astra approval",
+    "Owner decision catalogue/rework and any separately required owner acceptance",
+    "#448 owner-only closure stays open"
+  ]
+}

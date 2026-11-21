@@ -1,0 +1,1222 @@
+{
+  "id": "P12",
+  "kind": "built-cli-preflight",
+  "purpose": "existing policy: Codex preflight checks membership/enabled only (gpt-5.5 effort none)",
+  "variant": "missing",
+  "defaults": {
+    "byHarness": {
+      "codex": {
+        "model": "gpt-5.5",
+        "effort": "none"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "not timed out",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "exit code",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "row \"Database\" ok /^reachable and migrated$/",
+      "expected": {
+        "status": "ok",
+        "detail": "/^reachable and migrated$/"
+      },
+      "actual": {
+        "status": "ok",
+        "detail": "/^reachable and migrated$/"
+      },
+      "pass": true
+    },
+    {
+      "name": "row \"Harness codex\" ok",
+      "expected": {
+        "status": "ok",
+        "detail": "(any)"
+      },
+      "actual": {
+        "status": "ok",
+        "detail": "(any)"
+      },
+      "pass": true
+    },
+    {
+      "name": "row \"Harness claude\" ok",
+      "expected": {
+        "status": "ok",
+        "detail": "(any)"
+      },
+      "actual": {
+        "status": "ok",
+        "detail": "(any)"
+      },
+      "pass": true
+    },
+    {
+      "name": "row \"Default model\" ok /^gpt-5\\.5 \\(codex\\) is in the model catalog$/",
+      "expected": {
+        "status": "ok",
+        "detail": "/^gpt-5\\.5 \\(codex\\) is in the model catalog$/"
+      },
+      "actual": {
+        "status": "ok",
+        "detail": "/^gpt-5\\.5 \\(codex\\) is in the model catalog$/"
+      },
+      "pass": true
+    },
+    {
+      "name": "DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "pass": true
+    },
+    {
+      "name": "WAL bytes/presence unchanged",
+      "expected": null,
+      "actual": {
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "pass": false
+    },
+    {
+      "name": "no rollback journal created",
+      "expected": null,
+      "actual": null,
+      "pass": true
+    },
+    {
+      "name": "logical hash unchanged",
+      "expected": "b4ac0a04440bf573b596482ad620acb38fb78cc283a15441096274d38e02e52b",
+      "actual": "b4ac0a04440bf573b596482ad620acb38fb78cc283a15441096274d38e02e52b",
+      "pass": true
+    },
+    {
+      "name": "catalog rows unchanged",
+      "expected": "69959f9f961471884b805e9986a5c1a352b6f970d1a77286771c6dfa26a0aa1e",
+      "actual": "69959f9f961471884b805e9986a5c1a352b6f970d1a77286771c6dfa26a0aa1e",
+      "pass": true
+    },
+    {
+      "name": "catalog rowcount unchanged",
+      "expected": 11,
+      "actual": 11,
+      "pass": true
+    },
+    {
+      "name": "migration ledger unchanged",
+      "expected": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "actual": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "pass": true
+    },
+    {
+      "name": "format marker unchanged",
+      "expected": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "actual": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "schema_version/user_version unchanged",
+      "expected": [
+        138,
+        0
+      ],
+      "actual": [
+        138,
+        0
+      ],
+      "pass": true
+    },
+    {
+      "name": "listing \"caseDir\" names unchanged (excluding -shm)",
+      "expected": [
+        "external store/",
+        "external store/gateway.db"
+      ],
+      "actual": [
+        "external store/",
+        "external store/gateway.db",
+        "external store/gateway.db-wal"
+      ],
+      "pass": false
+    },
+    {
+      "name": "listing \"storeDir\" names unchanged (excluding -shm)",
+      "expected": [
+        "gateway.db"
+      ],
+      "actual": [
+        "gateway.db",
+        "gateway.db-wal"
+      ],
+      "pass": false
+    },
+    {
+      "name": "still absent: cases\\P12\\data",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "fake CLIs saw probes only (no turn)",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:00:53.925Z",
+  "env": {
+    "TEMP": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp",
+    "USERPROFILE": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "HOME": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home",
+    "APPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Roaming",
+    "LOCALAPPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\home\\AppData\\Local",
+    "GG_HOST": "127.0.0.1",
+    "GG_LOG_LEVEL": "info",
+    "GG_SWAGGER_UI": "false",
+    "GG_WEB_DIST": "",
+    "GG_GOBLIN_DIST": "",
+    "GG_OLLAMA_ENABLED": "true",
+    "GG_OLLAMA_URL": "http://127.0.0.1:52275",
+    "GG_CODEX_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\codex-fake.mjs",
+    "GG_CLAUDE_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\bin\\claude.exe",
+    "GG_MASTER_KEY": "synthetic-32-bytes-0x48",
+    "GG_DATA_DIR": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\P12\\data",
+    "GG_DB_URL": "file:///C:/Users/98jak/AppData/Local/Temp/gg-448-qa-indep-20261121T090017/cases/P12/external%20store/gateway.db",
+    "GG_DEFAULTS": "{\"byHarness\":{\"codex\":{\"model\":\"gpt-5.5\",\"effort\":\"none\"}}}",
+    "GG_PORT": "63864"
+  },
+  "before": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "-wal": null,
+      "-shm": null,
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "6490b8ed3a307343759ebca8e08d032ff11b4d6e23d4b128d2752e330de39b79",
+      "logicalHash": "b4ac0a04440bf573b596482ad620acb38fb78cc283a15441096274d38e02e52b",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "9e8d7a3eaf0745c075ae71c929cf5c48306805941e156194a4e22025cf91f165"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "bf22dcbb01679c4b3ab52c5ac1cae3823fded2170b39560c1ea741f7be5d24ae"
+        },
+        "model_catalog": {
+          "count": 11,
+          "sha256": "7fdf68fcbc5b31eb244e285e006f58521bd6ee85a722bf5e2dc6addace85a60a"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79dd6198004ef1bdda0699c3a7d2b7fd4feb8b72fb873159c2c1b361c7d8198f"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 11,
+      "catalogHash": "69959f9f961471884b805e9986a5c1a352b6f970d1a77286771c6dfa26a0aa1e",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "caseDir": [
+        "external store/",
+        "external store/gateway.db (479232)"
+      ],
+      "storeDir": [
+        "gateway.db (479232)"
+      ]
+    }
+  },
+  "pid": 13816,
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "timedOut": false,
+  "durationMs": 2674,
+  "raw": {
+    "stdout": "raw/P12.stdout.txt",
+    "stderr": "raw/P12.stderr.txt",
+    "class": "private-synthetic-raw"
+  },
+  "after": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "0c8a9a7c3012ba4e57402799066181183927d9345faad7a4b9d2b3eaf741d9fb"
+      },
+      "-wal": {
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "-shm": {
+        "size": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "6490b8ed3a307343759ebca8e08d032ff11b4d6e23d4b128d2752e330de39b79",
+      "logicalHash": "b4ac0a04440bf573b596482ad620acb38fb78cc283a15441096274d38e02e52b",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "9e8d7a3eaf0745c075ae71c929cf5c48306805941e156194a4e22025cf91f165"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "bf22dcbb01679c4b3ab52c5ac1cae3823fded2170b39560c1ea741f7be5d24ae"
+        },
+        "model_catalog": {
+          "count": 11,
+          "sha256": "7fdf68fcbc5b31eb244e285e006f58521bd6ee85a722bf5e2dc6addace85a60a"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79dd6198004ef1bdda0699c3a7d2b7fd4feb8b72fb873159c2c1b361c7d8198f"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 11,
+      "catalogHash": "69959f9f961471884b805e9986a5c1a352b6f970d1a77286771c6dfa26a0aa1e",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "baseOnly": {
+      "exists": true,
+      "withWal": false,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "6490b8ed3a307343759ebca8e08d032ff11b4d6e23d4b128d2752e330de39b79",
+      "logicalHash": "b4ac0a04440bf573b596482ad620acb38fb78cc283a15441096274d38e02e52b",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "4dc4597f3ecb8dbfdc2ac0d1978adad7780613c2e7185aa81319474303d9b64c"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "3e7e732f85082369525c1950dee00aa837f9247373a7f9b1af9b7d15fdef4e9e"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "9e8d7a3eaf0745c075ae71c929cf5c48306805941e156194a4e22025cf91f165"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "bf22dcbb01679c4b3ab52c5ac1cae3823fded2170b39560c1ea741f7be5d24ae"
+        },
+        "model_catalog": {
+          "count": 11,
+          "sha256": "7fdf68fcbc5b31eb244e285e006f58521bd6ee85a722bf5e2dc6addace85a60a"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79dd6198004ef1bdda0699c3a7d2b7fd4feb8b72fb873159c2c1b361c7d8198f"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 11,
+      "catalogHash": "69959f9f961471884b805e9986a5c1a352b6f970d1a77286771c6dfa26a0aa1e",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 4,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "caseDir": [
+        "external store/",
+        "external store/gateway.db (479232)",
+        "external store/gateway.db-shm (32768)",
+        "external store/gateway.db-wal (0)"
+      ],
+      "storeDir": [
+        "gateway.db (479232)",
+        "gateway.db-shm (32768)",
+        "gateway.db-wal (0)"
+      ]
+    }
+  },
+  "fakeInvocations": [
+    {
+      "cli": "claude",
+      "kind": "version",
+      "exit": 0,
+      "pid": 18328,
+      "utc": "2026-11-21T09:00:56.1870094Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-21c67134",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "version",
+      "exit": 0,
+      "pid": 35976,
+      "utc": "2026-11-21T09:00:56.227Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-a2b4bddc",
+      "args": [
+        "--version"
+      ]
+    },
+    {
+      "cli": "claude",
+      "kind": "help",
+      "exit": 0,
+      "pid": 40316,
+      "utc": "2026-11-21T09:00:56.2829793Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-21c67134",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ]
+    },
+    {
+      "cli": "claude",
+      "kind": "auth-status",
+      "exit": 0,
+      "pid": 29556,
+      "utc": "2026-11-21T09:00:56.3566780Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-claude-probe-21c67134",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-help",
+      "exit": 0,
+      "pid": 36016,
+      "utc": "2026-11-21T09:00:56.358Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-a2b4bddc",
+      "args": [
+        "exec",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "exec-resume-help",
+      "exit": 0,
+      "pid": 42960,
+      "utc": "2026-11-21T09:00:56.470Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-a2b4bddc",
+      "args": [
+        "exec",
+        "resume",
+        "--help"
+      ]
+    },
+    {
+      "cli": "codex",
+      "kind": "login-status",
+      "exit": 0,
+      "pid": 5364,
+      "utc": "2026-11-21T09:00:56.581Z",
+      "cwd": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\tmp\\gg-codex-probe-a2b4bddc",
+      "args": [
+        "login",
+        "status"
+      ]
+    }
+  ],
+  "ollamaRequests": [
+    {
+      "method": "GET",
+      "url": "/api/tags",
+      "utc": "2026-11-21T09:00:56.125Z"
+    }
+  ],
+  "report": {
+    "rows": [
+      {
+        "status": "ok",
+        "label": "Node.js",
+        "detail": "Node 22.23.4"
+      },
+      {
+        "status": "WARN",
+        "label": "Data directory",
+        "detail": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090017\\cases\\P12\\data does not exist yet; it is created on first start"
+      },
+      {
+        "status": "ok",
+        "label": "Master key",
+        "detail": "taken from GG_MASTER_KEY"
+      },
+      {
+        "status": "ok",
+        "label": "Database",
+        "detail": "reachable and migrated"
+      },
+      {
+        "status": "ok",
+        "label": "Harness ollama",
+        "detail": "Ollama service metadata probe passed; model execution and memory requirements are not tested."
+      },
+      {
+        "status": "ok",
+        "label": "Harness claude",
+        "detail": "claude 2.1.287 is installed and logged in"
+      },
+      {
+        "status": "ok",
+        "label": "Harness codex",
+        "detail": "codex 0.160.0 is installed and logged in"
+      },
+      {
+        "status": "WARN",
+        "label": "Jev",
+        "detail": "no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured"
+      },
+      {
+        "status": "ok",
+        "label": "Default model",
+        "detail": "gpt-5.5 (codex) is in the model catalog"
+      }
+    ],
+    "summary": "0 failed, 2 warning(s): ready to start"
+  },
+  "shm": {
+    "before": null,
+    "after": {
+      "size": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "changed": true,
+    "note": "SQLite readers may update -shm; allowed"
+  },
+  "pass": false,
+  "finishedUtc": "2026-11-21T09:00:56.682Z"
+}

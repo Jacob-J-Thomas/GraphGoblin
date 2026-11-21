@@ -1,0 +1,122 @@
+{
+  "issue": 448,
+  "qa": "independent behavior QA, Claude Opus 5.5 (fresh context, separate from author and reviewer)",
+  "candidate": "b45807f033601a53919f2c9e16e0de751971a518",
+  "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+  "verdictScale": "PASS | FAIL | GAP (not established by this QA) | PASS+GAP (behaviour passes; a stated limit or documentation precision issue remains)",
+  "authoritativeRun": "observations/run-02 (driver/qa448-driver.run-02.mjs); run-01 retained with its strict-expectation failures",
+  "criteria": [
+    {
+      "id": "C01",
+      "criterion": "Source, tree, runtime, lockfile and build binding",
+      "verdict": "PASS",
+      "evidence": ["binding/git-state-before.txt", "binding/git-state-after.txt", "binding/candidate-vs-base.diff", "binding/changed-files-sha256.txt", "binding/runtime.txt", "binding/dist-binding.txt", "commands/01-build.log"],
+      "facts": "HEAD b45807f, parent 02351e2, clean before/after; diff byte-identical to author candidate.diff (sha256 6269f388...); 7 file hashes equal author manifest; lockfile blob unchanged from base; Node v22.23.4, pnpm 12.8.1; single pnpm build exit 0 (12/12 tasks, infrastructure+api cache miss, 5 unchanged packages replayed); dist contains projectStartupModelCatalog at both call sites."
+    },
+    {
+      "id": "C02",
+      "criterion": "Offline --preflight and ordinary startup share the pure stored-first projection",
+      "verdict": "PASS",
+      "evidence": ["binding/dist-binding.txt", "observations/run-02/M01.json", "observations/run-02/P01.json", "observations/run-02/S01.json", "observations/run-02/S06.json"],
+      "facts": "Built preflight.js:429 and container.js:80 call projectStartupModelCatalog. M01: stored rows first in stored order, input unmutated, idempotent, only missing pair appended. Same store+GG_DEFAULTS admitted by built CLI (P01) and booted by built gateway (S01); S06/S07 show boot sees the projected (missing) seed as another harness's model (MODEL_HARNESS_MISMATCH)."
+    },
+    {
+      "id": "C03",
+      "criterion": "Missing shipped Codex+Claude seeds admitted in memory only by offline --preflight (external percent-encoded path, inside GG_DATA_DIR, WAL-only missing rows)",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/P01.json", "observations/run-02/P02.json", "observations/run-02/P03.json", "observations/run-02/P18.json", "fixtures-run-02/reverify.json"],
+      "facts": "Exit 0; ok Database reachable and migrated; ok Default model gpt-6.1-terra (codex) is in the model catalog; ok Claude default model. Rows still absent afterwards (11 rows, independent re-read); data dir still absent for external cases."
+    },
+    {
+      "id": "C04",
+      "criterion": "Offline --preflight writes nothing: no seed/refresh/migrate; DB/WAL bytes and logical rows unchanged (-shm reader changes allowed)",
+      "verdict": "PASS+GAP",
+      "evidence": ["observations/run-02/P01.json..P18.json", "observations/run-02/M05.json", "observations/run-01/*.json", "fixtures-run-02/SHA256SUMS", "fixtures-run-02/reverify.json"],
+      "facts": "All 18 CLI cases: DB sha256 unchanged, logical hash, catalog rows/rowcount, migration ledger, format marker, schema_version/user_version unchanged; no rollback journal. Existing WAL byte-identical (P03 16512 B, P18). GAP: on a WAL-mode store with no -wal file, every read-only open (built openReadOnlyDatabaseClient, built guardCurrentStore alone, independent node:sqlite readOnly; M05) creates a 0-byte -wal and 32 KiB -shm. Zero frames; not attributable to #448 (unchanged guard path; also on unsupported store P15 and startup refusals S05-S11). Strictly, CHANGELOG/docs/11 'database and WAL bytes remain unchanged' does not mention that an empty -wal file can appear."
+    },
+    {
+      "id": "C05",
+      "criterion": "Ordinary startup on a separate copy accepts the same missing-seed config and seeds normally",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/S01.json", "observations/run-02/S02.json", "fixtures-run-02/reverify.json"],
+      "facts": "Built gateway listening (healthz pid = owned child); GET /model-catalog both seeds enabled; GET /system/model-defaults = GG_DEFAULTS; GET /system/preflight database/default-model/default-model.claude ok; drained exit 0; stored rows 11 -> 13, ledger/marker unchanged, no pre-existing enabled flag changed. S02 covers WAL-only missing rows inside GG_DATA_DIR."
+    },
+    {
+      "id": "C06",
+      "criterion": "Existing exact (harness, model) rows win: disabled same-seed-id rows and stored metadata",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/P04.json", "observations/run-02/P05.json", "observations/run-02/P10.json", "observations/run-02/P11.json", "observations/run-02/S03.json", "observations/run-02/S04.json", "observations/run-02/S09.json", "observations/run-02/M01.json"],
+      "facts": "Disabled row stays disabled in projection (single entry), offline and after boot. Stored Claude efforts [high] override shipped metadata: low refused offline (P10) and at boot (S09, EFFORT_UNSUPPORTED); high admitted (P11)."
+    },
+    {
+      "id": "C07",
+      "criterion": "D172 distinct policies: Codex disabled default WARN/exit 0; Claude disabled default FAIL/exit 1; boot rejects only invalid (not unavailable) and preserves the disabled row; disabled model unavailable to execution",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/P04.json", "observations/run-02/P05.json", "observations/run-02/S03.json", "observations/run-02/S04.json", "observations/run-02/M01.json", "observations/run-02/M03.json"],
+      "facts": "P04: WARN Default model 'gpt-6.1-terra is in the model catalog but disabled', exit 0. P05: FAIL Claude default model 'The configured Claude model is disabled', exit 1. S03/S04: gateway boots; GET /model-catalog enabled:false; validate MODEL_DISABLED severity warning, publishable false; publish 422 LOOP_INVALID; draft run 202 then failed EVALUATION_UNAVAILABLE details.code MODEL_DISABLED; isAllowed false; resolveHarnessModel unavailable/MODEL_DISABLED; validateHarnessDefaults []. Fakes saw only probes during the run."
+    },
+    {
+      "id": "C08",
+      "criterion": "Unknown, wrong harness/family and unsupported effort remain invalid",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/P06.json..P09.json", "observations/run-02/S05.json..S08.json", "observations/run-02/P12.json", "observations/run-02/S10.json"],
+      "facts": "Offline FAIL/exit 1 for unknown, wrong-harness, wrong-family, Claude effort none. Boot refuses before writes with EVALUATION_INVALID_CONFIGURATION + MODEL_NOT_IN_CATALOG / MODEL_HARNESS_MISMATCH / EFFORT_UNSUPPORTED; DB bytes and logical rows unchanged. Existing asymmetry retained: Codex preflight does not check effort (P12 ok) while boot refuses gpt-5.5/none (S10)."
+    },
+    {
+      "id": "C09",
+      "criterion": "First-run, unsupported, unreadable, pending-migration, external-path and WAL read-only guards unchanged",
+      "verdict": "PASS+GAP",
+      "evidence": ["observations/run-02/P13.json..P17.json", "observations/run-02/S11.json", "binding/unchanged-paths.txt"],
+      "facts": "P13/P14 nothing created; P15 format 3 FAIL with reset guidance; P16 SQLITE_NOTADB FAIL; P17 '1 migration(s) pending' WARN, ledger stays 29; S11 startup refuses format 3. GAP: 'unchanged versus base' rests on source equivalence (store-format.ts, db.ts, readiness.ts unchanged; preflight/container diffs only touch the catalog expression) - the base binary was not built or run (single build slot)."
+    },
+    {
+      "id": "C10",
+      "criterion": "Discrimination: the candidate change is what admits the missing seeds",
+      "verdict": "PASS+GAP",
+      "evidence": ["observations/run-02/M02.json"],
+      "facts": "Same missing-seed store through built runPreflight: candidate catalog source -> default-model ok, default-model.claude ok; stored-only catalog source -> both fail. Boot validator with stored-only catalog -> codex and claude MODEL_NOT_IN_CATALOG; with projection -> []. GAP: synthetic counterfactual at the candidate, not the base binary (author's stored-only control log is the only base-like runtime evidence)."
+    },
+    {
+      "id": "C11",
+      "criterion": "Isolation: no owner Ollama, Codex/Claude credentials, owner ports, secrets, paid provider or model turn",
+      "verdict": "PASS",
+      "evidence": ["observations/run-02/summary.json", "observations/run-02/raw/fake-cli-invocations.jsonl", "observations/run-02/raw/ollama-recorder-requests.json", "commands/20-api-focused.fetch-guard.jsonl"],
+      "facts": "Children built from an empty environment with scratch USERPROFILE/HOME/APPDATA/LOCALAPPDATA/TEMP, fake Claude exe and fake Codex .mjs (probe-only; refuse anything else with exit 86), Ollama URL = local recorder. run-02: 22 x 7 probe kinds, 0 refused-non-probe; recorder saw only GET /api/tags (22). Gateway ports ephemeral, never 4747/4748/11434. Guarded focused API suite: 10 in-test fetches to 127.0.0.1:11434 blocked (test-hygiene finding)."
+    },
+    {
+      "id": "C12",
+      "criterion": "Author focused suites re-run independently (once, no retry)",
+      "verdict": "FAIL tier recorded (API PASS; infrastructure FAIL, pre-existing class)",
+      "evidence": ["commands/20-api-focused.log", "commands/21-infra-focused.log"],
+      "facts": "API preflight-catalog/preflight/preflight-ollama: 3 files, 61/61 passed, exit 0. Infrastructure catalog-projection/catalog/storage: 55 passed, 1 failed, exit 1 - catalog.test.ts 'reads current-format base catalog before discovery migrations without joining new tables' EBUSY unlink catalog.db. Same test and class as the author's candidate run and immutable-baseline run; that test does not call the projection. Not claimed to have vanished; cause not established."
+    },
+    {
+      "id": "C13",
+      "criterion": "Own native fixture close/cleanup inspected",
+      "verdict": "FAIL tier recorded (native cleanup class, not a #448 product criterion)",
+      "evidence": ["observations/run-01/M04.json", "observations/run-02/M04.json"],
+      "facts": "After libsql client.close(): run-01 writer and read-only files EBUSY for >= 1.25 s; run-02 writer released by 250 ms, read-only client EBUSY >= 1.25 s and removable immediately after explicit gc(). node:sqlite writer releases immediately. Consistent with the repository's own vitest comments about native handles outliving close() on Windows. All scratch files were removed after the processes exited."
+    },
+    {
+      "id": "C14",
+      "criterion": "Owned processes and scratch cleanup",
+      "verdict": "PASS",
+      "evidence": ["observations/run-01/summary.json", "observations/run-02/summary.json", "commands/30-cleanup.log", "binding/git-state-after.txt"],
+      "facts": "run-01 and run-02: 30 owned API children each, exits 0/1 only, 0 timeouts, 0 still running. One stray wait loop of mine (bash 40164 tree) identified by unique command line and stopped with taskkill /T (4 PIDs). Nonce-verified removal of both scratch roots; 27 suite TEMP leftovers removed (prefix + creation-time attribution). Final: 0 owned process references, 0 listeners on 4747/4748/11434, tree clean."
+    },
+    {
+      "id": "C15",
+      "criterion": "Live provider entitlement / actual model turn",
+      "verdict": "GAP (out of scope by design)",
+      "evidence": [],
+      "facts": "No provider, credential or model turn was used; readiness is fake-CLI based. Live entitlement is not established by this QA."
+    },
+    {
+      "id": "C16",
+      "criterion": "No UI change",
+      "verdict": "PASS",
+      "evidence": ["binding/candidate-vs-base.stat"],
+      "facts": "Seven changed files: CHANGELOG, docs/11, apps/api container/preflight(+test), infrastructure settings(+test). No apps/web change."
+    }
+  ]
+}

@@ -28,6 +28,7 @@ import {
   openDatabase,
   openReadOnlyDatabaseClient,
   pendingMigrationCount,
+  projectStartupModelCatalog,
   type Database,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
@@ -649,7 +650,7 @@ export async function configPreflightSources(
             JEV_SECRET,
           )
         : Promise.resolve(undefined),
-    catalog: () => new SqliteModelCatalog(handle.db).list(),
+    catalog: async () => projectStartupModelCatalog(await new SqliteModelCatalog(handle.db).list()),
     jevEnabled: async () =>
       (await new SqliteClassifierModels(handle.db).findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
     close: () => handle.close(),
