@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Document explicit Windows batch-file invocation and pinned-definition recovery for
+  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression
+  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.
+
 - System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
   passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
   tools are not verified by this check. CLI inventory commands are useful for investigation,

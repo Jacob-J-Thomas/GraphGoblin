@@ -147,7 +147,7 @@ an account-specific explanation from that generic category.
 
 ## Find the symptom
 
-For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start; correct the missing command or start configuration and explicitly Resume. Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.
+For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start. Restore an external prerequisite, such as a missing executable, then explicitly Resume. To change the command, arguments or working-directory configuration, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](03-run-and-observe.md#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies the change because both keep the pinned version. See [Windows batch commands](#windows-batch-commands). Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.
 
 After upgrading, an unfinished script visit from an earlier build may have no dispatch marker even though it already produced an effect. Recovery classifies it as `SCRIPT_OUTCOME_UNCERTAIN` with a visit ID and no dispatch ID; it does not run the command. The same failure and recovery choices remain available if writing a dispatched script's progress or completion failed. Repair the storage fault, inspect any external effect, then choose Resume or Replay knowingly, or leave the run failed with Cancel. No store reset or migration is required.
 
@@ -197,6 +197,31 @@ After upgrading, an unfinished script visit from an earlier build may have no di
 | The UI asks for an API key                                                                                                                                     | `GG_REQUIRE_API_KEY=true`; this browser has no key, or its key was revoked.                                                                                                                                                                                                             | Paste a key. For the first key, stop the API, run `node apps/api/dist/main.js --create-api-key <name>` with the server's environment, then restart (see [Settings](06-settings-and-secrets.md#the-first-key-from-the-command-line)).                                                                                                                                                                                                                                                                                                                                                                        |
 | The UI returns 404                                                                                                                                             | `GG_WEB_DIST` is empty or points at a missing build, or the checkout was not built.                                                                                                                                                                                                     | Run `pnpm build`, or set `GG_WEB_DIST` to a built web directory containing `index.html`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Settings defaults change but a run uses another model                                                                                                          | A node value or loop default wins over the owner default.                                                                                                                                                                                                                               | Clear the node or loop value, or change it; owner defaults apply from the next run start or resume.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+### Windows batch commands
+
+Script commands run without an implicit shell. On Windows, naming a `.cmd` or `.bat` file as
+the command fails with `SCRIPT_START_FAILED`: the process runner proved that it did not start.
+This is distinct from `SCRIPT_OUTCOME_UNCERTAIN`, which needs explicit recovery consent because
+an earlier attempt may have produced effects. A proven start refusal permits ordinary Resume,
+but Resume and Replay both use the failed run's pinned command, arguments and working-directory
+configuration.
+
+To run a batch file, explicitly choose `C:\Windows\System32\cmd.exe` (use your Windows
+installation's actual path), set its arguments to `/d`, `/c` and the intended batch command,
+and choose the working directory deliberately. `/d` disables the command processor's AutoRun
+commands. The command string after `/c` is interpreted by that shell; keep it authored and
+quote paths and arguments for `cmd.exe`, rather than inserting untrusted text. For example,
+with a working directory containing `build.cmd`, the arguments are `["/d", "/c", "build.cmd"]`.
+Start a fresh run from the corrected definition. The UI's **New run** uses a published version,
+so publish the correction before starting it there. To test an unpublished saved draft, use
+`POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run
+freezes a new snapshot without publication. Publishing can arm the new version's cron and
+webhook triggers and disable the earlier version's registrations; see
+[trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6).
+Neither Resume nor Replay applies a definition change; both retain the old batch-file command.
+If only an external prerequisite changed, such as
+restoring a missing executable, Resume can use the existing pinned definition.
 
 ## HTTP probe exceeds 64 KiB
 

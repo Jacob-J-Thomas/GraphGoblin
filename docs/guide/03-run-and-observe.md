@@ -172,7 +172,7 @@ Windows PowerShell gives a POST without a body a form content type, which the AP
 
 Pause and input retain their state-conflict errors. Resume and Replay return typed current eligibility refusals; see [ADR-0061](../decisions/ADR-0061-recovery-eligibility.md) for the complete list.
 
-Editing the loop does not change a failed run's pinned config. For a config or graph fix, publish a corrected version and start a new run. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.
+Editing the loop does not change a failed run's pinned config. For a config or graph fix, start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there. To test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run freezes a new snapshot without publication. Publishing can arm the new version's cron and webhook triggers and disable the earlier version's registrations; see [trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6). Resume and Replay retain the original pin. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.
 
 Child runs reconstruct like any other run: their first event, `run.queued`, carries the thread the parent seeded (`initialThread`), so the inspector shows inherited messages and values at every event. Runs recorded before that field existed start from empty collections; `GET /runs/{id}/thread` always returns the server's current thread.
 
@@ -270,7 +270,7 @@ A subloop creates a separate child run with its own version, thread, and log. Th
 
 ## Act on failure reasons
 
-`SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.
+`SCRIPT_START_FAILED` means the runner proved the command did not start. After restoring an external prerequisite, such as a missing executable, Resume can retry the pinned definition. If the command, arguments or working-directory configuration must change, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies that definition change: both retain the failed run's pinned version. See [Windows batch commands](07-troubleshooting.md#windows-batch-commands). `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.
 
 A handler failure looks like this inside the run snapshot's `failure` field:
 
@@ -286,7 +286,7 @@ A handler failure looks like this inside the run snapshot's `failure` field:
 }
 ```
 
-Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Publish and start a new run when the correction changes the pinned definition. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
+Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Start a fresh run from the corrected definition when the correction changes the pinned definition, using a published version in the UI or an explicit [API draft start](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
 
 Non-pinned generic Codex failures permit Resume even when the adapter reports `retriable: false`
 for a lost stream or CLI exit. Generic Claude failures require the adapter's `retriable`

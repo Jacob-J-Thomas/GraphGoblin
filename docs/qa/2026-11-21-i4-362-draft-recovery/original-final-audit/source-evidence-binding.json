@@ -1,0 +1,1052 @@
+{
+  "schema": "graphgoblin.final-review.source-and-evidence/1",
+  "pr": 548,
+  "issue": 362,
+  "verdict": "CHANGES_REQUIRED",
+  "formalScan": 3,
+  "formalScanCap": 3,
+  "reviewerRole": "fresh independent final reviewer, GPT-6.2 Astra MAX as assigned by coordinator; no separate external model attestation",
+  "report": {
+    "path": "REPORT.md",
+    "bytes": 17024,
+    "sha256": "11ea4ff863fc923388d0d19c26e3d7e4bed8d1e0a5a877626c80b6dbe30710f5"
+  },
+  "sourceCheckout": "G:/ggq/gg-i4-362-batch-guidance/GraphGoblin",
+  "evidenceRoot": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents",
+  "dispatchBrief": "i4-548-final-astra-BRIEF-02.md",
+  "priorities": {
+    "materialIntroduced": [
+      "F3"
+    ],
+    "priorF1": "resolved for pinned Resume/Replay versus new corrected version",
+    "priorF2": "resolved for symptom-table section placement",
+    "nonblockingAttributionCorrections": [
+      "loopback HTTP without bearer authentication",
+      "distinct once-published loops in A1 and A5; no single-loop republish trial in #362 QA"
+    ],
+    "completionPath": "D035/D042 bounded correction, three formal passes consumed, coordinator completion and subsequent fresh exact-head/current-target evidence"
+  },
+  "materialFinding": {
+    "verdict": "CHANGES_REQUIRED",
+    "oneMaterialFinding": {
+      "id": "F3",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "scope": "Correct recovery guidance for fresh starts using a saved definition",
+      "sourceAnchors": [
+        {
+          "path": "docs/04-node-catalog.md",
+          "line": 157,
+          "purpose": "generic publication instruction",
+          "lineText": "working-directory configuration. To change them, publish a corrected definition and start a",
+          "fileSha256": "2e6f1c81f07ca34839d3b53a913d490a3d9370bb11d77aff48b54f0286cb97e1",
+          "gitBlob": "4403181bde89e64be5bbf18855b483f270cee000"
+        },
+        {
+          "path": "docs/guide/03-run-and-observe.md",
+          "line": 273,
+          "purpose": "generic publication instruction",
+          "lineText": "`SCRIPT_START_FAILED` means the runner proved the command did not start. After restoring an external prerequisite, such as a missing executable, Resume can retry the pinned definition. If the command, arguments or working-directory configuration must change, publish the corrected definition and start a fresh run. Neither Resume nor Replay applies that definition change: both retain the failed run's pinned version. See [Windows batch commands](07-troubleshooting.md#windows-batch-commands). `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.",
+          "fileSha256": "2afe9c7dcdbbed16a29a1193804a96103b520c433582bd8a9e1068b62c3f13d9",
+          "gitBlob": "838020ca764fa01f888a04e0095e3019141f0ab2"
+        },
+        {
+          "path": "docs/guide/07-troubleshooting.md",
+          "line": 150,
+          "purpose": "generic publication instruction",
+          "lineText": "For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start. Restore an external prerequisite, such as a missing executable, then explicitly Resume. To change the command, arguments or working-directory configuration, publish the corrected definition and start a fresh run; neither Resume nor Replay applies the change because both keep the pinned version. See [Windows batch commands](#windows-batch-commands). Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.",
+          "fileSha256": "476d7811f23c518e4596214b017faee50c9407ea23562d9474af4aa3a0f9e426",
+          "gitBlob": "94f1a5982ecf9167b2f437f60ca56faec2e6a536"
+        },
+        {
+          "path": "docs/guide/07-troubleshooting.md",
+          "line": 216,
+          "purpose": "generic publication instruction",
+          "lineText": "Publish the corrected definition and start a fresh run. Neither Resume nor Replay applies a",
+          "fileSha256": "476d7811f23c518e4596214b017faee50c9407ea23562d9474af4aa3a0f9e426",
+          "gitBlob": "94f1a5982ecf9167b2f437f60ca56faec2e6a536"
+        },
+        {
+          "path": "docs/qa/2026-11-21-i4-362-recovery-docs/README.md",
+          "line": 24,
+          "purpose": "historical supplemental statement",
+          "lineText": "The correction changes exactly `docs/04-node-catalog.md`, `docs/guide/03-run-and-observe.md` and `docs/guide/07-troubleshooting.md`. Restoring an external prerequisite can permit ordinary Resume. Changing the command, arguments or working-directory configuration requires a corrected published definition and a fresh run; Resume and Replay retain the old pinned version. The Windows batch subsection follows the general symptom table and retains its anchor.",
+          "fileSha256": "9cc8355da53a7fb4ae66f0f0518bcfc24665161a1e696945fa075fd4da926369",
+          "gitBlob": "623c87bccdd4d8dcaacd96c284491ac31e145a22"
+        },
+        {
+          "path": "docs/guide/03-run-and-observe.md",
+          "line": 74,
+          "purpose": "supported editable draft API start",
+          "lineText": "The response is HTTP 202 with a `run` object. Save `run.id`; execution continues in the background. Specify `triggerNodeId` when selecting among several triggers. `input` must match the manual trigger's schema, or the request fails with 400 `INVALID_INPUT`. `return` adds channels to the exit's channels. Optional `versionId` pins a particular version. A loop with no published version returns 404 `LOOP_NOT_FOUND`, and a draft `versionId` without `allowDraft` returns 409 `VERSION_NOT_PUBLISHED`. To try an unpublished draft, supply the draft's `versionId` (from `GET /loops/{id}`) and set `allowDraft` true. The run answers with a new `versionId`: a snapshot of the draft taken at start, which later draft edits never change. The UI runs published versions.",
+          "fileSha256": "2afe9c7dcdbbed16a29a1193804a96103b520c433582bd8a9e1068b62c3f13d9",
+          "gitBlob": "838020ca764fa01f888a04e0095e3019141f0ab2"
+        },
+        {
+          "path": "docs/guide/07-troubleshooting.md",
+          "line": 183,
+          "purpose": "existing draft troubleshooting route",
+          "lineText": "| Starting a run returns 404 `LOOP_NOT_FOUND` or 409 `VERSION_NOT_PUBLISHED`                                                                                     | Wrong loop ID, no published version, or a draft version without `allowDraft`.                                                                                                                                                                                                           | Check the ID, publish, or pass `allowDraft` true with the draft's `versionId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |",
+          "fileSha256": "476d7811f23c518e4596214b017faee50c9407ea23562d9474af4aa3a0f9e426",
+          "gitBlob": "94f1a5982ecf9167b2f437f60ca56faec2e6a536"
+        },
+        {
+          "path": "apps/api/src/routes/runs.ts",
+          "line": 85,
+          "purpose": "allowDraft request field",
+          "lineText": "            allowDraft: z.boolean().optional(),",
+          "fileSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+          "gitBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674"
+        },
+        {
+          "path": "apps/api/src/routes/runs.ts",
+          "line": 109,
+          "purpose": "allowDraft passed to manager",
+          "lineText": "            ...(body.allowDraft ? { allowDraft: true } : {}),",
+          "fileSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+          "gitBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674"
+        },
+        {
+          "path": "packages/engine/src/run-manager.ts",
+          "line": 689,
+          "purpose": "fresh draft freezes an immutable snapshot",
+          "lineText": "      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;",
+          "fileSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+          "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+        },
+        {
+          "path": "packages/engine/src/run-manager.ts",
+          "line": 3379,
+          "purpose": "eligibility of unpublished draft",
+          "lineText": "    if (version.status !== 'published' && !input.allowDraft) {",
+          "fileSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+          "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+        },
+        {
+          "path": "packages/engine/src/run-manager.ts",
+          "line": 1822,
+          "purpose": "replay pins source version",
+          "lineText": "      versionId: source.versionId,",
+          "fileSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+          "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+        },
+        {
+          "path": "packages/engine/src/run-manager.ts",
+          "line": 1823,
+          "purpose": "replay keeps pin",
+          "lineText": "      pinned: source.pinned,",
+          "fileSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+          "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+        },
+        {
+          "path": "packages/engine/src/run-manager.ts",
+          "line": 2344,
+          "purpose": "execution reloads original version",
+          "lineText": "    const version = await this.ports.loops.getVersion(run.versionId);",
+          "fileSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+          "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+        },
+        {
+          "path": "packages/engine/src/definition-pin.test.ts",
+          "line": 145,
+          "purpose": "new draft start sees edit",
+          "lineText": "    const next = await engine.start(draft.loopId, null, { versionId: draft.id, allowDraft: true });",
+          "fileSha256": "538b35e35a4b30823e16e8b961e66afade6d632939f137c428d0b0230b5a416c",
+          "gitBlob": "52aa95f9588e8e5ccff3ba64b29b8b1303db5646"
+        },
+        {
+          "path": "packages/engine/src/definition-pin.test.ts",
+          "line": 148,
+          "purpose": "new draft produces updated value",
+          "lineText": "    expect((await answer(engine, next)).result).toBe('new');",
+          "fileSha256": "538b35e35a4b30823e16e8b961e66afade6d632939f137c428d0b0230b5a416c",
+          "gitBlob": "52aa95f9588e8e5ccff3ba64b29b8b1303db5646"
+        },
+        {
+          "path": "apps/api/src/definition-pins.test.ts",
+          "line": 343,
+          "purpose": "API suite checks replay of a draft snapshot",
+          "lineText": "      // A replay fork of the draft run executes the draft run's snapshot.",
+          "fileSha256": "9b868251661655d4ab788e323fd2d9b2c1b5ec7e40cdb5bb8a4df775453e54ff",
+          "gitBlob": "44c7f993c74c27aba09536543769b089a072bf07"
+        },
+        {
+          "path": "apps/api/src/routes/loops.ts",
+          "line": 392,
+          "purpose": "publication arms triggers",
+          "lineText": "        await container.triggers.armVersion(loop, version);",
+          "fileSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+          "gitBlob": "fa2564fdd036404f42f0ef36f5e146dbae4a9cdb"
+        },
+        {
+          "path": "docs/08-triggers-and-integrations.md",
+          "line": 33,
+          "purpose": "effect on cron and webhook registration",
+          "lineText": "- `POST /loops/{id}/publish` arms the new version: one `schedules` row per cron trigger node and one `webhook_endpoints` row per webhook trigger node. Rows of earlier versions of the loop are disabled, not deleted, so `GET /loops/{id}/triggers` shows the history. Runs in flight are unaffected (ADR-0008).",
+          "fileSha256": "ab175aa8b8fdcb8debcb6074328e9cbc3a49e15f93185445e4718f435fd99d98",
+          "gitBlob": "805d7d2fe5833e6e0ff3fd5d28ebac068f039bd5"
+        }
+      ],
+      "sameComparisonBase": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "currentPRBodyClaimObserved": true,
+      "relevantCurrentCIFileSummaries": [
+        "✓ src/definition-pin.test.ts (15 tests) 575ms",
+        "✓ src/definition-pins.test.ts (4 tests) 3644ms"
+      ],
+      "observability": "Fresh draft pinning is verified by existing current CI and source. No native Windows draft-script experiment or observed trigger replacement during #362 QA is claimed."
+    },
+    "d180VerbatimPublicSha256": "ad8bc4b6b5efb65cced1989face3e87e77969ba76200281044066f496768d888",
+    "attributionCorrections": [
+      {
+        "fact": "Disposable HTTP/SQLite over loopback with API-key enforcement off",
+        "earlyPRComment": 7061030154,
+        "earlyIssueComment": 7061030378,
+        "fixtureFile": "independent/evidence/fixtures/a-api.mjs",
+        "lines": [
+          75,
+          92,
+          95
+        ]
+      },
+      {
+        "fact": "QA A1 fork retains original version, A3 resumes after external repair, A5 is a separate published loop. No QA A1-to-A5 republish on one loop. Broader version semantics have separate source and hosted tests.",
+        "originalReview2Comment": 7061841254,
+        "originalReview2Line": 40
+      }
+    ],
+    "finalObservation": {
+      "at": "2026-11-21T12:41:57.285245+00:00",
+      "prHead": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+      "base": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "main": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "mergeable": true,
+      "draft": true,
+      "closed": false
+    }
+  },
+  "gitSource": {
+    "head": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+    "target": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "ancestryTreeAndParents": {
+      "02351e2fb932b3be44e7cc3fb3943a61d568226c": [
+        "d289bb12b943557584c5659bc33447d1baebc2f6",
+        "47ca4640793a81efa5bec661dba25627de314774",
+        "2854c5f0df468199083142ee10dda9fc2e2d6a8b"
+      ],
+      "5db3dfd4e2c96e53aa52b5a33403819da8c49196": [
+        "c6fc1acd4e0837ed4ec3cad0e8554f926e0f8626",
+        "02351e2fb932b3be44e7cc3fb3943a61d568226c"
+      ],
+      "d284b9a485f80d168109ea695aa7dd7066f90c4d": [
+        "10f8e6a1bf4d6f649b266787ca0d3f9f96036eca",
+        "5db3dfd4e2c96e53aa52b5a33403819da8c49196"
+      ],
+      "a84f988b89e456b0e2270e3c4750afb250b6c68f": [
+        "b0de2af3f1aab4bdd0552076091a6082db6e94fb",
+        "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+        "598b8f4b02e39e9389cef45acf936dffc17256cb"
+      ],
+      "b3f22d345aee3cbfbcd818ebb7980d962cafd2b1": [
+        "5c6eb688488bf9f4508092081cb76e709b04dd20",
+        "d284b9a485f80d168109ea695aa7dd7066f90c4d",
+        "a84f988b89e456b0e2270e3c4750afb250b6c68f"
+      ],
+      "38223fd6104a8212ce8bbf6d8d75e8a0d297cbf4": [
+        "5afdcbc03956e12b5d0b8c7a4347d52160aa3ac3",
+        "b3f22d345aee3cbfbcd818ebb7980d962cafd2b1"
+      ],
+      "505060e2c396db5355f0b1f1f4048cbeb9ec30f8": [
+        "95e8dd2ca26c76bcee332f0fbb827b5a221bbef8",
+        "38223fd6104a8212ce8bbf6d8d75e8a0d297cbf4"
+      ]
+    },
+    "originalChangedPaths": [
+      "CHANGELOG.md",
+      "docs/04-node-catalog.md",
+      "docs/guide/07-troubleshooting.md",
+      "packages/infrastructure/src/process/scripts.test.ts"
+    ],
+    "exactlyUnchangedOriginalEntries": 33858,
+    "eightUnchangedSourceLockBlobsThroughFinal": [
+      {
+        "path": "packages/infrastructure/src/process/scripts.ts",
+        "baseBlob": "834d668f6e04c0e4a1970bd4bde060da2a704933",
+        "candidateBlob": "834d668f6e04c0e4a1970bd4bde060da2a704933",
+        "gitObjectBytesSha256": "6404f7bcc6e9a4e77f7cde3b0883ec6f55fcb99129f97ab044841dc1e9f0d13d",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "packages/engine/src/handlers/script.ts",
+        "baseBlob": "808a83c8a2f34ef2e9d2a0ff2aa618df85ec4760",
+        "candidateBlob": "808a83c8a2f34ef2e9d2a0ff2aa618df85ec4760",
+        "gitObjectBytesSha256": "755fd3209e166ce45567af884a75c24144236e7f480675e110584f2c323b89da",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "packages/engine/src/handlers/script-dispatch.ts",
+        "baseBlob": "77704235d5eecfced4bbac6c1cce1040f551fe96",
+        "candidateBlob": "77704235d5eecfced4bbac6c1cce1040f551fe96",
+        "gitObjectBytesSha256": "bb2a25b55f435af6f8bdf576efa774fc378d34d372fcfb781d4ade92d6b0eefd",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "packages/engine/src/run-recovery.ts",
+        "baseBlob": "8a6eff20e80d45ebf440873e3d8074465558a99f",
+        "candidateBlob": "8a6eff20e80d45ebf440873e3d8074465558a99f",
+        "gitObjectBytesSha256": "a36ffd0214ed8abeca089355d9e66ef16d095a55aa5444588d7188bfd8da24ce",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "packages/engine/src/run-manager.ts",
+        "baseBlob": "cda770decf420af2ad3534628b86c58a940a2d5c",
+        "candidateBlob": "cda770decf420af2ad3534628b86c58a940a2d5c",
+        "gitObjectBytesSha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "apps/api/src/main.ts",
+        "baseBlob": "21249b9c2364215ae84065a3c6648ed14a5b2151",
+        "candidateBlob": "21249b9c2364215ae84065a3c6648ed14a5b2151",
+        "gitObjectBytesSha256": "87d5c97825e09ee7248221cb4f8599deb23013343d3829e1303eb424b693a9e2",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "apps/api/src/routes/runs.ts",
+        "baseBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674",
+        "candidateBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674",
+        "gitObjectBytesSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+        "baseAndCandidateGitObjectBytesEqual": true
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "baseBlob": "92a751dbb2c4ead02c57adadbf1afcbd4d63aca5",
+        "candidateBlob": "92a751dbb2c4ead02c57adadbf1afcbd4d63aca5",
+        "gitObjectBytesSha256": "3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df",
+        "baseAndCandidateGitObjectBytesEqual": true
+      }
+    ],
+    "correctionChangedPaths": [
+      "docs/04-node-catalog.md",
+      "docs/guide/03-run-and-observe.md",
+      "docs/guide/07-troubleshooting.md"
+    ],
+    "threeDocsSourcePatchSha256": "deb2124d80ac06d7064c5171e76241593f8db93017aa093d844ffab7802d5d5c",
+    "protectedNonEditorialEntriesRechecked": 1570,
+    "allThreeConflictParentsRetained": [
+      ".gitattributes",
+      ".prettierignore",
+      "CHANGELOG.md"
+    ],
+    "incomingMainNonTriviaComparison": [
+      {
+        "path": "packages/adapter-codex/src/isolation.ts",
+        "tokens": 310
+      },
+      {
+        "path": "packages/adapter-codex/src/options.ts",
+        "tokens": 444
+      }
+    ],
+    "currentDeltaAgainstTarget": {
+      "allPaths": 213,
+      "outsideQA": [
+        ".gitattributes",
+        ".prettierignore",
+        "CHANGELOG.md",
+        "docs/04-node-catalog.md",
+        "docs/guide/03-run-and-observe.md",
+        "docs/guide/07-troubleshooting.md",
+        "packages/infrastructure/src/process/scripts.test.ts"
+      ]
+    },
+    "originalAndFinalArchiveOnlyChildPolicyVerified": true,
+    "clean": true
+  },
+  "archiveIntegrity": {
+    "archiveVerification": {
+      "2026-11-21-i4-362-batch-commands": {
+        "files": 132,
+        "memberBytesExcludingSelf": 3029871,
+        "manifestSha256": "0c205c6311081b40d7d1cf68bba426b624362de7a5356342abf3ed967f8e34cc",
+        "exactLocalSourceCopies": 127,
+        "copiedBytes": 2963842,
+        "publicationCommitReceiptSha256": "21cfbf0560b96803e8f97d58c78ebe3846dc20c3f596ff8e72e6b5a33c38dfa8"
+      },
+      "2026-11-21-i4-362-recovery-docs": {
+        "files": 74,
+        "memberBytesExcludingSelf": 2891802,
+        "manifestSha256": "643695d42380df5c05b3301994b0a9df0eab46dbc588a89fbdc128980a2b0d3d",
+        "exactLocalSourceCopies": 62,
+        "copiedBytes": 2629857,
+        "publicationCommitReceiptSha256": "3c19f566160b0c80be1460498650baa734b225efb467833bc5ba873c94e6373b"
+      },
+      "2026-11-21-i4-427-365": {
+        "files": 243,
+        "memberBytesExcludingSelf": 6888039,
+        "manifestSha256": "063ca3ffbcd4b81b531b73da9a4d32e3bb5dd532857cfcd88ef66027d5678e74"
+      }
+    },
+    "nestedAuthorSealMembers": 8,
+    "independentPublicationSealMembers": 112,
+    "independentOriginalManifestEntries": 101,
+    "selectionCounts": {
+      "localOriginalMemberCount": 109,
+      "localOriginalBytes": 5381108,
+      "originalManifestListedMemberCount": 101,
+      "originalManifestListedBytes": 3239972,
+      "selectedOriginalMemberCount": 105,
+      "selectedOriginalBytes": 2744428,
+      "excludedOriginalMemberCount": 4,
+      "excludedOriginalBytes": 2636680,
+      "supplementalMemberCount": 0,
+      "supplementalBytes": 0,
+      "selectedEvidenceMemberCount": 105,
+      "selectedEvidenceBytes": 2744428
+    },
+    "selectedExclusions": [
+      "work/a/data/graphgoblin.db",
+      "work/a/data/graphgoblin.db-shm",
+      "work/a/data/graphgoblin.db-wal",
+      "work/a/home/AppData/Local/Microsoft/Windows/PowerShell/StartupProfileData-NonInteractive"
+    ],
+    "fourCorrectionRootsComplete": true,
+    "integrationSeal": {
+      "entries": 223,
+      "sha256": "dd97f07edd26f2284a00b53ea4a1ce5446440fe184897607439cb35dee016d24"
+    },
+    "sevenEmittedArtifactsMatch": [
+      {
+        "path": "packages/infrastructure/dist/process/scripts.js",
+        "sha256": "2f820e07f4af75532ba0d81df1c9cb5e8523676a601b6da0fa2f539a4d83ee3b"
+      },
+      {
+        "path": "packages/engine/dist/handlers/script.js",
+        "sha256": "7d9d78cacbc32dc5ada34f15edc6722af9f606b07b7885d4d6d4f7981503861b"
+      },
+      {
+        "path": "packages/engine/dist/handlers/script-dispatch.js",
+        "sha256": "e57b4449a9c80777e5fd36ceb9b18aa37e5a62268c2f31185bc65471cd316132"
+      },
+      {
+        "path": "packages/engine/dist/run-recovery.js",
+        "sha256": "f4486eb92b9f9bdf2e8da771d3f9ac4a32704e68f94c2184756dc9dbea4ed7a5"
+      },
+      {
+        "path": "packages/engine/dist/run-manager.js",
+        "sha256": "c1d2f770736efc12a08b1d363b5e14fe1aa6e71f609a210c81afad8401b1385e"
+      },
+      {
+        "path": "apps/api/dist/main.js",
+        "sha256": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c"
+      },
+      {
+        "path": "apps/api/dist/routes/runs.js",
+        "sha256": "8738a554fe8a47bbb85ca59a87efc6a75314996ae5680908c2865285609c7027"
+      }
+    ],
+    "strongCredentialPatternCandidates": [],
+    "newArchiveFilesScannedForCommonCredentialShapes": 206
+  },
+  "actualProviderAndPublications": {
+    "observedAtUTC": "2026-11-21T12:35:49.095970+00:00",
+    "formalSessionsAndQA": [
+      {
+        "role": "independent behavior QA",
+        "boundSource": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "readOnlySetting": false,
+        "session": "dd4a6812-5c5e-4905-8ea0-7864904366ba",
+        "started": "2026-11-21T08:33:26.109Z",
+        "finished": "2026-11-21T08:59:42.952Z",
+        "exit": 0,
+        "terminal": "completed/success",
+        "verifiedEventEnvelopes": 1400,
+        "finalMessageSha256": "20b02499465c8f263fde1dcb337cd5334e8b5e2b4160080e64863b4b5cdf9cda",
+        "eventsSha256": "d0ef4944bb04d2a6bcfb710d53b0f3f3c1fe717f74eec14e16961afb9b8fa085",
+        "resultSha256": "e3a297e0a6ee39c970fd9fbfa627e7787f3ea0732a21cf13283cdd8774d14657",
+        "findings": "already contained at parent"
+      },
+      {
+        "role": "formal general review 1",
+        "boundSource": "b3f22d345aee3cbfbcd818ebb7980d962cafd2b1",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "readOnlySetting": true,
+        "session": "b1cb27b7-06e6-4d27-8f00-eb6e82ffb11e",
+        "started": "2026-11-21T11:00:05.164Z",
+        "finished": "2026-11-21T11:07:18.175Z",
+        "exit": 0,
+        "terminal": "completed/success",
+        "verifiedEventEnvelopes": 483,
+        "finalMessageSha256": "8637b778464b7a1cf56d89106e6638eba01156b2e18476c144c76f50e774b196",
+        "eventsSha256": "b2147822c0cab7a3b1a97ac7cddedf1071b251f422f85b0e358f5140c7e68579",
+        "resultSha256": "8948ba184d21d3070fddb4bd2fb8f3c263ad5f550c80866aec3cf03405ca457f",
+        "findings": "CHANGES_REQUIRED, F1 and F2"
+      },
+      {
+        "role": "corrective review 2",
+        "boundSource": "38223fd6104a8212ce8bbf6d8d75e8a0d297cbf4",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "readOnlySetting": true,
+        "session": "09508e36-09f8-474e-a196-e0986b6fc383",
+        "started": "2026-11-21T11:15:11.395Z",
+        "finished": "2026-11-21T11:20:32.401Z",
+        "exit": 0,
+        "terminal": "completed/success",
+        "verifiedEventEnvelopes": 495,
+        "finalMessageSha256": "8159411b425e626fba021ed860cec45f35968ead9c2d70d9f6ed41bfdcc06ade",
+        "eventsSha256": "deafe81a00658de03fc2e92848391620691ba29049ed01066ad534f0a87947a7",
+        "resultSha256": "f53cbafc03c1874d41e80035208241be34dcbd428ad162c3ef28c7b1faba871c",
+        "findings": "ACCEPT CORRECTION"
+      }
+    ],
+    "independentReportSha256": "477fd76774556f43b25949ca81690522c6f3cf792fa2bd47b82155441b7e5690",
+    "livePR": {
+      "state": "OPEN",
+      "isDraft": true,
+      "title": "Document Windows batch invocation and cover native .bat refusals",
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548",
+      "baseRefOid": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "headRefOid": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+      "reviewDecision": null,
+      "mergeable": "MERGEABLE",
+      "mergeStateStatus": "CLEAN",
+      "closingIssuesReferences": {
+        "totalCount": 1,
+        "nodes": [
+          {
+            "number": 362,
+            "state": "OPEN"
+          }
+        ]
+      },
+      "reviews": {
+        "totalCount": 0
+      },
+      "reviewThreads": {
+        "totalCount": 0,
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      }
+    },
+    "prBodySha256": "a83d45231fb3f34f38a06d479b132ff74bd2fae758ee66b478391fd4d160f5aa",
+    "liveIssue": {
+      "title": "Script commands ending in .cmd or .bat fail with INTERNAL_ERROR spawn EINVAL instead of PROCESS_START_FAILED",
+      "state": "OPEN",
+      "labels": [
+        "aidlc-ready",
+        "qa:touched-systems",
+        "impl:gpt-6.1-sol",
+        "review:claude-opus-5.5",
+        "type:bug",
+        "area:engine"
+      ],
+      "commentCount": 2,
+      "bodySha256": "02ff19786a5ce1208ba43a8265a172a5978e9aa83e64e41f9cad031ace045508"
+    },
+    "publicComments": [
+      {
+        "id": 7060850648,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7060850648",
+        "bodySha256": "ad8bc4b6b5efb65cced1989face3e87e77969ba76200281044066f496768d888",
+        "matchedIdentifiedOriginalOrPublicationReceipt": false
+      },
+      {
+        "id": 7061030154,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061030154",
+        "bodySha256": "87a3e0b8e75c43073917b9f9f1395c3e91092bf491c78d4ac850b0b82aa48527",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7061485206,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061485206",
+        "bodySha256": "1bc3be864d7b6ef93549a4c715ff26d28ed0d49d85b1a593ba8e5f384b9a19be",
+        "matchedIdentifiedOriginalOrPublicationReceipt": false
+      },
+      {
+        "id": 7061723332,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061723332",
+        "bodySha256": "8637b778464b7a1cf56d89106e6638eba01156b2e18476c144c76f50e774b196",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7061750399,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061750399",
+        "bodySha256": "528c419afdf92241c6e2226bc32cebeb07996216464bef09ba4632f1d09994b9",
+        "matchedIdentifiedOriginalOrPublicationReceipt": false
+      },
+      {
+        "id": 7061841254,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061841254",
+        "bodySha256": "8159411b425e626fba021ed860cec45f35968ead9c2d70d9f6ed41bfdcc06ade",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7061841454,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7061841454",
+        "bodySha256": "c74529e85e6045fa3ee84870835c324eb7a45b0336a335612e05160f38fc63c9",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7062348972,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/548#issuecomment-7062348972",
+        "bodySha256": "088452e3d4e102e1dc27d1de720e991d9ca18460d5d71ab7542541eeddaec161",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7060850436,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362#issuecomment-7060850436",
+        "bodySha256": "8c42b1858b9d994d1b6960ef1ff85afbf3e39bfe625ca74e21f9a69bcf4e08d0",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      },
+      {
+        "id": 7061030378,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/362#issuecomment-7061030378",
+        "bodySha256": "87a3e0b8e75c43073917b9f9f1395c3e91092bf491c78d4ac850b0b82aa48527",
+        "matchedIdentifiedOriginalOrPublicationReceipt": true
+      }
+    ]
+  },
+  "rawBehaviorRecords": {
+    "administrativeReadOnlyCaseReplay": {
+      "uniqueCases": 64,
+      "totals": {
+        "PASS": 63,
+        "OBSERVED-AS-PREDICTED": 1
+      },
+      "typedCounts": {
+        "acceptance": {
+          "PASS": 33
+        },
+        "control": {
+          "PASS": 22
+        },
+        "discriminating-control": {
+          "PASS": 2
+        },
+        "adjacent-pre-existing-observation": {
+          "OBSERVED-AS-PREDICTED": 1
+        },
+        "supporting": {
+          "PASS": 6
+        }
+      },
+      "all64CasesIdentical": true
+    },
+    "originalVMReplayerSha256": "6fa06dc4d837a93af987dadd74aa3ace40d7c5af6d9bbbb82d6a04dd65330fbf",
+    "savedCaseReplaySha256": "0c2de785330327af0a3bf6a3b1cf05b3a2b7073aef45c4da79bb2f5c28b33b1e",
+    "independentBuild": "12/12 successful, 0 cached",
+    "independentHistoricalRuntime": {
+      "node": "v22.23.4",
+      "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "platform": "win32",
+      "arch": "x64",
+      "os": "Windows 11 Pro 10.0.26300 (ver: 10.0.26300.9974)",
+      "pnpm": "12.8.1"
+    },
+    "rawCaseInputs": {
+      "n0-node-spawn-shape": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9",
+      "n1-process-scripts": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab",
+      "e-engine-composition": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3",
+      "a-api": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c",
+      "a6-api-restart": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34",
+      "m-mutant-control": "c304614bc92c7a592ac4e8ee11983dcbe394154a2fa93f74b34fba9b6cc0b299",
+      "h-heartbeat-probe": "db20639db3ba7ef4a335aac778c529082801b80b96a2705758e1cf5a82fa2658"
+    },
+    "apiBinding": {
+      "httpTranscriptRecords": 40,
+      "distinctLoopsPublishedOnce": 5,
+      "readAfterRestart": 6,
+      "separateProcesses": true,
+      "sameStore": true,
+      "staleHttpStatus": 409,
+      "a1AndReplayVersionID": "01M7YMJZYJ1AHGPZ5DHVB0M4FX",
+      "replayPinnedFieldMatchesSource": true,
+      "A5IsDifferentLoop": true,
+      "apiKeyEnforcement": false,
+      "authHeader": false
+    },
+    "nativeBatchRefusalVariants": 7,
+    "observed200BuiltRunner": true,
+    "counterfactual": [
+      "mutant rejected EINVAL",
+      "current engine over mutant recorded SCRIPT_OUTCOME_UNCERTAIN"
+    ],
+    "authorFocused": {
+      "passed": 4,
+      "outOfScopeSkipped": 43,
+      "localWindows": true,
+      "testLogSha256": "92a338950b1e2d1de97e91a14862d685e9d650a1f08ae2dd17507afd93517cab",
+      "toolReceiptSha256": "cafe3a495886eed672e449e6c2d0ffa10a3caebcf0185120079a3418ad0fd3f7"
+    }
+  },
+  "ci": {
+    "workflowRun": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44899725257",
+    "run": 44899725257,
+    "attempt": 1,
+    "event": "pull_request",
+    "conclusion": "success",
+    "head": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+    "target": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "synthetic": "46bdce6bf5cb413684a61e7eccfb4a58990ae8bc",
+    "syntheticTree": "95e8dd2ca26c76bcee332f0fbb827b5a221bbef8",
+    "syntheticParents": [
+      "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "505060e2c396db5355f0b1f1f4048cbeb9ec30f8"
+    ],
+    "jobs": {
+      "Template image": {
+        "job": 136832884788,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      },
+      "Coverage": {
+        "job": 136832884995,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      },
+      "Browser": {
+        "job": 136832885027,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      },
+      "Repository checks": {
+        "job": 136832885034,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      },
+      "Windows launcher": {
+        "job": 136832885053,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      },
+      "Gates": {
+        "job": 136837159459,
+        "conclusion": "success",
+        "failedOrCancelledSteps": []
+      }
+    },
+    "getCommitAndRunAndJobsLive": true,
+    "unitPassedSkipped": [
+      10032,
+      53
+    ],
+    "browserPassed": 488,
+    "windowsLauncherPassed": 27,
+    "dependencyAudit": "7 low | 13 moderate",
+    "localCachedJobLogSHA256": {
+      "browser.log": "b2020849a7b35ba22d67f3e41ed28bba479e765d8f3af96e43ba9cd18e5b386b",
+      "coverage.log": "535ed072f9931f0a046cceedcf1e1b43b27f1e08327f896faea0ec3fefe82a4c",
+      "gates.log": "9285858b5d7b7dd83244d228d2fbbaee91a7d53d99a50843379b65e20b857ebe",
+      "repository-checks.log": "9fa0e37f1216acf6d236d19a022c67935df5f9c85b1f5c25b700e3e9eea126b9",
+      "template-image.log": "821312db3abb9b7709e4aa72b5fd4871c11840431d8183580e57c883cde3ee71",
+      "windows-launcher.log": "4bd0df71a11ac1b36b20948496fd8c5b0e75d0b68745b2b697a679b3110f6184"
+    },
+    "coverageArtifactId": 14705717649,
+    "coverageZIPsha256": "f9b583b517daebf76950141ca2587289fb1dfe246ab4b09e2ed3e37cb7ff250b",
+    "coverage": {
+      "packages/adapter-codex/coverage/coverage-summary.json": {
+        "sha256": "41f3adfd62015ffeeaf1eee67256798653f4af1767772b92fa58d1c24689e8b7",
+        "lines": 99.21,
+        "branches": 95.25
+      },
+      "packages/adapter-jev/coverage/coverage-summary.json": {
+        "sha256": "c703a4ede0c2b500c11e01e21768c87aad818abd38fc8dc5095cf844ee2f0c8b",
+        "lines": 98.8,
+        "branches": 96.77
+      },
+      "packages/api-client/coverage/coverage-summary.json": {
+        "sha256": "5c0d558e3d4177a6b3e4d727b3b1144f7ff1190e78bfc7297fd2555538f25ec9",
+        "lines": 100,
+        "branches": 97.3
+      },
+      "packages/contracts/coverage/coverage-summary.json": {
+        "sha256": "47ff9a0abc4464fa985b9525e415c11fd92cd1dd81d6521a67083265b9bc7cf5",
+        "lines": 99.42,
+        "branches": 95.1
+      },
+      "packages/domain/coverage/coverage-summary.json": {
+        "sha256": "3fabe943a84254e65817d0d10d42deaaf3d4c697888e735f4986514a399a1ffd",
+        "lines": 98.75,
+        "branches": 96
+      },
+      "packages/engine/coverage/coverage-summary.json": {
+        "sha256": "815e70d1527923f6d003a1c84893d3725d6d43fa98d722c67e5e46f8a09abf05",
+        "lines": 96.94,
+        "branches": 91.22
+      },
+      "packages/infrastructure/coverage/coverage-summary.json": {
+        "sha256": "53ead6ee10c9e5d961b60cb4bc934575c455c2a4afba9d55943b9190fd44f789",
+        "lines": 97.8,
+        "branches": 93.18
+      },
+      "apps/api/coverage/coverage-summary.json": {
+        "sha256": "c854804782a47f2b096b4f0a01f0e9e5deb94ea687f78e4e66cb0cbb3a41449e",
+        "lines": 95.28,
+        "branches": 90.96
+      },
+      "apps/mcp/coverage/coverage-summary.json": {
+        "sha256": "d51a993d98511ea7eb47f6ee49d87f57ddc15c6c85bc577982dcc63ccc944a4c",
+        "lines": 96.95,
+        "branches": 94.65
+      },
+      "apps/plugin-claude/coverage/coverage-summary.json": {
+        "sha256": "63716c289f26b238ca1ff3be8dced552f5864c63ce557f86d266089b587796c3",
+        "lines": 95,
+        "branches": 95.23
+      },
+      "apps/plugin-codex/coverage/coverage-summary.json": {
+        "sha256": "56bc72bade6556216f3d3486169082085cf5d10381db8f6611ffd8492b9aed25",
+        "lines": 95.58,
+        "branches": 91.66
+      },
+      "apps/web/coverage/coverage-summary.json": {
+        "sha256": "d33a5271c396e8930619163c340fd046d54423c7452100474d0b2bec653050e8",
+        "lines": 98.63,
+        "branches": 94.39
+      },
+      "tooling/coverage/coverage-summary.json": {
+        "sha256": "600ecd893a0730a8452f7317b40a5b93d1e8f796087d65ad7caaeb4bc685ac9d",
+        "lines": 97.48,
+        "branches": 93.57
+      }
+    },
+    "windowsArtifactId": 14705004711,
+    "windowsZIPsha256": "751219e8fa4eafaf9e164c7a3ef4687244f7221e0140e9e530700740b386581d",
+    "windowsFiles": {
+      "manifest.json": "9a15c8e0646a315992c6167924915d1c4b3e55d29f3c02dd4ff7971ec179e454",
+      "result.json": "37eb83503fd16b89b9d388f3d3c90017d83548d03dd54a9b53eaf291375eaec0",
+      "observations.ndjson": "45488a926988ef1976dcf6a0610fe73699d18a713e11526f0d2680b77d2168f9"
+    },
+    "canonicalReplay": {
+      "state": "complete",
+      "observations": {
+        "state": "valid",
+        "reason": null,
+        "bytes": 91651,
+        "records": 338,
+        "closed": true,
+        "rejected": 0,
+        "omittedRecords": 0,
+        "omittedBytes": 0,
+        "byType": {
+          "recorder-open": 1,
+          "case-start": 27,
+          "fixture": 9,
+          "child": 219,
+          "cleanup": 15,
+          "case-end": 27,
+          "alias-round": 4,
+          "alias": 2,
+          "ownership-result": 15,
+          "contention": 3,
+          "ownership-check": 3,
+          "ownership-cleanup": 3,
+          "fixture-state": 9,
+          "recorder-closed": 1
+        }
+      },
+      "missing": [],
+      "sourceModuleSha256": "a6699139e0ac185967416889578f2a3501a2272da81f3839ffe20be713edf449",
+      "replayerSha256": "f845d906d19e6900f57a2f972de659ca444856676947800e2319d9ca67b7382d"
+    },
+    "ciSupportingLogs": {
+      "verified.json": "0cb0e8b063d54369404eb01039ad70b391bff7eaca9535440a8731ba1a98d4e4",
+      "run.json": "bcfc1a29c9067bdff00ac6cfb81294c798fce38185ef196b64c89d9b12f85180",
+      "jobs.json": "5386bc93a4ad2ab55d241c1da80df54a93aaeecc7523134963b99fc584953244",
+      "merge.json": "c517b3027f74d19793349872310288d7912a95882d00d5e057e36924cbeed9cc",
+      "artifacts.json": "23aa54fddd7509173d1ac50993d7bf62bca57d9f880b9eaf8a63543d8b37445c"
+    },
+    "nativeSupportingLogs": {
+      "verified.json": "f7394957fedbcda1e7b764c72198a2e589f1984d9f227861c1718f2c9ceeb1d1",
+      "binding.json": "0b0f9dad103d160484874b0141abbe146a023b5229d8daf3b48805073b27ee31"
+    }
+  },
+  "additionalSourceAndPreservationChecks": {
+    "observedAtUTC": "2026-11-21T12:38:47.534524+00:00",
+    "effectiveProtectedRuleChecks": [
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-batch-commands/independent/**",
+        "files": 113
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-batch-commands/author/**",
+        "files": 9
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-batch-commands/decision/**",
+        "files": 2
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/reviews/review-1/**",
+        "files": 9
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/reviews/review-2/**",
+        "files": 9
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/correction/**",
+        "files": 6
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/freeze/**",
+        "files": 19
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/context/**",
+        "files": 19
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/decision/**",
+        "files": 1
+      },
+      {
+        "rule": "docs/qa/2026-11-21-i4-362-recovery-docs/source/**",
+        "files": 3
+      }
+    ],
+    "threeConflictStageBindings": [
+      {
+        "path": ".gitattributes",
+        "originalConflictSha256": "5f3834a83e9bf8aca94433244345d237c0de27f5b15673f52f8b29faf758b227",
+        "resolvedGitBlob": "5923d7c023f61a7a7776c85df5de9e1a27d6150f",
+        "oursSectionRetained": true,
+        "theirsSectionRetained": true
+      },
+      {
+        "path": ".prettierignore",
+        "originalConflictSha256": "a26d9034c165b180ebf3adaa31d9fe52c8e1044f809c4ee8e181fc1112488a21",
+        "resolvedGitBlob": "c405b6266c510dc5cf02320de90c5a83912925e5",
+        "oursSectionRetained": true,
+        "theirsSectionRetained": true
+      },
+      {
+        "path": "CHANGELOG.md",
+        "originalConflictSha256": "0557da3609d0c2e97fc00e8dc8f10f89760da456ca58737f6ec669aa62855a0b",
+        "resolvedGitBlob": "7636d8feef3f4185205dfed16f369be6b151abba",
+        "oursSectionRetained": true,
+        "theirsSectionRetained": true
+      }
+    ],
+    "readOnlyFinalRemoteRefSnapshot": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8\trefs/heads/codex/gg-i4-362-batch-guidance\na84f988b89e456b0e2270e3c4750afb250b6c68f\trefs/heads/main\n505060e2c396db5355f0b1f1f4048cbeb9ec30f8\trefs/pull/548/head\n46bdce6bf5cb413684a61e7eccfb4a58990ae8bc\trefs/pull/548/merge\n",
+    "cleanSource": true,
+    "ordinaryFfPush": {
+      "head": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8",
+      "tree": "95e8dd2ca26c76bcee332f0fbb827b5a221bbef8",
+      "remoteBefore": "b3f22d345aee3cbfbcd818ebb7980d962cafd2b1\trefs/heads/codex/gg-i4-362-batch-guidance",
+      "remoteAfter": "505060e2c396db5355f0b1f1f4048cbeb9ec30f8\trefs/heads/codex/gg-i4-362-batch-guidance",
+      "pushExit": 0,
+      "clean": true,
+      "mode": "normal fast-forward",
+      "at": "2026-11-21T11:34:02.4676522Z"
+    },
+    "changedPullRequestBodyPublicationReceiptSha256": "cea1e96b94c88cf94671c9bde2747d4f6bfb52df9142d360b788d9514886bd04",
+    "scopeCases": {
+      "E6-cancel-precedence-seam": [
+        "acceptance",
+        "PASS"
+      ],
+      "M1-mutant-direct": [
+        "discriminating-control",
+        "PASS"
+      ],
+      "M2-mutant-through-current-engine": [
+        "discriminating-control",
+        "PASS"
+      ],
+      "H1-heartbeat-script-probe-cmd": [
+        "adjacent-pre-existing-observation",
+        "OBSERVED-AS-PREDICTED"
+      ]
+    },
+    "frozenSourceReceipts": {
+      "i4-548-final-astra-BRIEF-02.md": "46d42016a5721b10c3fc4063744dce868ad208245232f2233765d6c58e9ee346",
+      "i4-362-doc-freeze-01/receipt.json": "636104a27cb8ed7fc21f799bb5a5f9fb8763ff73de02064fdcaf50f6b8795234",
+      "i4-362-correction-publication-01/root-commit-verification.json": "3c19f566160b0c80be1460498650baa734b225efb467833bc5ba873c94e6373b",
+      "i4-362-correction-decision-publication.json": "deceb7154fc667e4cbbb990d299020f310cd49898f3254357efd338c7b018908",
+      "i4-362-correction-review-publication.json": "49accf64e858bb327a7bf7de0b5992c5fc7a6bc081a4ecc4d1a0a1deb67592ce",
+      "i4-362-publication-01/QA-publication-receipts.json": "debe580f0279bbbd9c2c6d860b20f15bf11abc68e51ece4e3460715d06840f11",
+      "i4-reset-review-publications-01/362/terminal-validation.json": "90c2f4ff11646dbc907a3d8de42ee250ea028a8cd25c8849a5c6f0ff93aedffd",
+      "i4-362-doc-correction-01/before-after-unformatted.json": "057178be7af04f6a7800a3f2d4ad97da9890862097a93f6af47715acb0d961c1"
+    }
+  },
+  "gateDocuments": [
+    "AGENTS.md",
+    "docs/README.md",
+    "docs/15-issue-workflow.md",
+    "docs/delivery/2026-11-17-five-intents-register.md",
+    "run-agentic-pr-pipeline/SKILL.md",
+    "run-agentic-pr-pipeline/references/review-policy.md"
+  ],
+  "evaluatedProofs": {
+    "archive": "Git ls-tree and cat-file --batch over current blob IDs; compare complete original, supplemental and inherited manifests, individual retained working files, original publication commit trees, 127+62 named source copies, 109 prepublication local records, seven bound emitted artifacts and nested author/independent seals. Integration external seal contains 223 verified entries.",
+    "source": "Complete recursive Git tree comparison; three original conflict-stage blobs and both sides in the integrated text; type and lexeme pairs from TypeScript createScanner(skipTrivia=true) for the two inherited main adapter comment changes.",
+    "behavior": "Separate checked read-only use of the archived case replay VM on saved raw bytes, substituting in-memory verification of its final editorial file for an output write. Original predicates, all complete case fields and the saved accounting JSON matched. Directly checked representative native, engine, mutant, REST and restart records, same-version A1 fork, unique loop publication URLs, no bearer credential and distinct API processes.",
+    "ci": "Live GitHub run/attempt/jobs/artifact IDs, digests and synthetic parents/tree; retained ZIP CRC checks and member hashes; all 13 line/branch values from actual coverage-summary totals; six job log hashes, test counts after stripping ANSI styling, current canonical native parser/summary and all three member bytes. 338 read-only replay records; no native launcher rerun.",
+    "privacy": "Bounded patterns for common GitHub, Google/OpenAI-style or AWS access-key forms, private-key headers and JWTs across all 206 added archive files; no candidate. Original fixture configuration and selection were inspected. This coverage does not imply an exhaustive secret audit."
+  },
+  "historicalAndProvisionalContext": {
+    "originalNegativeFormalReport": {
+      "id": 7061723332,
+      "verdict": "CHANGES_REQUIRED",
+      "preserved": true
+    },
+    "olderCI": [
+      {
+        "run": 44890908736,
+        "head": "d284b9a4",
+        "scope": "prior original archive only"
+      },
+      {
+        "run": 44893807635,
+        "head": "b3f22d34",
+        "scope": "prior integration only"
+      }
+    ],
+    "originalQAFailuresAndLimits": [
+      "Shell parse failure before any fixture action, then corrected file creation.",
+      "Git Bash tasklist /FI argument conversion failed; the corrected read used MSYS_NO_PATHCONV.",
+      "pnpm exec caused an implicit install; registry contact was unobserved. Frozen offline installation was retained separately.",
+      "First API fixture left its losing timer outstanding after the process had drained; process exit and port were checked independently.",
+      "E6 controls cancellation timing after a real refusal. Force-stop/deadline interleavings and triggered poll are outside the observed matrix.",
+      "The author packet includes a separate coordinator transcription for the empty lint and diff output streams."
+    ],
+    "provisionalJournal": [
+      {
+        "order": 1,
+        "status": "Checks pending",
+        "assessment": "Live head, six jobs and native-review state agreed. Disclosed the unauthenticated loopback API and absence of same-loop republish in the independent QA."
+      },
+      {
+        "order": 2,
+        "status": "Provisional anticipated approval",
+        "assessment": "Archive/CI/QA replays matched; preliminary communication reported no introduced blocker while the final deliverable was being assembled."
+      },
+      {
+        "order": 3,
+        "status": "Investigation reopened before signing",
+        "assessment": "Fresh draft API selection contradicted the universal publication advice. Coordinator was told to hold publication and merge while source and current CI tests were checked."
+      },
+      {
+        "order": 4,
+        "status": "Final CHANGES_REQUIRED",
+        "assessment": "Public draft API, actual freezeDraft branch, current hosted definition-pin tests and publish/trigger arming established F3. Coordinator acknowledged the bounded correction path; original negative/provisional records are retained."
+      }
+    ],
+    "auditReaderAdjustments": [
+      "Used direct GraphQL rather than a gh pr view field unsupported in the locally installed client.",
+      "Read GitHub multi-level comment readback JSON in its actual envelope; two self-manifest receipts store hash only. Manifest byte lengths were checked separately.",
+      "Removed ANSI display codes to count Vitest summaries; initially undecorated-text matching found no lines.",
+      "Read FF-push receipt OIDs from its complete ls-remote lines. None of these reader adjustments reran or changed a product observation."
+    ]
+  },
+  "excludedScope": [
+    "No new product tests, candidate build, CI rerun or provider invocation in this audit.",
+    "No native GitHub review approval, signed merge, remote mutation, owner QA, source or Git index edit by final reviewer.",
+    "Public errata, engineering rectification, post-correction evidence and disposition belong to the coordinator."
+  ]
+}
