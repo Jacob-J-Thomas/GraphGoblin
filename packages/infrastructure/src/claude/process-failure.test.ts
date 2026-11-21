@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
+import { HarnessOptionsSchema } from '@graphgoblin/contracts';
+import type { HarnessEvent } from '@graphgoblin/engine';
 import { killTree } from '../process/index.js';
 import { ClaudeHarnessError } from './errors.js';
 import { ClaudeHarness } from './harness.js';
@@ -23,6 +25,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 });
 vi.mock('../process/index.js', () => ({ killTree: vi.fn() }));
 let child: ChildProcess;
+const scriptedChildren: ChildProcess[] = [];
 const stdout = () => child.stdout;
 const request = (signal = new AbortController().signal) => ({
   binary: 'synthetic-cli',
@@ -52,9 +55,11 @@ beforeEach(() => {
   vi.mocked(spawn).mockReturnValue(child);
 });
 afterEach(() => {
-  child.stdin?.destroy();
-  child.stdout?.destroy();
-  child.stderr?.destroy();
+  for (const owned of [child, ...scriptedChildren.splice(0)]) {
+    owned.stdin?.destroy();
+    owned.stdout?.destroy();
+    owned.stderr?.destroy();
+  }
   vi.useRealTimers();
   vi.clearAllMocks();
 });
@@ -171,12 +176,18 @@ describe('read-only observation after an actual spawn refusal (#364)', () => {
     });
   }
   const observed = () => vi.mocked(stat).mock.calls.map(([path]) => String(path));
-  function refuse(code = 'ENOENT', binary = executable, signal?: AbortSignal) {
+  function refuse(
+    code = 'ENOENT',
+    binary = executable,
+    signal?: AbortSignal,
+    timeoutMs: number | null = 1000,
+  ) {
     Object.assign(child, { pid: undefined });
     const result = runClaudeProcess({
       ...request(signal),
       binary,
       cwd: workspace,
+      timeoutMs,
     });
     child.emit('error', Object.assign(new Error(`spawn ${binary} ${code}`), { code }));
     return result;
@@ -247,12 +258,18 @@ describe('read-only observation after an actual spawn refusal (#364)', () => {
       const pending = new Promise<Stats>((resolve) => {
         release = resolve;
       });
-      observe({ [workspace]: pending });
+      observe({ ...Object.fromEntries(names.map((name) => [name, pending])), [workspace]: 'file' });
       const controller = new AbortController();
-      const result = refuse('ENOENT', 'claude', controller.signal);
-      expect(observed()).toEqual([workspace]);
+      const removed = vi.spyOn(controller.signal, 'removeEventListener');
+      const result = refuse(
+        'ENOENT',
+        executable,
+        controller.signal,
+        mode === 'deadline' ? 15 : null,
+      );
+      expect(observed()).toEqual(names);
       if (mode === 'abort') controller.abort();
-      else await vi.advanceTimersByTimeAsync(1000);
+      else await vi.advanceTimersByTimeAsync(15);
       const settled = await result;
       expect(settled).toMatchObject({
         spawnCode: 'ENOENT',
@@ -263,12 +280,134 @@ describe('read-only observation after an actual spawn refusal (#364)', () => {
       expect(settled).not.toHaveProperty('startRefusal');
       expect(settled).not.toHaveProperty('terminationUnconfirmed');
       expect(killTree).not.toHaveBeenCalled();
+      expect(removed).toHaveBeenCalledWith('abort', expect.any(Function));
       release(fileStats);
-      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(0);
       expect(await result).toBe(settled);
+      expect(observed()).toEqual(names);
       expect(vi.getTimerCount()).toBe(0);
     },
   );
+  it.each(['success', 'rejection'] as const)(
+    'bounds an unconfigured wait and ignores late metadata %s without a subsequent lookup',
+    async (late) => {
+      let release!: (stats: Stats) => void, reject!: (error: Error) => void;
+      const pending = new Promise<Stats>((resolve, fail) => {
+        release = resolve;
+        reject = fail;
+      });
+      observe({ ...Object.fromEntries(names.map((name) => [name, pending])), [workspace]: 'file' });
+      const controller = new AbortController();
+      const removed = vi.spyOn(controller.signal, 'removeEventListener');
+      const result = refuse('ENOENT', executable, controller.signal, null);
+      child.emit('close', -4058);
+      let settled = false;
+      void result.then(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toBe(true);
+      const value = await result;
+      expect(value).toEqual({
+        exitCode: null,
+        stdout: '',
+        timedOut: false,
+        aborted: false,
+        overflow: false,
+        spawnCode: 'ENOENT',
+      });
+      const bytes = JSON.stringify(value);
+      expect(removed).toHaveBeenCalledWith('abort', expect.any(Function));
+      expect(vi.getTimerCount()).toBe(0);
+      if (late === 'success') release(fileStats);
+      else reject(fault('ENOENT'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(await result).toBe(value);
+      expect(JSON.stringify(value)).toBe(bytes);
+      expect(observed()).toEqual(names);
+      expect(killTree).not.toHaveBeenCalled();
+    },
+  );
+  it('starts the private budget at the refusal and retains timely factual metadata across wall-clock changes', async () => {
+    let release!: (stats: Stats) => void;
+    observe({
+      [workspace]: new Promise<Stats>((resolve) => {
+        release = resolve;
+      }),
+    });
+    Object.assign(child, { pid: undefined });
+    const result = runClaudeProcess({
+      ...request(),
+      binary: 'claude',
+      cwd: workspace,
+      timeoutMs: null,
+    });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(stat).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+    child.emit('error', fault('ENOENT'));
+    await vi.advanceTimersByTimeAsync(999);
+    vi.setSystemTime(new Date('2099-01-01T00:00:00Z'));
+    release(fileStats);
+    expect(await result).toMatchObject({
+      spawnCode: 'ENOENT',
+      startRefusal: 'working-directory-not-directory',
+      timedOut: false,
+      aborted: false,
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('rejects metadata after the absolute bound before a delayed timer callback can run', async () => {
+    let now = 0,
+      release!: (stats: Stats) => void;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const pending = new Promise<Stats>((resolve) => {
+      release = resolve;
+    });
+    observe({ ...Object.fromEntries(names.map((name) => [name, pending])), [workspace]: 'file' });
+    const result = refuse('ENOENT', executable, undefined, null);
+    now = 1000;
+    release(fileStats);
+    const value = await result;
+    expect(value).toMatchObject({ spawnCode: 'ENOENT', timedOut: false, aborted: false });
+    expect(value).not.toHaveProperty('startRefusal');
+    expect(observed()).toEqual(names);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('rechecks the monotonic deadline when the diagnostic timer fires early', async () => {
+    let now = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    observe({ [workspace]: new Promise<Stats>(() => undefined) });
+    const result = refuse('EACCES', 'claude', undefined, null);
+    let settled = false;
+    void result.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(settled).toBe(false);
+    now = 1000;
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(settled).toBe(true);
+    expect(await result).toMatchObject({ spawnCode: 'EACCES', timedOut: false, aborted: false });
+    expect(await result).not.toHaveProperty('startRefusal');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('does not add a diagnostic deadline to an unbounded process that actually started', async () => {
+    const result = runClaudeProcess({ ...request(), timeoutMs: null });
+    let settled = false;
+    void result.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(settled).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+    child.emit('close', 0);
+    expect(await result).toMatchObject({ exitCode: 0, timedOut: false, aborted: false });
+    expect(stat).not.toHaveBeenCalled();
+    expect(killTree).not.toHaveBeenCalled();
+  });
   it('ignores the pipe faults and close that follow a refusal, settling once with the refusal', async () => {
     observe({ [workspace]: 'directory' });
     const result = refuse('ENOENT', 'claude');
@@ -347,9 +486,13 @@ describe('lost check output through the runner and harness (#364)', () => {
     '--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume';
   const diagnosis = 'API Error: 401 PRIVATE_STDERR_BODY';
   /** Version and help pass; the sign-in check child follows the given script. */
-  function scriptChecks(auth: (scripted: ChildProcess) => void): void {
+  function scriptChecks(
+    auth: (scripted: ChildProcess) => void,
+    turn?: (scripted: ChildProcess) => void,
+  ): void {
     vi.mocked(spawn).mockImplementation((_binary: string, args: readonly string[]) => {
       const scripted = new ChildProcess();
+      scriptedChildren.push(scripted);
       Object.assign(scripted, { pid: 4243 });
       scripted.stdin = new PassThrough();
       scripted.stdout = new PassThrough();
@@ -360,12 +503,127 @@ describe('lost check output through the runner and harness (#364)', () => {
           auth(scripted);
           return;
         }
+        if (!args.includes('--version') && !args.includes('--help')) {
+          turn?.(scripted);
+          return;
+        }
         scripted.stdout?.emit('data', Buffer.from(args.includes('--version') ? '2.1.285' : flags));
         scripted.emit('close', 0);
       });
       return scripted;
     });
   }
+  it.each(['success', 'rejection'] as const)(
+    'settles a default public turn after refused start despite pending stat and late %s',
+    async (late) => {
+      let release!: (stats: Stats) => void, reject!: (error: Error) => void, turnReady!: () => void;
+      const metadata = new Promise<Stats>((resolve, fail) => {
+        release = resolve;
+        reject = fail;
+      });
+      const ready = new Promise<void>((resolve) => {
+        turnReady = resolve;
+      });
+      vi.mocked(stat).mockReturnValue(metadata);
+      scriptChecks(
+        (scripted) => {
+          scripted.stdout?.emit(
+            'data',
+            Buffer.from('{"authMethod":"claude.ai","email":"PRIVATE_ACCOUNT"}'),
+          );
+          scripted.emit('close', 0);
+        },
+        (scripted) => {
+          Object.assign(scripted, { pid: undefined });
+          scripted.emit(
+            'error',
+            Object.assign(new Error('PRIVATE_NATIVE_BODY'), { code: 'ENOENT' }),
+          );
+          scripted.emit('close', -4058);
+          turnReady();
+        },
+      );
+      const runner = vi.fn(runClaudeProcess);
+      const controller = new AbortController();
+      const session = new ClaudeHarness({
+        platform: 'win32',
+        binary: 'synthetic-cli',
+        runner,
+      }).start(
+        {
+          workingDirectory: 'synthetic-workspace',
+          model: 'claude-opus-5-5',
+          effort: 'xhigh',
+          options: HarnessOptionsSchema.parse({ sandbox: 'read-only', approval: 'never' }),
+          turn: { prompt: 'PRIVATE_PROMPT' },
+        },
+        controller.signal,
+      );
+      let terminal = false;
+      const outcome = session.result.catch((error: unknown) => {
+        terminal = true;
+        return error;
+      });
+      const events: HarnessEvent[] = [];
+      const drained = (async () => {
+        for await (const event of session.events) events.push(event);
+      })();
+      await ready;
+      const command = runner.mock.calls.at(-1)?.[0];
+      expect(command).toMatchObject({ timeoutMs: null, cwd: 'synthetic-workspace' });
+      const removed = vi.spyOn(command!.signal, 'removeEventListener');
+      expect(
+        runner.mock.calls.map(([call]) =>
+          call.args.includes('--version')
+            ? 'version'
+            : call.args.includes('--help')
+              ? 'help'
+              : call.args.includes('auth')
+                ? 'auth'
+                : 'turn',
+        ),
+      ).toEqual(['version', 'help', 'auth', 'turn']);
+      await vi.advanceTimersByTimeAsync(999);
+      expect(terminal).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      // A finite liveness oracle: the exact old source fails here, rather than hanging this test.
+      expect(terminal).toBe(true);
+      const failure = {
+        code: 'HARNESS_TURN_FAILED',
+        message:
+          "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        retriable: false,
+      };
+      expect(await outcome).toMatchObject(failure);
+      await expect(session.sessionId).rejects.toMatchObject(failure);
+      await drained;
+      expect(events).toEqual([
+        { type: 'error', ...failure, submission: 'definitely-not-submitted' },
+      ]);
+      const processResult = await runner.mock.results.at(-1)?.value;
+      expect(processResult).toEqual({
+        exitCode: null,
+        stdout: '',
+        timedOut: false,
+        aborted: false,
+        overflow: false,
+        spawnCode: 'ENOENT',
+      });
+      const bytes = JSON.stringify({ events, processResult });
+      expect(controller.signal.aborted).toBe(false);
+      expect(removed).toHaveBeenCalledWith('abort', expect.any(Function));
+      expect(vi.getTimerCount()).toBe(0);
+      expect(killTree).not.toHaveBeenCalled();
+      if (late === 'success') release(fileStats);
+      else reject(Object.assign(new Error('PRIVATE_FS_BODY'), { code: 'ENOENT' }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(JSON.stringify({ events, processResult })).toBe(bytes);
+      expect(stat).toHaveBeenCalledExactlyOnceWith('synthetic-workspace');
+      expect(runner).toHaveBeenCalledTimes(4);
+      expect(vi.getTimerCount()).toBe(0);
+      expect(JSON.stringify(events)).not.toContain('PRIVATE');
+    },
+  );
   it.each([
     ['stdout', 1],
     ['stdout', null],

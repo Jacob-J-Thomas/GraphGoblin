@@ -105,3 +105,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0085 - Refuse secret-bearing Windows launcher overrides](ADR-0085-refuse-launcher-secret-overrides.md) rejects explicit master-key and Jev seed-key overrides before configuration persistence or launcher actions, without printing their values (#437).
 
 [ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
+
+[ADR-0089 - Bound optional Claude start-refusal diagnosis](ADR-0089-bounded-claude-refusal-diagnosis.md) gives post-refusal metadata a private monotonic deadline, retaining timely facts and returning the known refusal with unknown cause when optional diagnosis expires (#364).

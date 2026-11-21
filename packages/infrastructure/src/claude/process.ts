@@ -50,6 +50,7 @@ export type ClaudeCliRunner = (
 export type ClaudeStartRefusal =
   'executable-missing' | 'working-directory-missing' | 'working-directory-not-directory';
 type PathState = 'missing' | 'directory' | 'other' | 'unknown';
+const START_REFUSAL_DIAGNOSIS_MS = 1000;
 async function pathState(path: string): Promise<PathState> {
   try {
     return (await stat(path)).isDirectory() ? 'directory' : 'other';
@@ -70,16 +71,22 @@ async function pathState(path: string): Promise<PathState> {
 async function observeStartRefusal(
   request: ClaudeProcessRequest,
   code: NonNullable<ClaudeProcessResult['spawnCode']>,
+  current: () => boolean,
 ): Promise<ClaudeStartRefusal | undefined> {
+  if (!current()) return undefined;
+  const observePath = (path: string): Promise<PathState> =>
+    current() ? pathState(path) : Promise.resolve('unknown');
   const binary = request.binary;
   if (code === 'ENOENT' && isAbsolute(binary) && resolvePath(binary) === normalize(binary)) {
     const names =
       process.platform === 'win32' ? [binary, `${binary}.com`, `${binary}.exe`] : [binary];
-    const states = await Promise.all(names.map(pathState));
+    const states = await Promise.all(names.map(observePath));
+    if (!current()) return undefined;
     if (states.every((state) => state === 'missing' || state === 'directory'))
       return 'executable-missing';
   }
-  const directory = await pathState(request.cwd);
+  const directory = await observePath(request.cwd);
+  if (!current()) return undefined;
   if (directory === 'missing') return 'working-directory-missing';
   if (directory === 'other') return 'working-directory-not-directory';
   return undefined;
@@ -119,6 +126,7 @@ export const runClaudeProcess = (
     let treeConfirmed = false;
     let closeCode: number | null = null;
     let killTimer: ReturnType<typeof setTimeout> | undefined;
+    let diagnosticTimer: ReturnType<typeof setTimeout> | undefined;
     let diagnostic = '';
     let rejection: ClaudeProcessResult['turnRejection'];
     const finish = (exitCode: number | null, terminationUnconfirmed = false): void => {
@@ -126,6 +134,7 @@ export const runClaudeProcess = (
       settled = true;
       clearTimeout(timer);
       if (killTimer) clearTimeout(killTimer);
+      if (diagnosticTimer) clearTimeout(diagnosticTimer);
       request.signal.removeEventListener('abort', kill);
       resolve({
         exitCode,
@@ -233,8 +242,20 @@ export const runClaudeProcess = (
       const code =
         error.code === 'ENOENT' ? 'ENOENT' : error.code === 'EACCES' ? 'EACCES' : 'UNKNOWN';
       spawnCode = code;
-      void observeStartRefusal(request, code).then((observed) => {
-        startRefusal = observed;
+      // Optional metadata must not hold a proved refusal open, even for an unbounded turn.
+      // The absolute monotonic deadline also rejects late metadata before a delayed timer runs.
+      const deadline = performance.now() + START_REFUSAL_DIAGNOSIS_MS;
+      const current = (): boolean => !settled && performance.now() < deadline;
+      const expire = (): void => {
+        if (settled) return;
+        const remaining = deadline - performance.now();
+        if (remaining > 0) diagnosticTimer = setTimeout(expire, remaining);
+        else finish(null);
+      };
+      diagnosticTimer = setTimeout(expire, START_REFUSAL_DIAGNOSIS_MS);
+      void observeStartRefusal(request, code, current).then((observed) => {
+        if (settled) return;
+        if (current()) startRefusal = observed;
         finish(null);
       });
     });

@@ -964,6 +964,14 @@ established, in fixed text without paths:
 Every refusal stays `definitely-not-submitted`, and the turn uses the working directory exactly as
 given. Unconfirmed termination and cancellation keep their precedence; an abort or deadline that
 arrives during the observation reports the refusal at once, without a cause and without a timeout.
+Optional metadata has its own private 1,000 ms monotonic budget, starting when the runner observes
+the refusal, even for a turn with no request deadline or watchdog. When that budget expires, the
+actual spawn code and definite non-submission remain; the cause stays unknown, without claiming
+a process timeout or cancellation. Only metadata accepted before the absolute deadline can add a
+cause. No subsequent lookup starts after expiry or settlement, and late results cannot change the
+returned failure. The runner releases its diagnostic timer and abort listener; an already issued
+filesystem read may finish later, because the budget bounds the wait rather than cancelling native
+`stat`. See [ADR-0089](decisions/ADR-0089-bounded-claude-refusal-diagnosis.md).
 A later error event of a started process, such as a failed kill, is not a refusal. From 260
 characters Windows also fails the refused process's stdout and stderr pipes (`read ENOTCONN`); the
 runner ignores pipe faults of a process that never started, where they previously escaped as an
