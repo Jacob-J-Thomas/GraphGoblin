@@ -1,0 +1,2219 @@
+{
+  "prAndIssue": {
+    "data": {
+      "repository": {
+        "ref": {
+          "target": {
+            "oid": "a84f988b89e456b0e2270e3c4750afb250b6c68f"
+          }
+        },
+        "pullRequest": {
+          "number": 550,
+          "state": "OPEN",
+          "title": "fix(codex): shorten structured scratch and SDK schema paths",
+          "isDraft": true,
+          "headRefName": "codex/gg-i4-363-structured",
+          "headRefOid": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+          "baseRefName": "main",
+          "baseRefOid": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+          "mergeable": "MERGEABLE",
+          "mergeStateStatus": "CLEAN",
+          "reviewDecision": null,
+          "body": "Structured calls use a short exclusive adapter scratch directory, and the managed Codex SDK patch now also shortens its output-schema directory prefix. This removes the sequential SDK blocker at the tested 226-character Windows temp root while retaining schema enforcement, native creation/cleanup, the existing windowsHide patch and dependency versions. The docs state the measured boundary and correct the retry count to four attempts / three retries.\n\nPart of #279. Closes #363.\n\nSource `7d8467439b9850a555b92ab4b96b58c8b8b78388` has original 19-case independent allocator QA, retained SDK-blocker evidence, 57 focused author tests and adapter coverage of 99.41% lines / 95.50% branches. Genuine native CLI QA passes the corrected short/226 pair, observing scratch/schema lengths 249/255, matching strict schema, exit 0 and cleanup.\n\nThe independent SDK evidence represents eight intended scenarios across twelve calls, **not twelve passes**. Original driver 0/8 and corrected abort driver 0/2 failures remain unchanged; two original abort fixtures are excluded. D183 separately dispositions saved success/error/abort states, process-handle fields and scoped CIM absence. The archive preserves original reports/provider records, raw failures, all scripts, exact hashes and explicit limits.\n\nThis is a draft while **actual Claude formal review 2 and final Astra review 3 remain open**, alongside exact publication-head/current-target CI and required native/coverage verification. Review 1 remains CHANGES_REQUIRED at its original source; no later verdict is implied or retroactively attached. Arbitrary long paths, live entitlement, native abort/error and tool/sandbox behavior remain outside the stated native-success evidence.\n\nCurrent integrated head `55c9a5497f9e4a6e7f9ebeaa29283e3898170683` targets main `a84f988b89e456b0e2270e3c4750afb250b6c68f`. The ordinary integration preserves all seven #363 runtime/test/patch/lock files exactly and all 339 own plus 243 inherited evidence blobs. Only additive preservation-policy and changelog conflicts were resolved. [Retained evidence](docs/qa/2026-11-21-i4-363-structured-temp/README.md) separates original failed QA drivers from the measured native and saved-state results.\n",
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550",
+          "potentialMergeCommit": {
+            "oid": "7dafb6a54586928199c95c7170780378b5036e19",
+            "tree": {
+              "oid": "1108c458b590bbfedfcf3a5e39b1966eb8252e62"
+            },
+            "parents": {
+              "nodes": [
+                {
+                  "oid": "a84f988b89e456b0e2270e3c4750afb250b6c68f"
+                },
+                {
+                  "oid": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683"
+                }
+              ]
+            }
+          },
+          "closingIssuesReferences": {
+            "nodes": [
+              {
+                "number": 363,
+                "state": "OPEN"
+              }
+            ],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          },
+          "reviewThreads": {
+            "nodes": [],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          },
+          "reviews": {
+            "nodes": [],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          },
+          "comments": {
+            "nodes": [
+              {
+                "databaseId": 7061290665,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061290665",
+                "body": "# Review 1 of 3: #363 short exclusive scratch allocation (Claude opposite-family, read-only)\n\n**Decision: CHANGES_REQUIRED.** The runtime change is correct and I'm not asking for any code change. The blocker is that the docs and CHANGELOG added by this patch say the 226-character temp root is supported. In the production Codex path, structured calls under that root very likely still fail. The fix is a short wording correction in two files.\n\n## Binding\n- **Head:** `76beeb0f2e99343697578c2713ac06f80d59e7b5`. I confirmed this by reading the branch ref `refs/heads/codex/gg-i4-363-structured`.\n- **Tree / parent:** `2544bc2913f9cec0d95a215ea631ab62c7985c1d` / `02351e2fb932b3be44e7cc3fb3943a61d568226c`. Both come from `source-binding.json`; I couldn't check them myself.\n- **Checkout vs patch:** I read `structured.ts` and `structured.test.ts` in full, plus the docs/06 and CHANGELOG hunks in place. They match the `author.patch` post-image.\n- **Unchanged method:** `complete()` is byte-identical to the baseline file in `baseline-structured.original.ts`.\n\n## Findings\n\n### F1 (P2, in scope, blocking): the docs claim the 226-character root works, but the real Codex path still fails there\nSignature: `structured-long-temp/sdk-output-schema-mkdtemp`\n\n**Root cause.** Every structured call sends an output schema to the Codex SDK:\n- `structured.ts:76` always sets `outputSchema`, and `harness.ts:249` passes it on.\n- The production harness uses the real SDK client (`adapters.ts:17`, `harness.ts:104-115`, `client.ts:48`).\n- In `@openai/codex-sdk` 0.160.0, the turn calls `createOutputSchemaFile` (`dist/index.js:55`). That calls `fs.mkdtemp(path.join(os.tmpdir(), \"codex-output-schema-\"))` (`dist/index.js:13`), with no fallback.\n- No code in `apps` or `packages` changes the process temp root, so this directory goes under the same root as the scratch directory.\n\n**The arithmetic.** At a 226-character root, the SDK's template is 226 + 1 + 20 + 6 = **253 characters**. The repo's own measurement says Windows `mkdtemp` fails with `ENAMETOOLONG` from 248 to 258 characters (`docs/qa/2026-10-19-wp-f5-launch-diagnosis.md:108`). The author's own baseline also shows Node 22.23.4 `mkdtemp` failing at 256 on this host.\n\n**Impact.**\n- **Production callers:** the engine's decision and coerce-repair calls pass no working directory (`docs/06:606-608`), so they use exactly this path.\n- **What changes:** the failure still happens; it just moves later. After the patch, the scratch directory is created and a `codex mcp list` check runs (`client.ts:45`, no paid turn). The SDK's `mkdtemp` then fails, and the error comes back through the harness's generic error classification instead of the allocator's raw error.\n- **Why the existing hedges don't cover it:** they mention paths created *inside* the scratch directory and \"arbitrary\" CLI operations. The SDK directory sits next to the scratch directory, is created on every call, and fails for the same `mkdtemp` reason the patch says it avoids.\n- **Wording that is wrong:** `docs/06:601` says \"This supports the tested 226-character temporary root\". `CHANGELOG.md:9` says \"This avoids the Windows `mkdtemp` failure under the tested 226-character temp root\". That breaks AGENTS.md \"Keep docs in sync\" and the brief's rules: no general long-path claim, and docs bounded to the real case.\n- **Delivery risk:** #363 / U4.4 could be closed on a claim the production path contradicts.\n- **Why the tests missed it:** they use `FakeHarness`, which never reaches the SDK.\n\n**Required in this PR (docs only, no runtime change):**\n- `docs/06:601-602` and `CHANGELOG.md:9` should say only that the adapter's own scratch directory no longer fails at the tested root.\n- Both should say that real Codex structured turns at that root are still limited by the SDK creating its output-schema directory with `mkdtemp` under the same temp root, and link a follow-up.\n- The handoff report should say the same.\n\n**This finding can be refuted without a paid turn.** An existing test setup runs the real SDK against a fake CLI (`isolation.test.ts:84-99`); the test at `:287-308` already sends a `CodexStructured` call through it and checks `--output-schema`. If that call, with no working directory and the temp root stubbed to 226 characters, succeeds on Windows, F1 is withdrawn.\n\n**Decision for the coordinator or owner.** If #363 / U4.4 requires real structured turns to *succeed* at that root, the SDK-owned directory needs an approach choice. That is a scope increase needing human direction, not part of this PR.\n\n### F2 (P3, non-blocking): the CHANGELOG miscounts the retries\n`CHANGELOG.md:7-8` says \"retrying at most four `EEXIST` collisions\". The code makes four attempts in total (`structured.ts:24`), so it retries at most three times; the fourth collision is thrown. The test at `structured.test.ts:167-179` confirms this. `docs/06:598` (\"tries at most four names\") is correct. This can be fixed in the same edit as F1.\n\n## Areas reviewed with no findings\n- **Correctness:** the allocator change matches the contract.\n  - Non-collision errors are thrown at once.\n  - The caller only gets a cleanup handle after `mkdir` succeeds.\n  - The working-directory precedence (`request ?? option`), the rule that configured paths are never cleaned, and the abort/cancel/cleanup/primary-failure order are all unchanged.\n- **Security and ownership:**\n  - Mode `0o700` matches `mkdtemp`.\n  - The exclusive `mkdir` never reuses an existing name, including a planted symlink (that gives `EEXIST`).\n  - Names use 4 bytes from the crypto random generator.\n  - A colliding directory is never removed.\n  - This is the same pattern as `cli.ts:110-124` and `claude/harness.ts:83-97`.\n- **Path limits:** the old allocator worked up to a root of about 217 characters; the new one should work up to about 235, given the 258-character working-directory limit. The docs make no claim beyond that, apart from F1.\n- **Random collisions:** with 32-bit names and four attempts, the risk is negligible. The 1-collision test would also catch a name that isn't random, because a repeated name would need a third attempt.\n- **Layering:** `node:crypto` is built in and already used in this package. No new dependency, injection point or schema.\n- **Test quality:** good for what it tests.\n  - Collisions are real `EEXIST` errors from a second actual `mkdir`, and the marker files are checked afterwards.\n  - Errors are checked by identity, and abort-during-allocation uses a real `mkdir`.\n  - Cleanup failures don't hide the primary error.\n  - The precedence test confirms nothing is allocated or removed.\n  - Injected errors are labelled as injected.\n  - Its only limit is staying at the fake-harness level, which is F1.\n\n## Optional follow-ups (not blocking, for the coordinator to decide and file)\n1. **The SDK's output-schema `mkdtemp` under long temp roots:** the issue-ready follow-up from F1, with current behaviour, the 253-character arithmetic and the evidence above. I couldn't check GitHub for duplicates.\n2. **Three copies of the allocator (P3, low priority):** the same loop exists in `cli.ts`, `claude/harness.ts` and `structured.ts`, and `structured.ts` uses a literal `4` where the others use a named constant. The contract rules out a shared helper in this PR.\n\n## Limits of this review\n- **Nothing executed:** I only read files. I ran no commands, tests, lint, typecheck, coverage or CI. Every result in this review that comes from running something is author-reported.\n- **Author evidence I read:** the baseline log (1 failed, `ENAMETOOLONG` from `mkdtemp`), the candidate log (21/21 passed) and `command-outcomes.json`.\n- **Not verified:** the tree and parent SHAs, all hashes (not recomputed), and whether the working tree is clean.\n- **F1 is an inference from reading code, not reproduced:** it rests on the SDK source, the path arithmetic, the repo's measured range and the author's baseline.\n- **No GitHub access:** I haven't read the #363 text or checked for duplicate issues.\n- **Still pending:** final Astra MAX review, independent QA, and CI on the exact head and current target.",
+                "createdAt": "2026-11-21T10:31:16Z",
+                "updatedAt": "2026-11-21T10:31:16Z"
+              },
+              {
+                "databaseId": 7061310292,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061310292",
+                "body": "# #363 QA evidence for PR #550\n\nProduct source: `7d8467439b9850a555b92ab4b96b58c8b8b78388`. Archive child: `6216b9a1397642ae522908ded008f3229608eab8`. Current integrated head: `55c9a5497f9e4a6e7f9ebeaa29283e3898170683`, targeting main `a84f988b89e456b0e2270e3c4750afb250b6c68f`.\n\n[Retained evidence at this exact head](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/55c9a5497f9e4a6e7f9ebeaa29283e3898170683/docs/qa/2026-11-21-i4-363-structured-temp/README.md) preserves original reports, scripts, failed invocations, raw states, provider records and hashes.\n\n- **Original independent allocator QA: 19/19.** Native filesystem/public-method controls and a real Node cwd child with a local HarnessPort. This tier does **not** reach the SDK.\n- **SDK author evidence:** 675 tests passed / 4 live tests skipped; adapter-owned TypeScript coverage is 99.41% lines and 95.50% branches, above the unchanged 90% floors. Vendor SDK code is exercised behaviorally and is not counted in those coverage percentages.\n- **Corrected genuine native CLI pair: 2/2.** Actual development-source adapter/default harness/managed SDK and bundled `codex.exe` each make one synthetic loopback Responses request, carry the matching strict schema and exit 0. At the 226-character root, observed lengths are scratch 249, SDK directory 243 and schema file 255, followed by cleanup and sentinel preservation.\n- **Failed drivers remain failed:** original corrected-SDK driver 0 PASS / 8 FAIL; corrected abort driver 0 PASS / 2 FAIL. Two original abort fixtures fell through before cancellation and are excluded from abort evidence. The earlier SDK-blocker driver also retains its 0/2 outcome.\n\n[D183's separate saved-state disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363#issuecomment-7060992346) establishes **eight intended scenarios across twelve actual calls, not twelve passes**. Corrected abort interpretation uses the harmless CLI: schema/scratch were present before abort, then AbortError, removal and sentinel preservation; separate ChildProcess handle fields and scoped CIM absence support termination despite missing exit callbacks. Those are not replacement green driver results or a general process audit.\n\nAll **339 own #363 archive blobs plus 243 inherited PR #547 blobs** were verified against their original committed raw bytes and seals. The #363 implementation/tests/SDK-patch/lock remain unchanged by main integration; incoming approved comments/guidance and evidence are retained.\n\n[Historical actual Claude review 1 is published verbatim](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061290665) and remains **CHANGES_REQUIRED at `76beeb0f2e99343697578c2713ac06f80d59e7b5`**. Actual Claude formal review 2 has **not started**. Final Astra review 3 and current-head/current-target CI remain **pending**. QA dispatch identity and native fixture model names remain separate from the genuine Claude formal-review envelope.\n\nNo native error/abort, live-provider entitlement, arbitrary longer paths/subsequent child files or tool/sandbox behavior is claimed. This records bounded engineering evidence; it closes nothing and establishes no merge or owner acceptance.\n",
+                "createdAt": "2026-11-21T10:32:44Z",
+                "updatedAt": "2026-11-21T10:32:44Z"
+              },
+              {
+                "databaseId": 7061548828,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061548828",
+                "body": "Current-head/current-target CI has passed at `55c9a5497f9e4a6e7f9ebeaa29283e3898170683` against main `a84f988b89e456b0e2270e3c4750afb250b6c68f`: [run 44894502596](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596), attempt 1, all six jobs successful. Coverage records 10,049 unit tests passed / 52 skipped and all existing package thresholds; browser records 488 passed, native Windows 27 passed. Audit: 7 low / 13 moderate, no high or critical finding.\n\nThe downloaded native artifact `14703338512`, SHA-256 `357d01a5ba9ad144cb84974be96a8b4013ac17ddfc5500ad7f10c4ac3f4d0b61`, passed its member, digest, exact revision/parent/tree and canonical 338-record replay checks. Tested synthetic merge: `7dafb6a54586928199c95c7170780378b5036e19`.\n\nThis verifies CI and its retained native evidence. Actual Claude corrective review 2 is still queued for the reported reset; the reserved fresh Astra final audit is scan 3. Original review 1 and failed QA driver outcomes remain unchanged. No merge, issue closure or owner acceptance is claimed.",
+                "createdAt": "2026-11-21T10:54:49Z",
+                "updatedAt": "2026-11-21T10:54:49Z"
+              },
+              {
+                "databaseId": 7061723533,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061723533",
+                "body": "# Review 2 of 3: #363 targeted corrective review (actual Claude, read-only)\n\n**Verdict: ACCEPT CORRECTION** for product source `7d8467439b9850a555b92ab4b96b58c8b8b78388`.\n\n- **F1 is resolved.** The real SDK's next allocation after the adapter scratch was the reported blocker, and the managed patch fixes it.\n- **F2 is resolved.** The wording now says four attempts / three retries, which matches the unchanged code.\n- I found no blocking direct regression and no material missing criterion within the D177/D183 scope.\n\nReview 1 remains CHANGES_REQUIRED at `76beeb0f` as a historical record. This review is the second formal slot. It is not merge approval and not a CI result.\n\n## Binding\n\n- **Coordinator receipt:** `ROOT-RECEIPT.json` exists and records head `55c9a5497f9e\u2026`. That head is an ordinary merge of archive child `6216b9a1\u2026` and current target main `a84f988b\u2026`, with `productSource` = `7d846743\u2026`.\n- **Checked-out head:** the worktree `.git` points to `refs/heads/codex/gg-i4-363-structured`, which contains `55c9a549\u2026`.\n- **Product files, checked by reading only (no hashing):** the patch, `sdk-schema.test.ts`, both fixtures and ADR-0087 have the same content as the author's frozen `candidate-source/` copies. `structured.ts` matches the allocator review 1 reviewed. The lock carries exactly three references to the new patch hash and none to the old one. The #363 passages in CHANGELOG, docs/06 and the research doc match the frozen wording.\n- **Scope of the verdict:** it covers source `7d846743`. It carries over to head `55c9a549` only for the #363 product bytes, which the receipt says are unchanged and which my reading supports. The merge also brought in comment-only #427/#365 edits to `options.ts` and `isolation.ts`. I did not verify those; they contain no temp or schema code.\n\n## F1: the real SDK schema allocation (`structured-long-temp/sdk-output-schema-mkdtemp`)\n\n**Resolved.** The source change is exactly what D177 selected.\n\n**The patch.** `patches/@openai__codex-sdk@0.160.0.patch` gains one new hunk at `dist/index.js:13`, changing the prefix from `\"codex-output-schema-\"` to `\"gg-schema-\"`. The existing `windowsHide: true` hunk is unchanged.\n\n**The installed SDK the adapter actually loads** (`packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js`):\n\n- Line 13 has the new prefix.\n- It still calls native `fs.mkdtemp`, so exclusive creation, the six random characters and the permissions are unchanged.\n- Lines 21\u201327 still write the schema with `JSON.stringify` and clean up if the write fails.\n- The turn's `finally` cleanup (lines 93\u201395) and the error/abort/`finally` path in exec (lines 297\u2013315) are unchanged.\n- Client `env` only reaches the spawned CLI (lines 244\u2013267). This confirms the SDK has no public way to change where it creates the schema directory.\n\n**Lock and dependencies.** `pnpm-lock.yaml` lines 169, 537 and 6654 are the only changes. `pnpm-workspace.yaml` and the `0.160.0` specifier are unchanged, and only adapter-codex depends on the SDK. The author's patch-commit log and frozen reinstall log (\"Lockfile is up to date\") back this up.\n\n**Byte equivalence.** The author's `verify-managed-patch.mjs` asserts that the installed file equals the original with only the prefix bytes replaced, and that the lock equals the original with only the hash replaced. Independent QA reports the same result. I read the scripts and results; I did not run them.\n\n**Evidence against review 1's refutation test.** Review 1 said F1 would be withdrawn if the real SDK call succeeded under a 226-character temp root on Windows. Independent QA's corrected native pair did this through real `CodexStructured` and `CodexHarness`, the patched SDK and the bundled `codex.exe`:\n\n- In the 226 case, `codex.exe` (PID 27004) exited 0.\n- `--cd` was 249 characters and `--output-schema` was 255 characters; the schema directory was 243.\n- There was one `POST /v1/responses` whose strict `json_schema` equals the requested schema.\n- The proof was returned, both directories were removed and the sentinels kept their contents.\n\nThe counterfactuals are also in place: the author's run with the original prefix failed with `ENAMETOOLONG \u2026 codex-output-schema-XXXXXX`, and the earlier SDK-boundary readback showed the long-root rejection with no turn marker.\n\n**ADR-0087** accurately records the context, the decision, the declined alternatives and the consequences, including that future SDK updates must re-check both patch hunks.\n\n## F2: retry wording\n\n**Resolved.** In `structured.ts:18\u201326` the loop throws on the fourth `EEXIST`, so there are four attempts and three retries. The test at `structured.test.ts:167\u2013179` expects four `mkdir` calls and an `EEXIST` rejection. `CHANGELOG.md:7\u20138` and `docs/06:624` now say the same thing. I did not reopen the allocator.\n\n## Direct regressions from the patch and tests\n\nNone found that block.\n\n- **Temp-path ownership.** The SDK still removes only the directory it created with `mkdtemp`. No product code sweeps temp directories by a `gg-` prefix, so the new namespace cannot be caught by another cleanup. The reset code uses its own strict `^gg-reset-store-[A-Za-z0-9]{6}$` pattern.\n- **Test environment stays in the child** (`sdk-schema.test.ts:79\u2013106`):\n  - TEMP, TMP, TMPDIR and the home variables are set only for the child process, from an allowlist of the parent's variables.\n  - The test asserts the parent's TEMP and TMP are unchanged.\n  - `NODE_OPTIONS` and `NODE_V8_COVERAGE` are removed before the CLI preload is added (`sdk-schema-case.mjs:12\u201321`).\n  - There is no monkeypatching, no private SDK entry point, no change to the global temp root and no omitted schema.\n- **What the test checks:**\n  - The schema text and JSON match exactly, and `--output-schema` is passed (lines 133\u2013135).\n  - The schema directory sits directly under TEMP with the `gg-schema-` prefix and a six-character suffix, at 243/255 characters on the long root (lines 136\u2013142).\n  - The directory is gone afterwards (line 143) and the `gg-schema-` entries are the same before and after (lines 144\u2013146).\n  - Look-alike sentinels `gg-schema-KEEP00` and `gg-structured-keep` and a plain file survive with their contents (lines 61\u201366 and 109\u2013111).\n  - Cleanup in `afterEach` checks the path is inside temp and has the expected name before removing it (lines 42\u201348).\n- **Abort ordering.** The test host waits for the CLI's record, confirms the schema file still exists, then aborts (`sdk-schema-case.mjs:44\u201352`). The test then requires `AbortError`, `schemaPresentAtAbort === true` and the directory removed. The maintained `schema-cli.mjs:31\u201333` blocks on an awaited promise that never settles. That avoids the original independent fixture's fall-through to a nonexistent `exec` main (`harmless-cli-v1.mjs:20`). If it ever did fall through, the test would fail, because the result would not be an `AbortError`.\n- **Counterfactual matches the final test.** The counterfactual test and fixtures differ from the final ones only in Prettier wrapping and the lint fix's explicit `node:` imports. The assertions are the same.\n- **CI coverage of the guard.** CI's unit and coverage jobs run on `ubuntu-latest`. The Windows `ENAMETOOLONG` boundary is therefore only exercised on Windows machines. However, the regex and the 243/255 length assertions are platform-independent and would fail if the prefix were reverted.\n\n## Evidence and public claims\n\nThe CHANGELOG, docs/06, the research note, ADR-0087 and the archive README stay within what the raw evidence shows:\n\n- **Call accounting:** eight intended scenarios across twelve calls, not 12 PASS.\n- **Driver results stay red where they were red:** the original eight-case driver is 0/8 (exit 1), the corrected abort pair is 0/2 (exit 1), and the two original abort fixtures are excluded as invalid.\n- **The native pair:** 2/2, success cases only.\n- **Explicitly not claimed:** a real provider turn, live entitlement or support for arbitrary long paths.\n\nThe explanation for the red corrected-abort driver is consistent with the code I read. The SDK's `finally` calls `child.removeAllListeners()` (`index.js:310`) before the child's exit event can reach the observer. The separately saved handle fields show `signalCode: SIGTERM` and `liveHandles: []`. These are handle observations, not the missing callbacks, and the scoped CIM check stays scoped.\n\nThe evidence identity tiers are kept separate as the brief requires.\n\n## Non-blocking and pre-existing items\n\nOptional:\n\n1. **docs/06 lines 630\u2013633.** The sentence credits \"Real-SDK/harmless-CLI tests\" with seeing all three lengths. In the maintained suites, 249 is asserted by the fake-harness allocator test (`structured.test.ts:65`) and 243/255 by `sdk-schema.test.ts`. The combined real-SDK observation of 249 comes from the author replay and independent QA. ADR-0087 states these tiers precisely; docs/06 could do the same.\n2. **docs/06 line 624** is longer than the surrounding line wrap. This is formatting only.\n3. **The maintained abort test only implicitly checks that the CLI ended.** It relies on the 6-second `execFile` timeout. An explicit check on `record.pid` could be added, keeping PID reuse in mind.\n\nPre-existing, not caused by #363:\n\n4. **ADR-0086 is missing from `docs/decisions/README.md`** on base as well.\n5. **Native abort/error is not established.** The SDK's cleanup swallows `rm` errors, so on Windows a schema directory left locked at abort time would persist silently. This behavior is the same with the old prefix.\n6. **This worktree's `node_modules/.pnpm`** still contains the unused old-hash SDK copy. Fresh installs and CI are unaffected.\n\n## What I read and what I did not verify\n\n**Read:**\n\n- **Repository:** AGENTS.md, docs/README.md, docs/15, the register's intent 4 sections and D171 amendment, D177, D183, review 1's final message, and ROOT-RECEIPT (head, parents, source preservation, review status).\n- **Product source:** the patch, the full `sdk-schema.test.ts`, both fixtures, `structured.ts`, `structured.test.ts:150\u2013189`, ADR-0087, and the #363 passages in docs/06, CHANGELOG and the research note.\n- **Installed SDK and config:** installed SDK lines 1\u2013379, the lock hash lines, `harness.ts` schema lines and the ci.yml runner lines.\n- **SDK author packet:** report, tracked diff, original patch, candidate copies, managed-patch readback and script, counterfactual log and files, focused-test, lint-02, patch-commit and reinstall logs.\n- **SDK independent QA (02):** report, readback analysis, all three driver consoles, the full native-226 state, key fields of the corrected abort-226 state, and CLI fixtures v1/v3.\n- **SDK boundary (01):** readback analysis.\n- **Publication (01):** source binding, evidence issues, identity notes, review 2 preparation, and the archive README at head.\n\n**Not done or not verified:**\n\n- I ran no commands, tests, lint, typecheck, coverage, build, install or CI.\n- I computed no hashes. That includes the review 1 and D183 SHA-256 values, manifests `401468\u2026` and `49b577\u2026`, the patch hash against the file bytes, the installed-SDK hash and the tree IDs.\n- My file comparisons were by reading, so EOL or whitespace differences would not show.\n- I did not check worktree or index cleanliness, or the merge's comment-only `options.ts`/`isolation.ts` claim.\n- I did not check how the new test behaves on Linux CI.\n- I did not read the allocator author/QA packets, the review 1 envelope files, the independent QA manifest/seal/ledger/most raw states, the author coverage/licence/layer logs, the merge-resolution evidence, or issue #363 on GitHub.\n\n## Gate status\n\nReview 2 of 3 is now recorded as ACCEPT CORRECTION. Still open: the final independent Astra review (slot 3), CI on the current head against the current target, and native artifact replay. I have not closed, published, committed or merged anything.",
+                "createdAt": "2026-11-21T11:11:12Z",
+                "updatedAt": "2026-11-21T11:11:12Z"
+              },
+              {
+                "databaseId": 7061750756,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061750756",
+                "body": "Publication context for the [verbatim actual Claude corrective review](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061723533): formal review 2 of 3, `claude-opus-5-5`, `xhigh`, read-only, successful provider terminal (exit 0). Verdict: **ACCEPT CORRECTION**.\n\nReviewed source: `7d8467439b9850a555b92ab4b96b58c8b8b78388`; archive child: `6216b9a1397642ae522908ded008f3229608eab8`; integrated head: `55c9a5497f9e4a6e7f9ebeaa29283e3898170683`; target: `a84f988b89e456b0e2270e3c4750afb250b6c68f`. The review carries to that integrated head for the unchanged #363 product bytes under the root receipt. Original report SHA-256: `1c01ec92fbd9e526c35366781824c3f27890a43148dfb345a8c82cd99f982993`. Fresh GitHub GET matched its original UTF-8 bytes.\n\nThe historical review 1 remains unchanged. The [coordinator CI record](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061548828) is separate evidence from this static review. Final Astra review 3 remains reserved; this publication does not grant closure or merge approval.",
+                "createdAt": "2026-11-21T11:13:35Z",
+                "updatedAt": "2026-11-21T11:13:35Z"
+              }
+            ],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          }
+        },
+        "issue": {
+          "number": 363,
+          "state": "OPEN",
+          "title": "adapter-codex structured calls fail with ENAMETOOLONG under long temp roots (mkdtemp)",
+          "body": "Found by WP-F5 (#102 launch diagnosis) and confirmed by its independent GPT-6.1 Sol review on 2026-10-19. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\n`packages/adapter-codex/src/structured.ts:15` creates its working directory with `mkdtemp(join(tmpdir(), 'graphgoblin-structured-'))`. On Windows `mkdtemp` fails with `ENAMETOOLONG` once the final path reaches 248 characters (247 passes), so under a long temp root the public `CodexStructured.complete()` fails before any harness start.\n\n## Steps\n\n1. Point `TEMP`/`TMP` at a directory whose path is 226 characters long.\n2. Call `CodexStructured.complete()` (no real turn is needed to reach the failure).\n\nExpected: the structured call starts the harness.\n\nActual: `ENAMETOOLONG` with zero harness starts.\n\n## Fix shape\n\nUse the same pattern WP-F5 introduced for the Claude probe directory in `packages/infrastructure/src/claude/harness.ts` (`probeDirectory()`: `mkdir` of a short random-suffix name with a bounded `EEXIST` retry). WP-F1's unmerged branch adds a similar `mkdtemp(..., 'gg-codex-probe-')` at `packages/adapter-codex/src/cli.ts:92`, which reaches exactly 248 characters under a 226-character root; the orchestrator resolves that one when F1 integrates.\n\n## Related\n\n#102, WP-F5 record `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`.\n\n\n## Intent 4 delivery admission \u2014 November 21\n\nAdmitted after [intent 3 engineering delivery](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448) on signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`, under the owner's ordered batch and delegated blocker-decision authority. [D171 and its alternatives](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) distinguish coordinator selection from human plan approval. Historical parking text above remains history.\n\nCorrect the current structured-call temporary-directory defect using bounded exclusive short-name creation with safe collision and cancellation/cleanup behavior. Preserve unrelated/colliding paths and working-directory precedence.\n\nImplementation and opposite-family review use the named routing models at xhigh. **Independent QA agent (planned):** `i4_363_behavior_qa`, a separate context and checkout; actual provider/session/build/evidence will be recorded when dispatched. GPT owns architecture; Claude Code contributes implementation, design critique, QA and adversarial review. Preserve touched-system positive/negative QA, unchanged coverage, current-head/current-target CI, fresh independent Astra MAX final audit and the three-general-scan cap. No implementation, QA or acceptance is implied by admission. Owner-only closure obligations and held460/Mac501 remain separate.",
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363",
+          "parent": null,
+          "labels": {
+            "nodes": [
+              {
+                "name": "aidlc-ready"
+              },
+              {
+                "name": "qa:touched-systems"
+              },
+              {
+                "name": "impl:gpt-6.1-sol"
+              },
+              {
+                "name": "review:claude-opus-5.5"
+              },
+              {
+                "name": "type:bug"
+              },
+              {
+                "name": "area:harness"
+              }
+            ],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          },
+          "comments": {
+            "nodes": [
+              {
+                "databaseId": 7060507676,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363#issuecomment-7060507676",
+                "body": "# D177 \u2014 Complete the real #363 SDK path through the managed patch\n\nThe owner delegated blocker decisions for this batch, with explanations and rejected alternatives for consolidated owner review. Select a narrow extension of #363 to the already-managed, pinned `@openai/codex-sdk@0.160.0` patch. Retain its existing windowsHide change. Shorten only the SDK output-schema temporary-directory prefix from `codex-output-schema-` to `gg-schema-`, preserving native mkdtemp exclusive creation, randomness, permissions, schema enforcement, error behavior and cleanup. Record this dependency decision in an ADR and synchronize the patch hash in the lockfile through pnpm; do not change package versions or other dependencies.\n\nWhy: independent native Windows QA at adapter candidate 76beeb0f established that the new 249-character adapter scratch is created under a 226-character TEMP root, but the real SDK then fails its own 253-character mkdtemp template before any turn. A short-root control completes and its harmless CLI actually reads the generated schema. The SDK offers no public host temp-root/schema-file override; child env options do not affect its host allocation. This is a sequential blocker to the same reported call, not an unrelated feature.\n\nThe shorter SDK prefix should produce a 243-character directory and a 255-character schema file under the exact reported root. Those are predictions, not test results. Verify them through the actual installed patched SDK and native child process, with short-root success and unchanged schema content/cleanup, failing uncorrected SDK counterfactual, failure/abort cleanup and preservation of unrelated paths. Keep the adapter's bounded exclusive mkdir fix and its existing independent allocator evidence. Correct the inaccurate four-retries wording to four attempts (three retries). Do not promise arbitrary Windows long-path support.\n\nAlternatives declined: close the issue on a fake-harness success and document the immediate SDK blocker (would leave the real reported call broken); process-global TEMP mutation or runtime monkeypatch (unsafe concurrency and private behavior); remove outputSchema (loses the contract); introduce a replacement SDK/executor or version upgrade without evidence (larger unrelated surface); duplicate a custom random allocator inside the vendor patch (unnecessary when shortening the existing native mkdtemp prefix satisfies this bounded path).\n\nThe original SDK-boundary driver has 0 PASS/2 FAIL because it wrongly counted tsx caches as product residue. Its saved-state readback separately proves the actual short success/long failure and owned scratch cleanup. Preserve both original results and corrected interpretation; no retry-to-green substitution. Manifest: 49b577d1a6776ad8c0cd6ca429b5eeec9e70bd56984b03d738c88c4d6c552bc3.\n\nThe existing Claude review remains CHANGES_REQUIRED until a targeted actual Claude re-review of the fix. Independent real-SDK/native QA, unchanged coverage/license/audit gates, current-head/current-target CI and final designated Astra review remain required. No issue closure, owner acceptance, deployment or broader SDK observability/classification policy change is implied.\n",
+                "createdAt": "2026-11-21T09:20:42Z",
+                "updatedAt": "2026-11-21T09:20:42Z"
+              },
+              {
+                "databaseId": 7060992346,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363#issuecomment-7060992346",
+                "body": "# D183 \u2014 Preserve the #363 native results and separately disposition QA-driver failures\n\nThe owner authorized blocker decisions with their reasons and declined alternatives recorded for consolidated review before owner QA. The coordinator accepts the bounded saved-state interpretation below as independent behavioral evidence for the corrected SDK path. This is not an approval to merge or an alteration of the failed driver outcomes.\n\nThe tested source is 7d8467439b9850a555b92ab4b96b58c8b8b78388. Independent QA uses actual development-source CodexStructured, the default CodexHarness, the installed patched SDK and, for the native pair, the bundled codex.exe against a synthetic loopback Responses endpoint. At the 226-character temp root, the adapter scratch is 249 characters, the SDK schema directory 243 and schema file 255. The corrected native pair passes 2/2 with one request each, matching strict schema, actual native PID/exit-0 evidence, removed product directories and preserved sentinels.\n\nThe original eight-call driver remains 0 PASS / 8 FAIL because its child-process observer filtered before spawnargs was populated. Two original abort fixtures additionally fell through to a nonexistent Node main before cancellation, and are excluded from abort acceptance. Four original success/error cases have direct saved outcome, schema and filesystem evidence. Two corrected abort calls now observe both directories present at cancellation, AbortError, subsequent removal and preserved sentinels. Their driver remains 0 PASS / 2 FAIL because the SDK removes the observer's exit listener; separately saved public ChildProcess signal/exit fields show SIGTERM and no live handle. Final scoped CIM observations show no recorded fixture PIDs or matching fixture-root command lines. Those are handle and scoped process observations, not the missing exit-event records or a general host-process audit.\n\nThe separate readback validates eight intended scenarios across 12 actual calls. It is a saved-state interpretation, not a replacement green behavior run. All original predictions, scripts, failed outcomes and corrections remain byte-for-byte retained. The independent packet manifest is 401468059e7e26f77894971648eb54805d60aa4dfb37b7d839a0ff6944758eab. The earlier allocator and original SDK-blocker packet manifests also match their original bytes.\n\nWhy selected: the failed guards have explicit, reproducible observer/fixture explanations, and independent native and filesystem records directly answer the bounded product criteria. The narrower evidence is sufficient to send the source and all limitations to actual Claude corrective review and the final independent audit. The conclusion is limited to the exact supported test boundary; it does not promise arbitrary long paths, subsequent child files, live entitlement, provider/tool behavior, or owner acceptance.\n\nAlternatives declined:\n- Relabel all original drivers PASS or report 12 passing cases: false accounting.\n- Keep rerunning until every diagnostic guard is green: adds repetitive behavior without addressing an unresolved product criterion and hides the finite diagnostic history.\n- Treat an absent original event callback as proof of a running child: contradicted by the corrected native exits and the corrected-abort public handle fields, scoped CIM observations and cleanup.\n- Modify SDK cleanup or listener removal to accommodate an observer: changes product behavior for a test-instrumentation issue.\n- Merge based on this QA alone: actual opposite-family correction review, ordinary coverage and exact-current-head/current-target CI, native artifact replay and the reserved final audit remain required.\n\nEvidence: [independent report](i4-363-sdk-independent-02/REPORT.md), [saved-state analysis](i4-363-sdk-independent-02/readback-analysis.json), [manifest](i4-363-sdk-independent-02/manifest.json). No earlier failed evidence or review verdict is overwritten. Present this decision and its limits in the final owner decision review and QA checklist.",
+                "createdAt": "2026-11-21T10:04:45Z",
+                "updatedAt": "2026-11-21T10:04:45Z"
+              },
+              {
+                "databaseId": 7061311002,
+                "author": {
+                  "login": "Jacob-J-Thomas"
+                },
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363#issuecomment-7061311002",
+                "body": "# #363 QA evidence for PR #550\n\nProduct source: `7d8467439b9850a555b92ab4b96b58c8b8b78388`. Archive child: `6216b9a1397642ae522908ded008f3229608eab8`. Current integrated head: `55c9a5497f9e4a6e7f9ebeaa29283e3898170683`, targeting main `a84f988b89e456b0e2270e3c4750afb250b6c68f`.\n\n[Retained evidence at this exact head](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/55c9a5497f9e4a6e7f9ebeaa29283e3898170683/docs/qa/2026-11-21-i4-363-structured-temp/README.md) preserves original reports, scripts, failed invocations, raw states, provider records and hashes.\n\n- **Original independent allocator QA: 19/19.** Native filesystem/public-method controls and a real Node cwd child with a local HarnessPort. This tier does **not** reach the SDK.\n- **SDK author evidence:** 675 tests passed / 4 live tests skipped; adapter-owned TypeScript coverage is 99.41% lines and 95.50% branches, above the unchanged 90% floors. Vendor SDK code is exercised behaviorally and is not counted in those coverage percentages.\n- **Corrected genuine native CLI pair: 2/2.** Actual development-source adapter/default harness/managed SDK and bundled `codex.exe` each make one synthetic loopback Responses request, carry the matching strict schema and exit 0. At the 226-character root, observed lengths are scratch 249, SDK directory 243 and schema file 255, followed by cleanup and sentinel preservation.\n- **Failed drivers remain failed:** original corrected-SDK driver 0 PASS / 8 FAIL; corrected abort driver 0 PASS / 2 FAIL. Two original abort fixtures fell through before cancellation and are excluded from abort evidence. The earlier SDK-blocker driver also retains its 0/2 outcome.\n\n[D183's separate saved-state disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/363#issuecomment-7060992346) establishes **eight intended scenarios across twelve actual calls, not twelve passes**. Corrected abort interpretation uses the harmless CLI: schema/scratch were present before abort, then AbortError, removal and sentinel preservation; separate ChildProcess handle fields and scoped CIM absence support termination despite missing exit callbacks. Those are not replacement green driver results or a general process audit.\n\nAll **339 own #363 archive blobs plus 243 inherited PR #547 blobs** were verified against their original committed raw bytes and seals. The #363 implementation/tests/SDK-patch/lock remain unchanged by main integration; incoming approved comments/guidance and evidence are retained.\n\n[Historical actual Claude review 1 is published verbatim](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/550#issuecomment-7061290665) and remains **CHANGES_REQUIRED at `76beeb0f2e99343697578c2713ac06f80d59e7b5`**. Actual Claude formal review 2 has **not started**. Final Astra review 3 and current-head/current-target CI remain **pending**. QA dispatch identity and native fixture model names remain separate from the genuine Claude formal-review envelope.\n\nNo native error/abort, live-provider entitlement, arbitrary longer paths/subsequent child files or tool/sandbox behavior is claimed. This records bounded engineering evidence; it closes nothing and establishes no merge or owner acceptance.\n",
+                "createdAt": "2026-11-21T10:32:48Z",
+                "updatedAt": "2026-11-21T10:32:48Z"
+              }
+            ],
+            "pageInfo": {
+              "hasNextPage": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "run": {
+    "id": 44894502596,
+    "name": "CI",
+    "node_id": "WFR_kwLOU6rh8s8AAAAKc-u-xA",
+    "head_branch": "codex/gg-i4-363-structured",
+    "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+    "path": ".github/workflows/ci.yml",
+    "display_title": "fix(codex): shorten structured scratch and SDK schema paths",
+    "run_number": 994,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 374245139,
+    "check_suite_id": 121508861068,
+    "check_suite_node_id": "CS_kwDOU6rh8s8AAAAcSn4UjA",
+    "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+    "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+    "pull_requests": [
+      {
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+        "id": 5426878639,
+        "number": 550,
+        "head": {
+          "ref": "codex/gg-i4-363-structured",
+          "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+          "repo": {
+            "id": 1403707890,
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+            "name": "GraphGoblin"
+          }
+        },
+        "base": {
+          "ref": "main",
+          "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+          "repo": {
+            "id": 1403707890,
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+            "name": "GraphGoblin"
+          }
+        }
+      }
+    ],
+    "created_at": "2026-11-21T10:28:24Z",
+    "updated_at": "2026-11-21T10:53:16Z",
+    "actor": {
+      "login": "Jacob-J-Thomas",
+      "id": 92639671,
+      "node_id": "U_kgDOBYWRtw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Jacob-J-Thomas",
+      "html_url": "https://github.com/Jacob-J-Thomas",
+      "followers_url": "https://api.github.com/users/Jacob-J-Thomas/followers",
+      "following_url": "https://api.github.com/users/Jacob-J-Thomas/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Jacob-J-Thomas/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Jacob-J-Thomas/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Jacob-J-Thomas/subscriptions",
+      "organizations_url": "https://api.github.com/users/Jacob-J-Thomas/orgs",
+      "repos_url": "https://api.github.com/users/Jacob-J-Thomas/repos",
+      "events_url": "https://api.github.com/users/Jacob-J-Thomas/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Jacob-J-Thomas/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-11-21T10:28:24Z",
+    "triggering_actor": {
+      "login": "Jacob-J-Thomas",
+      "id": 92639671,
+      "node_id": "U_kgDOBYWRtw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Jacob-J-Thomas",
+      "html_url": "https://github.com/Jacob-J-Thomas",
+      "followers_url": "https://api.github.com/users/Jacob-J-Thomas/followers",
+      "following_url": "https://api.github.com/users/Jacob-J-Thomas/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Jacob-J-Thomas/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Jacob-J-Thomas/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Jacob-J-Thomas/subscriptions",
+      "organizations_url": "https://api.github.com/users/Jacob-J-Thomas/orgs",
+      "repos_url": "https://api.github.com/users/Jacob-J-Thomas/repos",
+      "events_url": "https://api.github.com/users/Jacob-J-Thomas/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Jacob-J-Thomas/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/jobs",
+    "logs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/logs",
+    "check_suite_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-suites/121508861068",
+    "artifacts_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/artifacts",
+    "cancel_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/cancel",
+    "rerun_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/workflows/374245139",
+    "head_commit": {
+      "id": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+      "tree_id": "1108c458b590bbfedfcf3a5e39b1966eb8252e62",
+      "message": "Merge main into structured temporary-path branch",
+      "timestamp": "2026-11-21T10:27:50Z",
+      "author": {
+        "name": "Jacob-J-Thomas",
+        "email": "92639671+Jacob-J-Thomas@users.noreply.github.com"
+      },
+      "committer": {
+        "name": "Jacob-J-Thomas",
+        "email": "92639671+Jacob-J-Thomas@users.noreply.github.com"
+      }
+    },
+    "repository": {
+      "id": 1403707890,
+      "node_id": "R_kgDOU6rh8g",
+      "name": "GraphGoblin",
+      "full_name": "Jacob-J-Thomas/GraphGoblin",
+      "private": false,
+      "owner": {
+        "login": "Jacob-J-Thomas",
+        "id": 92639671,
+        "node_id": "U_kgDOBYWRtw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/Jacob-J-Thomas",
+        "html_url": "https://github.com/Jacob-J-Thomas",
+        "followers_url": "https://api.github.com/users/Jacob-J-Thomas/followers",
+        "following_url": "https://api.github.com/users/Jacob-J-Thomas/following{/other_user}",
+        "gists_url": "https://api.github.com/users/Jacob-J-Thomas/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/Jacob-J-Thomas/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/Jacob-J-Thomas/subscriptions",
+        "organizations_url": "https://api.github.com/users/Jacob-J-Thomas/orgs",
+        "repos_url": "https://api.github.com/users/Jacob-J-Thomas/repos",
+        "events_url": "https://api.github.com/users/Jacob-J-Thomas/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/Jacob-J-Thomas/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin",
+      "description": "Design, run, and observe agent loops: a PWA and gateway API for node-graph workflows that drive Codex, with an MCP server and a Codex plugin.",
+      "fork": false,
+      "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+      "forks_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/forks",
+      "keys_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/teams",
+      "hooks_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/hooks",
+      "issue_events_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/events",
+      "assignees_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/tags",
+      "blobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/languages",
+      "stargazers_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/stargazers",
+      "contributors_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/contributors",
+      "subscribers_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/subscribers",
+      "subscription_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/subscription",
+      "commits_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/merges",
+      "archive_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/downloads",
+      "issues_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/labels{/name}",
+      "releases_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/deployments"
+    },
+    "head_repository": {
+      "id": 1403707890,
+      "node_id": "R_kgDOU6rh8g",
+      "name": "GraphGoblin",
+      "full_name": "Jacob-J-Thomas/GraphGoblin",
+      "private": false,
+      "owner": {
+        "login": "Jacob-J-Thomas",
+        "id": 92639671,
+        "node_id": "U_kgDOBYWRtw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/Jacob-J-Thomas",
+        "html_url": "https://github.com/Jacob-J-Thomas",
+        "followers_url": "https://api.github.com/users/Jacob-J-Thomas/followers",
+        "following_url": "https://api.github.com/users/Jacob-J-Thomas/following{/other_user}",
+        "gists_url": "https://api.github.com/users/Jacob-J-Thomas/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/Jacob-J-Thomas/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/Jacob-J-Thomas/subscriptions",
+        "organizations_url": "https://api.github.com/users/Jacob-J-Thomas/orgs",
+        "repos_url": "https://api.github.com/users/Jacob-J-Thomas/repos",
+        "events_url": "https://api.github.com/users/Jacob-J-Thomas/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/Jacob-J-Thomas/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin",
+      "description": "Design, run, and observe agent loops: a PWA and gateway API for node-graph workflows that drive Codex, with an MCP server and a Codex plugin.",
+      "fork": false,
+      "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+      "forks_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/forks",
+      "keys_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/teams",
+      "hooks_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/hooks",
+      "issue_events_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/events",
+      "assignees_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/tags",
+      "blobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/languages",
+      "stargazers_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/stargazers",
+      "contributors_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/contributors",
+      "subscribers_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/subscribers",
+      "subscription_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/subscription",
+      "commits_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/merges",
+      "archive_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/downloads",
+      "issues_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/labels{/name}",
+      "releases_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/deployments"
+    }
+  },
+  "jobs": {
+    "total_count": 6,
+    "jobs": [
+      {
+        "id": 136817165950,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBGfg",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136817165950",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817165950",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:28:24Z",
+        "started_at": "2026-11-21T10:28:26Z",
+        "completed_at": "2026-11-21T10:53:15Z",
+        "name": "Browser",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:28:27Z",
+            "completed_at": "2026-11-21T10:28:28Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:42Z"
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:28:42Z",
+            "completed_at": "2026-11-21T10:28:45Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-21T10:28:45Z",
+            "completed_at": "2026-11-21T10:28:46Z"
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-21T10:28:46Z",
+            "completed_at": "2026-11-21T10:28:52Z"
+          },
+          {
+            "name": "Install Edge",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-21T10:28:52Z",
+            "completed_at": "2026-11-21T10:29:17Z"
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-21T10:29:17Z",
+            "completed_at": "2026-11-21T10:29:44Z"
+          },
+          {
+            "name": "Functional browser suite (no retries)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-21T10:29:44Z",
+            "completed_at": "2026-11-21T10:53:10Z"
+          },
+          {
+            "name": "Browser coverage and exclusions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-21T10:53:10Z",
+            "completed_at": "2026-11-21T10:53:10Z"
+          },
+          {
+            "name": "Upload browser failure evidence",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10,
+            "started_at": "2026-11-21T10:53:10Z",
+            "completed_at": "2026-11-21T10:53:10Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18,
+            "started_at": "2026-11-21T10:53:10Z",
+            "completed_at": "2026-11-21T10:53:13Z"
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-21T10:53:13Z",
+            "completed_at": "2026-11-21T10:53:13Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-21T10:53:13Z",
+            "completed_at": "2026-11-21T10:53:13Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-21T10:53:13Z",
+            "completed_at": "2026-11-21T10:53:13Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817165950",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000021190,
+        "runner_name": "GitHub Actions 1000021190",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 136817166212,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHhA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136817166212",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166212",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:28:24Z",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:30:12Z",
+        "name": "Template image",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:28Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:44Z"
+          },
+          {
+            "name": "Build the distributed image",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:28:44Z",
+            "completed_at": "2026-11-21T10:30:08Z"
+          },
+          {
+            "name": "Load installed templates without network or writable storage",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-21T10:30:08Z",
+            "completed_at": "2026-11-21T10:30:11Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-21T10:30:11Z",
+            "completed_at": "2026-11-21T10:30:11Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-21T10:30:11Z",
+            "completed_at": "2026-11-21T10:30:11Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166212",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000021193,
+        "runner_name": "GitHub Actions 1000021193",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 136817166220,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHjA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136817166220",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166220",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:28:24Z",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:34:23Z",
+        "name": "Windows launcher",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:28:27Z",
+            "completed_at": "2026-11-21T10:28:28Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:56Z"
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:28:56Z",
+            "completed_at": "2026-11-21T10:29:06Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-21T10:29:06Z",
+            "completed_at": "2026-11-21T10:29:11Z"
+          },
+          {
+            "name": "Install",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-21T10:29:11Z",
+            "completed_at": "2026-11-21T10:29:23Z"
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-21T10:29:23Z",
+            "completed_at": "2026-11-21T10:30:08Z"
+          },
+          {
+            "name": "Prepare native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-21T10:30:08Z",
+            "completed_at": "2026-11-21T10:30:09Z"
+          },
+          {
+            "name": "Native Windows launcher acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-21T10:30:09Z",
+            "completed_at": "2026-11-21T10:34:09Z"
+          },
+          {
+            "name": "Finalize native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-21T10:34:09Z",
+            "completed_at": "2026-11-21T10:34:10Z"
+          },
+          {
+            "name": "Upload native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-21T10:34:10Z",
+            "completed_at": "2026-11-21T10:34:10Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18,
+            "started_at": "2026-11-21T10:34:10Z",
+            "completed_at": "2026-11-21T10:34:20Z"
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-21T10:34:20Z",
+            "completed_at": "2026-11-21T10:34:20Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-21T10:34:20Z",
+            "completed_at": "2026-11-21T10:34:22Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-21T10:34:22Z",
+            "completed_at": "2026-11-21T10:34:22Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166220",
+        "labels": [
+          "windows-latest"
+        ],
+        "runner_id": 1000021191,
+        "runner_name": "GitHub Actions 1000021191",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 136817166224,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHkA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136817166224",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166224",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:28:24Z",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:38:02Z",
+        "name": "Repository checks",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:29Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:28:29Z",
+            "completed_at": "2026-11-21T10:28:47Z"
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:28:47Z",
+            "completed_at": "2026-11-21T10:28:51Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-21T10:28:51Z",
+            "completed_at": "2026-11-21T10:28:51Z"
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-21T10:28:51Z",
+            "completed_at": "2026-11-21T10:28:59Z"
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-21T10:28:59Z",
+            "completed_at": "2026-11-21T10:29:34Z"
+          },
+          {
+            "name": "Reset acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-21T10:29:34Z",
+            "completed_at": "2026-11-21T10:29:43Z"
+          },
+          {
+            "name": "Recovery process acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-21T10:29:43Z",
+            "completed_at": "2026-11-21T10:29:46Z"
+          },
+          {
+            "name": "Chat restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-21T10:29:46Z",
+            "completed_at": "2026-11-21T10:29:51Z"
+          },
+          {
+            "name": "Wait restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-21T10:29:51Z",
+            "completed_at": "2026-11-21T10:31:19Z"
+          },
+          {
+            "name": "Prompt restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-11-21T10:31:19Z",
+            "completed_at": "2026-11-21T10:31:35Z"
+          },
+          {
+            "name": "Webhook retry acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12,
+            "started_at": "2026-11-21T10:31:35Z",
+            "completed_at": "2026-11-21T10:32:57Z"
+          },
+          {
+            "name": "Current-format migration acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13,
+            "started_at": "2026-11-21T10:32:57Z",
+            "completed_at": "2026-11-21T10:33:05Z"
+          },
+          {
+            "name": "Typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14,
+            "started_at": "2026-11-21T10:33:05Z",
+            "completed_at": "2026-11-21T10:34:24Z"
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15,
+            "started_at": "2026-11-21T10:34:24Z",
+            "completed_at": "2026-11-21T10:36:19Z"
+          },
+          {
+            "name": "Format check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16,
+            "started_at": "2026-11-21T10:36:19Z",
+            "completed_at": "2026-11-21T10:37:45Z"
+          },
+          {
+            "name": "Layer rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17,
+            "started_at": "2026-11-21T10:37:45Z",
+            "completed_at": "2026-11-21T10:37:45Z"
+          },
+          {
+            "name": "Migration generation is a no-op",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18,
+            "started_at": "2026-11-21T10:37:45Z",
+            "completed_at": "2026-11-21T10:37:46Z"
+          },
+          {
+            "name": "Design token rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-21T10:37:46Z",
+            "completed_at": "2026-11-21T10:37:47Z"
+          },
+          {
+            "name": "Dependency graph rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-21T10:37:47Z",
+            "completed_at": "2026-11-21T10:37:52Z"
+          },
+          {
+            "name": "Shipped templates and deliberate-invalid refusal",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-21T10:37:52Z",
+            "completed_at": "2026-11-21T10:37:52Z"
+          },
+          {
+            "name": "Licence allowlist",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22,
+            "started_at": "2026-11-21T10:37:52Z",
+            "completed_at": "2026-11-21T10:37:53Z"
+          },
+          {
+            "name": "Generated docs are current",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23,
+            "started_at": "2026-11-21T10:37:53Z",
+            "completed_at": "2026-11-21T10:37:53Z"
+          },
+          {
+            "name": "Design token contrast table is current and passing",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24,
+            "started_at": "2026-11-21T10:37:53Z",
+            "completed_at": "2026-11-21T10:37:54Z"
+          },
+          {
+            "name": "Dependency audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25,
+            "started_at": "2026-11-21T10:37:54Z",
+            "completed_at": "2026-11-21T10:37:54Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 48,
+            "started_at": "2026-11-21T10:37:54Z",
+            "completed_at": "2026-11-21T10:37:59Z"
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 49,
+            "started_at": "2026-11-21T10:37:59Z",
+            "completed_at": "2026-11-21T10:37:59Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 50,
+            "started_at": "2026-11-21T10:37:59Z",
+            "completed_at": "2026-11-21T10:37:59Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 51,
+            "started_at": "2026-11-21T10:37:59Z",
+            "completed_at": "2026-11-21T10:38:00Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166224",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000021192,
+        "runner_name": "GitHub Actions 1000021192",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 136817166266,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHug",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136817166266",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166266",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:28:24Z",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:48:49Z",
+        "name": "Coverage",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:28:27Z",
+            "completed_at": "2026-11-21T10:28:28Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:28:28Z",
+            "completed_at": "2026-11-21T10:28:46Z"
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:28:46Z",
+            "completed_at": "2026-11-21T10:28:50Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-21T10:28:50Z",
+            "completed_at": "2026-11-21T10:28:50Z"
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-21T10:28:50Z",
+            "completed_at": "2026-11-21T10:28:57Z"
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-21T10:28:57Z",
+            "completed_at": "2026-11-21T10:29:31Z"
+          },
+          {
+            "name": "Install Chromium for tooling browser measurements",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-21T10:29:31Z",
+            "completed_at": "2026-11-21T10:29:46Z"
+          },
+          {
+            "name": "Unit tests with coverage thresholds",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-21T10:29:46Z",
+            "completed_at": "2026-11-21T10:48:44Z"
+          },
+          {
+            "name": "Upload coverage reports",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-21T10:48:44Z",
+            "completed_at": "2026-11-21T10:48:44Z"
+          },
+          {
+            "name": "Coverage report status",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-21T10:48:44Z",
+            "completed_at": "2026-11-21T10:48:44Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18,
+            "started_at": "2026-11-21T10:48:44Z",
+            "completed_at": "2026-11-21T10:48:47Z"
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-21T10:48:47Z",
+            "completed_at": "2026-11-21T10:48:47Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-21T10:48:47Z",
+            "completed_at": "2026-11-21T10:48:48Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-21T10:48:48Z",
+            "completed_at": "2026-11-21T10:48:48Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166266",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000021194,
+        "runner_name": "GitHub Actions 1000021194",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 136821980419,
+        "run_id": 44894502596,
+        "workflow_name": "CI",
+        "head_branch": "codex/gg-i4-363-structured",
+        "run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOU6rh8s8AAAAf2zm9Aw",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/136821980419",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136821980419",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-21T10:48:49Z",
+        "started_at": "2026-11-21T10:48:51Z",
+        "completed_at": "2026-11-21T10:48:54Z",
+        "name": "Gates",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-21T10:48:52Z",
+            "completed_at": "2026-11-21T10:48:52Z"
+          },
+          {
+            "name": "Require Repository checks and Coverage to succeed",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-21T10:48:52Z",
+            "completed_at": "2026-11-21T10:48:52Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-21T10:48:52Z",
+            "completed_at": "2026-11-21T10:48:52Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136821980419",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000021202,
+        "runner_name": "GitHub Actions 1000021202",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      }
+    ]
+  },
+  "artifacts": {
+    "total_count": 2,
+    "artifacts": [
+      {
+        "id": 14703559289,
+        "node_id": "MDg6QXJ0aWZhY3QxNDcwMzU1OTI4OQ==",
+        "name": "coverage",
+        "size_in_bytes": 22477,
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/artifacts/14703559289",
+        "archive_download_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/artifacts/14703559289/zip",
+        "expired": false,
+        "digest": "sha256:2538662a5e558ee64e09b344a0021efc133018a118164c06d84780e9edccf908",
+        "created_at": "2026-11-21T10:48:44Z",
+        "updated_at": "2026-11-21T10:48:44Z",
+        "expires_at": "2027-02-19T10:28:24Z",
+        "workflow_run": {
+          "id": 44894502596,
+          "repository_id": 1403707890,
+          "head_repository_id": 1403707890,
+          "head_branch": "codex/gg-i4-363-structured",
+          "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683"
+        }
+      },
+      {
+        "id": 14703338512,
+        "node_id": "MDg6QXJ0aWZhY3QxNDcwMzMzODUxMg==",
+        "name": "windows-launcher-1",
+        "size_in_bytes": 9181,
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/artifacts/14703338512",
+        "archive_download_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/artifacts/14703338512/zip",
+        "expired": false,
+        "digest": "sha256:357d01a5ba9ad144cb84974be96a8b4013ac17ddfc5500ad7f10c4ac3f4d0b61",
+        "created_at": "2026-11-21T10:34:10Z",
+        "updated_at": "2026-11-21T10:34:10Z",
+        "expires_at": "2027-02-19T10:28:24Z",
+        "workflow_run": {
+          "id": 44894502596,
+          "repository_id": 1403707890,
+          "head_repository_id": 1403707890,
+          "head_branch": "codex/gg-i4-363-structured",
+          "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683"
+        }
+      }
+    ]
+  },
+  "statusChecks": {
+    "total_count": 6,
+    "check_runs": [
+      {
+        "id": 136821980419,
+        "name": "Gates",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2zm9Aw",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "68c1a7cd-21ab-53c7-a127-80f9ee925436",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136821980419",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136821980419",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136821980419",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:48:51Z",
+        "completed_at": "2026-11-21T10:48:54Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 0,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136821980419/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 136817166266,
+        "name": "Coverage",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHug",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "6cbd0a76-2394-50bf-8dd6-f33be881cf76",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166266",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166266",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166266",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:48:49Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 1,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166266/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 136817166224,
+        "name": "Repository checks",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHkA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "bd4a4ce6-26c9-540e-a648-eb95d577a418",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166224",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166224",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166224",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:38:02Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 1,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166224/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 136817166220,
+        "name": "Windows launcher",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHjA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "c50a4e33-24bf-57cf-8fde-6c1a604c2851",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166220",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166220",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166220",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:34:23Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 1,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166220/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 136817166212,
+        "name": "Template image",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBHhA",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "8a814e09-2a9a-5ae3-a0aa-2ed4943fc7c7",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166212",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166212",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817166212",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:28:27Z",
+        "completed_at": "2026-11-21T10:30:12Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 1,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817166212/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 136817165950,
+        "name": "Browser",
+        "node_id": "CR_kwDOU6rh8s8AAAAf2vBGfg",
+        "head_sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "external_id": "28cc853f-7b99-5c39-863f-d47be678926d",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817165950",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817165950",
+        "details_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44894502596/job/136817165950",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-21T10:28:26Z",
+        "completed_at": "2026-11-21T10:53:15Z",
+        "output": {
+          "title": null,
+          "summary": null,
+          "text": null,
+          "annotations_count": 1,
+          "annotations_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/check-runs/136817165950/annotations"
+        },
+        "check_suite": {
+          "id": 121508861068
+        },
+        "app": {
+          "id": 15368,
+          "client_id": "Iv1.05c79e9ad1f6bdfa",
+          "slug": "github-actions",
+          "node_id": "MDM6QXBwMTUzNjg=",
+          "owner": {
+            "login": "github",
+            "id": 9919,
+            "node_id": "MDEyOk9yZ2FuaXphdGlvbjk5MTk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/9919?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/github",
+            "html_url": "https://github.com/github",
+            "followers_url": "https://api.github.com/users/github/followers",
+            "following_url": "https://api.github.com/users/github/following{/other_user}",
+            "gists_url": "https://api.github.com/users/github/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/github/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/github/subscriptions",
+            "organizations_url": "https://api.github.com/users/github/orgs",
+            "repos_url": "https://api.github.com/users/github/repos",
+            "events_url": "https://api.github.com/users/github/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/github/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "name": "GitHub Actions",
+          "description": "Automate your workflow from idea to production",
+          "external_url": "https://help.github.com/en/actions",
+          "html_url": "https://github.com/apps/github-actions",
+          "created_at": "2018-07-30T09:30:17Z",
+          "updated_at": "2026-06-18T16:17:48Z",
+          "permissions": {
+            "actions": "write",
+            "administration": "read",
+            "artifact_metadata": "write",
+            "attestations": "write",
+            "checks": "write",
+            "code_quality": "write",
+            "contents": "write",
+            "copilot_requests": "write",
+            "deployments": "write",
+            "discussions": "write",
+            "drives": "write",
+            "issues": "write",
+            "merge_queues": "write",
+            "metadata": "read",
+            "models": "read",
+            "packages": "write",
+            "pages": "write",
+            "pull_requests": "write",
+            "repository_hooks": "write",
+            "repository_projects": "write",
+            "security_events": "write",
+            "statuses": "write",
+            "vulnerability_alerts": "read"
+          },
+          "events": [
+            "branch_protection_rule",
+            "check_run",
+            "check_suite",
+            "create",
+            "delete",
+            "deployment",
+            "deployment_status",
+            "discussion",
+            "discussion_comment",
+            "fork",
+            "gollum",
+            "issues",
+            "issue_comment",
+            "label",
+            "merge_group",
+            "milestone",
+            "page_build",
+            "public",
+            "pull_request",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "push",
+            "registry_package",
+            "release",
+            "repository",
+            "repository_dispatch",
+            "status",
+            "watch",
+            "workflow_dispatch",
+            "workflow_run"
+          ]
+        },
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/pulls/550",
+            "id": 5426878639,
+            "number": 550,
+            "head": {
+              "ref": "codex/gg-i4-363-structured",
+              "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+              "repo": {
+                "id": 1403707890,
+                "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin",
+                "name": "GraphGoblin"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "actualMergeObject": {
+    "sha": "7dafb6a54586928199c95c7170780378b5036e19",
+    "node_id": "C_kwDOU6rh8toAKDdkYWZiNmE1NDU4NjkyODE5OWM5NWM3MTcwNzgwMzc4YjUwMzZlMTk",
+    "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/7dafb6a54586928199c95c7170780378b5036e19",
+    "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/7dafb6a54586928199c95c7170780378b5036e19",
+    "author": {
+      "name": "Jacob Thomas",
+      "email": "92639671+Jacob-J-Thomas@users.noreply.github.com",
+      "date": "2026-11-21T10:28:21Z"
+    },
+    "committer": {
+      "name": "GitHub",
+      "email": "noreply@github.com",
+      "date": "2026-11-21T10:28:21Z"
+    },
+    "tree": {
+      "sha": "1108c458b590bbfedfcf3a5e39b1966eb8252e62",
+      "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/trees/1108c458b590bbfedfcf3a5e39b1966eb8252e62"
+    },
+    "message": "Merge 55c9a5497f9e4a6e7f9ebeaa29283e3898170683 into a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "parents": [
+      {
+        "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/a84f988b89e456b0e2270e3c4750afb250b6c68f",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/a84f988b89e456b0e2270e3c4750afb250b6c68f"
+      },
+      {
+        "sha": "55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/55c9a5497f9e4a6e7f9ebeaa29283e3898170683",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/55c9a5497f9e4a6e7f9ebeaa29283e3898170683"
+      }
+    ],
+    "verification": {
+      "verified": true,
+      "reason": "valid",
+      "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJrAXJFCRC1aQ7uu5UhlAAANhQQAGhKJC94QbeAXkWb1TEwgwiK\nJ8KXkZwt6/kqfnkmo/CICq5HlGdn+nqsVeBi5eaGQZm6Osit3rRLDJjdOa5nw1Od\nUgN1YlkARIxLQVaMe7INPPl03WeFXXZPFmAFDL0Cl3KAoT9oP693Ekqgk9iouqvj\nFSceal8HTRp6kjyGMeOpOyQxDU/k53dvQ+3ipJSiSKX7fx5j9QZ2dBhkax4MbjTw\nzSC+zyXDg3FcQY9SM4EifoV+Dp3zkS8QK8wP+5wND5jvRHGRXXStRzqK/9+Cq/Ip\nArqeDMYmL9MVN6NDUr1hENAPq2zvwP6oVyg0U3AA0WLbnsJZ2SLlmzHXOlXUEw+M\naTR1Jvh4eb57P9UZ6M0zH1xXxyLctc4JGqYutRkYnUQ/EfgZFT3stcVqQmOWvfCd\nxsOlXUX/E2+Xnz08CewK2C4Nj44aCWOHhLwOZRX9xwVOZa0NpwuumeH9qGN0WwN+\nz51JiZpMOz436TruPDGqdc7/XKsS2g+Vb9i8+5/gAXutudk4f+EpwHZY4XJ/bycg\n9fzf09FDj/qsyN29U3SrUVi93ITXFoBVr7OVq0OvzvugRP/u84eg31pT3QPVrTW/\nkynFlHZdkUU8j7XxmS0sO5mp8gSuownB5ouf+pKUHDyUU/QHSXksfrp2nr2fOiBR\ny6utknx1uxh7V70t8YKb\n=1upn\n-----END PGP SIGNATURE-----\n",
+      "payload": "tree 1108c458b590bbfedfcf3a5e39b1966eb8252e62\nparent a84f988b89e456b0e2270e3c4750afb250b6c68f\nparent 55c9a5497f9e4a6e7f9ebeaa29283e3898170683\nauthor Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com> 1795256901 -0600\ncommitter GitHub <noreply@github.com> 1795256901 -0600\n\nMerge 55c9a5497f9e4a6e7f9ebeaa29283e3898170683 into a84f988b89e456b0e2270e3c4750afb250b6c68f\n",
+      "verified_at": "2026-11-21T10:28:22Z"
+    }
+  },
+  "signedMain": {
+    "sha": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "node_id": "C_kwDOU6rh8toAKGE4NGY5ODhiODllNDU2YjBlMjI3MGUzYzQ3NTBhZmIyNTBiNmM2OGY",
+    "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "author": {
+      "name": "Jacob Thomas",
+      "email": "92639671+Jacob-J-Thomas@users.noreply.github.com",
+      "date": "2026-11-21T10:13:06Z"
+    },
+    "committer": {
+      "name": "GitHub",
+      "email": "noreply@github.com",
+      "date": "2026-11-21T10:13:06Z"
+    },
+    "tree": {
+      "sha": "b0de2af3f1aab4bdd0552076091a6082db6e94fb",
+      "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/trees/b0de2af3f1aab4bdd0552076091a6082db6e94fb"
+    },
+    "message": "Merge pull request #547 from Jacob-J-Thomas/codex/gg-i4-427-guide\n\nDocument Codex account refusals and inherited Windows sandbox settings",
+    "parents": [
+      {
+        "sha": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/02351e2fb932b3be44e7cc3fb3943a61d568226c",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/02351e2fb932b3be44e7cc3fb3943a61d568226c"
+      },
+      {
+        "sha": "598b8f4b02e39e9389cef45acf936dffc17256cb",
+        "url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/git/commits/598b8f4b02e39e9389cef45acf936dffc17256cb",
+        "html_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/commit/598b8f4b02e39e9389cef45acf936dffc17256cb"
+      }
+    ],
+    "verification": {
+      "verified": true,
+      "reason": "valid",
+      "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJrAW6yCRC1aQ7uu5UhlAAAAJIQAB6cxLcprsMfTIGgV+J+TU5D\nluca7lFwfKQ6LXG8Wj74k1vb9Gf6jzx/9ttr8GUJrGGeITu1HGB4Bbx0hu4Ee/ai\nHzuvB35ECWL3HtqWsA2K+5bOzXHg0rLPmDES/SkmvqdRE1L1LMoJrj0xsjyqfU3b\nXs8TvecsaUMgPesfLl05aba5NJbDYpKlUeO1l8Ci5hzWZTt7WdBtsVOHTxLl+WDQ\nA04Vdj2LaMM1J6d8Oop0FKGHqfpQYeCLW/17QZF02LNNqd2hybM/A3GxfaBW4O0T\nnqSqPdRgQfWLq5MDatbkHjJOtxFAxGObtQQGb4oKik2tqB88KynfG303qieTHEFG\n8L9RbfVHrDg9M7DRzOCEqBrUU7pgenfFfUgG/cUFngVUexBZBxeX/q+za9EqYZ5r\n+4CSiF3vXXISCukr4DcajCw/5sMOUniY+q7lAZq80umkSllsB8LwW+BC0AJqkOCw\n1HmxJwo2XBfMUzC6mvRFnM6/KZXKR3EP0wsd3FJtwtcn70j/RP/YleJBOTSdGmRr\ndsHfkQBX+c0+XcQEBk4Rjee+vXIPKG+oktOA4uG5JQppcfkRd7ThspO5foRd+mIJ\nccuV6PYLv6ralPInT0zhDPzNq0b1J7Z0oQP/44Y+Ghio7UbHeNSSNY713YX/B9Mi\nc+M+/gTEMrnoYdu9s9+W\n=IdfX\n-----END PGP SIGNATURE-----\n",
+      "payload": "tree b0de2af3f1aab4bdd0552076091a6082db6e94fb\nparent 02351e2fb932b3be44e7cc3fb3943a61d568226c\nparent 598b8f4b02e39e9389cef45acf936dffc17256cb\nauthor Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com> 1795255986 -0600\ncommitter GitHub <noreply@github.com> 1795255986 -0600\n\nMerge pull request #547 from Jacob-J-Thomas/codex/gg-i4-427-guide\n\nDocument Codex account refusals and inherited Windows sandbox settings",
+      "verified_at": "2026-11-21T10:13:07Z"
+    }
+  }
+}

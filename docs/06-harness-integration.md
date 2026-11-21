@@ -505,7 +505,28 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 ### Mapping inference config to the SDK (Decided, verified in M4)
 
-Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
+An enabled GraphGoblin catalogue entry or a ready preflight does not establish that the selected
+model is available to the API process user's actual Codex login and provider endpoint. Preflight
+checks installation, supported CLI capabilities and authentication without requesting a model turn.
+The bundled CLI's static model/plan metadata is not a live entitlement check. The October 2026
+ChatGPT-account refusal for `gpt-5.5` in [#427](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427)
+is dated evidence, not a universal current restriction or proof that an API key always fixes it.
+
+For a Codex inference turn's structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
+as `HARNESS_ARGUMENTS_REJECTED`; the run records `HARNESS_TURN_FAILED` with that adapter code and
+does not offer Resume. An account/endpoint explanation is evidence for that refused request,
+not a diagnosis for every unavailable model or unknown provider error. Deliberately choose a
+model supported for that login/endpoint, or change the login/endpoint as the API process user;
+correct the applicable definition/default, restart the API if process defaults changed, and start a new run. GraphGoblin does not substitute
+another model or globally disable a seed from one account's refusal. See
+[model-access troubleshooting](guide/07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint).
+
+LLM decisions deliberately omit provider text: the same refusal maps to `DECIDER_HTTP_ERROR`
+and a non-resumable `EVALUATION_PROVIDER_FAILED` with “Decision provider request failed.”
+That run record cannot establish an account-specific cause. Diagnose the selected decision
+model/login/endpoint separately; this change does not expand the decision's diagnostic boundary.
+
+The adapter sends the supported thread settings below explicitly on every session. Their SDK CLI arguments follow `config` overrides and win over the corresponding keys in `configOverrides` or `config.toml`. Other keys, including Windows sandbox backend selection, remain inherited unless overridden. This precedence alone does not establish the enforcement effect of every other sandbox-related key.
 
 Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
 
@@ -543,7 +564,12 @@ converter or backfill is provided (ADR-0062).
 
 A loop turn still inherits from the machine:
 
-- the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
+- the login, the model catalog and the account's model access;
+- the CLI's Windows sandbox backend selection (`windows.sandbox`), unless an explicit node
+  config override supplies it. The SDK's `sandboxMode`
+  becomes the separate `--sandbox` permission level; it does not select that Windows backend.
+  GraphGoblin supplies no dedicated backend selection. The inheritance alone
+  is not evidence that the node's sandbox permissions were weakened;
 - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
 - the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
 
@@ -597,6 +623,22 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+
+The request's working directory takes precedence over the adapter's configured directory;
+neither configured directory is removed. Without either, the adapter exclusively creates a
+short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+limit. It makes at most four attempts (three retries) on `EEXIST`; other creation errors propagate before the
+harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+to a directory this call created. Cancellation and primary failures keep their existing
+cleanup precedence. The pinned SDK separately writes the required output schema under the
+host temporary root. Its managed patch shortens that directory's native `mkdtemp` prefix
+from `codex-output-schema-` to `gg-schema-`, keeping its allocation and cleanup semantics
+([ADR-0087](decisions/ADR-0087-short-codex-schema-temp-prefix.md)). Real-SDK/harmless-CLI
+tests at the measured 226-character Windows temporary root observe a 249-character adapter
+scratch, 243-character SDK schema directory and 255-character schema file, with normal,
+error and abort cleanup. These controlled fixtures are not a provider turn or a promise of
+arbitrary long-path support; ordinary OS/CLI limits still apply.
+
 Configured plugins are inherited through the common harness, including their tools; the
 read-only sandbox controls local commands rather than the authority of plugin services.
 The engine's LLM decision and coerce-repair callers supply neither a working directory

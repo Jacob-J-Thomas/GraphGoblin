@@ -21,8 +21,8 @@ import type { CliCommand, CliRunner } from './cli.js';
  *
  * Order of the `--config` arguments: server switches, these defaults, then the node's own
  * `configOverrides` (so a node turns one server back on with `mcp_servers.<name>.enabled=true`,
- * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which no
- * override can weaken.
+ * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which
+ * win over overrides of the corresponding keys. Other sandbox-related keys remain separate.
  *
  * Every key segment that reaches `--config`, a listed server name or a node override key, must be
  * one plain TOML key (letters, digits, `_`, `-`) and not `__proto__`, `constructor` or

@@ -6,6 +6,25 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and publish a new version before starting a new run. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
 
+- Codex structured calls create short scratch names with exclusive `mkdir` in at most four
+  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
+  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
+  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI
+  verification at the measured 226-character Windows temp root observes a 249-character adapter
+  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI
+  limits remain. Request/configured working directories and cleanup precedence are unchanged.
+  **Upgrade:** reinstall dependencies from the updated frozen lockfile, then rebuild the API.
+  No SDK version, dependency, stored schema/format or reset change.
+
+- Clarify that an enabled Codex model and a ready preflight do not establish current access
+  for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
+  the provider's explanation; LLM decisions retain only a safe failure category. The guide
+  describes deliberate supported-model/login selection without automatic fallback or an
+  API-key-only promise (#427).
+- Reconcile Codex sandbox documentation and source comments: the authored sandbox permission
+  level is explicit, while Windows backend selection remains inherited unless explicitly
+  overridden. No sandbox permissions or backend behavior changed (#365).
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
