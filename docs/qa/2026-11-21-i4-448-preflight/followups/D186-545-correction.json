@@ -1,0 +1,206 @@
+{
+  "before": {
+    "id": 6526925066,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+    "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+    "issue_number": 545,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\n`apps/api/src/preflight.ts:265-289` checks only Codex model membership and enabled state. Ordinary startup also validates the selected effort through `validateHarnessDefaults`. For a configured `gpt-5.5` / `none`, offline preflight can report the default ready and exit 0, while startup rejects `EFFORT_UNSUPPORTED`. The maintained #448 regression at `apps/api/src/preflight-catalog.test.ts:203-211` records the existing disagreement rather than fixing it.\n\nAcceptance when separately dispatched:\n- Reproduce with disposable supported/current stores and the public offline command/startup; include supported-effort and missing-effort controls.\n- Make the Codex default result truthfully account for the effective effort, with no model/provider turn or automatic substitution.\n- Preserve read-only database/WAL behavior, stored enabled preferences, existing harness readiness separation and the documented SQLite SHM reader exception.\n- Do not silently align Codex/Claude disabled-model severity or expand model retirement policy; select any such product change separately.\n- Update preflight documentation and meaningful positive/negative tests; retain numerical coverage, independent QA, opposite-family review and current-target CI.\n\nDuplicate check included open/closed preflight-title, preflight/effort, pending-migration and startup/seed searches; #448 covers missing seeds, #179 CLI prerequisite capability and #132 template-catalog repeated work. None owns this effort-check discrepancy. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:api",
+        "color": "BFDADC",
+        "description": "Fastify API"
+      },
+      {
+        "name": "area:harness",
+        "color": "BFDADC",
+        "description": "Harness and model adapters"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-21T09:10:05Z",
+    "updated_at": "2026-11-21T09:10:05Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+    "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+  },
+  "input": {
+    "repository_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "issue_number": 545,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\n`apps/api/src/preflight.ts:265-289` checks only Codex model membership and enabled state. Ordinary startup also validates the selected effort through `validateHarnessDefaults`. For a configured `gpt-5.5` / `none`, offline preflight can report the default ready and exit 0, while startup rejects `EFFORT_UNSUPPORTED`. The maintained #448 regression at `apps/api/src/preflight-catalog.test.ts:203-211` records the existing disagreement rather than fixing it.\n\nAcceptance when separately dispatched:\n- Reproduce with disposable supported/current stores and the public offline command/startup; include supported-effort and missing-effort controls.\n- Make the Codex default result truthfully account for the effective effort, with no model/provider turn or automatic substitution.\n- Preserve read-only database/WAL behavior (no WAL frames; an existing WAL unchanged), stored enabled preferences, existing harness readiness separation and the documented SQLite reader-sidecar exception (`-shm`, and an empty `-wal` where none existed).\n- Do not silently align Codex/Claude disabled-model severity or expand model retirement policy; select any such product change separately.\n- Update preflight documentation and meaningful positive/negative tests; retain numerical coverage, independent QA, opposite-family review and current-target CI.\n\nDuplicate check included open/closed preflight-title, preflight/effort, pending-migration and startup/seed searches; #448 covers missing seeds, #179 CLI prerequisite capability and #132 template-catalog repeated work. None owns this effort-check discrepancy. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch."
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "id": 6526925066,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+        "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+        "issue_number": 545,
+        "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\n`apps/api/src/preflight.ts:265-289` checks only Codex model membership and enabled state. Ordinary startup also validates the selected effort through `validateHarnessDefaults`. For a configured `gpt-5.5` / `none`, offline preflight can report the default ready and exit 0, while startup rejects `EFFORT_UNSUPPORTED`. The maintained #448 regression at `apps/api/src/preflight-catalog.test.ts:203-211` records the existing disagreement rather than fixing it.\n\nAcceptance when separately dispatched:\n- Reproduce with disposable supported/current stores and the public offline command/startup; include supported-effort and missing-effort controls.\n- Make the Codex default result truthfully account for the effective effort, with no model/provider turn or automatic substitution.\n- Preserve read-only database/WAL behavior (no WAL frames; an existing WAL unchanged), stored enabled preferences, existing harness readiness separation and the documented SQLite reader-sidecar exception (`-shm`, and an empty `-wal` where none existed).\n- Do not silently align Codex/Claude disabled-model severity or expand model retirement policy; select any such product change separately.\n- Update preflight documentation and meaningful positive/negative tests; retain numerical coverage, independent QA, opposite-family review and current-target CI.\n\nDuplicate check included open/closed preflight-title, preflight/effort, pending-migration and startup/seed searches; #448 covers missing seeds, #179 CLI prerequisite capability and #132 template-catalog repeated work. None owns this effort-check discrepancy. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:gpt-6.1-sol",
+            "color": "1D76DB",
+            "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+          },
+          {
+            "name": "review:claude-opus-5.5",
+            "color": "006B75",
+            "description": "Cross-vendor reviewer: Claude Opus 5.5"
+          },
+          {
+            "name": "type:bug",
+            "color": "D73A4A",
+            "description": "Something does not work as documented"
+          },
+          {
+            "name": "area:api",
+            "color": "BFDADC",
+            "description": "Fastify API"
+          },
+          {
+            "name": "area:harness",
+            "color": "BFDADC",
+            "description": "Harness and model adapters"
+          },
+          {
+            "name": "backlog",
+            "color": "9E9E9E",
+            "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 0,
+        "created_at": "2026-11-21T09:10:05Z",
+        "updated_at": "2026-11-21T11:11:35Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+        "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+      "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+      "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+    },
+    "isError": false
+  },
+  "readback": {
+    "id": 6526925066,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+    "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+    "issue_number": 545,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\n`apps/api/src/preflight.ts:265-289` checks only Codex model membership and enabled state. Ordinary startup also validates the selected effort through `validateHarnessDefaults`. For a configured `gpt-5.5` / `none`, offline preflight can report the default ready and exit 0, while startup rejects `EFFORT_UNSUPPORTED`. The maintained #448 regression at `apps/api/src/preflight-catalog.test.ts:203-211` records the existing disagreement rather than fixing it.\n\nAcceptance when separately dispatched:\n- Reproduce with disposable supported/current stores and the public offline command/startup; include supported-effort and missing-effort controls.\n- Make the Codex default result truthfully account for the effective effort, with no model/provider turn or automatic substitution.\n- Preserve read-only database/WAL behavior (no WAL frames; an existing WAL unchanged), stored enabled preferences, existing harness readiness separation and the documented SQLite reader-sidecar exception (`-shm`, and an empty `-wal` where none existed).\n- Do not silently align Codex/Claude disabled-model severity or expand model retirement policy; select any such product change separately.\n- Update preflight documentation and meaningful positive/negative tests; retain numerical coverage, independent QA, opposite-family review and current-target CI.\n\nDuplicate check included open/closed preflight-title, preflight/effort, pending-migration and startup/seed searches; #448 covers missing seeds, #179 CLI prerequisite capability and #132 template-catalog repeated work. None owns this effort-check discrepancy. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:api",
+        "color": "BFDADC",
+        "description": "Fastify API"
+      },
+      {
+        "name": "area:harness",
+        "color": "BFDADC",
+        "description": "Harness and model adapters"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-21T09:10:05Z",
+    "updated_at": "2026-11-21T11:11:35Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+    "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+  },
+  "verbatim": true
+}

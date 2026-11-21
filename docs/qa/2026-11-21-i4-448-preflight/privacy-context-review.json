@@ -1,0 +1,28 @@
+{
+  "scope": "Selected evidence bytes; no original redaction and no owner credential files read.",
+  "candidateCount": 0,
+  "patterns": [
+    {
+      "name": "GitHub-token",
+      "pattern": "/\\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\\b/g"
+    },
+    {
+      "name": "provider-token",
+      "pattern": "/\\bsk-(?:ant-|proj-)[A-Za-z0-9_-]{20,}\\b/g"
+    },
+    {
+      "name": "AWS-access-key",
+      "pattern": "/\\b(?:AKIA|ASIA)[A-Z0-9]{16}\\b/g"
+    },
+    {
+      "name": "private-key",
+      "pattern": "/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g"
+    },
+    {
+      "name": "literal-bearer",
+      "pattern": "/\\bBearer\\s+[A-Za-z0-9_.-]{24,}/g"
+    }
+  ],
+  "syntheticContext": "QA driver defines SYNTH_KEY with Buffer.alloc(32,0x48). Fake CLI model/auth/readiness records are test metadata, not owner/provider entitlement. Ten default11434 test fetches were recorded and blocked; no hidden successful live-owner probe is claimed.",
+  "limits": "Bounded publication inspection, not a repository or account security verdict."
+}

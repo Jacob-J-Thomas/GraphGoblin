@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 492711,
+  "stop_reason": "end_turn",
+  "session_id": "b93ac062-5c62-4b4c-9767-4c457d4ae95a",
+  "total_cost_usd": 3.4443199999999994,
+  "usage": {
+    "input_tokens": 114,
+    "cache_creation_input_tokens": 154071,
+    "cache_read_input_tokens": 5685980,
+    "output_tokens": 53705,
+    "output_tokens_details": {
+      "thinking_tokens": 32854
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 154071,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 20214,
+        "cache_read_input_tokens": 156371,
+        "cache_creation_input_tokens": 412,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 412
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 114,
+      "outputTokens": 53705,
+      "cacheReadInputTokens": 5685980,
+      "cacheCreationInputTokens": 154071,
+      "webSearchRequests": 0,
+      "costUSD": 3.4443199999999994,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 32854,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 154071,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 96,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# #448 independent QA: final report (continuation 02, Claude Opus 5.5)\n\n## Verdict\n\n**CONDITIONAL PASS.**\n\n- **Runtime:** candidate `b45807f` does what #448 asks. Nothing in the native evidence calls for a runtime change.\n- **One current blocker, documentation only:** the CHANGELOG sentence #448 adds, and the existing docs/11:157 sentence, both say \"database and WAL bytes\" stay unchanged. The evidence shows that a read-only open can create an **empty `-wal` and a 32 KiB `-shm`** when a WAL-mode store has no `-wal` file. Replacement wording is in §7.\n- **Two failed tiers stay failed:**\n  - C12: infrastructure focused suite, 55 passed / 1 failed.\n  - C13: native close/EBUSY probe.\n  - Both match an existing failure class. Neither is a #448 product regression.\n- **Gaps:**\n  - C09 and C10: parity with the base binary rests on source comparison only; the base binary was never run.\n  - C15: live provider entitlement is out of scope.\n\n## 1. What this report is\n\n- **No new executions.** I only read files. I ran no commands, builds or tests, made no product calls or provider turns, and edited nothing.\n- **Source of results.** Every native result cited here comes from QA session 01 (`Q/i4-448-independent-01`, 2026-11-21 09:00–09:17Z). Paths below are relative to that folder.\n- **How QA01 ended.** It hit its usage quota, so it never produced a verdict:\n  - `provider/result.json` records `is_error: true`, `api_error_status: 429`, `api_error: usage_limit_reached` and `terminal_reason: api_error`.\n  - `provider/exit.json` records code 1.\n  - The `subtype: \"success\"` field is a wrapper value, not a result.\n  - `observations/criteria.json` is that session's per-criterion assessment, not a final verdict. This report gives the verdict; the original files are unchanged.\n- **Not a review.** This is not a formal general review and doesn't reset the review budget. Both formal reviews are used up; the fresh GPT/Astra final audit is scan 3.\n\n## 2. Code and build checks (C01)\n\n- **Branches.** The QA branch `codex/gg-i4-448-qa` is still at `b45807f033601a53919f2c9e16e0de751971a518`, the worktree HEAD. The author branch `codex/gg-i4-448-preflight` is at `083d7264`; according to review-02's `b.patch`, it changes only the docs/11 table.\n- **Clean tree.** Index and worktree were clean at 08:50:43Z and again at 09:16:34Z. The lockfile blob `92a751db…` is the same at base and head.\n- **Runtime.** Node v22.23.4, pnpm 12.8.1.\n- **Build.** One `pnpm build`: \"12 successful, 12 total\", **5 of them cache replays**, exit 0. It was not a fully uncached build.\n- **Built output.** The built files call `projectStartupModelCatalog` at `settings.js:382`, `preflight.js:429` and `container.js:80`. The `apps/api/dist/main.js` SHA-256 `3160ac2a…` is the same in run-01, run-02 and the final state.\n- **Diff.** 7 files, +393/−10. Nothing under `apps/web` changed.\n\n## 3. Exact counts\n\nThese come from each run's `summary.json`. This corrects C14's \"30 each\".\n\n| | run-01 | run-02 |\n|---|---|---|\n| Owned API child processes | **29** = 17 offline P cases + 12 startup (G0 plus S01–S11) | **30** = 18 P + 12 startup (G0 plus S01–S11) |\n| Exit code 0 / exit code 1 | 13 / 16 | 14 / 16 (P18 is the extra exit 0) |\n| Timed out | 0 | 0 |\n| Still running (driver record) | none | none |\n| Driver cases (pass / fail) | 40 (18 / 22) | 42 (41 / 1) |\n| Checks (failed) | 515 (49) | 580 (1) |\n\n- **Startup children.** There are 11 named startup scenarios plus the G0 first-run start: 12 startup child processes per run, not 11.\n- **Exit records vs. process absence.** Exit codes and zero timeouts are the driver's own records. They don't prove that no process was left. That comes separately from two other records:\n  - `binding/git-state-after.txt` at 09:16:34Z: `owned_process_refs=0`, `owner_port_listeners=0`.\n  - `commands/30-cleanup.log`: both scratch roots removed after their nonces were checked (259 and 274 files), 27 test-suite TEMP leftovers removed, exit 0.\n- **Stray wait loop.** The leftover bash wait loop (process tree from PID 40164, 4 PIDs) appears only in the QA01 provider event log (9 mentions), not in the cleanup log. I didn't trace it again.\n- **Focused test tiers** are counted separately and not added together:\n  - API: 61/61, exit 0.\n  - Infrastructure: 55 passed / 1 failed, exit 1.\n\n## 4. Per-criterion results\n\n| ID | Result | Key evidence | Introduced by #448? |\n|---|---|---|---|\n| C01 | PASS | binding/*, commands/01-build.* | n/a |\n| C02 | PASS | dist-binding.txt; run-02 M01 (9/9), P01, S01, S06 | Yes (the intended change) |\n| C03 | PASS | run-02 P01, P02, P03, P18; fixtures-run-02/reverify.json | Yes (intended) |\n| C04 | **Data unchanged: PASS. Sidecar wording: OPEN (docs-only blocker)** | §5 | Behaviour existed before; the CHANGELOG sentence is new; docs/11:157 existed before |\n| C05 | PASS | run-02 S01, S02; reverify | Yes (parity) |\n| C06 | PASS | P04, P05, P10, P11, S03, S04, S09, M01 | Kept as before |\n| C07 | PASS | P04/P05 raw stdout, S03, S04, M03 | Kept as before (D172) |\n| C08 | PASS | P06–P09, S05–S08 | Kept as before |\n| C09 | PASS + GAP | P13–P17, S11, binding/unchanged-paths.txt | Kept as before |\n| C10 | PASS + GAP | run-02 M02; author original-stored-only-control.log | Yes (intended) |\n| C11 | PASS, plus a test-hygiene finding | fake-cli-invocations.jsonl, ollama-recorder-requests.json, 20-api-focused.fetch-guard.jsonl | Hygiene issue existed before |\n| C12 | **FAILED TIER** (API passes, infrastructure fails) | commands/20-\\*, 21-\\*; author focused-infrastructure-02.log, baseline-catalog-single-case.log | Same class existed before |\n| C13 | **FAILED TIER** (native cleanup, not a product criterion) | run-01/M04.json, run-02/M04.json | Same class existed before |\n| C14 | PASS, with the count correction | §3 | n/a |\n| C15 | GAP (out of scope) | none | n/a |\n| C16 | PASS | candidate-vs-base.stat | n/a |\n\n**Notes by criterion:**\n\n- **C02.** Both the preflight and startup call sites use the same pure function. M01 shows stored rows keep their order, the input is not mutated, the call is idempotent and only missing (harness, model) pairs are added.\n- **C03.** Preflight exits 0 with Database, Default model and Claude default model all ok. After P01 and P03 the stores still have 11 rows, with Terra and Opus absent.\n- **C05.** The gateway starts and listens; healthz reports the owned child's PID. Both seeds show as enabled. `/system/model-defaults` equals GG_DEFAULTS. `/system/preflight` reports ok for the database and both default-model checks. The drained exit is 0. Stored rows go from 11 to 13; the migration ledger and format marker are unchanged, and no existing `enabled` flag changed. S02 covers rows missing only in the WAL, with the store inside GG_DATA_DIR.\n- **C06.** A disabled stored row with the same seed ID stays a single, disabled row, both offline and after startup. A stored Claude effort list of `[high]` wins: `low` fails offline (P10) and is refused at startup with EFFORT_UNSUPPORTED (S09), while `high` passes (P11).\n- **C07.**\n  - Codex disabled default (P04): `WARN … is in the model catalog but disabled`, exit 0.\n  - Claude disabled default (P05): `FAIL The configured Claude model is disabled`, exit 1.\n  - At startup (S03/S04): the gateway boots and the row stays `enabled:false`. Validation reports MODEL_DISABLED as a warning and `publishable` is false. Publish is refused with 422 LOOP_INVALID. A run is accepted (202), then fails with EVALUATION_UNAVAILABLE / MODEL_DISABLED, and the fake CLIs see no model turn.\n  - M03: `isAllowed` is false, `resolveHarnessModel` returns unavailable / MODEL_DISABLED, and `validateHarnessDefaults` returns `[]`.\n  - D175 is about #442 plugin diagnostics and doesn't affect any of this.\n- **C08.**\n  - Offline, all four invalid cases fail with exit 1: unknown model, wrong harness, wrong family, and Claude effort `none`.\n  - At startup, the gateway refuses with EVALUATION_INVALID_CONFIGURATION plus the matching code: MODEL_NOT_IN_CATALOG, MODEL_HARNESS_MISMATCH (twice) or EFFORT_UNSUPPORTED. DB bytes and logical rows are unchanged.\n  - There is an existing mismatch: offline preflight accepts Codex `gpt-5.5` with effort `none` (P12 ok), while startup refuses it (S10). That is parked as #545.\n- **C09.**\n  - First run with no store (P13/P14): nothing is created.\n  - Store format 3 (P15): FAIL with reset guidance.\n  - File that isn't SQLite (P16): SQLITE_NOTADB FAIL.\n  - Pending migration (P17): `1 migration(s) pending` WARN, ledger unchanged.\n  - Startup on store format 3 (S11): refused.\n  - GAP: \"unchanged from base\" rests on these files having identical blobs: `db.ts`, `store-format.ts`, `readiness.ts`, `model-resolution.ts`, `config.ts`, `serve.ts`, `main.ts`, plus two small hunks. The base binary was never run.\n  - P17 also shows that preflight uses the shipped catalog for a store with pending migrations. That branch of the code is unchanged by #448 and is parked as #546.\n- **C10.** With the candidate code path, both default-model checks pass. With a stored-only catalog, both fail. The startup validator with stored rows only reports MODEL_NOT_IN_CATALOG for both Codex and Claude; with the projection it reports nothing. GAP: this comparison was run on the candidate build, not the base binary.\n- **C11.**\n  - Fake CLIs: 154 calls (22 each of 7 probe kinds), none refused, so no model turn was attempted.\n  - Ollama stand-in: 22 requests, all `GET /api/tags`.\n  - Children ran with an empty environment and scratch USERPROFILE, HOME, APPDATA, LOCALAPPDATA and TEMP, on temporary ports.\n  - Hygiene finding: the API test run made 10 attempts to reach the default `127.0.0.1:11434/api/tags`, all blocked by the recorder.\n  - PID 35168 appears both as run-02's S01 gateway and in the blocked-fetch log. The PID number was reused. S01 exited (code 0) in the run that ended at 09:06:08Z, and the blocked fetches happened from 09:07:56 to 09:08:07Z during the test run.\n- **C12.** The failing infrastructure test is `catalog.test.ts` \"reads current-format base catalog before discovery migrations…\", which fails with EBUSY when unlinking `catalog.db`.\n  - The author's candidate run shows 55/1 on the same test (EBUSY on `catalog.db-wal`). The fixed baseline single-case run shows 1 failed / 9 skipped (EBUSY on `catalog.db`).\n  - #448 doesn't change that file, and the test doesn't call `projectStartupModelCatalog`; it calls `readPreMigrationModelCatalog`. Its `rm` has no `.catch`, unlike the test just before it.\n  - The cause is not established. The failure has not gone away.\n- **C13.** M04 unlinks files immediately after closing native connections.\n  - Run-01: files from both the libsql writer and the read-only client were still EBUSY after 1.25 s (2 failed checks).\n  - Run-02: the writer's files were released by 250 ms. The read-only client's files were EBUSY at 0, 250 and 1000 ms, then removable straight after an explicit `gc()`.\n  - The node:sqlite writer releases its files immediately.\n- **C16.** No browser or UI code changed.\n\n## 5. C04: what is and isn't established\n\n**Established** (run-02; run-01 agrees wherever its strict check could be evaluated):\n\n- **Stored data unchanged.** These all held in every case where a store file existed, plus M02, all 3 M05 probes and the S05–S11 startup refusals:\n  - DB file SHA-256 unchanged.\n  - Logical hash, catalog-row hash and row count unchanged.\n  - Migration ledger, format marker and schema_version/user_version unchanged.\n  - No rollback journal created.\n- **Missing seeds are not written.** After P01 and P03 the store still has 11 rows, with Terra and Opus absent. Only an ordinary startup (S01) seeded it to 13.\n- **An existing WAL is left byte-for-byte identical:** P03 (16,512 B, no checkpoint, no frames) and P18 (the 0-byte WAL left by P01).\n- **Empty sidecar files are created.** 13 of 18 P cases started with no `-wal`: P01, P02, P04–P12, P15 and P17. Each ended with a 0-byte `-wal` (SHA-256 `e3b0c442…`, i.e. empty) and a 32,768-byte `-shm`, and both files remained after the process exited.\n  - The other 5: P03 and P18 already had a WAL; P13 and P14 had no store; P16 was not SQLite.\n  - The same happened in M02 and the 7 startup refusals: 21 entries in `summary.emptyWalCreatedByOfflineReaders`.\n  - Run-01 failed exactly the same 13 P cases plus M02 and S05–S11 on its strict \"WAL bytes/presence unchanged\" check. That is 47 of its 49 failed checks; the other 2 are M04.\n- **It isn't caused by the projection.** M05 gets the same 0-byte `-wal` and 32 KiB `-shm` from each of these on its own:\n  - the built `openReadOnlyDatabaseClient`;\n  - the built `guardCurrentStore` (the unchanged guard that startup and preflight share);\n  - Node's own SQLite in `readOnly` mode (SQLite 3.53.4).\n- **Zero WAL frames means nothing reached the stored data through the WAL.** That still doesn't amount to \"no WAL created\".\n\n**Not established:**\n\n- Any claim that no new sidecar file appears. That claim is contradicted.\n- Base-binary behaviour. The behaviour likely predates #448 (unchanged source plus M05), but the base binary was never run.\n- Behaviour on non-Windows systems, Docker volumes, read-only directories or filesystems, or restricted permissions.\n- How often real stores have no `-wal`. Here, G0's drained gateway exit left a 650,992-byte `-wal` and a 32 KiB `-shm`. The fixtures with no `-wal` were produced by the QA's own checkpoint and close.\n- How a later writer behaves with an empty `-wal` already in place. This was not specifically tested.\n\n**The run-02 rewording is not a hidden fix.**\n\n- The run-02 driver's `walChecks` function (lines 332–351) says outright that it now accepts \"absent or 0 bytes\" and records `walCreatedEmpty`.\n- Run-01 is kept as it was, and criteria.json graded C04 PASS+GAP, not PASS.\n- Even so, run-02's 41/42 must not be read as confirming the \"WAL bytes unchanged\" wording.\n- I'm refining one original interpretation: run-01's failures were not wrong expectations. They were correct observations against the documented claim, which mixed up \"no data written\" with \"no file created\".\n\n## 6. Current blocker vs. older, bounded findings\n\n- **Current blocker (documentation only, within #448's scope).** The CHANGELOG sentence is new in #448. docs/11:157 is older, but it sits in the section #448 extends. The fact that root has parked related issues doesn't excuse new text on an invariant #448 touches.\n- **Older findings, not #448 blockers:**\n  - **#545:** Codex effort is checked at startup but not in offline preflight (P12 vs S10).\n  - **#546:** stores with pending migrations use the shipped catalog in preflight (P17). On the startup side, per source, `container.ts:220` applies the projection when the guard reports `current`.\n  - **#262:** model retirement and stale-metadata policy; not touched.\n  - C12 EBUSY, C13 native close, and the C11 test fetches to the default Ollama port.\n  - The empty-sidecar behaviour itself. If root wants literally no new files, that means changing the shared read-only open, which is a separate decision outside #448.\n\n## 7. Proposed wording\n\nI wrote the wording below. Root applies it after this verdict, and the independent GPT reviewer gives it a final check. None of it is applied yet.\n\n**7a. CHANGELOG: replace the #448 entry**\n\n```\n- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first\n  catalog projection as startup (#448). Existing stored metadata and disabled rows retain\n  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or\n  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's\n  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an\n  empty one (no frames, so no stored data).\n  **Upgrade:** rebuild the API. No schema, stored format or reset change.\n```\n\n**7b. docs/11 line 157: replace the paragraph** (it stays one source line)\n\n> `apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes stored state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database bytes, stored rows and any existing write-ahead log bytes. SQLite's read-only open may still create or update the `-shm` shared-memory index and, if a WAL-mode store has no `-wal` file, create an empty one; it holds no frames, so no stored data changes.\n\n**7c. Table, Default model row** (relative to `083d7264`; the warn cell stays the same, so only the Codex warning and the Claude failure are covered, as now)\n\n- **fail (recommended):** `Codex model is missing; a configured Claude default has a missing, unknown, wrong-family or disabled model, or a missing or unsupported effort`\n- **ok (optional):** `Codex model is in its enabled catalog; a configured Claude default is the exact enabled model with a supported effort (no Claude default: not checked)`\n\nEvidence for this wording:\n\n- With Codex-only GG_DEFAULTS, the P12 output has no Claude default model row (`preflight.ts:410–411`).\n- A disabled Claude default fails (P05), as do a wrong-family Claude model (P08) and an unsupported Claude effort (P09, P10). A disabled Codex default warns (P04).\n- A missing Claude effort and an unknown Claude model rest on source only (`preflight.ts:413–416`); no native case ran them.\n- The fail cell matches review 2's suggested rewording.\n- Root re-runs the formatter to fix table padding.\n\n**7d. Follow-up issues, to align after the verdict**\n\n- **#546 is inaccurate as written.** Replace its line with:\n  `- Never create, migrate, seed, refresh or alter the inspected database, and never write WAL frames or change an existing WAL; preserve the SQLite reader-sidecar exception (`-shm` updates, and an empty `-wal` beside a WAL-mode store that had none) and failure closure of unsupported formats.`\n- **#545 has no literal \"never create\" clause.** An optional matching edit:\n  `- Preserve read-only database/WAL behavior (no WAL frames; an existing WAL unchanged), stored enabled preferences, existing harness readiness separation and the documented SQLite reader-sidecar exception (`-shm`, and an empty `-wal` where none existed).`\n\n## 8. Remaining limits and root gates\n\n- **Test environment.** Windows only. Fake CLIs and a local Ollama stand-in; no live entitlement and no browser.\n- **Fake Claude binary.** The `claude.exe` hash differs between runs (`bbdc2723…` and `98b4ae3c…`) but comes from the same `.cs` source (`1a5b48a2…`). Both runs passed its self-test: version check exits 0, a model turn is refused with 86.\n- **Author records.** The raw output of the author's interrupted, wrongly scoped test run was not fully kept.\n- **Publication draft.** I did not recompute the 51 hash checks in `Q/i4-448-publication-01`.\n- **Root gates still open:**\n  1. Apply or decide the wording in §7 and create the documentation-only head.\n  2. Independent GPT final review of that wording.\n  3. Fresh Astra final audit (scan 3).\n  4. CI on the current head and target.\n  5. Owner-only closure of #448.\n\nI closed, published and approved nothing.",
+  "ttft_ms": 1434,
+  "type": "result",
+  "duration_ms": 506847,
+  "uuid": "eaccbf21-c81d-47c0-9e05-eef4739681ef",
+  "ttft_stream_ms": 1181,
+  "time_to_request_ms": 164,
+  "first_content_frame_ms": 1181,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 114,
+      "outputTokens": 53705,
+      "cacheReadInputTokens": 5685980,
+      "cacheCreationInputTokens": 154071,
+      "webSearchRequests": 0,
+      "costUSD": 3.4443199999999994,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 32854,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 154071,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

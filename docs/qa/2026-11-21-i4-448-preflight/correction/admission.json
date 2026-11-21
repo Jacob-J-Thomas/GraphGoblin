@@ -1,0 +1,81 @@
+{
+  "at": "2026-11-21T11:12:05.784Z",
+  "workspace": "G:/ggq/gg-i4-448-preflight/GraphGoblin",
+  "head": "083d7264ffaeaadba44ebd2f929efb4ac526a127",
+  "tree": "485df640b90c94ac9a79bc8fe682b311748dd876",
+  "statusBefore": "",
+  "indexPath": "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.git\\worktrees\\GraphGoblin143\\index",
+  "indexShaBefore": "79a530f154452339f070f7abb075b65067115d85293c3487bb572ca9a386896b",
+  "node": {
+    "version": "v22.23.4",
+    "path": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+  },
+  "report": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-independent-02\\provider\\provider-final-message.md",
+    "sha256": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56",
+    "bytes": 19324
+  },
+  "providerFiles": [
+    {
+      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-independent-02\\provider\\result.json",
+      "sha256": "e158463ffa3fc16bc2452129243ab3f8dad022f4bdd1d6cafc01b8705b1b50ef"
+    },
+    {
+      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-independent-02\\provider\\exit.json",
+      "sha256": "73c318a2982bb203294835a4bf4d1ff5979ac2320a9ee68a7e235d4998fa3dd3"
+    },
+    {
+      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-independent-02\\provider\\launch.json",
+      "sha256": "2b19ea8eea8f8391b3e08d7f071e1347015da7235ca3b825ecd6421e07705fa4"
+    }
+  ],
+  "provider": {
+    "isError": false,
+    "stopReason": "end_turn",
+    "terminalReason": "completed",
+    "exit": {
+      "code": 0,
+      "finishedAt": "2026-11-21T11:08:35.871Z"
+    },
+    "modelUsageKeys": [
+      "claude-opus-5-5"
+    ]
+  },
+  "authority": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\decision-186.md",
+    "sha256": "465be6032c2ea8ca483d7adc553a9053a7b04423aebbe0a313c0d0566406a0ae"
+  },
+  "selectedSnippets": [
+    {
+      "id": "7a-changelog",
+      "text": "- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first\n  catalog projection as startup (#448). Existing stored metadata and disabled rows retain\n  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or\n  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's\n  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an\n  empty one (no frames, so no stored data).\n  **Upgrade:** rebuild the API. No schema, stored format or reset change.",
+      "utf8Bytes": 587,
+      "sha256": "a8f8ba3c0c74885d1275daaf9625dbee7300bef1d7f286dc71cd90bcd69af243"
+    },
+    {
+      "id": "7b-doc11-paragraph",
+      "text": "`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes stored state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database bytes, stored rows and any existing write-ahead log bytes. SQLite's read-only open may still create or update the `-shm` shared-memory index and, if a WAL-mode store has no `-wal` file, create an empty one; it holds no frames, so no stored data changes.",
+      "utf8Bytes": 657,
+      "sha256": "96c9da8ce4f528b9cf25166dca2ae19634a476f406f3ffb6844777ed1588de2f"
+    },
+    {
+      "id": "7c-default-model-fail",
+      "text": "Codex model is missing; a configured Claude default has a missing, unknown, wrong-family or disabled model, or a missing or unsupported effort",
+      "utf8Bytes": 142,
+      "sha256": "105fa14baa41a1e24f01eaf713da9e49d11d8dca2dc8695c97ae76089d83c122"
+    },
+    {
+      "id": "7c-default-model-ok",
+      "text": "Codex model is in its enabled catalog; a configured Claude default is the exact enabled model with a supported effort (no Claude default: not checked)",
+      "utf8Bytes": 150,
+      "sha256": "57a47a6574d2a3d977d399420f8ef4d08fee10bcc1bc2db8738b983cd7cf2d1c"
+    }
+  ],
+  "replaced": {
+    "changelogEntry": "- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first\n  catalog projection as startup (#448). Existing stored metadata and disabled rows retain\n  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or\n  migrate the store; database and WAL bytes remain unchanged (SQLite readers may update `-shm`).\n  **Upgrade:** rebuild the API. No schema, stored format or reset change.",
+    "doc11Paragraph": "`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database and write-ahead log bytes (the `-shm` index is shared memory any reader updates).",
+    "defaultModelRow": "| Default model  | Codex model is in its enabled catalog; a Claude default is the exact supported model and effort                                                               | Codex default is in the catalog but disabled                                                                                                         | Codex model is missing; Claude default is missing, unknown, wrong-family, disabled, or has unsupported effort |",
+    "unchangedWarnCell": "Codex default is in the catalog but disabled"
+  },
+  "scope": "Only exact selected actual Claude sections7a/7b/both7c cells. Formatter may adjust table padding. No runtime or other prose change, tests, index, commit or publication."
+}

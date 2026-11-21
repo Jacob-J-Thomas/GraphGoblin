@@ -1,0 +1,115 @@
+{
+  "scenarios": {
+    "S1-absent": {
+      "preflightCode": 0,
+      "walBefore": "absent",
+      "walImmediate": "0B",
+      "walSettled": "0B",
+      "dbUnchanged": true,
+      "myPredicate": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "candidateHelper": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "oldStrict": {
+        "immediate": "reject",
+        "settled": "reject"
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "codexTerraStored": false
+    },
+    "S2a-empty-written": {
+      "preflightCode": 0,
+      "walBefore": "0B",
+      "walImmediate": "0B",
+      "walSettled": "0B",
+      "dbUnchanged": true,
+      "myPredicate": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "candidateHelper": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "oldStrict": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "codexTerraStored": false
+    },
+    "S2b-empty-from-prior-reader": {
+      "preflightCode": 0,
+      "walBefore": "0B",
+      "walImmediate": "0B",
+      "walSettled": "0B",
+      "dbUnchanged": true,
+      "myPredicate": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "candidateHelper": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "oldStrict": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "codexTerraStored": false
+    },
+    "S3-frozen-nonempty": {
+      "preflightCode": 0,
+      "walBefore": "8272B",
+      "walImmediate": "8272B",
+      "walSettled": "8272B",
+      "dbUnchanged": true,
+      "myPredicate": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "candidateHelper": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "oldStrict": {
+        "immediate": "accept",
+        "settled": "accept"
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "codexTerraStored": false
+    }
+  },
+  "controls": [
+    "P1 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+    "P2 intent=accept mine=accept helper=accept old=reject agree=true realized=true",
+    "P3 intent=accept mine=accept helper=accept old=reject agree=true realized=true",
+    "P4 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+    "P5 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+    "N01 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N02 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N03 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N04 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N05 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N06 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N07 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N08 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N09 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N10 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N11 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N12 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N13 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+    "N14 intent=reject mine=reject helper=reject old=reject agree=true realized=true"
+  ],
+  "allHelperAgree": true,
+  "allIntentsRealized": true
+}

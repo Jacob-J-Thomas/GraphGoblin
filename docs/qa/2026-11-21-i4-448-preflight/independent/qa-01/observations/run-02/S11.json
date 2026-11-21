@@ -1,0 +1,984 @@
+{
+  "id": "S11",
+  "kind": "built-ordinary-startup",
+  "purpose": "unsupported store (format 3) refused by startup without writes",
+  "variant": "unsupported",
+  "defaults": {
+    "byHarness": {
+      "codex": {
+        "model": "gpt-6.1-terra",
+        "effort": "medium"
+      },
+      "claude": {
+        "model": "claude-opus-5-5",
+        "effort": "high"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "startup refused (not listening)",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "exit code 1",
+      "expected": 1,
+      "actual": 1,
+      "pass": true
+    },
+    {
+      "name": "stderr names The store is format 3",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "fake CLIs saw probes only (no turn)",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "refusal: DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "ba4be72b25c0ef4bdfdb640a8a1ab6a4a7e74ee4804ed63fa299cadd144a14b9"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "ba4be72b25c0ef4bdfdb640a8a1ab6a4a7e74ee4804ed63fa299cadd144a14b9"
+      },
+      "pass": true
+    },
+    {
+      "name": "no WAL frames written (WAL still absent, or created with 0 bytes)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "FINDING (recorded, see M05): 0-byte -wal file created where none existed",
+      "expected": "recorded",
+      "actual": true,
+      "pass": true,
+      "observation": true
+    },
+    {
+      "name": "refusal: logical hash unchanged",
+      "expected": "bcdb8e66dd1e5f1863e2a3f29f3310e1dbb31923b5b5eaa48f72360936253d93",
+      "actual": "bcdb8e66dd1e5f1863e2a3f29f3310e1dbb31923b5b5eaa48f72360936253d93",
+      "pass": true
+    },
+    {
+      "name": "refusal: catalog rows unchanged",
+      "expected": "bbddbad9b528a6bdc29128569afa8538418e4dee639ced573b44d05f9f7f665f",
+      "actual": "bbddbad9b528a6bdc29128569afa8538418e4dee639ced573b44d05f9f7f665f",
+      "pass": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:06:01.411Z",
+  "env": {
+    "TEMP": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\tmp",
+    "USERPROFILE": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\home",
+    "HOME": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\home",
+    "APPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\home\\AppData\\Roaming",
+    "LOCALAPPDATA": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\home\\AppData\\Local",
+    "GG_HOST": "127.0.0.1",
+    "GG_LOG_LEVEL": "info",
+    "GG_SWAGGER_UI": "false",
+    "GG_WEB_DIST": "",
+    "GG_GOBLIN_DIST": "",
+    "GG_OLLAMA_ENABLED": "true",
+    "GG_OLLAMA_URL": "http://127.0.0.1:59538",
+    "GG_CODEX_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\bin\\codex-fake.mjs",
+    "GG_CLAUDE_BINARY": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\bin\\claude.exe",
+    "GG_MASTER_KEY": "synthetic-32-bytes-0x48",
+    "GG_DATA_DIR": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-448-qa-indep-20261121T090427\\cases\\S11\\data",
+    "GG_DB_URL": "file:///C:/Users/98jak/AppData/Local/Temp/gg-448-qa-indep-20261121T090427/cases/S11/external%20store/gateway.db",
+    "GG_DEFAULTS": "{\"byHarness\":{\"codex\":{\"model\":\"gpt-6.1-terra\",\"effort\":\"medium\"},\"claude\":{\"model\":\"claude-opus-5-5\",\"effort\":\"high\"}}}"
+  },
+  "before": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "ba4be72b25c0ef4bdfdb640a8a1ab6a4a7e74ee4804ed63fa299cadd144a14b9"
+      },
+      "-wal": null,
+      "-shm": null,
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "39c4100d547c2512f80ffd9c807dea89a90fe460aa865d9f336076be50cf2b8d",
+      "logicalHash": "bcdb8e66dd1e5f1863e2a3f29f3310e1dbb31923b5b5eaa48f72360936253d93",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "7f4fb21fed86efaa3fd0fcc9a2ee3a42a7f13943e151a930d30dce338a07b8fc"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "af2315e81d5ccdfbb84f45d43d1e1afad714651efdb10e131cd1a2781b607e3a"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "e0756db672628c7e49e5cbc682335cac9232ffb8f455e30d6644b5168d3092e3"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "b2ee789319cc30d15b37781e668b911a31c60e6d7e6ffcf925a3fd4d9156afda"
+        },
+        "model_catalog": {
+          "count": 13,
+          "sha256": "561773c1a861fe91e66df0f0aa02d74535c4a8d703f35e2609d5a63778e79813"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79b4341615be3b85d60fdeb295c12563fcc99daac6ad2ee40e3df95fa3be04cc"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "display_name": "Claude Opus 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 13,
+      "catalogHash": "bbddbad9b528a6bdc29128569afa8538418e4dee639ced573b44d05f9f7f665f",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 3,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "storeDir": [
+        "gateway.db (479232)"
+      ],
+      "dataDir": null
+    }
+  },
+  "pid": 5384,
+  "port": 56755,
+  "listening": false,
+  "exit": {
+    "code": 1,
+    "signal": null
+  },
+  "durationMs": 3408,
+  "raw": {
+    "stdout": "raw/S11.stdout.txt",
+    "stderr": "raw/S11.stderr.txt",
+    "class": "private-synthetic-raw"
+  },
+  "after": {
+    "files": {
+      "db": {
+        "size": 479232,
+        "sha256": "ba4be72b25c0ef4bdfdb640a8a1ab6a4a7e74ee4804ed63fa299cadd144a14b9"
+      },
+      "-wal": {
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "-shm": {
+        "size": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "-journal": null
+    },
+    "logical": {
+      "exists": true,
+      "withWal": true,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "39c4100d547c2512f80ffd9c807dea89a90fe460aa865d9f336076be50cf2b8d",
+      "logicalHash": "bcdb8e66dd1e5f1863e2a3f29f3310e1dbb31923b5b5eaa48f72360936253d93",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "7f4fb21fed86efaa3fd0fcc9a2ee3a42a7f13943e151a930d30dce338a07b8fc"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "af2315e81d5ccdfbb84f45d43d1e1afad714651efdb10e131cd1a2781b607e3a"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "e0756db672628c7e49e5cbc682335cac9232ffb8f455e30d6644b5168d3092e3"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "b2ee789319cc30d15b37781e668b911a31c60e6d7e6ffcf925a3fd4d9156afda"
+        },
+        "model_catalog": {
+          "count": 13,
+          "sha256": "561773c1a861fe91e66df0f0aa02d74535c4a8d703f35e2609d5a63778e79813"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79b4341615be3b85d60fdeb295c12563fcc99daac6ad2ee40e3df95fa3be04cc"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "display_name": "Claude Opus 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 13,
+      "catalogHash": "bbddbad9b528a6bdc29128569afa8538418e4dee639ced573b44d05f9f7f665f",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 3,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "baseOnly": {
+      "exists": true,
+      "withWal": false,
+      "schemaHash": "fdc0eb6697ca5df90136bfadfe8dc2467752057c2112c16280a129e875a04ad5",
+      "dataHash": "39c4100d547c2512f80ffd9c807dea89a90fe460aa865d9f336076be50cf2b8d",
+      "logicalHash": "bcdb8e66dd1e5f1863e2a3f29f3310e1dbb31923b5b5eaa48f72360936253d93",
+      "tableCount": 31,
+      "perTable": {
+        "__drizzle_migrations": {
+          "count": 30,
+          "sha256": "ba22cb5cc276e7abb9d8839070f3854f506a1c9e3cc0cb970f8d2c561df16939"
+        },
+        "api_keys": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_audio_uploads": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_bindings": {
+          "count": 1,
+          "sha256": "7f4fb21fed86efaa3fd0fcc9a2ee3a42a7f13943e151a930d30dce338a07b8fc"
+        },
+        "chat_conversations": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_devices": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_pairings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "chat_turns": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "classifier_models": {
+          "count": 1,
+          "sha256": "95485ff3fe9093b48cc5ed8337268a48c9307f538d92070947a2da76846f6685"
+        },
+        "event_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "gg_upgrade_state": {
+          "count": 1,
+          "sha256": "af2315e81d5ccdfbb84f45d43d1e1afad714651efdb10e131cd1a2781b607e3a"
+        },
+        "harness_sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "inbound_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "loop_versions": {
+          "count": 1,
+          "sha256": "e0756db672628c7e49e5cbc682335cac9232ffb8f455e30d6644b5168d3092e3"
+        },
+        "loops": {
+          "count": 1,
+          "sha256": "b2ee789319cc30d15b37781e668b911a31c60e6d7e6ffcf925a3fd4d9156afda"
+        },
+        "model_catalog": {
+          "count": 13,
+          "sha256": "561773c1a861fe91e66df0f0aa02d74535c4a8d703f35e2609d5a63778e79813"
+        },
+        "model_discovery": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "ollama_connection": {
+          "count": 1,
+          "sha256": "79b4341615be3b85d60fdeb295c12563fcc99daac6ad2ee40e3df95fa3be04cc"
+        },
+        "run_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resource_uses": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "run_resources": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "runs": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "schedules": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secrets": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "settings": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "timers": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_endpoints": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "webhook_receipts": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "workspace_reference_state": {
+          "count": 1,
+          "sha256": "a7e17bff33422c57a09bdd22fe1b1ceab0d7e3848078a816773ffd117120b50f"
+        },
+        "workspace_references": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "catalog": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "display_name": "Claude Fable 5.1",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "display_name": "Claude Haiku 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "display_name": "Claude Opus 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "display_name": "Claude Sonnet 5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "high",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.5",
+          "source": "harness",
+          "display_name": "GPT-5.5",
+          "efforts": "[\"low\",\"medium\",\"high\",\"xhigh\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-luna",
+          "source": "harness",
+          "display_name": "GPT-5.6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-sol",
+          "source": "harness",
+          "display_name": "GPT-5.6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-5.6-terra",
+          "source": "harness",
+          "display_name": "GPT-5.6 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "source": "harness",
+          "display_name": "GPT-6 Astra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "source": "harness",
+          "display_name": "GPT-6 Luna",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "low",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-sol",
+          "source": "harness",
+          "display_name": "GPT-6 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "source": "harness",
+          "display_name": "GPT-6.1 Sol",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-terra",
+          "source": "harness",
+          "display_name": "GPT-6.1 Terra",
+          "efforts": "[\"none\",\"low\",\"medium\",\"high\",\"xhigh\",\"max\"]",
+          "default_effort": "medium",
+          "enabled": 1
+        }
+      ],
+      "catalogCount": 13,
+      "catalogHash": "bbddbad9b528a6bdc29128569afa8538418e4dee639ced573b44d05f9f7f665f",
+      "migrations": {
+        "count": 30,
+        "maxCreatedAt": 1793075959185
+      },
+      "marker": [
+        {
+          "id": 1,
+          "format_version": 3,
+          "status": "complete",
+          "source_hash": "fresh",
+          "manifest_hash": "fresh"
+        }
+      ],
+      "pragmas": {
+        "user_version": 0,
+        "schema_version": 138,
+        "page_count": 117,
+        "journal_mode": "wal"
+      }
+    },
+    "listings": {
+      "storeDir": [
+        "gateway.db (479232)",
+        "gateway.db-shm (32768)",
+        "gateway.db-wal (0)"
+      ],
+      "dataDir": []
+    }
+  },
+  "fakeInvocations": [],
+  "ollamaRequests": [],
+  "walCreatedEmpty": true,
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:06:04.938Z"
+}

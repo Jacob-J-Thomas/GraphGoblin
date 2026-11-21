@@ -1,0 +1,352 @@
+{
+  "id": "M04",
+  "kind": "native-cleanup-probe",
+  "purpose": "unlink immediately after closing a test-owned writer connection, record EBUSY if any",
+  "checks": [
+    {
+      "name": "libsql openDatabase writer, close() then immediate unlink: recorded (EBUSY count 9; remaining 3)",
+      "expected": "recorded",
+      "actual": {
+        "failures": [
+          {
+            "delayMs": 0,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 0,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 0,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          }
+        ],
+        "remaining": [
+          "",
+          "-wal",
+          "-shm"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "name": "libsql openDatabase writer, close() then immediate unlink: all files removable within 1.25 s",
+      "expected": [],
+      "actual": [
+        "",
+        "-wal",
+        "-shm"
+      ],
+      "pass": false
+    },
+    {
+      "name": "node:sqlite writer, close() then immediate unlink: recorded (EBUSY count 0; remaining 0)",
+      "expected": "recorded",
+      "actual": {
+        "failures": [],
+        "remaining": []
+      },
+      "pass": true
+    },
+    {
+      "name": "node:sqlite writer, close() then immediate unlink: all files removable within 1.25 s",
+      "expected": [],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "name": "libsql read-only client on WAL store, close() then immediate unlink: recorded (EBUSY count 9; remaining 3)",
+      "expected": "recorded",
+      "actual": {
+        "failures": [
+          {
+            "delayMs": 0,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 0,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 0,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 250,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db-wal",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db-shm",
+            "ok": false,
+            "code": "EBUSY"
+          },
+          {
+            "delayMs": 1000,
+            "file": "gateway.db",
+            "ok": false,
+            "code": "EBUSY"
+          }
+        ],
+        "remaining": [
+          "",
+          "-wal",
+          "-shm"
+        ]
+      },
+      "pass": true
+    },
+    {
+      "name": "libsql read-only client on WAL store, close() then immediate unlink: all files removable within 1.25 s",
+      "expected": [],
+      "actual": [
+        "",
+        "-wal",
+        "-shm"
+      ],
+      "pass": false
+    }
+  ],
+  "startedUtc": "2026-11-21T09:01:56.579Z",
+  "attempts": [
+    {
+      "label": "libsql openDatabase writer, close() then immediate unlink",
+      "results": [
+        {
+          "delayMs": 0,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 0,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 0,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        }
+      ],
+      "remaining": [
+        "",
+        "-wal",
+        "-shm"
+      ]
+    },
+    {
+      "label": "node:sqlite writer, close() then immediate unlink",
+      "results": [
+        {
+          "delayMs": 0,
+          "file": "gateway.db",
+          "ok": true
+        }
+      ],
+      "remaining": []
+    },
+    {
+      "label": "libsql read-only client on WAL store, close() then immediate unlink",
+      "results": [
+        {
+          "delayMs": 0,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 0,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 0,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 250,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db-wal",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db-shm",
+          "ok": false,
+          "code": "EBUSY"
+        },
+        {
+          "delayMs": 1000,
+          "file": "gateway.db",
+          "ok": false,
+          "code": "EBUSY"
+        }
+      ],
+      "remaining": [
+        "",
+        "-wal",
+        "-shm"
+      ]
+    }
+  ],
+  "libsqlBeforeClose": {
+    "db": {
+      "size": 479232,
+      "sha256": "96b606a3589372ce5ba108eeef44e8f2f20bbaba8d2e04a5e96b5d07869a599c"
+    },
+    "-wal": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "-shm": {
+      "size": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "-journal": null
+  },
+  "nodeBeforeClose": {
+    "db": {
+      "size": 479232,
+      "sha256": "96b606a3589372ce5ba108eeef44e8f2f20bbaba8d2e04a5e96b5d07869a599c"
+    },
+    "-wal": {
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "-shm": {
+      "size": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "-journal": null
+  },
+  "pass": false,
+  "finishedUtc": "2026-11-21T09:01:59.425Z"
+}

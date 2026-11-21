@@ -1,0 +1,28 @@
+run 04 S1-absent (immediate)
+   before={"gateway.db":479232} after={"gateway.db":479232,"gateway.db-wal":0} old=reject helper=accept
+run 04 S1-absent (settled)
+   before={"gateway.db":479232} after={"gateway.db":479232,"gateway.db-wal":0} old=reject helper=accept
+run 04 S2a-empty-written (immediate)
+   before={"gateway.db":479232,"gateway.db-wal":0} after={"gateway.db":479232,"gateway.db-wal":0} old=accept helper=accept
+run 04 S2a-empty-written (settled)
+   before={"gateway.db":479232,"gateway.db-wal":0} after={"gateway.db":479232,"gateway.db-wal":0} old=accept helper=accept
+run 04 S2b-empty-from-prior-reader (immediate)
+   before={"gateway.db":479232,"gateway.db-wal":0} after={"gateway.db":479232,"gateway.db-wal":0} old=accept helper=accept
+run 04 S2b-empty-from-prior-reader (settled)
+   before={"gateway.db":479232,"gateway.db-wal":0} after={"gateway.db":479232,"gateway.db-wal":0} old=accept helper=accept
+run 04 S3-frozen-nonempty (immediate)
+   before={"gateway.db":479232,"gateway.db-wal":8272} after={"gateway.db":479232,"gateway.db-wal":8272} old=accept helper=accept
+run 04 S3-frozen-nonempty (settled)
+   before={"gateway.db":479232,"gateway.db-wal":8272} after={"gateway.db":479232,"gateway.db-wal":8272} old=accept helper=accept
+run 03b actual candidate test "preserves rows and migrations with an initially absent WAL" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 2
+   before={"gateway.db":479232} after={"gateway.db-wal":0,"gateway.db":479232} old=reject helper=accept
+run 03b actual candidate test "preserves rows and migrations with an initially absent WAL" fixture gg-preflight-catalog-xDeZzo: sample 1 (before) vs sample 3
+   before={"gateway.db":479232} after={"gateway.db-wal":0,"gateway.db":479232} old=reject helper=accept
+first old-strict rejection message: AssertionError: expected { …(2) } to deeply equal { …(1) }
+{
+  "absentToEmptyObserved": 4,
+  "oldRejectsAllAbsentToEmpty": true,
+  "helperAcceptsAllAbsentToEmpty": true,
+  "otherCasesOldAccepts": true,
+  "otherCasesHelperAccepts": true
+}
