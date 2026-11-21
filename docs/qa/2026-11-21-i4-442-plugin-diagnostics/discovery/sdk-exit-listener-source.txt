@@ -1,0 +1,33 @@
+        stderrChunks.push(data);
+      });
+    }
+    const exitPromise = new Promise(
+      (resolve) => {
+        child.once("exit", (code, signal) => {
+          resolve({ code, signal });
+        });
+      }
+    );
+    const rl = readline.createInterface({
+      input: child.stdout,
+      crlfDelay: Infinity
+    });
+    try {
+      for await (const line of rl) {
+        yield line;
+      }
+      if (spawnError) throw spawnError;
+      const { code, signal } = await exitPromise;
+      if (code !== 0 || signal) {
+        const stderrBuffer = Buffer.concat(stderrChunks);
+        const detail = signal ? `signal ${signal}` : `code ${code ?? 1}`;
+        throw new Error(`Codex Exec exited with ${detail}: ${stderrBuffer.toString("utf8")}`);
+      }
+    } finally {
+      rl.close();
+      child.removeAllListeners();
+      try {
+        if (!child.killed) child.kill();
+      } catch {
+      }
+    }

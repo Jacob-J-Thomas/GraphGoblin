@@ -1070,6 +1070,9 @@ retry preflight."). Claude rows add the adapter's model listing ("listed by adap
 and state that listings do not confirm account access. **Retry preflight** in the card head
 refetches and is disabled while a check runs.
 
+Codex rows add the fixed plugin scope notice (loaded plugin tools are not verified by this check), muted,
+after any problems, in every state; it is not a problem and makes no request.
+
 **Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
 "Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
 disabled), or "<Harness> readiness: <label>. See Harness preflight below." for a harness that is

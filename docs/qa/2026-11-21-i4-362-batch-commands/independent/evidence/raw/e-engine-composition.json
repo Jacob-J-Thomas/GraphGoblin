@@ -1,0 +1,1844 @@
+{
+  "meta": {
+    "tier": "E-built-engine-composition-real-ProcessScripts",
+    "node": "v22.23.4",
+    "startedAt": "2026-11-21T08:44:55.230Z",
+    "work": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e",
+    "finishedAt": "2026-11-21T08:45:09.347Z",
+    "finalActiveResources": []
+  },
+  "results": [
+    {
+      "name": "E1-cmd",
+      "config": {
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmd\\refused.cmd",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmd"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "D73SGS1XSA8P4J7N5N8XEZR8W1",
+            "versionId": "ZEKEX92HX7JN6PBEGMJ5PTQ7CA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E1-cmd",
+              "label": "e-E1-cmd v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 7,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000003",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "step": "after-manager-restart",
+          "runnerCallsDuringRestart": 0,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "D73SGS1XSA8P4J7N5N8XEZR8W1",
+            "versionId": "ZEKEX92HX7JN6PBEGMJ5PTQ7CA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E1-cmd",
+              "label": "e-E1-cmd v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 7,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000003",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "step": "after-plain-resume",
+          "resumeResult": {
+            "ok": true,
+            "status": "running"
+          },
+          "runnerCallsDuringResume": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "D73SGS1XSA8P4J7N5N8XEZR8W1",
+            "versionId": "ZEKEX92HX7JN6PBEGMJ5PTQ7CA",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E1-cmd",
+              "label": "e-E1-cmd v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 11,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000004",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:44:57.325Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed",
+            "8:run.resumed",
+            "9:node.started(script)",
+            "10:script.dispatched(script)",
+            "11:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            },
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 10,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000004"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            },
+            {
+              "seq": 11,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000004",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            },
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000004",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "staleResume": {
+        "ok": false,
+        "code": "RECOVERY_STALE",
+        "message": "The run changed since it was shown. Refresh and review its current recovery choices.",
+        "runnerCallsDuringStaleResume": 0
+      },
+      "runnerCalls": [
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmd\\refused.cmd",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "stdout": "",
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "timedOut": false,
+            "stdoutOverflow": false,
+            "stderrOverflow": false
+          }
+        },
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmd\\refused.cmd",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "stdout": "",
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "timedOut": false,
+            "stdoutOverflow": false,
+            "stderrOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "E2-bat",
+      "config": {
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\bat\\refused.bat",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\bat"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "33NJKYEM9KJP1J57RY0R83B6RC",
+            "versionId": "GBSX8BTFGTS51K0YMZMM56F2CM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E2-bat",
+              "label": "e-E2-bat v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 7,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000003",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "step": "after-plain-resume",
+          "resumeResult": {
+            "ok": true,
+            "status": "running"
+          },
+          "runnerCallsDuringResume": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "33NJKYEM9KJP1J57RY0R83B6RC",
+            "versionId": "GBSX8BTFGTS51K0YMZMM56F2CM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E2-bat",
+              "label": "e-E2-bat v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 11,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000004",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:45:00.414Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 11,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed",
+            "8:run.resumed",
+            "9:node.started(script)",
+            "10:script.dispatched(script)",
+            "11:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            },
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 10,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000004"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            },
+            {
+              "seq": 11,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000004",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            },
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000004",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "staleResume": {
+        "ok": false,
+        "code": "RECOVERY_STALE",
+        "message": "The run changed since it was shown. Refresh and review its current recovery choices.",
+        "runnerCallsDuringStaleResume": 0
+      },
+      "runnerCalls": [
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\bat\\refused.bat",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "stdout": "",
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "timedOut": false,
+            "stdoutOverflow": false,
+            "stderrOverflow": false
+          }
+        },
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\bat\\refused.bat",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "stdout": "",
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "timedOut": false,
+            "stdoutOverflow": false,
+            "stderrOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "E3-missing-exe",
+      "config": {
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\missing-exe\\gg362-missing.exe",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\missing-exe"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "YPX0J82YZBCXXA3W9Z9463F50Q",
+            "versionId": "2H1XCSCQ2N0N2ZFYDAJ18DT4MM",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E3-missing-exe",
+              "label": "e-E3-missing-exe v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "failed",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 7,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "failure": {
+              "code": "SCRIPT_START_FAILED",
+              "message": "The script process could not start. Resume tries to start it again.",
+              "nodeId": "script",
+              "resumable": true,
+              "script": {
+                "visitId": "00000000000000000000000001:5",
+                "dispatchId": "00000000000000000000000003",
+                "state": "definitely-not-started"
+              }
+            },
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:45:02.018Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 7,
+            "resume": {
+              "allowed": true
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.failed"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [
+            {
+              "seq": 7,
+              "failure": {
+                "code": "SCRIPT_START_FAILED",
+                "message": "The script process could not start. Resume tries to start it again.",
+                "nodeId": "script",
+                "resumable": true,
+                "script": {
+                  "visitId": "00000000000000000000000001:5",
+                  "dispatchId": "00000000000000000000000003",
+                  "state": "definitely-not-started"
+                }
+              }
+            }
+          ],
+          "cancelled": [],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": [
+            {
+              "level": "error",
+              "msg": "node failed",
+              "obj": {
+                "runId": "00000000000000000000000001",
+                "nodeId": "script",
+                "failure": {
+                  "code": "SCRIPT_START_FAILED",
+                  "message": "The script process could not start. Resume tries to start it again.",
+                  "resumable": true,
+                  "nodeId": "script",
+                  "script": {
+                    "visitId": "00000000000000000000000001:5",
+                    "dispatchId": "00000000000000000000000003",
+                    "state": "definitely-not-started"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "runnerCalls": [
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\missing-exe\\gg362-missing.exe",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "timedOut": false,
+            "stdout": "",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stderrOverflow": false,
+            "stdoutOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "E4-node-marker",
+      "config": {
+        "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "args": [
+          "-e",
+          "require(\"node:fs\").writeFileSync(process.argv[1], \"effect\\r\\n\")",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\node-marker\\marker.txt"
+        ],
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\node-marker"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "2TAXRPNX3V7QJWCNZG5YBZEQF1",
+            "versionId": "05WQ94VF38VKB1M90Y04Y1Z3VF",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E4-node-marker",
+              "label": "e-E4-node-marker v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "succeeded",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 12,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "outcome": "success",
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:45:04.268Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": true
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:node.progress(script)",
+            "8:node.finished(script)",
+            "9:node.started(done)",
+            "10:exit.evaluated(done)",
+            "11:node.finished(done)",
+            "12:run.finished"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 7,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "node.progress",
+              "nodeId": "script",
+              "progress": {
+                "exitCode": 0,
+                "stderr": "",
+                "stdoutBytes": 0
+              }
+            }
+          ],
+          "scriptFinished": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 8,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "node.finished",
+              "nodeId": "script",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/script",
+                  "value": {
+                    "nodeId": "script",
+                    "value": "",
+                    "at": "2026-10-02T12:00:00.000Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "script",
+                    "value": "",
+                    "at": "2026-10-02T12:00:00.000Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 606
+            }
+          ],
+          "failures": [],
+          "cancelled": [],
+          "markerExists": true,
+          "markerContent": "effect\r\n",
+          "loggerLines": []
+        }
+      ],
+      "runnerCalls": [
+        {
+          "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+          "args": [
+            "-e",
+            "require(\"node:fs\").writeFileSync(process.argv[1], \"effect\\r\\n\")",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\node-marker\\marker.txt"
+          ],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "completed",
+            "exitCode": 0,
+            "timedOut": false,
+            "stdout": "",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "stderr": "",
+            "stderrOverflow": false,
+            "stdoutOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "E5-cmdexe-explicit-shell",
+      "config": {
+        "command": "C:\\WINDOWS\\System32\\cmd.exe",
+        "args": [
+          "/d",
+          "/c",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmdexe-cmd\\refused.cmd"
+        ],
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmdexe-cmd"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "MXYQBGGZZ8RZP77ZM0Z4M1AK3Q",
+            "versionId": "NZ4ZDTRPRGVQ4ZYQQA0V5Q33EX",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E5-cmdexe-explicit-shell",
+              "label": "e-E5-cmdexe-explicit-shell v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "succeeded",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 12,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "outcome": "success",
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:45:06.258Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 12,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_FINISHED",
+              "message": "This run has finished. Resume only continues paused runs or supported failures."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": true
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:node.progress(script)",
+            "8:node.finished(script)",
+            "9:node.started(done)",
+            "10:exit.evaluated(done)",
+            "11:node.finished(done)",
+            "12:run.finished"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 7,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "node.progress",
+              "nodeId": "script",
+              "progress": {
+                "exitCode": 0,
+                "stderr": "",
+                "stdoutBytes": 0
+              }
+            }
+          ],
+          "scriptFinished": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 8,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "node.finished",
+              "nodeId": "script",
+              "patch": [
+                {
+                  "op": "add",
+                  "path": "/outputs/script",
+                  "value": {
+                    "nodeId": "script",
+                    "value": "",
+                    "at": "2026-10-02T12:00:00.000Z"
+                  }
+                },
+                {
+                  "op": "replace",
+                  "path": "/lastOutput",
+                  "value": {
+                    "nodeId": "script",
+                    "value": "",
+                    "at": "2026-10-02T12:00:00.000Z"
+                  }
+                }
+              ],
+              "route": "out",
+              "durationMs": 387
+            }
+          ],
+          "failures": [],
+          "cancelled": [],
+          "markerExists": true,
+          "markerContent": "effect\r\n",
+          "loggerLines": []
+        }
+      ],
+      "runnerCalls": [
+        {
+          "command": "C:\\WINDOWS\\System32\\cmd.exe",
+          "args": [
+            "/d",
+            "/c",
+            "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cmdexe-cmd\\refused.cmd"
+          ],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "completed",
+            "exitCode": 0,
+            "timedOut": false,
+            "stdout": "",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "stderr": "",
+            "stderrOverflow": false,
+            "stdoutOverflow": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "E6-cmd-cancel-after-refusal-seam",
+      "config": {
+        "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cancel-seam\\refused.cmd",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cancel-seam"
+      },
+      "runId": "00000000000000000000000001",
+      "steps": [
+        {
+          "step": "first-attempt",
+          "runnerCalls": 1,
+          "run": {
+            "id": "00000000000000000000000001",
+            "ownerId": "local",
+            "loopId": "0947AQK3W3YVNNZ0RBH638HT57",
+            "versionId": "4F2RWDFS6J0FM4T6FJBNAFKQ40",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "e-E6-cmd-cancel-after-refusal-seam",
+              "label": "e-E6-cmd-cancel-after-refusal-seam v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "00000000000000000000000002",
+            "status": "cancelled",
+            "iteration": 1,
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "lastEventSeq": 8,
+            "startedAt": "2026-10-02T12:00:00.000Z",
+            "currentNodeId": "script",
+            "cancelRequestedAt": "2026-10-02T12:00:00.000Z",
+            "finishedAt": "2026-10-02T12:00:00.000Z",
+            "finalizedAt": "2026-11-21T08:45:07.821Z"
+          },
+          "runSchemaValid": true,
+          "snapshotSchemaValid": true,
+          "eventsSchemaValid": true,
+          "recovery": {
+            "observedSeq": 8,
+            "resume": {
+              "allowed": false,
+              "code": "RUN_CANCELLED",
+              "message": "This run was cancelled; Resume is unavailable."
+            },
+            "replayDefault": {
+              "allowed": false,
+              "code": "REPLAY_NODE_NOT_REACHED",
+              "message": "This run never reached this node."
+            },
+            "replay": [
+              {
+                "nodeId": "start",
+                "label": "Start",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "script",
+                "label": "Script under test",
+                "effects": [
+                  {
+                    "nodeId": "script",
+                    "label": "Script under test",
+                    "kind": "script"
+                  }
+                ],
+                "action": {
+                  "allowed": true
+                }
+              },
+              {
+                "nodeId": "done",
+                "label": "Done",
+                "effects": [],
+                "action": {
+                  "allowed": false,
+                  "code": "REPLAY_NODE_NOT_REACHED",
+                  "message": "This run never reached this node."
+                }
+              }
+            ]
+          },
+          "eventTypes": [
+            "1:run.queued",
+            "2:run.started",
+            "3:node.started(start)",
+            "4:node.finished(start)",
+            "5:node.started(script)",
+            "6:script.dispatched(script)",
+            "7:run.cancel_requested",
+            "8:run.cancelled"
+          ],
+          "dispatches": [
+            {
+              "runId": "00000000000000000000000001",
+              "seq": 6,
+              "ts": "2026-10-02T12:00:00.000Z",
+              "type": "script.dispatched",
+              "nodeId": "script",
+              "visitId": "00000000000000000000000001:5",
+              "dispatchId": "00000000000000000000000003"
+            }
+          ],
+          "scriptProgress": [],
+          "scriptFinished": [],
+          "failures": [],
+          "cancelled": [
+            "run.cancel_requested",
+            "run.cancelled"
+          ],
+          "markerExists": false,
+          "markerContent": null,
+          "loggerLines": []
+        }
+      ],
+      "runnerCalls": [
+        {
+          "command": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-362-independent-01\\work\\e\\cancel-seam\\refused.cmd",
+          "args": [],
+          "signalAbortedOnEntry": false,
+          "result": {
+            "state": "definitely-not-started",
+            "exitCode": null,
+            "stdout": "",
+            "stderr": "spawn failed: PROCESS_START_FAILED",
+            "stdoutBytes": 0,
+            "stderrBytes": 0,
+            "timedOut": false,
+            "stdoutOverflow": false,
+            "stderrOverflow": false
+          },
+          "signalAbortedAfterCancel": true
+        }
+      ]
+    }
+  ]
+}

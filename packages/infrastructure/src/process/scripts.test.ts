@@ -355,17 +355,28 @@ describe('ProcessScripts', () => {
     expect((await scripts.run(request({ maxStderrBytes: 0 }))).stderr).toBe('');
   });
 
-  it.skipIf(process.platform !== 'win32')(
-    'proves the native .cmd EINVAL refusal never executes its marker',
-    async () => {
+  it.skipIf(process.platform !== 'win32').each(['cmd', 'bat'])(
+    'refuses a native .%s command without effects and runs it only through an explicit shell',
+    async (extension) => {
       const dir = await mkdtemp(join(tmpdir(), 'gg-wp-d1-spawn-'));
       try {
-        const command = join(dir, 'refused.cmd');
+        const command = join(dir, `refused.${extension}`);
         const marker = join(dir, 'marker');
         await writeFile(command, `@echo effect>"${marker}"\r\n`);
         const result = await new ProcessScripts().run(request({ command, args: [], cwd: dir }));
         expect(result).toMatchObject({ state: 'definitely-not-started', exitCode: null });
         await expect(access(marker)).rejects.toMatchObject({ code: 'ENOENT' });
+        // This same fixture must actually produce an effect when the author explicitly
+        // selects a shell. A broken batch file cannot make the refusal assertion pass.
+        const explicit = await new ProcessScripts().run(
+          request({
+            command: join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe'),
+            args: ['/d', '/c', `refused.${extension}`],
+            cwd: dir,
+          }),
+        );
+        expect(explicit).toMatchObject({ state: 'completed', exitCode: 0 });
+        expect(await readFile(marker, 'utf8')).toBe('effect\r\n');
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

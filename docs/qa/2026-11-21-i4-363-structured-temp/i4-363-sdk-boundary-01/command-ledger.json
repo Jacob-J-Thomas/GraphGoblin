@@ -1,0 +1,145 @@
+{
+  "provenance": "Read-only discovery commands and fixture authoring are reconstructed from recorded tool inputs. All behavior execution commands exist verbatim in saved scripts; actual child args/environment-key set and results are saved in observations.json. Original behavior driver artifacts were not edited after execution.",
+  "checkout": "G:/ggq/gg-i4-363-qa/GraphGoblin",
+  "commandHistory": [
+    {
+      "id": "read-review-and-real-path-pattern",
+      "commands": [
+        "Get-Content .../i4-363-opus-review-01/provider/provider-final-message.md",
+        "Get-Content packages/adapter-codex/src/isolation.test.ts -TotalCount 340",
+        "Get-Content packages/adapter-codex/src/harness.ts -TotalCount 260",
+        "Get-Content packages/adapter-codex/src/options.ts",
+        "Test-Path node_modules",
+        "Test-Path packages/adapter-codex/node_modules/@openai/codex-sdk",
+        "Get-Content packages/adapter-codex/src/client.ts -ErrorAction Continue",
+        "git status --porcelain=v1"
+      ],
+      "result": "Succeeded; dependency directory absent."
+    },
+    {
+      "id": "initial-sdk-location-assumption",
+      "command": "rg -n \"createOutputSchemaFile|codex-output-schema\" C:/Users/98jak/source/repos/GraphGoblin/node_modules/.pnpm/@openai+codex-sdk@0.160.0/node_modules/@openai/codex-sdk -g '*.js' -g '*.ts'",
+      "error": "rg: C:/Users/98jak/source/repos/GraphGoblin/node_modules/.pnpm/@openai+codex-sdk@0.160.0/node_modules/@openai/codex-sdk: IO error for operation on C:/Users/98jak/source/repos/GraphGoblin/node_modules/.pnpm/@openai+codex-sdk@0.160.0/node_modules/@openai/codex-sdk: The system cannot find the path specified. (os error 3)",
+      "result": "Path assumption wrong; read only. No dependency/source mutation to repair this path."
+    },
+    {
+      "id": "inspect-test-pattern",
+      "commands": [
+        "Test-Path .../i4-363-sdk-boundary-01",
+        "Get-Content packages/adapter-codex/src/isolation.test.ts | Select-Object -Skip 270 -First 50",
+        "Get-Content packages/adapter-codex/src/harness.ts | Select-Object -Skip 260 -First 300"
+      ]
+    },
+    {
+      "id": "prepare-evidence",
+      "commands": [
+        "Exclusive New-Item creation of evidence/raw/sources; Test-Path guard refused any existing evidence directory.",
+        "Get-Content .npmrc",
+        "Get-Content pnpm-workspace.yaml -TotalCount 65",
+        "Get-Content packages/adapter-codex/src/fixtures/argv-cli.mjs",
+        "Get-Content packages/adapter-codex/src/harness.ts -TotalCount 135",
+        "Copy-Item reviewer message to sources/opus-review-claims.md",
+        "Get-FileHash SHA256 reviewer message and pnpm-lock.yaml"
+      ],
+      "result": "Reviewer hash matches efab11b92aa1f406d9d53eef4334b05cca4de1f485293d851a173246b3d6949a."
+    },
+    {
+      "id": "offline-install",
+      "command": "& 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-boundary-01/setup.ps1'",
+      "script": "setup.ps1",
+      "actualCommand": "pnpm.cmd install --offline --frozen-lockfile",
+      "exitCode": 0,
+      "result": "17.3 seconds; no downloads; existing patches applied; lock unchanged; raw/offline-install.log and setup-result.json retained."
+    },
+    {
+      "id": "parallel-read-during-install",
+      "commands": [
+        "Get-Content patches/@openai__codex-sdk@0.160.0.patch",
+        "Get-Content apps/api/package.json | Select-Object -Last 40",
+        "Get-Content packages/engine/src/index.ts -TotalCount 55",
+        "Get-Content packages/domain/src/index.ts -TotalCount 35",
+        "Get-Content packages/adapter-codex/src/cli.ts -TotalCount 90"
+      ],
+      "result": "Existing SDK patch only windowsHide; tsx is pinned API development dependency."
+    },
+    {
+      "id": "read-installed-sdk",
+      "commands": [
+        "Get-Content packages/adapter-codex/node_modules/@openai/codex-sdk/package.json",
+        "Get-Content packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js -TotalCount 180",
+        "rg -n \"type CodexOptions|type TurnOptions|outputSchema|temp|env|constructor|outputSchemaFile\" packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.d.ts packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js",
+        "Get-Content raw-does-not-exist -ErrorAction SilentlyContinue",
+        "Get-Content .../raw/setup-result.json"
+      ],
+      "errorNote": "Extraneous nonexistent raw-does-not-exist read was suppressed, returned no content and supplied no evidence."
+    },
+    {
+      "id": "sdk-options-read",
+      "commands": [
+        "Get-Content packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.d.ts | Select-Object -Skip 160 -First 110",
+        "Get-Content packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js | Select-Object -Skip 230 -First 40",
+        "Get-Content packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js | Select-Object -Skip 510 -First 42",
+        "Get-FileHash -Algorithm SHA256 packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js",
+        "Test-Path apps/api/node_modules/tsx/dist/loader.mjs",
+        "git status --porcelain=v1"
+      ]
+    },
+    {
+      "id": "first-and-only-behavior-run",
+      "command": "& 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-boundary-01/run-boundary.ps1'",
+      "script": "run-boundary.ps1",
+      "exitCode": 1,
+      "caseCount": 2,
+      "pass": 0,
+      "fail": 2,
+      "reason": "Both original verification failures were the TEMP-empty guard, because tsx cache remained. Short public completion resolved; long public completion rejected with SDK path error. All original output retained."
+    },
+    {
+      "id": "behavior-internal",
+      "source": "Exact invocations in immutable run-boundary-v1.mjs and observations.json",
+      "commands": [
+        "Node --import <pinned tsx loader> --conditions=development sdk-case-v1.mjs raw/short-control.config.json",
+        "Node --import <pinned tsx loader> --conditions=development sdk-case-v1.mjs raw/long-226.config.json"
+      ],
+      "result": "Each separate child exit 0. Real harness/SDK fake CLI local Node mcp/exec invocations recorded in listing/turn artifacts."
+    },
+    {
+      "id": "inspect-failed-guard-and-state",
+      "commands": [
+        "Get-Content observations.json",
+        "Get-Content raw/short-control.stderr.txt",
+        "Get-Content raw/long-226.stderr.txt",
+        "Get-Content raw/long-226.state.json",
+        "rg --files apps/api/node_modules/tsx/dist",
+        "Get-Content raw/driver-console.txt",
+        "Get-Content raw/short-control.turn.json -TotalCount 100"
+      ]
+    },
+    {
+      "id": "readback-only",
+      "command": "$env:PATH = \"$env:USERPROFILE\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64;$env:PATH\"\n& node C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-boundary-01/analyze-saved-states.mjs *>&1 | Tee-Object -FilePath C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-boundary-01/raw/readback-console.txt\nexit $LASTEXITCODE",
+      "exitCode": 0,
+      "result": "Validated saved native states and cache-source classification only; no behavior or provider calls."
+    },
+    {
+      "id": "cache-source-and-sdk-reinspection",
+      "commands": [
+        "Get-Content tsx-source-snippets.json",
+        "Get-Content apps/api/node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+        "Get-Content sources/sdk.js -TotalCount 32"
+      ]
+    },
+    {
+      "id": "final-seal",
+      "command": "$env:PATH = \"$env:USERPROFILE\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64;$env:PATH\"\nnode C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-boundary-01/seal-boundary.mjs",
+      "purpose": "Readback/hash validation and artifact manifest only, including every original allocator-QA manifest file."
+    }
+  ],
+  "fixtureRefinementsBeforeExecution": [
+    "Added hash check for sealed original QA before/after new investigation."
+  ],
+  "postExecutionProductOrFixtureChanges": [],
+  "postExecutionInterpretationCorrection": "Preserved original failing driver and predictions. New readback-only script classified tsx cache separately while validating native outcome/marker/cleanup data. No green rerun.",
+  "gitOrOwnerMutations": "None; only frozen dependencies in the QA checkout and unique evidence/fixture directories.",
+  "constraints": "No provider turn, login, owner configuration, service/ports, SDK monkeypatch, product source or Git index mutation."
+}

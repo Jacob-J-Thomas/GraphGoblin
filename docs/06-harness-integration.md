@@ -528,7 +528,7 @@ LLM decisions and `coerce`/output-transform repairs use separate structured call
 
 Other extension isolation remains ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory **with plugins switched off only for discovery**, so plugin-owned servers are not listed and then suppressed. It starts the turn with every listed standalone MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; standalone servers are therefore disabled by name and remain available through explicit node overrides.
 
-Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded; [#442](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/442) tracks diagnostics for that limit.
+Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded. System preflight adds an informational `plugins.codex` warning after Codex CLI/login readiness succeeds, and Settings shows the same scope notice in the Codex card (#442): loaded plugin tools are not verified by this check. Readiness, authentication, normal inheritance and node overrides remain unchanged. The notice starts no inventory, app-server or provider probe. Supported CLI inventory can help investigate, but configuration and tool lists do not establish complete loaded-plugin health; see [missing Codex tools](guide/07-troubleshooting.md#codex-plugin-tools-are-missing).
 
 Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. The shared contract checks raw authored keys before record parsing, including dotted keys, nested tables and tables inside arrays. The editor and API reject an invalid key with its field path instead of discarding it; publication also checks retained drafts and reports `CODEX_CONFIG_KEY_INVALID` on the inference node. Ordinary scalar values, valid tables and dotted keys keep their existing behavior. A previously stored invalid-key draft remains unchanged when publication is refused. Such stored definitions must be corrected before restarting with this contract, because the existing store guard refuses invalid definitions (see the CHANGELOG upgrade note).
 
@@ -617,6 +617,22 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+
+The request's working directory takes precedence over the adapter's configured directory;
+neither configured directory is removed. Without either, the adapter exclusively creates a
+short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+limit. It makes at most four attempts (three retries) on `EEXIST`; other creation errors propagate before the
+harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+to a directory this call created. Cancellation and primary failures keep their existing
+cleanup precedence. The pinned SDK separately writes the required output schema under the
+host temporary root. Its managed patch shortens that directory's native `mkdtemp` prefix
+from `codex-output-schema-` to `gg-schema-`, keeping its allocation and cleanup semantics
+([ADR-0087](decisions/ADR-0087-short-codex-schema-temp-prefix.md)). Real-SDK/harmless-CLI
+tests at the measured 226-character Windows temporary root observe a 249-character adapter
+scratch, 243-character SDK schema directory and 255-character schema file, with normal,
+error and abort cleanup. These controlled fixtures are not a provider turn or a promise of
+arbitrary long-path support; ordinary OS/CLI limits still apply.
+
 Configured plugins are inherited through the common harness, including their tools; the
 read-only sandbox controls local commands rather than the authority of plugin services.
 The engine's LLM decision and coerce-repair callers supply neither a working directory

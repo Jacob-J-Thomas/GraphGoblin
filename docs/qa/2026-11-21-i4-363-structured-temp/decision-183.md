@@ -1,0 +1,20 @@
+# D183 — Preserve the #363 native results and separately disposition QA-driver failures
+
+The owner authorized blocker decisions with their reasons and declined alternatives recorded for consolidated review before owner QA. The coordinator accepts the bounded saved-state interpretation below as independent behavioral evidence for the corrected SDK path. This is not an approval to merge or an alteration of the failed driver outcomes.
+
+The tested source is 7d8467439b9850a555b92ab4b96b58c8b8b78388. Independent QA uses actual development-source CodexStructured, the default CodexHarness, the installed patched SDK and, for the native pair, the bundled codex.exe against a synthetic loopback Responses endpoint. At the 226-character temp root, the adapter scratch is 249 characters, the SDK schema directory 243 and schema file 255. The corrected native pair passes 2/2 with one request each, matching strict schema, actual native PID/exit-0 evidence, removed product directories and preserved sentinels.
+
+The original eight-call driver remains 0 PASS / 8 FAIL because its child-process observer filtered before spawnargs was populated. Two original abort fixtures additionally fell through to a nonexistent Node main before cancellation, and are excluded from abort acceptance. Four original success/error cases have direct saved outcome, schema and filesystem evidence. Two corrected abort calls now observe both directories present at cancellation, AbortError, subsequent removal and preserved sentinels. Their driver remains 0 PASS / 2 FAIL because the SDK removes the observer's exit listener; separately saved public ChildProcess signal/exit fields show SIGTERM and no live handle. Final scoped CIM observations show no recorded fixture PIDs or matching fixture-root command lines. Those are handle and scoped process observations, not the missing exit-event records or a general host-process audit.
+
+The separate readback validates eight intended scenarios across 12 actual calls. It is a saved-state interpretation, not a replacement green behavior run. All original predictions, scripts, failed outcomes and corrections remain byte-for-byte retained. The independent packet manifest is 401468059e7e26f77894971648eb54805d60aa4dfb37b7d839a0ff6944758eab. The earlier allocator and original SDK-blocker packet manifests also match their original bytes.
+
+Why selected: the failed guards have explicit, reproducible observer/fixture explanations, and independent native and filesystem records directly answer the bounded product criteria. The narrower evidence is sufficient to send the source and all limitations to actual Claude corrective review and the final independent audit. The conclusion is limited to the exact supported test boundary; it does not promise arbitrary long paths, subsequent child files, live entitlement, provider/tool behavior, or owner acceptance.
+
+Alternatives declined:
+- Relabel all original drivers PASS or report 12 passing cases: false accounting.
+- Keep rerunning until every diagnostic guard is green: adds repetitive behavior without addressing an unresolved product criterion and hides the finite diagnostic history.
+- Treat an absent original event callback as proof of a running child: contradicted by the corrected native exits and the corrected-abort public handle fields, scoped CIM observations and cleanup.
+- Modify SDK cleanup or listener removal to accommodate an observer: changes product behavior for a test-instrumentation issue.
+- Merge based on this QA alone: actual opposite-family correction review, ordinary coverage and exact-current-head/current-target CI, native artifact replay and the reserved final audit remain required.
+
+Evidence: [independent report](i4-363-sdk-independent-02/REPORT.md), [saved-state analysis](i4-363-sdk-independent-02/readback-analysis.json), [manifest](i4-363-sdk-independent-02/manifest.json). No earlier failed evidence or review verdict is overwritten. Present this decision and its limits in the final owner decision review and QA checklist.

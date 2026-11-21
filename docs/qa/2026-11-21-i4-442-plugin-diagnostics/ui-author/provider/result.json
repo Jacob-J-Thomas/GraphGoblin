@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 803886,
+  "stop_reason": "end_turn",
+  "session_id": "2241bc8a-2791-457e-9e74-18243330f4a8",
+  "total_cost_usd": 6.315115399999998,
+  "usage": {
+    "input_tokens": 270,
+    "cache_creation_input_tokens": 169400,
+    "cache_read_input_tokens": 15996677,
+    "output_tokens": 87975,
+    "output_tokens_details": {
+      "thinking_tokens": 37036
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 169400,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1306,
+        "cache_read_input_tokens": 168801,
+        "cache_creation_input_tokens": 599,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 599
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 270,
+      "outputTokens": 87975,
+      "cacheReadInputTokens": 15996677,
+      "cacheCreationInputTokens": 169400,
+      "webSearchRequests": 0,
+      "costUSD": 6.315115399999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 37036,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 169400,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 162,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The Codex notice is in place in Settings → Harness preflight, and it's ready for the GPT UI review. All changes are uncommitted and nothing is staged. HEAD is still `5b0d806c`, and the seven frozen backend and docs files still match the root receipt.\n\n**Files changed (my three only)**\n- `apps/web/src/settings/sections/PreflightSection.tsx` (+24 lines)\n- `apps/web/src/settings/sections/PreflightSection.test.tsx`\n- `apps/web/src/settings/SettingsPage.test.tsx`\n\n**What the user sees**\n- The Codex row has a small muted paragraph containing the shared constant word for word. It's imported from `@graphgoblin/domain`, not copied.\n- The two inventory commands are shown as code by splitting the constant itself, so the visible text is exactly the shared text.\n- It sits after any problems and outside the problem list. The badge, problems, Retry, Rechecking/Offline status, loading view and error view are unchanged.\n- No new query, request, contract field or control.\n- Claude, Ollama and other rows never show it, and neither does a result list without Codex.\n\n**Design choices**\n- **Muted paragraph, not `Alert`:** this copies the existing Claude note (\"Adapter model listings do not confirm account access\"). `Alert` would add a second live region in a card whose tests rely on exactly one. A tinted box under Ready would also read as a problem with Codex.\n- **Not a badge, not the problems list:** a second badge would look like a measured plugin state, and D175 ruled out using `problems`.\n- **Shown for every Codex state, not only Ready:** it describes what the check covers, which is the same whatever the result. The brief asks for it alongside the sign-in problems, and the docs don't limit it to Ready. This is the one deliberate difference from the backend, which adds its warning only when Codex passes. If the reviewer prefers Ready-only, it's a one-condition change.\n\n**Checks (all retained in `i4-442-ui-author-02/author/`)**\n- **Before edits:** the two focused test files passed, 48 tests.\n- **Final:** 59 tests pass (11 new). The web typecheck, ESLint with zero warnings and Prettier all pass.\n- **Focused coverage on `PreflightSection.tsx`:** passes the unchanged 90% thresholds (100% statements, functions and lines; 96.42% branches). The one uncovered branch is older Claude code (`84d641a`).\n- **Mutation testing:** I made nine deliberately wrong versions of the component, and the tests failed for all nine. They covered: notice removed, on every harness, Ready-only, warning colour, live region, no code formatting, visually hidden, placed before the problems, and wording changed. The file was restored and hash-checked after each one. Afterwards only a comment changed.\n- **Failures:** no gate check failed. One read-only diff command failed on a shell quirk and was redone with `diff -u`; the report records it.\n\n**Still open**\n- **`docs/09-frontend-and-pwa.md` (lines 1064–1071) doesn't mention the Codex notice.** That's the docs owner's file, so I didn't edit it; suggested wording is in the report.\n- **Not checked in a real browser:** the unit tests don't load CSS, so real rendering, wrapping at narrow widths and screen-reader order still need browser QA. Two browser test files touch this card: `responsive.spec.ts` (sideways scroll) and `readiness.spec.ts` (single status region). Per the brief, I didn't run them.\n- These are author tests only. GPT review, browser QA, CI and the final audit remain separate gates, and #439, #442 and owner acceptance stay open.\n\nThe full report, with copy and layout reasoning, is `REPORT.md` in `i4-442-ui-author-02/author/`, and the final patch is `10-final-uncommitted.patch`.",
+  "ttft_ms": 2372,
+  "type": "result",
+  "duration_ms": 1325218,
+  "uuid": "86353355-0757-45e9-870a-31dca58de7a1",
+  "ttft_stream_ms": 2104,
+  "time_to_request_ms": 1301,
+  "first_content_frame_ms": 2104,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 270,
+      "outputTokens": 87975,
+      "cacheReadInputTokens": 15996677,
+      "cacheCreationInputTokens": 169400,
+      "webSearchRequests": 0,
+      "costUSD": 6.315115399999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 37036,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 169400,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

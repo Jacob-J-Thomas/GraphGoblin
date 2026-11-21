@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1184817,
+  "stop_reason": "end_turn",
+  "session_id": "dd4a6812-5c5e-4905-8ea0-7864904366ba",
+  "total_cost_usd": 8.222444200000004,
+  "usage": {
+    "input_tokens": 216,
+    "cache_creation_input_tokens": 283907,
+    "cache_read_input_tokens": 15928421,
+    "output_tokens": 138232,
+    "output_tokens_details": {
+      "thinking_tokens": 45603
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 283907,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1918,
+        "cache_read_input_tokens": 284465,
+        "cache_creation_input_tokens": 4216,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 4216
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 216,
+      "outputTokens": 138232,
+      "cacheReadInputTokens": 15928421,
+      "cacheCreationInputTokens": 283907,
+      "webSearchRequests": 0,
+      "costUSD": 8.222444200000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 45603,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 283907,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 118,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "#362 is already fixed at `02351e2f`. On this Windows host a `.cmd` or `.bat` script never runs its body: the run fails with a resumable `SCRIPT_START_FAILED`, never `INTERNAL_ERROR`, and that holds through the built engine and the built API. I made no code changes. The checkout stayed at `02351e2f` (tree `d289bb12`) with a clean status and unchanged lockfile from start to finish.\n\n**Results:** 64 cases, 64 pass, 0 fail. That is 33 acceptance cases, 22 controls, 2 mutant controls and 6 runs of existing unit tests, which count as supporting evidence only. The verdicts are computed from the raw output, not entered by hand.\n\n- **Native refusal:** with `shell:false`, Node v22.23.4 rejects all 7 batch-file variants I tried (`.cmd`, `.bat`, upper/mixed case, trailing dot or space, with arguments). It throws `spawn EINVAL` immediately, before any process exists, and no marker file was created. Running the same files through `cmd.exe /d /c` does create the markers, so the files work when actually executed. A missing executable fails differently (`ENOENT`), as expected.\n- **Script runner (built code):** the batch refusal comes back as `definitely-not-started` instead of an error. 200 repeated refusals gave identical results and left no timers or handles behind.\n- **Engine and API:** the run fails `SCRIPT_START_FAILED` with the node, visit and dispatch recorded. Recovery offers plain Resume and Replay with no extra consent, which matches docs 04/05. Resume tries again and is refused again, and a stale Resume is rejected (409). Restarting the engine or the whole API on the same database never re-runs anything. Cancelling right after a refusal ends the run as cancelled, not failed. The API logs contain no `INTERNAL_ERROR`, no raw `EINVAL`, no stack traces and no provider activity.\n- **The fix is what makes the difference:** I ran the same tests against a copy of the built runner with only the PR #375 catch removed. The `EINVAL` then escapes and the run is recorded as `SCRIPT_OUTCOME_UNCERTAIN`, which requires consent. So the correct result above comes from that catch.\n- **Naming:** `PROCESS_START_FAILED` was never an engine or API error code. Script-node failures use `SCRIPT_START_FAILED`, and I did not reintroduce the old name.\n\n**Three pre-existing issues for you to rule on. None of them blocks the already-fixed finding:**\n- **O1 – old name still visible:** the runner's internal text `spawn failed: PROCESS_START_FAILED` shows up in heartbeat script-probe results (confirmed on this machine). Poll triggers forward the same text in their source; I did not run them.\n- **O2 – unhelpful message for batch files:** for a batch file the refusal is permanent, yet the message and the user guide say to Resume, and Resume and Replay can only fail again. The fix that works is changing the command to `cmd.exe /d /c <file>`, but no doc says so; the field help just says \"Program to run.\" A batch-file refusal and a missing executable also produce identical failures. This overlaps with #364.\n- **O3 – test gaps:** the repo has no native `.bat` test and no API-level test for batch refusals.\n\n**Not verified:** the MCP and web inspector surfaces (I make no UI claim), deadline and forced-stop ordering (source only), live SSE streaming, poll-trigger probes, coverage thresholds, other platforms, CI, review and the final audit.\n\n**What closing #362 still needs:**\n1. You record that `SCRIPT_START_FAILED` replaces the issue's `PROCESS_START_FAILED` wording.\n2. You record a disposition for O1 and O2.\n3. Opposite-family review.\n4. A fresh independent Astra MAX final audit.\n5. Current-target CI with the native Windows job passing at the closing commit.\n\nThis report does not close the issue.\n\n**Process notes:**\n- The first `pnpm exec` ran an install on its own; the lockfile stayed unchanged.\n- One shell command failed to parse and ran nothing, so I re-ran it.\n- One `tasklist` call needed rerunning.\n- One fixture left a 60-second timer running, which inflated its wall time but not the results.\n\nAll four are logged in `raw/99-failed-commands-and-repairs.log`.\n\n**Cleanup:**\n- Both API processes (PIDs 18668 and 36472) shut down cleanly with exit code 0, and their ports were freed.\n- All test data stayed inside the QA folder.\n- The only thing I deleted was one copied executable.\n- I touched no owner ports, store or credentials, and made no provider calls.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-362-independent-01` (I left `provider/` alone); open `REPORT.md` first:\n- `REPORT.md`\n- `observations.json`\n- `manifest.json`: hashes of 101 files\n- `fixtures/`: test scripts plus `PREDICTIONS.md`, written before each run\n- `raw/`\n- `work/`",
+  "ttft_ms": 1549,
+  "type": "result",
+  "duration_ms": 1573662,
+  "uuid": "3ed5ff4a-c930-43ee-a7d1-5c76ec08b8c0",
+  "ttft_stream_ms": 1156,
+  "time_to_request_ms": 384,
+  "first_content_frame_ms": 1156,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 216,
+      "outputTokens": 138232,
+      "cacheReadInputTokens": 15928421,
+      "cacheCreationInputTokens": 283907,
+      "webSearchRequests": 0,
+      "costUSD": 8.222444200000004,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 45603,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 283907,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

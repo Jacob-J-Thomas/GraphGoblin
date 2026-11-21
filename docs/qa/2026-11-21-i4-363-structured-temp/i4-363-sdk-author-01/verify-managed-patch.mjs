@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+const repo='G:/ggq/gg-i4-363-structured/GraphGoblin';
+const evidence='C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-author-01';
+const before=await readFile(join(evidence,'original-sdk.js'));
+const after=await readFile(join(repo,'packages/adapter-codex/node_modules/@openai/codex-sdk/dist/index.js'));
+const oldPrefix=Buffer.from('"codex-output-schema-"'),newPrefix=Buffer.from('"gg-schema-"');
+const offset=before.indexOf(oldPrefix);assert(offset>=0);assert.equal(before.indexOf(oldPrefix,offset+oldPrefix.length),-1);
+assert(after.equals(Buffer.concat([before.subarray(0,offset),newPrefix,before.subarray(offset+oldPrefix.length)])));
+assert(before.includes(Buffer.from('windowsHide: true'))&&after.includes(Buffer.from('windowsHide: true')));
+const originalLock=await readFile(join(evidence,'original-pnpm-lock.yaml'));
+const currentLock=await readFile(join(repo,'pnpm-lock.yaml'));
+const oldHash='3d897be4ca6f078ed158b30bb1a58bc02e1e689560dc658e8bd2d93d27b7338d';
+const patch=await readFile(join(repo,'patches/@openai__codex-sdk@0.160.0.patch'));
+const newHash=createHash('sha256').update(patch).digest('hex');
+assert.equal(originalLock.toString('utf8').split(oldHash).length-1,3);
+assert(currentLock.equals(Buffer.from(originalLock.toString('utf8').replaceAll(oldHash,newHash))));
+const metadata=JSON.parse(await readFile(join(repo,'packages/adapter-codex/node_modules/@openai/codex-sdk/package.json'),'utf8'));
+assert.equal(metadata.version,'0.160.0');assert.equal(metadata.license,'Apache-2.0');
+const result={onlyExpectedPrefixChange:true,byteExactOnlyPrefixChange:true,windowsHideRetained:true,onlyThreeSdkLockHashReferencesChanged:true,sdkVersion:metadata.version,sdkLicense:metadata.license,patchSha256:newHash,installedSdkSha256:createHash('sha256').update(after).digest('hex'),originalSdkSha256:createHash('sha256').update(before).digest('hex')};
+await writeFile(join(evidence,'managed-patch-readback.json'),JSON.stringify(result,null,2)+'\n');
+process.stdout.write(JSON.stringify(result)+'\n');

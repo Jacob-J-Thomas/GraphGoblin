@@ -1,0 +1,39 @@
+- region "Harness preflight":
+  - heading "Harness preflight" [level=2]
+  - status: Offline; showing the last check.
+  - button "Retry preflight"
+  - list:
+    - listitem:
+      - text: Ready
+      - code: codex
+      - text: v0.160.0
+      - paragraph:
+        - text: Loaded plugin tools are not verified by this check. Inspect
+        - code: codex plugin list --json
+        - text: and
+        - code: codex mcp list --json
+        - text: in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.
+    - listitem:
+      - text: CLI not found
+      - code: claude
+      - list:
+        - listitem: Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.
+      - list "Claude model support":
+        - listitem:
+          - code: claude-opus-5-5
+          - text: listed by adapter
+        - listitem:
+          - code: claude-fable-5-1
+          - text: listed by adapter
+        - listitem:
+          - code: claude-sonnet-5-5
+          - text: listed by adapter
+        - listitem:
+          - code: claude-haiku-5-5
+          - text: listed by adapter
+      - paragraph: Adapter model listings do not confirm account access. Preflight never starts a model turn.
+    - listitem:
+      - text: Unknown
+      - code: ollama
+      - list:
+        - listitem: Ollama is off in Settings
