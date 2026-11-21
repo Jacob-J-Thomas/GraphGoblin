@@ -1,0 +1,26 @@
+{
+  "beforeBehaviorExecution": true,
+  "cases": [
+    {
+      "id": "harmless-short-abort-corrected",
+      "tier": "harmless",
+      "root": "short",
+      "mode": "abort",
+      "expected": "Corrected preload remains pending after schema read. Abort occurs while schema and scratch exist; public AbortError, both directories removed, sentinels preserved, child termination observed."
+    },
+    {
+      "id": "harmless-226-abort-corrected",
+      "tier": "harmless",
+      "root": "226",
+      "mode": "abort",
+      "expected": "Corrected preload remains pending after schema read. Abort occurs while schema and scratch exist; public AbortError, both directories removed, sentinels preserved, child termination observed."
+    }
+  ],
+  "longExpected": {
+    "temp": 226,
+    "adapterScratch": 249,
+    "sdkSchemaDir": 243,
+    "sdkSchemaFile": 255
+  },
+  "fixtureRecoveryBudget": "At most one separately archived corrected attempt for the native pair only; no automatic retry in this driver."
+}
