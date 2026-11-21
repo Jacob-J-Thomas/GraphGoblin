@@ -1,0 +1,1279 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T021033Z-3c576e",
+  "label": "baseline",
+  "case": "ext-creator-death-helper-ready",
+  "title": "Creator death at helper-ready: running root with real PowerShell query, nested child, stdout holder and no-pipe member; exact launcher handle terminated; harness job held open",
+  "lane": "fixture",
+  "category": "creator-death",
+  "planRow": "Creator death at an acknowledged point (helper and descendants ready)",
+  "startedAtMs": 1795227062156,
+  "durationMs": 10946,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 23856,
+      "exitCode": 17820,
+      "exitKind": "creator-death-kill",
+      "watchdog": null,
+      "elapsedMs": 1362,
+      "osElapsedMs": 1354,
+      "osCreatedAtMs": 1795227062325,
+      "osExitedAtMs": 1795227063679,
+      "callerEofAfterExitMs": null,
+      "callerEofAfterTeardown": 21,
+      "code": null,
+      "diagnostic": "none",
+      "diagnosticFinal": "none",
+      "launcherLogRecords": [],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "stdoutText": "",
+      "stderrText": "",
+      "ext": {
+        "host": {
+          "job": "harness",
+          "preAssignInAnyJob": false,
+          "inHarnessJob": true
+        },
+        "boundary": {
+          "name": "helper-ready",
+          "reached": true,
+          "atMs": 1795227063675,
+          "detail": {
+            "rootAlive": true,
+            "membersReadyAt": 1795227063658
+          }
+        },
+        "killed": {
+          "code": 17820,
+          "terminateAtMs": 1795227063678,
+          "terminateCalled": true,
+          "alreadyExited": false,
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "stdioAtExit": {
+          "stdoutEofAtMs": null,
+          "stderrEofAtMs": null,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        "accountingBefore": {
+          "job": "harness",
+          "label": "before:click",
+          "atMs": 1795227062323,
+          "totalProcesses": 4,
+          "activeProcesses": 0,
+          "totalTerminatedProcesses": 0,
+          "assignedProcesses": 0,
+          "activePids": []
+        },
+        "accountingAtExit": {
+          "job": "harness",
+          "label": "atExit:click",
+          "atMs": 1795227063687,
+          "totalProcesses": 13,
+          "activeProcesses": 8,
+          "totalTerminatedProcesses": 0,
+          "assignedProcesses": 8,
+          "activePids": [
+            35660,
+            17880,
+            13624,
+            23656,
+            15064,
+            32724,
+            23440,
+            41680
+          ]
+        }
+      }
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-creator-death-helper-ready/nest-probe-probe/job",
+      "case": "ext-creator-death-helper-ready",
+      "role": "nest-probe-probe",
+      "pid": 17696,
+      "source": "jobspawn",
+      "self": null,
+      "openedAtMs": 1795227062169,
+      "opened": {
+        "ok": true,
+        "image": "QaWitness.exe",
+        "parentPid": 43932,
+        "inAnyJob": true,
+        "preAssignInAnyJob": false,
+        "inHarnessJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062163,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227062163,
+          "exitedAtMs": 1795227062302
+        },
+        "boundary:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227062163,
+          "exitedAtMs": 1795227062302
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227062163,
+          "exitedAtMs": 1795227062302
+        },
+        "afterCleanup": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227062163,
+          "exitedAtMs": 1795227062302
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795227062163,
+          "exitedAtMs": 1795227062302
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795227069038,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/launcher-click/job",
+      "case": "ext-creator-death-helper-ready",
+      "role": "launcher-click",
+      "pid": 23856,
+      "source": "jobspawn",
+      "self": null,
+      "openedAtMs": 1795227062332,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 43932,
+        "inAnyJob": true,
+        "preAssignInAnyJob": false,
+        "inHarnessJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062325,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": null
+        },
+        "exit": {
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "afterCleanup": {
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795227069039,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/identity-1/23440",
+      "case": "ext-creator-death-helper-ready",
+      "role": "identity-1",
+      "pid": 23440,
+      "source": "handshake",
+      "self": {
+        "case": "ext-creator-death-helper-ready",
+        "role": "identity-1",
+        "pid": 23440,
+        "ppid": 23856,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795227062532,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 23856,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062433,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": null
+        },
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": null
+        },
+        "afterCleanup": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 42073,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": 1795227073062
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795227069040,
+        "watchdog": {
+          "alive": false,
+          "exitCode": 42073,
+          "createdAtMs": 1795227062433,
+          "exitedAtMs": 1795227073062,
+          "terminateCalled": true
+        }
+      },
+      "finalClassification": "driver-watchdog"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/held-stdout/17880",
+      "case": "ext-creator-death-helper-ready",
+      "role": "held-stdout",
+      "pid": 17880,
+      "source": "handshake",
+      "self": {
+        "case": "ext-creator-death-helper-ready",
+        "role": "held-stdout",
+        "pid": 17880,
+        "ppid": 23440,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "other",
+          "stderr": "char"
+        },
+        "lifetimeMs": 60000
+      },
+      "openedAtMs": 1795227062678,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 23440,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062539,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062539,
+          "exitedAtMs": null
+        },
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062539,
+          "exitedAtMs": null
+        },
+        "afterCleanup": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062539,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062539,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 47,
+          "createdAtMs": 1795227062539,
+          "exitedAtMs": 1795227069045
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795227069041
+      },
+      "finalClassification": "driver-release"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/held-none/13624",
+      "case": "ext-creator-death-helper-ready",
+      "role": "held-none",
+      "pid": 13624,
+      "source": "handshake",
+      "self": {
+        "case": "ext-creator-death-helper-ready",
+        "role": "held-none",
+        "pid": 13624,
+        "ppid": 23440,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "char"
+        },
+        "lifetimeMs": 60000
+      },
+      "openedAtMs": 1795227062680,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 23440,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062550,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062550,
+          "exitedAtMs": null
+        },
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062550,
+          "exitedAtMs": null
+        },
+        "afterCleanup": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062550,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062550,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 47,
+          "createdAtMs": 1795227062550,
+          "exitedAtMs": 1795227069045
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795227069041
+      },
+      "finalClassification": "driver-release"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/ps-query/41680",
+      "case": "ext-creator-death-helper-ready",
+      "role": "ps-query",
+      "pid": 41680,
+      "source": "handshake",
+      "self": {
+        "case": "ext-creator-death-helper-ready",
+        "pid": 41680,
+        "role": "ps-query"
+      },
+      "openedAtMs": 1795227062989,
+      "opened": {
+        "ok": true,
+        "image": "powershell.exe",
+        "parentPid": 23440,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227062560,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        43
+      ],
+      "messages": [
+        {
+          "atMs": 1795227063571,
+          "queryMs": 509,
+          "queried": true,
+          "event": "query-done"
+        }
+      ],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062560,
+          "exitedAtMs": null
+        },
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062560,
+          "exitedAtMs": null
+        },
+        "afterCleanup": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062560,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227062560,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 47,
+          "createdAtMs": 1795227062560,
+          "exitedAtMs": 1795227069056
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795227069042
+      },
+      "finalClassification": "driver-release"
+    },
+    {
+      "tag": "ext-creator-death-helper-ready/ps-nested/15064",
+      "case": "ext-creator-death-helper-ready",
+      "role": "ps-nested",
+      "pid": 15064,
+      "source": "handshake",
+      "self": {
+        "case": "ext-creator-death-helper-ready",
+        "role": "ps-nested",
+        "pid": 15064,
+        "ppid": 41680,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "char"
+        },
+        "lifetimeMs": 60000
+      },
+      "openedAtMs": 1795227063651,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 41680,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227063565,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "boundary:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227063565,
+          "exitedAtMs": null
+        },
+        "atExit:click": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227063565,
+          "exitedAtMs": null
+        },
+        "afterCleanup": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227063565,
+          "exitedAtMs": null
+        },
+        "afterGrace": {
+          "alive": true,
+          "exitCode": null,
+          "createdAtMs": 1795227063565,
+          "exitedAtMs": null
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 47,
+          "createdAtMs": 1795227063565,
+          "exitedAtMs": 1795227069046
+        }
+      },
+      "teardown": {
+        "action": "release-request",
+        "atMs": 1795227069042
+      },
+      "finalClassification": "driver-release"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795227062526,
+      "pid": 23440,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227063658,
+      "pid": 23440,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227063658,
+      "pid": 23440,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "none"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [
+      {
+        "tag": "ext-creator-death-helper-ready:harness",
+        "name": "harness",
+        "requested": {
+          "limitFlags": 8192,
+          "uiFlags": 0,
+          "activeLimit": 0
+        },
+        "readBack": {
+          "limitFlags": 8192,
+          "activeProcessLimit": 0,
+          "uiRestrictions": 0
+        },
+        "open": false,
+        "createdAtMs": 1795227062160,
+        "closedAtMs": 1795227073090,
+        "closeOk": true
+      }
+    ],
+    "accounting": [
+      {
+        "job": "harness",
+        "label": "before:probe",
+        "atMs": 1795227062160,
+        "totalProcesses": 0,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "after:probe",
+        "atMs": 1795227062322,
+        "totalProcesses": 4,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "before:click",
+        "atMs": 1795227062323,
+        "totalProcesses": 4,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "boundary:click",
+        "atMs": 1795227063676,
+        "totalProcesses": 13,
+        "activeProcesses": 9,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 9,
+        "activePids": [
+          23856,
+          35660,
+          17880,
+          13624,
+          23656,
+          15064,
+          32724,
+          23440,
+          41680
+        ]
+      },
+      {
+        "job": "harness",
+        "label": "atExit:click",
+        "atMs": 1795227063687,
+        "totalProcesses": 13,
+        "activeProcesses": 8,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 8,
+        "activePids": [
+          35660,
+          17880,
+          13624,
+          23656,
+          15064,
+          32724,
+          23440,
+          41680
+        ]
+      },
+      {
+        "job": "harness",
+        "label": "afterCleanup",
+        "atMs": 1795227066034,
+        "totalProcesses": 13,
+        "activeProcesses": 8,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 8,
+        "activePids": [
+          35660,
+          17880,
+          13624,
+          23656,
+          15064,
+          32724,
+          23440,
+          41680
+        ]
+      },
+      {
+        "job": "harness",
+        "label": "afterGrace:observers-retained",
+        "atMs": 1795227069038,
+        "totalProcesses": 13,
+        "activeProcesses": 8,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 8,
+        "activePids": [
+          35660,
+          17880,
+          13624,
+          23656,
+          15064,
+          32724,
+          23440,
+          41680
+        ]
+      },
+      {
+        "job": "harness",
+        "label": "afterGrace:observers-closed",
+        "atMs": 1795227069040,
+        "totalProcesses": 13,
+        "activeProcesses": 8,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 8,
+        "activePids": [
+          35660,
+          17880,
+          13624,
+          23656,
+          15064,
+          32724,
+          23440,
+          41680
+        ]
+      },
+      {
+        "job": "harness",
+        "label": "teardown:before-close",
+        "atMs": 1795227073090,
+        "totalProcesses": 13,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      }
+    ],
+    "probes": [
+      {
+        "name": "probe",
+        "job": "harness",
+        "spawned": true,
+        "inHarnessJob": true,
+        "exitCode": 0,
+        "report": {
+          "innerUiRestrictions": 0,
+          "selfInAnyJob": true,
+          "ownJobUiRestrictions": 0,
+          "nestedJobCreated": true,
+          "jobListAttributeSet": true,
+          "jobListCreateProcess": true,
+          "jobListChildInNestedJob": true,
+          "assignToFreshJob": true
+        },
+        "totalProcessesAdded": 4,
+        "nestingSupported": true
+      }
+    ],
+    "observersClosed": [
+      {
+        "atMs": 1795227069040,
+        "roles": [
+          "nest-probe-probe",
+          "launcher-click"
+        ]
+      }
+    ]
+  },
+  "filesystem": [
+    {
+      "path": "click.capture.stderr.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978827433",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "click.capture.stdout.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978827432",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 345,
+      "fileId": "810877956:281474978827434",
+      "sha256": "78bae3db0a96ee13b03c730a8a4fceb54178f2dcff2d0679747b635376478804"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 471,
+      "fileId": "810877956:281474978827428",
+      "sha256": "eb5f4c6557a099204ed4bfd562e9c959260fb197a43c9886505580e1a5dd17c8"
+    },
+    {
+      "path": "probe.nest-probe.json",
+      "type": "file",
+      "size": 204,
+      "fileId": "810877956:281474978827431",
+      "sha256": "e96c66b531d1f004a9014b9df06a52fba57f53ba860131a1622b8534c27cd9cf"
+    },
+    {
+      "path": "probe.probe.stderr.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978827430",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "probe.probe.stdout.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978827429",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "ready/held-none",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978827436",
+      "sha256": "d919054469d4fbaf10aed7bd9dc6c96024cb4340755e9c4bc0649cb2c02388fe"
+    },
+    {
+      "path": "ready/held-stdout",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978827435",
+      "sha256": "9f4b5abbe2f093cb1d0bdedd6522643c44c7532ee6bb1b20f0b7d9b80adc140c"
+    },
+    {
+      "path": "ready/ps-nested",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978827438",
+      "sha256": "2b5b537ed3403dad1452092001c2c1baebef05d5c3e543eb62305c8b211e7304"
+    },
+    {
+      "path": "ready/ps-query",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978827437",
+      "sha256": "41e210f108b9f4dca85b7067ca15fa04e484e58db2d093d7a1df973f1bb15c64"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 581,
+      "fileId": "810877956:281474978827427",
+      "sha256": "55db7e5526b6252b54bbed95685f4a9e3949ca36b1c9c8c9c0a064e91ddddd41"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795227062160,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795227062160,
+      "event": "harness-job-created",
+      "name": "harness",
+      "readBack": {
+        "limitFlags": 8192,
+        "activeProcessLimit": 0,
+        "uiRestrictions": 0
+      }
+    },
+    {
+      "atMs": 1795227062322,
+      "event": "nest-probe-done",
+      "name": "probe",
+      "nestingSupported": true
+    },
+    {
+      "atMs": 1795227062332,
+      "event": "launcher-resumed",
+      "name": "click",
+      "job": "harness",
+      "ok": true,
+      "resumedAtMs": 1795227062331
+    },
+    {
+      "atMs": 1795227063675,
+      "event": "boundary-reached",
+      "name": "helper-ready"
+    },
+    {
+      "atMs": 1795227063684,
+      "event": "launcher-terminated-at-boundary",
+      "name": "helper-ready",
+      "terminateCalled": true,
+      "alreadyExited": false
+    },
+    {
+      "atMs": 1795227063685,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 17820
+    },
+    {
+      "atMs": 1795227069040,
+      "event": "observers-closed",
+      "roles": [
+        "nest-probe-probe",
+        "launcher-click"
+      ]
+    },
+    {
+      "atMs": 1795227073068,
+      "event": "driver-watchdog-terminate",
+      "role": "identity-1"
+    },
+    {
+      "atMs": 1795227073091,
+      "event": "harness-job-closed",
+      "name": "harness",
+      "activeBeforeClose": 0
+    }
+  ],
+  "assertions": [
+    {
+      "id": "boundary-reached-launcher-killed",
+      "kind": "requirement",
+      "text": "the helper-ready boundary was reached while the launcher was alive and the exact launcher handle was terminated with the creator-kill code",
+      "expected": {
+        "reached": true,
+        "launcherExitCode": 17820
+      },
+      "actual": {
+        "boundary": {
+          "name": "helper-ready",
+          "reached": true,
+          "atMs": 1795227063675,
+          "detail": {
+            "rootAlive": true,
+            "membersReadyAt": 1795227063658
+          }
+        },
+        "killed": {
+          "code": 17820,
+          "terminateAtMs": 1795227063678,
+          "terminateCalled": true,
+          "alreadyExited": false,
+          "alive": false,
+          "exitCode": 17820,
+          "createdAtMs": 1795227062325,
+          "exitedAtMs": 1795227063679
+        },
+        "launcherExitCode": 17820
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "identity-1-ended-with-creator",
+      "kind": "requirement",
+      "text": "identity-1 ends within 2000 ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded",
+      "expected": {
+        "alive": false,
+        "classification": "terminated-other",
+        "exitedRelativeToLauncherExitMs": "0..2000"
+      },
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterCleanup",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "ps-query-ended-with-creator",
+      "kind": "requirement",
+      "text": "ps-query ends within 2000 ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded",
+      "expected": {
+        "alive": false,
+        "classification": "terminated-other",
+        "exitedRelativeToLauncherExitMs": "0..2000"
+      },
+      "actual": {
+        "role": "ps-query",
+        "sample": "afterCleanup",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "ps-nested-ended-with-creator",
+      "kind": "requirement",
+      "text": "ps-nested ends within 2000 ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded",
+      "expected": {
+        "alive": false,
+        "classification": "terminated-other",
+        "exitedRelativeToLauncherExitMs": "0..2000"
+      },
+      "actual": {
+        "role": "ps-nested",
+        "sample": "afterCleanup",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "held-stdout-ended-with-creator",
+      "kind": "requirement",
+      "text": "held-stdout ends within 2000 ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded",
+      "expected": {
+        "alive": false,
+        "classification": "terminated-other",
+        "exitedRelativeToLauncherExitMs": "0..2000"
+      },
+      "actual": {
+        "role": "held-stdout",
+        "sample": "afterCleanup",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "held-none-ended-with-creator",
+      "kind": "requirement",
+      "text": "held-none ends within 2000 ms after the launcher is killed, while the harness job is still open (private job kill-on-close, not harness teardown); exit code is OS-assigned and recorded",
+      "expected": {
+        "alive": false,
+        "classification": "terminated-other",
+        "exitedRelativeToLauncherExitMs": "0..2000"
+      },
+      "actual": {
+        "role": "held-none",
+        "sample": "afterCleanup",
+        "alive": true,
+        "exitCode": null,
+        "exitedRelativeToLauncherExitMs": null,
+        "exitedBeforeLauncherExit": false,
+        "classification": "alive"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "harness-open-and-empty-after-cleanup",
+      "kind": "requirement",
+      "text": "2000 ms after the launcher died the still-open harness job reports zero active processes (completion observed before any harness teardown)",
+      "expected": {
+        "active": 0,
+        "harnessJobOpen": true
+      },
+      "actual": {
+        "cleanup": {
+          "job": "harness",
+          "label": "afterCleanup",
+          "atMs": 1795227066034,
+          "totalProcesses": 13,
+          "activeProcesses": 8,
+          "totalTerminatedProcesses": 0,
+          "assignedProcesses": 8,
+          "activePids": [
+            35660,
+            17880,
+            13624,
+            23656,
+            15064,
+            32724,
+            23440,
+            41680
+          ]
+        },
+        "harnessJobOpen": true
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "accounting-observers",
+      "kind": "info",
+      "text": "harness accounting after grace with observer handles retained, then closed",
+      "expected": null,
+      "actual": {
+        "observersRetained": {
+          "active": 8,
+          "total": 13,
+          "activePids": [
+            35660,
+            17880,
+            13624,
+            23656,
+            15064,
+            32724,
+            23440,
+            41680
+          ]
+        },
+        "observersClosed": {
+          "active": 8,
+          "total": 13,
+          "activePids": [
+            35660,
+            17880,
+            13624,
+            23656,
+            15064,
+            32724,
+            23440,
+            41680
+          ],
+          "closedRoles": [
+            "nest-probe-probe",
+            "launcher-click"
+          ]
+        },
+        "harnessJobOpen": true
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "creator-death-exit-codes",
+      "kind": "info",
+      "text": "OS-assigned exit codes of the helper tree after creator death (no 0xE0470459 assertion: the launcher never called TerminateJobObject)",
+      "expected": null,
+      "actual": [
+        {
+          "role": "identity-1",
+          "exitCode": null,
+          "deltaMs": null
+        },
+        {
+          "role": "ps-query",
+          "exitCode": null,
+          "deltaMs": null
+        },
+        {
+          "role": "ps-nested",
+          "exitCode": null,
+          "deltaMs": null
+        },
+        {
+          "role": "held-stdout",
+          "exitCode": null,
+          "deltaMs": null
+        },
+        {
+          "role": "held-none",
+          "exitCode": null,
+          "deltaMs": null
+        }
+      ],
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "caller-eof-at-launcher-exit",
+      "kind": "requirement",
+      "text": "the caller's launcher stdout/stderr reach EOF within 1500 ms of launcher exit",
+      "expected": "<= 1500",
+      "actual": {
+        "afterExitMs": null,
+        "afterDriverTeardown": "pending"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "in-job-probe",
+      "kind": "info",
+      "text": "in-job probe: own job UI restrictions read from inside, nested CreateProcess(JOB_LIST) and AssignProcessToJobObject outcomes",
+      "expected": null,
+      "actual": {
+        "name": "probe",
+        "job": "harness",
+        "spawned": true,
+        "inHarnessJob": true,
+        "exitCode": 0,
+        "report": {
+          "innerUiRestrictions": 0,
+          "selfInAnyJob": true,
+          "ownJobUiRestrictions": 0,
+          "nestedJobCreated": true,
+          "jobListAttributeSet": true,
+          "jobListCreateProcess": true,
+          "jobListChildInNestedJob": true,
+          "assignToFreshJob": true
+        },
+        "totalProcessesAdded": 4,
+        "nestingSupported": true
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "sentinel-alive",
+      "kind": "control",
+      "text": "same-executable run sentinel outside every launcher and job remains alive",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

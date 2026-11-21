@@ -1,0 +1,30 @@
+{
+  "schema": "qa459i-driver-freeze/1",
+  "version": "v2",
+  "frozenUtc": "2026-11-21T04:31:44.710Z",
+  "frozenUtcBasis": "Actual mtime of driver/v2/MANIFEST.sha256. This record was first written at 04:31:53.760Z with a hand-typed, incorrect frozenUtc of 2026-11-21T04:36:30Z; corrected after the run from file times. Run baseline-20261121T043159Z-5ff66d launched at 04:31:59.342Z, after the freeze.",
+  "supersedesForFutureUse": "v1 (retained unchanged with its run)",
+  "correction": {
+    "number": 1,
+    "of": 1,
+    "kind": "driver expectation (timing assumption), not a product result and not a setup blockage",
+    "firstFailedAssumption": "Q06 expected at least two ownership samples ([2, 60]) from the actual producer under StartupTimeoutSeconds 8.",
+    "evidence": "Run baseline-20261121T042951Z-e1e0e8, Q06: one ownership sample of 3,375 ms (relay-measured), Ensure 3,930 ms, store-unverified, no gateway marker, owner record preserved. ADR-0086: a held retry starts only if the remaining window less the 2,000 ms reserve fits the previous sample's measured duration (Launcher.cs lines 1157-1158).",
+    "change": "Q06 baseline prediction and corrected expectation ownershipCalls [2, 60] -> [1, 60]; README version note. No harness, fixture, build, port, timing or other case change.",
+    "diff": "driver/v1-to-v2.cases.diff",
+    "rerun": "Q06 only, once, under v2 as the renewed baseline comparison for the changed expectation."
+  },
+  "manifest": { "path": "driver/v2/MANIFEST.sha256", "sha256": "766811a8076395f172127dea170220b8827b009ef828de26678d8768a178076e", "entries": 11 },
+  "unchangedFromV1": [
+    "fixtures/repo/**",
+    "harness/Qa459iHarness.cs",
+    "qa459i-build.mjs",
+    "qa459i-driver.mjs",
+    "qa459i-manifest.mjs"
+  ],
+  "buildRecord": { "path": "setup/build-record.json", "sha256": "b0fde9875983eaa64b3f9ea604b305e85487f07da2f075f6e81fbd9253fa2f88", "rebuilt": false },
+  "assemblies": {
+    "GraphGoblin.exe": "febd02c1ad43814b2bed19d74ac6eb1ae8d409b607449117731f3501428c8a20",
+    "Qa459iHarness.exe": "346a225c0cebc996abe1edf4439c91a17c7aabf0be724d4d4944cfd3456a8fc1"
+  }
+}

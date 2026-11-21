@@ -1,0 +1,258 @@
+{
+  "id": "Q11",
+  "name": "outer-leading-no-break-space",
+  "category": "F3 outer non-JSON whitespace",
+  "purpose": "A leading U+00A0 before an otherwise exact free object: not JSON whitespace, removed by .NET Trim.",
+  "responses": {
+    "identity": {
+      "bytes": 65,
+      "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be",
+      "text": "db7ae8e80a43b6f650695b2ae212566ddedcaa900e4dc8c60b747d34be200341\n"
+    },
+    "ownership": [
+      {
+        "call": 1,
+        "source": "bytes",
+        "bytes": 19,
+        "sha256": "73ea02950d6c1a2c0cca72799823fda9b8e8cac9f24f7ea3c334ecd5efcf373d",
+        "text": " {\"state\":\"free\"}\n"
+      }
+    ],
+    "repeatsLast": true,
+    "realProducerOutputs": []
+  },
+  "baselinePrediction": {
+    "authorizes": true,
+    "code": "unknown-exit",
+    "childExit": 54,
+    "ownershipCalls": [
+      1,
+      1
+    ]
+  },
+  "correctedExpectation": {
+    "authorizes": false,
+    "code": "helper-invalid",
+    "ownershipCalls": [
+      1,
+      1
+    ],
+    "messageIncludes": [
+      "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+    ]
+  },
+  "observed": {
+    "harnessPid": 23168,
+    "harnessExit": 0,
+    "harnessWatchdog": false,
+    "harnessMs": 803,
+    "setup": "ok",
+    "outcome": "launcher-failure",
+    "code": "unknown-exit",
+    "childExit": 54,
+    "lock": null,
+    "logFolder": "<scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q11\\launcher-log",
+    "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+    "presented": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.\r\n\r\nLog folder: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q11\\launcher-log\r\n\r\nConfiguration: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q11\\launcher-log\\GraphGoblin.exe.json",
+    "logRecord": "{\"time\":\"2026-11-21T04:30:14.1095594Z\",\"pid\":23168,\"outcome\":\"refused\",\"stage\":\"gateway\",\"code\":\"unknown-exit\",\"childExit\":54,\"message\":\"GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\\\api\\\\dist\\\\main.js from the checkout in a terminal to see the error.\",\"config\":\"<scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q11\\\\launcher-log\\\\GraphGoblin.exe.json\",\"logFolder\":\"<scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q11\\\\launcher-log\"}\n",
+    "exceptionType": null,
+    "ensureElapsedMs": 641,
+    "authorizedFreshGateway": true,
+    "gatewayMarkers": [
+      {
+        "pid": 43292,
+        "ppidIsHarness": true,
+        "port": "25840",
+        "logDirProvided": true,
+        "at": 1795235414049
+      }
+    ],
+    "identityCalls": 1,
+    "ownershipCalls": 1,
+    "helperRuns": [
+      {
+        "kind": "identity",
+        "index": 1,
+        "pid": 4084,
+        "startAt": 1795235413625,
+        "exitAt": 1795235413628,
+        "exitCode": 0,
+        "ms": 3
+      },
+      {
+        "kind": "ownership",
+        "index": 1,
+        "pid": 38156,
+        "startAt": 1795235413823,
+        "exitAt": 1795235413826,
+        "exitCode": 0,
+        "ms": 3
+      }
+    ],
+    "helperRootsExitedNaturallyZero": true,
+    "realProducer": [],
+    "realProducerEvents": [],
+    "canariesChecked": [
+      "QA459I_STDERR_CANARY_Q11"
+    ],
+    "canariesFound": [],
+    "storeBefore": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "fc70b7bdf697ed954172146ca607ec2783a3cf5a4006ec08acb4131fba8fb9a4"
+      }
+    ],
+    "storeAfter": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "fc70b7bdf697ed954172146ca607ec2783a3cf5a4006ec08acb4131fba8fb9a4"
+      }
+    ],
+    "storePreserved": true,
+    "ownerRecordPreserved": true,
+    "logDirAfter": [],
+    "portFreeAfter": true,
+    "port": 25840,
+    "sentinelAlive": true
+  },
+  "controls": [
+    {
+      "name": "harness completed without watchdog",
+      "pass": true
+    },
+    {
+      "name": "closed LauncherFailure (no unexpected exception)",
+      "pass": true
+    },
+    {
+      "name": "no private canary in message, presentation or log record",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "store bytes and names preserved",
+      "pass": true
+    },
+    {
+      "name": "driver-owned owner record state preserved",
+      "pass": true
+    },
+    {
+      "name": "no gateway.log or launcher.log written in log folder",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "helper roots exited naturally with 0",
+      "pass": true
+    },
+    {
+      "name": "gateway markers parented by harness",
+      "pass": true
+    },
+    {
+      "name": "gateway-start marker agrees with launcher-observed exit 54",
+      "pass": true
+    },
+    {
+      "name": "owned port free after case",
+      "pass": true
+    },
+    {
+      "name": "unrelated sentinel alive",
+      "pass": true
+    }
+  ],
+  "predictionChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": true,
+        "observed": true
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "unknown-exit",
+        "observed": "unknown-exit"
+      }
+    },
+    {
+      "name": "launcher-observed gateway exit",
+      "pass": true,
+      "detail": {
+        "expected": 54,
+        "observed": 54
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    }
+  ],
+  "correctedContractChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": false,
+      "detail": {
+        "expected": false,
+        "observed": true
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": false,
+      "detail": {
+        "expected": "helper-invalid",
+        "observed": "unknown-exit"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    },
+    {
+      "name": "message includes: The read-only launcher check returned an invalid or oversize",
+      "pass": false
+    }
+  ],
+  "status": "MATCHED-PREDICTION",
+  "correctedContract": "VIOLATES"
+}

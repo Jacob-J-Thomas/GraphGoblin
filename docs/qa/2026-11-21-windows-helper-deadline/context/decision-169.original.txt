@@ -1,0 +1,17 @@
+# D-169 — Correct F5 QA compiler accounting and admit the second setup adjustment
+
+Selected by the coordinator on November 21, 2026 under the owner's delegated blocker-decision authority. This corrects D168's compiler accounting; the original D168, provider report, terminal and earlier receipts remain unchanged as historical records. Consolidated owner review/rework remains before owner QA.
+
+The coordinator read the actual provider tool results at event lines 611 and 618. Each contains three failed compiler invocations: launcher, deadline harness and public-entry harness, each with exit 1. The actual count is **two failed batches, six failed compiler invocations**. The first direct Git Bash batch rewrote compiler switches and produced CS2001. Disabling that conversion in the second batch still left source-path failures (CS1504) and the consequent missing-assembly failure (CS0006). Switching to the Node build adapter with Windows paths then produced all three assemblies successfully.
+
+There were **two setup invocation adjustments**, exceeding the brief's one-adjustment allowance. There were zero fixture-source corrections and no behavioral case failures. All of these setup attempts preceded the harness freeze and behavioral execution. The official build subsequently compiled fresh assemblies from the verified production source, and the retained cases ran those successful outputs. The original report's three-failure/zero-setup-fault wording and D168's three-failure/one-adjustment accounting are superseded by these observed counts, not silently rewritten.
+
+I admit the second pre-freeze setup adjustment as a bounded administrative variance. It changed the compiler invocation only, preserved every failed attempt in the genuine provider stream, and changed neither product code, fixture expectations nor test thresholds. The independent behavior results, frozen source/assembly bindings and verified manifests remain valid evidence with this corrected accounting. This decision does not grant final acceptance: Fable correction review, fresh current-head/current-target CI/native proof, explicit capped completion and signed merge remain required.
+
+Alternatives considered:
+
+- Reject and repeat the full QA session: declined because the actual successful compilation, frozen harness and raw behavioral outcomes are retained and independently checked. No product or behavioral failure requires a rerun.
+- Count the two adjustments as one common fix or retain the report's three-failure summary: declined because the actual two command batches and six exit-1 invocations must remain visible.
+- Discard the earlier failed compiler records: declined because it would hide the execution history.
+
+D168's separate seven-native-group disposition still applies. The test counts remain 11 deadline cases/79 assertions, six independently designed native groups/97 assertions, 16 F3 cases/176 controls/88 corrected-contract checks, and one maintained group with nine TAP tests. No fourth general scan, renewed Astra sign-off, technical-gate waiver, owner acceptance or deployment is authorized.

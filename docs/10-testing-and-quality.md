@@ -1,5 +1,33 @@
 # 10 - Testing and quality
 
+The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
+floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
+exit and bounded work. Generation-specific handshakes retain exact native handles to nested
+members that ignore parent exit and broken pipes, with stdout, stderr, both or neither inherited.
+The Node fixture uses detached children so Node's own child-job cleanup cannot impersonate the
+launcher's collection. The checks require the launcher's distinctive job exit code within one
+shared cleanup allowance, while a same-executable sentinel and a separate helper survive.
+Controlled ownership fixtures verify a too-short retry window, a shortened stalled recheck and
+a conclusive held-to-free transition, preserving lock bytes and file identities on refusal.
+These synthetic cases are separate from the unmodified built helper's real WMI cases below.
+
+D166 controls drive the compiled public launcher with strict ownership protocol fixtures:
+duplicate decoded keys, JavaScript syntax, malformed escapes, wrong shapes, trailing material
+and non-JSON outer whitespace refuse without a gateway-spawn witness. Valid producer output,
+legal JSON whitespace, field order and Unicode/path escapes remain accepted. Held retries keep
+their refusal guidance after an invalid sample; seeded lock/guard bytes and filesystem identities
+remain intact. Compiled NativeChecks also drives the production cleanup-wait decision with a
+deterministic observation/clock seam at 1,999/2,000/2,001 ms and across an observation that passes
+the deadline. Those checks establish decision ordering, not a delayed kernel termination or I/O
+completion. Original native evidence and its remaining limits stay distinct.
+
+D167 controls exercise the immutable caller work cutoff through the shared production guard:
+before/equal/after expiry, setup charged before helper entry, validation or return crossing the
+cutoff, the 15-second cap and reserved cleanup interval. A compiled helper entry given an expired
+deadline cannot create its marker child; a controlled-clock validation reaching equality refuses.
+These establish deadline decisions and controlled entry behavior, not an OS scheduling race.
+The ordinary helper, strict protocol, held-store and cleanup controls retain their own scopes.
+
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
 gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,

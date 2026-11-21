@@ -1,0 +1,109 @@
+{
+  "schema": "qa167i-build-record/1",
+  "startUtc": "2026-11-21T07:01:59.753Z",
+  "node": "v22.23.4",
+  "checkout": {
+    "head": "184c95ac2d08590e258c084723eb9ab379f0bbe5",
+    "tree": "404700711621832629aef6d505b69076972474da",
+    "parents": [
+      "c6f08d4a62c1488690096f69f577a68c6d382cbc"
+    ],
+    "trackedChanges": 0,
+    "launcherBlob": "4293a97d549cc8920485f86d13e1ab7dce12e77a",
+    "matches": true
+  },
+  "compiler": {
+    "path": "<framework-compiler>\\csc.exe",
+    "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+  },
+  "inputs": {
+    "launcherSource": {
+      "sha256": "34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce"
+    },
+    "deadlineHarness": {
+      "sha256": "b7ab3b901c60e1ef622bbdf7290a3edd8034d16598a7dccf6be70a1640a8ab83"
+    },
+    "publicEntryHarness": {
+      "sha256": "99e0e8d906735007bc2099902e21b5487f8669284a91654a9264c872f1a1b8bf"
+    },
+    "launcherSourceAfter": {
+      "sha256": "34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce"
+    }
+  },
+  "steps": [
+    {
+      "label": "production-launcher",
+      "args": [
+        "/nologo",
+        "/target:winexe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\bin\\GraphGoblin.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 307,
+      "stdoutBytes": 0,
+      "stderrBytes": 0
+    },
+    {
+      "label": "deadline-harness-same-assembly",
+      "args": [
+        "/nologo",
+        "/target:exe",
+        "/optimize+",
+        "/platform:x64",
+        "/main:Qa167iDeadline",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\bin\\Qa167iDeadline.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+        "<out>\\harness\\v1\\Qa167iDeadline.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 364,
+      "stdoutBytes": 0,
+      "stderrBytes": 0
+    },
+    {
+      "label": "public-entry-harness",
+      "args": [
+        "/nologo",
+        "/target:exe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:<scratch>\\bin\\GraphGoblin.exe",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\bin\\Qa167iPublicEntry.exe",
+        "<out>\\harness\\v1\\Qa167iPublicEntry.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 615,
+      "stdoutBytes": 0,
+      "stderrBytes": 0
+    }
+  ],
+  "outputs": {
+    "launcher": {
+      "file": "<scratch>\\bin\\GraphGoblin.exe",
+      "sha256": "a4db890920f57967644b9ed1d533a4ae89e357a8c40ce9b16114bbe9e283bab2",
+      "bytes": 67072
+    },
+    "deadline": {
+      "file": "<scratch>\\bin\\Qa167iDeadline.exe",
+      "sha256": "c3ae3529fab6c602e7e22f6eed390e0fa24d49ee85be99b2dbaeca661d639f8e",
+      "bytes": 95744
+    },
+    "publicEntry": {
+      "file": "<scratch>\\bin\\Qa167iPublicEntry.exe",
+      "sha256": "25317c704e22a2f35209378a776f235f3b0dfee008a36a2c1bc9d6f58e8c3ff2",
+      "bytes": 6144
+    }
+  },
+  "endUtc": "2026-11-21T07:02:01.810Z"
+}

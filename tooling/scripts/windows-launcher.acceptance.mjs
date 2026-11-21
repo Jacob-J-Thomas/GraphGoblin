@@ -1894,6 +1894,30 @@ test(
         timeout: 60_000,
       });
       assert.match(result.stdout, /bounded log, closed outcome and NUL stdio checks passed/);
+      const helpers = await execute(checks, ['--helper-checks', work, process.execPath], {
+        env: environment,
+        windowsHide: true,
+        timeout: 60_000,
+      });
+      assert.match(helpers.stdout, /Native helper job, pipe and deadline checks passed/);
+      const decisions = await execute(checks, ['--cleanup-deadline-checks'], {
+        env: environment,
+        windowsHide: true,
+        timeout: 10_000,
+      });
+      assert.equal(
+        decisions.stdout.trim(),
+        'Deterministic cleanup decision checks passed (no kernel fault injected).',
+      );
+      const workDecisions = await execute(checks, ['--work-deadline-checks'], {
+        env: environment,
+        windowsHide: true,
+        timeout: 10_000,
+      });
+      assert.equal(
+        workDecisions.stdout.trim(),
+        'Deterministic caller work deadline checks passed (no scheduling fault injected).',
+      );
     });
 
     await t.test(
@@ -1976,6 +2000,221 @@ test(
         await assert.rejects(lstat(join(failing.config.DataDir, 'graphgoblin.lock')), {
           code: 'ENOENT',
         });
+      },
+    );
+
+    await t.test('held ownership retains guidance and budgets the last recheck', async () => {
+      // A tiny isolated built checkout replaces only the read-only protocol fixture. Its
+      // main records a spawn then exits; no real gateway, store or owner PID is involved.
+      for (const scenario of ['too-late', 'stalled-recheck', 'released']) {
+        const fixture = join(base, scenario);
+        const samples = join(fixture, 'samples');
+        const spawned = join(fixture, 'spawned');
+        const lock = join(fixture, 'graphgoblin.lock');
+        const marker = JSON.stringify({ pid: 1, token: randomUUID(), fixture: true });
+        for (const directory of ['apps/api/dist/windows-log', 'apps/web/dist'])
+          await mkdir(join(fixture, directory), { recursive: true });
+        await writeFile(lock, marker);
+        const before = await stat(lock, { bigint: true });
+        await writeFile(join(fixture, 'apps/web/dist/index.html'), '<html></html>');
+        await writeFile(join(fixture, 'apps/api/dist/windows-log/guard.js'), '');
+        await writeFile(
+          join(fixture, 'apps/api/dist/main.js'),
+          `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;\nimport fs from 'node:fs';fs.writeFileSync(${JSON.stringify(spawned)},'spawned');process.exit(75);`,
+        );
+        await writeFile(
+          join(fixture, 'apps/api/dist/instance-identity.js'),
+          `import fs from 'node:fs';
+          if(process.argv[2]!=='--store-state'){process.stdout.write('a'.repeat(64));}
+          else {
+            const file=${JSON.stringify(samples)};
+            const count=fs.existsSync(file)?Number(fs.readFileSync(file,'utf8')):0;
+            fs.writeFileSync(file,String(count+1));
+            if(count===0) setTimeout(()=>process.stdout.write(JSON.stringify({state:'held',path:${JSON.stringify(lock)},detail:'another GraphGoblin process holds this store'})),600);
+            else if(${JSON.stringify(scenario)}==='released') process.stdout.write('{"state":"free"}');
+            else setInterval(()=>{},1000);
+          }`,
+        );
+        const attempt = await configuration(install, `held-${scenario}`, {
+          Repo: fixture,
+          // Ten seconds leaves room for the measured first sample and the real TCP probe,
+          // while still forcing a final stalled query below the helper's 15-second cap.
+          StartupTimeoutSeconds: scenario === 'too-late' ? 2 : 10,
+        });
+        const started = performance.now();
+        const result = await launch(attempt.path);
+        const elapsed = performance.now() - started;
+        assert.equal(result.code, 1);
+        assert.ok(elapsed < 13_000, `The ${scenario} refusal exceeded bounded work and cleanup.`);
+        assert.equal(await readFile(lock, 'utf8'), marker);
+        const after = await stat(lock, { bigint: true });
+        assert.deepEqual([after.dev, after.ino], [before.dev, before.ino]);
+        assert.equal(await readFile(samples, 'utf8'), scenario === 'too-late' ? '1' : '2');
+        if (scenario === 'released') {
+          assert.equal(await readFile(spawned, 'utf8'), 'spawned');
+          assert.match(result.stderr, /failed during startup, and no startup diagnostic/);
+        } else {
+          await assert.rejects(lstat(spawned), { code: 'ENOENT' });
+          assert.match(result.stderr, /another GraphGoblin process holds this store/);
+          assert.match(result.stderr, /No second gateway was started/);
+          assert.match(
+            result.stderr,
+            /Do not stop an unrelated process or delete an unverified lock/,
+          );
+          assert.equal((await launcherRecords()).at(-1).code, 'store-held');
+        }
+      }
+    });
+
+    await t.test(
+      'ownership admission requires strict raw JSON and preserves held refusals',
+      async () => {
+        // Only the disposable helper protocol/main are stubbed. The shipped compiled launcher
+        // admits or refuses startup through its public entry; no real owner or WMI is simulated.
+        const fixture = join(base, 'strict protocol fixture');
+        const payload = join(fixture, 'payload');
+        const samples = join(fixture, 'samples');
+        const mode = join(fixture, 'mode');
+        const spawned = join(fixture, 'spawned');
+        const canary = 'GG_STRICT_OWNERSHIP_CANARY';
+        for (const directory of ['apps/api/dist/windows-log', 'apps/web/dist'])
+          await mkdir(join(fixture, directory), { recursive: true });
+        await writeFile(join(fixture, 'apps/web/dist/index.html'), '<html></html>');
+        await writeFile(join(fixture, 'apps/api/dist/windows-log/guard.js'), '');
+        await writeFile(
+          join(fixture, 'apps/api/dist/main.js'),
+          `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;\nimport fs from 'node:fs';fs.writeFileSync(${JSON.stringify(spawned)},'spawned');process.exit(75);`,
+        );
+        await writeFile(
+          join(fixture, 'apps/api/dist/instance-identity.js'),
+          `import fs from 'node:fs';import path from 'node:path';
+        process.stderr.write(${JSON.stringify(canary)});
+        if(process.argv[2]!=='--store-state')process.stdout.write('a'.repeat(64)+'\\n');
+        else {
+          const count=Number(fs.readFileSync(${JSON.stringify(samples)},'utf8'));
+          fs.writeFileSync(${JSON.stringify(samples)},String(count+1));
+          process.stdout.write(count===0&&fs.readFileSync(${JSON.stringify(mode)},'utf8')==='retained'
+            ?JSON.stringify({state:'held',path:path.join(process.env.GG_DATA_DIR,'graphgoblin.lock'),detail:'another GraphGoblin process holds this store'})+'\\n'
+            :fs.readFileSync(${JSON.stringify(payload)},'utf8'));
+        }`,
+        );
+        const cases = [
+          ['javascript-lines', "{\nstate:'free'\n}", 'invalid'],
+          ['single-quotes', "{'state':'free'}", 'invalid'],
+          ['duplicate-held-free', '{"state":"held","state":"free"}', 'invalid'],
+          [
+            'duplicate-free-held',
+            '{"state":"free","state":"held","path":"x","detail":"x"}',
+            'invalid',
+          ],
+          ['escaped-duplicate', '{"state":"held","\\u0073tate":"free"}', 'invalid'],
+          [
+            'duplicate-path',
+            '{"state":"held","path":"x","p\\u0061th":"y","detail":"x"}',
+            'invalid',
+          ],
+          ['unknown-field', JSON.stringify({ state: 'free', extra: canary }), 'invalid'],
+          ['trailing-object', '{"state":"free"}{"state":"free"}', 'invalid'],
+          ['trailing-comma', '{"state":"free",}', 'invalid'],
+          ['comment', `{"state":/*${canary}*/"free"}`, 'invalid'],
+          ['raw-string-lf', '{"state":"fr\nee"}', 'invalid'],
+          ['bad-escape', '{"state":"\\x66ree"}', 'invalid'],
+          ['bad-unicode', '{"state":"\\u00g0"}', 'invalid'],
+          ['apostrophe-escape', '{"state":"fr\\\'ee"}', 'invalid'],
+          ['outer-non-json', '\u00a0{"state":"free"}\u00a0', 'invalid'],
+          ['wrong-type', '{"state":null}', 'invalid'],
+          ['nested-value', '{"state":{"state":"free"}}', 'invalid'],
+          ['empty-object', '{}', 'invalid'],
+          ['unknown-state', '{"state":"other"}', 'invalid'],
+          ['free-with-held-fields', '{"state":"free","path":"x","detail":"x"}', 'invalid'],
+          ['held-missing', '{"state":"held","path":"x"}', 'invalid'],
+          ['held-blank', '{"state":"held","path":" ","detail":"x"}', 'invalid'],
+          ['held-blank-detail', '{"state":"held","path":"x","detail":" "}', 'invalid'],
+          ['producer-free', JSON.stringify({ state: 'free' }) + '\n', 'free'],
+          ['json-whitespace', ' \t\r\n{ "state" \t: "free" }\r\n', 'free'],
+          ['escaped-free', '{"st\\u0061te":"fr\\u0065e"}\n', 'free'],
+          [
+            'producer-held',
+            (lock) =>
+              JSON.stringify({
+                state: 'held',
+                path: lock,
+                detail: `another GraphGoblin process holds this store ${canary}`,
+              }) + '\n',
+            'held',
+          ],
+          [
+            'escaped-reordered-held',
+            (lock) =>
+              `{"detail":"another GraphGoblin process holds this store \\b\\f\\n\\r\\t \\/ \\" \\\\ ${canary}","p\\u0061th":${JSON.stringify(lock).replaceAll('α', '\\u03b1').replaceAll('🦊', '\\ud83e\\udd8a')},"st\\u0061te":"h\\u0065ld"}\n`,
+            'held',
+          ],
+          ['held-then-duplicate', '{"state":"held","\\u0073tate":"free"}', 'retained'],
+          ['held-then-non-json', '\u00a0{"state":"free"}', 'retained'],
+        ];
+        for (const [name, response, expected] of cases) {
+          const attempt = await configuration(install, `strict-${name}`, {
+            Repo: fixture,
+            DataDir: join(fixture, `store α 🦊 ${name}`),
+            StartupTimeoutSeconds: expected === 'retained' ? 10 : 1,
+          });
+          await mkdir(attempt.config.DataDir);
+          const originals = [];
+          for (const file of [
+            'graphgoblin.lock',
+            'graphgoblin.lock.reclaim',
+            'graphgoblin.db.graphgoblin.lock',
+            'graphgoblin.db.graphgoblin.lock.reclaim',
+          ]) {
+            const path = join(attempt.config.DataDir, file);
+            const original = await ownershipFixture(path, { pid: 1, token: randomUUID() });
+            originals.push({ ...original, identity: await stat(original.path, { bigint: true }) });
+            if (file.endsWith('.reclaim'))
+              originals.push({ path, identity: await stat(path, { bigint: true }) });
+          }
+          const lock = join(attempt.config.DataDir, 'graphgoblin.lock');
+          await writeFile(payload, typeof response === 'function' ? response(lock) : response);
+          await writeFile(samples, '0');
+          await writeFile(mode, expected);
+          const result = await launch(attempt.path);
+          assert.equal(result.code, 1, name);
+          assert.equal(result.stdout, '', name);
+          assert.ok(!result.stderr.includes(canary), name);
+          const recorded = (await launcherRecords()).at(-1);
+          assert.ok(!JSON.stringify(recorded).includes(canary), name);
+          if (expected === 'free') {
+            assert.equal(await readFile(spawned, 'utf8'), 'spawned', name);
+            assert.equal(recorded.code, 'startup-failed-unlogged', name);
+            await unlink(spawned);
+          } else {
+            await assert.rejects(lstat(spawned), { code: 'ENOENT' }, name);
+            assert.equal(
+              recorded.code,
+              expected === 'invalid' ? 'helper-invalid' : 'store-held',
+              name,
+            );
+            if (expected !== 'invalid') {
+              assert.equal(recorded.lock, lock, name);
+              assert.match(result.stderr, /No second gateway was started/, name);
+              assert.match(
+                result.stderr,
+                /Do not stop an unrelated process or delete an unverified lock/,
+                name,
+              );
+            }
+          }
+          assert.equal(await readFile(samples, 'utf8'), expected === 'retained' ? '2' : '1', name);
+          for (const original of originals) {
+            const after = await stat(original.path, { bigint: true });
+            assert.deepEqual(
+              [after.dev, after.ino],
+              [original.identity.dev, original.identity.ino],
+              name,
+            );
+            if (original.contents !== undefined)
+              assert.equal(await readFile(original.path, 'utf8'), original.contents, name);
+          }
+        }
       },
     );
 

@@ -1,0 +1,405 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T020839Z-081d57",
+  "label": "candidate",
+  "case": "ext-strict-utf8-ownership",
+  "title": "Strict UTF-8: an otherwise valid held ownership answer with one invalid byte inside its path string",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Strict UTF-8 validation of the stage protocol (a lenient decoder would accept this as held)",
+  "startedAtMs": 1795226980276,
+  "durationMs": 3360,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 43904,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 326,
+      "osElapsedMs": 319,
+      "osCreatedAtMs": 1795226980285,
+      "osExitedAtMs": 1795226980604,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-invalid",
+      "diagnostic": "helper-invalid",
+      "diagnosticFinal": "helper-invalid",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:09:40.5895925Z",
+          "pid": 43904,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-invalid",
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "config": "<RUN>\\cases\\ext-strict-utf8-ownership\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 238,
+      "stdoutBytes": 0,
+      "stderrBytes": 238,
+      "stdoutText": "",
+      "stderrText": "The read-only launcher check returned an invalid or oversized response. No gateway was started.\r\n\r\nConfiguration: <RUN>\\cases\\ext-strict-utf8-ownership\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-strict-utf8-ownership/launcher-click/43904",
+      "case": "ext-strict-utf8-ownership",
+      "role": "launcher-click",
+      "pid": 43904,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226980291,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 45884,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226980285,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226980285,
+          "exitedAtMs": 1795226980604
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226980285,
+          "exitedAtMs": 1795226980604
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226980285,
+          "exitedAtMs": 1795226980604
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226980285,
+          "exitedAtMs": 1795226980604
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/identity-1/18684",
+      "case": "ext-strict-utf8-ownership",
+      "role": "identity-1",
+      "pid": 18684,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "identity-1",
+        "pid": 18684,
+        "ppid": 43904,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226980466,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 43904,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226980390,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980390,
+          "exitedAtMs": 1795226980473
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980390,
+          "exitedAtMs": 1795226980473
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980390,
+          "exitedAtMs": 1795226980473
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-strict-utf8-ownership/store-state-1/40388",
+      "case": "ext-strict-utf8-ownership",
+      "role": "store-state-1",
+      "pid": 40388,
+      "source": "handshake",
+      "self": {
+        "case": "ext-strict-utf8-ownership",
+        "role": "store-state-1",
+        "pid": 40388,
+        "ppid": 43904,
+        "helper": "store-state",
+        "index": 1
+      },
+      "openedAtMs": 1795226980571,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 43904,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226980491,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980491,
+          "exitedAtMs": 1795226980580
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980491,
+          "exitedAtMs": 1795226980580
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226980491,
+          "exitedAtMs": 1795226980580
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226980462,
+      "pid": 18684,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226980466,
+      "pid": 18684,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226980466,
+      "pid": 18684,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795226980467,
+      "pid": 18684,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    },
+    {
+      "at": 1795226980566,
+      "pid": 40388,
+      "kind": "store-state",
+      "event": "helper-start",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795226980572,
+      "pid": 40388,
+      "kind": "store-state",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "store-state-1"
+    },
+    {
+      "at": 1795226980573,
+      "pid": 40388,
+      "kind": "store-state",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "store-state-1",
+      "stdout": "held-bad-utf8"
+    },
+    {
+      "at": 1795226980574,
+      "pid": 40388,
+      "kind": "store-state",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "store-state-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "data",
+      "type": "directory"
+    },
+    {
+      "path": "data/graphgoblin.lock",
+      "type": "file",
+      "size": 84,
+      "fileId": "810877956:281474978827369",
+      "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb"
+    },
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 951,
+      "fileId": "810877956:281474978827370",
+      "sha256": "6b1ef4a2a6ab0ebb0b4ec777944a9e295fb87141de6416084d1271abf5ae0929"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 468,
+      "fileId": "810877956:281474978827367",
+      "sha256": "f3735f06a4ab49c5342507bcb4b38ac0c1fd9767dcfd85e7e1fc5a8a972258b8"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 364,
+      "fileId": "810877956:281474978827371",
+      "sha256": "6c8d7fb1e70ef529fa68d2ee7027af7fedeaea26a6e20ef6a4ea48008c57b6e3"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 385,
+      "fileId": "810877956:281474978827366",
+      "sha256": "c472810b94eb548dcf8355c7295723e5485ae24f4629e05bf4a40e0993514e25"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795226980280,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795226980291,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226980609,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "invalid UTF-8 inside a JSON string refuses with helper-invalid (strict decoding), not store-held",
+      "expected": "helper-invalid",
+      "actual": {
+        "code": "helper-invalid",
+        "storeStateCalls": 1
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "lock-unchanged",
+      "kind": "control",
+      "text": "store lock bytes and file identity unchanged",
+      "expected": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978827369"
+      },
+      "actual": {
+        "exists": true,
+        "sha256": "2d6d9060133627994d196f7489f7ee97f864c8a9bdb64d69bfc60c890a3c3deb",
+        "size": 84,
+        "fileId": "810877956:281474978827369"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

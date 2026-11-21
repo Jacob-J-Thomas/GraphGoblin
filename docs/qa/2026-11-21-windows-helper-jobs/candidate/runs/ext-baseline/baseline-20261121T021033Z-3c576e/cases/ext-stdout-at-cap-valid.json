@@ -1,0 +1,276 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T021033Z-3c576e",
+  "label": "baseline",
+  "case": "ext-stdout-at-cap-valid",
+  "title": "Stdout exactly at the 256 KiB cap: a valid identity line padded with spaces to 262144 bytes, natural exit 0",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Stdout retention bound: exactly 256 KiB is retained and validated",
+  "startedAtMs": 1795227108760,
+  "durationMs": 18175,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 35336,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 15149,
+      "osElapsedMs": 15142,
+      "osCreatedAtMs": 1795227108768,
+      "osExitedAtMs": 1795227123910,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-timeout",
+      "diagnostic": "helper-timeout",
+      "diagnosticFinal": "helper-timeout",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:12:03.8918426Z",
+          "pid": 35336,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-timeout",
+          "message": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.",
+          "config": "<RUN>\\cases\\ext-stdout-at-cap-valid\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 292,
+      "stdoutBytes": 0,
+      "stderrBytes": 292,
+      "stdoutText": "",
+      "stderrText": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.\r\n\r\nConfiguration: <RUN>\\cases\\ext-stdout-at-cap-valid\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-stdout-at-cap-valid/launcher-click/35336",
+      "case": "ext-stdout-at-cap-valid",
+      "role": "launcher-click",
+      "pid": 35336,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795227108773,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 38516,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227108768,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227108768,
+          "exitedAtMs": 1795227123910
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227108768,
+          "exitedAtMs": 1795227123910
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227108768,
+          "exitedAtMs": 1795227123910
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227108768,
+          "exitedAtMs": 1795227123910
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-stdout-at-cap-valid/identity-1/43196",
+      "case": "ext-stdout-at-cap-valid",
+      "role": "identity-1",
+      "pid": 43196,
+      "source": "handshake",
+      "self": {
+        "case": "ext-stdout-at-cap-valid",
+        "role": "identity-1",
+        "pid": 43196,
+        "ppid": 35336,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795227108958,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 35336,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227108868,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227108868,
+          "exitedAtMs": 1795227123882
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227108868,
+          "exitedAtMs": 1795227123882
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227108868,
+          "exitedAtMs": 1795227123882
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-dotnet-process-kill"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795227108955,
+      "pid": 43196,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227108960,
+      "pid": 43196,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 216,
+      "fileId": "810877956:281474978827502",
+      "sha256": "2a6733eedbfa7b6f44fde017d7bfb911bbbbf073477aa05eff608e4bbd0811b4"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 464,
+      "fileId": "810877956:281474978827501",
+      "sha256": "1c3399a0cd968a5a7250e101fbc08e4799093efc9833e7f7d35f2e7d945acacb"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 418,
+      "fileId": "810877956:281474978827503",
+      "sha256": "42af04d7767c7323a5da969e48296670a127f3a82cbac7a8f317bf11950106a2"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 355,
+      "fileId": "810877956:281474978827500",
+      "sha256": "7c3feadb06a80827507edaef49d779d4053a91292df207fe8daeb46ed155bef8"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795227108765,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795227108773,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795227123915,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "requirement",
+      "text": "a valid result of exactly 262144 bytes is retained, trimmed and accepted",
+      "expected": "foreign-listener",
+      "actual": "helper-timeout",
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "root-natural-zero",
+      "kind": "requirement",
+      "text": "the root completes its 256 KiB write and exits naturally with 0",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 4294967295,
+        "exitedRelativeToLauncherExitMs": -28,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-dotnet-process-kill"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

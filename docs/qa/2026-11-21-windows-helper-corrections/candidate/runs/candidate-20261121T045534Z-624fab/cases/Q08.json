@@ -1,0 +1,250 @@
+{
+  "id": "Q08",
+  "name": "malformed-javascript-syntax-multiline-free",
+  "category": "F3 malformed syntax (JavaScript-only)",
+  "purpose": "Unquoted member name and single-quoted string across lines, as in the final audit.",
+  "responses": {
+    "identity": {
+      "bytes": 65,
+      "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be",
+      "text": "db7ae8e80a43b6f650695b2ae212566ddedcaa900e4dc8c60b747d34be200341\n"
+    },
+    "ownership": [
+      {
+        "call": 1,
+        "source": "bytes",
+        "bytes": 20,
+        "sha256": "895885c3e9316335d7aac4047ce55141295abbabed2e31464ac60b69f66252b9",
+        "text": "{\n  state: 'free'\n}\n"
+      }
+    ],
+    "repeatsLast": true,
+    "realProducerOutputs": []
+  },
+  "baselinePrediction": {
+    "authorizes": true,
+    "code": "unknown-exit",
+    "childExit": 54,
+    "ownershipCalls": [
+      1,
+      1
+    ]
+  },
+  "correctedExpectation": {
+    "authorizes": false,
+    "code": "helper-invalid",
+    "ownershipCalls": [
+      1,
+      1
+    ],
+    "messageIncludes": [
+      "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+    ]
+  },
+  "observed": {
+    "harnessPid": 36984,
+    "harnessExit": 0,
+    "harnessWatchdog": false,
+    "harnessMs": 434,
+    "setup": "ok",
+    "outcome": "launcher-failure",
+    "code": "helper-invalid",
+    "childExit": 0,
+    "lock": null,
+    "logFolder": null,
+    "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+    "presented": "The read-only launcher check returned an invalid or oversized response. No gateway was started.\r\n\r\nConfiguration: <scratch>\\runs\\candidate-20261121T045534Z-624fab\\Q08\\launcher-log\\GraphGoblin.exe.json",
+    "logRecord": "{\"time\":\"2026-11-21T04:55:54.6076519Z\",\"pid\":36984,\"outcome\":\"refused\",\"stage\":\"gateway\",\"code\":\"helper-invalid\",\"message\":\"The read-only launcher check returned an invalid or oversized response. No gateway was started.\",\"config\":\"<scratch>\\\\runs\\\\candidate-20261121T045534Z-624fab\\\\Q08\\\\launcher-log\\\\GraphGoblin.exe.json\"}\n",
+    "exceptionType": null,
+    "ensureElapsedMs": 288,
+    "authorizedFreshGateway": false,
+    "gatewayMarkers": [],
+    "identityCalls": 1,
+    "ownershipCalls": 1,
+    "helperRuns": [
+      {
+        "kind": "identity",
+        "index": 1,
+        "pid": 16064,
+        "startAt": 1795236954435,
+        "exitAt": 1795236954437,
+        "exitCode": 0,
+        "ms": 2
+      },
+      {
+        "kind": "ownership",
+        "index": 1,
+        "pid": 12360,
+        "startAt": 1795236954584,
+        "exitAt": 1795236954586,
+        "exitCode": 0,
+        "ms": 2
+      }
+    ],
+    "helperRootsExitedNaturallyZero": true,
+    "realProducer": [],
+    "realProducerEvents": [],
+    "canariesChecked": [
+      "QA459I_STDERR_CANARY_Q08"
+    ],
+    "canariesFound": [],
+    "storeBefore": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "1296ed434e4fd472fdc9f909c833e3fc7fd49c3ac7336002d0a1d8eb055c25ec"
+      }
+    ],
+    "storeAfter": [
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "1296ed434e4fd472fdc9f909c833e3fc7fd49c3ac7336002d0a1d8eb055c25ec"
+      }
+    ],
+    "storePreserved": true,
+    "ownerRecordPreserved": true,
+    "logDirAfter": [],
+    "portFreeAfter": true,
+    "port": 25840,
+    "sentinelAlive": true
+  },
+  "controls": [
+    {
+      "name": "harness completed without watchdog",
+      "pass": true
+    },
+    {
+      "name": "closed LauncherFailure (no unexpected exception)",
+      "pass": true
+    },
+    {
+      "name": "no private canary in message, presentation or log record",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "store bytes and names preserved",
+      "pass": true
+    },
+    {
+      "name": "driver-owned owner record state preserved",
+      "pass": true
+    },
+    {
+      "name": "no gateway.log or launcher.log written in log folder",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "helper roots exited naturally with 0",
+      "pass": true
+    },
+    {
+      "name": "gateway markers parented by harness",
+      "pass": true
+    },
+    {
+      "name": "gateway-start marker agrees with launcher-observed exit 54",
+      "pass": true
+    },
+    {
+      "name": "owned port free after case",
+      "pass": true
+    },
+    {
+      "name": "unrelated sentinel alive",
+      "pass": true
+    }
+  ],
+  "predictionChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": false,
+      "detail": {
+        "expected": true,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": false,
+      "detail": {
+        "expected": "unknown-exit",
+        "observed": "helper-invalid"
+      }
+    },
+    {
+      "name": "launcher-observed gateway exit",
+      "pass": false,
+      "detail": {
+        "expected": 54,
+        "observed": 0
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    }
+  ],
+  "correctedContractChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": false,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "helper-invalid",
+        "observed": "helper-invalid"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          1
+        ],
+        "observed": 1
+      }
+    },
+    {
+      "name": "message includes: The read-only launcher check returned an invalid or oversize",
+      "pass": true
+    }
+  ],
+  "status": "DIFFERED-FROM-PREDICTION",
+  "correctedContract": "CONFORMS"
+}

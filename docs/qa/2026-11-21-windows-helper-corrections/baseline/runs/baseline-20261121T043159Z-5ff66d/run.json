@@ -1,0 +1,100 @@
+{
+  "schema": "qa459i-run/1",
+  "runId": "baseline-20261121T043159Z-5ff66d",
+  "label": "baseline",
+  "startUtc": "2026-11-21T04:31:59.503Z",
+  "node": "v22.23.4",
+  "execPath": "<home>\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "ports": [
+    25840,
+    25859
+  ],
+  "setupFaults": [],
+  "cases": [
+    {
+      "id": "Q06",
+      "name": "real-producer-held-driver-record",
+      "status": "MATCHED-PREDICTION",
+      "correctedContract": "CONFORMS",
+      "authorized": false,
+      "code": "store-unverified",
+      "ownershipCalls": 2,
+      "ms": 4437
+    }
+  ],
+  "checkout": {
+    "head": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "tree": "0b1a84d1c881518b4744e2565a2874ec481921fc",
+    "trackedChanges": 0,
+    "expectedHead": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "expectedTree": "0b1a84d1c881518b4744e2565a2874ec481921fc"
+  },
+  "sources": {
+    "apps/windows-launcher/Launcher.cs": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078",
+    "apps/api/src/instance-identity.ts": "7afbe98ded3e89d4241c88726b832d1a0f483ad5ef7a359d5afb22d696088d9e",
+    "apps/api/src/data-dir-lock.ts": "5f3ab443bcc4e91bc4a97b444000f85801c6276f2a2deb63a004e277f4cc5d3f",
+    "apps/api/dist/instance-identity.js": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+    "apps/api/dist/data-dir-lock.js": "dfc4e59a48e65191b85cc2508507070c98dc7d14b00f3291651ab60d5b0d9c71"
+  },
+  "assemblies": {
+    "launcher": {
+      "sha256": "febd02c1ad43814b2bed19d74ac6eb1ae8d409b607449117731f3501428c8a20",
+      "recorded": "febd02c1ad43814b2bed19d74ac6eb1ae8d409b607449117731f3501428c8a20"
+    },
+    "harness": {
+      "sha256": "346a225c0cebc996abe1edf4439c91a17c7aabf0be724d4d4944cfd3456a8fc1",
+      "recorded": "346a225c0cebc996abe1edf4439c91a17c7aabf0be724d4d4944cfd3456a8fc1"
+    },
+    "launcherSourceAtBuild": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078"
+  },
+  "driver": {
+    "qa459i-driver.mjs": "e4b6a9e0c0981ebb2055788e35cbc1894f0346abb1db6fa7ea1bb18793fb8a87",
+    "qa459i-cases.mjs": "387b10317e5ac63abb3988548598e23570391ea68c82b1eddba8565b2145c2eb",
+    "qa459i-build.mjs": "648d201f00228297db8c7e891a80fd8e4b4bbea0f817c60b551d60fb510bbf2a",
+    "harness/Qa459iHarness.cs": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+  },
+  "fixtureRepo": {
+    "apps/api/dist/instance-identity.js": "653846c472c902a34301090f6bd47a6c7b2cc31e4092e7ff82f02145e421b996",
+    "apps/api/dist/main.js": "db0a5d06fb6fb20ba9bfe24d5dbd94577afae5029166cbd14f12ac1d16f9b15a",
+    "apps/api/dist/windows-log/guard.js": "e7d54582298e157ffbcc36cccfd20324c5c66d7ba1f991d4d8d3b0b06c7d7788",
+    "apps/web/dist/index.html": "6b85cfc929ab74eba1ed6f7146f608f191fed272262970f4e07f16cb35090d93",
+    "package.json": "5b90d35e3b24e5f416fe94980525224bdc90a5f38794862dd1773a75c47c8e03"
+  },
+  "preflight": {
+    "exit": 0,
+    "watchdog": false,
+    "ms": 349,
+    "result": {
+      "schema": "qa459i-harness-result/1",
+      "mode": "--preflight",
+      "harnessPid": 7464,
+      "startUtc": "2026-11-21T04:31:59.9868384Z",
+      "setup": "ok",
+      "logRootAdmitted": true,
+      "harnessExitCode": 0,
+      "endUtc": "2026-11-21T04:32:00.0529701Z"
+    }
+  },
+  "sentinel": {
+    "pid": 11992,
+    "startedUtc": "2026-11-21T04:32:00.136Z",
+    "aliveAtTeardown": true,
+    "teardown": {
+      "kind": "driver-teardown",
+      "code": null,
+      "signal": "SIGTERM",
+      "at": "2026-11-21T04:32:04.666Z"
+    }
+  },
+  "endUtc": "2026-11-21T04:32:04.666Z",
+  "status": "COMPLETED",
+  "summary": {
+    "cases": 1,
+    "matchedPrediction": 1,
+    "differedFromPrediction": 0,
+    "setupFault": 0,
+    "conformsToCorrectedContract": 1,
+    "violatesCorrectedContract": 0,
+    "authorizedFreshGateway": 0
+  }
+}

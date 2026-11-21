@@ -372,6 +372,16 @@ test('child commands map to closed tool and mode names without copying arguments
     ['C:\\W\\System32\\icacls.exe', 'system-tool', 'acl'],
     ['C:\\W\\System32\\whoami.exe', 'system-tool', 'user'],
     [['C:\\i\\NativeChecks.exe', ['--bounded-log-checks']], 'native-checks', 'bounded-log-checks'],
+    [
+      ['C:\\i\\NativeChecks.exe', ['--cleanup-deadline-checks', CANARY]],
+      'native-checks',
+      'cleanup-deadline-checks',
+    ],
+    [
+      ['C:\\i\\NativeChecks.exe', ['--work-deadline-checks', CANARY]],
+      'native-checks',
+      'work-deadline-checks',
+    ],
     [['C:\\i\\NativeChecks.exe', ['C:\\x.exe', 'y.json']], 'native-checks', 'relaunch-checks'],
     [
       ['C:\\i\\GraphGoblin.exe', ['--config', CANARY, '--ensure-gateway']],
@@ -425,12 +435,15 @@ test('stderr becomes a closed diagnostic class and its text never leaves the cla
     'GraphGoblin failed during startup. A startup diagnostic naming': 'startup-failed-logged',
     'GraphGoblin failed during startup, and no startup diagnostic': 'startup-failed-unlogged',
     'GraphGoblin exited during startup with an unrecognized status (exit code 9).': 'unknown-exit',
-    'The configured Node runtime did not answer the read-only identity/ownership check.':
-      'helper-timeout',
+    'The read-only identity check exceeded its work budget.': 'helper-timeout',
+    'Windows could not start an isolated launcher check.': 'helper-containment',
+    'Windows could not confirm that all processes for this launcher check stopped. another GraphGoblin process holds this store':
+      'helper-cleanup-unconfirmed',
     'The Node 22 runtime, launcher configuration or store ownership could not be checked.':
       'helper-refused',
     'The configured Node runtime could not be started.': 'helper-unavailable',
     'The ownership helper returned an invalid result.': 'helper-invalid',
+    'The read-only launcher check returned an invalid or oversized response.': 'helper-invalid',
     'Could not establish whether port 4831 is free.': 'port-unknown',
     'The existing gateway is still releasing its store.': 'still-releasing',
     'Windows could not start the configured Node runtime for the gateway.': 'spawn-failed',

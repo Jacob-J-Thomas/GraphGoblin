@@ -107,6 +107,9 @@ const COMMAND_FLAGS = [
   'close-window',
   'window-fixture',
   'bounded-log-checks',
+  'helper-checks',
+  'cleanup-deadline-checks',
+  'work-deadline-checks',
   'ensure-gateway',
 ];
 const MODES = [
@@ -126,6 +129,11 @@ const MODES = [
 ];
 /** Closed launcher, installer and PowerShell outcomes recognised from the first 4 KiB of stderr. */
 const DIAGNOSTICS = [
+  [
+    'helper-cleanup-unconfirmed',
+    /Windows could not confirm that all processes for this launcher check stopped/,
+  ],
+  ['helper-containment', /Windows could not start an isolated launcher check/],
   ['startup-timeout', /did not become ready within \d+ seconds/],
   ['foreign-listener', /belongs to an unrelated or differently configured service/],
   ['foreign-gateway', /does not belong to this startup attempt/],
@@ -143,10 +151,13 @@ const DIAGNOSTICS = [
   ['startup-failed-logged', /failed during startup\. A startup diagnostic/],
   ['startup-failed-unlogged', /failed during startup, and no startup diagnostic/],
   ['unknown-exit', /exited during startup with an unrecognized status/],
-  ['helper-timeout', /did not answer the read-only identity\/ownership check/],
+  ['helper-timeout', /read-only (?:identity|ownership) check exceeded its work budget/],
   ['helper-refused', /or store ownership could not be checked/],
   ['helper-unavailable', /configured Node runtime could not be started/],
-  ['helper-invalid', /ownership helper returned an invalid result/],
+  [
+    'helper-invalid',
+    /read-only launcher check returned an invalid or oversized response|ownership helper returned an invalid result/,
+  ],
   ['port-unknown', /whether port \d+ is free|port check had no confirmed outcome/],
   ['still-releasing', /still releasing its store/],
   ['spawn-failed', /Windows could not start the configured Node runtime/],

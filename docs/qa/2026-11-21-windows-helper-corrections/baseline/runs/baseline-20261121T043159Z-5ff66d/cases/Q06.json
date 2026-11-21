@@ -1,0 +1,327 @@
+{
+  "id": "Q06",
+  "name": "real-producer-held-driver-record",
+  "category": "control: actual producer (held) and byte-preserved driver-owned owner record",
+  "purpose": "The actual producer reads a driver-owned malformed owner record and reports held; the record stays byte-identical.",
+  "responses": {
+    "identity": {
+      "bytes": 65,
+      "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be",
+      "text": "db7ae8e80a43b6f650695b2ae212566ddedcaa900e4dc8c60b747d34be200341\n"
+    },
+    "ownership": [
+      {
+        "call": 1,
+        "source": "real-producer"
+      }
+    ],
+    "repeatsLast": true,
+    "realProducerOutputs": [
+      {
+        "file": "real-producer-1.stdout.bin",
+        "bytes": 223,
+        "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005",
+        "text": "{\"state\":\"held\",\"detail\":\"Store ownership could not be verified (malformed or incomplete owner record)\",\"path\":\"<scratch>\\\\runs\\\\baseline-20261121T043159Z-5ff66d\\\\Q06\\\\store-α\\\\graphgoblin.lock\"}\n"
+      },
+      {
+        "file": "real-producer-2.stdout.bin",
+        "bytes": 223,
+        "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005",
+        "text": "{\"state\":\"held\",\"detail\":\"Store ownership could not be verified (malformed or incomplete owner record)\",\"path\":\"<scratch>\\\\runs\\\\baseline-20261121T043159Z-5ff66d\\\\Q06\\\\store-α\\\\graphgoblin.lock\"}\n"
+      }
+    ]
+  },
+  "baselinePrediction": {
+    "authorizes": false,
+    "code": "store-unverified",
+    "lock": "lockPath",
+    "ownershipCalls": [
+      1,
+      60
+    ],
+    "messageIncludes": [
+      "Store ownership could not be verified (malformed or incomplete owner record)",
+      "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+    ]
+  },
+  "correctedExpectation": {
+    "authorizes": false,
+    "code": "store-unverified",
+    "lock": "lockPath",
+    "ownershipCalls": [
+      1,
+      60
+    ],
+    "messageIncludes": [
+      "Store ownership could not be verified (malformed or incomplete owner record)",
+      "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+    ]
+  },
+  "observed": {
+    "harnessPid": 31140,
+    "harnessExit": 0,
+    "harnessWatchdog": false,
+    "harnessMs": 4437,
+    "setup": "ok",
+    "outcome": "launcher-failure",
+    "code": "store-unverified",
+    "childExit": 0,
+    "lock": "<scratch>\\runs\\baseline-20261121T043159Z-5ff66d\\Q06\\store-α\\graphgoblin.lock",
+    "logFolder": null,
+    "message": "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\runs\\baseline-20261121T043159Z-5ff66d\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+    "presented": "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\runs\\baseline-20261121T043159Z-5ff66d\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <scratch>\\runs\\baseline-20261121T043159Z-5ff66d\\Q06\\launcher-log\\GraphGoblin.exe.json",
+    "logRecord": "{\"time\":\"2026-11-21T04:32:04.5832662Z\",\"pid\":31140,\"outcome\":\"refused\",\"stage\":\"gateway\",\"code\":\"store-unverified\",\"message\":\"Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\\\runs\\\\baseline-20261121T043159Z-5ff66d\\\\Q06\\\\store-α\\\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\",\"config\":\"<scratch>\\\\runs\\\\baseline-20261121T043159Z-5ff66d\\\\Q06\\\\launcher-log\\\\GraphGoblin.exe.json\",\"lock\":\"<scratch>\\\\runs\\\\baseline-20261121T043159Z-5ff66d\\\\Q06\\\\store-α\\\\graphgoblin.lock\"}\n",
+    "exceptionType": null,
+    "ensureElapsedMs": 4305,
+    "authorizedFreshGateway": false,
+    "gatewayMarkers": [],
+    "identityCalls": 1,
+    "ownershipCalls": 2,
+    "helperRuns": [
+      {
+        "kind": "identity",
+        "index": 1,
+        "pid": 40164,
+        "startAt": 1795235520404,
+        "exitAt": 1795235520407,
+        "exitCode": 0,
+        "ms": 3
+      },
+      {
+        "kind": "ownership",
+        "index": 1,
+        "pid": 37668,
+        "startAt": 1795235520576,
+        "exitAt": 1795235522265,
+        "exitCode": 0,
+        "ms": 1689
+      },
+      {
+        "kind": "ownership",
+        "index": 2,
+        "pid": 38808,
+        "startAt": 1795235522686,
+        "exitAt": 1795235524555,
+        "exitCode": 0,
+        "ms": 1869
+      }
+    ],
+    "helperRootsExitedNaturallyZero": true,
+    "realProducer": [
+      {
+        "file": "real-producer-1.stdout.bin",
+        "bytes": 223,
+        "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005"
+      },
+      {
+        "file": "real-producer-2.stdout.bin",
+        "bytes": 223,
+        "sha256": "8c1ce14f762c3729fe33e46620b7c1f353d234d74b29f6c1f0b1078913115005"
+      }
+    ],
+    "realProducerEvents": [
+      {
+        "at": 1795235522264,
+        "index": 1,
+        "producerPid": 33092,
+        "code": 0,
+        "signal": null,
+        "bytes": 223
+      },
+      {
+        "at": 1795235524554,
+        "index": 2,
+        "producerPid": 32516,
+        "code": 0,
+        "signal": null,
+        "bytes": 223
+      }
+    ],
+    "canariesChecked": [
+      "QA459I_STDERR_CANARY_Q06"
+    ],
+    "canariesFound": [],
+    "storeBefore": [
+      {
+        "path": "graphgoblin.lock",
+        "type": "file",
+        "bytes": 85,
+        "sha256": "79706eba872cd11d33a6590e51aca1b038fb142752adcf94eb8e114dae7ac8e3"
+      },
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "788f39db80cfab85b8c731aad47281360fac82c63985884f784e690ab71e5479"
+      }
+    ],
+    "storeAfter": [
+      {
+        "path": "graphgoblin.lock",
+        "type": "file",
+        "bytes": 85,
+        "sha256": "79706eba872cd11d33a6590e51aca1b038fb142752adcf94eb8e114dae7ac8e3"
+      },
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "788f39db80cfab85b8c731aad47281360fac82c63985884f784e690ab71e5479"
+      }
+    ],
+    "storePreserved": true,
+    "ownerRecordPreserved": true,
+    "logDirAfter": [],
+    "portFreeAfter": true,
+    "port": 25840,
+    "sentinelAlive": true
+  },
+  "controls": [
+    {
+      "name": "harness completed without watchdog",
+      "pass": true
+    },
+    {
+      "name": "closed LauncherFailure (no unexpected exception)",
+      "pass": true
+    },
+    {
+      "name": "no private canary in message, presentation or log record",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "store bytes and names preserved",
+      "pass": true
+    },
+    {
+      "name": "driver-owned owner record state preserved",
+      "pass": true
+    },
+    {
+      "name": "no gateway.log or launcher.log written in log folder",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "helper roots exited naturally with 0",
+      "pass": true
+    },
+    {
+      "name": "gateway markers parented by harness",
+      "pass": true
+    },
+    {
+      "name": "gateway-start marker agrees with launcher-observed exit 54",
+      "pass": true
+    },
+    {
+      "name": "owned port free after case",
+      "pass": true
+    },
+    {
+      "name": "unrelated sentinel alive",
+      "pass": true
+    }
+  ],
+  "predictionChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": false,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "store-unverified",
+        "observed": "store-unverified"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          60
+        ],
+        "observed": 2
+      }
+    },
+    {
+      "name": "lock location",
+      "pass": true
+    },
+    {
+      "name": "message includes: Store ownership could not be verified (malformed or incomple",
+      "pass": true
+    },
+    {
+      "name": "message includes: No second gateway was started. Do not stop an unrelated proc",
+      "pass": true
+    }
+  ],
+  "correctedContractChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": false,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "store-unverified",
+        "observed": "store-unverified"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          1,
+          60
+        ],
+        "observed": 2
+      }
+    },
+    {
+      "name": "lock location",
+      "pass": true
+    },
+    {
+      "name": "message includes: Store ownership could not be verified (malformed or incomple",
+      "pass": true
+    },
+    {
+      "name": "message includes: No second gateway was started. Do not stop an unrelated proc",
+      "pass": true
+    }
+  ],
+  "status": "MATCHED-PREDICTION",
+  "correctedContract": "CONFORMS"
+}

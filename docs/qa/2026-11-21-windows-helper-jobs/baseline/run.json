@@ -1,0 +1,79 @@
+{
+  "schema": "gg459-native-qa-run/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "startedAt": "2026-11-21T01:34:04.697Z",
+  "checkout": {
+    "head": "47ca4640793a81efa5bec661dba25627de314774",
+    "tree": "c0ff3509016ce0db415fd1f35939ad39a7a9ac9d",
+    "trackedChanges": "",
+    "launcherSourceSha256": "85e85388c1227eea67465d27f3c1dabb91254090b1649d44676410fc3566a485",
+    "launcherSourceBlob": "7bbdf3057cb5f0bd295c96df01549c3534d5351b",
+    "dist": {
+      "apps/api/dist/instance-identity.js": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/windows-process-identity.js": "06be670fd2587da19751cf2e73a563246c6f59697d22d246ff82f5222d77d09b",
+      "apps/api/dist/data-dir-lock.js": "dfc4e59a48e65191b85cc2508507070c98dc7d14b00f3291651ab60d5b0d9c71",
+      "apps/api/dist/windows-log/guard.js": "cba6e1d032fd09f1d3e19f9772f65b4776510860669ffb45e78ac7a41475355c"
+    },
+    "evidenceModuleSha256": "3f294986ac2179ea968c8c34ad5eb14b11df690f823668b1cec6d9e1ecdaf5e4"
+  },
+  "build": {
+    "compiler": "Framework64/v4.0.30319/csc.exe",
+    "launcherFlags": "/nologo /target:winexe /optimize+ /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll",
+    "launcherExeSha256": "0bd18c5c984187685d8a7cb66024a064fb400c325dbd93affe4203080cb0a489",
+    "compilerOutput": "<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(896,48): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.state' is never assigned to, and will always have its default value null\r\n<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(896,55): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.path' is never assigned to, and will always have its default value null\r\n<CHECKOUT>\\apps\\windows-launcher\\Launcher.cs(896,61): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.detail' is never assigned to, and will always have its default value null",
+    "witnessExeSha256": "c6edcf617134dbec84ee61162396979fecaf4fe69235b7f3a612c2e3027d1820"
+  },
+  "runtime": {
+    "node": "v22.23.4",
+    "nodeExecutableSha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26300",
+      "version": "Windows 11 Pro",
+      "arch": "x64"
+    },
+    "clr": "4.0.30319.42000",
+    "witnessOs": "Microsoft Windows NT 6.2.9200.0"
+  },
+  "driver": {
+    "qa459-driver.mjs": "3cea01be736353899bd706665cc8e22ac6f26376ba5c3c4ba71b0874b69f7b7a",
+    "qa459-cases.mjs": "963fcfeaddc41f4eca59cc5a4ede2f85bdb7d17bc1d41eba3d34c0819a381753",
+    "README.md": "061de3e9f1c84a9768199b4ffa0b5ab093680dc5fe323039065aaa6a828b7dc8",
+    "witness/QaWitness.cs": "9c1795fd57105d9ce296e963f6b15359c9a3497f130b7c51ecb43665f12c21ad",
+    "fixtures/gateway.mjs": "eedb44b91fe918d1b97a672318f6ec62f4a58666657ab7a3202b59146579dd5f",
+    "fixtures/handshake.mjs": "e3c2143fb2747981f4111af6a5ae79b35620acf21b2cb9642c3b930724d95dda",
+    "fixtures/helper.mjs": "e029749b7de6f511de541afae051fdde83e9be9d7df43cf12008a796765a080f",
+    "fixtures/member.mjs": "d806da9709a946bebd705514e5594d4dcc674973b75d3b1177b90947e37ef535",
+    "fixtures/ps-query.ps1": "d7f5de1e98ac34e64169e781ff08a680a159cd07ef5f191458762b070672198b"
+  },
+  "constants": {
+    "WATCHDOG_CODE": 42073,
+    "DOTNET_KILL_CODE": 4294967295,
+    "CODES": {
+      "member": 41,
+      "psQuery": 43,
+      "gatewayDrained": 44,
+      "gatewayMaxLife": 45,
+      "sentinel": 46,
+      "released": 47,
+      "driverGone": 48,
+      "rootMaxLife": 49,
+      "setupFault": 97
+    },
+    "GRACE_MS": 3000,
+    "EXIT_SLACK_MS": 32,
+    "jobExitCode": null
+  },
+  "launcherHost": "detached",
+  "driverProcess": {
+    "image": "node.exe",
+    "inAnyJob": true
+  },
+  "invocation": "<launcher.exe> --config <case>\\launcher.json --ensure-gateway (quiet; no dialog, no PWA)",
+  "sentinel": {
+    "pid": 41756,
+    "image": "node.exe"
+  }
+}

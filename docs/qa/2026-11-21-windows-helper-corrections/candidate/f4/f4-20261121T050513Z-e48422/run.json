@@ -1,0 +1,202 @@
+{
+  "schema": "qa459t-f4-run/1",
+  "runId": "f4-20261121T050513Z-e48422",
+  "startUtc": "2026-11-21T05:05:13.976Z",
+  "node": "v22.23.4",
+  "setupFaults": [],
+  "checkout": {
+    "head": "37803eeef9f55c2a316289aa502798025a7873be",
+    "tree": "647d297990837f7f21e0054c5be15a0109fab2f1",
+    "trackedChanges": 0,
+    "launcherGitBlob": "f3a4f314703033c7deecece51ed3c8278d08a5a9",
+    "launcherWorktreeMatchesHead": true,
+    "expectedHead": "37803eeef9f55c2a316289aa502798025a7873be",
+    "expectedTree": "647d297990837f7f21e0054c5be15a0109fab2f1"
+  },
+  "driver": {
+    "qa459t-f4.mjs": "c504731e4c876ca3849750622914aefb5779140829f8f2f451656fbae32c6124",
+    "harness/Qa459tCleanupDecision.cs": "f43d09f8791375e0374f8cdf4386eb2330c1dde337b6e97705b20395cb9a1244",
+    "README.md": "59b5e58fb3e634f263224cc6e0325f0e6196c8f46374789ca3adb406e12d6c71"
+  },
+  "inputs": {
+    "launcherSource": {
+      "sha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520"
+    },
+    "harnessSource": {
+      "sha256": "f43d09f8791375e0374f8cdf4386eb2330c1dde337b6e97705b20395cb9a1244"
+    },
+    "launcherSourceAfterCompile": {
+      "sha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520"
+    },
+    "harnessSourceAfterCompile": {
+      "sha256": "f43d09f8791375e0374f8cdf4386eb2330c1dde337b6e97705b20395cb9a1244"
+    }
+  },
+  "compile": {
+    "compiler": {
+      "path": "C:\\WINDOWS\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
+      "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+    },
+    "args": [
+      "/nologo",
+      "/target:exe",
+      "/optimize+",
+      "/platform:x64",
+      "/main:Qa459tCleanupDecision",
+      "/reference:System.Windows.Forms.dll",
+      "/reference:System.Web.Extensions.dll",
+      "/out:<scratch>\\f4\\f4-20261121T050513Z-e48422\\bin\\Qa459tCleanupDecision.exe",
+      "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+      "<out>\\f4\\v1\\harness\\Qa459tCleanupDecision.cs"
+    ],
+    "exit": 0,
+    "signal": null,
+    "ms": 300,
+    "stdout": "",
+    "stderr": ""
+  },
+  "assembly": {
+    "sha256": "e7003f753c0264a9ef26f9c3dc68ea4a327db8f8e0008452fe24bd24d7746287",
+    "bytes": 74240
+  },
+  "execution": {
+    "pid": 41596,
+    "exit": 0,
+    "signal": null,
+    "spawnError": null,
+    "watchdog": false,
+    "ms": 2446,
+    "stdout": "QA459T F4 cases=8 passed=8 failed=0\r\n",
+    "stderr": ""
+  },
+  "result": {
+    "sha256": "f586e6e7b4830403995da9235c87eb03c117c85ea354c9afca3e431b438219cc",
+    "bytes": 5653
+  },
+  "cases": [
+    {
+      "id": "T1",
+      "name": "complete-at-1999",
+      "expectedResult": true,
+      "actualResult": true,
+      "trace": "OE",
+      "samples": [
+        1999
+      ],
+      "observations": 1,
+      "wallMs": 0,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T2",
+      "name": "complete-at-2000-equality",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OE",
+      "samples": [
+        2000
+      ],
+      "observations": 1,
+      "wallMs": 0,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T3",
+      "name": "complete-at-2001",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OE",
+      "samples": [
+        2001
+      ],
+      "observations": 1,
+      "wallMs": 0,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T4",
+      "name": "poll-crosses-deadline-within-one-observation",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OE",
+      "samples": [
+        2001
+      ],
+      "observations": 1,
+      "wallMs": 0,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T5",
+      "name": "incomplete-then-complete-after-deadline",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OEOE",
+      "samples": [
+        1999,
+        2001
+      ],
+      "observations": 2,
+      "wallMs": 9,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T6",
+      "name": "incomplete-then-complete-in-budget",
+      "expectedResult": true,
+      "actualResult": true,
+      "trace": "OEOE",
+      "samples": [
+        1998,
+        1999
+      ],
+      "observations": 2,
+      "wallMs": 15,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T7",
+      "name": "incomplete-at-deadline-stops-polling",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OE",
+      "samples": [
+        2000
+      ],
+      "observations": 1,
+      "wallMs": 0,
+      "verdict": "PASS",
+      "failedChecks": []
+    },
+    {
+      "id": "T8",
+      "name": "real-monotonic-stopwatch-late-pass",
+      "expectedResult": false,
+      "actualResult": false,
+      "trace": "OE",
+      "samples": [
+        2065
+      ],
+      "observations": 1,
+      "wallMs": 2065,
+      "verdict": "PASS",
+      "failedChecks": []
+    }
+  ],
+  "cleanupMilliseconds": 2000,
+  "summary": {
+    "cases": 8,
+    "passed": 8,
+    "failed": 0,
+    "harnessExit": 0,
+    "watchdog": false
+  },
+  "status": "COMPLETED-ALL-PASS",
+  "endUtc": "2026-11-21T05:05:17.302Z"
+}
