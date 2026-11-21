@@ -913,7 +913,7 @@ namespace GraphGoblin.Desktop
             }
         }
 
-        /// <summary>The validator runs inside the work window, before the already-empty job closes.</summary>
+        /// <summary>Validate raw decoded output inside the work window; return its trimmed form.</summary>
         public static string Read(string executable, string arguments, string directory, SortedDictionary<string, string> environment, string stage, int workMilliseconds, Func<string, bool> validate)
         {
             var clock = Stopwatch.StartNew();
@@ -950,12 +950,15 @@ namespace GraphGoblin.Desktop
                         if (exited && output.Eof && error.Eof && Empty(job)) {
                             if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
                             if (exitCode != 0) throw Refused(exitCode);
-                            try { result = new UTF8Encoding(false, true).GetString(retained.GetBuffer(), 0, (int)retained.Length).Trim(); }
+                            string decoded;
+                            try { decoded = new UTF8Encoding(false, true).GetString(retained.GetBuffer(), 0, (int)retained.Length); }
                             catch (DecoderFallbackException) { throw Invalid(); }
                             bool valid;
-                            try { valid = validate(result); } catch (Exception) { valid = false; }
+                            try { valid = validate(decoded); } catch (Exception) { valid = false; }
                             if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
                             if (!valid) throw Invalid();
+                            result = decoded.Trim();
+                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
                             success = true; break;
                         }
                         // Fair bounded chunks even under a perpetual flood on either stream.
@@ -980,15 +983,14 @@ namespace GraphGoblin.Desktop
                     TerminateJobObject(job, TerminationExit);
                     if (output != null) { output.CloseWriter(); output.Cancel(); }
                     if (error != null) { error.CloseWriter(); error.Cancel(); }
-                    while (true) {
+                    confirmed = AwaitCleanup(delegate {
                         int ignored;
                         if (child != null && child.TryGetExit(out ignored)) { child.Dispose(); child = null; }
                         bool outputDone = output == null || output.Complete();
                         bool errorDone = error == null || error.Complete();
-                        confirmed = child == null && Empty(job) && outputDone && errorDone;
-                        if (confirmed || cleanup.ElapsedMilliseconds >= CleanupMilliseconds) break;
-                        Thread.Sleep(1);
-                    }
+                        bool jobEmpty = Empty(job);
+                        return child == null && jobEmpty && outputDone && errorDone;
+                    }, () => cleanup.ElapsedMilliseconds);
                 }
                 if (job != null) job.Dispose(); // last handle also kills any member on unconfirmed cleanup
                 if (child != null) child.Dispose();
@@ -999,6 +1001,22 @@ namespace GraphGoblin.Desktop
             }
             if (failure != null) throw failure;
             return result;
+        }
+
+        /// <summary>
+        /// The complete observation must finish before the deadline. A later successful poll
+        /// cannot credit timely collection, even when it now permits safe resource disposal.
+        /// Delegates keep this exact production decision deterministic in compiled checks.
+        /// </summary>
+        internal static bool AwaitCleanup(Func<bool> observe, Func<long> elapsedMilliseconds)
+        {
+            while (true) {
+                bool complete = observe();
+                long observedAt = elapsedMilliseconds();
+                if (observedAt >= CleanupMilliseconds) return false;
+                if (complete) return true;
+                Thread.Sleep(1);
+            }
         }
         static LauncherFailure Timeout(string stage) { return new LauncherFailure("helper-timeout", "The read-only " + stage + " check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started."); }
         static LauncherFailure Refused(int code) { return new LauncherFailure("helper-refused", "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.", null, null, code); }
@@ -1141,7 +1159,7 @@ namespace GraphGoblin.Desktop
         public void Ensure()
         {
             expected = ReadHelper("", "identity", HelperProcess.WorkMilliseconds,
-                value => System.Text.RegularExpressions.Regex.IsMatch(value, "\\A[a-f0-9]{64}\\z"));
+                value => System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "\\A[a-f0-9]{64}\\z"));
             if (Probe()) return;
             var releaseClock = Stopwatch.StartNew();
             while (closing)
@@ -1228,24 +1246,96 @@ namespace GraphGoblin.Desktop
             return new LauncherFailure(ownership.Code, guidance, null, ownership.Lock, 0);
         }
 
-        static bool ValidOwnership(string text)
+        /// <summary>
+        /// Only the ownership wire shape: one flat object of JSON strings. Framework's
+        /// JavaScriptSerializer also accepts JavaScript syntax and overwrites duplicate names.
+        /// Decode names before checking uniqueness; never normalize the wire with Trim first.
+        /// </summary>
+        sealed class OwnershipReader
         {
-            // Validate the complete response inside the helper's budget. Unknown shapes refuse.
-            var fields = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(text);
-            object state;
-            if (fields == null || !fields.TryGetValue("state", out state)) return false;
-            if (Equals(state, "free")) return fields.Count == 1;
-            object path, detail;
-            return Equals(state, "held") && fields.Count == 3 && fields.TryGetValue("path", out path) && path is string &&
-                !String.IsNullOrWhiteSpace((string)path) && fields.TryGetValue("detail", out detail) && detail is string && !String.IsNullOrWhiteSpace((string)detail);
+            readonly string text; int position;
+            public OwnershipReader(string source) { text = source; }
+            void Whitespace()
+            {
+                while (position < text.Length && (text[position] == ' ' || text[position] == '\t' || text[position] == '\r' || text[position] == '\n')) position++;
+            }
+            bool Take(char value)
+            {
+                Whitespace();
+                if (position >= text.Length || text[position] != value) return false;
+                position++; return true;
+            }
+            static int Hex(char value)
+            {
+                if (value >= '0' && value <= '9') return value - '0';
+                if (value >= 'a' && value <= 'f') return value - 'a' + 10;
+                if (value >= 'A' && value <= 'F') return value - 'A' + 10;
+                throw new FormatException();
+            }
+            string ReadString()
+            {
+                if (!Take('"')) throw new FormatException();
+                var result = new StringBuilder();
+                while (position < text.Length) {
+                    char value = text[position++];
+                    if (value == '"') return result.ToString();
+                    if (value < 0x20) throw new FormatException();
+                    if (value != '\\') { result.Append(value); continue; }
+                    if (position >= text.Length) throw new FormatException();
+                    char escape = text[position++];
+                    switch (escape) {
+                        case '"': case '\\': case '/': result.Append(escape); break;
+                        case 'b': result.Append('\b'); break;
+                        case 'f': result.Append('\f'); break;
+                        case 'n': result.Append('\n'); break;
+                        case 'r': result.Append('\r'); break;
+                        case 't': result.Append('\t'); break;
+                        case 'u':
+                            if (text.Length - position < 4) throw new FormatException();
+                            int unit = 0;
+                            for (int i = 0; i < 4; i++) unit = unit * 16 + Hex(text[position++]);
+                            // JSON escapes represent UTF-16 code units; do not canonicalize or
+                            // discard legal producer escapes, including escaped surrogate units.
+                            result.Append((char)unit); break;
+                        default: throw new FormatException();
+                    }
+                }
+                throw new FormatException();
+            }
+            public Ownership Read()
+            {
+                if (text == null || !Take('{')) return null;
+                var owner = new Ownership();
+                var names = new HashSet<string>(StringComparer.Ordinal);
+                do {
+                    string name = ReadString();
+                    if ((name != "state" && name != "path" && name != "detail") || !names.Add(name) || !Take(':')) return null;
+                    string value = ReadString();
+                    if (name == "state") owner.state = value;
+                    else if (name == "path") owner.path = value;
+                    else owner.detail = value;
+                    if (Take('}')) break;
+                    if (!Take(',')) return null;
+                } while (true);
+                Whitespace();
+                if (position != text.Length) return null;
+                if (owner.state == "free") return names.Count == 1 ? owner : null;
+                return owner.state == "held" && names.Count == 3 && !String.IsNullOrWhiteSpace(owner.path) && !String.IsNullOrWhiteSpace(owner.detail) ? owner : null;
+            }
+        }
+
+        static bool TryReadOwnership(string text, out Ownership owner)
+        {
+            try { owner = new OwnershipReader(text).Read(); }
+            catch (FormatException) { owner = null; }
+            return owner != null;
         }
 
         bool StoreHasLiveOwner(int workMilliseconds)
         {
-            var owner = new JavaScriptSerializer().Deserialize<Ownership>(ReadHelper(" --store-state", "ownership", workMilliseconds, ValidOwnership));
-            if (owner != null && owner.state == "free") return false;
-            if (owner == null || owner.state != "held" || String.IsNullOrWhiteSpace(owner.path) || String.IsNullOrWhiteSpace(owner.detail))
-                throw new LauncherFailure("helper-invalid", "The ownership helper returned an invalid result. No gateway was started.");
+            Ownership owner = null;
+            ReadHelper(" --store-state", "ownership", workMilliseconds, value => TryReadOwnership(value, out owner));
+            if (owner.state == "free") return false;
             string[] closed = ClosedOwnership(owner.detail);
             ownership = new OwnershipOutcome { Code = closed[0], Text = closed[1] + ": " + Program.RenderPath(owner.path), Lock = owner.path };
             return true;

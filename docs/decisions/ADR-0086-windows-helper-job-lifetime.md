@@ -56,6 +56,16 @@ covers root/job and I/O verification. At expiry the last job handle closes and a
 operation transfers its SafeHandle, OVERLAPPED, event and buffer to a completion owner. A cancel
 request alone never proves completion and storage is never freed while Windows can use it.
 
+[D166](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/459#issuecomment-7056880570)
+clarifies two boundaries after the final source audit. Ownership is parsed once as a flat strict
+JSON object of the exact free/held string fields, from raw decoded output before trimming.
+Property names are decoded before duplicate and allowlist checks. Legal JSON whitespace, field
+order, Unicode and path escaping remain supported; no serializer round-trip equality or general
+parser dependency is introduced. Identity retains its existing padding behavior. Cleanup elapsed
+time is sampled after the complete root/job/stream observation pass and must be strictly below
+2,000 ms to credit confirmation. Later safe disposal never upgrades an expired outcome. The
+shared deterministic observation/clock checks establish that timing decision, not a kernel race.
+
 Closed failures distinguish containment, runtime unavailability, stage timeout, natural nonzero
 exit, invalid protocol and unconfirmed cleanup. At a decision point unconfirmed cleanup leads,
 then retained held guidance on an inconclusive retry, expired work, known natural nonzero exit,

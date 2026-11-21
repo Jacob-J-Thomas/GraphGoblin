@@ -9,6 +9,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
   for cleanup; held-store retries reserve that cleanup time and retain the last held guidance
   when a conclusive new sample cannot fit. Raw helper output is never displayed or logged.
+  Ownership output is parsed once as strict JSON before whitespace normalization; duplicate
+  decoded keys, unknown fields and JavaScript-only syntax refuse startup. Cleanup is confirmed
+  only when the complete process/job/stream observation finishes before the two-second deadline;
+  a later completion keeps the unconfirmed-cleanup outcome (D166).
   **Upgrade:** rebuild and reinstall the launcher. Windows 10 or Windows Server 2016 or later
   with compatible nested jobs is required, including for warm shortcut clicks. A restricted host
   can refuse the shortcut while an existing gateway remains callable at its current address.

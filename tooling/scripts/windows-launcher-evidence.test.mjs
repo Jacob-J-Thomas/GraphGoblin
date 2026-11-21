@@ -372,6 +372,11 @@ test('child commands map to closed tool and mode names without copying arguments
     ['C:\\W\\System32\\icacls.exe', 'system-tool', 'acl'],
     ['C:\\W\\System32\\whoami.exe', 'system-tool', 'user'],
     [['C:\\i\\NativeChecks.exe', ['--bounded-log-checks']], 'native-checks', 'bounded-log-checks'],
+    [
+      ['C:\\i\\NativeChecks.exe', ['--cleanup-deadline-checks', CANARY]],
+      'native-checks',
+      'cleanup-deadline-checks',
+    ],
     [['C:\\i\\NativeChecks.exe', ['C:\\x.exe', 'y.json']], 'native-checks', 'relaunch-checks'],
     [
       ['C:\\i\\GraphGoblin.exe', ['--config', CANARY, '--ensure-gateway']],

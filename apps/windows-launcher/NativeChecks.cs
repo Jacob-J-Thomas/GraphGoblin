@@ -189,8 +189,12 @@ public static class NativeChecks
         var env = new System.Collections.Generic.SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (System.Collections.DictionaryEntry item in Environment.GetEnvironmentVariables()) env[(string)item.Key] = (string)item.Value;
         HelperProcess.CheckCapability();
-        Func<string, int, string> run = (script, budget) => HelperProcess.Read(node, "-e " + Program.Quote(script), work, env, "identity", budget, text => text == "ok");
+        Func<string, int, string> run = (script, budget) => HelperProcess.Read(node, "-e " + Program.Quote(script), work, env, "identity", budget, text => text.Trim() == "ok");
         Check(run("process.stdout.write('ok')", 5000) == "ok", "A clean helper did not succeed.");
+        string raw = null;
+        Check(HelperProcess.Read(node, "-e " + Program.Quote("process.stdout.write(' \\tok\\n')"), work, env, "identity", 5000,
+            text => { raw = text; return text == " \tok\n"; }) == "ok" && raw == " \tok\n", "The validator did not receive the untrimmed decoded response.");
+        Check(run("process.stdout.write('ok'+' '.repeat(262142))", 5000) == "ok", "The exact byte-cap identity padding behavior changed.");
         var slow = Stopwatch.StartNew();
         Check(run("setTimeout(()=>process.stdout.write('ok'),700)", 3000) == "ok" && slow.ElapsedMilliseconds >= 700, "Slow successful work was not awaited.");
         Check(run("process.stderr.write('PRIVATE_CANARY'.repeat(100000));process.stdout.write('ok')", 5000) == "ok", "An in-budget stderr flood deadlocked.");
@@ -274,11 +278,36 @@ public static class NativeChecks
         Check(fourProbes.ElapsedMilliseconds >= 15000 && fourProbes.ElapsedMilliseconds < 18000, "The initial work cap changed.");
     }
 
+    /// <summary>Deterministic decision evidence, not a delayed-kernel-cleanup experiment.</summary>
+    static void CleanupDeadlineChecks()
+    {
+        int observations = 0;
+        Check(!HelperProcess.AwaitCleanup(() => { observations++; return observations == 2; },
+            () => observations == 1 ? 1999 : 2001) && observations == 2,
+            "A first completion after the deadline was credited.");
+        Check(!HelperProcess.AwaitCleanup(() => true, () => 2000), "Equality at the cleanup deadline was credited.");
+        Check(HelperProcess.AwaitCleanup(() => true, () => 1999), "In-budget completion was refused.");
+        long clock = 1999;
+        Check(!HelperProcess.AwaitCleanup(() => { clock = 2001; return true; }, () => clock),
+            "The deadline was sampled before a poll that crossed it.");
+        observations = 0;
+        Check(!HelperProcess.AwaitCleanup(() => { observations++; return false; }, () => 2000) && observations == 1,
+            "An expired incomplete observation started another poll.");
+        observations = 0;
+        Check(HelperProcess.AwaitCleanup(() => ++observations == 2, () => observations == 1 ? 1998 : 1999) && observations == 2,
+            "A later in-budget completion was refused.");
+    }
+
     [STAThread]
     public static int Main(string[] args)
     {
         try
         {
+            if (args[0] == "--cleanup-deadline-checks")
+            {
+                CleanupDeadlineChecks();
+                Console.WriteLine("Deterministic cleanup decision checks passed (no kernel fault injected)."); return 0;
+            }
             if (args[0] == "--helper-checks")
             {
                 HelperChecks(args[1], args[2]);

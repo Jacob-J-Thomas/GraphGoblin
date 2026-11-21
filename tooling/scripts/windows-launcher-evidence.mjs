@@ -108,6 +108,7 @@ const COMMAND_FLAGS = [
   'window-fixture',
   'bounded-log-checks',
   'helper-checks',
+  'cleanup-deadline-checks',
   'ensure-gateway',
 ];
 const MODES = [

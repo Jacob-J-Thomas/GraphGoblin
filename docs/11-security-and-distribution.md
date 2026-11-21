@@ -12,6 +12,13 @@ operator presentation; synchronous OS calls can exceed the observed wall-clock b
 rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
 fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
 
+The ownership response is one strict JSON object, parsed once from raw decoded output before
+trimming. Only the exact free/held string fields are accepted; duplicate decoded names, unknown
+fields, JavaScript syntax and trailing material refuse. Legal JSON whitespace, Unicode and path
+escapes remain valid. Cleanup credit requires a complete process/job/stream observation before
+2,000 ms; equality or later completion remains unconfirmed even when resources can now be safely
+disposed. This preserves refusal precedence and pending-I/O resource ownership (D166).
+
 ## Licensing (Decided)
 
 - Allowed licences in the dependency tree: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0. Anything else fails the CI allowlist check and needs an ADR to add.
