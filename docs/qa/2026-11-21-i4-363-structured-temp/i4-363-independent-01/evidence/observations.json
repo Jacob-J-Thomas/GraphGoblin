@@ -1,0 +1,1306 @@
+{
+  "startedAt": "2026-11-21T08:59:37.691Z",
+  "sourceBinding": {
+    "head": "76beeb0f2e99343697578c2713ac06f80d59e7b5",
+    "tree": "2544bc2913f9cec0d95a215ea631ab62c7985c1d",
+    "soleParent": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+    "branch": "codex/gg-i4-363-qa",
+    "beforeStatus": "",
+    "candidate": {
+      "path": "G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts",
+      "sha256": "a471fdb0c9ce929620a9a27dea8d968ed88d131b55d86935eccf9adc9e93445e",
+      "gitBlob": "715141ca077d3e043bc455e9be5e5fe32e7ffa93"
+    },
+    "base": {
+      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\sources\\base-structured.ts",
+      "sha256": "2536d0be91bf17d805a6392f69760f12ccfed728ca40a61f9eb065bd28eff2b0",
+      "gitBlob": "447ebfdaf45144221fded674b86f8e83ec704457",
+      "provenance": "Raw bytes captured with git show before execution; baseline copy imported, not a production edit."
+    },
+    "unchanged": {
+      "optionsInterface": true,
+      "parseLooseCompleteAndExportTail": true,
+      "cliTsSha256": "5afe53196cabcb74e2b0b9a530eba040af48e47c5e50ec2712b5540d1af64532"
+    },
+    "fixture": {
+      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-v1.mjs",
+      "sha256": "154217347fcc8664155eb178ebbfd3dd0d90c8c2f5a446c4409d742b3e6d4482"
+    },
+    "diffNameStatus": "M\tCHANGELOG.md\nM\tdocs/06-harness-integration.md\nM\tpackages/adapter-codex/src/structured.test.ts\nM\tpackages/adapter-codex/src/structured.ts\n",
+    "lockSha256": "3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df"
+  },
+  "native": {
+    "version": "v22.23.4",
+    "platform": "win32",
+    "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+  },
+  "owner": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8",
+  "cases": [
+    {
+      "id": "baseline-226",
+      "tier": "Native Windows FS + unmodified base-source copy + local HarnessPort",
+      "status": "PASS",
+      "expected": "Native base mkdtemp fails ENAMETOOLONG before harness; no scratch remains.",
+      "mkdirCalls": [],
+      "mkdirErrors": [],
+      "mkdtempCalls": [
+        {
+          "prefix": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\baseline-226\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxx\\graphgoblin-structured-"
+        }
+      ],
+      "rmCalls": [],
+      "created": [],
+      "harnessStarts": [],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\baseline-226",
+      "observedRejection": {
+        "name": "Error",
+        "message": "ENAMETOOLONG: name too long, mkdtemp 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\baseline-226\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxx\\graphgoblin-structured-XXXXXX'",
+        "code": "ENAMETOOLONG",
+        "syscall": "mkdtemp",
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\baseline-226\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxx\\graphgoblin-structured-XXXXXX",
+        "stack": "Error: ENAMETOOLONG: name too long, mkdtemp 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\baseline-226\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxx\\graphgoblin-structured-XXXXXX'\n    at async Object.mkdtemp (node:internal/fs/promises:1192:10)\n    at async fsp.mkdtemp (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:145:22)\n    at async freshTempDir (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\sources\\base-structured.ts:15:16)\n    at async CodexStructured.complete (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\sources\\base-structured.ts:52:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:263:5\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:260:3"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "candidate-226-native-child",
+      "tier": "Native Windows FS and actual Node child process + local HarnessPort; uncontrolled cryptographic name",
+      "status": "PASS",
+      "expected": "Native 226-character TMP reaches one local harness in an empty 249-character scratch; real child Node cwd works; structured value and usage survive; scratch removed.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\candidate-226-native-child\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxxxxxx\\gg-structured-60459a6b",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\candidate-226-native-child\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxxxxxx\\gg-structured-60459a6b",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\candidate-226-native-child\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxxxxxx\\gg-structured-60459a6b"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\candidate-226-native-child\\long-root-segment\\long-root-segment\\long-root-segment\\long-root-segment\\xxxxxxxxxxxxxxxxxxxxxx\\gg-structured-60459a6b",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\candidate-226-native-child",
+      "nativeChild": {
+        "status": 0,
+        "signal": null,
+        "stdout": "{\"cwd\":\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-17-five-intents\\\\i4-363-independent-01\\\\fixture-owned\\\\run-0b2a256dc8\\\\candidate-226-native-child\\\\long-root-segment\\\\long-root-segment\\\\long-root-segment\\\\long-root-segment\\\\xxxxxxxxxxxxxxxxxxxxxx\\\\gg-structured-60459a6b\",\"version\":\"v22.23.4\",\"platform\":\"win32\"}",
+        "stderr": ""
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "fresh-per-call",
+      "tier": "Native Windows FS + local HarnessPort; uncontrolled cryptographic names",
+      "status": "PASS",
+      "expected": "Two completions use distinct empty exclusive scratch paths and remove both; JSON fallback works.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-02ce862c",
+          "options": {
+            "mode": 448
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-c3dd4293",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-02ce862c",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-c3dd4293",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-02ce862c",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-c3dd4293"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-02ce862c",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        },
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call\\gg-structured-c3dd4293",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup",
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\fresh-per-call",
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "configured-precedence",
+      "tier": "Native caller-owned fixture directories + local HarnessPort",
+      "status": "PASS",
+      "expected": "Request directory wins, then option directory; no allocation/cleanup; markers survive; raw text/JSON fallback and execution options preserved.",
+      "mkdirCalls": [],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [],
+      "created": [],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\configured-precedence\\request",
+            "model": "local-model-identifier",
+            "effort": "low",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": [
+            "marker.txt"
+          ]
+        },
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\configured-precedence\\option",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": [
+            "marker.txt"
+          ]
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\configured-precedence",
+      "preservedCallerDirectories": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\configured-precedence\\request",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\configured-precedence\\option"
+      ],
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "real-collision-then-success",
+      "tier": "Controlled random-name selection; actual native mkdir EEXIST + native sentinel preservation + local HarnessPort",
+      "status": "PASS",
+      "expected": "Controlled random first name collides with actual directory; native EEXIST; second succeeds; sentinel preserved and only new scratch removed.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-c0111de1",
+          "options": {
+            "mode": 448
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-a110ca7e",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [
+        {
+          "name": "Error",
+          "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-c0111de1'",
+          "code": "EEXIST",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-c0111de1",
+          "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-c0111de1'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:341:30\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+        }
+      ],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-a110ca7e",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-a110ca7e"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-a110ca7e",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [
+        "c0111de1",
+        "a110ca7e"
+      ],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success",
+      "collisionMarkersVerifiedBeforeFixtureTeardown": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\real-collision-then-success\\gg-structured-c0111de1"
+      ],
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "four-real-collisions",
+      "tier": "Controlled random-name selection; actual native mkdir EEXIST + native sentinel preservation + local HarnessPort",
+      "status": "PASS",
+      "expected": "Four distinct actual collisions yield four native EEXIST errors, no fifth random name, no harness/cleanup, four markers preserved.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de1",
+          "options": {
+            "mode": 448
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de2",
+          "options": {
+            "mode": 448
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de3",
+          "options": {
+            "mode": 448
+          }
+        },
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [
+        {
+          "name": "Error",
+          "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de1'",
+          "code": "EEXIST",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de1",
+          "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de1'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:340:24\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+        },
+        {
+          "name": "Error",
+          "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de2'",
+          "code": "EEXIST",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de2",
+          "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de2'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:340:24\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+        },
+        {
+          "name": "Error",
+          "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de3'",
+          "code": "EEXIST",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de3",
+          "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de3'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:340:24\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+        },
+        {
+          "name": "Error",
+          "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4'",
+          "code": "EEXIST",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4",
+          "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:340:24\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+        }
+      ],
+      "mkdtempCalls": [],
+      "rmCalls": [],
+      "created": [],
+      "harnessStarts": [],
+      "randomNames": [
+        "c0111de1",
+        "c0111de2",
+        "c0111de3",
+        "c0111de4"
+      ],
+      "cancelCalls": 0,
+      "order": [],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions",
+      "observedRejection": {
+        "name": "Error",
+        "message": "EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4'",
+        "code": "EEXIST",
+        "syscall": "mkdir",
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4",
+        "stack": "Error: EEXIST: file already exists, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:340:24\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:329:31"
+      },
+      "collisionMarkersVerifiedBeforeFixtureTeardown": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de1",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de2",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de3",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\four-real-collisions\\gg-structured-c0111de4"
+      ],
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "native-mkdir-error",
+      "tier": "Native Windows missing-parent ENOENT, no fabricated errno",
+      "status": "PASS",
+      "expected": "Missing parent yields native ENOENT after one mkdir attempt, no retry/harness/cleanup.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [
+        {
+          "name": "Error",
+          "message": "ENOENT: no such file or directory, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50'",
+          "code": "ENOENT",
+          "syscall": "mkdir",
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50",
+          "stack": "Error: ENOENT: no such file or directory, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:358:5\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:353:3"
+        }
+      ],
+      "mkdtempCalls": [],
+      "rmCalls": [],
+      "created": [],
+      "harnessStarts": [],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "ENOENT: no such file or directory, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50'",
+        "code": "ENOENT",
+        "syscall": "mkdir",
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50",
+        "stack": "Error: ENOENT: no such file or directory, mkdir 'C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\native-mkdir-error\\missing-parent\\gg-structured-58bfdb50'\n    at async Object.mkdir (node:internal/fs/promises:858:10)\n    at async fsp.mkdir (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:129:22)\n    at async freshTempDir (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:21:7)\n    at async CodexStructured.complete (G:\\ggq\\gg-i4-363-qa\\GraphGoblin\\packages\\adapter-codex\\src\\structured.ts:62:38)\n    at async rejected (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:191:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:358:5\n    at async one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:5)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:353:3"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "pre-aborted",
+      "tier": "Public method + native allocation instrumentation",
+      "status": "PASS",
+      "expected": "Caller reason identity, no mkdir/mkdtemp/harness/cleanup.",
+      "mkdirCalls": [],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [],
+      "created": [],
+      "harnessStarts": [],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\pre-aborted",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent caller aborted before allocation",
+        "stack": "Error: Independent caller aborted before allocation\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:369:20\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:366:3"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "allocation-abort-cleanup-ok",
+      "tier": "Native exclusive mkdir; controlled post-allocation abort",
+      "status": "PASS",
+      "expected": "Abort immediately after actual mkdir preserves reason, no harness; newly owned scratch removed.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-ok\\gg-structured-31acd5ea",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-ok\\gg-structured-31acd5ea",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-ok\\gg-structured-31acd5ea"
+      ],
+      "harnessStarts": [],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-ok",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent caller abort after native allocation",
+        "stack": "Error: Independent caller abort after native allocation\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:379:20\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:377:47"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "allocation-abort-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled post-allocation abort and cleanup rejection",
+      "status": "PASS",
+      "expected": "Same abort reason wins over injected cleanup failure; known residue manually recovered by QA.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error\\gg-structured-b802ff68",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error\\gg-structured-b802ff68",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error\\gg-structured-b802ff68"
+      ],
+      "harnessStarts": [],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent caller abort after native allocation",
+        "stack": "Error: Independent caller abort after native allocation\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:379:20\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:377:47"
+      },
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error\\gg-structured-b802ff68",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\allocation-abort-cleanup-error\\gg-structured-b802ff68"
+      ],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "sync-harness-error-cleanup-ok",
+      "tier": "Native exclusive mkdir; controlled local harness failure",
+      "status": "PASS",
+      "expected": "Synchronous start failure identity wins; native cleanup removes scratch.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-ok\\gg-structured-406d01b6",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-ok\\gg-structured-406d01b6",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-ok\\gg-structured-406d01b6"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-ok\\gg-structured-406d01b6",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-ok",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent sync-harness failure",
+        "code": "QA_LOCAL_HARNESS_FAILURE",
+        "stack": "Error: Independent sync-harness failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:388:35\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:387:100"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "sync-harness-error-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled local harness failure and cleanup rejection",
+      "status": "PASS",
+      "expected": "Synchronous start failure identity wins over injected cleanup failure; known residue recovered.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent sync-harness failure",
+        "code": "QA_LOCAL_HARNESS_FAILURE",
+        "stack": "Error: Independent sync-harness failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:388:35\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:387:100"
+      },
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\sync-harness-error-cleanup-error\\gg-structured-3bd235fc"
+      ],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "async-result-error-cleanup-ok",
+      "tier": "Native exclusive mkdir; controlled local harness failure",
+      "status": "PASS",
+      "expected": "Asynchronous result failure identity wins; native cleanup removes scratch.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-ok\\gg-structured-9902efab",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-ok\\gg-structured-9902efab",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-ok\\gg-structured-9902efab"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-ok\\gg-structured-9902efab",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-ok",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent async-result failure",
+        "code": "QA_LOCAL_HARNESS_FAILURE",
+        "stack": "Error: Independent async-result failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:388:35\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:387:100"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "async-result-error-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled local harness failure and cleanup rejection",
+      "status": "PASS",
+      "expected": "Asynchronous result failure identity wins over injected cleanup failure; known residue recovered.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent async-result failure",
+        "code": "QA_LOCAL_HARNESS_FAILURE",
+        "stack": "Error: Independent async-result failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:388:35\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:387:100"
+      },
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\async-result-error-cleanup-error\\gg-structured-9672925e"
+      ],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "success-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled local harness success and cleanup rejection",
+      "status": "PASS",
+      "expected": "Successful value survives injected cleanup failure; known residue recovered.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 0,
+      "order": [
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error",
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\success-cleanup-error\\gg-structured-fd037d80"
+      ],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "cancel-resolve-cleanup-ok",
+      "tier": "Native exclusive mkdir; controlled local hanging session, deferred cancel settlement",
+      "status": "PASS",
+      "expected": "Scratch exists until deferred cancel resolves; caller reason wins; one cancel then one native cleanup.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-ok\\gg-structured-346d7314",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-ok\\gg-structured-346d7314",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-ok\\gg-structured-346d7314"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-ok\\gg-structured-346d7314",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 1,
+      "order": [
+        "cancel called",
+        "cancel settled",
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-ok",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent caller abort during harness",
+        "stack": "Error: Independent caller abort during harness\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:406:20\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:401:90"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "cancel-resolve-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled local hanging session, deferred cancel settlement and cleanup rejection",
+      "status": "PASS",
+      "expected": "Caller reason wins after cancel settles despite cleanup failure; known residue recovered.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 1,
+      "order": [
+        "cancel called",
+        "cancel settled",
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent caller abort during harness",
+        "stack": "Error: Independent caller abort during harness\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:406:20\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:401:90"
+      },
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-resolve-cleanup-error\\gg-structured-b42f76f1"
+      ],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "cancel-reject-cleanup-ok",
+      "tier": "Native exclusive mkdir; controlled local hanging session, deferred cancel settlement",
+      "status": "PASS",
+      "expected": "Scratch exists until deferred cancel rejects; cancel error wins over caller reason; one cancel then one native cleanup.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-ok\\gg-structured-88255647",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-ok\\gg-structured-88255647",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-ok\\gg-structured-88255647"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-ok\\gg-structured-88255647",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 1,
+      "order": [
+        "cancel called",
+        "cancel settled",
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-ok",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent harness cancel failure",
+        "stack": "Error: Independent harness cancel failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:407:25\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:401:90"
+      },
+      "residueBeforeQaRecovery": [],
+      "residueAfterQaRecovery": []
+    },
+    {
+      "id": "cancel-reject-cleanup-error",
+      "tier": "Native exclusive mkdir; controlled local hanging session, deferred cancel settlement and cleanup rejection",
+      "status": "PASS",
+      "expected": "Cancel error wins over caller reason and cleanup error; known residue recovered.",
+      "mkdirCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994",
+          "options": {
+            "mode": 448
+          }
+        }
+      ],
+      "mkdirErrors": [],
+      "mkdtempCalls": [],
+      "rmCalls": [
+        {
+          "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994",
+          "options": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "created": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994"
+      ],
+      "harnessStarts": [
+        {
+          "request": {
+            "workingDirectory": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never",
+              "networkAccess": false,
+              "webSearch": false
+            },
+            "turn": {
+              "prompt": "Independent local structured QA",
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "signalAborted": false,
+          "exists": true,
+          "entries": []
+        }
+      ],
+      "randomNames": [],
+      "cancelCalls": 1,
+      "order": [
+        "cancel called",
+        "cancel settled",
+        "cleanup"
+      ],
+      "root": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error",
+      "observedRejection": {
+        "name": "Error",
+        "message": "Independent harness cancel failure",
+        "stack": "Error: Independent harness cancel failure\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:407:25\n    at one (file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:222:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-independent-01/fixture-v1.mjs:401:90"
+      },
+      "expectedSyntheticResidue": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994",
+      "residueBeforeQaRecovery": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-363-independent-01\\fixture-owned\\run-0b2a256dc8\\cancel-reject-cleanup-error\\gg-structured-40427994"
+      ],
+      "residueAfterQaRecovery": []
+    }
+  ],
+  "final": {
+    "completedAt": "2026-11-21T08:59:38.503Z",
+    "pass": 19,
+    "fail": 0,
+    "predicted": 19,
+    "executed": 19,
+    "fixtureOwnerRemoved": true,
+    "sourceUnchanged": true,
+    "gitClean": true,
+    "lockSha256": "3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df",
+    "limitations": [
+      "No real Codex CLI/provider turn; local HarnessPort only.",
+      "Baseline loaded from exact Git base bytes as controlled copy.",
+      "Collision naming deterministic, EEXIST native.",
+      "Abort/cancel/failure scheduling controlled in this isolated process.",
+      "Injected cleanup failures intentionally leave known scratch until QA recovery.",
+      "No arbitrary/unlimited long-path support claim.",
+      "No full build, numerical coverage, browser, external reviewer, CI or final Astra gate."
+    ]
+  }
+}

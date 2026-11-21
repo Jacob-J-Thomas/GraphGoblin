@@ -1,7 +1,8 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import * as structuredFs from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import type { HarnessPort } from '@graphgoblin/engine';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import { describe, expect, it, vi } from 'vitest';
@@ -10,6 +11,62 @@ import { CodexHarness } from './harness.js';
 import { createCodexStructured } from './structured.js';
 
 const schema = { type: 'object' };
+
+// Inject boundary errors while retaining actual exclusive mkdir and owned cleanup.
+vi.mock('node:fs/promises', { spy: true });
+
+function useTempRoot(root: string): void {
+  for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, root);
+}
+
+async function withTempRoot(
+  body: (root: string, fs: typeof structuredFs) => Promise<void>,
+): Promise<void> {
+  const fs = await vi.importActual<typeof structuredFs>('node:fs/promises');
+  const parent = await fs.realpath(tmpdir());
+  const root = await fs.mkdtemp(join(parent, 'gg-structured-case-'));
+  try {
+    useTempRoot(root);
+    await body(root, fs);
+  } finally {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    // This case owns this exact fresh child; never remove a caller-selected root.
+    expect(dirname(resolve(root))).toBe(resolve(parent));
+    expect(basename(root)).toMatch(/^gg-structured-case-/);
+    await fs.rm(root, { recursive: true, force: true });
+  }
+}
+
+it('starts the fake harness under a real 226-character temp root and cleans its scratch', async () => {
+  await withTempRoot(async (root, fs) => {
+    let longTemp = root;
+    while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
+    longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
+    expect(longTemp).toHaveLength(226);
+    await fs.mkdir(longTemp, { recursive: true });
+    useTempRoot(longTemp);
+    const harness = new FakeHarness([{ finalText: '{}' }]);
+    const start = harness.start.bind(harness);
+    vi.spyOn(harness, 'start').mockImplementation((request, signal) => {
+      expect(readdirSync(request.workingDirectory ?? '')).toEqual([]);
+      return start(request, signal);
+    });
+    await expect(
+      createCodexStructured(harness).complete(
+        { prompt: 'p', schema },
+        new AbortController().signal,
+      ),
+    ).resolves.toMatchObject({ value: {} });
+    expect(harness.started).toHaveLength(1);
+    const directory = harness.started[0]?.workingDirectory ?? '';
+    expect(dirname(directory)).toBe(longTemp);
+    expect(basename(directory)).toMatch(/^gg-structured-[a-f0-9]{8}$/);
+    expect(directory).toHaveLength(249);
+    await expect(fs.access(directory)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await fs.readdir(longTemp)).toEqual([]);
+  });
+});
 
 describe('CodexStructured', () => {
   it('runs one read-only thread with the schema and returns the parsed value', async () => {
@@ -51,7 +108,7 @@ describe('CodexStructured', () => {
     const structured = createCodexStructured(harness);
     await structured.complete({ prompt: 'p', schema }, new AbortController().signal);
     const dir = harness.started[0]?.workingDirectory ?? '';
-    expect(dir).toMatch(/graphgoblin-structured-/);
+    expect(basename(dir)).toMatch(/^gg-structured-[a-f0-9]{8}$/);
     expect(existsSync(dir)).toBe(false);
   });
 
@@ -80,6 +137,196 @@ describe('CodexStructured', () => {
       networkAccessEnabled: false,
       webSearchMode: 'disabled',
     });
+  });
+});
+
+it.each([1, 4])(
+  'preserves %i real collision directories and bounds allocation attempts',
+  async (collisions) => {
+    await withTempRoot(async (root, fs) => {
+      const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
+      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+      const existing: string[] = [];
+      for (let index = 0; index < collisions; index += 1) {
+        create.mockImplementationOnce(async (path, options) => {
+          await fs.mkdir(path, options);
+          const directory = String(path);
+          existing.push(directory);
+          await fs.writeFile(
+            join(directory, 'preserved.txt'),
+            'another creator owns this directory',
+          );
+          return fs.mkdir(path, options); // The OS, not a fabricated errno, rejects the collision.
+        });
+      }
+      const harness = new FakeHarness([{ finalText: '{}' }]);
+      const result = createCodexStructured(harness).complete(
+        { prompt: 'p', schema },
+        new AbortController().signal,
+      );
+      if (collisions === 4) {
+        await expect(result).rejects.toMatchObject({ code: 'EEXIST' });
+        expect(harness.started).toHaveLength(0);
+        expect(remove).not.toHaveBeenCalled();
+      } else {
+        await expect(result).resolves.toMatchObject({ value: {} });
+        expect(harness.started).toHaveLength(1);
+        expect(remove).toHaveBeenCalledExactlyOnceWith(harness.started[0]?.workingDirectory, {
+          recursive: true,
+          force: true,
+        });
+      }
+      expect(create).toHaveBeenCalledTimes(collisions === 4 ? 4 : 2);
+      for (const [path, options] of create.mock.calls) {
+        expect(dirname(String(path))).toBe(root);
+        expect(basename(String(path))).toMatch(/^gg-structured-[a-f0-9]{8}$/);
+        expect(options).toEqual({ mode: 0o700 });
+      }
+      for (const directory of existing) {
+        expect(await fs.readFile(join(directory, 'preserved.txt'), 'utf8')).toBe(
+          'another creator owns this directory',
+        );
+        expect(remove.mock.calls.some(([path]) => String(path) === directory)).toBe(false);
+      }
+    });
+  },
+);
+
+it('propagates a non-collision allocation error immediately without starting or cleaning', async () => {
+  await withTempRoot(async (root, fs) => {
+    const failure = Object.assign(new Error('controlled allocation refusal'), { code: 'EACCES' });
+    const create = vi.spyOn(structuredFs, 'mkdir').mockClear().mockRejectedValueOnce(failure);
+    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+    const harness = new FakeHarness();
+    await expect(
+      createCodexStructured(harness).complete(
+        { prompt: 'p', schema },
+        new AbortController().signal,
+      ),
+    ).rejects.toBe(failure);
+    expect(create).toHaveBeenCalledOnce();
+    expect(remove).not.toHaveBeenCalled();
+    expect(harness.started).toHaveLength(0);
+    expect(await fs.readdir(root)).toEqual([]);
+  });
+});
+
+it('does not allocate for an already aborted default-directory request', async () => {
+  await withTempRoot(async () => {
+    const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
+    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+    const harness = new FakeHarness();
+    const reason = new Error('caller aborted before allocation');
+    const controller = new AbortController();
+    controller.abort(reason);
+    await expect(
+      createCodexStructured(harness).complete({ prompt: 'p', schema }, controller.signal),
+    ).rejects.toBe(reason);
+    expect(create).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(harness.started).toHaveLength(0);
+  });
+});
+
+it.each([false, true])(
+  'preserves allocation-time abort and cleans only its scratch, cleanup fails=%s',
+  async (cleanupFails) => {
+    await withTempRoot(async (_root, fs) => {
+      const reason = new Error('caller aborted during allocation');
+      const controller = new AbortController();
+      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+      if (cleanupFails) remove.mockRejectedValueOnce(new Error('controlled cleanup refusal'));
+      let scratch = '';
+      vi.spyOn(structuredFs, 'mkdir')
+        .mockClear()
+        .mockImplementationOnce(async (path, options) => {
+          const result = await fs.mkdir(path, options);
+          scratch = String(path);
+          controller.abort(reason);
+          return result;
+        });
+      const harness = new FakeHarness();
+      await expect(
+        createCodexStructured(harness).complete({ prompt: 'p', schema }, controller.signal),
+      ).rejects.toBe(reason);
+      expect(harness.started).toHaveLength(0);
+      expect(scratch).not.toBe('');
+      expect(remove).toHaveBeenCalledExactlyOnceWith(scratch, { recursive: true, force: true });
+      if (cleanupFails) expect(await fs.readdir(scratch)).toEqual([]);
+      else await expect(fs.access(scratch)).rejects.toMatchObject({ code: 'ENOENT' });
+    });
+  },
+);
+
+it('keeps the successful result when owned scratch cleanup fails', async () => {
+  await withTempRoot(async (_root, fs) => {
+    vi.spyOn(structuredFs, 'rm').mockRejectedValueOnce(new Error('controlled cleanup refusal'));
+    const harness = new FakeHarness([{ finalText: '{"ok":true}' }]);
+    await expect(
+      createCodexStructured(harness).complete(
+        { prompt: 'p', schema },
+        new AbortController().signal,
+      ),
+    ).resolves.toMatchObject({ value: { ok: true } });
+    const scratch = harness.started[0]?.workingDirectory ?? '';
+    expect(await fs.readdir(scratch)).toEqual([]);
+  });
+});
+
+it.each([false, true])(
+  'preserves synchronous harness failure when scratch cleanup fails=%s',
+  async (cleanupFails) => {
+    await withTempRoot(async (_root, fs) => {
+      const failure = new Error('harness rejected before returning a session');
+      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+      if (cleanupFails) remove.mockRejectedValueOnce(new Error('controlled cleanup refusal'));
+      let scratch = '';
+      const harness = new FakeHarness();
+      vi.spyOn(harness, 'start').mockImplementation((request) => {
+        scratch = request.workingDirectory ?? '';
+        expect(readdirSync(scratch)).toEqual([]);
+        throw failure;
+      });
+      await expect(
+        createCodexStructured(harness).complete(
+          { prompt: 'p', schema },
+          new AbortController().signal,
+        ),
+      ).rejects.toBe(failure);
+      expect(remove).toHaveBeenCalledExactlyOnceWith(scratch, { recursive: true, force: true });
+      if (cleanupFails) expect(await fs.readdir(scratch)).toEqual([]);
+      else await expect(fs.access(scratch)).rejects.toMatchObject({ code: 'ENOENT' });
+    });
+  },
+);
+
+it('keeps request-over-option directory precedence without allocating or cleaning either', async () => {
+  await withTempRoot(async (root, fs) => {
+    const requested = join(root, 'request');
+    const configured = join(root, 'configured');
+    for (const directory of [requested, configured]) {
+      await fs.mkdir(directory);
+      await fs.writeFile(join(directory, 'preserved.txt'), 'caller directory');
+    }
+    const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
+    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
+    const tempDir = vi.fn();
+    const harness = new FakeHarness([{ finalText: '{}' }, { finalText: '{}' }]);
+    const structured = createCodexStructured(harness, { workingDirectory: configured, tempDir });
+    await structured.complete(
+      { prompt: 'p', schema, workingDirectory: requested },
+      new AbortController().signal,
+    );
+    await structured.complete({ prompt: 'p', schema }, new AbortController().signal);
+    expect(harness.started.map((request) => request.workingDirectory)).toEqual([
+      requested,
+      configured,
+    ]);
+    expect(tempDir).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    for (const directory of [requested, configured])
+      expect(await fs.readFile(join(directory, 'preserved.txt'), 'utf8')).toBe('caller directory');
   });
 });
 

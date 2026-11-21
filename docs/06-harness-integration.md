@@ -617,6 +617,22 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+
+The request's working directory takes precedence over the adapter's configured directory;
+neither configured directory is removed. Without either, the adapter exclusively creates a
+short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+limit. It makes at most four attempts (three retries) on `EEXIST`; other creation errors propagate before the
+harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+to a directory this call created. Cancellation and primary failures keep their existing
+cleanup precedence. The pinned SDK separately writes the required output schema under the
+host temporary root. Its managed patch shortens that directory's native `mkdtemp` prefix
+from `codex-output-schema-` to `gg-schema-`, keeping its allocation and cleanup semantics
+([ADR-0087](decisions/ADR-0087-short-codex-schema-temp-prefix.md)). Real-SDK/harmless-CLI
+tests at the measured 226-character Windows temporary root observe a 249-character adapter
+scratch, 243-character SDK schema directory and 255-character schema file, with normal,
+error and abort cleanup. These controlled fixtures are not a provider turn or a promise of
+arbitrary long-path support; ordinary OS/CLI limits still apply.
+
 Configured plugins are inherited through the common harness, including their tools; the
 read-only sandbox controls local commands rather than the authority of plugin services.
 The engine's LLM decision and coerce-repair callers supply neither a working directory

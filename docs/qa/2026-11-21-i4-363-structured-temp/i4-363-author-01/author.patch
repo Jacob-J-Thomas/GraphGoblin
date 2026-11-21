@@ -1,0 +1,352 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f4f086bbd6608b7fa9af2e30bfce7908e81919b..d9aa2eeb892b6aa5b06a445df97be619c9597704 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Codex structured calls create short scratch names with exclusive `mkdir`, retrying at most
++  four `EEXIST` collisions and preserving every colliding directory (#363). This avoids the
++  Windows `mkdtemp` failure under the tested 226-character temp root; OS/CLI path limits remain.
++  Request/configured working directories and cancellation/error cleanup precedence are unchanged.
++
+ - Windows launcher identity and ownership checks own their descendants in private Windows jobs
+   (#459), drain both output streams within a bounded work window and collect failed checks
+   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index 47bd8470928055e2d8316da14294bea176690782..11a6e6cd2290708c7f6c157a30cb73b926da45bc 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -591,6 +591,16 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
+ sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
+ working directory or an empty temporary directory it removes afterwards. It returns
+ parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
++
++The request's working directory takes precedence over the adapter's configured directory;
++neither configured directory is removed. Without either, the adapter exclusively creates a
++short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
++limit. It tries at most four names on `EEXIST`; other creation errors propagate before the
++harness starts. A colliding directory is never reused or removed, and cleanup belongs only
++to a directory this call created. Cancellation and primary failures keep their existing
++cleanup precedence. This supports the tested 226-character temporary root; ordinary OS/CLI
++path limits still apply, including paths the harness later creates inside that directory.
++
+ Configured plugins are inherited through the common harness, including their tools; the
+ read-only sandbox controls local commands rather than the authority of plugin services.
+ The engine's LLM decision and coerce-repair callers supply neither a working directory
+diff --git a/packages/adapter-codex/src/structured.test.ts b/packages/adapter-codex/src/structured.test.ts
+index 47da6a9e5dd88ac3c798e49748a64f11567d3b19..1ef39deb756b8850f71c238fbab57ff0c9f7891a 100644
+--- a/packages/adapter-codex/src/structured.test.ts
++++ b/packages/adapter-codex/src/structured.test.ts
+@@ -1,7 +1,8 @@
+-import { existsSync } from 'node:fs';
++import { existsSync, readdirSync } from 'node:fs';
++import * as structuredFs from 'node:fs/promises';
+ import { mkdtemp, rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
++import { basename, dirname, join, resolve } from 'node:path';
+ import type { HarnessPort } from '@graphgoblin/engine';
+ import { FakeHarness } from '@graphgoblin/engine/testing';
+ import { describe, expect, it, vi } from 'vitest';
+@@ -11,6 +12,62 @@ import { createCodexStructured } from './structured.js';
+ 
+ const schema = { type: 'object' };
+ 
++// Inject boundary errors while retaining actual exclusive mkdir and owned cleanup.
++vi.mock('node:fs/promises', { spy: true });
++
++function useTempRoot(root: string): void {
++  for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, root);
++}
++
++async function withTempRoot(
++  body: (root: string, fs: typeof structuredFs) => Promise<void>,
++): Promise<void> {
++  const fs = await vi.importActual<typeof structuredFs>('node:fs/promises');
++  const parent = await fs.realpath(tmpdir());
++  const root = await fs.mkdtemp(join(parent, 'gg-structured-case-'));
++  try {
++    useTempRoot(root);
++    await body(root, fs);
++  } finally {
++    vi.restoreAllMocks();
++    vi.unstubAllEnvs();
++    // This case owns this exact fresh child; never remove a caller-selected root.
++    expect(dirname(resolve(root))).toBe(resolve(parent));
++    expect(basename(root)).toMatch(/^gg-structured-case-/);
++    await fs.rm(root, { recursive: true, force: true });
++  }
++}
++
++it('starts the fake harness under a real 226-character temp root and cleans its scratch', async () => {
++  await withTempRoot(async (root, fs) => {
++    let longTemp = root;
++    while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
++    longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
++    expect(longTemp).toHaveLength(226);
++    await fs.mkdir(longTemp, { recursive: true });
++    useTempRoot(longTemp);
++    const harness = new FakeHarness([{ finalText: '{}' }]);
++    const start = harness.start.bind(harness);
++    vi.spyOn(harness, 'start').mockImplementation((request, signal) => {
++      expect(readdirSync(request.workingDirectory ?? '')).toEqual([]);
++      return start(request, signal);
++    });
++    await expect(
++      createCodexStructured(harness).complete(
++        { prompt: 'p', schema },
++        new AbortController().signal,
++      ),
++    ).resolves.toMatchObject({ value: {} });
++    expect(harness.started).toHaveLength(1);
++    const directory = harness.started[0]?.workingDirectory ?? '';
++    expect(dirname(directory)).toBe(longTemp);
++    expect(basename(directory)).toMatch(/^gg-structured-[a-f0-9]{8}$/);
++    expect(directory).toHaveLength(249);
++    await expect(fs.access(directory)).rejects.toMatchObject({ code: 'ENOENT' });
++    expect(await fs.readdir(longTemp)).toEqual([]);
++  });
++});
++
+ describe('CodexStructured', () => {
+   it('runs one read-only thread with the schema and returns the parsed value', async () => {
+     const harness = new FakeHarness([
+@@ -51,7 +108,7 @@ describe('CodexStructured', () => {
+     const structured = createCodexStructured(harness);
+     await structured.complete({ prompt: 'p', schema }, new AbortController().signal);
+     const dir = harness.started[0]?.workingDirectory ?? '';
+-    expect(dir).toMatch(/graphgoblin-structured-/);
++    expect(basename(dir)).toMatch(/^gg-structured-[a-f0-9]{8}$/);
+     expect(existsSync(dir)).toBe(false);
+   });
+ 
+@@ -83,6 +140,196 @@ describe('CodexStructured', () => {
+   });
+ });
+ 
++it.each([1, 4])(
++  'preserves %i real collision directories and bounds allocation attempts',
++  async (collisions) => {
++    await withTempRoot(async (root, fs) => {
++      const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
++      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++      const existing: string[] = [];
++      for (let index = 0; index < collisions; index += 1) {
++        create.mockImplementationOnce(async (path, options) => {
++          await fs.mkdir(path, options);
++          const directory = String(path);
++          existing.push(directory);
++          await fs.writeFile(
++            join(directory, 'preserved.txt'),
++            'another creator owns this directory',
++          );
++          return fs.mkdir(path, options); // The OS, not a fabricated errno, rejects the collision.
++        });
++      }
++      const harness = new FakeHarness([{ finalText: '{}' }]);
++      const result = createCodexStructured(harness).complete(
++        { prompt: 'p', schema },
++        new AbortController().signal,
++      );
++      if (collisions === 4) {
++        await expect(result).rejects.toMatchObject({ code: 'EEXIST' });
++        expect(harness.started).toHaveLength(0);
++        expect(remove).not.toHaveBeenCalled();
++      } else {
++        await expect(result).resolves.toMatchObject({ value: {} });
++        expect(harness.started).toHaveLength(1);
++        expect(remove).toHaveBeenCalledExactlyOnceWith(harness.started[0]?.workingDirectory, {
++          recursive: true,
++          force: true,
++        });
++      }
++      expect(create).toHaveBeenCalledTimes(collisions === 4 ? 4 : 2);
++      for (const [path, options] of create.mock.calls) {
++        expect(dirname(String(path))).toBe(root);
++        expect(basename(String(path))).toMatch(/^gg-structured-[a-f0-9]{8}$/);
++        expect(options).toEqual({ mode: 0o700 });
++      }
++      for (const directory of existing) {
++        expect(await fs.readFile(join(directory, 'preserved.txt'), 'utf8')).toBe(
++          'another creator owns this directory',
++        );
++        expect(remove.mock.calls.some(([path]) => String(path) === directory)).toBe(false);
++      }
++    });
++  },
++);
++
++it('propagates a non-collision allocation error immediately without starting or cleaning', async () => {
++  await withTempRoot(async (root, fs) => {
++    const failure = Object.assign(new Error('controlled allocation refusal'), { code: 'EACCES' });
++    const create = vi.spyOn(structuredFs, 'mkdir').mockClear().mockRejectedValueOnce(failure);
++    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++    const harness = new FakeHarness();
++    await expect(
++      createCodexStructured(harness).complete(
++        { prompt: 'p', schema },
++        new AbortController().signal,
++      ),
++    ).rejects.toBe(failure);
++    expect(create).toHaveBeenCalledOnce();
++    expect(remove).not.toHaveBeenCalled();
++    expect(harness.started).toHaveLength(0);
++    expect(await fs.readdir(root)).toEqual([]);
++  });
++});
++
++it('does not allocate for an already aborted default-directory request', async () => {
++  await withTempRoot(async () => {
++    const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
++    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++    const harness = new FakeHarness();
++    const reason = new Error('caller aborted before allocation');
++    const controller = new AbortController();
++    controller.abort(reason);
++    await expect(
++      createCodexStructured(harness).complete({ prompt: 'p', schema }, controller.signal),
++    ).rejects.toBe(reason);
++    expect(create).not.toHaveBeenCalled();
++    expect(remove).not.toHaveBeenCalled();
++    expect(harness.started).toHaveLength(0);
++  });
++});
++
++it.each([false, true])(
++  'preserves allocation-time abort and cleans only its scratch, cleanup fails=%s',
++  async (cleanupFails) => {
++    await withTempRoot(async (_root, fs) => {
++      const reason = new Error('caller aborted during allocation');
++      const controller = new AbortController();
++      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++      if (cleanupFails) remove.mockRejectedValueOnce(new Error('controlled cleanup refusal'));
++      let scratch = '';
++      vi.spyOn(structuredFs, 'mkdir')
++        .mockClear()
++        .mockImplementationOnce(async (path, options) => {
++          const result = await fs.mkdir(path, options);
++          scratch = String(path);
++          controller.abort(reason);
++          return result;
++        });
++      const harness = new FakeHarness();
++      await expect(
++        createCodexStructured(harness).complete({ prompt: 'p', schema }, controller.signal),
++      ).rejects.toBe(reason);
++      expect(harness.started).toHaveLength(0);
++      expect(scratch).not.toBe('');
++      expect(remove).toHaveBeenCalledExactlyOnceWith(scratch, { recursive: true, force: true });
++      if (cleanupFails) expect(await fs.readdir(scratch)).toEqual([]);
++      else await expect(fs.access(scratch)).rejects.toMatchObject({ code: 'ENOENT' });
++    });
++  },
++);
++
++it('keeps the successful result when owned scratch cleanup fails', async () => {
++  await withTempRoot(async (_root, fs) => {
++    vi.spyOn(structuredFs, 'rm').mockRejectedValueOnce(new Error('controlled cleanup refusal'));
++    const harness = new FakeHarness([{ finalText: '{"ok":true}' }]);
++    await expect(
++      createCodexStructured(harness).complete(
++        { prompt: 'p', schema },
++        new AbortController().signal,
++      ),
++    ).resolves.toMatchObject({ value: { ok: true } });
++    const scratch = harness.started[0]?.workingDirectory ?? '';
++    expect(await fs.readdir(scratch)).toEqual([]);
++  });
++});
++
++it.each([false, true])(
++  'preserves synchronous harness failure when scratch cleanup fails=%s',
++  async (cleanupFails) => {
++    await withTempRoot(async (_root, fs) => {
++      const failure = new Error('harness rejected before returning a session');
++      const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++      if (cleanupFails) remove.mockRejectedValueOnce(new Error('controlled cleanup refusal'));
++      let scratch = '';
++      const harness = new FakeHarness();
++      vi.spyOn(harness, 'start').mockImplementation((request) => {
++        scratch = request.workingDirectory ?? '';
++        expect(readdirSync(scratch)).toEqual([]);
++        throw failure;
++      });
++      await expect(
++        createCodexStructured(harness).complete(
++          { prompt: 'p', schema },
++          new AbortController().signal,
++        ),
++      ).rejects.toBe(failure);
++      expect(remove).toHaveBeenCalledExactlyOnceWith(scratch, { recursive: true, force: true });
++      if (cleanupFails) expect(await fs.readdir(scratch)).toEqual([]);
++      else await expect(fs.access(scratch)).rejects.toMatchObject({ code: 'ENOENT' });
++    });
++  },
++);
++
++it('keeps request-over-option directory precedence without allocating or cleaning either', async () => {
++  await withTempRoot(async (root, fs) => {
++    const requested = join(root, 'request');
++    const configured = join(root, 'configured');
++    for (const directory of [requested, configured]) {
++      await fs.mkdir(directory);
++      await fs.writeFile(join(directory, 'preserved.txt'), 'caller directory');
++    }
++    const create = vi.spyOn(structuredFs, 'mkdir').mockClear();
++    const remove = vi.spyOn(structuredFs, 'rm').mockClear();
++    const tempDir = vi.fn();
++    const harness = new FakeHarness([{ finalText: '{}' }, { finalText: '{}' }]);
++    const structured = createCodexStructured(harness, { workingDirectory: configured, tempDir });
++    await structured.complete(
++      { prompt: 'p', schema, workingDirectory: requested },
++      new AbortController().signal,
++    );
++    await structured.complete({ prompt: 'p', schema }, new AbortController().signal);
++    expect(harness.started.map((request) => request.workingDirectory)).toEqual([
++      requested,
++      configured,
++    ]);
++    expect(tempDir).not.toHaveBeenCalled();
++    expect(create).not.toHaveBeenCalled();
++    expect(remove).not.toHaveBeenCalled();
++    for (const directory of [requested, configured])
++      expect(await fs.readFile(join(directory, 'preserved.txt'), 'utf8')).toBe('caller directory');
++  });
++});
++
+ it('does not create a directory or start provider work for an already aborted request', async () => {
+   const harness = new FakeHarness();
+   const tempDir = vi.fn();
+diff --git a/packages/adapter-codex/src/structured.ts b/packages/adapter-codex/src/structured.ts
+index 447ebfdaf45144221fded674b86f8e83ec704457..715141ca077d3e043bc455e9be5e5fe32e7ffa93 100644
+--- a/packages/adapter-codex/src/structured.ts
++++ b/packages/adapter-codex/src/structured.ts
+@@ -1,4 +1,5 @@
+-import { mkdtemp, rm } from 'node:fs/promises';
++import { randomBytes } from 'node:crypto';
++import { mkdir, rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import type { Effort, JsonSchema, Usage } from '@graphgoblin/contracts';
+@@ -12,8 +13,17 @@ export interface CodexStructuredOptions {
+ }
+ 
+ async function freshTempDir(): Promise<{ path: string; cleanup: () => Promise<void> }> {
+-  const path = await mkdtemp(join(tmpdir(), 'graphgoblin-structured-'));
+-  return { path, cleanup: () => rm(path, { recursive: true, force: true }) };
++  // Like readiness probes, avoid mkdtemp's lower Windows path limit. Only a successful
++  // exclusive mkdir grants cleanup ownership; a colliding directory is never reused.
++  for (let attempt = 1; ; attempt += 1) {
++    const path = join(tmpdir(), `gg-structured-${randomBytes(4).toString('hex')}`);
++    try {
++      await mkdir(path, { mode: 0o700 });
++      return { path, cleanup: () => rm(path, { recursive: true, force: true }) };
++    } catch (error) {
++      if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || attempt === 4) throw error;
++    }
++  }
+ }
+ 
+ function parseLoose(text: string): unknown {
