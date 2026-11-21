@@ -1,0 +1,114 @@
+{
+  "repo": "G:/ggq/gg-i4-427-qa/GraphGoblin",
+  "attempt": "native-source-attempt-2",
+  "node": "v22.23.4",
+  "version": {
+    "code": 0,
+    "output": "codex-cli 0.160.0\n",
+    "stdout": "codex-cli 0.160.0\n"
+  },
+  "cliPackage": "G:\\ggq\\gg-i4-427-qa\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex@0.160.0\\node_modules\\@openai\\codex\\package.json",
+  "nativePackage": "G:\\ggq\\gg-i4-427-qa\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex@0.160.0-win32-x64\\node_modules\\@openai\\codex\\package.json",
+  "nativeBinary": "G:\\ggq\\gg-i4-427-qa\\GraphGoblin\\node_modules\\.pnpm\\@openai+codex@0.160.0-win32-x64\\node_modules\\@openai\\codex\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+  "sdkSha256": "ae27616562385faf2c4540833d27761f348ab035c4f722076f5d7de45d9390e3",
+  "nativeSha256": "fdda5fa3cf3fb3d000b876720742857676293e4315e4b045fae6f8bd7e866d1d",
+  "port": 56363,
+  "unexpected": [],
+  "results": [
+    {
+      "name": "historical-account-refusal",
+      "model": "gpt-5.5",
+      "id": "01a1fd46-21a7-7cf1-8231-229881185674",
+      "error": {
+        "code": "HARNESS_ARGUMENTS_REJECTED",
+        "name": "Error",
+        "message": "The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+        "retriable": false,
+        "submission": "delivery-uncertain"
+      },
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "01a1fd46-21a7-7cf1-8231-229881185674",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "error",
+          "code": "HARNESS_ARGUMENTS_REJECTED",
+          "message": "The provider refused the request (HTTP 400): The 'gpt-5.5' model is not supported when using Codex with a ChatGPT account.",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "requests": 1
+    },
+    {
+      "name": "supported-positive",
+      "model": "gpt-6-luna",
+      "id": "01a1fd46-2409-75a1-a2ca-8671c9701a6d",
+      "result": {
+        "finalText": "QA427_SUPPORTED_OK",
+        "usage": {
+          "inputTokens": 1,
+          "outputTokens": 1,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        },
+        "items": [
+          {
+            "id": "item_0",
+            "type": "message",
+            "summary": "QA427_SUPPORTED_OK",
+            "detail": {
+              "id": "item_0",
+              "type": "agent_message",
+              "text": "QA427_SUPPORTED_OK"
+            }
+          }
+        ]
+      },
+      "events": [
+        {
+          "type": "session",
+          "sessionId": "01a1fd46-2409-75a1-a2ca-8671c9701a6d",
+          "mode": "fresh"
+        },
+        {
+          "type": "submitted",
+          "marker": "codex.turn.started"
+        },
+        {
+          "type": "item",
+          "item": {
+            "id": "item_0",
+            "type": "message",
+            "summary": "QA427_SUPPORTED_OK",
+            "detail": {
+              "id": "item_0",
+              "type": "agent_message",
+              "text": "QA427_SUPPORTED_OK"
+            }
+          }
+        },
+        {
+          "type": "usage",
+          "usage": {
+            "inputTokens": 1,
+            "outputTokens": 1,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "type": "turn-complete"
+        }
+      ],
+      "requests": 1
+    }
+  ],
+  "tier": "real candidate source harness + pinned SDK/native CLI; synthetic local provider; no live entitlement measured"
+}

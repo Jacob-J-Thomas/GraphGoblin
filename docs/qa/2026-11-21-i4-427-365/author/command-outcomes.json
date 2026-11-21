@@ -1,0 +1,76 @@
+{
+  "capture": "original merged PowerShell console output; no later log rewrite",
+  "coverageThresholdOrExclusionChanged": false,
+  "eventsDurationSeconds": 4.65,
+  "eventsTestsPassed": 54,
+  "formatPaths": [
+    "CHANGELOG.md",
+    "docs/06-harness-integration.md",
+    "docs/delivery/2026-11-17-five-intents-register.md",
+    "docs/guide/06-settings-and-secrets.md",
+    "docs/guide/07-troubleshooting.md",
+    "docs/research/codex-sdk.md",
+    "packages/adapter-codex/src/options.ts"
+  ],
+  "fullCoverageOrHeavySuiteRun": false,
+  "node": "v22.23.4",
+  "pnpm": "12.8.1",
+  "results": [
+    {
+      "command": "pnpm.cmd install --offline --frozen-lockfile",
+      "exit": 0,
+      "log": "install.log",
+      "logBytes": 1793,
+      "logSha256": "801a740c38c126200fedcffc43b7714495b8b074cddf990791f8bac6316006dc",
+      "name": "install"
+    },
+    {
+      "command": "pnpm.cmd exec prettier --write [seven changed files]",
+      "exit": 0,
+      "log": "format.log",
+      "logBytes": 349,
+      "logSha256": "76b7bee34729a16ed1c679fbce7ba96fe6fcf274fc8f0f43d686095b1d85966f",
+      "name": "format"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/events.test.ts",
+      "exit": 0,
+      "log": "events-unit.log",
+      "logBytes": 476,
+      "logSha256": "17822d648acc71b5696cfb2acd9ed639fb92b3253a778cbb7525af711f02a726",
+      "name": "events-unit"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex lint",
+      "exit": 0,
+      "log": "adapter-lint.log",
+      "logBytes": 12,
+      "logSha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc",
+      "name": "adapter-lint"
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/adapter-codex typecheck",
+      "exit": 0,
+      "log": "adapter-typecheck.log",
+      "logBytes": 54,
+      "logSha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca",
+      "name": "adapter-typecheck"
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check [seven changed files]",
+      "exit": 0,
+      "log": "format-check.log",
+      "logBytes": 68,
+      "logSha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+      "name": "format-check"
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "log": "diff-check.log",
+      "logBytes": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "diff-check"
+    }
+  ]
+}

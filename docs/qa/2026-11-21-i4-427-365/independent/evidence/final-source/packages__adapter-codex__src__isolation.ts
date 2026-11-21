@@ -1,0 +1,210 @@
+import type { CodexOptions } from '@openai/codex-sdk';
+import { plainCodexConfigSegment } from '@graphgoblin/contracts';
+import type { CliCommand, CliRunner } from './cli.js';
+
+/**
+ * Codex turns inherit configured plugins (ADR-0067), with other extensions isolated (ADR-0063).
+ *
+ * The CLI loads `~/.codex/config.toml` (and a trusted project's `.codex/config.toml`) for every
+ * turn. The CLI resolves installed and remote plugins, including their enabled/disabled state
+ * and their own MCP servers. These defaults still switch off standalone MCP servers, ChatGPT
+ * apps, memories, goals, sub-agents, lifecycle hooks and the `notify` program.
+ *
+ * - `features.<name>=false` switches a feature off; `features.plugins=false` removes every local
+ *   and remote plugin and the MCP servers they bring.
+ * - `--config` overrides merge into the loaded tables, so `mcp_servers={}` clears nothing and a
+ *   non-table value fails the configuration. Each configured server is switched off by name with
+ *   `mcp_servers.<name>.enabled=false`; naming a server that is not configured also fails the
+ *   configuration, so the names come from the CLI itself (`codex mcp list --json`).
+ * - Arrays replace, so `notify=[]` removes the turn-completion program.
+ * - Among repeated `--config` keys the last one wins.
+ *
+ * Order of the `--config` arguments: server switches, these defaults, then the node's own
+ * `configOverrides` (so a node turns one server back on with `mcp_servers.<name>.enabled=true`,
+ * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which
+ * win over overrides of the corresponding keys. Other sandbox-related keys remain separate.
+ *
+ * Every key segment that reaches `--config`, a listed server name or a node override key, must be
+ * one plain TOML key (letters, digits, `_`, `-`) and not `__proto__`, `constructor` or
+ * `prototype` (QA423-01, review round 1). Anything else refuses the turn before it starts, and
+ * the configuration is built from prototype-free tables.
+ */
+
+type Config = NonNullable<CodexOptions['config']>;
+type ConfigValue = Config[string];
+
+const isTable = (value: unknown): value is Config =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** A node override the loop refuses to pass: the pinned definition cannot run as authored. */
+export function overrideRefusal(path: string): Error {
+  return Object.assign(
+    new Error(
+      `The Codex config override key ${JSON.stringify(path.slice(0, 200))} cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, "_" or "-", and not __proto__, constructor or prototype.`,
+    ),
+    {
+      code: 'HARNESS_INVALID_CONFIGURATION',
+      retriable: false,
+      submission: 'definitely-not-submitted' as const,
+    },
+  );
+}
+
+/**
+ * Features that bring the machine's own installs, account connectors or personal state into a
+ * turn, or change what an unattended turn can do: ChatGPT apps, memories, lifecycle
+ * hooks, sub-agent spawning (`multi_agent`) and goals. The CLI's own code-mode host
+ * (`code_mode_host`) is its tool host, not an extension, and stays on: without it a turn runs no
+ * command.
+ */
+export const ISOLATED_FEATURES = ['apps', 'memories', 'hooks', 'multi_agent', 'goals'] as const;
+
+/**
+ * A configuration table whose keys are all its own (QA423-01). Server names and authored keys
+ * such as `__proto__`, `constructor` or `toString` are ordinary keys to the CLI. A table without
+ * a prototype stores and reads them as ordinary keys; on a plain object, assigning `__proto__`
+ * changes the prototype instead and the key is lost, and the other names read inherited members.
+ */
+export function table(entries: Iterable<readonly [string, ConfigValue]> = []): Config {
+  const out = Object.create(null) as Config;
+  for (const [key, value] of entries) out[key] = value;
+  return out;
+}
+
+/** The defaults every loop turn starts from, before the node's overrides. */
+export function isolationDefaults(): Config {
+  return table([
+    ['features', table(ISOLATED_FEATURES.map((name) => [name, false] as const))],
+    ['notify', []],
+  ]);
+}
+
+/** `mcp_servers.<name>.enabled=false` for each server the machine configures, in listed order. */
+export function serverSwitches(names: readonly string[]): Config {
+  return names.length
+    ? table([
+        ['mcp_servers', table(names.map((name) => [name, table([['enabled', false]])] as const))],
+      ])
+    : table();
+}
+
+/** Dotted keys become nested tables, as the CLI splits every `--config` key on dots. */
+function expand(config: Config): Config {
+  const out = table();
+  for (const [key, raw] of Object.entries(config)) {
+    const value = isTable(raw) ? expand(raw) : raw;
+    const path = key.split('.');
+    const leaf = path.pop()!;
+    let current = out;
+    for (const part of path) {
+      const next = current[part];
+      current = current[part] = isTable(next) ? next : table();
+    }
+    const existing = current[leaf];
+    current[leaf] = isTable(value) && isTable(existing) ? merge(existing, value) : value;
+  }
+  return out;
+}
+
+function merge(base: Config, override: Config): Config {
+  const out = table(Object.entries(base));
+  for (const [key, value] of Object.entries(override)) {
+    const current = out[key];
+    out[key] = isTable(current) && isTable(value) ? merge(current, value) : value;
+  }
+  return out;
+}
+
+/**
+ * Layer configurations; a later layer wins key path by key path. Arrays and scalars replace,
+ * tables merge, as the CLI layers its own configuration.
+ */
+export function layerConfig(...layers: Config[]): Config {
+  return layers.reduce<Config>((acc, layer) => merge(acc, expand(layer)), table());
+}
+
+/** The CLI's own words for a failure: its non-empty lines joined, bounded to 300 characters. */
+function excerpt(text: string): string {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  // A long startup warning (for example PATH aliases under a temporary CODEX_HOME) must not
+  // consume the bound and hide the configuration error the owner needs to repair.
+  const error = lines.findIndex((line) => /^error:/i.test(line));
+  return (error < 0 ? lines : lines.slice(error)).join(' | ').slice(0, 300);
+}
+
+function listingFailure(
+  code: 'HARNESS_NOT_INSTALLED' | 'HARNESS_TURN_FAILED',
+  reason: string,
+): Error {
+  return Object.assign(
+    new Error(
+      `Codex could not list the machine's MCP servers, so the turn did not start: ${reason}`,
+    ),
+    { code, retriable: false, submission: 'definitely-not-submitted' as const },
+  );
+}
+
+/**
+ * Discovery must exclude plugin servers even though execution inherits plugins. Otherwise those
+ * servers would be listed and disabled by serverSwitches, suppressing an enabled plugin's tools.
+ * Never derive this list only from the execution defaults (ADR-0067).
+ */
+export const LISTING_ARGS = [
+  'mcp',
+  'list',
+  '--json',
+  ...['plugins', ...ISOLATED_FEATURES].flatMap((name) => ['--config', `features.${name}=false`]),
+];
+
+/**
+ * The names of the MCP servers the CLI would start in `cwd`, read from the CLI itself so every
+ * configuration layer it loads (user, profile, trusted project) is included.
+ */
+export async function configuredServers(
+  cli: CliCommand | undefined,
+  run: CliRunner,
+  timeoutMs: number,
+  cwd: string | undefined,
+  signal: AbortSignal | undefined,
+): Promise<string[]> {
+  if (!cli) throw listingFailure('HARNESS_NOT_INSTALLED', 'the Codex CLI was not found.');
+  const result = await run({ ...cli, ...(cwd ? { cwd } : {}) }, LISTING_ARGS, timeoutMs, signal);
+  if (result.spawnError !== undefined)
+    throw listingFailure(
+      /enoent/i.test(result.spawnError) ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
+      `the CLI did not run (${result.spawnError}).`,
+    );
+  if (result.code !== 0)
+    throw listingFailure(
+      'HARNESS_TURN_FAILED',
+      `mcp list exited ${result.code}: ${excerpt(result.output)}`,
+    );
+  // Only stdout carries the JSON; warnings or logs the CLI writes to stderr are not part of it.
+  let listed: unknown;
+  try {
+    listed = JSON.parse(result.stdout);
+  } catch {
+    throw listingFailure(
+      'HARNESS_TURN_FAILED',
+      `mcp list printed no JSON: ${excerpt(result.stdout)}`,
+    );
+  }
+  if (
+    !Array.isArray(listed) ||
+    !listed.every((entry) => isTable(entry) && typeof entry['name'] === 'string')
+  )
+    throw listingFailure('HARNESS_TURN_FAILED', 'mcp list printed an unexpected shape.');
+  const names = listed.map((entry) => (entry as { name: string }).name);
+  // Validated before any argument is built: a name the loop cannot pass as one plain key stops
+  // the turn rather than leaving that server enabled (QA423-01).
+  const unusable = names.find((name) => !plainCodexConfigSegment(name));
+  if (unusable !== undefined)
+    throw listingFailure(
+      'HARNESS_TURN_FAILED',
+      `the server name ${JSON.stringify(unusable.slice(0, 100))} cannot be switched off through --config.`,
+    );
+  return names;
+}
