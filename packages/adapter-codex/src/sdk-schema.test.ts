@@ -37,6 +37,17 @@ interface State {
   };
   schemaPresentAtAbort?: boolean;
   schemaDirectoryExistsAfter?: boolean;
+  workSettled: boolean;
+  childAliveAfter?: boolean;
+  publicationWindow?: {
+    finalMarkerExists: boolean;
+    observerWaiting: boolean;
+    workSettled: boolean;
+    pendingFile: string;
+    pendingRecord: State['record'];
+    pendingFileExistsAfter: boolean;
+  };
+  observationError?: { name: string; message: string; code?: string };
 }
 
 afterEach(async () => {
@@ -47,7 +58,11 @@ afterEach(async () => {
   }
 });
 
-async function fixture(mode: Mode, length?: number) {
+async function fixture(
+  mode: Mode,
+  length?: number,
+  controls: { publicationBarrier?: boolean; observerFault?: 'read' | 'parse' } = {},
+) {
   const root = await mkdtemp(join(tmpdir(), 'gg-sdk-schema-'));
   roots.push(root);
   let temp = join(root, 'temp');
@@ -74,6 +89,7 @@ async function fixture(mode: Mode, length?: number) {
       schema,
       recordFile: join(root, 'schema-record.json'),
       stateFile,
+      ...controls,
     }),
   );
   const env = Object.fromEntries(
@@ -86,7 +102,7 @@ async function fixture(mode: Mode, length?: number) {
     ),
   );
   const parentTemp = { TEMP: process.env['TEMP'], TMP: process.env['TMP'] };
-  const output = await execute(process.execPath, [runCase, configFile], {
+  const execution = execute(process.execPath, [runCase, configFile], {
     cwd: root,
     env: {
       ...env,
@@ -102,9 +118,26 @@ async function fixture(mode: Mode, length?: number) {
     windowsHide: true,
     timeout: 6000,
   });
-  expect(output.stderr).toBe('');
+  let failure: unknown;
+  if (controls.observerFault) {
+    try {
+      await execution;
+    } catch (error: unknown) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({ code: 1 });
+  } else {
+    const output = await execution;
+    expect(output.stderr).toBe('');
+  }
   expect({ TEMP: process.env['TEMP'], TMP: process.env['TMP'] }).toEqual(parentTemp);
   const state = JSON.parse(await readFile(stateFile, 'utf8')) as State;
+  if (controls.observerFault) {
+    expect(state.observationError).toBeDefined();
+    expect(failure).toMatchObject({
+      stderr: expect.stringContaining(state.observationError?.message ?? 'Missing observer fault'),
+    });
+  }
   expect(state.actualTemp).toBe(temp);
   for (const directory of unrelated)
     expect(await readFile(join(directory, 'keep'), 'utf8')).toBe(mode);
@@ -141,9 +174,45 @@ it.each(['short', '226-character'].flatMap((label) => modes.map((mode) => ({ lab
       expect(record.schemaPath).toHaveLength(255);
     }
     expect(state.schemaDirectoryExistsAfter).toBe(false);
+    expect(state.workSettled).toBe(true);
+    expect(state.childAliveAfter).toBe(false);
     const ownedNamespace = (names: string[]) =>
       names.filter((name) => name.startsWith('gg-schema-'));
     expect(ownedNamespace(state.entriesAfter)).toEqual(ownedNamespace(state.entriesBefore));
+  },
+  10_000,
+);
+
+it('keeps the abort observer waiting until the complete record is published by rename', async () => {
+  const { state } = await fixture('abort', undefined, { publicationBarrier: true });
+  expect(state.publicationWindow).toMatchObject({
+    finalMarkerExists: false,
+    observerWaiting: true,
+    workSettled: false,
+    pendingFileExistsAfter: false,
+  });
+  expect(state.publicationWindow?.pendingRecord).toEqual(state.record);
+  expect(state.record?.schema).toEqual(schema);
+  expect(state.outcome).toMatchObject({ kind: 'rejected', name: 'AbortError' });
+  expect(state.schemaPresentAtAbort).toBe(true);
+  expect(state.workSettled).toBe(true);
+  expect(state.childAliveAfter).toBe(false);
+  expect(state.schemaDirectoryExistsAfter).toBe(false);
+}, 10_000);
+
+it.each(['read', 'parse'] as const)(
+  'reports the original observer %s fault after aborting and settling the SDK child',
+  async (observerFault) => {
+    const { state } = await fixture('abort', undefined, { observerFault });
+    expect(state.observationError).toMatchObject(
+      observerFault === 'read' ? { name: 'Error', code: 'ENOENT' } : { name: 'SyntaxError' },
+    );
+    expect(state.record?.schema).toEqual(schema);
+    expect(state.outcome).toMatchObject({ kind: 'rejected', name: 'AbortError' });
+    expect(state.workSettled).toBe(true);
+    expect(state.childAliveAfter).toBe(false);
+    expect(state.schemaDirectoryExistsAfter).toBe(false);
+    expect(state.entriesAfter).toEqual(state.entriesBefore);
   },
   10_000,
 );
