@@ -1,0 +1,428 @@
+Source evidence read from git object HEAD=02351e2fb932b3be44e7cc3fb3943a61d568226c tree=d289bb12b943557584c5659bc33447d1baebc2f6
+PR375 commit 35bd31ad ancestor of HEAD: yes
+commit introducing sync catch (git log -S 'notably .cmd/.bat with EINVAL'): 35bd31ad 2026-10-25 Admit a subloop child and its parent link in one transaction; record the child finish once (#320) (#375)
+PROCESS_START_FAILED ever in engine/contracts src (git log -S): ''
+
+=== packages/infrastructure/src/process/scripts.ts:101-136 (blob 834d668f6e04c0e4a1970bd4bde060da2a704933) ===
+  101    run(request: ScriptRunRequest): Promise<ScriptRunResult> {
+  102      const notStarted: ScriptRunResult = {
+  103        state: 'definitely-not-started',
+  104        exitCode: null,
+  105        stdout: '',
+  106        stderr: '',
+  107        stdoutBytes: 0,
+  108        stderrBytes: 0,
+  109        timedOut: false,
+  110        stdoutOverflow: false,
+  111        stderrOverflow: false,
+  112      };
+  113      // Do not spawn and then kill a command whose cancellation is already known.
+  114      if (request.signal.aborted) return Promise.resolve(notStarted);
+  115      const stdout = new BoundedOutputCapture(request.maxStdoutBytes ?? this.maxOutputBytes);
+  116      const stderr = new BoundedOutputCapture(request.maxStderrBytes ?? this.maxOutputBytes);
+  117      return new Promise((resolve) => {
+  118        let child: ChildProcess;
+  119        try {
+  120          child = this.spawnImpl(request.command, request.args, {
+  121            cwd: request.cwd,
+  122            env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
+  123            stdio: ['pipe', 'pipe', 'pipe'],
+  124            windowsHide: true,
+  125            detached: this.platform !== 'win32',
+  126            shell: false,
+  127          });
+  128        } catch {
+  129          // Node rejects some commands synchronously (notably .cmd/.bat with EINVAL).
+  130          resolve({
+  131            ...notStarted,
+  132            stderr: request.maxStderrBytes === undefined ? 'spawn failed: PROCESS_START_FAILED' : '',
+  133          });
+  134          return;
+  135        }
+  136  
+
+=== packages/infrastructure/src/process/scripts.ts:176-215 (blob 834d668f6e04c0e4a1970bd4bde060da2a704933) ===
+  176        const finish = (
+  177          exitCode: number | null,
+  178          state: ScriptRunResult['state'] = 'completed',
+  179          terminationUnconfirmed = false,
+  180        ): void => {
+  181          if (settled) return;
+  182          settled = true;
+  183          if (timer) clearTimeout(timer);
+  184          clearTimeout(cleanupTimer);
+  185          request.signal.removeEventListener('abort', onAbort);
+  186          const errorText = stderr.text();
+  187          resolve({
+  188            state,
+  189            exitCode,
+  190            ...(terminationUnconfirmed ? { terminationUnconfirmed: true as const } : {}),
+  191            timedOut,
+  192            stdout: stdout.text(),
+  193            stdoutBytes: stdout.byteLength,
+  194            stderrBytes: stderr.byteLength,
+  195            stderr:
+  196              state === 'definitely-not-started' && request.maxStderrBytes === undefined
+  197                ? `${errorText}${errorText ? '\n' : ''}spawn failed: PROCESS_START_FAILED`
+  198                : errorText,
+  199            stderrOverflow: stderr.overflow,
+  200            stdoutOverflow: stdout.overflow,
+  201          });
+  202        };
+  203  
+  204        child.on('error', () => {
+  205          if (spawned) kill();
+  206          finish(null, spawned ? 'outcome-uncertain' : 'definitely-not-started');
+  207        });
+  208        child.on('close', (code) => {
+  209          closed = true;
+  210          closeCode = code;
+  211          if (!killing || treeConfirmed) finish(code);
+  212        });
+  213  
+  214        if (request.signal.aborted) onAbort();
+  215        else request.signal.addEventListener('abort', onAbort, { once: true });
+
+=== packages/engine/src/handlers/script.ts:49-115 (blob 808a83c8a2f34ef2e9d2a0ff2aa618df85ec4760) ===
+   49      if (ctx.signal.aborted) throw new RunCancelledError();
+   50      const dispatchId = ctx.services.newId();
+   51      await ctx.services.record({
+   52        type: 'script.dispatched',
+   53        nodeId: ctx.node.id,
+   54        visitId,
+   55        dispatchId,
+   56      });
+   57      const timeout = withTimeout(
+   58        ctx.signal,
+   59        config.timeoutSeconds,
+   60        () => new Error('script timeout'),
+   61      );
+   62      let result;
+   63      try {
+   64        result = await ctx.ports.scripts.run({
+   65          command: config.command,
+   66          args,
+   67          cwd,
+   68          env,
+   69          ...(stdin !== undefined ? { stdin } : {}),
+   70          ...(config.timeoutSeconds !== undefined ? { timeoutMs: config.timeoutSeconds * 1000 } : {}),
+   71          signal: timeout.signal,
+   72        });
+   73      } catch {
+   74        // An unclassified runner rejection cannot prove the command never executed.
+   75        throw new RunFailureError('SCRIPT_OUTCOME_UNCERTAIN', SCRIPT_UNCERTAIN_MESSAGE, {
+   76          nodeId: ctx.node.id,
+   77          script: { visitId, dispatchId, state: 'outcome-uncertain' },
+   78        });
+   79      } finally {
+   80        timeout.dispose();
+   81      }
+   82      if (result.terminationUnconfirmed) {
+   83        throw new RunFailureError(
+   84          'SCRIPT_TERMINATION_UNCONFIRMED',
+   85          'Script process tree termination was not confirmed; stop the process before restarting',
+   86          {
+   87            nodeId: ctx.node.id,
+   88            resumable: false,
+   89            script: { visitId, dispatchId, state: 'outcome-uncertain' },
+   90            details: {
+   91              interruptedByStop:
+   92                timeout.signal.reason instanceof RunFailureError &&
+   93                timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+   94            },
+   95          },
+   96        );
+   97      }
+   98      if (ctx.signal.aborted) throw new RunCancelledError();
+   99      const script = {
+  100        visitId,
+  101        dispatchId,
+  102        state: result.state,
+  103        ...(result.exitCode !== null ? { exitCode: result.exitCode } : {}),
+  104      };
+  105      if (result.state !== 'completed') {
+  106        throw new RunFailureError(
+  107          result.state === 'definitely-not-started'
+  108            ? 'SCRIPT_START_FAILED'
+  109            : 'SCRIPT_OUTCOME_UNCERTAIN',
+  110          result.state === 'definitely-not-started'
+  111            ? 'The script process could not start. Resume tries to start it again.'
+  112            : SCRIPT_UNCERTAIN_MESSAGE,
+  113          { nodeId: ctx.node.id, script },
+  114        );
+  115      }
+
+=== packages/engine/src/run-recovery.ts:85-126 (blob 8a6eff20e80d45ebf440873e3d8074465558a99f) ===
+   85    const uncertain =
+   86      run.status === 'failed' &&
+   87      (run.failure?.code === 'SCRIPT_OUTCOME_UNCERTAIN' ||
+   88        run.failure?.script?.state === 'outcome-uncertain');
+   89    const uncertainNode = run.failure?.nodeId ?? run.currentNodeId;
+   90    const missing =
+   91      run.status === 'failed' &&
+   92      run.failure?.code === 'HARNESS_SESSION_MISSING' &&
+   93      !(await childSessionRecovered(ports, run));
+   94    const active =
+   95      ['queued', 'running', 'waiting'].includes(run.status) ||
+   96      (run.status === 'failed' && facts.lifecycle?.type === 'run.resumed');
+   97    const resume =
+   98      common ??
+   99      (run.cancelRequestedAt || run.status === 'cancelled'
+  100        ? refused('RUN_CANCELLED', 'This run was cancelled; Resume is unavailable.')
+  101        : active
+  102          ? refused('RUN_ACTIVE', 'This run is still active. Pause it before continuing with Resume.')
+  103          : missing
+  104            ? refused(
+  105                'SESSION_RECOVERY_REQUIRED',
+  106                'Choose Start fresh session on the failed inference run before resuming, or use Replay for a deliberate new run.',
+  107              )
+  108            : run.status === 'paused'
+  109              ? allowed
+  110              : run.status === 'failed' &&
+  111                  (run.failure?.resumable || run.failure?.code === 'HARNESS_SESSION_MISSING')
+  112                ? uncertain
+  113                  ? refused(
+  114                      'SCRIPT_CONSENT_REQUIRED',
+  115                      'The script may already have produced its effect. Choose Recover script to explicitly retry.',
+  116                    )
+  117                  : allowed
+  118                : run.status === 'failed'
+  119                  ? refused(
+  120                      'FAILURE_NOT_RESUMABLE',
+  121                      'This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run.',
+  122                    )
+  123                  : refused(
+  124                      'RUN_FINISHED',
+  125                      'This run has finished. Resume only continues paused runs or supported failures.',
+  126                    ));
+
+=== packages/engine/src/run-manager.ts:1324-1343 (blob cda770decf420af2ad3534628b86c58a940a2d5c) ===
+ 1324          if (
+ 1325            !recovery.resume.allowed &&
+ 1326            !(
+ 1327              recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED' &&
+ 1328              command?.retryUncertainScript &&
+ 1329              recovery.scriptConsent
+ 1330            )
+ 1331          )
+ 1332            throw new RecoveryRefusedError(recovery.resume.code, recovery.resume.message);
+ 1333          try {
+ 1334            return await this.resumeRun(
+ 1335              current,
+ 1336              observedSeq,
+ 1337              actor,
+ 1338              command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
+ 1339              await this.reviewedChildRecovery(
+ 1340                current,
+ 1341                command?.retryUncertainScript && recovery.scriptConsent ? true : undefined,
+ 1342              ),
+ 1343            );
+
+=== packages/engine/src/run-manager.ts:2626-2683 (blob cda770decf420af2ad3534628b86c58a940a2d5c) ===
+ 2626            await this.interruptRun(runId);
+ 2627            return;
+ 2628          }
+ 2629          if (
+ 2630            !terminationUnconfirmed &&
+ 2631            isDeadlineAbort(controller.signal) &&
+ 2632            !(await this.mustGet(runId)).cancelRequestedAt
+ 2633          ) {
+ 2634            await this.failRun(runId, deadlineFailure().toFailure(nodeId));
+ 2635            return;
+ 2636          }
+ 2637          if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
+ 2638            await this.finalizeCancel(runId);
+ 2639            return;
+ 2640          }
+ 2641          const providerFailure =
+ 2642            !(error instanceof RunFailureError) && isDeciderError(error)
+ 2643              ? deciderFailure(error)
+ 2644              : undefined;
+ 2645          const failure =
+ 2646            error instanceof InternalRunFailureError
+ 2647              ? error
+ 2648              : error instanceof RunFailureError
+ 2649                ? error.toFailure(nodeId)
+ 2650                : providerFailure
+ 2651                  ? new InternalRunFailureError(providerFailure.message, {
+ 2652                      nodeId,
+ 2653                      details: providerFailure.details,
+ 2654                    })
+ 2655                  : {
+ 2656                      code: 'INTERNAL_ERROR' as const,
+ 2657                      message: INTERNAL_FAILURE_MESSAGE,
+ 2658                      nodeId,
+ 2659                      resumable: true,
+ 2660                    };
+ 2661          if (providerFailure)
+ 2662            this.ports.logger.warn(
+ 2663              { runId, nodeId, ...providerFailure.diagnostic },
+ 2664              'node provider failed',
+ 2665            );
+ 2666          else
+ 2667            this.ports.logger.error(
+ 2668              {
+ 2669                runId,
+ 2670                nodeId,
+ 2671                failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
+ 2672                ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+ 2673                  ? { error: errorDiagnostic(error) }
+ 2674                  : {}),
+ 2675              },
+ 2676              'node failed',
+ 2677            );
+ 2678          await this.failRun(
+ 2679            runId,
+ 2680            failure,
+ 2681            error instanceof RunFailureError ? error.options.records : undefined,
+ 2682          );
+ 2683          return;
+
+=== packages/engine/src/run-manager.ts:3053-3068 (blob cda770decf420af2ad3534628b86c58a940a2d5c) ===
+ 3053      // A bookkeeping error is not a script outcome. Classify against durable evidence before
+ 3054      // recording either handler failures (progress writes) or outer failures (completion writes).
+ 3055      const engineAuthored = authoredFailure instanceof InternalRunFailureError;
+ 3056      const classified = classifyScriptFailure(
+ 3057        events,
+ 3058        runId,
+ 3059        engineAuthored ? authoredFailure.toFailure() : authoredFailure,
+ 3060      );
+ 3061      // Only an explicit engine-owned projection can supply public copy for an internal cause.
+ 3062      const { details: _privateDetails, ...fields } = classified;
+ 3063      const failure = boundedFailure(
+ 3064        classified.code === 'INTERNAL_ERROR' && !engineAuthored
+ 3065          ? { ...fields, message: INTERNAL_FAILURE_MESSAGE }
+ 3066          : classified,
+ 3067      );
+ 3068      await this.ports.events.append(runId, [...records, { type: 'run.failed', failure }]);
+
+=== packages/contracts/src/run.ts:42-60 (blob c094ade5e68793b6a9ca7a1afa84043d4a57453f) ===
+   42  export const RunErrorCodeSchema = z.enum([
+   43    'HARNESS_NOT_INSTALLED',
+   44    'HARNESS_NOT_AUTHENTICATED',
+   45    'HARNESS_QUOTA_EXHAUSTED',
+   46    'HARNESS_TURN_FAILED',
+   47    'HARNESS_TRANSPORT_FAILED',
+   48    'HARNESS_OUTPUT_LIMIT',
+   49    'RUN_DEADLINE_EXCEEDED',
+   50    'STRUCTURED_COMPLETION_TIMEOUT',
+   51    'RUN_INTERRUPTED_BY_STOP',
+   52    'SCRIPT_TERMINATION_UNCONFIRMED',
+   53    'HARNESS_DELIVERY_UNCERTAIN',
+   54    'HARNESS_SESSION_MISSING',
+   55    'HARNESS_TERMINATION_UNCONFIRMED',
+   56    'WORKING_DIRECTORY_MISSING',
+   57    'SCRIPT_EXIT_CODE',
+   58    'SCRIPT_START_FAILED',
+   59    'SCRIPT_OUTCOME_UNCERTAIN',
+   60    'SCRIPT_TIMEOUT',
+
+=== packages/contracts/src/run.ts:98-111 (blob c094ade5e68793b6a9ca7a1afa84043d4a57453f) ===
+   98  export const ScriptExecutionStateSchema = z.enum([
+   99    'definitely-not-started',
+  100    'outcome-uncertain',
+  101    'completed',
+  102  ]);
+  103  export type ScriptExecutionState = z.infer<typeof ScriptExecutionStateSchema>;
+  104  
+  105  /** The logical visit survives retries; each dispatched process has a fresh dispatch identity. */
+  106  export const ScriptFailureSchema = z.strictObject({
+  107    visitId: z.string().min(1).max(128),
+  108    dispatchId: UlidSchema.optional(),
+  109    state: ScriptExecutionStateSchema,
+  110    exitCode: z.number().int().optional(),
+  111  });
+
+=== packages/engine/src/handlers/heartbeat.ts:60-92 (blob 3bf8929da7fcad24a78a74a8775d3878f2a742c2) ===
+   60        let result;
+   61        try {
+   62          result = await ctx.ports.scripts.run({
+   63            command: spec.command,
+   64            args,
+   65            cwd,
+   66            env: {},
+   67            timeoutMs: spec.timeoutSeconds * 1000,
+   68            signal: timeout.signal,
+   69          });
+   70        } finally {
+   71          timeout.dispose();
+   72        }
+   73        if (
+   74          result.terminationUnconfirmed &&
+   75          timeout.signal.reason instanceof RunFailureError &&
+   76          timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP'
+   77        ) {
+   78          throw new RunFailureError(
+   79            'SCRIPT_TERMINATION_UNCONFIRMED',
+   80            'Heartbeat probe termination was not confirmed during explicit stop',
+   81            { nodeId: ctx.node.id, resumable: false, details: { interruptedByStop: true } },
+   82          );
+   83        }
+   84        return toJson({
+   85          exitCode: result.exitCode,
+   86          // This UTF-16 display slice is not a byte cap.
+   87          stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
+   88          stderr: result.stderr.slice(-4000),
+   89          json: jsonOrText(result.stdout),
+   90          timedOut: result.timedOut || timeout.timedOut(),
+   91          ...(result.terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
+   92        });
+
+=== apps/api/src/triggers/poll.ts:259-279 (blob 80e2bb79f07f509875545817ad0b53d74bbd3e5b) ===
+  259        case 'script': {
+  260          const args: string[] = [];
+  261          for (const arg of spec.args) args.push(await renderTemplate(arg, view));
+  262          const result = await this.deps.scripts.run({
+  263            command: spec.command,
+  264            ...(itemsMode ? { maxStdoutBytes: PROBE_MAX_BODY_BYTES } : {}),
+  265            args,
+  266            cwd: this.deps.scriptCwd,
+  267            env: {},
+  268            timeoutMs: spec.timeoutSeconds * 1000,
+  269            signal: AbortSignal.timeout(spec.timeoutSeconds * 1000 + 1000),
+  270          });
+  271          if (itemsMode) return itemsScriptProbe(result);
+  272          return {
+  273            exitCode: result.exitCode,
+  274            // This UTF-16 display slice is not a byte cap.
+  275            stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
+  276            stderr: result.stderr.slice(-4000),
+  277            json: jsonOrText(result.stdout),
+  278            timedOut: result.timedOut,
+  279          };
+
+=== docs/05-execution-engine.md:489-491 (blob 4081943ee18baf66d7b17cd5d2e89b36e5920b73) ===
+  489  Before calling the process runner the script handler appends `script.dispatched { nodeId, visitId, dispatchId }` durably. `visitId` is `<runId>:<first node.started sequence since that node last finished>`; retries retain the visit and allocate a new dispatch ID. The runner distinguishes `definitely-not-started` (synchronous refusal, missing command or an already-aborted request), `outcome-uncertain` (a dispatched process whose disposition is unknown), and `completed` (observed process termination). A proven refusal fails with resumable `SCRIPT_START_FAILED`; ordinary explicit Resume tries it again. A completed nonzero exit retains `SCRIPT_EXIT_CODE`; timeouts retain `SCRIPT_TIMEOUT`.
+  490  
+  491  Script failures after dispatch carry `failure.script = { visitId, dispatchId, state, exitCode? }`; the dispatch ID is absent when no durable dispatch identity exists, including an interrupted pre-change visit. A `run.failed` disposes a pending dispatch only if its script provenance matches the node, visit and dispatch. If progress or completion persistence fails after dispatch, the failure recorder preserves `SCRIPT_OUTCOME_UNCERTAIN` and that provenance instead of replacing it with a generic bookkeeping error. A known typed completed/start-failed disposition retains its class. A parent subloop failure preserves its child's typed script provenance and identifies the child run, so nested recovery exposes the same dispatch evidence. Forced stop, run deadline and unconfirmed process termination retain their non-resumable failure causes alongside the uncertain script provenance. Only explicit script-consent recovery leaves an uncertain failed run; its observed Resume knowingly retries the same visit with a new dispatch. Plain Resume refuses with `SCRIPT_CONSENT_REQUIRED`. A crash during that new dispatch is uncertain again. A crash after process exit but before recording a disposition is also uncertain. The inspector explains that the previous attempt may already have produced its effect: **Recover script** offers **Resume**, **Replay** from the failed node, and **Cancel** (leave the run failed without running anything). API and MCP return the same failure and provenance; MCP must obtain the user's explicit retry choice. No exactly-once external-effect guarantee is made; Resume or Replay may repeat an effect.
+
+=== docs/04-node-catalog.md:152-152 (blob 1fb8fc9499bbed7da7432fbd0dce3911421ba87d) ===
+  152  Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, with `failure.script.state: completed` and the exit code. A proven process-start refusal fails with resumable `SCRIPT_START_FAILED` (`definitely-not-started`). Before calling the process runner the engine durably records `script.dispatched { nodeId, visitId, dispatchId }`. A dispatch without a matching recorded outcome fails with resumable `SCRIPT_OUTCOME_UNCERTAIN` (`outcome-uncertain`), including when writing progress or completion fails. A generic bookkeeping failure does not dispose the dispatch. Re-entering an unfinished script visit from an earlier build without a dispatch marker is also uncertain: missing provenance cannot prove the command never ran. Such visits never run automatically after upgrading. The previous attempt may already have produced its effect. In the inspector choose **Recover script**, then **Resume** to rerun knowingly, **Replay** to start a new run from that node, or **Cancel** to leave the run failed. Resume and Replay can repeat the effect; this is not an exactly-once guarantee (05).
+
+=== docs/guide/03-run-and-observe.md:273-273 (blob ce6476cc78d403c0934dfd3766b11973e4ad0ffc) ===
+  273  `SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.
+
+=== pre-fix runner (35bd31ad^:packages/infrastructure/src/process/scripts.ts) spawn block ===
+   95      return new Promise((resolve) => {
+   96        const child = this.spawnImpl(request.command, request.args, {
+   97          cwd: request.cwd,
+   98          env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
+   99          stdio: ['pipe', 'pipe', 'pipe'],
+  100          windowsHide: true,
+  101          detached: this.platform !== 'win32',
+  102          shell: false,
+  103        });
+=== pre-fix handler (35bd31ad^:packages/engine/src/handlers/script.ts) runner call ===
+   51      let result;
+   52      try {
+   53        result = await ctx.ports.scripts.run({
+   54          command: config.command,
+   55          args,
+   56          cwd,
+   57          env,
+   58          ...(stdin !== undefined ? { stdin } : {}),
+   59          ...(config.timeoutSeconds !== undefined ? { timeoutMs: config.timeoutSeconds * 1000 } : {}),
+   60          signal: timeout.signal,
+   61        });
+   62      } finally {
+   63        timeout.dispose();

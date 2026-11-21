@@ -1,0 +1,2161 @@
+{
+  "schema": "graphgoblin-qa-administrative-case-replay/1",
+  "scope": "Original builder bytes evaluated in a VM with only confined evidence reads and one in-memory captured write. No product fixtures, native processes, engine/API, build, tests or provider are executed. The original builder and observations bytes remain unchanged.",
+  "runtime": "v22.23.4",
+  "originalBuilder": {
+    "path": "evidence/fixtures/build-observations.mjs",
+    "sha256": "d3da0e8dec8e0ffd9b3d453c40ad819609e2070690ad45085dff54dbce147816"
+  },
+  "originalObservations": {
+    "path": "evidence/observations.json",
+    "sha256": "305fd4fdb3009c98f91f3c6aa026093c4c2631a2c15fd8de91ce1573a4a9c971"
+  },
+  "comparison": {
+    "all64CasesIdentical": true,
+    "summaryIdentical": true,
+    "sourceBindingIdentical": true,
+    "runtimeBindingIdentical": true,
+    "ignoredField": "generatedAt (administrative replay time)"
+  },
+  "totals": {
+    "PASS": 63,
+    "OBSERVED-AS-PREDICTED": 1
+  },
+  "typedCounts": {
+    "acceptance": {
+      "PASS": 33
+    },
+    "control": {
+      "PASS": 22
+    },
+    "discriminating-control": {
+      "PASS": 2
+    },
+    "adjacent-pre-existing-observation": {
+      "OBSERVED-AS-PREDICTED": 1
+    },
+    "supporting": {
+      "PASS": 6
+    }
+  },
+  "uniqueCases": 64,
+  "providerFinalWordingsPreserved": true,
+  "accountingClarification": "64 total records comprise 63 PASS records plus one adjacent-pre-existing-observation with result OBSERVED-AS-PREDICTED. The original report/provider wording 64 PASS overstates PASS by one and is preserved unchanged. No failure or assertion is waived by this clarification.",
+  "rawPredicateInputs": [
+    {
+      "path": "evidence/raw/n0-node-spawn-shape.json",
+      "bytes": 8570,
+      "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+    },
+    {
+      "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+      "bytes": 20,
+      "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+    },
+    {
+      "path": "evidence/raw/n1-process-scripts.json",
+      "bytes": 10939,
+      "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+    },
+    {
+      "path": "evidence/raw/n1-process-scripts.exit.txt",
+      "bytes": 20,
+      "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+    },
+    {
+      "path": "evidence/raw/e-engine-composition.json",
+      "bytes": 61434,
+      "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+    },
+    {
+      "path": "evidence/raw/e-engine-composition.exit.txt",
+      "bytes": 20,
+      "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+    },
+    {
+      "path": "evidence/raw/a-api.json",
+      "bytes": 163403,
+      "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+    },
+    {
+      "path": "evidence/raw/a-api-server.log",
+      "bytes": 25851,
+      "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+    },
+    {
+      "path": "evidence/raw/a-api.exit.txt",
+      "bytes": 20,
+      "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+    },
+    {
+      "path": "evidence/raw/a6-api-restart.json",
+      "bytes": 4862,
+      "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+    },
+    {
+      "path": "evidence/raw/a6-api-restart-server.log",
+      "bytes": 6495,
+      "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+    },
+    {
+      "path": "evidence/raw/m-mutant-control.json",
+      "bytes": 2091,
+      "sha256": "c304614bc92c7a592ac4e8ee11983dcbe394154a2fa93f74b34fba9b6cc0b299"
+    },
+    {
+      "path": "evidence/raw/h-heartbeat-probe.json",
+      "bytes": 2053,
+      "sha256": "db20639db3ba7ef4a335aac778c529082801b80b96a2705758e1cf5a82fa2658"
+    },
+    {
+      "path": "evidence/raw/u-infra-scripts.log",
+      "bytes": 329,
+      "sha256": "c9b89179f54ab23a7dd4fb174551d83ae38c8114834376c9bb88d9d909116382"
+    },
+    {
+      "path": "evidence/raw/u-infra-script-recovery.log",
+      "bytes": 337,
+      "sha256": "fdfe792ea6f416cb8e92099630c45109de2fce41ef5b32e31ebb167d784fb210"
+    },
+    {
+      "path": "evidence/raw/u-engine-script-recovery.log",
+      "bytes": 313,
+      "sha256": "08e2622ecffee8c4a54f0db0c8f3e1468015b52d809f293a941381376cebf5d0"
+    },
+    {
+      "path": "evidence/raw/u-engine-run-recovery.log",
+      "bytes": 310,
+      "sha256": "b900f40266d67858ae0e3981c1ecdae457650e6b38d42c4af7a437294a2cfe10"
+    },
+    {
+      "path": "evidence/raw/u-contracts-script-provenance.log",
+      "bytes": 331,
+      "sha256": "a3fa8542a38b830f05c991f3d083afe618fd043967682147b23e4d1b82eea395"
+    },
+    {
+      "path": "evidence/raw/u-infra-verbose.log",
+      "bytes": 6895,
+      "sha256": "b0fd604a67318a891070cd797b818489a4e45f48b95527906e30914997ec3507"
+    },
+    {
+      "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+      "bytes": 1209,
+      "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+    },
+    {
+      "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+      "bytes": 6761,
+      "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+    },
+    {
+      "path": "evidence/raw/n1-process-scripts.stdout.txt",
+      "bytes": 1509,
+      "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+    },
+    {
+      "path": "evidence/fixtures/n1-process-scripts.mjs",
+      "bytes": 7051,
+      "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+    },
+    {
+      "path": "evidence/raw/e-engine-composition.stdout.txt",
+      "bytes": 4602,
+      "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+    },
+    {
+      "path": "evidence/fixtures/e-engine-composition.mjs",
+      "bytes": 9204,
+      "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+    },
+    {
+      "path": "evidence/raw/a-api.stdout.txt",
+      "bytes": 4914,
+      "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+    },
+    {
+      "path": "evidence/fixtures/a-api.mjs",
+      "bytes": 15209,
+      "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+    },
+    {
+      "path": "evidence/raw/90-cleanup-proof.txt",
+      "bytes": 3022,
+      "sha256": "1c646a645d1264a8b3d441a29fcac51958941249dfad06c7c419797c17aee888"
+    },
+    {
+      "path": "evidence/raw/a6-api-restart.stdout.txt",
+      "bytes": 3327,
+      "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+    },
+    {
+      "path": "evidence/raw/a6-api-restart.exit.txt",
+      "bytes": 20,
+      "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+    },
+    {
+      "path": "evidence/fixtures/a6-api-restart.mjs",
+      "bytes": 6540,
+      "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+    },
+    {
+      "path": "evidence/raw/m-mutant-control.stdout.txt",
+      "bytes": 1066,
+      "sha256": "919a9d2b1c2d42034e7452dc5676c4d106ffe7dc5a9dce84b17bba7033a06a4d"
+    },
+    {
+      "path": "evidence/fixtures/m-mutant-control.mjs",
+      "bytes": 5898,
+      "sha256": "4c220ad033a4d2e49c11ea2d41f57aa9a95803c9a9ba75d58d7f73e9ddf0e6e6"
+    },
+    {
+      "path": "evidence/work/m-mutant-scripts.mjs",
+      "bytes": 8563,
+      "sha256": "5faae0c669280579f9f2a9b0e255876af2152ec1e78afee73be6b928d895766c"
+    },
+    {
+      "path": "evidence/raw/h-heartbeat-probe.stdout.txt",
+      "bytes": 586,
+      "sha256": "f6f6a8a48ea0ab1845dd737dec2a28da8a867c469ae9b8b73c176d04dc41fb08"
+    },
+    {
+      "path": "evidence/fixtures/h-heartbeat-probe.mjs",
+      "bytes": 3438,
+      "sha256": "adcbd033bce2c3d1faa4d751b5802ffb44c2320abb5c80668d180d2cb9adc8ca"
+    }
+  ],
+  "cases": [
+    {
+      "id": "N0-cmd-abs",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-bat-abs",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmd-upper",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-bat-mixed",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmd-trailing-dot",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmd-trailing-space",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmd-with-args",
+      "kind": "acceptance",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-shim-extensionless",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-missing-exe",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmdexe-cmd",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-cmdexe-bat",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-node-marker",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N0-resources",
+      "kind": "control",
+      "tier": "N0",
+      "evidenceTier": "native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.json",
+          "bytes": 8570,
+          "sha256": "99ede531865eb9b7d486a5d68a57352b27f2e94a23ac893a0cf4ede2a8c922e9"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.stdout.txt",
+          "bytes": 1209,
+          "sha256": "db9255c2f946cc13380a07d476cb91ccf449fa085216d49fbddfe57a2875aa53"
+        },
+        {
+          "path": "evidence/raw/n0-node-spawn-shape.exit.txt",
+          "bytes": 20,
+          "sha256": "5360743498781ea582c8f62625ab7be82d8827cdc8236597cf449142ecffb439"
+        },
+        {
+          "path": "evidence/fixtures/n0-node-spawn-shape.mjs",
+          "bytes": 6761,
+          "sha256": "01f1a885786cd18dabcb85da442ea75f729b456e9e3007efe82482a769c8ee22"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmd",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-bat",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmd-upper",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmd-timeout30s-stdin",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmd-maxStderrBytes0",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-missing-exe-timeout30s",
+      "kind": "control",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmdexe-cmd",
+      "kind": "control",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-node-marker",
+      "kind": "control",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-preaborted-node-marker",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-cmd-repeat-200",
+      "kind": "acceptance",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "N1-process-exit",
+      "kind": "control",
+      "tier": "N1",
+      "evidenceTier": "native-os-process+built-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/n1-process-scripts.json",
+          "bytes": 10939,
+          "sha256": "a1435a7bc84af74319f95d5194f7099e67eaf5136f0f0023a3e21dc1085cd9ab"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.stdout.txt",
+          "bytes": 1509,
+          "sha256": "dea0d13445e3a0c9a47c8e8f3eacd2df0bd56b7aa9a5a62b52816780bbef3611"
+        },
+        {
+          "path": "evidence/raw/n1-process-scripts.exit.txt",
+          "bytes": 20,
+          "sha256": "b1d035715dc546778b3e2627e1caf5d561c41205ffa1a00f476731da76fc226a"
+        },
+        {
+          "path": "evidence/fixtures/n1-process-scripts.mjs",
+          "bytes": 7051,
+          "sha256": "d71dfc5c511b8f69966d04d37ce1dfb1d2927e19f09dbe75cf52697ae423fefe"
+        }
+      ]
+    },
+    {
+      "id": "E1-cmd-first",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E2-bat-first",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E3-missing-exe-first",
+      "kind": "control",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E1-cmd-manager-restart",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E1-cmd-plain-resume",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E1-cmd-stale-resume",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E2-bat-plain-resume",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E2-bat-stale-resume",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E4-node-marker",
+      "kind": "control",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E5-cmdexe-explicit-shell",
+      "kind": "control",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E6-cancel-precedence-seam",
+      "kind": "acceptance",
+      "tier": "E-seam",
+      "evidenceTier": "engine-public-methods+native-runner+timing-seam",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "E-no-internal-error",
+      "kind": "acceptance",
+      "tier": "E",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/e-engine-composition.json",
+          "bytes": 61434,
+          "sha256": "8df6cd8dee258401e6da03017a417438f31d11aff5f2d0aeb0b785d100d0e9f3"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.stdout.txt",
+          "bytes": 4602,
+          "sha256": "7f2e686c37e4028605f93b9292af8817f314ecfaef151f9f20d80b1c6d279275"
+        },
+        {
+          "path": "evidence/raw/e-engine-composition.exit.txt",
+          "bytes": 20,
+          "sha256": "5ff2924256e7df78dbab9919ccf6f82b85e834102a909a67ca4be71500be51e0"
+        },
+        {
+          "path": "evidence/fixtures/e-engine-composition.mjs",
+          "bytes": 9204,
+          "sha256": "8bdb14baefeea78eba083cb9bfdb371a8c50373d2f82e4033140a26d8254188e"
+        }
+      ]
+    },
+    {
+      "id": "A1-cmd-first",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A2-bat-first",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A3-missing-exe-first",
+      "kind": "control",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A1-cmd-plain-resume",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A2-bat-plain-resume",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A1-cmd-stale-resume",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A1-cmd-replay-no-consent",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A3-repaired-explicit-resume",
+      "kind": "control",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A4-node-marker",
+      "kind": "control",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A5-cmdexe-explicit-shell",
+      "kind": "control",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A-server-log",
+      "kind": "acceptance",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        }
+      ]
+    },
+    {
+      "id": "A-cleanup",
+      "kind": "control",
+      "tier": "A",
+      "evidenceTier": "public-api-http+sqlite+native-runner",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a-api.json",
+          "bytes": 163403,
+          "sha256": "96cbc177844660af4178860326f7cb4ba6b50d06e317f40afad42b086f3dc54c"
+        },
+        {
+          "path": "evidence/raw/a-api.stdout.txt",
+          "bytes": 4914,
+          "sha256": "f5c7fa7861a80413bec35792c78816e0ce78c01a3fca68b25a4022c952eca192"
+        },
+        {
+          "path": "evidence/raw/a-api.exit.txt",
+          "bytes": 20,
+          "sha256": "beb5dff9056b4d91a48f9a4c01beb3f60cee109d324bab9ebf382e08a1b77a77"
+        },
+        {
+          "path": "evidence/raw/a-api-server.log",
+          "bytes": 25851,
+          "sha256": "54487f48e2dcd307bc1cef0e12c5eacf050dfbdb2df35d61e0bb50fedc864dcd"
+        },
+        {
+          "path": "evidence/fixtures/a-api.mjs",
+          "bytes": 15209,
+          "sha256": "eb4eb99d4d1718a3abffbe432017f7b8e9d24405d8cfa53e9ed089876b7f5fa0"
+        },
+        {
+          "path": "evidence/raw/90-cleanup-proof.txt",
+          "bytes": 3022,
+          "sha256": "1c646a645d1264a8b3d441a29fcac51958941249dfad06c7c419797c17aee888"
+        }
+      ]
+    },
+    {
+      "id": "A6-A1-cmd",
+      "kind": "acceptance",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-A1-cmd-replay",
+      "kind": "acceptance",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-A2-bat",
+      "kind": "acceptance",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-A3-missing-then-repaired-resume",
+      "kind": "control",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-A4-node-marker",
+      "kind": "control",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-A5-cmdexe-explicit-shell",
+      "kind": "control",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        }
+      ]
+    },
+    {
+      "id": "A6-markers-log-cleanup",
+      "kind": "control",
+      "tier": "A6",
+      "evidenceTier": "public-api-http+sqlite+process-restart",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/a6-api-restart.json",
+          "bytes": 4862,
+          "sha256": "e360f3d49f79696483103c35bc21cd39694f5c9b38f6c051273cf07cda2c4c34"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.stdout.txt",
+          "bytes": 3327,
+          "sha256": "9623a8bfbd9b041fb61013df37c5f2adb39e84eb9a171f8c438914b149533f04"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart.exit.txt",
+          "bytes": 20,
+          "sha256": "0efc56a9bdd8137d1cb1379f36433abadc56b93c9d6830b1324225e655591b4b"
+        },
+        {
+          "path": "evidence/raw/a6-api-restart-server.log",
+          "bytes": 6495,
+          "sha256": "07eaabfe47a0dff31baa9e1d7dc49d8c45d11a89d1800307a5055bd947464fac"
+        },
+        {
+          "path": "evidence/fixtures/a6-api-restart.mjs",
+          "bytes": 6540,
+          "sha256": "6f8441658a9977b5532da17c4e44ad87b69237d71437949a45b21ee6086ff172"
+        },
+        {
+          "path": "evidence/raw/90-cleanup-proof.txt",
+          "bytes": 3022,
+          "sha256": "1c646a645d1264a8b3d441a29fcac51958941249dfad06c7c419797c17aee888"
+        }
+      ]
+    },
+    {
+      "id": "M1-mutant-direct",
+      "kind": "discriminating-control",
+      "tier": "M",
+      "evidenceTier": "mutant-control(non-production)+native-os-process",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/m-mutant-control.json",
+          "bytes": 2091,
+          "sha256": "c304614bc92c7a592ac4e8ee11983dcbe394154a2fa93f74b34fba9b6cc0b299"
+        },
+        {
+          "path": "evidence/raw/m-mutant-control.stdout.txt",
+          "bytes": 1066,
+          "sha256": "919a9d2b1c2d42034e7452dc5676c4d106ffe7dc5a9dce84b17bba7033a06a4d"
+        },
+        {
+          "path": "evidence/fixtures/m-mutant-control.mjs",
+          "bytes": 5898,
+          "sha256": "4c220ad033a4d2e49c11ea2d41f57aa9a95803c9a9ba75d58d7f73e9ddf0e6e6"
+        },
+        {
+          "path": "evidence/work/m-mutant-scripts.mjs",
+          "bytes": 8563,
+          "sha256": "5faae0c669280579f9f2a9b0e255876af2152ec1e78afee73be6b928d895766c"
+        }
+      ]
+    },
+    {
+      "id": "M2-mutant-through-current-engine",
+      "kind": "discriminating-control",
+      "tier": "M",
+      "evidenceTier": "mutant-control(non-production)+engine-public-methods",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/m-mutant-control.json",
+          "bytes": 2091,
+          "sha256": "c304614bc92c7a592ac4e8ee11983dcbe394154a2fa93f74b34fba9b6cc0b299"
+        },
+        {
+          "path": "evidence/raw/m-mutant-control.stdout.txt",
+          "bytes": 1066,
+          "sha256": "919a9d2b1c2d42034e7452dc5676c4d106ffe7dc5a9dce84b17bba7033a06a4d"
+        },
+        {
+          "path": "evidence/fixtures/m-mutant-control.mjs",
+          "bytes": 5898,
+          "sha256": "4c220ad033a4d2e49c11ea2d41f57aa9a95803c9a9ba75d58d7f73e9ddf0e6e6"
+        },
+        {
+          "path": "evidence/work/m-mutant-scripts.mjs",
+          "bytes": 8563,
+          "sha256": "5faae0c669280579f9f2a9b0e255876af2152ec1e78afee73be6b928d895766c"
+        }
+      ]
+    },
+    {
+      "id": "H1-heartbeat-script-probe-cmd",
+      "kind": "adjacent-pre-existing-observation",
+      "tier": "H",
+      "evidenceTier": "engine-public-methods+native-runner",
+      "result": "OBSERVED-AS-PREDICTED",
+      "evidence": [
+        {
+          "path": "evidence/raw/h-heartbeat-probe.json",
+          "bytes": 2053,
+          "sha256": "db20639db3ba7ef4a335aac778c529082801b80b96a2705758e1cf5a82fa2658"
+        },
+        {
+          "path": "evidence/raw/h-heartbeat-probe.stdout.txt",
+          "bytes": 586,
+          "sha256": "f6f6a8a48ea0ab1845dd737dec2a28da8a867c469ae9b8b73c176d04dc41fb08"
+        },
+        {
+          "path": "evidence/fixtures/h-heartbeat-probe.mjs",
+          "bytes": 3438,
+          "sha256": "adcbd033bce2c3d1faa4d751b5802ffb44c2320abb5c80668d180d2cb9adc8ca"
+        }
+      ]
+    },
+    {
+      "id": "U1-infra-scripts",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-infra-scripts.log",
+          "bytes": 329,
+          "sha256": "c9b89179f54ab23a7dd4fb174551d83ae38c8114834376c9bb88d9d909116382"
+        }
+      ]
+    },
+    {
+      "id": "U2-infra-script-recovery",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-infra-script-recovery.log",
+          "bytes": 337,
+          "sha256": "fdfe792ea6f416cb8e92099630c45109de2fce41ef5b32e31ebb167d784fb210"
+        }
+      ]
+    },
+    {
+      "id": "U3-engine-script-recovery",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-engine-script-recovery.log",
+          "bytes": 313,
+          "sha256": "08e2622ecffee8c4a54f0db0c8f3e1468015b52d809f293a941381376cebf5d0"
+        }
+      ]
+    },
+    {
+      "id": "U4-engine-run-recovery",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-engine-run-recovery.log",
+          "bytes": 310,
+          "sha256": "b900f40266d67858ae0e3981c1ecdae457650e6b38d42c4af7a437294a2cfe10"
+        }
+      ]
+    },
+    {
+      "id": "U5-contracts-script-provenance",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-contracts-script-provenance.log",
+          "bytes": 331,
+          "sha256": "a3fa8542a38b830f05c991f3d083afe618fd043967682147b23e4d1b82eea395"
+        }
+      ]
+    },
+    {
+      "id": "U6-infra-native-verbose",
+      "kind": "supporting",
+      "tier": "U",
+      "evidenceTier": "existing-unit-tests(supporting)",
+      "result": "PASS",
+      "evidence": [
+        {
+          "path": "evidence/raw/u-infra-verbose.log",
+          "bytes": 6895,
+          "sha256": "b0fd604a67318a891070cd797b818489a4e45f48b95527906e30914997ec3507"
+        }
+      ]
+    }
+  ],
+  "originalBuilderConsole": [
+    "{\"acceptance\":{\"PASS\":33},\"control\":{\"PASS\":22},\"discriminating-control\":{\"PASS\":2},\"adjacent-pre-existing-observation\":{\"OBSERVED-AS-PREDICTED\":1},\"supporting\":{\"PASS\":6}}",
+    "PASS                   acceptance                         N0-cmd-abs",
+    "PASS                   acceptance                         N0-bat-abs",
+    "PASS                   acceptance                         N0-cmd-upper",
+    "PASS                   acceptance                         N0-bat-mixed",
+    "PASS                   acceptance                         N0-cmd-trailing-dot",
+    "PASS                   acceptance                         N0-cmd-trailing-space",
+    "PASS                   acceptance                         N0-cmd-with-args",
+    "PASS                   control                            N0-shim-extensionless",
+    "PASS                   control                            N0-missing-exe",
+    "PASS                   control                            N0-cmdexe-cmd",
+    "PASS                   control                            N0-cmdexe-bat",
+    "PASS                   control                            N0-node-marker",
+    "PASS                   control                            N0-resources",
+    "PASS                   acceptance                         N1-cmd",
+    "PASS                   acceptance                         N1-bat",
+    "PASS                   acceptance                         N1-cmd-upper",
+    "PASS                   acceptance                         N1-cmd-timeout30s-stdin",
+    "PASS                   acceptance                         N1-cmd-maxStderrBytes0",
+    "PASS                   control                            N1-missing-exe-timeout30s",
+    "PASS                   control                            N1-cmdexe-cmd",
+    "PASS                   control                            N1-node-marker",
+    "PASS                   acceptance                         N1-preaborted-node-marker",
+    "PASS                   acceptance                         N1-cmd-repeat-200",
+    "PASS                   control                            N1-process-exit",
+    "PASS                   acceptance                         E1-cmd-first",
+    "PASS                   acceptance                         E2-bat-first",
+    "PASS                   control                            E3-missing-exe-first",
+    "PASS                   acceptance                         E1-cmd-manager-restart",
+    "PASS                   acceptance                         E1-cmd-plain-resume",
+    "PASS                   acceptance                         E1-cmd-stale-resume",
+    "PASS                   acceptance                         E2-bat-plain-resume",
+    "PASS                   acceptance                         E2-bat-stale-resume",
+    "PASS                   control                            E4-node-marker",
+    "PASS                   control                            E5-cmdexe-explicit-shell",
+    "PASS                   acceptance                         E6-cancel-precedence-seam",
+    "PASS                   acceptance                         E-no-internal-error",
+    "PASS                   acceptance                         A1-cmd-first",
+    "PASS                   acceptance                         A2-bat-first",
+    "PASS                   control                            A3-missing-exe-first",
+    "PASS                   acceptance                         A1-cmd-plain-resume",
+    "PASS                   acceptance                         A2-bat-plain-resume",
+    "PASS                   acceptance                         A1-cmd-stale-resume",
+    "PASS                   acceptance                         A1-cmd-replay-no-consent",
+    "PASS                   control                            A3-repaired-explicit-resume",
+    "PASS                   control                            A4-node-marker",
+    "PASS                   control                            A5-cmdexe-explicit-shell",
+    "PASS                   acceptance                         A-server-log",
+    "PASS                   control                            A-cleanup",
+    "PASS                   acceptance                         A6-A1-cmd",
+    "PASS                   acceptance                         A6-A1-cmd-replay",
+    "PASS                   acceptance                         A6-A2-bat",
+    "PASS                   control                            A6-A3-missing-then-repaired-resume",
+    "PASS                   control                            A6-A4-node-marker",
+    "PASS                   control                            A6-A5-cmdexe-explicit-shell",
+    "PASS                   control                            A6-markers-log-cleanup",
+    "PASS                   discriminating-control             M1-mutant-direct",
+    "PASS                   discriminating-control             M2-mutant-through-current-engine",
+    "OBSERVED-AS-PREDICTED  adjacent-pre-existing-observation  H1-heartbeat-script-probe-cmd",
+    "PASS                   supporting                         U1-infra-scripts",
+    "PASS                   supporting                         U2-infra-script-recovery",
+    "PASS                   supporting                         U3-engine-script-recovery",
+    "PASS                   supporting                         U4-engine-run-recovery",
+    "PASS                   supporting                         U5-contracts-script-provenance",
+    "PASS                   supporting                         U6-infra-native-verbose"
+  ]
+}
