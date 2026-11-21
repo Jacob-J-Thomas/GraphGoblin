@@ -1,0 +1,206 @@
+{
+  "before": {
+    "id": 6526925181,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+    "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+    "issue_number": 546,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\nWhen migrations are pending, `runPreflight` uses the shipped default catalog (`apps/api/src/preflight.ts:366`) instead of stored rows and describes it as the catalog seeded on first start. Ordinary startup can read a current-format store through `readPreMigrationModelCatalog` and admits from stored rows plus missing seeds before migrating. Offline and ordinary startup can therefore disagree about a stored model, disabled flag or supported effort on this path. This finding is source-backed; the review did not execute a new pending-migration reproduction.\n\nAcceptance when separately dispatched:\n- Independently reproduce a current-format/pending-migration store where stored metadata differs from shipped seeds; include a clean migrated store, missing store and unsupported/unreadable store.\n- Define a truthful read-only pre-migration admission result consistent with the startup guard where safe. If a model projection cannot safely be inspected, distinguish that limit rather than asserting unsupported model or ready execution from unrelated seed data.\n- Never migrate, seed, refresh, create or alter the inspected database/WAL; preserve the SQLite SHM reader exception and failure closure of unsupported formats.\n- Keep stored owner disablement, provider/account readiness, and model-retirement policy separate; no automatic model substitution.\n- Verify the public command/startup distinction and update documentation under normal review/QA/coverage/CI gates.\n\nDuplicate check included open/closed preflight-title, pending-migration/catalog and startup/seed searches. #448 explicitly handles current migrated stores; #179 is CLI prerequisite capability, and #495 is aliased-checkout repository guards. This is a separate pre-existing path. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:api",
+        "color": "BFDADC",
+        "description": "Fastify API"
+      },
+      {
+        "name": "area:harness",
+        "color": "BFDADC",
+        "description": "Harness and model adapters"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-21T09:10:05Z",
+    "updated_at": "2026-11-21T09:10:05Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+    "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+  },
+  "input": {
+    "repository_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "issue_number": 546,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\nWhen migrations are pending, `runPreflight` uses the shipped default catalog (`apps/api/src/preflight.ts:366`) instead of stored rows and describes it as the catalog seeded on first start. Ordinary startup can read a current-format store through `readPreMigrationModelCatalog` and admits from stored rows plus missing seeds before migrating. Offline and ordinary startup can therefore disagree about a stored model, disabled flag or supported effort on this path. This finding is source-backed; the review did not execute a new pending-migration reproduction.\n\nAcceptance when separately dispatched:\n- Independently reproduce a current-format/pending-migration store where stored metadata differs from shipped seeds; include a clean migrated store, missing store and unsupported/unreadable store.\n- Define a truthful read-only pre-migration admission result consistent with the startup guard where safe. If a model projection cannot safely be inspected, distinguish that limit rather than asserting unsupported model or ready execution from unrelated seed data.\n- Never create, migrate, seed, refresh or alter the inspected database, and never write WAL frames or change an existing WAL; preserve the SQLite reader-sidecar exception (`-shm` updates, and an empty `-wal` beside a WAL-mode store that had none) and failure closure of unsupported formats.\n- Keep stored owner disablement, provider/account readiness, and model-retirement policy separate; no automatic model substitution.\n- Verify the public command/startup distinction and update documentation under normal review/QA/coverage/CI gates.\n\nDuplicate check included open/closed preflight-title, pending-migration/catalog and startup/seed searches. #448 explicitly handles current migrated stores; #179 is CLI prerequisite capability, and #495 is aliased-checkout repository guards. This is a separate pre-existing path. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch."
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "id": 6526925181,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+        "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+        "issue_number": 546,
+        "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\nWhen migrations are pending, `runPreflight` uses the shipped default catalog (`apps/api/src/preflight.ts:366`) instead of stored rows and describes it as the catalog seeded on first start. Ordinary startup can read a current-format store through `readPreMigrationModelCatalog` and admits from stored rows plus missing seeds before migrating. Offline and ordinary startup can therefore disagree about a stored model, disabled flag or supported effort on this path. This finding is source-backed; the review did not execute a new pending-migration reproduction.\n\nAcceptance when separately dispatched:\n- Independently reproduce a current-format/pending-migration store where stored metadata differs from shipped seeds; include a clean migrated store, missing store and unsupported/unreadable store.\n- Define a truthful read-only pre-migration admission result consistent with the startup guard where safe. If a model projection cannot safely be inspected, distinguish that limit rather than asserting unsupported model or ready execution from unrelated seed data.\n- Never create, migrate, seed, refresh or alter the inspected database, and never write WAL frames or change an existing WAL; preserve the SQLite reader-sidecar exception (`-shm` updates, and an empty `-wal` beside a WAL-mode store that had none) and failure closure of unsupported formats.\n- Keep stored owner disablement, provider/account readiness, and model-retirement policy separate; no automatic model substitution.\n- Verify the public command/startup distinction and update documentation under normal review/QA/coverage/CI gates.\n\nDuplicate check included open/closed preflight-title, pending-migration/catalog and startup/seed searches. #448 explicitly handles current migrated stores; #179 is CLI prerequisite capability, and #495 is aliased-checkout repository guards. This is a separate pre-existing path. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:gpt-6.1-sol",
+            "color": "1D76DB",
+            "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+          },
+          {
+            "name": "review:claude-opus-5.5",
+            "color": "006B75",
+            "description": "Cross-vendor reviewer: Claude Opus 5.5"
+          },
+          {
+            "name": "type:bug",
+            "color": "D73A4A",
+            "description": "Something does not work as documented"
+          },
+          {
+            "name": "area:api",
+            "color": "BFDADC",
+            "description": "Fastify API"
+          },
+          {
+            "name": "area:harness",
+            "color": "BFDADC",
+            "description": "Harness and model adapters"
+          },
+          {
+            "name": "backlog",
+            "color": "9E9E9E",
+            "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 0,
+        "created_at": "2026-11-21T09:10:05Z",
+        "updated_at": "2026-11-21T11:11:33Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+        "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+      "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+      "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+    },
+    "isError": false
+  },
+  "readback": {
+    "id": 6526925181,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+    "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+    "issue_number": 546,
+    "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\nWhen migrations are pending, `runPreflight` uses the shipped default catalog (`apps/api/src/preflight.ts:366`) instead of stored rows and describes it as the catalog seeded on first start. Ordinary startup can read a current-format store through `readPreMigrationModelCatalog` and admits from stored rows plus missing seeds before migrating. Offline and ordinary startup can therefore disagree about a stored model, disabled flag or supported effort on this path. This finding is source-backed; the review did not execute a new pending-migration reproduction.\n\nAcceptance when separately dispatched:\n- Independently reproduce a current-format/pending-migration store where stored metadata differs from shipped seeds; include a clean migrated store, missing store and unsupported/unreadable store.\n- Define a truthful read-only pre-migration admission result consistent with the startup guard where safe. If a model projection cannot safely be inspected, distinguish that limit rather than asserting unsupported model or ready execution from unrelated seed data.\n- Never create, migrate, seed, refresh or alter the inspected database, and never write WAL frames or change an existing WAL; preserve the SQLite reader-sidecar exception (`-shm` updates, and an empty `-wal` beside a WAL-mode store that had none) and failure closure of unsupported formats.\n- Keep stored owner disablement, provider/account readiness, and model-retirement policy separate; no automatic model substitution.\n- Verify the public command/startup distinction and update documentation under normal review/QA/coverage/CI gates.\n\nDuplicate check included open/closed preflight-title, pending-migration/catalog and startup/seed searches. #448 explicitly handles current migrated stores; #179 is CLI prerequisite capability, and #495 is aliased-checkout repository guards. This is a separate pre-existing path. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:api",
+        "color": "BFDADC",
+        "description": "Fastify API"
+      },
+      {
+        "name": "area:harness",
+        "color": "BFDADC",
+        "description": "Harness and model adapters"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-21T09:10:05Z",
+    "updated_at": "2026-11-21T11:11:33Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+    "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+  },
+  "verbatim": true
+}

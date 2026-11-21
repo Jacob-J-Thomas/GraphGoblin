@@ -1,0 +1,15 @@
+GraphGoblin preflight
+
+  STATUS  CHECK                 DETAIL
+  ok      Node.js               Node 22.23.4
+  WARN    Data directory        C:\Users\98jak\AppData\Local\Temp\gg-448-qa-indep-20261121T090017\cases\P15\data does not exist yet; it is created on first start
+  ok      Master key            taken from GG_MASTER_KEY
+  FAIL    Database              The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "C:\Users\98jak\AppData\Local\Temp\gg-448-qa-indep-20261121T090017\cases\P15\data"
+  WARN    Harness ollama        Ollama is not checked until the database is current and readable
+  ok      Harness claude        claude 2.1.287 is installed and logged in
+  ok      Harness codex         codex 0.160.0 is installed and logged in
+  WARN    Jev                   not checked until the database is migrated; Jev is optional
+  ok      Default model         gpt-6.1-terra (codex) is in the default catalog seeded on first start
+  ok      Claude default model  Exact Claude model and effort are configured
+
+1 failed, 3 warning(s): fix the failed checks before starting

@@ -1,0 +1,269 @@
+# 11 - Security and distribution
+
+Windows launcher's read-only identity and ownership helpers each enter a private kill-on-close
+job at process creation (ADR-0086). Only their own descendants are collected; queried owners,
+WMI's service, providers and the detached gateway are outside that lifetime. This needs Windows
+10 or Windows Server 2016 or later and compatible nested jobs. Staged installation checks API
+capability, and every click verifies actual containment before even reusing a gateway. Failure
+refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
+at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share a
+15-second initial work budget. Failed checks use one further two-second cleanup allowance before
+operator presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store
+rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
+fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
+
+Caller admission fixes an absolute monotonic work cutoff before argument/environment preparation.
+Native setup, creation admission, reads, validation and result consumption use that same cutoff;
+equality refuses. Held retries cannot restart a clock after setup or accept a free result inside
+the two-second cleanup reserve. Cleanup itself retains its independent allowance (D167).
+
+The ownership response is one strict JSON object, parsed once from raw decoded output before
+trimming. Only the exact free/held string fields are accepted; duplicate decoded names, unknown
+fields, JavaScript syntax and trailing material refuse. Legal JSON whitespace, Unicode and path
+escapes remain valid. Cleanup credit requires a complete process/job/stream observation before
+2,000 ms; equality or later completion remains unconfirmed even when resources can now be safely
+disposed. This preserves refusal precedence and pending-I/O resource ownership (D166).
+
+## Licensing (Decided)
+
+- Allowed licences in the dependency tree: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0. Anything else fails the CI allowlist check and needs an ADR to add.
+- Rejected: AGPL, SSPL, BSL, Elastic, Commons Clause, Sustainable Use, and any "source-available" licence. No code is copied from n8n, Dify, or similar products.
+- Agent harnesses are external engines. Codex CLI is Apache-2.0 and the owner installs it; it is not bundled. Claude Code is an owner-installed external CLI used directly by the native-Windows adapter. GraphGoblin does not bundle it or add an Anthropic SDK dependency; Claude Code's own terms apply. See [ADR-0023](decisions/ADR-0023-installed-claude-code.md).
+- The full audit of the proposed dependencies is in `research/licenses.md`.
+
+`pnpm check:licenses` evaluates the reported production dependency metadata against `tooling/license-allowlist.json`: parentheses preserve grouping, `WITH` binds before `AND`, and `AND` before `OR`; an alternative needs one allowed branch, while a conjunction needs both. A `WITH` pair requires that exact `licence WITH exception` entry in `allowed`; approving the base licence alone, or a package metadata exception, does not approve the pair. Any `*`-suffixed guessed licence is a distinct violation unless `allowGuessed` is explicitly true, including markers on unused alternatives. Malformed expressions always fail with a parse-error reason. Operators must be uppercase and IDs match case-sensitively; the gate fails closed on anything else. Package exceptions apply only to unallowlisted licence IDs. Failures retain package name, reported versions and original expression. This is a metadata policy check, not legal certification.
+
+## Credentials (Decided)
+
+- Codex: GraphGoblin relies on the machine's `codex login` state. It never stores, reads, or proxies Codex credentials. Subscription login is the expected mode for 1.0.
+- Claude Code: the local adapter accepts only the installed CLI's `claude.ai` login category. It checks before every turn, stores no credential, and exposes no raw auth response. Hosted API-provider support is separate future work tracked by [#100](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/100).
+- Jev: an API key stored in the secret store as `jev-api-key`. At API startup, after migration and before Jev initialization, a non-empty `GG_JEV_API_KEY` seeds that secret for the local owner only if it is absent. When `GG_JEV_API_KEY` is unset, `JEV_API_KEY` is the fallback name; an explicitly empty `GG_JEV_API_KEY` disables seeding even if the fallback is set. The secret store wins: an existing secret is never overwritten, and later environment changes do not rotate it. The seed is encrypted by the same secret store, with no plaintext file or logged value; the seed log names the variable actually used: `seeded jev-api-key from GG_JEV_API_KEY` or `seeded jev-api-key from JEV_API_KEY`. Without a non-empty seed or when the secret already exists, there is no seed log line.
+- GraphGoblin API keys: generated for other applications and the MCP server, hashed at rest, shown once. Every private route, reads included, requires the key's scope for that resource (07), so a key minted for one job, such as `runs:write` for the MCP server, cannot list loops, settings, secrets, or other keys. Through HTTP, a scoped key with `api-keys:write` may mint only keys with explicitly listed scopes it holds itself (write implies read), and may never grant `*`; escalation returns `403 SCOPE_NOT_DELEGABLE` listing the offending scopes, and omitted scopes return `400 VALIDATION_FAILED`. Local trusted mode and callers holding `*` may grant any scopes and may omit scopes to default to `*` ([ADR-0016](decisions/ADR-0016-api-key-scope-delegation.md)). Administrative key creation outside HTTP is unchanged. The first key in required-key mode comes from `node apps/api/dist/main.js --create-api-key <name> [--scopes a,b]` (see "First API key" below).
+- Current-key metadata: `GET /api-keys` retains owner scoping and returns no tokens or hashes. Its required `current` boolean identifies only the key that authenticated this list request when keys are required, using the actor id already verified by the auth plugin. It is never stored or returned on key creation. Trusted mode flags no rows, even when a valid bearer key is supplied; the flag changes neither scope checks nor delegation rules.
+- Post-1.0 hosted: users bring their own harness API keys per the harness vendor's terms; subscription logins cannot be offered inside a hosted product.
+
+## Secret store (Decided)
+
+- Values are encrypted directly with the 32-byte master key using AES-256-GCM, with a fresh random IV and authentication tag for each value. The master key comes from `GG_MASTER_KEY` (base64) or `<dataDir>/master.key`, generated on first start with owner-only permissions. There are no per-secret data keys or envelope wrapping, and no `@napi-rs/keyring` dependency in 1.0. An OS-keyring master-key source and per-secret envelope keys are post-1.0 work (12, "Product gaps known at 1.0").
+- Secrets are referenced from configs by name, for example `secret:jev-api-key`, and resolved only inside the process at execution time. They never appear in events, logs, exports, or API responses.
+- The `redact` mutation operation exists partly so that values that reach the thread from scripts or harness output can be masked before they go anywhere else.
+
+## Inbound exposure (Decided)
+
+- The API binds to localhost by default. Changing the bind address without API keys enabled logs a prominent warning.
+- Webhook endpoints need no API key; they are protected by HMAC signatures, size limits and rate limits. Timestamp signing uses a replay window; body signing consumes exact raw content indefinitely across versions, including filtered deliveries, and enforces authored business keys separately inside receipt admission (see 08). The other public routes are listed in [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03).
+- Development tunnels are limited to the hooks prefix and must authenticate at the tunnel. Polling triggers are the recommended no-inbound alternative.
+
+## Execution posture (Decided)
+
+- The script node executes arbitrary user programs by design. In 1.0 they run as the GraphGoblin process user on the user's own machine. This is acceptable for a single-user tool and is stated plainly in the UI.
+- Codex sessions run under Codex's own sandbox with the mode set on the node. The default is `workspace-write`. `danger-full-access` is allowed but highlighted in the editor.
+- Claude Code runs on native Windows with either `read-only`/`never` or the explicitly selected `danger-full-access`/`never` pair. Read-only restricts built-in tools but does not confine filesystem reads or provide an OS sandbox. Full access adds `Edit`, `Write`, and `Bash`; commands and network access are unconfined as the API user. Claude rejects workspace-write, approval prompts, explicit network isolation, web search, custom capabilities, and raw config overrides. It never upgrades an unsupported request to full access.
+- Post-1.0 multi-tenant hosting requires per-run isolation, which is why the runner abstraction exists: a remote runner can be a container.
+- Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose body can match the empty string or split the same text two ways, looking through nested groups (`packages/domain/src/regex-safety.ts`, ADV-007). JSONata cannot turn a string into a regex except through `$eval`, which compiles a string at run time; it is shadowed by a binding that checks the string the same way and then runs it through JSONata's own `$eval`, in the caller's environment and budget. The check is conservative and syntactic: it can reject a harmless pattern (rewrite it, for example without an optional part that overlaps what follows), and it is a heuristic, not a proof that every accepted pattern is linear. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
+
+## Probe resource bounds (#117)
+
+Outbound HTTP probes retain at most 65,536 decompressed body bytes before decoding
+or JSON parsing (`PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
+Oversized identity-encoded declared lengths refuse before reading; encoded wire
+lengths are not compared with the decompressed cap. Streamed/no-length bodies stop
+on the first over-limit chunk. The reader is cancelled and its lock released on
+overflow, abort or timeout. Overflow is the safe typed `HTTP_PROBE_BODY_OVERFLOW`
+failure, never a successful truncated response. HEAD and body-less 204/304 metadata
+are exempt because there is no response body. This budget matches strict poll-script stdout and also
+applies to heartbeat and single-result HTTP probes (08).
+
+## Retention (Decided)
+
+1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. Settings has no purge action. Retention policies, scheduled purges, and the manual run and loop purge controls are post-1.0 work (12, "Residual risks and post-1.0 backlog").
+
+A refused store is never removed implicitly. A store this build cannot open (another format, no valid marker, or damaged) stops startup with an explanation and is left as it is; nothing converts it ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)). Removing a whole store is an explicit operator action, `node apps/api/dist/main.js --reset`: without `--yes` it lists what it would remove and changes nothing; `--yes --data-dir <path>` naming the configured data directory takes the data-directory lock and removes exactly the listed run workspaces (names that are stored run IDs), `artifacts/`, private chat audio under `chat-audio/`, the database and its SQLite sidecars, then the lock file. It keeps `master.key` and every other entry, never follows links, never removes anything outside the data directory, refuses when the database is elsewhere or the directory is in use, and reports exactly what it removed if it stops part of the way. Only physical `artifacts/` and `chat-audio/` directories are removed: a top-level link or non-directory is kept with a reason, and its target is never followed. Browser device drafts are discarded per loop in the editor. See the [reset guide](guide/08-offline-upgrade.md).
+
+Artifacts use unchanged `artifact:<kind>/<sha256>` references. Publication writes a unique temporary file in the final file's directory, flushes its bytes with `fsync`, closes it, then atomically renames it over the final path. Readers verify SHA-256 over the raw bytes before UTF-8 decoding; a mismatch throws typed `ArtifactStoreError` with the API-only code `ARTIFACT_CORRUPT` (HTTP 500 on download), while missing content remains `undefined` (HTTP 404). A repeated `put` verifies existing content and atomically replaces a corrupt file; concurrent writers of identical content converge on the same verified bytes.
+
+As an engineering parameter, Windows publication uses six attempts with five delays of 10, 20, 40, 80 and 160 ms (310 ms total backoff, plus I/O time), only for `EPERM`/`EBUSY`, to tolerate brief scanner/indexer locks without unlinking the final path. After failed publication, `put` re-reads the final reference: if another identical writer already published verified content, it succeeds despite the replacement failure. Otherwise it fails explicitly as `ARTIFACT_WRITE_FAILED`. Longer scanner locks remain a residual when no correct, readable final file exists. Interrupted `.tmp` files are ignored by reference reads and are not swept; a startup sweep is a possible later bolt. This protects publication from interrupted writes; it does not promise power-loss durability of the directory entry or change retention.
+
+## Distribution (Decided)
+
+- The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.
+- Run exactly one API process per data directory and SQLite database file. Before opening SQLite or running migrations, recovery, timers, or scheduling, the API exclusively creates `<dataDir>/graphgoblin.lock` and `<database-file>.graphgoblin.lock` with its PID and start time. Canonical database ownership also protects an external `GG_DB_URL` reached from another data directory or a directory junction/symlink alias. A database with multiple hard links is refused because file-name locks cannot establish one owner across those aliases. A live owner causes `another GraphGoblin process holds <path>` and exit code 1, even on a different port. For shell API startup this is a single, stack-free line with guidance to check the owner's port/configuration, wait for the owning process to finish or stop it before retrying. Uncertain ownership names the lock or reclamation guard and retains the verification reason; inspect the owner record and running GraphGoblin processes, then resolve the uncertainty before retrying. Control characters and line separators are escaped in these explanations. Unexpected shell startup failures keep their existing diagnostics. A lock is replaced when its PID is confirmed dead or equals this process's own PID without an in-process hold; malformed locks and uncheckable PIDs are refused. Clean shutdown, SIGINT, and SIGTERM release ownership after active runs settle and SQLite closes. `--create-api-key` takes both writer locks; stop the server first. A confirmed `--reset` takes them too, and its dry run checks ownership without taking it. Its manifest lists both lock files, and any stale lock file or `.reclaim` guard that taking them reclaims, as the reset's own rather than as kept data, once each under the name the directory lists, matched by filesystem identity rather than letter case (a hard link under another name stays kept, and hard links the filesystem cannot tell apart refuse the reset); its output says what releasing each lock did. The confirmed manifest and a refusal after taking the locks say a stale entry was reclaimed only when the lock module reports that this acquisition removed it, and otherwise that a stale entry the preview found was already gone when the lock was taken, without saying who removed it; a failed attempt to take either lock is never reported as no change, but names that lock and lists its file and guard as found before and after the attempt. Read-only `--preflight` can run alongside the server. Keep the same `GG_DATA_DIR` with an external database to preserve its master key/artifact association. There is no execution or scheduler lease between processes (05, "One run manager per store").
+- Preflight on first run checks Node version, harnesses, the data directory, and the master key source. Claude requires the owner-installed native Windows CLI version 2.1.285 or newer, required capabilities and Claude.ai login; without a Claude default configured, its absence is a warning. See "First-run preflight" below.
+- Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
+
+### Install from a checkout (Decided by implementation, WP-F2)
+
+The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
+case-insensitively, before the installer writes any configuration, including temporary staging
+files. Empty values are refused too. The native launcher also refuses these keys in manually
+edited JSON before starting or reusing a gateway. Refusals never print their values. Use the
+data directory's `master.key` and GraphGoblin's encrypted secret store instead. Ordinary
+non-secret overrides remain supported; inherited `GG_*` variables are still cleared rather
+than copied into launcher configuration or its child environment
+([ADR-0085](decisions/ADR-0085-refuse-launcher-secret-overrides.md)).
+
+A gateway started by the Windows launcher keeps its private server log in the launcher folder,
+which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
+Retention is bounded to two 4 MiB gateway files and two 256 KiB launcher files. The gateway log
+keeps engine diagnostics such as run failure stacks; its HTTP access records carry only the
+method, route template and status, records of malformed requests only their status and Node's
+error code, and launcher messages and new startup records use fixed text with validated
+locations (ADR-0081).
+
+On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
+A successfully observed different identity proves that a PID has been reused and permits the
+same guarded reclamation as a dead PID. Recovery guards are nonempty directories with immutable
+UUID owner markers, published by atomic rename; stale readers can remove only the observed marker
+and an empty directory, never a successor owner. Old regular-file guards are refused and need
+independent verification before manual cleanup. Stop old writers before updating both binaries. The API and desktop launcher share this read-only policy
+for both locks and their `.reclaim` guards. Unavailable, denied or malformed identities remain
+held. Windows PowerShell and WMI must be available to establish a new writer's identity; the
+query is hidden and profile-free; foreign-PID probes are bounded to five seconds, while
+the cached self probe retries once with a twenty-second limit per attempt. Refusals distinguish
+verified live ownership from unverifiable ownership and retain the probe failure cause. PID-only abandoned records cannot
+prove reuse and need independent inspection if their PID now belongs to another process.
+See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
+
+Reading an enumerated recovery marker on Windows can also report `EPERM`. If an independent
+`lstat` finds that exact UUID path absent, recovery continues without unlinking it. An unreadable
+marker that still exists keeps its original error. Reads of the main owner record keep their errors.
+
+Concurrent Windows deletion can report `EPERM` after another contender has removed the same
+stale UUID marker or empty guard directory. The API accepts that outcome only when a separate
+`lstat` establishes that exact path is absent; it never retries the deletion. A marker or directory
+that remains present, or whose absence cannot be verified, retains a filesystem error naming the
+operation and code. Successor markers are preserved. If releasing the recovery guard fails after
+the main lock was acquired, acquisition rolls back the main lock and reports the cleanup failure.
+A failed rollback explicitly reports retained ownership. Failed releases keep their in-process
+holds, and additional cleanup failures retain the original refusal rather than replacing it.
+
+`scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
+
+`pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
+
+### Container image (Decided by implementation, WP-F2)
+
+- `Dockerfile` (multi-stage on `node:22-bookworm-slim`): the build stage copies only the root manifests, the lockfile, `tooling/`, `packages/`, and `apps/` (`.dockerignore` also drops build output, data directories, keys, SQLite files, `.tmp/`, `.claude/`, and `.env*` inside them; `tooling/scripts/dockerignore.test.mjs` checks the rules against sample and tracked paths), installs pnpm 12.8.1, runs `pnpm install --frozen-lockfile`, builds the API with its workspace dependencies and the web app, and runs `pnpm --filter @graphgoblin/api deploy --prod --legacy` for a self-contained API with production dependencies only. The runtime stage holds that API under `/app/apps/api`, the web app under `/app/apps/web/dist`, and a `codex` wrapper on `PATH` for the Linux Codex binary that `@openai/codex-sdk` pulls in (`codex --version` runs during the build). It runs as the non-root `node` user (uid 1000) with `GG_HOST=0.0.0.0`, `GG_DATA_DIR=/data` (a `VOLUME`), `GG_WEB_DIST=/app/apps/web/dist`, a `HEALTHCHECK` on `/healthz`, and `CMD ["node", "apps/api/dist/main.js"]`. Claude Code is not bundled in the image and its native-Windows adapter refuses the container's platform.
+- `docker-compose.yml` publishes port 4747 on the host's loopback only, keeps `/data` in a named volume, mounts the host's Codex login (`~/.codex` to `/home/node/.codex`, read-write because Codex refreshes its tokens), and leaves `GG_REQUIRE_API_KEY` and `OPENAI_API_KEY` commented. Codex credentials are never part of the image: mount the login or pass an API key at run time. On a Linux host the mounted directory must be readable and writable by uid 1000.
+- The image is for a single user on a trusted network. `GG_HOST=0.0.0.0` is needed inside the container, so the API logs its beyond-localhost warning unless `GG_REQUIRE_API_KEY=true`; publishing the port beyond the host's loopback without keys exposes every route, including script execution.
+- Codex's own sandbox (`workspace-write` and `read-only`) relies on Linux kernel features that a default container may not grant; inference nodes inside the container were not exercised live in WP-F2.
+- Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
+- Smoke test before the data-directory lock (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` worked through `docker exec`. With the lock, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` before restarting it.
+
+The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an unclean container exit. On restart, the API reclaims locks and `.reclaim` sidecars whose recorded PID is dead, or matches its own PID without an in-process hold; a second acquisition held by this process is refused, and the random ownership token prevents release from deleting a replacement file. Compose uses `init: true` to forward signals to Node and `stop_grace_period: 1h` to leave time for drain and an explicit operator choice before Docker SIGKILL. If a start is refused, stop the owning API or key-creation command and wait for shutdown; for a malformed or unverifiable lock or sidecar, inspect it and remove only the verified stale file or guard directory after confirming all GraphGoblin processes using the volume have stopped.
+
+## First-run preflight (Decided by implementation, 2026-10-03)
+
+`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes stored state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database bytes, stored rows and any existing write-ahead log bytes. SQLite's read-only open may still create or update the `-shm` shared-memory index and, if a WAL-mode store has no `-wal` file, create an empty one; it holds no frames, so no stored data changes.
+
+For an existing current, migrated store, offline model admission uses startup's catalog projection:
+stored rows come first, with shipped seeds appended in memory only when their `(harness, model)`
+pair is absent. A newly shipped seed can therefore satisfy `GG_DEFAULTS` before the first upgrade
+start without being inserted by preflight. Stored metadata and disabled rows still take precedence;
+preflight does not refresh them. Codex's disabled default remains a warning; disabled models stay
+unavailable to execution. Missing stores use the shipped catalog; unsupported or unreadable stores
+still fail their database check.
+
+| Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                                       |
+| Data directory | exists and a new probe file can be created (exclusively, random name) and removed                                                                             | does not exist yet (created on first start)                                                                                                          | not a directory, unreadable, or not writable                                                                  |
+| Master key     | `GG_MASTER_KEY` or `<dataDir>/master.key` decodes to 32 bytes                                                                                                 | no key yet (generated on first start; back it up)                                                                                                    | present but not a base64 32-byte key, or unreadable                                                           |
+| Database       | reachable, no pending migrations                                                                                                                              | file does not exist yet but its nearest existing ancestor is a writable directory (start creates the rest), or migrations pending (applied at start) | cannot be opened, read, or queried, or its file cannot be created                                             |
+| Harness `<id>` | `HarnessPort.preflight()` ok (Codex checks its executable and login; Claude checks native Windows CLI 2.1.285 or newer, supported flags, and Claude.ai login) | Claude is unavailable or not logged in while no Claude default is configured                                                                         | required harness not installed, not logged in, unsupported, or no harness is registered                       |
+| Jev            | `jev-api-key` secret set                                                                                                                                      | no key (Jev is optional; a decision selecting it cannot run), or not checkable before the database is migrated                                       |                                                                                                               |
+| Default model  | Codex model is in its enabled catalog; a configured Claude default is the exact enabled model with a supported effort (no Claude default: not checked) | Codex default is in the catalog but disabled                                                                                                         | Codex model is missing; a configured Claude default has a missing, unknown, wrong-family or disabled model, or a missing or unsupported effort |
+
+- **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other [non-public route](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). `GET /harness/preflight` remains for the harness check alone.
+- **CLI**: `node apps/api/dist/main.js --preflight` (or `pnpm --filter @graphgoblin/api preflight` after `pnpm build`) reads the same environment as the server, prints the checks as a table, and exits 0 when no check failed and 1 otherwise, without starting the server. It opens the database only when its file exists, and never creates the data directory, the key, or the database, so it is safe before the first start. `GG_DB_URL` is parsed the way libsql parses it (percent-decoded, relative, `file:///C:/...`), and the server's start creates the database file's directory as well as the data directory. The writability probe opens a new randomly named file with `wx`, so it never truncates an existing file, never follows a symlink, and removes only the file it created.
+
+## First API key (Decided, WP-F2, ADR-0015)
+
+With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one cannot come from the API. Stop any API using the data directory first. `graphgoblin-api --create-api-key <name> [--scopes a,b]` (`node apps/api/dist/main.js ...`) reads the same environment as the server, takes its data-directory lock, creates the database if needed and applies migrations (as a start would), inserts a key for the local owner, prints the token once to standard output, releases the lock, and exits without starting the HTTP server. A held lock exits 1 before any database work. Nothing is logged; only the SHA-256 hash is stored. Scopes default to `*` only when `--scopes` is absent: an unknown or repeated option, a stray argument, a missing value, or a malformed scope exits 2 with the usage before anything is written. The install scripts print the command; in the container use `docker compose run --rm` with the API stopped, as shown in the guide.
+
+## Trigger credential boundaries (#29)
+
+Body-signature verification uses the exact raw bytes before decoding or parsing. The configured signing header is excluded case-insensitively from the shared `$headers` binding before dedupe and filter expressions run. Receipts and run invocations store content/signature hashes or authored business keys, never that request credential. Unsigned event and delivery headers cannot authorize a GitHub action: presets check the signed repository/object/action fields. HTTP probes remove authorization, cookie, set-cookie and API-key response headers before returning a result that may be persisted. Transport and process errors use safe diagnostic codes. This does not redact arbitrary application payload fields or make untrusted script execution safe.
+
+## Multi-tenant checklist for later (recorded)
+
+Owner scoping enforced in every repository method, auth provider with OIDC, per-user secret keys, remote runners with isolation, Postgres, scheduler lease and run-execution lease (1.0 supports one API process, with one run manager and one scheduler, per data directory: a second process over the same database would execute queued and recovered runs twice and fire schedules twice), rate limits per owner, audit log of control actions.
+
+## Template runtime retirement (#165)
+
+The API composition root installs no private template authority, credential resolver, script wrapper, reporter, admission wrapper, transition callback or finalization wrapper. Ordinary script environments, secret references, return delivery and the durable `markFinalized` lifecycle remain available. Catalogue HTTP reads return manifests without provider, repository, secret or prerequisite probes. Configured prerequisite, instantiate and instance endpoints are removed. A template copy is an owner-scoped ordinary draft; later ordinary nodes carry any explicit effects.
+
+The live catalogue loads only the declared draft export, validates its current format and graph, and returns `{manifest, draft}` internally. Every creation receives a clone. Shipped drafts require manual triggers, exclude scripts, subloops and heartbeat nodes, and return only to the caller. Containment, canonical-root, link, regular-file and size checks remain. No configured graph or private support file is opened or hashed by the live catalogue. Asset faults return the fixed sanitized 503 `TEMPLATE_PACKAGE_INVALID`; unknown IDs return 404 `TEMPLATE_NOT_FOUND`.
+
+Step 06 is complete with steps 07 and 08 folded into the same child. Configured services, the temporary configured-catalogue fixture and their tests are deleted. The engine has no template execution/resume policies or private script execution identity. Run transitions and trigger admission have no template callback; their transactions, compare-and-swap, identity validation, pins and post-commit notifications remain. Ordinary script environments, stdin/stdout, cancellation, timeouts and output bounds remain unchanged. The API build and image have no private template support entries; generic GitHub polling remains an ordinary recipe.
+
+Step 09 removed configured contracts and the `container.templates.store` facade. Migration `0012_retire_template_instances` drops `template_instances`, `runs.template_subject` and the six template expression indexes; format-4 readiness requires it already applied. Step 10 reduced the catalogue to four manifests and ordinary drafts; the live loader opens no configured graphs or support files.
+
+The accepted end state is recorded in [ADR-0034](decisions/ADR-0034-retire-template-runtime-authority.md). The shared stopped-store format-4 cutover deletes configured instances, their loops and runs, with no archive or private-report exception. This child performs no installed data conversion, journal reconciliation, credential rotation or physical cleanup. Ordinary authored scripts retain the API account's filesystem access; templates provide no operating-system confinement.
+
+## Managed stop controls (#224)
+
+The first SIGINT or SIGTERM requests normal drain. Signals within 1,000 ms of the preceding accepted signal are ignored to coalesce foreground-group and pnpm
+forwarding of one Ctrl+C. A later SIGINT or SIGTERM explicitly forces interruption through the same container controller as
+`POST /system/shutdown` with `{ "action": "force" }`. Signal handlers remain installed
+through drain; repeated signals during startup are remembered until recovery settles.
+`{ "action": "drain" }` starts normal stop and `{ "action": "wait" }` acknowledges the
+choice without a new deadline. `GET /system/shutdown` exposes phase and active identities.
+Controls require `system:write` (`system:read` for status) in API-key mode.
+
+The engineering default `GG_SHUTDOWN_GRACE_MS=300000` gives five minutes before an operator
+warning offers wait or force; expiry has no kill action. Durable parks and paused runs recover on restart and do not hold drain. Drain checks
+active executors, queued family work and due wakes at
+50 ms; script termination has a five-second acknowledgement/close reporting deadline only
+after explicit interruption. Native kill failure, including a nonzero `taskkill /T /F`,
+during this stop's explicit interruption retains listener, SQLite and lock in `force-failed`.
+Earlier unconfirmed terminations are visible in `unconfirmedRunIds` but do not block normal
+stop. Inspect the recorded failure and native processes; a further force request or later
+signal explicitly exits with code 1, preserving that failure and leaving the lock for the
+next process to reclaim. A 100 ms response-flush delay precedes this emergency exit; it
+performs no cleanup. Drain observation failures use `drain-failed`; invalid controls return
+409 with current phase. Force interruption is
+recorded as a non-resumable failed run with node/attempt evidence and possible external effects.
+
+The supplied Compose example allows one hour (an engineering allowance for deliberation
+beyond the five-minute notice). Docker's subsequent SIGKILL is an external hard deadline
+and cannot record managed interruption. For indefinite normal waiting, request drain through
+the API while Compose remains running and stop the service after it exits; configure other
+supervisors accordingly. HTTP and SSE remain usable throughout drain. Streams close after
+executor/delivery cleanup; HTTP closes next, then SQLite, then the directory lock is released.
+
+On Windows, use the API controls when stopping from another process. Windows `taskkill`
+and Node's programmatic `child.kill('SIGINT'/'SIGTERM')` bypass JavaScript signal handlers;
+they cannot establish managed drain/force evidence. The real signal cases run on Linux CI.
+A Ctrl+C in the gateway's own console is covered on Windows by
+`apps/api/src/shutdown-console.test.ts`, which delivers a real console control event; every
+provider and tool process has its own hidden console, so only the gateway receives it.
+
+## Chat voice and pairing boundaries (ADR-0068)
+
+Voice configuration, provider probes, model installation, pure loop previews and guarded staging
+require wildcard owner authority; device tokens cannot call those routes. Generic settings writes
+cannot replace reserved voice configuration. A dedicated `voice.openai.*` encrypted gateway secret
+is selected explicitly; inference credentials are never inferred to be transcription credentials.
+Cloud setup states sample upload and billing before execution. Audio route selection happens
+before dispatch and is recorded; uncertain provider outcomes are not retried or sent elsewhere.
+
+Canonical WAV is validated for byte length, PCM format, sample rate, channels, frame alignment and
+sample-derived duration. Durable upload identities bind audience, MIME type, body hash and bytes;
+status reads cannot grant another audience's file. Restart/expiry leaves recovery evidence or a
+retired tombstone rather than reusing an identity. Caption text participates in turn identity and
+canonical input validation. Neither shell caches microphone bytes, transcripts, tokens or API
+responses in its service worker; unsent voice remains bounded in app memory.
+
+Local transcription requires a private server-owned runtime qualification record. The inspector
+checks the executable and dependency real paths/hashes and complete loadable backend inventory.
+Public settings/probe requests cannot attest a runtime. Model-only downloads use immutable official
+allowlisted assets, verified length/SHA-256, HTTPS redirect host restrictions, bounds and atomic
+rename. Compiler/runtime source installation and ffmpeg are outside the preset. The exact permissive
+`Apache-2.0 WITH LLVM-exception` pair is allowed for the reviewed LLVM runtime; no broad exception
+approval is implied. See the [licence evidence](research/licenses.md#guided-voice-assets-and-existing-runtime-qualification-adr-0068).
+
+Pairing authority comes from explicit public URL configuration, or strict configured-and-bound
+loopback for same-machine use. It never comes from request Host or Forwarded headers. Local fallback
+requires required-key mode and the actual bound port; explicit invalid public configuration refuses.
+LAN enrollment uses the trusted HTTPS gateway origin and never embeds an owner credential.
