@@ -12,6 +12,11 @@ operator presentation; synchronous OS calls can exceed the observed wall-clock b
 rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
 fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
 
+Caller admission fixes an absolute monotonic work cutoff before argument/environment preparation.
+Native setup, creation admission, reads, validation and result consumption use that same cutoff;
+equality refuses. Held retries cannot restart a clock after setup or accept a free result inside
+the two-second cleanup reserve. Cleanup itself retains its independent allowance (D167).
+
 The ownership response is one strict JSON object, parsed once from raw decoded output before
 trimming. Only the exact free/held string fields are accepted; duplicate decoded names, unknown
 fields, JavaScript syntax and trailing material refuse. Legal JSON whitespace, Unicode and path

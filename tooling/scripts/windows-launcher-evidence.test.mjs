@@ -377,6 +377,11 @@ test('child commands map to closed tool and mode names without copying arguments
       'native-checks',
       'cleanup-deadline-checks',
     ],
+    [
+      ['C:\\i\\NativeChecks.exe', ['--work-deadline-checks', CANARY]],
+      'native-checks',
+      'work-deadline-checks',
+    ],
     [['C:\\i\\NativeChecks.exe', ['C:\\x.exe', 'y.json']], 'native-checks', 'relaunch-checks'],
     [
       ['C:\\i\\GraphGoblin.exe', ['--config', CANARY, '--ensure-gateway']],

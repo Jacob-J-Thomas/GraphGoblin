@@ -710,6 +710,44 @@ namespace GraphGoblin.Desktop
     public static class HelperProcess
     {
         public const int WorkMilliseconds = 15000, CleanupMilliseconds = 2000, OutputBytes = 262144;
+
+        /// <summary>One caller-admitted cutoff, including preparation; never restart its clock.</summary>
+        public sealed class WorkDeadline
+        {
+            readonly Func<long> elapsedMilliseconds;
+            readonly long expiresAt;
+
+            internal WorkDeadline(Func<long> elapsedMilliseconds, long expiresAt)
+            {
+                this.elapsedMilliseconds = elapsedMilliseconds;
+                this.expiresAt = expiresAt;
+            }
+
+            public static WorkDeadline Start(int milliseconds)
+            {
+                var clock = Stopwatch.StartNew();
+                return new WorkDeadline(() => clock.ElapsedMilliseconds, milliseconds);
+            }
+
+            internal static WorkDeadline Recheck(Func<long> elapsedMilliseconds, long releaseMilliseconds)
+            {
+                long admittedAt = elapsedMilliseconds();
+                return new WorkDeadline(elapsedMilliseconds,
+                    Math.Min(admittedAt + WorkMilliseconds, releaseMilliseconds - CleanupMilliseconds));
+            }
+
+            internal long Remaining { get { return Math.Max(0, expiresAt - elapsedMilliseconds()); } }
+            internal bool Expired { get { return elapsedMilliseconds() >= expiresAt; } }
+            internal void Check(string stage) { if (Expired) throw Timeout(stage); }
+
+            internal T Within<T>(string stage, Func<T> operation)
+            {
+                Check(stage);
+                T result = operation();
+                Check(stage);
+                return result;
+            }
+        }
         public const uint TerminationExit = 0xE0470459;
         const int Pending = 997, Incomplete = 996, BrokenPipe = 109, PipeConnected = 535;
 
@@ -914,51 +952,56 @@ namespace GraphGoblin.Desktop
         }
 
         /// <summary>Validate raw decoded output inside the work window; return its trimmed form.</summary>
-        public static string Read(string executable, string arguments, string directory, SortedDictionary<string, string> environment, string stage, int workMilliseconds, Func<string, bool> validate)
+        public static string Read(string executable, string arguments, string directory, SortedDictionary<string, string> environment, string stage, WorkDeadline work, Func<string, bool> validate)
         {
-            var clock = Stopwatch.StartNew();
             SafeFileHandle job = null; Pipe output = null, error = null; ChildProcess child = null;
             LauncherFailure failure = null; bool success = false, exited = false; int exitCode = 0; string result = null;
             try {
+                work.Check(stage);
                 job = NewJob(); output = new Pipe(); error = new Pipe();
                 using (var input = CreateFile("NUL", 0x80000000, 3, IntPtr.Zero, 3, 0, IntPtr.Zero))
                 using (var attributes = new Attributes(job, input, output.Writer, error.Writer)) {
                     if (input.IsInvalid) throw Containment();
-                    if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                    work.Check(stage);
                     IntPtr block = Marshal.StringToHGlobalUni(string.Join("\0", environment.Select(item => item.Key + "=" + item.Value)) + "\0\0");
                     try {
                         var startup = new StartupInfoEx { attributes = attributes.List, startup = new StartupInfo {
                             cb = Marshal.SizeOf(typeof(StartupInfoEx)), flags = 0x100, input = input.DangerousGetHandle(), output = output.Writer.DangerousGetHandle(), error = error.Writer.DangerousGetHandle() } };
+                        var command = new StringBuilder(Program.Quote(executable) + " " + arguments);
                         ProcessInformation created;
-                        if (!CreateProcess(executable, new StringBuilder(Program.Quote(executable) + " " + arguments), IntPtr.Zero, IntPtr.Zero, true, 0x08080400, block, directory, ref startup, out created)) {
+                        work.Check(stage);
+                        if (!CreateProcess(executable, command, IntPtr.Zero, IntPtr.Zero, true, 0x08080400, block, directory, ref startup, out created)) {
                             int code = Marshal.GetLastWin32Error();
                             if (code == 2 || code == 3 || code == 193 || code == 216) throw new LauncherFailure("helper-unavailable", "The configured Node runtime could not be started. Check the Node path in the launcher configuration.");
                             throw Containment();
                         }
                         child = new ChildProcess(created.pid, created.process); CloseHandle(created.thread);
+                        work.Check(stage);
                     } finally { Marshal.FreeHGlobal(block); }
                 }
                 output.CloseWriter(); error.CloseWriter();
                 using (var retained = new MemoryStream()) {
                     while (true) {
-                        if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                        work.Check(stage);
                         if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
                         output.Drain(retained);
-                        if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                        work.Check(stage);
                         error.Drain(null);
+                        work.Check(stage);
                         if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
                         if (exited && output.Eof && error.Eof && Empty(job)) {
-                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                            work.Check(stage);
                             if (exitCode != 0) throw Refused(exitCode);
                             string decoded;
                             try { decoded = new UTF8Encoding(false, true).GetString(retained.GetBuffer(), 0, (int)retained.Length); }
                             catch (DecoderFallbackException) { throw Invalid(); }
+                            work.Check(stage);
                             bool valid;
                             try { valid = validate(decoded); } catch (Exception) { valid = false; }
-                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                            work.Check(stage);
                             if (!valid) throw Invalid();
                             result = decoded.Trim();
-                            if (clock.ElapsedMilliseconds >= workMilliseconds) throw Timeout(stage);
+                            work.Check(stage);
                             success = true; break;
                         }
                         // Fair bounded chunks even under a perpetual flood on either stream.
@@ -969,7 +1012,7 @@ namespace GraphGoblin.Desktop
             catch (LauncherFailure refused) {
                 failure = refused;
                 if (refused.Code == "helper-invalid") {
-                    if (clock.ElapsedMilliseconds >= workMilliseconds) failure = Timeout(stage);
+                    if (work.Expired) failure = Timeout(stage);
                     else if (exited && exitCode != 0) failure = Refused(exitCode);
                 }
             }
@@ -1039,10 +1082,11 @@ namespace GraphGoblin.Desktop
             origin = "http://127.0.0.1:" + config.Port;
         }
 
-        string ReadHelper(string argument, string stage, int workMilliseconds, Func<string, bool> validate)
+        string ReadHelper(string argument, string stage, HelperProcess.WorkDeadline work, Func<string, bool> validate)
         {
-            return HelperProcess.Read(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument,
-                config.Repo, config.ChildEnvironment(), stage, workMilliseconds, validate);
+            return work.Within(stage, () => HelperProcess.Read(config.Node,
+                Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument,
+                config.Repo, config.ChildEnvironment(), stage, work, validate));
         }
 
         bool Listening()
@@ -1158,7 +1202,8 @@ namespace GraphGoblin.Desktop
 
         public void Ensure()
         {
-            expected = ReadHelper("", "identity", HelperProcess.WorkMilliseconds,
+            var identityWork = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
+            expected = ReadHelper("", "identity", identityWork,
                 value => System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "\\A[a-f0-9]{64}\\z"));
             if (Probe()) return;
             var releaseClock = Stopwatch.StartNew();
@@ -1168,7 +1213,8 @@ namespace GraphGoblin.Desktop
                 Thread.Sleep((int)Math.Min(200, ReleaseRemaining(releaseClock))); if (Probe()) return;
             }
             var sampleClock = Stopwatch.StartNew();
-            bool held = StoreHasLiveOwner(HelperProcess.WorkMilliseconds);
+            var ownershipWork = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
+            bool held = StoreHasLiveOwner(ownershipWork);
             long sampleMilliseconds = sampleClock.ElapsedMilliseconds;
             while (held)
             {
@@ -1176,10 +1222,11 @@ namespace GraphGoblin.Desktop
                 if (work < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
                 Thread.Sleep((int)Math.Min(200, Math.Max(0, work)));
                 if (Probe()) return;
-                work = RecheckWork(releaseClock);
-                if (work < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
+                var retryWork = HelperProcess.WorkDeadline.Recheck(() => releaseClock.ElapsedMilliseconds,
+                    (long)config.StartupTimeoutSeconds * 1000);
+                if (retryWork.Remaining < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
                 sampleClock.Restart();
-                try { held = StoreHasLiveOwner((int)work); }
+                try { held = StoreHasLiveOwner(retryWork); }
                 catch (LauncherFailure failure) { throw HeldFailure(failure); }
                 sampleMilliseconds = sampleClock.ElapsedMilliseconds;
             }
@@ -1331,10 +1378,11 @@ namespace GraphGoblin.Desktop
             return owner != null;
         }
 
-        bool StoreHasLiveOwner(int workMilliseconds)
+        bool StoreHasLiveOwner(HelperProcess.WorkDeadline work)
         {
             Ownership owner = null;
-            ReadHelper(" --store-state", "ownership", workMilliseconds, value => TryReadOwnership(value, out owner));
+            ReadHelper(" --store-state", "ownership", work, value => TryReadOwnership(value, out owner));
+            work.Check("ownership");
             if (owner.state == "free") return false;
             string[] closed = ClosedOwnership(owner.detail);
             ownership = new OwnershipOutcome { Code = closed[0], Text = closed[1] + ": " + Program.RenderPath(owner.path), Lock = owner.path };

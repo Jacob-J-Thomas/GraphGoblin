@@ -189,10 +189,29 @@ public static class NativeChecks
         var env = new System.Collections.Generic.SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (System.Collections.DictionaryEntry item in Environment.GetEnvironmentVariables()) env[(string)item.Key] = (string)item.Value;
         HelperProcess.CheckCapability();
-        Func<string, int, string> run = (script, budget) => HelperProcess.Read(node, "-e " + Program.Quote(script), work, env, "identity", budget, text => text.Trim() == "ok");
+        Func<string, int, string> run = (script, budget) => {
+            var deadline = HelperProcess.WorkDeadline.Start(budget);
+            return HelperProcess.Read(node, "-e " + Program.Quote(script), work, env, "identity", deadline, text => text.Trim() == "ok");
+        };
         Check(run("process.stdout.write('ok')", 5000) == "ok", "A clean helper did not succeed.");
+        string expiredMarker = Path.Combine(work, "expired-helper-must-not-start");
+        try {
+            var expired = HelperProcess.WorkDeadline.Start(0);
+            HelperProcess.Read(node, "-e " + Program.Quote("require('fs').writeFileSync(process.argv[1],'started')") + " " + Program.Quote(expiredMarker),
+                work, env, "identity", expired, text => true);
+            throw new Exception("An expired caller deadline admitted a helper.");
+        }
+        catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout" && !File.Exists(expiredMarker), "Expired work started a helper or changed its refusal."); }
+        long validationClock = 0;
+        try {
+            HelperProcess.Read(node, "-e " + Program.Quote("process.stdout.write('ok')"), work, env, "identity",
+                new HelperProcess.WorkDeadline(() => validationClock, 5000), text => { validationClock = 5000; return text == "ok"; });
+            throw new Exception("Validation at the caller deadline succeeded.");
+        }
+        catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "Late validation changed the closed refusal."); }
         string raw = null;
-        Check(HelperProcess.Read(node, "-e " + Program.Quote("process.stdout.write(' \\tok\\n')"), work, env, "identity", 5000,
+        var paddedWork = HelperProcess.WorkDeadline.Start(5000);
+        Check(HelperProcess.Read(node, "-e " + Program.Quote("process.stdout.write(' \\tok\\n')"), work, env, "identity", paddedWork,
             text => { raw = text; return text == " \tok\n"; }) == "ok" && raw == " \tok\n", "The validator did not receive the untrimmed decoded response.");
         Check(run("process.stdout.write('ok'+' '.repeat(262142))", 5000) == "ok", "The exact byte-cap identity padding behavior changed.");
         var slow = Stopwatch.StartNew();
@@ -278,6 +297,52 @@ public static class NativeChecks
         Check(fourProbes.ElapsedMilliseconds >= 15000 && fourProbes.ElapsedMilliseconds < 18000, "The initial work cap changed.");
     }
 
+    /// <summary>The same immutable cutoff and operation guard used by caller preparation.</summary>
+    static void WorkDeadlineChecks()
+    {
+        Action<Action> timeout = operation => {
+            try { operation(); throw new Exception("Expired work was accepted."); }
+            catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "The work cutoff changed its closed refusal."); }
+        };
+        foreach (long finishedAt in new long[] { 249, 250, 251 }) {
+            long clock = 0;
+            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250);
+            Check(work.Remaining == 250, "A retry did not preserve the two-second cleanup reserve.");
+            Func<string> read = () => work.Within("ownership", () => { clock = finishedAt; return "free"; });
+            if (finishedAt < 250) Check(read() == "free", "On-time free work was refused.");
+            else timeout(() => read());
+        }
+        foreach (long enteredAt in new long[] { 250, 251 }) {
+            long clock = 0; int calls = 0;
+            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250);
+            clock = enteredAt;
+            timeout(() => work.Within("ownership", () => { calls++; return "free"; }));
+            Check(calls == 0, "Expired admission ran preparation or helper work.");
+        }
+        long now = 0; int creations = 0;
+        var setup = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        timeout(() => setup.Within("ownership", () => { now = 250; setup.Check("ownership"); creations++; return "free"; }));
+        Check(creations == 0, "Preparation crossing expiry admitted native creation.");
+        now = 0;
+        var omittedSetup = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        now = 50;
+        Check(omittedSetup.Remaining == 200, "Preparation was rebased out of the work cutoff.");
+        timeout(() => omittedSetup.Within("ownership", () => { now += 225; return "free"; }));
+        now = 0;
+        var returnedLate = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        timeout(() => returnedLate.Within("ownership", () => { now = 249; returnedLate.Check("ownership"); now = 250; return "free"; }));
+        now = 1000;
+        var capped = HelperProcess.WorkDeadline.Recheck(() => now, 40000);
+        Check(capped.Remaining == 15000, "A retry widened the initial 15-second work cap.");
+        now = 15999; capped.Check("ownership");
+        now = 16000; timeout(() => capped.Check("ownership"));
+        var initial = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
+        Check(initial.Remaining <= 15000, "The initial deadline exceeded its work cap.");
+        now = 250;
+        var noReserve = HelperProcess.WorkDeadline.Recheck(() => now, 2000);
+        Check(noReserve.Remaining == 0 && noReserve.Expired, "An exhausted cleanup reserve granted new work.");
+    }
+
     /// <summary>Deterministic decision evidence, not a delayed-kernel-cleanup experiment.</summary>
     static void CleanupDeadlineChecks()
     {
@@ -303,6 +368,11 @@ public static class NativeChecks
     {
         try
         {
+            if (args[0] == "--work-deadline-checks")
+            {
+                WorkDeadlineChecks();
+                Console.WriteLine("Deterministic caller work deadline checks passed (no scheduling fault injected)."); return 0;
+            }
             if (args[0] == "--cleanup-deadline-checks")
             {
                 CleanupDeadlineChecks();

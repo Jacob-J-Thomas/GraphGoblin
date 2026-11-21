@@ -1909,6 +1909,15 @@ test(
         decisions.stdout.trim(),
         'Deterministic cleanup decision checks passed (no kernel fault injected).',
       );
+      const workDecisions = await execute(checks, ['--work-deadline-checks'], {
+        env: environment,
+        windowsHide: true,
+        timeout: 10_000,
+      });
+      assert.equal(
+        workDecisions.stdout.trim(),
+        'Deterministic caller work deadline checks passed (no scheduling fault injected).',
+      );
     });
 
     await t.test(

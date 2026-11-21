@@ -13,6 +13,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   decoded keys, unknown fields and JavaScript-only syntax refuse startup. Cleanup is confirmed
   only when the complete process/job/stream observation finishes before the two-second deadline;
   a later completion keeps the unconfirmed-cleanup outcome (D166).
+  Caller admission now carries one absolute work cutoff through helper preparation, creation,
+  validation and result consumption. Setup cannot restart the held retry's clock or admit a
+  free sample inside its reserved cleanup interval; equality at the cutoff refuses (D167).
   **Upgrade:** rebuild and reinstall the launcher. Windows 10 or Windows Server 2016 or later
   with compatible nested jobs is required, including for warm shortcut clicks. A restricted host
   can refuse the shortcut while an existing gateway remains callable at its current address.

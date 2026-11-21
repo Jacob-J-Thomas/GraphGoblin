@@ -109,6 +109,7 @@ const COMMAND_FLAGS = [
   'bounded-log-checks',
   'helper-checks',
   'cleanup-deadline-checks',
+  'work-deadline-checks',
   'ensure-gateway',
 ];
 const MODES = [

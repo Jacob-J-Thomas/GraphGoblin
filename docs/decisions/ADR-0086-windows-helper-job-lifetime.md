@@ -36,6 +36,9 @@ active processes from private-job basic accounting. Ordinary short-lived members
 within that same window. Observers retaining handles do not change the decision rule.
 
 Monotonic time bounds helper setup, creation, process/EOF/job observation and validation. The
+caller fixes one absolute work cutoff before arguments or environment preparation and passes
+that same clock/cutoff through native creation and result consumption. No inner stopwatch
+rebases elapsed setup time out of the allowance. Equality at the cutoff is expired. The
 initial identity and ownership checks each retain main's 15,000 ms cap. Four sequential 5,000 ms
 WMI lookups across locks and guards can exceed it; a legitimate slow first check therefore still
 refuses. Exhaustion never means stale ownership. Synchronous Windows creation is charged when
@@ -45,7 +48,11 @@ After a held result, subsequent ownership checks reserve 2,000 ms of the remaini
 window for cleanup. Their work window is the smaller of 15,000 ms and that remainder less the
 reserve. A retry starts only if it can fit the previous completed sample's measured duration or
 200 ms, whichever is larger, recalculated after the capped sleep and port probe. A responsive
-matching gateway may be reused. Only a valid, in-budget free sample permits a fresh startup.
+matching gateway may be reused. The retry's absolute cutoff is the earlier of admission plus
+15,000 ms or the existing release-window end minus 2,000 ms, in the same monotonic clock.
+Only a valid, in-budget free sample permits a fresh startup; expiry before result consumption
+cannot clear the last held outcome. Compiled shared-clock boundary checks establish that
+decision, not an OS scheduling reproduction.
 An inconclusive retry keeps the last held reason, bounded lock location and full refusal advice;
 a late release may require another click. HTTP, log and synchronous OS calls have separate limits.
 
