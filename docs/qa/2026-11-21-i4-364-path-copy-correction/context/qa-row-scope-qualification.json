@@ -1,0 +1,62 @@
+{
+  "status": "EDITORIAL_SCOPE_QUALIFICATION_ORIGINALS_UNCHANGED",
+  "originalGenerator": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-364-path-copy-independent-01\\inspect-doc-bytes.py",
+    "bytes": 9450,
+    "sha256": "380ec529c8f222eef160f32b30bb71aa2ba8b36510c2963ebc462a70039236c1"
+  },
+  "originalObservationReceipt": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-364-path-copy-independent-01\\observations.json",
+    "bytes": 5499,
+    "sha256": "8d34d65f37a457fd1e6e02ed6e32ec361905e9efb619c0b2f1290e551dfed957"
+  },
+  "originalQASeal": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-364-path-copy-independent-01\\SEAL.json",
+    "bytes": 501,
+    "sha256": "e713ddd3296e05b2ae766def0a08f3e3509eaca9fe1791e2a98eba502be946a4"
+  },
+  "sourceGuide": {
+    "head": "67d5957cfeb5ed65c0b3e6708f3543a30fbe5b40",
+    "path": "docs/guide/07-troubleshooting.md",
+    "bytes": 86656,
+    "sha256": "fd08def3e8c16bfc7415081a41875780523f7f5fbb903e8e24f39b252241732f"
+  },
+  "originalAssertionSource": [
+    {
+      "line": 32,
+      "text": "actual_row=new_lines[167]"
+    },
+    {
+      "line": 46,
+      "text": "spans=re.findall(rb'`([^`]*)`',actual_row)"
+    },
+    {
+      "line": 47,
+      "text": "assert spans.count(literal)==1"
+    },
+    {
+      "line": 72,
+      "text": "obs={'verdict':'PASS for root-authored documentation repair only','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'guide':GUIDE,'changed_lines':changed,'committed_before':{'revision':PARENT,'bytes':len(old),'sha256':sha(old),'forbidden_ascii_controls':controls(old)},'committed_after':{'revision':HEAD,'tree':TREE,'bytes':len(new),'sha256':sha(new),'forbidden_ascii_controls':controls(new)},'path_replacement':{'old_byte_hex':'08','replacement_hex':'5c62','occurrences':1,'before_window_hex':old[old.index(bytes([8]))-6:old.index(bytes([8]))+11].hex(),'after_code_span_literal':literal.decode(),'after_code_span_hex':literal.hex(),'literal_found_once_in_backtick_span':True,'matches_constructor_default_components':True,'constructor_lines_229_238':constructor.decode()},'formatter_padding':padding,'bytes_added_by_path_replacement':len(replaced)-len(old),'bytes_removed_by_formatter_padding':len(replaced)-len(new),'every_other_line_exact':True,'every_cell_value_exact_after_only_path_replacement':True,'whole_commit_changed_paths':delta,'runtime_and_D203_git_entries':preserved,'all_old_archives_subtree_parent':qa_parent,'all_old_archives_subtree_head':qa_head,'author_packet':{'root':str(A),'manifest_sha256':sha((A/'SHA256SUMS.json').read_bytes()),'members_verified':len(author_manifest),'before_after_match_committed_git_bytes':True},'source_index_before':before,'source_index_after':after,'source_index_unchanged':True,'limits':['Static committed bytes and Markdown code-span inspection only; no browser rendering or runtime behavior execution.','No product tests, builds, provider/model dispatch, GitHub call or repository/index/master write.','Independent documentation QA of root-authored repair, not another general review or approval of the whole PR.','All three general scans remain consumed; bounded Fable review, current delivery gates and coordinator completion remain root-owned.']}"
+    }
+  ],
+  "field": "literal_found_once_in_backtick_span",
+  "correctScope": "Exactly once among code spans in changed row 168; not whole-guide uniqueness",
+  "wholeGuideIdenticalCodeSpans": [
+    {
+      "line": 160,
+      "exactBacktickSpanOccurrences": 1
+    },
+    {
+      "line": 168,
+      "exactBacktickSpanOccurrences": 1
+    },
+    {
+      "line": 243,
+      "exactBacktickSpanOccurrences": 1
+    }
+  ],
+  "originalReportOrObservationRewritten": false,
+  "independentQAOutcomeChanged": false,
+  "formatterFact": "Two edge-padding spaces removed on the changed row; original author one-space wording retained and governed by the existing erratum",
+  "formatterCauseClaimed": false
+}
