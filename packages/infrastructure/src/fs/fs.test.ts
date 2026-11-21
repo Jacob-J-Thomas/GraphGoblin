@@ -15,7 +15,7 @@ import {
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative, resolve } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { WorkingDirectorySpec } from '@graphgoblin/contracts';
 import { TemplateError } from '@graphgoblin/domain';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
@@ -37,13 +37,20 @@ afterEach(() => {
   rmSync(dataDir, { recursive: true, force: true });
 });
 
+function createRelativeWorkspaceTarget(): string {
+  const fixtureDir = mkdtempSync(join(process.cwd(), 'gg-wp-relative-'));
+  onTestFinished(() => rmSync(fixtureDir, { recursive: true, force: true }));
+  return join(fixtureDir, 'workspace');
+}
+
 describe('FsWorkspace', () => {
   it('resolves fixed, relative, and temporary directories and reuses them', async () => {
     const ws = new FsWorkspace(dataDir);
     const fixed = await ws.resolve({ kind: 'fixed', path: join(dataDir, 'fixed') }, 'run1');
     expect(statSync(fixed).isDirectory()).toBe(true);
     expect(await ws.resolve({ kind: 'fixed', path: fixed }, 'run2')).toBe(fixed);
-    const relativePath = relative(process.cwd(), join(dataDir, 'relative'));
+    const relativePath = relative(process.cwd(), createRelativeWorkspaceTarget());
+    expect(isAbsolute(relativePath)).toBe(false);
     const relativeDirectory = await ws.resolve({ kind: 'fixed', path: relativePath }, 'run1');
     expect(relativeDirectory).toBe(resolve(relativePath));
     expect(statSync(relativeDirectory).isDirectory()).toBe(true);
@@ -83,6 +90,10 @@ describe('engine workspace filesystem boundary', () => {
   it.each(['fixed', 'relative', 'temp', 'template'] as const)(
     'uses real %s paths, caches resolution for delivery, and claims only new temporary directories',
     async (kind) => {
+      const target =
+        kind === 'relative' ? createRelativeWorkspaceTarget() : join(dataDir, 'user-owned');
+      const fixedPath = kind === 'relative' ? relative(process.cwd(), target) : target;
+      if (kind === 'relative') expect(isAbsolute(fixedPath)).toBe(false);
       const claims: OwnedRunResource[] = [];
       const journal: RunResourceJournal = {
         find: () => Promise.resolve(undefined),
@@ -100,16 +111,12 @@ describe('engine workspace filesystem boundary', () => {
       vi.spyOn(engine.ports.workspace, 'writeFile').mockImplementation(
         resources.workspace.writeFile,
       );
-      const target = join(dataDir, 'user-owned');
       const spec: WorkingDirectorySpec =
         kind === 'temp'
           ? { kind: 'temp' }
           : kind === 'template'
             ? { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' }
-            : {
-                kind: 'fixed',
-                path: kind === 'relative' ? relative(process.cwd(), target) : target,
-              };
+            : { kind: 'fixed', path: fixedPath };
       const loop = singleNodeLoop(
         `real workspace ${kind}`,
         {
@@ -126,16 +133,11 @@ describe('engine workspace filesystem boundary', () => {
       loop.settings = { workingDirectory: spec };
       try {
         const run = await engine.runToIdle(engine.publish(loop).loopId, { path: target });
-        const path = kind === 'temp' ? join(dataDir, 'workspaces', run.id) : target;
+        const path = kind === 'temp' ? join(realpathSync(dataDir), 'workspaces', run.id) : target;
         expect(run.status).toBe('succeeded');
         expect(port).toHaveBeenCalledTimes(1);
         expect(port).toHaveBeenCalledWith(
-          kind === 'temp'
-            ? { kind: 'temp' }
-            : {
-                kind: 'fixed',
-                path: kind === 'relative' ? relative(process.cwd(), target) : target,
-              },
+          kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: fixedPath },
           run.id,
         );
         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
