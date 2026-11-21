@@ -154,8 +154,12 @@ Behaviour: non-zero exit codes without a configured route fail the run with `SCR
 Commands use `shell: false`. Windows `.cmd` and `.bat` files therefore require an explicitly
 authored command processor; direct invocation is a proven `SCRIPT_START_FAILED`, not an
 automatic shell fallback. Resume and Replay keep the pinned command, arguments and
-working-directory configuration. To change them, publish a corrected definition and start a
-fresh run; neither Resume nor Replay applies the correction. After an external prerequisite
+working-directory configuration. To change them, start a fresh run from the corrected definition;
+neither Resume nor Replay applies the correction. The UI's **New run** uses a published version.
+To test an unpublished saved draft, use `POST /loops/{id}/runs` with the editable draft's
+`versionId` and `allowDraft: true`; the run freezes a new snapshot without publication.
+Publishing can arm the new version's cron and webhook triggers and disable the earlier version's
+registrations ([trigger arming](08-triggers-and-integrations.md#arming-decided-shipped-in-m6)). After an external prerequisite
 repair, such as restoring a missing executable, ordinary Resume can retry the pinned definition. See
 [Windows batch commands](guide/07-troubleshooting.md#windows-batch-commands) for an example.
 
