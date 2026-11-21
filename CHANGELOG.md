@@ -4,6 +4,22 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Claude no longer reports a missing CLI when Windows refused the working directory (#364).
+  Windows refuses a missing working directory, one that is a file and one longer than 258
+  characters with the same spawn `ENOENT` as a missing executable. After a refused start the
+  adapter now reads, without changing anything, the configured executable's full path (with the
+  `.com` and `.exe` forms Windows also tries) and the working directory, and reports only what
+  that establishes: `cli-missing`/`HARNESS_NOT_INSTALLED` when that executable path is absent;
+  `HARNESS_INVALID_CONFIGURATION` (not resumable) when a turn's working directory does not exist
+  or is not a folder; otherwise an `unknown` preflight or `HARNESS_TURN_FAILED` turn whose fixed
+  text names the 258-character limit when the path exceeds it, or both possible causes. An
+  executable named without a full path that cannot be started is now `unknown` rather than
+  `cli-missing`. Refused starts stay `definitely-not-submitted`; cancellation, deadlines and
+  unconfirmed termination keep precedence; no message contains a path or native error text. A
+  refused start in a working directory of 260 characters or more no longer raises an uncaught
+  `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
+  as a failed kill, is no longer taken for a refused start. No store, export or contract change.
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds

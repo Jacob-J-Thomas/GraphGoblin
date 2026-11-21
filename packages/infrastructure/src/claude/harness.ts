@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import {
   cliFailureState,
   readinessDetail,
@@ -34,7 +34,12 @@ import {
   installedClaudeVersion,
   verifyInstalledCapabilities,
 } from './protocol.js';
-import { runClaudeProcess, type ClaudeCliRunner, type ClaudeProcessResult } from './process.js';
+import {
+  runClaudeProcess,
+  type ClaudeCliRunner,
+  type ClaudeProcessResult,
+  type ClaudeStartRefusal,
+} from './process.js';
 import { EventQueue } from './queue.js';
 import { claudeModelCapabilities } from './models.js';
 export interface ClaudeHarnessOptions {
@@ -95,11 +100,66 @@ async function probeDirectory(): Promise<string> {
     }
   }
 }
+/** Windows starts no process in a working directory longer than this (#102, #364). */
+const WINDOWS_WORKING_DIRECTORY_LIMIT = 258;
+/**
+ * A refused start, worded from what the runner established (#364). A spawn `ENOENT` alone does not
+ * say whether the executable or the working directory failed, so only an established absence is
+ * reported as a missing CLI, and only the turn's own working directory is configuration; the
+ * temporary check folder is not. Otherwise the cause stays unknown: the message names both
+ * operands, or the Windows limit as a fact about the path's length. Messages are fixed text.
+ */
+function startFailure(
+  code: NonNullable<ClaudeProcessResult['spawnCode']>,
+  refusal: ClaudeStartRefusal | undefined,
+  cwd: string,
+  probe: boolean,
+): ClaudeHarnessError {
+  if (refusal === 'executable-missing')
+    return new ClaudeHarnessError(
+      'HARNESS_NOT_INSTALLED',
+      probe
+        ? 'Claude CLI was not found at the configured path.'
+        : 'The Claude executable was not found at its configured path; install the Claude CLI or correct its path',
+    );
+  if (refusal) {
+    const state = refusal === 'working-directory-missing' ? 'does not exist' : 'is not a folder';
+    return probe
+      ? new ClaudeHarnessError(
+          'HARNESS_TURN_FAILED',
+          `Claude CLI could not be started because its temporary check folder ${state}.`,
+        )
+      : new ClaudeHarnessError(
+          'HARNESS_INVALID_CONFIGURATION',
+          `Claude could not be started because the working directory ${state}; check the working directory setting`,
+        );
+  }
+  const limit = WINDOWS_WORKING_DIRECTORY_LIMIT;
+  const long = resolve(cwd).length > limit;
+  if (probe)
+    return new ClaudeHarnessError(
+      'HARNESS_TURN_FAILED',
+      long
+        ? `Claude CLI could not be started (${code}) from its temporary check folder, whose path (from TEMP or TMP) is longer than the ${limit} characters Windows allows for a working directory.`
+        : `Claude CLI could not be started (${code}).`,
+    );
+  return new ClaudeHarnessError(
+    'HARNESS_TURN_FAILED',
+    long
+      ? `Claude could not be started (${code}); the working directory path is longer than the ${limit} characters Windows allows`
+      : `Claude could not be started (${code}); check the Claude executable's path and permissions and the working directory`,
+  );
+}
 /**
  * Turns and no-turn probes share the failure order. A probe's messages are single detail
- * sentences about the check (preflight adds the one next step); turn messages are unchanged.
+ * sentences about the check (preflight adds the one next step).
  */
-function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = false): void {
+function checkOutcome(
+  result: ClaudeProcessResult,
+  signal: AbortSignal,
+  cwd: string,
+  probe = false,
+): void {
   if (result.terminationUnconfirmed)
     throw new ClaudeHarnessError(
       'HARNESS_TERMINATION_UNCONFIRMED',
@@ -108,15 +168,7 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = 
         : 'Claude process termination was not confirmed; stop the installed CLI before retrying',
     );
   if (signal.aborted || result.aborted) throw abortError();
-  if (result.spawnCode)
-    throw new ClaudeHarnessError(
-      result.spawnCode === 'ENOENT' ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
-      !probe
-        ? 'The installed Claude executable could not be started; check its path and permissions'
-        : result.spawnCode === 'ENOENT'
-          ? 'Claude CLI was not found at the configured path.'
-          : `Claude CLI could not be started (${result.spawnCode}).`,
-    );
+  if (result.spawnCode) throw startFailure(result.spawnCode, result.startRefusal, cwd, probe);
   if (result.timedOut)
     throw new ClaudeHarnessError(
       'HARNESS_TIMEOUT',
@@ -146,6 +198,11 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = 
       result.failureState === 'transport',
     );
   }
+  if (probe && result.outputFailed)
+    throw new ClaudeHarnessError(
+      'HARNESS_TURN_FAILED',
+      'Claude CLI check output could not be read.',
+    );
   if (probe && (result.stdinFailed || result.exitCode !== 0))
     throw new ClaudeHarnessError(
       'HARNESS_TURN_FAILED',
@@ -153,7 +210,7 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = 
         ? 'Claude CLI check stopped without an exit code.'
         : `Claude CLI check exited with code ${result.exitCode}.`,
     );
-  if (result.stdinFailed || result.exitCode !== 0)
+  if (result.stdinFailed || result.outputFailed || result.exitCode !== 0)
     throw new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed');
 }
 /** Structural current HarnessPort implementation; additive HarnessId integration follows the issue 98 cutover. */
@@ -244,7 +301,7 @@ export class ClaudeHarness implements HarnessPort {
         authStatus &&
         (signOutDetail || /\bnot logged in\b/i.test(result.stdout) || result.notLoggedIn)
       ) {
-        checkOutcome({ ...result, exitCode: 0 }, signal, true);
+        checkOutcome({ ...result, exitCode: 0 }, signal, cwd, true);
         facts.authenticated = false;
         throw new ClaudeHarnessError(
           'HARNESS_NOT_AUTHENTICATED',
@@ -263,6 +320,7 @@ export class ClaudeHarness implements HarnessPort {
               : result.failureState,
         },
         signal,
+        cwd,
         true,
       );
       return result.stdout;
@@ -463,9 +521,10 @@ export class ClaudeHarness implements HarnessPort {
           result.aborted ||
           result.timedOut ||
           result.overflow ||
+          result.outputFailed ||
           result.callbackError
         )
-          checkOutcome(result, controller.signal);
+          checkOutcome(result, controller.signal, request.workingDirectory);
         if (!accepted && result.turnRejection) {
           delivery =
             result.turnRejection === 'session-missing'
@@ -482,7 +541,7 @@ export class ClaudeHarness implements HarnessPort {
               'Claude requires authentication before submitting this turn',
             );
         }
-        checkOutcome(result, controller.signal);
+        checkOutcome(result, controller.signal, request.workingDirectory);
         for (const record of parser.finish()) accept(record);
         const completed = accumulator.finish();
         for (const event of completionEvents) queue.push(event);
