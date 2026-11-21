@@ -1,0 +1,56 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "id": 5938305116,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+      "title": "A working-directory spawn ENOENT is reported as the Claude executable being missing",
+      "issue_number": 364,
+      "body": "Found by WP-F5 (#102 launch diagnosis) and confirmed by its independent GPT-6.1 Sol review on 2026-10-19. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\nA spawn `ENOENT` caused by the working directory is reported as the executable being missing: Claude preflight says \"The installed Claude executable could not be started\" (`HARNESS_NOT_INSTALLED` class) when the real cause is a working directory the process cannot start in.\n\n## Steps\n\n1. Point `TEMP`/`TMP` at a directory whose path is 234 characters or longer (the Claude CLI starts from working directories up to 258 characters and fails from 259; the probe directory adds the rest).\n2. Run `node apps/api/dist/main.js --preflight` or `GET /harness/preflight`.\n\nExpected: a message that names the working directory as the cause, or at least does not claim the executable is missing.\n\nActual: \"The installed Claude executable could not be started\", while `claude --version` works from a short directory.\n\n## Cause\n\n`packages/infrastructure/src/claude/harness.ts:67-70` maps every spawn `ENOENT` to the not-installed class. The same applies to a turn whose run workspace exceeds 258 characters.\n\n## Fix shape\n\nDistinguish a cwd-caused `ENOENT` (check the working directory exists and is startable before spawning, or inspect the error path) from a missing executable, and word the problem accordingly. Coordinate with WP-F1 (#179), which rewrites the readiness classification in the same file.\n\n## Related\n\n#102 (record `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`), #179.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:harness",
+          "color": "BFDADC",
+          "description": "Harness and model adapters"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-10-20T08:13:25Z",
+      "updated_at": "2026-10-20T08:13:25Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+      "display_title": "A working-directory spawn ENOENT is reported as the Claude executable being missing"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+    "title": "A working-directory spawn ENOENT is reported as the Claude executable being missing",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+    "display_title": "A working-directory spawn ENOENT is reported as the Claude executable being missing"
+  },
+  "isError": false
+}

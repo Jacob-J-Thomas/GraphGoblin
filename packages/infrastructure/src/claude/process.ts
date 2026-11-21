@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { stat } from 'node:fs/promises';
+import { isAbsolute, normalize, resolve as resolvePath } from 'node:path';
 import { killTree } from '../process/index.js';
 import { ClaudeHarnessError } from './errors.js';
 import { cliFailureState } from '@graphgoblin/domain';
@@ -21,10 +23,18 @@ export interface ClaudeProcessResult {
   timedOut: boolean;
   aborted: boolean;
   overflow: boolean;
+  /** Set only for an actual spawn refusal: no process was created, so nothing was submitted. */
   spawnCode?: 'ENOENT' | 'EACCES' | 'UNKNOWN';
+  /**
+   * The cause of a spawn refusal, when the read-only observation made after it established one.
+   * Absent when the cause is unknown, including when an observation could not be read.
+   */
+  startRefusal?: ClaudeStartRefusal;
   /** Kill deadline elapsed without the child's close event; never treat this as successful cancellation. */
   terminationUnconfirmed?: true;
   stdinFailed?: boolean;
+  /** A started process's stdout or stderr pipe failed, so its output is incomplete. */
+  outputFailed?: true;
   callbackError?: ClaudeHarnessError;
   /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
   failureState?: HarnessReadinessState;
@@ -37,6 +47,43 @@ export type ClaudeCliRunner = (
   request: ClaudeProcessRequest,
   onStdout?: (chunk: Buffer) => void,
 ) => Promise<ClaudeProcessResult>;
+export type ClaudeStartRefusal =
+  'executable-missing' | 'working-directory-missing' | 'working-directory-not-directory';
+type PathState = 'missing' | 'directory' | 'other' | 'unknown';
+async function pathState(path: string): Promise<PathState> {
+  try {
+    return (await stat(path)).isDirectory() ? 'directory' : 'other';
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    // Only a definite absence counts; access, length or other read faults leave the cause unknown.
+    return code === 'ENOENT' || code === 'ENOTDIR' ? 'missing' : 'unknown';
+  }
+}
+/**
+ * Read-only observation after a spawn refusal (#364). A spawn `ENOENT` does not say which operand
+ * failed: Windows also reports a missing, non-folder or overlong working directory that way. An
+ * executable counts as missing only for a fully qualified path whose every name Windows process
+ * start tries (the path, then with `.com` and `.exe` appended) is absent or a folder; a bare name
+ * or relative path is never resolved here. An existing folder is not proof that a process can
+ * start in it, so it establishes nothing.
+ */
+async function observeStartRefusal(
+  request: ClaudeProcessRequest,
+  code: NonNullable<ClaudeProcessResult['spawnCode']>,
+): Promise<ClaudeStartRefusal | undefined> {
+  const binary = request.binary;
+  if (code === 'ENOENT' && isAbsolute(binary) && resolvePath(binary) === normalize(binary)) {
+    const names =
+      process.platform === 'win32' ? [binary, `${binary}.com`, `${binary}.exe`] : [binary];
+    const states = await Promise.all(names.map(pathState));
+    if (states.every((state) => state === 'missing' || state === 'directory'))
+      return 'executable-missing';
+  }
+  const directory = await pathState(request.cwd);
+  if (directory === 'missing') return 'working-directory-missing';
+  if (directory === 'other') return 'working-directory-not-directory';
+  return undefined;
+}
 /** Own every child and its descendants, with no shell, bounded capture and fixed diagnostic codes. */
 export const runClaudeProcess = (
   request: ClaudeProcessRequest,
@@ -63,8 +110,10 @@ export const runClaudeProcess = (
       settled = false,
       timedOut = false,
       overflow = false,
-      stdinFailed = false;
+      stdinFailed = false,
+      outputFailed = false;
     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
+    let startRefusal: ClaudeStartRefusal | undefined;
     let killing: Promise<boolean> | undefined;
     let closed = false;
     let treeConfirmed = false;
@@ -86,8 +135,10 @@ export const runClaudeProcess = (
         overflow,
         ...(terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
         ...(spawnCode ? { spawnCode } : {}),
+        ...(startRefusal ? { startRefusal } : {}),
         ...(exitCode !== 0 && rejection ? { turnRejection: rejection } : {}),
         ...(stdinFailed ? { stdinFailed } : {}),
+        ...(outputFailed ? { outputFailed: true } : {}),
         ...(callbackError ? { callbackError } : {}),
         ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
           ? { failureState: cliFailureState(diagnostic) }
@@ -100,6 +151,11 @@ export const runClaudeProcess = (
     const kill = (): void => {
       if (settled) return;
       clearTimeout(timer);
+      // A refused start has no process to stop: report the refusal now, without its diagnosis.
+      if (spawnCode) {
+        finish(null);
+        return;
+      }
       if (killing) return;
       killTimer = setTimeout(() => finish(null, true), 5000);
       killing = killTree(child);
@@ -115,7 +171,8 @@ export const runClaudeProcess = (
       request.timeoutMs === null
         ? undefined
         : setTimeout(() => {
-            timedOut = true;
+            // A process that never started cannot have timed out.
+            if (!spawnCode) timedOut = true;
             kill();
           }, request.timeoutMs);
     request.signal.addEventListener('abort', kill, { once: true });
@@ -156,19 +213,40 @@ export const runClaudeProcess = (
         kill();
       }
     };
+    // Node has no pid only for a child that never started. Its pipes can still fail afterwards (on
+    // Windows from a 260-character working directory, stdout and stderr fail with ENOTCONN); the
+    // refusal itself arrives as the child's error event, so those secondary faults are ignored.
+    const started = (): boolean => child.pid !== undefined;
+    const outputFault = (): void => {
+      if (!started()) return;
+      outputFailed = true;
+      kill();
+    };
     child.stdout?.on('data', (chunk: Buffer) => collect(chunk, true));
     child.stderr?.on('data', (chunk: Buffer) => collect(chunk, false));
+    child.stdout?.on('error', outputFault);
+    child.stderr?.on('error', outputFault);
     child.on('error', (error: NodeJS.ErrnoException) => {
-      spawnCode =
+      // Only an actual spawn refusal proves that nothing started. A later error, such as a failed
+      // kill, leaves the close and termination outcomes authoritative.
+      if (settled || spawnCode || started()) return;
+      const code =
         error.code === 'ENOENT' ? 'ENOENT' : error.code === 'EACCES' ? 'EACCES' : 'UNKNOWN';
-      finish(null);
+      spawnCode = code;
+      void observeStartRefusal(request, code).then((observed) => {
+        startRefusal = observed;
+        finish(null);
+      });
     });
     child.on('close', (code) => {
       closed = true;
       closeCode = code;
+      // After a refusal Node still closes the child; the refusal path settles the result.
+      if (spawnCode) return;
       if (!killing || treeConfirmed) finish(code);
     });
     child.stdin?.on('error', () => {
+      if (!started()) return;
       stdinFailed = true;
       kill();
     });

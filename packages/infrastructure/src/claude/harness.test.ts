@@ -115,6 +115,8 @@ describe('Claude existing harness contract', () => {
     { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
     { timedOut: true, code: 'HARNESS_TIMEOUT' },
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+    // A failed output pipe may have lost acceptance evidence, so no refusal can be trusted (#364).
+    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
   ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
     const { harness } = fixture({
       records: [
@@ -826,6 +828,7 @@ describe('Claude preflight and transport failure matrix', () => {
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
     { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
+    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
     const { harness } = fixture({ exit });
     const session = harness.start(request, new AbortController().signal);
@@ -855,7 +858,14 @@ describe('Claude preflight and transport failure matrix', () => {
 describe('unconfirmed native termination', () => {
   it.each([
     ['timeout', { timedOut: true }, 'unknown', 'HARNESS_TIMEOUT'],
-    ['missing executable', { spawnCode: 'ENOENT' }, 'cli-missing', 'HARNESS_NOT_INSTALLED'],
+    [
+      'missing executable',
+      { spawnCode: 'ENOENT', startRefusal: 'executable-missing' },
+      'cli-missing',
+      'HARNESS_NOT_INSTALLED',
+    ],
+    // A refusal with no established cause never claims that the CLI is missing (#364).
+    ['unexplained start refusal', { spawnCode: 'ENOENT' }, 'unknown', 'HARNESS_TURN_FAILED'],
     [
       'unconfirmed termination',
       { terminationUnconfirmed: true },
@@ -1011,3 +1021,196 @@ it.each(['auth', 'quota', 'transport'] as const)(
     await events;
   },
 );
+
+describe('Claude start refusal diagnostics (#364)', () => {
+  const refused = (extra: Partial<ClaudeProcessResult> = {}) =>
+    outcome('', { exitCode: null, spawnCode: 'ENOENT', ...extra });
+  const longDirectory = join(tmpdir(), 'x'.repeat(259));
+  it.each([
+    [
+      'a missing working directory',
+      { startRefusal: 'working-directory-missing' as const },
+      request.workingDirectory,
+      'HARNESS_INVALID_CONFIGURATION',
+      'Claude could not be started because the working directory does not exist; check the working directory setting',
+    ],
+    [
+      'a working directory that is not a folder',
+      { startRefusal: 'working-directory-not-directory' as const },
+      request.workingDirectory,
+      'HARNESS_INVALID_CONFIGURATION',
+      'Claude could not be started because the working directory is not a folder; check the working directory setting',
+    ],
+    [
+      'an absent executable',
+      { startRefusal: 'executable-missing' as const },
+      request.workingDirectory,
+      'HARNESS_NOT_INSTALLED',
+      'The Claude executable was not found at its configured path; install the Claude CLI or correct its path',
+    ],
+    [
+      'an unexplained ENOENT',
+      {},
+      request.workingDirectory,
+      'HARNESS_TURN_FAILED',
+      "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+    ],
+    [
+      'an unexplained EACCES',
+      { spawnCode: 'EACCES' as const },
+      request.workingDirectory,
+      'HARNESS_TURN_FAILED',
+      "Claude could not be started (EACCES); check the Claude executable's path and permissions and the working directory",
+    ],
+    [
+      'an unexplained refusal in a long working directory',
+      {},
+      longDirectory,
+      'HARNESS_TURN_FAILED',
+      'Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows',
+    ],
+  ])(
+    'reports a turn refusal with %s as fixed text and no submission',
+    async (_case, observation, workingDirectory, code, message) => {
+      const { harness, calls } = fixture({ records: [], exit: refused(observation) });
+      const session = harness.start(
+        { ...request, workingDirectory, turn: { prompt: 'PRIVATE_PROMPT' } },
+        new AbortController().signal,
+      );
+      const events = await drain(session.events);
+      const failure = { code, message, retriable: false };
+      expect(events).toEqual([
+        { type: 'error', ...failure, submission: 'definitely-not-submitted' },
+      ]);
+      await expect(session.result).rejects.toMatchObject(failure);
+      await expect(session.sessionId).rejects.toMatchObject({ code });
+      // The authored working directory is used exactly as given; nothing substitutes another.
+      expect(calls.at(-1)?.cwd).toBe(workingDirectory);
+      expect(JSON.stringify(events)).not.toContain('PRIVATE');
+      expect(JSON.stringify(events)).not.toContain(workingDirectory);
+    },
+  );
+  it('keeps a turn uncertain when its output pipe failed, even with a recognised refusal', async () => {
+    const { harness } = fixture({
+      records: [],
+      exit: { exitCode: 1, outputFailed: true, turnRejection: 'auth' },
+    });
+    const session = harness.start(request, new AbortController().signal);
+    expect((await drain(session.events)).at(-1)).toEqual({
+      type: 'error',
+      code: 'HARNESS_TURN_FAILED',
+      message: 'Claude turn failed',
+      retriable: false,
+      submission: 'delivery-uncertain',
+    });
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TURN_FAILED' });
+  });
+  it('keeps cancellation ahead of a working-directory diagnosis', async () => {
+    const controller = new AbortController();
+    const runner: ClaudeCliRunner = (command) => {
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      if (command.args.includes('auth'))
+        return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
+      controller.abort();
+      return Promise.resolve(refused({ aborted: true, startRefusal: 'working-directory-missing' }));
+    };
+    const session = new ClaudeHarness({ runner, platform: 'win32' }).start(
+      request,
+      controller.signal,
+    );
+    await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+    expect(await drain(session.events)).toEqual([]);
+  });
+  it.each([
+    [
+      { startRefusal: 'executable-missing' as const },
+      'cli-missing',
+      'HARNESS_NOT_INSTALLED',
+      'Claude CLI was not found at the configured path.',
+      'Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.',
+    ],
+    [
+      { startRefusal: 'working-directory-missing' as const },
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started because its temporary check folder does not exist.',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+    [
+      { startRefusal: 'working-directory-not-directory' as const },
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started because its temporary check folder is not a folder.',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+    [
+      {},
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started (ENOENT).',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+  ])(
+    'reports check refusal %o as %s; the check folder is never configuration',
+    async (observation, state, code, detail, action) => {
+      const calls: ClaudeProcessRequest[] = [];
+      const runner: ClaudeCliRunner = (command) => {
+        calls.push(command);
+        return Promise.resolve(refused(observation));
+      };
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      const facts = await harness.preflight();
+      expect(facts).toMatchObject({ state, ok: false, problems: [`${detail} ${action}`] });
+      expect(facts).not.toHaveProperty('authenticated');
+      expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
+      const session = harness.start(request, new AbortController().signal);
+      await expect(session.result).rejects.toMatchObject({ code, message: detail });
+      expect((await drain(session.events)).at(-1)).toMatchObject({
+        code,
+        submission: 'definitely-not-submitted',
+      });
+    },
+  );
+  it('reports an unreadable check output without trusting partial sign-in text', async () => {
+    const runner: ClaudeCliRunner = (command) =>
+      Promise.resolve(
+        command.args.includes('auth')
+          ? outcome('{"loggedIn":false}', { outputFailed: true, notLoggedIn: true })
+          : outcome(command.args.includes('--help') ? help : '2.1.285'),
+      );
+    const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
+    expect(facts).toMatchObject({
+      state: 'unknown',
+      problems: [
+        'Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.',
+      ],
+    });
+    expect(facts).not.toHaveProperty('authenticated');
+  });
+  it('names the Windows limit for an unexplained refusal from a long temporary check folder', async () => {
+    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-364-long-temp-'));
+    let longTemp = root;
+    while (longTemp.length < 240) longTemp = join(longTemp, 'segment-abcdefghij');
+    await probeFs.mkdir(longTemp, { recursive: true });
+    const directories: string[] = [];
+    const runner: ClaudeCliRunner = (command) => {
+      directories.push(command.cwd);
+      return Promise.resolve(refused());
+    };
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
+    try {
+      const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
+      expect(directories[0]?.length).toBeGreaterThan(258);
+      expect(facts).toMatchObject({
+        state: 'unknown',
+        problems: [
+          'Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. Check that the Claude CLI starts and responds, then retry preflight.',
+        ],
+      });
+    } finally {
+      vi.unstubAllEnvs();
+      await probeFs.rm(root, { recursive: true, force: true });
+    }
+  });
+});

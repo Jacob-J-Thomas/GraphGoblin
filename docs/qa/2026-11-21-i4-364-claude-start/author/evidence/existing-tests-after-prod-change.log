@@ -1,0 +1,58 @@
+v22.23.4
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (13 tests | 1 failed) 56ms
+   ❯ bounded native transport failure outcomes (8)
+     × reports stdin delivery failure without claiming a successful turn 10ms
+ ❯ src/claude/harness.test.ts (57 tests | 1 failed) 2140ms
+   ❯ unconfirmed native termination (8)
+     × keeps missing executable authoritative over positive auth-status text 32ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > unconfirmed native termination > keeps missing executable authoritative over positive auth-status text
+AssertionError: expected { state: 'unknown', ok: false, …(5) } to match object { state: 'cli-missing', ok: false }
+(5 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+    "ok": false,
+-   "state": "cli-missing",
++   "state": "unknown",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:877:22
+    875|       const harness = new ClaudeHarness({ platform: 'win32', runner });
+    876|       const result = await harness.preflight();
+    877|       expect(result).toMatchObject({ state, ok: false });
+       |                      ^
+    878|       expect(result).not.toHaveProperty('authenticated');
+    879|       await expect(
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports stdin delivery failure without claiming a successful turn
+AssertionError: expected "vi.fn()" to be called with arguments: [ ChildProcess{ …(14), …(2) } ]
+System.Management.Automation.RemoteException
+Number of calls: 0
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:89:22
+     87|     const result = runClaudeProcess(request());
+     88|     child.stdin?.emit('error', new Error('PRIVATE_STDIN_BODY'));
+     89|     expect(killTree).toHaveBeenCalledWith(child);
+       |                      ^
+     90|     child.emit('close', null);
+     91|     expect(await result).toMatchObject({ stdinFailed: true });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  2 failed | 207 passed | 2 skipped (211)
+   Start at  02:41:03
+   Duration  22.13s (tests 58%, import 22%, transform 20%)
+
+vitest-exit=1

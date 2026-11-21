@@ -1,0 +1,51 @@
+{
+  "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+  "sources": [
+    {
+      "path": "packages/infrastructure/src/claude/process.ts",
+      "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+      "sha256": "397e7110641a9cb844cd7ec85df60d27c38056bad24fcc8b8f4b3e9bc89f0cc9",
+      "derivedSha256": "b4a68a378e42735ba6a0ad046ff740ee20fc159039a4e09f3fe11003e2916867"
+    },
+    {
+      "path": "packages/infrastructure/src/claude/harness.ts",
+      "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+      "sha256": "1af4a5fbb6d1ad48496b9effa05df2f98f86bd63ad4275d5cd07b0702e0d23e9",
+      "derivedSha256": "ebae59ee4b0fc646313c2e1be2075e17628e77bdbc825d22736e630b533d18fa"
+    }
+  ],
+  "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\fixtures\\CANARY364_NATIVE_PATH\\ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\\eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "result": {
+    "code": "HARNESS_NOT_INSTALLED",
+    "message": "The installed Claude executable could not be started; check its path and permissions"
+  },
+  "events": [
+    {
+      "type": "error",
+      "code": "HARNESS_NOT_INSTALLED",
+      "message": "The installed Claude executable could not be started; check its path and permissions",
+      "retriable": false,
+      "submission": "definitely-not-submitted"
+    }
+  ],
+  "candidateOriginal": {
+    "ok": false,
+    "code": "HARNESS_TURN_FAILED",
+    "message": "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows"
+  },
+  "checks": [
+    {
+      "name": "existing binary and cwd at control time",
+      "pass": true
+    },
+    {
+      "name": "parent source reproduces false installation diagnosis",
+      "pass": true
+    },
+    {
+      "name": "candidate original oracle rejects baseline classification",
+      "pass": true
+    }
+  ],
+  "scope": "Only exact base process/harness TS transpiled to isolated evidence modules; relative dependencies bind to unchanged built helpers. No candidate/source worktree mutation and no new pnpm build."
+}

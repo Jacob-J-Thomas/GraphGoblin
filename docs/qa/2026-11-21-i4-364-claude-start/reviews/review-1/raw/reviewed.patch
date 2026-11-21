@@ -1,0 +1,1253 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f4f086b..92007c5d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,22 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Claude no longer reports a missing CLI when Windows refused the working directory (#364).
++  Windows refuses a missing working directory, one that is a file and one longer than 258
++  characters with the same spawn `ENOENT` as a missing executable. After a refused start the
++  adapter now reads, without changing anything, the configured executable's full path (with the
++  `.com` and `.exe` forms Windows also tries) and the working directory, and reports only what
++  that establishes: `cli-missing`/`HARNESS_NOT_INSTALLED` when that executable path is absent;
++  `HARNESS_INVALID_CONFIGURATION` (not resumable) when a turn's working directory does not exist
++  or is not a folder; otherwise an `unknown` preflight or `HARNESS_TURN_FAILED` turn whose fixed
++  text names the 258-character limit when the path exceeds it, or both possible causes. An
++  executable named without a full path that cannot be started is now `unknown` rather than
++  `cli-missing`. Refused starts stay `definitely-not-submitted`; cancellation, deadlines and
++  unconfirmed termination keep precedence; no message contains a path or native error text. A
++  refused start in a working directory of 260 characters or more no longer raises an uncaught
++  `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
++  as a failed kill, is no longer taken for a refused start. No store, export or contract change.
++
+ - Windows launcher identity and ownership checks own their descendants in private Windows jobs
+   (#459), drain both output streams within a bounded work window and collect failed checks
+   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index 47bd8470..87b3cb0d 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -713,7 +713,7 @@ The model catalog is authoritative for selected and effective models. Shared adm
+ 
+ The product owner develops on Windows 11. Codex's native Windows sandbox applies. POSIX signals are not available, so process trees are killed with `taskkill /T /F` where GraphGoblin owns the process (scripts); for Codex sessions the CLI's own job object ends the tree on abort (see "Cancellation"). Every provider and tool process starts with `windowsHide: true` and piped stdio, which gives it its own hidden console: Codex preflight, Claude turns and probes, scripts, and Codex sessions. The SDK 0.160.0 spawns sessions without the option, so a pnpm patch adds it (ADR-0049 acceptance amendment); without it the CLI shared the gateway's console and a terminal Ctrl+C killed a running turn. Paths are normalised with `node:path` and never built by string concatenation.
+ 
+-Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
++Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Node reports that refusal as spawn `ENOENT`, the code of a missing executable; the Claude adapter's [start refusals](#claude-code-adapter-26) say which operand it could establish (#364). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
+ 
+ ### Fixtures (Decided)
+ 
+@@ -896,6 +896,38 @@ policies keep their existing meanings. Session lookup filters by harness before
+ newest matching session, so a Codex session is never passed to Claude or vice versa. The same
+ resolved request is used for normal and structured-output repair turns. Version, help, and authentication probes run in a fresh empty temporary directory; only the actual turn uses the authored working directory.
+ 
++**Start refusals (#364).** A spawn `ENOENT` does not say which operand failed: on Windows 11 with
++Node 22.23.4, a missing working directory, one that is a file and an existing one longer than 258
++characters are all refused with the same `ENOENT` as a missing executable, and Node attributes
++each to the executable. After an actual refusal (Node created no process), the runner makes one
++read-only observation of the request's own executable and working directory and returns only a
++closed cause. The executable counts as missing only when its configured path is fully qualified
++and that path and its `.com` and `.exe` forms, the names Windows process start tries, are all
++absent or folders; an executable named without a full path is never resolved through `PATH`. A
++working directory that is absent (or below a file) or is not a folder is established from its own
++metadata. An existing folder establishes nothing, because it can still be unstartable, and a read
++that fails for any other reason leaves the cause unknown. The adapter reports only what was
++established, in fixed text without paths:
++
++| Established                              | Preflight                                                                                                                                                 | Turn                                                                                                                                                      |
++| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
++| Executable missing                       | `cli-missing`: "Claude CLI was not found at the configured path."                                                                                         | `HARNESS_NOT_INSTALLED` (restorable), raised by the turn's own readiness check                                                                            |
++| Turn working directory missing or a file | Not applicable                                                                                                                                            | `HARNESS_INVALID_CONFIGURATION`: "Claude could not be started because the working directory does not exist" (or "is not a folder"); pinned, not resumable |
++| Check folder missing or a file           | `unknown`: "Claude CLI could not be started because its temporary check folder does not exist." (or "is not a folder")                                    | The same detail as `HARNESS_TURN_FAILED`; the check folder is never configuration                                                                         |
++| Nothing, path over 258 characters        | `unknown`: "... from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory." | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows"                |
++| Nothing                                  | `unknown`: "Claude CLI could not be started (ENOENT)." (or the `EACCES`/`UNKNOWN` code)                                                                   | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory"               |
++
++Every refusal stays `definitely-not-submitted`, and the turn uses the working directory exactly as
++given. Unconfirmed termination and cancellation keep their precedence; an abort or deadline that
++arrives during the observation reports the refusal at once, without a cause and without a timeout.
++A later error event of a started process, such as a failed kill, is not a refusal. From 260
++characters Windows also fails the refused process's stdout and stderr pipes (`read ENOTCONN`); the
++runner ignores pipe faults of a process that never started, where they previously escaped as an
++uncaught exception. A started process's stdout or stderr failure stops its tree and fails the turn
++(`HARNESS_TURN_FAILED`, delivery uncertain, ahead of any recognised stderr refusal, because lost
++output can hide acceptance) or the check ("Claude CLI check output could not be read."). The 258-character wording states the path's length against the documented limit; it is
++not proof of the cause.
++
+ The CLI streams JSON lines. GraphGoblin records bounded progress, usage, the transcript artifact,
+ and a policy-evidence item when transcript capture is enabled. Provider response bodies and raw
+ stderr are not included in diagnostics. Cancellation owns the CLI process tree; if termination
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+index b1b4db08..ed797aca 100644
+--- a/docs/guide/07-troubleshooting.md
++++ b/docs/guide/07-troubleshooting.md
+@@ -134,7 +134,8 @@ After upgrading, an unfinished script visit from an earlier build may have no di
+ | Saving, publishing or Settings is refused with `EFFORT_UNSUPPORTED`, or a run fails `EVALUATION_INVALID_CONFIGURATION` with `details.code: EFFORT_UNSUPPORTED` | The effort is not one the selected or inherited model offers: for example `none` or `max` on GPT-5.5, or `none` with Claude. The Effort field names the model that does not support it, and the node shows the issue. A run pinned to such an effort fails before any provider request. | Choose an effort the model offers, or Default, in the node, LLM decision, loop defaults, Settings or `GG_DEFAULTS`. Publish and start a new run; the failed run's definition is pinned.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+ | Codex rejects the model ID                                                                                                                                     | Execution rejected the selected ID for this account, or the ID is misspelled.                                                                                                                                                                                                           | Correct the node model or `defaults.byHarness.codex.model` in the loop, owner settings, or `GG_DEFAULTS`. The catalog does not verify account access. Publish a new version for node/loop changes; restart for process defaults.                                                                                                                                                                                                                                                                                                                                                                            |
+ | A Codex command fails with `CreateProcessWithLogonW failed: 267`                                                                                               | The command's working directory is missing or longer than 258 characters (`CreateProcessAsUserW failed: 267` in the unelevated sandbox).                                                                                                                                                | The run transcript does not show a command's own directory. Open the worker's Codex session log (`%USERPROFILE%\.codex\sessions`, file name containing the node's session ID) and read that tool call's `workdir`. Check that this `workdir` exists and has at most 258 characters, whether or not it matches the node's working directory (a command may use another directory on purpose). A `workdir` that drops a segment of the node's directory is a probable typo by the worker, as in the diagnosed case, and needs no GraphGoblin change. [Diagnosis](../qa/2026-10-19-wp-f5-launch-diagnosis.md). |
+-| Claude preflight says the executable could not be started; `claude --version` works                                                                            | A working `claude --version` may use another executable or account. Otherwise the API's `TEMP`/`TMP` may be too long: 234 characters or more.                                                                                                                                           | First check, for the account running the API, the executable it uses (`GG_CLAUDE_BINARY`, else `%USERPROFILE%\.local\bin\claude.exe`), that this account is signed in, and the API's `TEMP` and `TMP`. If those paths have 234 characters or more, the Claude check directory exceeds the Windows 258-character working-directory limit: set both to a shorter directory and retry preflight.                                                                                                                                                                                                               |
++| Claude preflight says `Claude CLI could not be started (ENOENT)`, perhaps naming its temporary check folder; `claude --version` works                          | Preflight could not start the CLI or establish why (#364). A working `claude --version` may use another executable or account. If the problem names the check folder, the API's `TEMP`/`TMP` has 234 characters or more.                                                                | First check, for the account running the API, the executable it uses (`GG_CLAUDE_BINARY`, else `%USERPROFILE%\.localin\claude.exe`), that this account is signed in, and the API's `TEMP` and `TMP`. If those paths have 234 characters or more, the Claude check directory exceeds the Windows 258-character working-directory limit: set both to a shorter directory and retry preflight. `CLI not found` means the configured full path and its `.com`/`.exe` forms are absent; a name without a full path is not looked up.                                                                             |
++| A Claude run fails: `Claude could not be started because the working directory does not exist` (or `is not a folder`, or is longer than 258 characters)        | When the CLI was started, the node's working directory was missing, a file, or longer than the 258 characters Windows allows (#364). Nothing was submitted.                                                                                                                             | Correct the loop's working-directory setting so that the folder exists and its full path has at most 258 characters; for a temporary workspace, use a shorter `GG_DATA_DIR`. These failures are not resumable: start a new run. `Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory` establishes neither cause: check both.                                                                                                                                                                                                                 |
+ | Codex reports denied writes                                                                                                                                    | The node uses a read-only sandbox, or writes outside its allowed workspace.                                                                                                                                                                                                             | Choose the intended fixed working directory and `workspace-write` for a node that should edit it. Publish and start the corrected version. Check actual target permissions; full access is not required for ordinary workspace edits.                                                                                                                                                                                                                                                                                                                                                                       |
+ | A run stays waiting                                                                                                                                            | It needs input, a matching signal, a timer, a heartbeat condition, or a child result.                                                                                                                                                                                                   | Read `waiting.kind`. Submit the form or use `provide_input`/`send_signal`; inspect the child or probe. Resume is for paused/failed runs, not answering a wait.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+ | A paused run does not accept input                                                                                                                             | Pause holds execution; the input endpoint requires waiting status.                                                                                                                                                                                                                      | Resume first, then answer when the input wait appears.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+@@ -243,7 +244,7 @@ for first load, background rechecks, offline pauses, completed lookup failures a
+ | State              | Label             | What to do                                                                                                                                                                                                       |
+ | ------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | `checking`         | Checking…         | The first check has not answered yet. Wait for it.                                                                                                                                                               |
+-| `unknown`          | Unknown           | The check timed out or returned empty/unrecognised login output, even with exit 0. Sign-out is not established. Check that the CLI starts and responds, then retry preflight.                                    |
++| `unknown`          | Unknown           | The check timed out, returned empty/unrecognised login output even with exit 0, or found no cause for a failed start. Sign-out is not established. Check that the CLI starts and responds, then retry preflight. |
+ | `ready`            | Ready             | CLI version, required flags and local login passed. Account access to a model is not verified.                                                                                                                   |
+ | `cli-missing`      | CLI not found     | Install the CLI or set `GG_CLAUDE_BINARY` / `GG_CODEX_BINARY`, then retry preflight.                                                                                                                             |
+ | `cli-incompatible` | CLI update needed | Update that CLI; the problem names the version or missing option. Then retry preflight.                                                                                                                          |
+diff --git a/packages/infrastructure/src/claude/fixtures/turn-cli.mjs b/packages/infrastructure/src/claude/fixtures/turn-cli.mjs
+index 67a7c0a8..4ee72d29 100644
+--- a/packages/infrastructure/src/claude/fixtures/turn-cli.mjs
++++ b/packages/infrastructure/src/claude/fixtures/turn-cli.mjs
+@@ -41,6 +41,18 @@ else {
+     });
+     if (scenario === 'assistant')
+       print({ type: 'assistant', message: { content: [{ type: 'text', text: 'working' }] } });
++    // An ordinary completed turn whose result is the directory the process actually started in.
++    if (scenario === 'success') {
++      print({
++        type: 'result',
++        subtype: 'success',
++        is_error: false,
++        session_id: '11111111-1111-4111-8111-111111111111',
++        result: process.cwd(),
++        usage: { input_tokens: 1, output_tokens: 1 },
++        modelUsage: { 'claude-opus-5-5': {} },
++      });
++    }
+     // A provider failure reported in the stream, then a non-zero exit with only a banner on stderr.
+     if (scenario === 'provider-failure') {
+       print({
+@@ -51,5 +63,5 @@ else {
+       process.stderr.write('PRIVATE_STDERR_BANNER\n');
+     }
+   }
+-  process.exitCode = 1;
++  process.exitCode = scenario === 'success' ? 0 : 1;
+ }
+diff --git a/packages/infrastructure/src/claude/harness.test.ts b/packages/infrastructure/src/claude/harness.test.ts
+index 6959fbca..f182f25e 100644
+--- a/packages/infrastructure/src/claude/harness.test.ts
++++ b/packages/infrastructure/src/claude/harness.test.ts
+@@ -115,6 +115,8 @@ describe('Claude existing harness contract', () => {
+     { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
+     { timedOut: true, code: 'HARNESS_TIMEOUT' },
+     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
++    // A failed output pipe may have lost acceptance evidence, so no refusal can be trusted (#364).
++    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
+   ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
+     const { harness } = fixture({
+       records: [
+@@ -826,6 +828,7 @@ describe('Claude preflight and transport failure matrix', () => {
+     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+     { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
+     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
++    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
+   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
+     const { harness } = fixture({ exit });
+     const session = harness.start(request, new AbortController().signal);
+@@ -855,7 +858,14 @@ describe('Claude preflight and transport failure matrix', () => {
+ describe('unconfirmed native termination', () => {
+   it.each([
+     ['timeout', { timedOut: true }, 'unknown', 'HARNESS_TIMEOUT'],
+-    ['missing executable', { spawnCode: 'ENOENT' }, 'cli-missing', 'HARNESS_NOT_INSTALLED'],
++    [
++      'missing executable',
++      { spawnCode: 'ENOENT', startRefusal: 'executable-missing' },
++      'cli-missing',
++      'HARNESS_NOT_INSTALLED',
++    ],
++    // A refusal with no established cause never claims that the CLI is missing (#364).
++    ['unexplained start refusal', { spawnCode: 'ENOENT' }, 'unknown', 'HARNESS_TURN_FAILED'],
+     [
+       'unconfirmed termination',
+       { terminationUnconfirmed: true },
+@@ -1011,3 +1021,196 @@ it.each(['auth', 'quota', 'transport'] as const)(
+     await events;
+   },
+ );
++
++describe('Claude start refusal diagnostics (#364)', () => {
++  const refused = (extra: Partial<ClaudeProcessResult> = {}) =>
++    outcome('', { exitCode: null, spawnCode: 'ENOENT', ...extra });
++  const longDirectory = join(tmpdir(), 'x'.repeat(259));
++  it.each([
++    [
++      'a missing working directory',
++      { startRefusal: 'working-directory-missing' as const },
++      request.workingDirectory,
++      'HARNESS_INVALID_CONFIGURATION',
++      'Claude could not be started because the working directory does not exist; check the working directory setting',
++    ],
++    [
++      'a working directory that is not a folder',
++      { startRefusal: 'working-directory-not-directory' as const },
++      request.workingDirectory,
++      'HARNESS_INVALID_CONFIGURATION',
++      'Claude could not be started because the working directory is not a folder; check the working directory setting',
++    ],
++    [
++      'an absent executable',
++      { startRefusal: 'executable-missing' as const },
++      request.workingDirectory,
++      'HARNESS_NOT_INSTALLED',
++      'The Claude executable was not found at its configured path; install the Claude CLI or correct its path',
++    ],
++    [
++      'an unexplained ENOENT',
++      {},
++      request.workingDirectory,
++      'HARNESS_TURN_FAILED',
++      "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
++    ],
++    [
++      'an unexplained EACCES',
++      { spawnCode: 'EACCES' as const },
++      request.workingDirectory,
++      'HARNESS_TURN_FAILED',
++      "Claude could not be started (EACCES); check the Claude executable's path and permissions and the working directory",
++    ],
++    [
++      'an unexplained refusal in a long working directory',
++      {},
++      longDirectory,
++      'HARNESS_TURN_FAILED',
++      'Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows',
++    ],
++  ])(
++    'reports a turn refusal with %s as fixed text and no submission',
++    async (_case, observation, workingDirectory, code, message) => {
++      const { harness, calls } = fixture({ records: [], exit: refused(observation) });
++      const session = harness.start(
++        { ...request, workingDirectory, turn: { prompt: 'PRIVATE_PROMPT' } },
++        new AbortController().signal,
++      );
++      const events = await drain(session.events);
++      const failure = { code, message, retriable: false };
++      expect(events).toEqual([
++        { type: 'error', ...failure, submission: 'definitely-not-submitted' },
++      ]);
++      await expect(session.result).rejects.toMatchObject(failure);
++      await expect(session.sessionId).rejects.toMatchObject({ code });
++      // The authored working directory is used exactly as given; nothing substitutes another.
++      expect(calls.at(-1)?.cwd).toBe(workingDirectory);
++      expect(JSON.stringify(events)).not.toContain('PRIVATE');
++      expect(JSON.stringify(events)).not.toContain(workingDirectory);
++    },
++  );
++  it('keeps a turn uncertain when its output pipe failed, even with a recognised refusal', async () => {
++    const { harness } = fixture({
++      records: [],
++      exit: { exitCode: 1, outputFailed: true, turnRejection: 'auth' },
++    });
++    const session = harness.start(request, new AbortController().signal);
++    expect((await drain(session.events)).at(-1)).toEqual({
++      type: 'error',
++      code: 'HARNESS_TURN_FAILED',
++      message: 'Claude turn failed',
++      retriable: false,
++      submission: 'delivery-uncertain',
++    });
++    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TURN_FAILED' });
++  });
++  it('keeps cancellation ahead of a working-directory diagnosis', async () => {
++    const controller = new AbortController();
++    const runner: ClaudeCliRunner = (command) => {
++      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
++      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
++      if (command.args.includes('auth'))
++        return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
++      controller.abort();
++      return Promise.resolve(refused({ aborted: true, startRefusal: 'working-directory-missing' }));
++    };
++    const session = new ClaudeHarness({ runner, platform: 'win32' }).start(
++      request,
++      controller.signal,
++    );
++    await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
++    expect(await drain(session.events)).toEqual([]);
++  });
++  it.each([
++    [
++      { startRefusal: 'executable-missing' as const },
++      'cli-missing',
++      'HARNESS_NOT_INSTALLED',
++      'Claude CLI was not found at the configured path.',
++      'Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.',
++    ],
++    [
++      { startRefusal: 'working-directory-missing' as const },
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      'Claude CLI could not be started because its temporary check folder does not exist.',
++      'Check that the Claude CLI starts and responds, then retry preflight.',
++    ],
++    [
++      { startRefusal: 'working-directory-not-directory' as const },
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      'Claude CLI could not be started because its temporary check folder is not a folder.',
++      'Check that the Claude CLI starts and responds, then retry preflight.',
++    ],
++    [
++      {},
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      'Claude CLI could not be started (ENOENT).',
++      'Check that the Claude CLI starts and responds, then retry preflight.',
++    ],
++  ])(
++    'reports check refusal %o as %s; the check folder is never configuration',
++    async (observation, state, code, detail, action) => {
++      const calls: ClaudeProcessRequest[] = [];
++      const runner: ClaudeCliRunner = (command) => {
++        calls.push(command);
++        return Promise.resolve(refused(observation));
++      };
++      const harness = new ClaudeHarness({ runner, platform: 'win32' });
++      const facts = await harness.preflight();
++      expect(facts).toMatchObject({ state, ok: false, problems: [`${detail} ${action}`] });
++      expect(facts).not.toHaveProperty('authenticated');
++      expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
++      const session = harness.start(request, new AbortController().signal);
++      await expect(session.result).rejects.toMatchObject({ code, message: detail });
++      expect((await drain(session.events)).at(-1)).toMatchObject({
++        code,
++        submission: 'definitely-not-submitted',
++      });
++    },
++  );
++  it('reports an unreadable check output without trusting partial sign-in text', async () => {
++    const runner: ClaudeCliRunner = (command) =>
++      Promise.resolve(
++        command.args.includes('auth')
++          ? outcome('{"loggedIn":false}', { outputFailed: true, notLoggedIn: true })
++          : outcome(command.args.includes('--help') ? help : '2.1.285'),
++      );
++    const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
++    expect(facts).toMatchObject({
++      state: 'unknown',
++      problems: [
++        'Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.',
++      ],
++    });
++    expect(facts).not.toHaveProperty('authenticated');
++  });
++  it('names the Windows limit for an unexplained refusal from a long temporary check folder', async () => {
++    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-364-long-temp-'));
++    let longTemp = root;
++    while (longTemp.length < 240) longTemp = join(longTemp, 'segment-abcdefghij');
++    await probeFs.mkdir(longTemp, { recursive: true });
++    const directories: string[] = [];
++    const runner: ClaudeCliRunner = (command) => {
++      directories.push(command.cwd);
++      return Promise.resolve(refused());
++    };
++    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
++    try {
++      const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
++      expect(directories[0]?.length).toBeGreaterThan(258);
++      expect(facts).toMatchObject({
++        state: 'unknown',
++        problems: [
++          'Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. Check that the Claude CLI starts and responds, then retry preflight.',
++        ],
++      });
++    } finally {
++      vi.unstubAllEnvs();
++      await probeFs.rm(root, { recursive: true, force: true });
++    }
++  });
++});
+diff --git a/packages/infrastructure/src/claude/harness.ts b/packages/infrastructure/src/claude/harness.ts
+index f97f4104..91b00200 100644
+--- a/packages/infrastructure/src/claude/harness.ts
++++ b/packages/infrastructure/src/claude/harness.ts
+@@ -1,7 +1,7 @@
+ import { randomBytes } from 'node:crypto';
+ import { mkdir, rm } from 'node:fs/promises';
+ import { homedir, tmpdir } from 'node:os';
+-import { join } from 'node:path';
++import { join, resolve } from 'node:path';
+ import {
+   cliFailureState,
+   readinessDetail,
+@@ -34,7 +34,12 @@ import {
+   installedClaudeVersion,
+   verifyInstalledCapabilities,
+ } from './protocol.js';
+-import { runClaudeProcess, type ClaudeCliRunner, type ClaudeProcessResult } from './process.js';
++import {
++  runClaudeProcess,
++  type ClaudeCliRunner,
++  type ClaudeProcessResult,
++  type ClaudeStartRefusal,
++} from './process.js';
+ import { EventQueue } from './queue.js';
+ import { claudeModelCapabilities } from './models.js';
+ export interface ClaudeHarnessOptions {
+@@ -95,11 +100,66 @@ async function probeDirectory(): Promise<string> {
+     }
+   }
+ }
++/** Windows starts no process in a working directory longer than this (#102, #364). */
++const WINDOWS_WORKING_DIRECTORY_LIMIT = 258;
++/**
++ * A refused start, worded from what the runner established (#364). A spawn `ENOENT` alone does not
++ * say whether the executable or the working directory failed, so only an established absence is
++ * reported as a missing CLI, and only the turn's own working directory is configuration; the
++ * temporary check folder is not. Otherwise the cause stays unknown: the message names both
++ * operands, or the Windows limit as a fact about the path's length. Messages are fixed text.
++ */
++function startFailure(
++  code: NonNullable<ClaudeProcessResult['spawnCode']>,
++  refusal: ClaudeStartRefusal | undefined,
++  cwd: string,
++  probe: boolean,
++): ClaudeHarnessError {
++  if (refusal === 'executable-missing')
++    return new ClaudeHarnessError(
++      'HARNESS_NOT_INSTALLED',
++      probe
++        ? 'Claude CLI was not found at the configured path.'
++        : 'The Claude executable was not found at its configured path; install the Claude CLI or correct its path',
++    );
++  if (refusal) {
++    const state = refusal === 'working-directory-missing' ? 'does not exist' : 'is not a folder';
++    return probe
++      ? new ClaudeHarnessError(
++          'HARNESS_TURN_FAILED',
++          `Claude CLI could not be started because its temporary check folder ${state}.`,
++        )
++      : new ClaudeHarnessError(
++          'HARNESS_INVALID_CONFIGURATION',
++          `Claude could not be started because the working directory ${state}; check the working directory setting`,
++        );
++  }
++  const limit = WINDOWS_WORKING_DIRECTORY_LIMIT;
++  const long = resolve(cwd).length > limit;
++  if (probe)
++    return new ClaudeHarnessError(
++      'HARNESS_TURN_FAILED',
++      long
++        ? `Claude CLI could not be started (${code}) from its temporary check folder, whose path (from TEMP or TMP) is longer than the ${limit} characters Windows allows for a working directory.`
++        : `Claude CLI could not be started (${code}).`,
++    );
++  return new ClaudeHarnessError(
++    'HARNESS_TURN_FAILED',
++    long
++      ? `Claude could not be started (${code}); the working directory path is longer than the ${limit} characters Windows allows`
++      : `Claude could not be started (${code}); check the Claude executable's path and permissions and the working directory`,
++  );
++}
+ /**
+  * Turns and no-turn probes share the failure order. A probe's messages are single detail
+- * sentences about the check (preflight adds the one next step); turn messages are unchanged.
++ * sentences about the check (preflight adds the one next step).
+  */
+-function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = false): void {
++function checkOutcome(
++  result: ClaudeProcessResult,
++  signal: AbortSignal,
++  cwd: string,
++  probe = false,
++): void {
+   if (result.terminationUnconfirmed)
+     throw new ClaudeHarnessError(
+       'HARNESS_TERMINATION_UNCONFIRMED',
+@@ -108,15 +168,7 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe =
+         : 'Claude process termination was not confirmed; stop the installed CLI before retrying',
+     );
+   if (signal.aborted || result.aborted) throw abortError();
+-  if (result.spawnCode)
+-    throw new ClaudeHarnessError(
+-      result.spawnCode === 'ENOENT' ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
+-      !probe
+-        ? 'The installed Claude executable could not be started; check its path and permissions'
+-        : result.spawnCode === 'ENOENT'
+-          ? 'Claude CLI was not found at the configured path.'
+-          : `Claude CLI could not be started (${result.spawnCode}).`,
+-    );
++  if (result.spawnCode) throw startFailure(result.spawnCode, result.startRefusal, cwd, probe);
+   if (result.timedOut)
+     throw new ClaudeHarnessError(
+       'HARNESS_TIMEOUT',
+@@ -146,6 +198,11 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe =
+       result.failureState === 'transport',
+     );
+   }
++  if (probe && result.outputFailed)
++    throw new ClaudeHarnessError(
++      'HARNESS_TURN_FAILED',
++      'Claude CLI check output could not be read.',
++    );
+   if (probe && (result.stdinFailed || result.exitCode !== 0))
+     throw new ClaudeHarnessError(
+       'HARNESS_TURN_FAILED',
+@@ -153,7 +210,7 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe =
+         ? 'Claude CLI check stopped without an exit code.'
+         : `Claude CLI check exited with code ${result.exitCode}.`,
+     );
+-  if (result.stdinFailed || result.exitCode !== 0)
++  if (result.stdinFailed || result.outputFailed || result.exitCode !== 0)
+     throw new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed');
+ }
+ /** Structural current HarnessPort implementation; additive HarnessId integration follows the issue 98 cutover. */
+@@ -244,7 +301,7 @@ export class ClaudeHarness implements HarnessPort {
+         authStatus &&
+         (signOutDetail || /\bnot logged in\b/i.test(result.stdout) || result.notLoggedIn)
+       ) {
+-        checkOutcome({ ...result, exitCode: 0 }, signal, true);
++        checkOutcome({ ...result, exitCode: 0 }, signal, cwd, true);
+         facts.authenticated = false;
+         throw new ClaudeHarnessError(
+           'HARNESS_NOT_AUTHENTICATED',
+@@ -263,6 +320,7 @@ export class ClaudeHarness implements HarnessPort {
+               : result.failureState,
+         },
+         signal,
++        cwd,
+         true,
+       );
+       return result.stdout;
+@@ -463,9 +521,10 @@ export class ClaudeHarness implements HarnessPort {
+           result.aborted ||
+           result.timedOut ||
+           result.overflow ||
++          result.outputFailed ||
+           result.callbackError
+         )
+-          checkOutcome(result, controller.signal);
++          checkOutcome(result, controller.signal, request.workingDirectory);
+         if (!accepted && result.turnRejection) {
+           delivery =
+             result.turnRejection === 'session-missing'
+@@ -482,7 +541,7 @@ export class ClaudeHarness implements HarnessPort {
+               'Claude requires authentication before submitting this turn',
+             );
+         }
+-        checkOutcome(result, controller.signal);
++        checkOutcome(result, controller.signal, request.workingDirectory);
+         for (const record of parser.finish()) accept(record);
+         const completed = accumulator.finish();
+         for (const event of completionEvents) queue.push(event);
+diff --git a/packages/infrastructure/src/claude/process-failure.test.ts b/packages/infrastructure/src/claude/process-failure.test.ts
+index 55b5e8d7..4ef9cd2d 100644
+--- a/packages/infrastructure/src/claude/process-failure.test.ts
++++ b/packages/infrastructure/src/claude/process-failure.test.ts
+@@ -1,7 +1,13 @@
+-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { ChildProcess, spawn } from 'node:child_process';
+ import type * as ChildProcessModule from 'node:child_process';
++import type { Stats } from 'node:fs';
++import { stat } from 'node:fs/promises';
++import type * as FsModule from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
+ import { PassThrough } from 'node:stream';
++import { fileURLToPath } from 'node:url';
+ import { killTree } from '../process/index.js';
+ import { ClaudeHarnessError } from './errors.js';
+ import { runClaudeProcess } from './process.js';
+@@ -10,6 +16,10 @@ vi.mock('node:child_process', async (importOriginal) => {
+   const actual = await importOriginal<typeof ChildProcessModule>();
+   return { ...actual, spawn: vi.fn() };
+ });
++vi.mock('node:fs/promises', async (importOriginal) => {
++  const actual = await importOriginal<typeof FsModule>();
++  return { ...actual, stat: vi.fn() };
++});
+ vi.mock('../process/index.js', () => ({ killTree: vi.fn() }));
+ let child: ChildProcess;
+ const stdout = () => child.stdout;
+@@ -22,10 +32,19 @@ const request = (signal = new AbortController().signal) => ({
+   timeoutMs: 1000,
+   maxOutputBytes: 1024,
+ });
++let directoryStats: Stats, fileStats: Stats;
++beforeAll(async () => {
++  const actual = await vi.importActual<typeof FsModule>('node:fs/promises');
++  directoryStats = await actual.stat(tmpdir());
++  fileStats = await actual.stat(fileURLToPath(import.meta.url));
++});
+ beforeEach(() => {
+   vi.useFakeTimers();
+   vi.mocked(killTree).mockResolvedValue(true);
++  vi.mocked(stat).mockResolvedValue(directoryStats);
+   child = new ChildProcess();
++  // These cases model a process that started; spawn refusals clear the pid as Node leaves it.
++  Object.assign(child, { pid: 4242 });
+   child.stdin = new PassThrough();
+   child.stdout = new PassThrough();
+   child.stderr = new PassThrough();
+@@ -94,6 +113,7 @@ describe('bounded native transport failure outcomes', () => {
+   it.each(['EACCES', 'EPERM'] as const)(
+     'maps native spawn error %s without retaining its body',
+     async (code) => {
++      Object.assign(child, { pid: undefined });
+       const result = runClaudeProcess(request());
+       const error = Object.assign(new Error('PRIVATE_NATIVE_BODY'), { code });
+       child.emit('error', error);
+@@ -101,6 +121,176 @@ describe('bounded native transport failure outcomes', () => {
+       expect(JSON.stringify(await result)).not.toContain('PRIVATE_NATIVE_BODY');
+     },
+   );
++  it('does not treat a later error of a started child, such as a failed kill, as a spawn refusal', async () => {
++    const result = runClaudeProcess(request());
++    child.emit('error', Object.assign(new Error('PRIVATE_KILL_BODY'), { code: 'EPERM' }));
++    child.emit('close', 0);
++    const settled = await result;
++    expect(settled).toMatchObject({ exitCode: 0 });
++    expect(settled).not.toHaveProperty('spawnCode');
++    expect(stat).not.toHaveBeenCalled();
++  });
++  it.each(['stdout', 'stderr'] as const)(
++    "reports a started child's %s pipe failure and stops its tree",
++    async (stream) => {
++      const result = runClaudeProcess(request());
++      child[stream]?.emit(
++        'error',
++        Object.assign(new Error('PRIVATE_PIPE_BODY'), { code: 'EPIPE' }),
++      );
++      expect(killTree).toHaveBeenCalledWith(child);
++      child.emit('close', null);
++      expect(await result).toMatchObject({ outputFailed: true, exitCode: null });
++      expect(await result).not.toHaveProperty('spawnCode');
++      expect(JSON.stringify(await result)).not.toContain('PRIVATE_PIPE_BODY');
++    },
++  );
++});
++
++describe('read-only observation after an actual spawn refusal (#364)', () => {
++  const root = join(tmpdir(), 'gg-364-controlled');
++  const executable = join(root, 'claude.exe');
++  const workspace = join(root, 'workspace');
++  // Windows process start also tries the path with `.com` and `.exe` appended.
++  const names =
++    process.platform === 'win32'
++      ? [executable, `${executable}.com`, `${executable}.exe`]
++      : [executable];
++  const fault = (code?: string) =>
++    Object.assign(new Error('PRIVATE_FS_BODY'), code === undefined ? {} : { code });
++  // Tokens, because the case tables are built before the real Stats objects exist.
++  type State = 'file' | 'directory' | Error | Promise<Stats>;
++  function observe(states: Record<string, State>): void {
++    vi.mocked(stat).mockImplementation((path) => {
++      const state = states[String(path)];
++      if (state === undefined) return Promise.reject(new Error(`unexpected ${String(path)}`));
++      if (state instanceof Error) return Promise.reject(state);
++      if (state === 'file') return Promise.resolve(fileStats);
++      return state === 'directory' ? Promise.resolve(directoryStats) : state;
++    });
++  }
++  const observed = () => vi.mocked(stat).mock.calls.map(([path]) => String(path));
++  function refuse(code = 'ENOENT', binary = executable, signal?: AbortSignal) {
++    Object.assign(child, { pid: undefined });
++    const result = runClaudeProcess({
++      ...request(signal),
++      binary,
++      cwd: workspace,
++    });
++    child.emit('error', Object.assign(new Error(`spawn ${binary} ${code}`), { code }));
++    return result;
++  }
++  it('establishes a missing executable only when every name process start tries is absent or a folder', async () => {
++    const absent = Object.fromEntries(names.map((name) => [name, fault('ENOENT')]));
++    observe({ ...absent, [executable]: fault('ENOTDIR') });
++    expect(await refuse()).toMatchObject({
++      spawnCode: 'ENOENT',
++      startRefusal: 'executable-missing',
++    });
++    expect(observed()).toEqual(names);
++    observe({ ...absent, [executable]: 'directory' });
++    expect(await refuse()).toMatchObject({ startRefusal: 'executable-missing' });
++  });
++  it.each([
++    ['a file', 'file' as const],
++    ['an unreadable path', fault('EACCES')],
++    ['an unclassified read fault', fault()],
++  ])('leaves the cause open when the executable path is %s', async (_case, state) => {
++    observe({
++      ...Object.fromEntries(names.map((name) => [name, fault('ENOENT')])),
++      [executable]: state,
++      [workspace]: 'directory',
++    });
++    const result = await refuse();
++    expect(result).toMatchObject({ spawnCode: 'ENOENT', exitCode: null });
++    expect(result).not.toHaveProperty('startRefusal');
++    expect(observed()).toEqual([...names, workspace]);
++    expect(JSON.stringify(result)).not.toContain('PRIVATE');
++  });
++  it.each([
++    ['missing', fault('ENOENT'), 'working-directory-missing'],
++    ['beneath a file', fault('ENOTDIR'), 'working-directory-missing'],
++    ['a file', 'file', 'working-directory-not-directory'],
++    ['an existing folder', 'directory', undefined],
++    ['unreadable', fault('EACCES'), undefined],
++    ['denied', fault('EPERM'), undefined],
++  ] as const)(
++    'classifies a working directory that is %s without resolving a bare executable name',
++    async (_case, state, refusal) => {
++      observe({ [workspace]: state });
++      const result = await refuse('ENOENT', 'claude');
++      expect(observed()).toEqual([workspace]);
++      if (refusal) expect(result).toMatchObject({ spawnCode: 'ENOENT', startRefusal: refusal });
++      else expect(result).not.toHaveProperty('startRefusal');
++    },
++  );
++  it('never resolves a relative executable path', async () => {
++    observe({ [workspace]: 'directory' });
++    expect(await refuse('ENOENT', join('bin', 'claude.exe'))).not.toHaveProperty('startRefusal');
++    expect(observed()).toEqual([workspace]);
++  });
++  it('establishes a missing executable only from an ENOENT refusal', async () => {
++    observe({
++      ...Object.fromEntries(names.map((name) => [name, fault('ENOENT')])),
++      [workspace]: 'directory',
++    });
++    const result = await refuse('EACCES');
++    expect(result).toMatchObject({ spawnCode: 'EACCES' });
++    expect(result).not.toHaveProperty('startRefusal');
++    expect(observed()).toEqual([workspace]);
++  });
++  it.each(['abort', 'deadline'] as const)(
++    'reports the refusal at once without a diagnosis or timeout when the %s arrives during the observation',
++    async (mode) => {
++      let release!: (stats: Stats) => void;
++      const pending = new Promise<Stats>((resolve) => {
++        release = resolve;
++      });
++      observe({ [workspace]: pending });
++      const controller = new AbortController();
++      const result = refuse('ENOENT', 'claude', controller.signal);
++      expect(observed()).toEqual([workspace]);
++      if (mode === 'abort') controller.abort();
++      else await vi.advanceTimersByTimeAsync(1000);
++      const settled = await result;
++      expect(settled).toMatchObject({
++        spawnCode: 'ENOENT',
++        exitCode: null,
++        aborted: mode === 'abort',
++        timedOut: false,
++      });
++      expect(settled).not.toHaveProperty('startRefusal');
++      expect(settled).not.toHaveProperty('terminationUnconfirmed');
++      expect(killTree).not.toHaveBeenCalled();
++      release(fileStats);
++      await Promise.resolve();
++      expect(await result).toBe(settled);
++      expect(vi.getTimerCount()).toBe(0);
++    },
++  );
++  it('ignores the pipe faults and close that follow a refusal, settling once with the refusal', async () => {
++    observe({ [workspace]: 'directory' });
++    const result = refuse('ENOENT', 'claude');
++    // Windows reports a 260-character working directory like this (ENOTCONN on both pipes).
++    for (const stream of ['stdout', 'stderr', 'stdin'] as const)
++      child[stream]?.emit(
++        'error',
++        Object.assign(new Error('PRIVATE_PIPE_BODY'), { code: 'ENOTCONN' }),
++      );
++    child.emit('close', -4058);
++    child.emit('error', Object.assign(new Error('PRIVATE_SECOND_BODY'), { code: 'EACCES' }));
++    const settled = await result;
++    expect(settled).toEqual({
++      exitCode: null,
++      stdout: '',
++      timedOut: false,
++      aborted: false,
++      overflow: false,
++      spawnCode: 'ENOENT',
++    });
++    expect(killTree).not.toHaveBeenCalled();
++    expect(observed()).toEqual([workspace]);
++  });
+ });
+ 
+ it.each(['stdout', 'stderr'] as const)(
+diff --git a/packages/infrastructure/src/claude/process.test.ts b/packages/infrastructure/src/claude/process.test.ts
+index d053fcf6..fa70d9b9 100644
+--- a/packages/infrastructure/src/claude/process.test.ts
++++ b/packages/infrastructure/src/claude/process.test.ts
+@@ -63,6 +63,7 @@ describe('owned native Claude process transport', () => {
+       args: [],
+     });
+     expect(result.spawnCode).toBe('ENOENT');
++    expect(result.startRefusal).toBe('executable-missing');
+     expect(result.exitCode).toBeNull();
+     expect(JSON.stringify(result)).not.toContain('missing-binary');
+   });
+diff --git a/packages/infrastructure/src/claude/process.ts b/packages/infrastructure/src/claude/process.ts
+index 400c903e..740f92c3 100644
+--- a/packages/infrastructure/src/claude/process.ts
++++ b/packages/infrastructure/src/claude/process.ts
+@@ -1,4 +1,6 @@
+ import { spawn } from 'node:child_process';
++import { stat } from 'node:fs/promises';
++import { isAbsolute, normalize, resolve as resolvePath } from 'node:path';
+ import { killTree } from '../process/index.js';
+ import { ClaudeHarnessError } from './errors.js';
+ import { cliFailureState } from '@graphgoblin/domain';
+@@ -21,10 +23,18 @@ export interface ClaudeProcessResult {
+   timedOut: boolean;
+   aborted: boolean;
+   overflow: boolean;
++  /** Set only for an actual spawn refusal: no process was created, so nothing was submitted. */
+   spawnCode?: 'ENOENT' | 'EACCES' | 'UNKNOWN';
++  /**
++   * The cause of a spawn refusal, when the read-only observation made after it established one.
++   * Absent when the cause is unknown, including when an observation could not be read.
++   */
++  startRefusal?: ClaudeStartRefusal;
+   /** Kill deadline elapsed without the child's close event; never treat this as successful cancellation. */
+   terminationUnconfirmed?: true;
+   stdinFailed?: boolean;
++  /** A started process's stdout or stderr pipe failed, so its output is incomplete. */
++  outputFailed?: true;
+   callbackError?: ClaudeHarnessError;
+   /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
+   failureState?: HarnessReadinessState;
+@@ -37,6 +47,43 @@ export type ClaudeCliRunner = (
+   request: ClaudeProcessRequest,
+   onStdout?: (chunk: Buffer) => void,
+ ) => Promise<ClaudeProcessResult>;
++export type ClaudeStartRefusal =
++  'executable-missing' | 'working-directory-missing' | 'working-directory-not-directory';
++type PathState = 'missing' | 'directory' | 'other' | 'unknown';
++async function pathState(path: string): Promise<PathState> {
++  try {
++    return (await stat(path)).isDirectory() ? 'directory' : 'other';
++  } catch (error) {
++    const code = (error as NodeJS.ErrnoException).code;
++    // Only a definite absence counts; access, length or other read faults leave the cause unknown.
++    return code === 'ENOENT' || code === 'ENOTDIR' ? 'missing' : 'unknown';
++  }
++}
++/**
++ * Read-only observation after a spawn refusal (#364). A spawn `ENOENT` does not say which operand
++ * failed: Windows also reports a missing, non-folder or overlong working directory that way. An
++ * executable counts as missing only for a fully qualified path whose every name Windows process
++ * start tries (the path, then with `.com` and `.exe` appended) is absent or a folder; a bare name
++ * or relative path is never resolved here. An existing folder is not proof that a process can
++ * start in it, so it establishes nothing.
++ */
++async function observeStartRefusal(
++  request: ClaudeProcessRequest,
++  code: NonNullable<ClaudeProcessResult['spawnCode']>,
++): Promise<ClaudeStartRefusal | undefined> {
++  const binary = request.binary;
++  if (code === 'ENOENT' && isAbsolute(binary) && resolvePath(binary) === normalize(binary)) {
++    const names =
++      process.platform === 'win32' ? [binary, `${binary}.com`, `${binary}.exe`] : [binary];
++    const states = await Promise.all(names.map(pathState));
++    if (states.every((state) => state === 'missing' || state === 'directory'))
++      return 'executable-missing';
++  }
++  const directory = await pathState(request.cwd);
++  if (directory === 'missing') return 'working-directory-missing';
++  if (directory === 'other') return 'working-directory-not-directory';
++  return undefined;
++}
+ /** Own every child and its descendants, with no shell, bounded capture and fixed diagnostic codes. */
+ export const runClaudeProcess = (
+   request: ClaudeProcessRequest,
+@@ -63,8 +110,10 @@ export const runClaudeProcess = (
+       settled = false,
+       timedOut = false,
+       overflow = false,
+-      stdinFailed = false;
++      stdinFailed = false,
++      outputFailed = false;
+     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
++    let startRefusal: ClaudeStartRefusal | undefined;
+     let killing: Promise<boolean> | undefined;
+     let closed = false;
+     let treeConfirmed = false;
+@@ -86,8 +135,10 @@ export const runClaudeProcess = (
+         overflow,
+         ...(terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
+         ...(spawnCode ? { spawnCode } : {}),
++        ...(startRefusal ? { startRefusal } : {}),
+         ...(exitCode !== 0 && rejection ? { turnRejection: rejection } : {}),
+         ...(stdinFailed ? { stdinFailed } : {}),
++        ...(outputFailed ? { outputFailed: true } : {}),
+         ...(callbackError ? { callbackError } : {}),
+         ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
+           ? { failureState: cliFailureState(diagnostic) }
+@@ -100,6 +151,11 @@ export const runClaudeProcess = (
+     const kill = (): void => {
+       if (settled) return;
+       clearTimeout(timer);
++      // A refused start has no process to stop: report the refusal now, without its diagnosis.
++      if (spawnCode) {
++        finish(null);
++        return;
++      }
+       if (killing) return;
+       killTimer = setTimeout(() => finish(null, true), 5000);
+       killing = killTree(child);
+@@ -115,7 +171,8 @@ export const runClaudeProcess = (
+       request.timeoutMs === null
+         ? undefined
+         : setTimeout(() => {
+-            timedOut = true;
++            // A process that never started cannot have timed out.
++            if (!spawnCode) timedOut = true;
+             kill();
+           }, request.timeoutMs);
+     request.signal.addEventListener('abort', kill, { once: true });
+@@ -156,19 +213,40 @@ export const runClaudeProcess = (
+         kill();
+       }
+     };
++    // Node has no pid only for a child that never started. Its pipes can still fail afterwards (on
++    // Windows from a 260-character working directory, stdout and stderr fail with ENOTCONN); the
++    // refusal itself arrives as the child's error event, so those secondary faults are ignored.
++    const started = (): boolean => child.pid !== undefined;
++    const outputFault = (): void => {
++      if (!started()) return;
++      outputFailed = true;
++      kill();
++    };
+     child.stdout?.on('data', (chunk: Buffer) => collect(chunk, true));
+     child.stderr?.on('data', (chunk: Buffer) => collect(chunk, false));
++    child.stdout?.on('error', outputFault);
++    child.stderr?.on('error', outputFault);
+     child.on('error', (error: NodeJS.ErrnoException) => {
+-      spawnCode =
++      // Only an actual spawn refusal proves that nothing started. A later error, such as a failed
++      // kill, leaves the close and termination outcomes authoritative.
++      if (settled || spawnCode || started()) return;
++      const code =
+         error.code === 'ENOENT' ? 'ENOENT' : error.code === 'EACCES' ? 'EACCES' : 'UNKNOWN';
+-      finish(null);
++      spawnCode = code;
++      void observeStartRefusal(request, code).then((observed) => {
++        startRefusal = observed;
++        finish(null);
++      });
+     });
+     child.on('close', (code) => {
+       closed = true;
+       closeCode = code;
++      // After a refusal Node still closes the child; the refusal path settles the result.
++      if (spawnCode) return;
+       if (!killing || treeConfirmed) finish(code);
+     });
+     child.stdin?.on('error', () => {
++      if (!started()) return;
+       stdinFailed = true;
+       kill();
+     });
+diff --git a/packages/infrastructure/src/claude/start-refusal.test.ts b/packages/infrastructure/src/claude/start-refusal.test.ts
+new file mode 100644
+index 00000000..a2fe4ce2
+--- /dev/null
++++ b/packages/infrastructure/src/claude/start-refusal.test.ts
+@@ -0,0 +1,300 @@
++// Native Claude start refusals (#364) through ClaudeHarness and the real process runner. The
++// executable is this Node binary running the fake CLI fixture; no provider or model is involved.
++// Windows refuses a missing, non-folder or overlong working directory with the same spawn ENOENT
++// as a missing executable, so these cases use real refusals of the current host.
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join, sep } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import type { HarnessEvent } from '@graphgoblin/engine';
++import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
++import { ClaudeHarness } from './harness.js';
++import { runClaudeProcess, type ClaudeProcessRequest } from './process.js';
++
++const fixture = fileURLToPath(new URL('./fixtures/turn-cli.mjs', import.meta.url));
++const CANARY = 'PRIVATE_CANARY_364';
++const windows = process.platform === 'win32';
++const CHECK = 'Check that the Claude CLI starts and responds, then retry preflight.';
++const MISSING_DIRECTORY =
++  'Claude could not be started because the working directory does not exist; check the working directory setting';
++const owned: string[] = [];
++afterEach(async () => {
++  vi.unstubAllEnvs();
++  const base = await realpath(tmpdir());
++  for (const root of owned.splice(0)) {
++    // Remove only this file's own disposable roots, after checking where they resolve.
++    const resolved = await realpath(root);
++    expect(resolved.startsWith(base + sep) && resolved.includes('gg-claude-start-')).toBe(true);
++    await rm(resolved, { recursive: true, force: true });
++  }
++});
++async function ownedRoot(): Promise<string> {
++  const root = await mkdtemp(join(tmpdir(), 'gg-claude-start-'));
++  owned.push(root);
++  return root;
++}
++/** An existing directory whose full path has exactly `length` characters. */
++async function directoryOfLength(root: string, length: number): Promise<string> {
++  let directory = join(root, CANARY);
++  while (directory.length < length - 21) directory = join(directory, 'segment-abcdefghij');
++  directory = join(directory, 'x'.repeat(length - directory.length - 1));
++  expect(directory).toHaveLength(length);
++  await mkdir(directory, { recursive: true });
++  return directory;
++}
++function harness(binary: string = process.execPath, turns: ClaudeProcessRequest[] = []) {
++  return new ClaudeHarness({
++    platform: 'win32',
++    binary,
++    runner: (request, onStdout) => {
++      if (request.stdin !== undefined) turns.push(request);
++      return runClaudeProcess(
++        { ...request, args: [fixture, 'success', ...request.args] },
++        onStdout,
++      );
++    },
++  });
++}
++async function turn(claude: ClaudeHarness, workingDirectory: string) {
++  const session = claude.start(
++    {
++      workingDirectory,
++      model: 'claude-opus-5-5',
++      effort: 'high',
++      options: { sandbox: 'read-only', approval: 'never' },
++      turn: { prompt: `${CANARY} prompt` },
++    },
++    new AbortController().signal,
++  );
++  const events: HarnessEvent[] = [];
++  for await (const event of session.events) events.push(event);
++  const settled = await session.result.then(
++    (result) => ({ result, error: undefined }),
++    (error: unknown) => ({ result: undefined, error }),
++  );
++  return { events, ...settled };
++}
++/** Public diagnostics carry fixed text only: no path, canary, native error text or prompt. */
++function expectPrivate(value: unknown, ...paths: string[]): void {
++  const text = JSON.stringify(value);
++  for (const fragment of [CANARY, 'spawn ', 'errno', 'syscall', ...paths])
++    expect(text).not.toContain(fragment);
++}
++function expectRefused(events: HarnessEvent[], error: unknown, code: string, message: string) {
++  const failure = { code, message, retriable: false };
++  expect(events).toEqual([{ type: 'error', ...failure, submission: 'definitely-not-submitted' }]);
++  expect(error).toMatchObject(failure);
++}
++
++describe('native Claude start refusals (#364)', () => {
++  it('starts an ordinary turn in the requested working directory', async () => {
++    const workingDirectory = join(await ownedRoot(), 'workspace');
++    await mkdir(workingDirectory);
++    const turns: ClaudeProcessRequest[] = [];
++    const { events, result, error } = await turn(harness(undefined, turns), workingDirectory);
++    expect(error).toBeUndefined();
++    expect(result?.finalText).toBe(workingDirectory);
++    expect(events.map((event) => event.type)).toEqual([
++      'session',
++      'item',
++      'submitted',
++      'usage',
++      'turn-complete',
++    ]);
++    expect(turns.map((request) => request.cwd)).toEqual([workingDirectory]);
++  }, 60_000);
++
++  it('reports a missing working directory as configuration, starting nothing', async () => {
++    const root = await ownedRoot();
++    const workingDirectory = join(root, `${CANARY}-missing`);
++    const turns: ClaudeProcessRequest[] = [];
++    const { events, error } = await turn(harness(undefined, turns), workingDirectory);
++    expectRefused(events, error, 'HARNESS_INVALID_CONFIGURATION', MISSING_DIRECTORY);
++    // The inherited directory is attempted as given; nothing substitutes another one.
++    expect(turns.map((request) => request.cwd)).toEqual([workingDirectory]);
++    expectPrivate([events, error], root, process.execPath);
++  }, 60_000);
++
++  it.skipIf(!windows)(
++    'reports a working directory that is a file as configuration',
++    async () => {
++      const root = await ownedRoot();
++      const workingDirectory = join(root, `${CANARY}-file.txt`);
++      await writeFile(workingDirectory, 'not a folder');
++      const { events, error } = await turn(harness(), workingDirectory);
++      expectRefused(
++        events,
++        error,
++        'HARNESS_INVALID_CONFIGURATION',
++        'Claude could not be started because the working directory is not a folder; check the working directory setting',
++      );
++      expectPrivate([events, error], root);
++    },
++    60_000,
++  );
++
++  // Windows starts processes in a working directory of up to 258 characters (#102). An existing
++  // longer one is refused with ENOENT, and from 260 characters its pipes also fail (ENOTCONN),
++  // which this run would report as an unhandled error.
++  it.skipIf(!windows).each([258, 259, 260, 300])(
++    'keeps an existing %s-character working directory truthful',
++    async (length) => {
++      const root = await ownedRoot();
++      const workingDirectory = await directoryOfLength(root, length);
++      const { events, result, error } = await turn(harness(), workingDirectory);
++      if (length === 258) {
++        expect(error).toBeUndefined();
++        expect(result?.finalText).toBe(workingDirectory);
++        return;
++      }
++      expectRefused(
++        events,
++        error,
++        'HARNESS_TURN_FAILED',
++        'Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows',
++      );
++      expectPrivate([events, error], root);
++    },
++    60_000,
++  );
++
++  it.skipIf(!windows).each([258, 259, 300])(
++    'keeps preflight truthful when TEMP makes a %s-character check folder',
++    async (length) => {
++      const root = await ownedRoot();
++      // The check folder is TEMP, a separator and `gg-claude-probe-` with 8 hexadecimal digits.
++      const temp = await directoryOfLength(root, length - 25);
++      for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, temp);
++      const facts = await harness().preflight();
++      vi.unstubAllEnvs();
++      expect(facts).toMatchObject(
++        length === 258
++          ? { state: 'ready', ok: true, problems: [] }
++          : {
++              state: 'unknown',
++              ok: false,
++              problems: [
++                `Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. ${CHECK}`,
++              ],
++            },
++      );
++      if (length !== 258) expect(facts).not.toHaveProperty('authenticated');
++      expect(await readdir(temp)).toEqual([]);
++      expectPrivate(facts, root);
++    },
++    60_000,
++  );
++
++  it('reports an absent executable in a valid directory as missing, before any turn', async () => {
++    const root = await ownedRoot();
++    const binary = join(root, `${CANARY}-claude.exe`);
++    const turns: ClaudeProcessRequest[] = [];
++    const claude = harness(binary, turns);
++    const facts = await claude.preflight();
++    expect(facts).toMatchObject({
++      state: 'cli-missing',
++      ok: false,
++      problems: [
++        'Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.',
++      ],
++    });
++    const workingDirectory = join(root, 'workspace');
++    await mkdir(workingDirectory);
++    const { events, error } = await turn(claude, workingDirectory);
++    expectRefused(
++      events,
++      error,
++      'HARNESS_NOT_INSTALLED',
++      'Claude CLI was not found at the configured path.',
++    );
++    expect(turns).toEqual([]);
++    expectPrivate([facts, events, error], root);
++  }, 60_000);
++
++  it.skipIf(!windows)(
++    'reports a configured executable path that names a folder as missing',
++    async () => {
++      const root = await ownedRoot();
++      const binary = join(root, `${CANARY}-claude.exe`);
++      await mkdir(binary);
++      expect(await harness(binary).preflight()).toMatchObject({ state: 'cli-missing' });
++    },
++    60_000,
++  );
++
++  it('does not claim that an executable named without a path is missing', async () => {
++    const facts = await harness(`gg-364-${CANARY}-claude`).preflight();
++    expect(facts).toMatchObject({
++      state: 'unknown',
++      ok: false,
++      problems: [`Claude CLI could not be started (ENOENT). ${CHECK}`],
++    });
++    expectPrivate(facts);
++  }, 60_000);
++});
++
++describe('native Claude start refusals as run failures (#364)', () => {
++  async function run(claude: ClaudeHarness, workingDirectory: string) {
++    const engine = await createTestEngine({
++      defaults: {
++        byHarness: {
++          codex: { model: 'gpt-6-luna', effort: 'low' },
++          claude: { model: 'claude-opus-5-5', effort: 'high' },
++        },
++      },
++    });
++    engine.ports.harnesses.claude = claude;
++    engine.ports.modelCatalog.entries.push({
++      harness: 'claude',
++      model: 'claude-opus-5-5',
++      source: 'harness',
++      displayName: 'Opus',
++      efforts: ['high'],
++      defaultEffort: 'high',
++      enabled: true,
++    });
++    const version = engine.publish({
++      ...singleNodeLoop('claude-start-refusal', {
++        id: 'infer',
++        kind: 'inference',
++        label: 'Infer',
++        config: {
++          harness: 'claude',
++          prompt: { template: 'Synthetic task' },
++          harnessOptions: { sandbox: 'read-only', approval: 'never' },
++        },
++      }),
++      settings: { workingDirectory: { kind: 'fixed', path: workingDirectory } },
++    });
++    const record = await engine.runToIdle(version.loopId);
++    expect(record.status).toBe('failed');
++    return record.failure;
++  }
++  it('keeps a missing working directory a non-resumable configuration failure that was not submitted', async () => {
++    const root = await ownedRoot();
++    // The run's own records may keep its working directory; the failure is fixed text.
++    const failure = await run(harness(), join(root, `${CANARY}-missing`));
++    expect(failure).toMatchObject({
++      code: 'HARNESS_TURN_FAILED',
++      message: `harness turn failed: ${MISSING_DIRECTORY}`,
++      resumable: false,
++      details: { adapterCode: 'HARNESS_INVALID_CONFIGURATION' },
++      inference: { submission: 'definitely-not-submitted' },
++    });
++    expectPrivate(failure, root);
++  }, 60_000);
++  it('keeps an established missing executable restorable', async () => {
++    const root = await ownedRoot();
++    const workingDirectory = join(root, 'workspace');
++    await mkdir(workingDirectory);
++    const failure = await run(harness(join(root, `${CANARY}-claude.exe`)), workingDirectory);
++    expect(failure).toMatchObject({
++      code: 'HARNESS_NOT_INSTALLED',
++      message: 'Claude CLI was not found at the configured path.',
++      resumable: true,
++      inference: { submission: 'definitely-not-submitted' },
++    });
++    expectPrivate(failure, root);
++  }, 60_000);
++});

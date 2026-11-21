@@ -1,0 +1,98 @@
+// TEMPORARY baseline observation for #364 on the unmodified source; removed after capture.
+import { afterAll, describe, expect, it, vi } from 'vitest';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { ClaudeHarness } from './harness.js';
+import { runClaudeProcess } from './process.js';
+import { subscriptionEnvironment } from './environment.js';
+
+const roots: string[] = [];
+afterAll(async () => {
+  for (const root of roots) await rm(root, { recursive: true, force: true });
+});
+async function root() {
+  const folder = await mkdtemp(join(tmpdir(), 'gg-364-baseline-'));
+  roots.push(folder);
+  return folder;
+}
+async function longDirectory(base: string, length: number) {
+  let dir = join(base, 'long');
+  while (dir.length < length - 21) dir = join(dir, 'segment-abcdefghij');
+  dir = join(dir, 'x'.repeat(length - dir.length - 1));
+  await mkdir(dir, { recursive: true });
+  return dir;
+}
+const start = (cwd: string, binary = process.execPath) =>
+  runClaudeProcess({
+    binary,
+    args: ['-e', 'process.stdout.write("started")'],
+    cwd,
+    env: subscriptionEnvironment(),
+    signal: new AbortController().signal,
+    timeoutMs: 5000,
+    maxOutputBytes: 1024,
+  });
+describe('baseline', () => {
+  it.each(['missing', 'file', 'long259', 'long300'] as const)('runner %s', async (kind) => {
+    const base = await root();
+    const file = join(base, 'file.txt');
+    await writeFile(file, 'x');
+    const cwd =
+      kind === 'missing'
+        ? join(base, 'missing')
+        : kind === 'file'
+          ? file
+          : await longDirectory(base, kind === 'long259' ? 259 : 300);
+    const result = await start(cwd);
+    console.log('BASELINE runner', kind, cwd.length, JSON.stringify(result));
+    expect(result.spawnCode).toBe('ENOENT');
+  });
+  it.each([259, 300])('preflight with TEMP making a %s-char probe cwd', async (length) => {
+    const base = await root();
+    const temp = await longDirectory(base, length - 25);
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, temp);
+    try {
+      const facts = await new ClaudeHarness({ binary: process.execPath, platform: 'win32' }).preflight();
+      console.log('BASELINE preflight', length, JSON.stringify({ state: facts.state, problems: facts.problems }));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+  it('turn with an overlong working directory', async () => {
+    const base = await root();
+    const cwd = await longDirectory(base, 300);
+    const harness = new ClaudeHarness({
+      platform: 'win32',
+      binary: process.execPath,
+      runner: (request, onStdout) =>
+        request.stdin === undefined
+          ? Promise.resolve({
+              exitCode: 0,
+              stdout: request.args.includes('--version')
+                ? '2.1.285'
+                : request.args.includes('--help')
+                  ? '--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume'
+                  : '{"authMethod":"claude.ai"}',
+              timedOut: false,
+              aborted: false,
+              overflow: false,
+            })
+          : runClaudeProcess({ ...request, args: ['-e', ''] }, onStdout),
+    });
+    const session = harness.start(
+      {
+        workingDirectory: cwd,
+        model: 'claude-opus-5-5',
+        effort: 'high',
+        options: { sandbox: 'read-only', approval: 'never' },
+        turn: { prompt: 'synthetic' },
+      },
+      new AbortController().signal,
+    );
+    const events = [];
+    for await (const event of session.events) events.push(event);
+    const error = await session.result.catch((e: unknown) => e);
+    console.log('BASELINE turn', JSON.stringify(events.at(-1)), (error as Error).message);
+  });
+});
