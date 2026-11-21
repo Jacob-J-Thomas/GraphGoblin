@@ -153,8 +153,10 @@ Behaviour: non-zero exit codes without a configured route fail the run with `SCR
 
 Commands use `shell: false`. Windows `.cmd` and `.bat` files therefore require an explicitly
 authored command processor; direct invocation is a proven `SCRIPT_START_FAILED`, not an
-automatic shell fallback. Ordinary Resume after that refusal keeps the pinned command and
-arguments. To change them, publish a corrected definition and start a new run. See
+automatic shell fallback. Resume and Replay keep the pinned command, arguments and
+working-directory configuration. To change them, publish a corrected definition and start a
+fresh run; neither Resume nor Replay applies the correction. After an external prerequisite
+repair, such as restoring a missing executable, ordinary Resume can retry the pinned definition. See
 [Windows batch commands](guide/07-troubleshooting.md#windows-batch-commands) for an example.
 
 Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
