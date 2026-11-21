@@ -826,7 +826,8 @@ namespace GraphGoblin.Desktop
                 IntPtr descriptor = IntPtr.Zero;
                 try {
                     uint size;
-                    string sid = WindowsIdentity.GetCurrent().User.Value;
+                    string sid;
+                    using (var identity = WindowsIdentity.GetCurrent()) sid = identity.User.Value;
                     if (!ConvertStringSecurityDescriptorToSecurityDescriptor("D:P(A;;GA;;;" + sid + ")", 1, out descriptor, out size)) throw Containment();
                     var security = new SecurityAttributes { size = Marshal.SizeOf(typeof(SecurityAttributes)), descriptor = descriptor };
                     string name = @"\\.\pipe\GraphGoblin.Check." + Guid.NewGuid().ToString("N");
