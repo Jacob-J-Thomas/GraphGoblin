@@ -353,3 +353,35 @@ records source bindings, actual verification results, original failures and rema
 The earlier C14/C25–C31 and visual-dialog limits remain unless a named new observation directly
 addresses one. #543/#544 stay parked, PR #460 stays held, and consolidated owner decision
 review and any requested rework remain before owner QA.
+
+## November 21 amendment: intent 3 engineering delivered; D171 admits intent 4
+
+PR [#541](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/541) merged with verified signed
+commit `02351e2fb932b3be44e7cc3fb3943a61d568226c`. Intent 3 engineering is complete: **14/26 core
+issues (53.8%)**, **3/5 intents**. [Verified engineering roll-up](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448).
+This does not complete #459's separately open, parked owner/visual QA, Mac #501 or held #460.
+The original negative audits, corrected-source evidence and remaining limits remain historical.
+
+Under the owner's delegated blocker-decision authority,
+[D171](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) admits
+the eight intent 4 units in registered order: #427, #448, #362, #363, #364, #365, #486 and #442.
+Independent units may overlap only with explicit file ownership. Admission records no completed
+implementation, QA, review or owner acceptance. Intent 5 remains behind intent 4 engineering.
+
+D171 refines #427 to distinguish dated account refusal, static catalogue metadata and current
+account/endpoint availability. Start with explicit guidance and prove the existing structured
+refusal recognition through independent disposable public-interface QA. A documentation-only
+disposition depends on that proof; a narrow demonstrated diagnostic gap requires a bounded
+correction. Do not substitute a model, globally disable a seed from one account result, promise
+that an API-key login fixes access, or claim current entitlement without evidence. No paid
+provider request or owner configuration change is needed. #365 reconciles inherited Windows
+sandbox/backend documentation without changing permissions or backend behavior.
+
+#448 retains its owner-only closure requirement. #362 needs evidence of its current already-landed
+behavior before disposition; #486 requires its separate boundary/recovery architecture selection.
+#442 uses supported diagnostics or states the observability limit and does not close related
+owner acceptance. Each unit retains independent behavior QA, actual Claude contribution,
+opposite-family review, unchanged coverage, exact-head/current-target CI and the registered fresh
+independent Astra MAX final audit within the three-general-scan cap. No human `plan-approved`
+label is inferred. Consolidated owner decision review and any requested rework remain before
+owner QA; #460, Mac #501, parked #542/#543/#544 and conditional #379 retain their separate gates.
