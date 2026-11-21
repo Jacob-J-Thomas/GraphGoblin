@@ -4,6 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
+  passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
+  tools are not verified by this check. CLI inventory commands are useful for investigation,
+  but do not prove every enabled plugin loaded. Readiness, authentication, exit status and
+  plugin inheritance/overrides keep their existing behavior; no new probe or repair runs.
+  **Upgrade:** rebuild the API and web app. Preflight output parsers must allow the new warning
+  row and warning count. No schema, stored format or reset change.
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
