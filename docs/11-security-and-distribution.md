@@ -156,6 +156,14 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 
 `apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database and write-ahead log bytes (the `-shm` index is shared memory any reader updates).
 
+For an existing current, migrated store, offline model admission uses startup's catalog projection:
+stored rows come first, with shipped seeds appended in memory only when their `(harness, model)`
+pair is absent. A newly shipped seed can therefore satisfy `GG_DEFAULTS` before the first upgrade
+start without being inserted by preflight. Stored metadata and disabled rows still take precedence;
+preflight does not refresh them. Codex's disabled default remains a warning; disabled models stay
+unavailable to execution. Missing stores use the shipped catalog; unsupported or unreadable stores
+still fail their database check.
+
 | Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                 |

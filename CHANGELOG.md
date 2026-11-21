@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
+  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
+  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
+  migrate the store; database and WAL bytes remain unchanged (SQLite readers may update `-shm`).
+  **Upgrade:** rebuild the API. No schema, stored format or reset change.
+
 - Windows launcher identity and ownership checks own their descendants in private Windows jobs
   (#459), drain both output streams within a bounded work window and collect failed checks
   before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
