@@ -46,7 +46,8 @@ function codex(state: keyof typeof LABELS): FakeApi['preflight'][number] {
     state,
     ok: state === 'ready',
     ...(state === 'cli-missing' ? {} : { version: '0.160.0' }),
-    authenticated: state === 'ready',
+    // As the adapter reports: false only for a confirmed sign-out, absent when login is unknown.
+    ...(state === 'ready' || state === 'auth' ? { authenticated: state === 'ready' } : {}),
     problems: state === 'ready' ? [] : [readinessMessage('codex', state)],
   };
 }
