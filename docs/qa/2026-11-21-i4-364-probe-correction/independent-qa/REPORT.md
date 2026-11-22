@@ -1,0 +1,75 @@
+# #364 D193/D198 independent corrective behavior QA
+
+**PASS within this bounded corrective scope.** Successful independent executions passed **272/272 predicates**: public harness/native/counterfactual 191/191, plus built HTTP/auth/engine/disk SQLite 81/81. Two earlier API instrumentation failures remain preserved and are explained below. No product defect was found. This report does not complete hosted CI, the final Astra audit, merge, or owner acceptance.
+
+Role: independent GPT behavior QA, separate from the actual Claude author and ordinary/final reviewers. The coordinator designated this context GPT6.1Sol/xhigh; that designation is dispatch provenance, not a native-provider observation. All drivers here were independently authored outside the repository. Author tests/results were inputs and were not run or labeled independent observations. Original `i4-364-independent-01` was not modified or rerun.
+
+## Binding and admission
+
+| Binding | Value |
+| --- | --- |
+| Independent checkout | `G:/ggq/gg-i4-364-qa/GraphGoblin` |
+| Initial clean detached source | `99f1de7863dfc6a05b63a9140f7fc7a6833fcb20` |
+| Initial tree | `911b2400b7622b5b04b58b3b03092d9ea90f55a3` |
+| Candidate | `b90ffd2dfce3d4a73b83c5722393298453cec07b` |
+| Candidate tree | `8ea6424a680177768fd9af9661e2d3cb2e3db9d8` |
+| Candidate parent | `a04f6661a74a727e6c963d8648ea2998bb6dbe7b` |
+| Runtime | Project Node `v22.23.4`, first on PATH; `pnpm.cmd` |
+| Build | One `pnpm.cmd build`, exit 0, 12 successful tasks, 0 cached |
+| Per-command TEMP/TMP | `G:/ggq/qa-scratch/i4-364-probe-independent-01` |
+
+`before-binding.json` records clean source/index and old build hashes before the authorized local fetch/detached checkout. `PREDICTIONS.md` and `predictions-original.sealed.json` predate behavior execution. `scenario-binding.json` records candidate source/build hashes before the first scenario. `release-receipt.json` confirms identical hashes at release.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Candidate `src/claude/harness.ts` | `79fd47db7d2749dd2a966f93771e74f2a929a9a8ea01b5c3fb35a11732d8b3b5` |
+| Candidate `src/claude/process.ts` | `c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322` |
+| Built `dist/claude/harness.js` | `7e2ebe9a68d1cdee02c974c008250f34af5f1bb52653fa7c5a3a71a65b76f6c3` |
+| Built `dist/claude/process.js` | `4c83adaa22fcd22c92f9ff911c7ba2c89e2be704dae606f09cb34a43b014afa6` |
+| Built API `app.js` | `56091afbd989b25faac361a4d24bcb3729bef043b63eab39ec589c7f5305b216` |
+| Built API `container.js` | `b38ea5cf9cddeb9d6bd63f663ca0c2b6ecceddf8e84b353277875aceda640c6d` |
+
+## Predictions and observations
+
+| Criterion | Result | Observed evidence and boundary |
+| --- | --- | --- |
+| F1: incomplete auth-like stdout at exit 1/null | PASS | Public preflight unknown, authenticated absent, fixed unreadable-output detail; start HARNESS_TURN_FAILED, nonretriable, definitely-not-submitted; no `--print` call |
+| F1: actual stderr classifier competes with lost stdout/stderr | PASS | Actual built runClaudeProcess classified `API Error: 401` as auth, with outputFailed true and close 1/null. Public harness retained unknown/absent/fixed cause. Native spawn/kill were controlled EventEmitter streams, not a spontaneous pipe failure |
+| Partial quota/transport/unknown-option/sign-out bodies | PASS | Incomplete auth stdout quota/transport and explicit sign-out; incomplete help unknown-option at exit 0/1/null retained the lost-output cause |
+| Completed authentication controls | PASS | Completed sign-out JSON remained auth/false; completed real-runner stderr auth refusal remained auth/false; complete account status remained ready/true |
+| F2: help-only established missing/file folder | PASS | Successful version/auth with help-only refusal retained the fixed temporary-folder cause in preflight and start; authenticated true came from the separate completed auth check |
+| F2: unexplained ENOENT/EACCES/UNKNOWN | PASS | Fixed source-owned start detail retained, no versioned option wrapper; unknown, nonretriable, no turn |
+| Ordinary completed help failures | PASS | Exit 1/null and completed recognized unknown option retained `Claude CLI 2.1.285 failed the --max-turns/--help check.` guidance |
+| Stronger outcome precedence | PASS | Both help/auth: unconfirmed termination, deadline, overflow, typed callback and start-refusal outcomes preceded loss. Actual session.cancel on the pending help/auth check yielded AbortError with no turn |
+| Existing turn submission/recovery controls | PASS | Turn output loss over missing-session rejection remained delivery-uncertain/HARNESS_TURN_FAILED. Completed auth rejection remained definitely-not-submitted. Completed missing-session refusal retained session-missing/HARNESS_SESSION_MISSING. Harmless successful turn completed |
+| Native Windows help-only missing/file induction | PASS | Copied Node executable ran the independently written harmless CLI. Only the owned harness check directory was removed or replaced with a file for help, with ownership guards and restoration in finally. Actual Windows spawn returned ENOENT and actual stat established the cause; no `--print` in either refused case |
+| Built REST/auth/SQLite propagation and persistence | PASS | Four cases: auth loss, help loss, help EACCES, native induced help missing. Actual loopback HTTP auth returned 401 without token, preflight preserved fixed facts, failed readiness admission returned 422 without execution rows; admitted ready snapshot followed by changed start prerequisite persisted the cause and nonresumable failure. Correct Resume returned 409 before/after restart without new rows/events/effects |
+| Original-source counterfactual | PASS | Preserved original harness build, externally rebound imports only, reproduced original auth/false and obsolete help wrapper. The same corrected-behavior oracle rejects both original outcomes. Frozen checkout was not edited |
+| Checkout/process/listener release | PASS | Clean detached candidate and index; source/build hashes unchanged; 83 recorded real PIDs absent, seven owned loopback ports refused connection, zero matching QA processes or check folders |
+| Full current-head/current-target hosted CI/native archive gates | UNVERIFIED here | Separate root gate; no full infrastructure rerun, threshold change or privilege change |
+| Fresh final Astra scan3 / owner acceptance | UNVERIFIED here | Separate contexts and gates; this is behavior QA only |
+
+`observations-01.json`, `checks-01.json`, `all-runner-calls-01.json`, and `driver-01-complete.json` preserve the 30 public/controlled/native stages and 191 predicates. Literal expected messages were independently specified. Synthetic output, prompt, path and binary canaries were checked against public messages/events, in both harness and HTTP failures. Raw command/fixture evidence intentionally contains those synthetic canaries.
+
+`api-observations-03.json` contains 42 real HTTP records, row/count snapshots, event histories and runner requests across four failed runs and a ready control. The API harness override uses the actual ClaudeHarness. Its preflight first genuinely completes in ready mode, then a controlled boundary changes only the following start prerequisite. This isolates a failure that occurs after run admission; no readiness fact is fabricated. That is a controlled harness fixture through the actual built HTTP/engine/storage stack, not actual native-provider execution.
+
+Each admitted failure recorded one `harness.turn` intent and only definitely-not-submitted evidence. The engine records two matching submission observations while folding the event and rejected result; they refer to the same turn ID, with no `--print`, no native turn sink entry and no new attempt on rejected Resume. Rejected preflight/admission and Resume comparisons cover execution rows/events, while admitted failures appropriately create their run, resource and placeholder-session metadata. The success control reached the native harmless sink exactly once overall. Four close/reopen cycles preserved the failed run/event bytes; correct Resume used the current public `observedSeq` and remained 409 even after readiness was restored. The final database has a native `SQLite format 3` header.
+
+## Failed attempts retained
+
+| Attempt | Outcome | Correction and provenance |
+| --- | --- | --- |
+| Public `driver-01.mjs` | Exit 0, 191/191 on its only execution | No behavior-driver retry |
+| API `api-driver-01.mjs` | Exit 1 after 10 passes and one failed assertion | Driver expected the bare adapter cause at the engine boundary. Actual engine adds its existing fixed `harness turn failed: ` prefix. `inference-failure.ts` confirmed it; actual code/resumability/submission/cause were correct. Raw failure, source hash, HTTP and store retained |
+| API `api-driver-02.mjs` | Exit 1 after 12 passes and one failed assertion | Driver sent `{}` to current Resume schema and got 400 VALIDATION_FAILED for missing observedSeq. This did not reach the recovery decision. Raw schema failure, source hash, HTTP and separate store retained |
+| API `api-driver-03.mjs` | Exit 0, 81/81 | Correct exact engine text, actual dotted event names, explicit single-intent/submission checks, and current observedSeq. Third and final permitted API iteration; fresh store/sink. No timeout, threshold or expected 409 was weakened |
+
+Both stops were genuine fixture/oracle errors. Their successful predicates are not counted in the 272/272 final successful-execution total. `api-instrumentation-correction-02.json` and `-03.json` bind each reason, previous/new driver hash and separate disposable store. No retry was used to hide a product defect. Preliminary read-only source discovery also encountered guessed nonexistent paths and a PowerShell wildcard argument error; these did not execute a scenario and are recorded in `COMMANDS.md`.
+
+## Limits and release
+
+Output loss was simulated through runner results or controlled spawn streams. No spontaneous started-process pipe fault, live Claude account status, real sign-in/out, provider turn, Linux/macOS observation or broad long-path matrix is claimed. Native folder absence/file was intentionally induced in a guarded owned temporary directory; it was not a natural failure. The genuine success controls used copied Node running a harmless local fixture. Stronger termination failure was a controlled result, not a leaked native child.
+
+No source/test/index edits, commits, pushes, GitHub calls, model/provider calls, owner-store changes, package reinstall, extra workers or host settings changes occurred. The only repository transition was the expressly authorized local fetch/detached checkout and ignored build outputs. Author checkout and prior evidence remained read-only. The known full Windows infrastructure symlink/permission/SQLite cleanup limitations were not rerun or relabeled.
+
+The checkout is released at the bound clean candidate. Owned native children and all API listeners are gone. Disposable evidence stores (including failed-attempt WAL/SHM), the harmless copied executable, build TEMP files and compile cache remain under the task scratch directory for provenance; they are inactive. `external-manifest.json` binds retained executable/store/artifact bytes. `SHA256SUMS` and `seal.json` freeze this packet after the report. No merge or owner acceptance is implied.

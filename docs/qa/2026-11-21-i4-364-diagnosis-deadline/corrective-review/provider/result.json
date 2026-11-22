@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 363024,
+  "stop_reason": "end_turn",
+  "session_id": "8ef4733d-d4e9-4d12-ac6a-4ac84c969afc",
+  "total_cost_usd": 3.5606622,
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 118188,
+    "cache_read_input_tokens": 597671,
+    "output_tokens": 38749,
+    "output_tokens_details": {
+      "thinking_tokens": 29892
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 118188,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 6482,
+        "cache_read_input_tokens": 107251,
+        "cache_creation_input_tokens": 13649,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 13649
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 20,
+      "outputTokens": 38749,
+      "cacheReadInputTokens": 597671,
+      "cacheCreationInputTokens": 118188,
+      "webSearchRequests": 0,
+      "costUSD": 3.5606622,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 29892,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 118188,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 59,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**ACCEPT FIX** — bounded corrective review of the D203 correction for #364 (F3). I found no introduced actionable defect in the five-file delta.\n\n## Binding and scope\n\n- **Candidate:** `G:/ggq/gg-i4-364-claude-start/GraphGoblin`. I read the worktree's `HEAD` and branch ref; `codex/gg-i4-364-claude-start` resolves to `e8cf31d51837a4fa362f909604b3070277db6c25`.\n- **Taken from the root receipt, not verified by me:** tree `0927bbbf…`, parent `580aded6…`, the clean state, and every SHA-256.\n- **Scope:** `process.ts`, `process-failure.test.ts`, `docs/06-harness-integration.md`, `ADR-0089` and the ADR index, as in `source.patch`. The patch has no `harness.ts` hunk, and the F1/F2 corrections are still present in that file.\n- **Standing:** this is the D035/D042 capped correction path. The final scan 3 verdict stays negative at `580aded6`; I request no further general scan.\n\n## Introduced actionable defects\n\nNone.\n\n## What I checked in `process.ts`\n\n| Ordering | Outcome | Where |\n| --- | --- | --- |\n| Stat pending past the budget, `timeoutMs: null`, no abort | Settles with the spawn code only; `timedOut` and `aborted` stay false | 247–255 |\n| Metadata arrives after the deadline but before a delayed timer callback | Cause discarded, generic refusal returned | 84, 89, 258 |\n| Timer fires early against the monotonic clock | Re-arms for the remainder, then settles | 251–252 |\n| Abort or shorter request deadline during diagnosis | Settles at once through `kill()`; no cause, no timeout | 160–167, 184 |\n| Late stat success or rejection after settlement | Ignored; no working-directory lookup starts | 76–78, 84, 257 |\n| Child close after refusal | Still ignored; the timer now bounds the wait | 266 |\n| Started child | Handler returns before any diagnostic timer exists | 241 |\n| Any settlement | Clears request, kill and diagnostic timers; removes the abort listener | 135–138 |\n\n- **Failure mapping:** the expired result reaches the unchanged harness as `definitely-not-submitted` (`harness.ts:525`) and the existing unknown-cause `HARNESS_TURN_FAILED` (`harness.ts:154–158`). Nothing maps it to a timeout or an abort.\n- **No scope creep:** the constant is module-private, and I found no retry, extra launch, kill of the refused child, PATH resolution or configuration.\n- **Timer re-arm:** it cannot spin, because Node clamps sub-millisecond delays to 1 ms. That is my knowledge of Node, not something I ran.\n\n## Tests and documentation\n\n- **Public-turn test (lines 516–626):** it drives real `runClaudeProcess` through `ClaudeHarness.start` with scripted children and asserts everything D203 requires:\n  - version, help, auth, then exactly one turn with `timeoutMs: null`;\n  - not terminal at 999 ms, terminal at 1,000 ms;\n  - the exact failure and a single `definitely-not-submitted` event;\n  - no kill, zero timers, listener removed;\n  - byte-stable results after late success and late rejection, with exactly one `stat` call.\n- **Listener assertion:** it is attributable to the runner, because the spied signal is the harness's internal controller, which the harness itself never unsubscribes from.\n- **Edited abort/deadline case:** it is strengthened, not weakened. The 15 ms deadline is needed to stay distinguishable from the new 1,000 ms budget.\n- **Docs:** `docs/06` and ADR-0089 match the code, including the statement that native `stat` is not cancelled.\n\n## Non-blocking observations\n\n- **Redundant guards:** lines 78/84 and 89/258 are pairwise redundant, so removing one alone would not fail a test. The three new uncovered branches (76, 78, 250) are defensive guards. The other three uncovered branches (82, 161, 168) are in lines the patch does not touch.\n- **Old-source control:** it ran only the two public-turn cases (filter `-t \"settles a default public turn\"`); both fail at test line 590. From reading, I expect the old source to fail the process-level bound cases too, but that was not run.\n- **Native cause assertions:** they now depend on a real `stat` returning within one second. If CI or native verification shows the generic message where a specific cause is expected, read it as budget expiry under load.\n- **Thread-pool occupancy:** already issued stats still hold thread-pool threads until they finish natively. This is documented and accepted by D203.\n\n## What I inspected and its limits\n\n- **Read in full:** `AGENTS.md`, `docs/15`, `decision-203.md`, the final scan 3 report, `receipt.json`, `source.patch`, candidate `process.ts`, `process-failure.test.ts`, ADR-0089 and the author `REPORT.md`.\n- **Read in part:** `harness.ts`, `killTree`, the `docs/06` section, the index entry, the old `process.ts`, and the fixture at `start-refusal.test.ts:319`.\n- **Raw evidence read:**\n  - old-source control log and receipts;\n  - both focused runs: 304 pass / 2 fail, then 306/306 across 13 files;\n  - the TEMP-spelling witness, which shows the two failures come from the fixture's `dirname`/`tmpdir()` comparison, independent of this delta;\n  - coverage summary and lcov branch records: 100% lines, 95.27% branches, `process.ts` only;\n  - format-check log, instrumentation history, frozen-source receipt, seal (65 manifest entries counted), status and process-release records;\n  - typecheck and lint logs, which contain only the command line; their exit code 0 comes from the receipts.\n- **Not done:** I executed nothing — no tests, builds, git commands or hash computation. Source-to-patch agreement is by reading, not byte comparison.\n- **Not observed:** a naturally stalled filesystem, or native refusal behaviour.\n- **Reviewer identity:** my session reports Fable 5.2 (`claude-fable-5-2`). I cannot attest the reasoning-effort setting from inside the session.\n\n## Remaining gates\n\nSeparate actual Opus 5.5 criterion QA, current-head and current-target CI and native verification, and coordinator completion remain required. This review is not author evidence, behaviour QA, merge authorization or owner acceptance.",
+  "ttft_ms": 3550,
+  "type": "result",
+  "duration_ms": 366437,
+  "uuid": "240e714e-e0fe-47d3-9609-b4c465f803a7",
+  "ttft_stream_ms": 3190,
+  "time_to_request_ms": 2739,
+  "first_content_frame_ms": 3190,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 20,
+      "outputTokens": 38749,
+      "cacheReadInputTokens": 597671,
+      "cacheCreationInputTokens": 118188,
+      "webSearchRequests": 0,
+      "costUSD": 3.5606622,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 29892,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 118188,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:06.232Z"
+}

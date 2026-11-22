@@ -1,0 +1,81 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/start-refusal.test.ts (17 tests | 2 failed) 4044ms
+   ❯ native Claude help-only check refusal (#364) (2)
+     × keeps a missing check folder when only the help check is refused 199ms
+     × keeps a check folder that is a file when only the help check is refused 218ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a missing check folder when only the help check is refused
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.287",
+  }
+
+ ❯ helpOnlyRefusal src/claude/start-refusal.test.ts:338:19
+    336|     });
+    337|     const facts = await claude.preflight();
+    338|     expect(facts).toMatchObject({
+       |                   ^
+    339|       state: 'unknown',
+    340|       ok: false,
+ ❯ src/claude/start-refusal.test.ts:357:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a check folder that is a file when only the help check is refused
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder is not a folder. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.287",
+  }
+
+ ❯ helpOnlyRefusal src/claude/start-refusal.test.ts:338:19
+    336|     });
+    337|     const facts = await claude.preflight();
+    338|     expect(facts).toMatchObject({
+       |                   ^
+    339|       state: 'unknown',
+    340|       ok: false,
+ ❯ src/claude/start-refusal.test.ts:365:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  2 failed | 304 passed (306)
+   Start at  09:13:53
+   Duration  12.63s (tests 49%, import 32%, transform 18%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-364-claude-
+  │ start\GraphGoblin\packages\infrastructure
+

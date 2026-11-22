@@ -1,0 +1,461 @@
+{
+  "scope": "Synthetic spawn/stat/kill seam only; unchanged built modules loaded through a narrowly scoped resolver hook. No native PID or native kill claim.",
+  "observations": [
+    {
+      "name": "abort",
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "elapsed": 2.497700000000009,
+      "statCalls": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+      ],
+      "kills": []
+    },
+    {
+      "name": "deadline",
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "elapsed": 18.97289999999998,
+      "statCalls": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+      ],
+      "kills": []
+    },
+    {
+      "name": "post-start-error",
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      },
+      "statCalls": [],
+      "kills": []
+    },
+    {
+      "name": "stdout-loss",
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "turnRejection": "auth",
+        "outputFailed": true
+      },
+      "kills": [
+        364002
+      ]
+    },
+    {
+      "name": "stderr-loss",
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "turnRejection": "auth",
+        "outputFailed": true
+      },
+      "kills": [
+        364002
+      ]
+    },
+    {
+      "name": "uncertain-read",
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "statCalls": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.com",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.exe",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+      ]
+    },
+    {
+      "name": "appended-exe",
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "statCalls": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.com",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.exe",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+      ]
+    },
+    {
+      "name": "output-before-auth",
+      "result": {
+        "name": "ClaudeHarnessError",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Claude turn failed"
+      },
+      "events": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude turn failed",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "cancel-before-diagnosis",
+      "result": {
+        "name": "AbortError",
+        "code": 20,
+        "message": "Claude turn cancelled"
+      },
+      "events": []
+    },
+    {
+      "name": "termination-before-cancel",
+      "result": {
+        "name": "ClaudeHarnessError",
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "message": "Claude process termination was not confirmed; stop the installed CLI before retrying"
+      },
+      "events": [
+        {
+          "type": "error",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "abort pending-diagnostic-settled",
+      "pass": true,
+      "detail": {
+        "elapsed": 2.497700000000009,
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": true,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        }
+      }
+    },
+    {
+      "name": "abort no-kill-and-abort-listener-removed",
+      "pass": true,
+      "detail": {
+        "kills": [],
+        "listeners": 0
+      }
+    },
+    {
+      "name": "abort late-stat-no-result-mutation",
+      "pass": true,
+      "detail": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "name": "deadline pending-diagnostic-settled",
+      "pass": true,
+      "detail": {
+        "elapsed": 18.97289999999998,
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        }
+      }
+    },
+    {
+      "name": "deadline no-kill-and-abort-listener-removed",
+      "pass": true,
+      "detail": {
+        "kills": [],
+        "listeners": 0
+      }
+    },
+    {
+      "name": "deadline late-stat-no-result-mutation",
+      "pass": true,
+      "detail": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "name": "post-start-error-no-refusal-evidence",
+      "pass": true,
+      "detail": {
+        "result": {
+          "exitCode": 1,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false
+        },
+        "statCalls": []
+      }
+    },
+    {
+      "name": "stdout loss-terminates-owned-tree",
+      "pass": true,
+      "detail": {
+        "result": {
+          "exitCode": 1,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "turnRejection": "auth",
+          "outputFailed": true
+        },
+        "kills": [
+          364002
+        ]
+      }
+    },
+    {
+      "name": "stdout loss-retains-closed-auth-and-privacy",
+      "pass": true,
+      "detail": {
+        "exitCode": 1,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "turnRejection": "auth",
+        "outputFailed": true
+      }
+    },
+    {
+      "name": "stderr loss-terminates-owned-tree",
+      "pass": true,
+      "detail": {
+        "result": {
+          "exitCode": 1,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "turnRejection": "auth",
+          "outputFailed": true
+        },
+        "kills": [
+          364002
+        ]
+      }
+    },
+    {
+      "name": "stderr loss-retains-closed-auth-and-privacy",
+      "pass": true,
+      "detail": {
+        "exitCode": 1,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "turnRejection": "auth",
+        "outputFailed": true
+      }
+    },
+    {
+      "name": "uncertain-read stays-ambiguous",
+      "pass": true,
+      "detail": {
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        },
+        "statCalls": [
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.com",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+        ]
+      }
+    },
+    {
+      "name": "appended-exe stays-ambiguous",
+      "pass": true,
+      "detail": {
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        },
+        "statCalls": [
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.com",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\not-present.exe.exe",
+          "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-364-independent-01\\CANARY364_SYNTHETIC_CWD"
+        ]
+      }
+    },
+    {
+      "name": "output-before-auth precedence",
+      "pass": true,
+      "detail": {
+        "result": {
+          "name": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude turn failed"
+        },
+        "events": [
+          {
+            "type": "error",
+            "code": "HARNESS_TURN_FAILED",
+            "message": "Claude turn failed",
+            "retriable": false,
+            "submission": "delivery-uncertain"
+          }
+        ]
+      }
+    },
+    {
+      "name": "output-loss-submission-uncertain",
+      "pass": true,
+      "detail": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude turn failed",
+          "retriable": false,
+          "submission": "delivery-uncertain"
+        }
+      ]
+    },
+    {
+      "name": "output-before-auth diagnostic-privacy",
+      "pass": true,
+      "detail": {
+        "result": {
+          "name": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude turn failed"
+        },
+        "events": [
+          {
+            "type": "error",
+            "code": "HARNESS_TURN_FAILED",
+            "message": "Claude turn failed",
+            "retriable": false,
+            "submission": "delivery-uncertain"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cancel-before-diagnosis precedence",
+      "pass": false,
+      "detail": {
+        "result": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "Claude turn cancelled"
+        },
+        "events": []
+      }
+    },
+    {
+      "name": "cancel-before-diagnosis diagnostic-privacy",
+      "pass": true,
+      "detail": {
+        "result": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "Claude turn cancelled"
+        },
+        "events": []
+      }
+    },
+    {
+      "name": "termination-before-cancel precedence",
+      "pass": true,
+      "detail": {
+        "result": {
+          "name": "ClaudeHarnessError",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying"
+        },
+        "events": [
+          {
+            "type": "error",
+            "code": "HARNESS_TERMINATION_UNCONFIRMED",
+            "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        ]
+      }
+    },
+    {
+      "name": "termination-before-cancel diagnostic-privacy",
+      "pass": true,
+      "detail": {
+        "result": {
+          "name": "ClaudeHarnessError",
+          "code": "HARNESS_TERMINATION_UNCONFIRMED",
+          "message": "Claude process termination was not confirmed; stop the installed CLI before retrying"
+        },
+        "events": [
+          {
+            "type": "error",
+            "code": "HARNESS_TERMINATION_UNCONFIRMED",
+            "message": "Claude process termination was not confirmed; stop the installed CLI before retrying",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        ]
+      }
+    }
+  ]
+}

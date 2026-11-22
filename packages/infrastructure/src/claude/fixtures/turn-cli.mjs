@@ -41,6 +41,18 @@ else {
     });
     if (scenario === 'assistant')
       print({ type: 'assistant', message: { content: [{ type: 'text', text: 'working' }] } });
+    // An ordinary completed turn whose result is the directory the process actually started in.
+    if (scenario === 'success') {
+      print({
+        type: 'result',
+        subtype: 'success',
+        is_error: false,
+        session_id: '11111111-1111-4111-8111-111111111111',
+        result: process.cwd(),
+        usage: { input_tokens: 1, output_tokens: 1 },
+        modelUsage: { 'claude-opus-5-5': {} },
+      });
+    }
     // A provider failure reported in the stream, then a non-zero exit with only a banner on stderr.
     if (scenario === 'provider-failure') {
       print({
@@ -51,5 +63,5 @@ else {
       process.stderr.write('PRIVATE_STDERR_BANNER\n');
     }
   }
-  process.exitCode = 1;
+  process.exitCode = scenario === 'success' ? 0 : 1;
 }

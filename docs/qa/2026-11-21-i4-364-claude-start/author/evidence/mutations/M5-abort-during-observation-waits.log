@@ -1,0 +1,31 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (31 tests | 2 failed) 16068ms
+   ❯ read-only observation after an actual spawn refusal (#364) (15)
+     × reports the refusal at once without a diagnosis or timeout when the abort arrives during the observation 8010ms
+     × reports the refusal at once without a diagnosis or timeout when the deadline arrives during the observation 8005ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > reports the refusal at once without a diagnosis or timeout when the abort arrives during the observation
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > reports the refusal at once without a diagnosis or timeout when the deadline arrives during the observation
+Error: Test timed out in 8000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/claude/process-failure.test.ts:234:42
+    232|     expect(observed()).toEqual([workspace]);
+    233|   });
+    234|   it.each(['abort', 'deadline'] as const)(
+       |                                          ^
+    235|     'reports the refusal at once without a diagnosis or timeout when t…
+    236|     async (mode) => {
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 29 passed (31)
+   Start at  02:49:14
+   Duration  17.95s (tests 91%, import 5%, transform 4%)
+
+vitest-exit=1

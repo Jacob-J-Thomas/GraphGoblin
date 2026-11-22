@@ -1,0 +1,747 @@
+{
+  "driver": "c4-old-source",
+  "utc": "2026-11-21T16:49:34.750Z",
+  "node": "v22.23.4",
+  "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "TEMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "TMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "passed": 15,
+  "failed": 0,
+  "predicates": [
+    {
+      "caseId": "setup",
+      "name": "harness.js bound to the scratch parent process.js; seams bound for it; candidate process.js not loaded",
+      "pass": true,
+      "observed": {
+        "harness": 1,
+        "old": [
+          "../process/index.js",
+          "node:child_process",
+          "node:fs/promises"
+        ],
+        "candidate": 0
+      },
+      "expected": {
+        "harness": 1,
+        "old": [
+          "../process/index.js",
+          "node:child_process",
+          "node:fs/promises"
+        ],
+        "candidate": 0
+      }
+    },
+    {
+      "caseId": "O1-old-public-default-turn",
+      "name": "turn genuinely refused natively (no pid, ENOENT)",
+      "pass": true,
+      "observed": {
+        "code": "ENOENT",
+        "syscallIsSpawn": true,
+        "atMs": 782.5437,
+        "pidAtError": false
+      },
+      "expected": "ENOENT"
+    },
+    {
+      "caseId": "O1-old-public-default-turn",
+      "name": "old source: still pending at +1,500 and +3,000 ms (no result, no event, queue open)",
+      "pass": true,
+      "observed": [
+        [
+          false,
+          0,
+          false
+        ],
+        [
+          false,
+          0,
+          false
+        ]
+      ],
+      "expected": [
+        [
+          false,
+          0,
+          false
+        ],
+        [
+          false,
+          0,
+          false
+        ]
+      ]
+    },
+    {
+      "caseId": "O1-old-public-default-turn",
+      "name": "old source: no diagnostic timer and no request timer for the turn",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "O1-old-public-default-turn",
+      "name": "old source settles only after the controlled release",
+      "pass": true,
+      "observed": 0.5362999999997555,
+      "expected": "< 50 ms after release"
+    },
+    {
+      "caseId": "O1-old-public-default-turn",
+      "name": "old source accepts the late metadata as the cause",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "turn genuinely refused natively (no pid, ENOENT)",
+      "pass": true,
+      "observed": {
+        "code": "ENOENT",
+        "syscallIsSpawn": true,
+        "atMs": 4061.1453,
+        "pidAtError": false
+      },
+      "expected": "ENOENT"
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "old source: run still non-terminal at +3,000 ms",
+      "pass": true,
+      "observed": "running",
+      "expected": "queued/running/waiting"
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "default run deadline null",
+      "pass": true,
+      "observed": null,
+      "expected": null
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "old run terminal after the release",
+      "pass": true,
+      "observed": "failed",
+      "expected": "failed"
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "old source: late cause becomes the run failure",
+      "pass": true,
+      "observed": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started because the working directory does not exist; check the working directory setting",
+        "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+        "submission": "definitely-not-submitted"
+      },
+      "expected": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started because the working directory does not exist; check the working directory setting",
+        "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+        "submission": "definitely-not-submitted"
+      }
+    },
+    {
+      "caseId": "O2-old-engine-default-run",
+      "name": "one turn attempt",
+      "pass": true,
+      "observed": 1,
+      "expected": 1
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no controlled stat left held",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "cleanup",
+      "name": "every started native fixture process closed",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    }
+  ],
+  "selfCheck": {
+    "performanceNowReplaced": true,
+    "setTimeoutWrapped": true,
+    "dateNowWrapped": true
+  },
+  "oldProcessURL": "file:///G:/ggq/qa-scratch/i4-364-deadline-independent-01/work/old-build/claude/process.js",
+  "results": {
+    "O1-old-public-default-turn": {
+      "windows": [
+        {
+          "atMsFromRefusal": 1500,
+          "settled": false,
+          "events": 0,
+          "queueClosed": false
+        },
+        {
+          "atMsFromRefusal": 3000,
+          "settled": false,
+          "events": 0,
+          "queueClosed": false
+        }
+      ],
+      "settledMsFromRefusal": 3003.874,
+      "events": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    "O2-old-engine-default-run": {
+      "statusAt3000": "running",
+      "pinnedLimits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "terminalMsAfterRelease": 4.633300000000418,
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started because the working directory does not exist; check the working directory setting",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "00000000000000000000000001:5",
+          "turnId": "00000000000000000000000003",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  },
+  "leftoverReleasedAtCleanup": 0,
+  "scratchRootRemoved": true,
+  "instrumentation": {
+    "redirects": [
+      {
+        "from": "harness",
+        "specifier": "./process.js",
+        "to": "old"
+      },
+      {
+        "from": "old",
+        "specifier": "node:child_process"
+      },
+      {
+        "from": "old",
+        "specifier": "node:fs/promises"
+      },
+      {
+        "from": "old",
+        "specifier": "../process/index.js"
+      }
+    ],
+    "statCalls": [
+      {
+        "id": 1,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 782.8876,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 783.8998,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 783.9496,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 2,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 783.1212,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 784.0989,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 784.0997,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 3,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 783.1584,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 784.0647,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 784.0665,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 4,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 784.1329,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 784.3236,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3786.023,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3785.9909
+      },
+      {
+        "id": 5,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 4061.1856,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4061.8308,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 4061.8371,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 6,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 4061.2368,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4061.7012,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4061.7796,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 7,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 4061.2763,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4061.8773,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4061.8786,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 8,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 4061.892,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 4062.1175,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 7064.3801,
+        "delivered": "error:ENOENT",
+        "releasedMs": 7064.2073
+      }
+    ],
+    "spawnCalls": [
+      {
+        "id": 1,
+        "caseId": "O1-old-public-default-turn",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 537.5682,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46800,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 625.9392
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 625.9961
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "caseId": "O1-old-public-default-turn",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 627.23,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46220,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 705.839
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 705.8709
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "caseId": "O1-old-public-default-turn",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 706.8147,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 19368,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 779.5862
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 779.6111
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "caseId": "O1-old-public-default-turn",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 780.8942,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 782.5437,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 783.7541
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "caseId": "O2-old-engine-default-run",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3853.6679,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 38260,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3924.0547
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3924.0835
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "caseId": "O2-old-engine-default-run",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3924.2236,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46888,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3991.979
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3992.0024
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "caseId": "O2-old-engine-default-run",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3992.1829,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 29496,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4059.2837
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4059.3266
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "caseId": "O2-old-engine-default-run",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 4060.1396,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 4061.1453,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 4061.5285
+          }
+        ]
+      }
+    ],
+    "killCalls": [],
+    "timers": [
+      {
+        "id": 1,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 551.2803,
+        "firedMs": null,
+        "clearedMs": 626.1296
+      },
+      {
+        "id": 2,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 634.3363,
+        "firedMs": null,
+        "clearedMs": 705.879
+      },
+      {
+        "id": 3,
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 713.6722,
+        "firedMs": null,
+        "clearedMs": 779.6166
+      },
+      {
+        "id": 4,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 3857.9836,
+        "firedMs": null,
+        "clearedMs": 3924.0895
+      },
+      {
+        "id": 5,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 3928.3249,
+        "firedMs": null,
+        "clearedMs": 3992.0087
+      },
+      {
+        "id": 6,
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 3996.7799,
+        "firedMs": null,
+        "clearedMs": 4059.3353
+      }
+    ],
+    "listeners": [
+      {
+        "caseId": "O1-old-public-default-turn",
+        "phase": "init",
+        "owner": "harness",
+        "addedMs": 531.102,
+        "removedMs": 3786.3516,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 551.3557,
+        "removedMs": 626.2051,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 634.4073,
+        "removedMs": 705.8975,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O1-old-public-default-turn",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 713.7234,
+        "removedMs": 779.6363,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O1-old-public-default-turn",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 781.7981,
+        "removedMs": 3786.1208,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 3852.7125,
+        "removedMs": 7064.5613,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 3858.0228,
+        "removedMs": 3924.114,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 3928.3723,
+        "removedMs": 3992.0339,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O2-old-engine-default-run",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 3996.8229,
+        "removedMs": 4059.3517,
+        "stillAttached": false
+      },
+      {
+        "caseId": "O2-old-engine-default-run",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 4060.8991,
+        "removedMs": 7064.4144,
+        "stillAttached": false
+      }
+    ],
+    "unhandled": [],
+    "heldStillUndelivered": [],
+    "nativeFixturePids": [
+      46800,
+      46220,
+      19368,
+      38260,
+      46888,
+      29496
+    ]
+  }
+}

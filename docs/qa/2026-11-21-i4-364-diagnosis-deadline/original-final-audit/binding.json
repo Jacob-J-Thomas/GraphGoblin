@@ -1,0 +1,1028 @@
+{
+  "schemaVersion": 1,
+  "audit": {
+    "repository": "Jacob-J-Thomas/GraphGoblin",
+    "pullRequest": 549,
+    "issue": 364,
+    "verdict": "CHANGES_REQUIRED",
+    "formalGeneralScanNumber": 3,
+    "maximumFormalGeneralScans": 3,
+    "role": "fresh independent final reviewer",
+    "configuredModel": "gpt-6.2-astra",
+    "configuredReasoningEffort": "max",
+    "identityProvenance": "coordinator dispatch",
+    "ownerAcceptance": false,
+    "issuedBy": "/root/i4_549_final_astra_02"
+  },
+  "findings": [
+    {
+      "id": "F3",
+      "severity": "P2",
+      "disposition": "FIX-IN-PR",
+      "introducedBy": "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20",
+      "firstReportedAgainst": "580aded6d295061897b047ac16811e5da230d9e0",
+      "signature": "claude/start-refusal-diagnosis-unbounded-without-turn-watchdog",
+      "primaryPath": "packages/infrastructure/src/claude/process.ts",
+      "primaryLines": [
+        235,
+        238
+      ],
+      "otherLines": [
+        78,
+        82,
+        171,
+        245
+      ],
+      "title": "A proved turn start refusal can wait indefinitely for optional filesystem metadata",
+      "evidence": "The default turn passes timeoutMs=null. A no-PID error defers completion to the filesystem observation and suppresses subsequent close. With no abort, no authored watchdog and a pending stat, no remaining branch can deliver the already-established failure. The base finished immediately on the child's error. A stalled lookup was represented in existing controlled QA with an explicit abort or finite runner timer. The no-watchdog case is derived from current source and was not executed in this audit.",
+      "acceptance": "Bound diagnostic result waiting independently of a running model turn. With successful prerequisites and only the turn's no-PID spawn refused, keep a required metadata read pending, omit all run/node timeouts and never cancel. Within the defined diagnostic bound, return the existing fixed unknown-cause failure with definitely-not-submitted, no duplicate turn, no kill, no inferred timeout, no retained timer/listener. A later metadata result cannot replace it. Preserve timely factual classifications and stronger outcomes."
+    }
+  ],
+  "priorFindings": [
+    {
+      "id": "F1",
+      "firstHead": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+      "disposition": "FIX-IN-PR",
+      "currentStatus": "verified corrected",
+      "correction": "b90ffd2dfce3d4a73b83c5722393298453cec07b",
+      "source": "packages/infrastructure/src/claude/harness.ts:193-210 and 306-331",
+      "independentObservation": "auth-like stdout and classified stderr plus loss/close 1 or null yield unknown, absent authenticated and fixed cause. Completed auth and sign-out remain distinct."
+    },
+    {
+      "id": "F2",
+      "firstHead": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+      "disposition": "FIX-IN-PR",
+      "currentStatus": "verified corrected",
+      "correction": "b90ffd2dfce3d4a73b83c5722393298453cec07b",
+      "source": "packages/infrastructure/src/claude/harness.ts:110-113, 135-159, 195-196 and 340-356",
+      "independentObservation": "Only help failed. Missing/file folder, unexplained native refusal and output-loss details survive. Completed option failures retain versioned guidance. Separate completed login remains a fact."
+    }
+  ],
+  "sourceAndIntegration": {
+    "candidate": "580aded6d295061897b047ac16811e5da230d9e0",
+    "parents": [
+      "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+      "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f"
+    ],
+    "target": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+    "tree": "49f4ae66198c4699867cab6c4f95c9ab4bf863b7",
+    "corrected": "b90ffd2dfce3d4a73b83c5722393298453cec07b",
+    "original": "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20",
+    "negativeReviewCandidate": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+    "evidencePublication": "5a42fb78f66431b0166c0c6a77210f8d94481b1f",
+    "integrationManifest": {
+      "count": 795,
+      "sha256": "6c745fbbe4f5d5f76c3e8053b7639cd0bcd04e4badc45429bfa60d12fcaaedcd"
+    },
+    "publicationManifest": {
+      "count": 111,
+      "sha256": "236f546cc37e4baf0c40a3982737f75188748e590943aa104cd780198372c51b"
+    },
+    "parentsMergeBase": "02a0000998fa119be7553ddc06a60b63fbde1e31",
+    "cleanParentModeAndBlobEntries": 35791,
+    "editorialFileSha256": {
+      ".gitattributes": "4b5e1ccb77330f5c95fc6badfbf770c8701015e91437ea7e4365b06a5a2054c7",
+      ".prettierignore": "093568cc56425f8856a175362b65140ec8f3931140b52c2dd7e996da4c9b4e56",
+      "CHANGELOG.md": "49a7dcc98af3cb06dfb0149ac9e8f6afbb88bc7a1e764566f3090cb7b1d467e7",
+      "docs/06-harness-integration.md": "48ed16748ec9e890694b29e1b5ebc4eaa43f3c9e14e75ed25a7476f3be140031",
+      "docs/guide/07-troubleshooting.md": "df578ac99506704201c256fcfe6d3d26a2705d122af889957379e4d8e1754bee"
+    },
+    "effectivePaths": {
+      "count": 380,
+      "nonArchivePaths": [
+        ".gitattributes",
+        ".prettierignore",
+        "CHANGELOG.md",
+        "docs/06-harness-integration.md",
+        "docs/guide/07-troubleshooting.md",
+        "packages/infrastructure/src/claude/fixtures/turn-cli.mjs",
+        "packages/infrastructure/src/claude/harness.test.ts",
+        "packages/infrastructure/src/claude/harness.ts",
+        "packages/infrastructure/src/claude/process-failure.test.ts",
+        "packages/infrastructure/src/claude/process.test.ts",
+        "packages/infrastructure/src/claude/process.ts",
+        "packages/infrastructure/src/claude/start-refusal.test.ts"
+      ],
+      "archivePaths": 368
+    },
+    "sevenIdenticalImplementationAndTestPaths": {
+      "packages/infrastructure/src/claude/fixtures/turn-cli.mjs": {
+        "blob": "4ee72d292c5ef46cc39573f3474555a11901b59f",
+        "sha256": "09239d2c2b2e96484c50562b01ff6fa955fe8ccd46e487b691c5d9dbb9aedf47"
+      },
+      "packages/infrastructure/src/claude/harness.test.ts": {
+        "blob": "de34ccf2f0788e37fe7d9418ff42217416409a72",
+        "sha256": "b24ab43f02c2f3da99cd75dc763d06412c81ddebb0a0f19ce2ec2c1ca9f4c960"
+      },
+      "packages/infrastructure/src/claude/harness.ts": {
+        "blob": "b8cb02379064e83602dc1f4fd7b7acfb3eb360c7",
+        "sha256": "79fd47db7d2749dd2a966f93771e74f2a929a9a8ea01b5c3fb35a11732d8b3b5"
+      },
+      "packages/infrastructure/src/claude/process-failure.test.ts": {
+        "blob": "676641650617a84f7db892e05e3d7161d6914f35",
+        "sha256": "ab1ce86fdefd6c5bfa58ffa70005a36a803af283c062b193179e7af60110fe4f"
+      },
+      "packages/infrastructure/src/claude/process.test.ts": {
+        "blob": "fa70d9b9fdc06f320f7e3b9f73ec3fa5d8925bd8",
+        "sha256": "12384a0617ec8f73a9f8046bfe2f741f1303a13d12795c4af37709c5eade5254"
+      },
+      "packages/infrastructure/src/claude/process.ts": {
+        "blob": "740f92c312ffa467d1ab48c203782a3c88876234",
+        "sha256": "c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322"
+      },
+      "packages/infrastructure/src/claude/start-refusal.test.ts": {
+        "blob": "86ef9808878554cdb42b743fe739edcf0332b377",
+        "sha256": "f24e8ecd342940030fe453c3201419575c4186d9bd70bcd49e73d567180e1b44"
+      }
+    },
+    "completeDiffSha256": "160b6e93519b85be981ea9b7add546ea3646e4fb865edd74ab8f39905227be1a",
+    "nonArchiveDiffSha256": "e188f78133fa281929b99297032578f7443bdc3eee5579f71921c59284c46db5",
+    "sixIncoming442Paths": [
+      "apps/api/src/preflight.test.ts",
+      "apps/api/src/preflight.ts",
+      "apps/web/src/settings/SettingsPage.test.tsx",
+      "apps/web/src/settings/sections/PreflightSection.test.tsx",
+      "apps/web/src/settings/sections/PreflightSection.tsx",
+      "packages/domain/src/readiness.ts"
+    ],
+    "correctionPaths": [
+      "docs/06-harness-integration.md",
+      "packages/infrastructure/src/claude/harness.test.ts",
+      "packages/infrastructure/src/claude/harness.ts",
+      "packages/infrastructure/src/claude/process-failure.test.ts",
+      "packages/infrastructure/src/claude/start-refusal.test.ts"
+    ],
+    "correctiveSourceTree": "8ea6424a680177768fd9af9661e2d3cb2e3db9d8",
+    "originalSourceTree": "911b2400b7622b5b04b58b3b03092d9ea90f55a3",
+    "evidenceOnlyPublicationDeltaCount": 212,
+    "sixArchives": [
+      {
+        "directory": "docs/qa/2026-11-21-i4-364-claude-start",
+        "membersIncludingSeal": 158,
+        "comparedRevision": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "seal": "docs/qa/2026-11-21-i4-364-claude-start/archive-seal.json",
+        "sha256": "f3d54d5b1aa2fc14f128581c6dc4c64b0770085d999d561583d8c4d4281cdfa6"
+      },
+      {
+        "directory": "docs/qa/2026-11-21-i4-364-probe-correction",
+        "membersIncludingSeal": 210,
+        "comparedRevision": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "seal": "docs/qa/2026-11-21-i4-364-probe-correction/integration-manifest.json",
+        "sha256": "2bf10938e9c14c4b0b33fb5ebe28b335cf0347377382d13e97f980cb3c453f8b"
+      },
+      {
+        "directory": "docs/qa/2026-11-21-i4-427-365",
+        "membersIncludingSeal": 243,
+        "comparedRevision": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "seal": "docs/qa/2026-11-21-i4-427-365/integration-manifest.json",
+        "sha256": "063ca3ffbcd4b81b531b73da9a4d32e3bb5dd532857cfcd88ef66027d5678e74"
+      },
+      {
+        "directory": "docs/qa/2026-11-21-i4-363-structured-temp",
+        "membersIncludingSeal": 339,
+        "comparedRevision": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "seal": "docs/qa/2026-11-21-i4-363-structured-temp/manifest.json",
+        "sha256": "52c70ecbd34de5db3fa65257d0679078a6087047ff2ec69d79b61b90f7dc5bb1"
+      },
+      {
+        "directory": "docs/qa/2026-11-21-i4-363-marker-correction",
+        "membersIncludingSeal": 272,
+        "comparedRevision": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "seal": "docs/qa/2026-11-21-i4-363-marker-correction/integration-manifest.json",
+        "sha256": "178a40e19fdc203a871e1583ae121533640330f6efef48470e18ef6d72007f8e"
+      },
+      {
+        "directory": "docs/qa/2026-11-21-i4-442-plugin-diagnostics",
+        "membersIncludingSeal": 707,
+        "comparedRevision": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+        "seal": "docs/qa/2026-11-21-i4-442-plugin-diagnostics/integration-manifest.json",
+        "sha256": "602a775de7bd8afcdcaae2433c08b9c386b4a1e6d783a28706621508d2d8cd71"
+      }
+    ],
+    "publicationSelection": {
+      "originalExactPublished": 150,
+      "originalLocalOnlyHashed": 24,
+      "correctionExactPublished": 202,
+      "correctionExtraFiles": 8,
+      "correctionExclusions": 0,
+      "correctionDerivatives": 0
+    },
+    "qaIndexSha256": "ebb8fcaa5b0b9c907acf3f261d4e0b4b46f3b4bd3e2a2f1ef25871274916878c",
+    "reviewCheckoutIndexSha256": "d68ad7bc9b0953e359372c21c0be9af8e50ca670e8d17da8da59f2a333fd3a78",
+    "integrationHelperInterruption": {
+      "phase": "After ordinary merge commit succeeded; before postcommit verification",
+      "error": "TypeError: list object is not callable at remote_main('after-commit-remote-main')",
+      "cause": "New helper function name shadowed by pre-existing local list variable in adapted commit routine.",
+      "correction": "Rename only the new unsealed helper local variable and expose postcommit-finalization action. Do not run commit again, modify product/worktree content, reset or rewrite. Resume exact identity/tree/archive/QA/main checks on already committed head.",
+      "ordinaryCommitReceiptExitCode": 0,
+      "timestamp": "2026-11-21T14:15:34.316338+00:00"
+    },
+    "push": {
+      "utc": "2026-11-21T14:17:14.157659+00:00",
+      "pr": 549,
+      "oldRemoteHead": "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+      "head": "580aded6d295061897b047ac16811e5da230d9e0",
+      "tree": "49f4ae66198c4699867cab6c4f95c9ab4bf863b7",
+      "parents": [
+        "4b822d67b3c8e70aae0a3e8e664bd6334245ae12",
+        "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f"
+      ],
+      "mainBeforeAndAfter": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+      "normalFastForwardPush": true,
+      "force": false,
+      "integrationSeal": "6c745fbbe4f5d5f76c3e8053b7639cd0bcd04e4badc45429bfa60d12fcaaedcd",
+      "integrationEntriesVerified": 795,
+      "ordinaryFullCurrentHeadCurrentTargetCI": "New run required; prior44908713842/02a is historical",
+      "freshFinalAstra3": "Still pending, not dispatched"
+    }
+  },
+  "rawGitArchiveReadback": {
+    "memberPathsCompared": 1929,
+    "distinctRawGitBlobs": 1392,
+    "aggregateMemberBytes": 53905018,
+    "distinctGitPayloadBytes": 45399621
+  },
+  "sourceAndEvidence": {
+    "providers": [
+      {
+        "stage": "original",
+        "model": "claude-opus-5-5",
+        "configuredEffort": "xhigh",
+        "exitCode": 0,
+        "terminalCount": 1,
+        "subtype": "success",
+        "stopReason": "end_turn",
+        "bytes": 6943,
+        "finalSha256": "404fa3f62ec7c0f1b84e19fd9bdab60dd922552b179a8036429f98f8d890478e",
+        "reportSha256": "c946dfafed9bd25f74d8b9d19cce5e587d9a07815ae979e8ac15552d5dc987fb",
+        "verifiedAuthorManifestEntries": 32,
+        "manifestSha256": "7ff283ecd3502eb8a95217872a960d2bb56b140544efbc824d8ad3dae2f15a87",
+        "streamSha256": "a2b124b548a70e46361e87c50a76cabb2107d0666e510b775b559b41b48cd944"
+      },
+      {
+        "stage": "correction",
+        "model": "claude-opus-5-5",
+        "configuredEffort": "xhigh",
+        "exitCode": 0,
+        "terminalCount": 1,
+        "subtype": "success",
+        "stopReason": "end_turn",
+        "bytes": 5124,
+        "finalSha256": "0ae91c94cb149b3fdc0760910997813c1346d14d9476a70ef4ce1bcdfdd0cad0",
+        "reportSha256": "0f8e3f64d5cf5a684f751b6091eff4df59eb23443e3d41fcf66e6696147c0ca8",
+        "verifiedAuthorManifestEntries": 109,
+        "manifestSha256": "12d974e01c76c8fa6e5fa0a3c73702c68893ba4b63cce4ff8a89f0ba6e4226f8",
+        "streamSha256": "89f059f24543c11cd8dc876f9b977f668df21689b96fa4db75cbafa692eec776"
+      }
+    ],
+    "negativeReport": {
+      "sha256": "4948e0b8d2c46044fa16da1fc04e77547c87ac2c40e31c75b2b34e386a95c637",
+      "verdict": "CHANGES_REQUIRED",
+      "sealedMembers": 2
+    },
+    "reviewOne": {
+      "sha256": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+      "sealedMembers": 52,
+      "verdict": "APPROVE"
+    },
+    "originalIndependentQa": {
+      "reportSha256": "a349b81c533ffa1c5a98a9076b4ec9f22e048a3d3fc22392e66ef3301fb15b53",
+      "verifiedManifestMembers": 75,
+      "executions": {
+        "native-observations.json": {
+          "pass": 42,
+          "failed": 0,
+          "sha256": "68fb2801622069fc59a2db55c352f60fac3d3c7517ff0c02b624e9aea3145b47"
+        },
+        "public-attempt2-observations.json": {
+          "pass": 55,
+          "failed": 0,
+          "sha256": "f74d3b8fa3cf99beddb32a443cc65918f2d6aa7926f8a6f00bcd4e7d6c28a975"
+        },
+        "probe-path-observations.json": {
+          "pass": 23,
+          "failed": 0,
+          "sha256": "c95518df90e719d71e2d2df52610139f13381d6eed75b4c6e7be03db0989e492"
+        },
+        "controlled-seam-observations.json": {
+          "pass": 19,
+          "failed": 1,
+          "sha256": "2825deec9dc9d0e882908ad45ed0da2db9065444e00259b73ddec57281a02fc5"
+        },
+        "cancel-predicate-correction.json": {
+          "pass": 3,
+          "failed": 0,
+          "sha256": "da6301e42b04aefcd6bedfc2bb337afbbacd4a49ab34029e3427c99c258b4b9b"
+        },
+        "baseline-negative-control.json": {
+          "pass": 3,
+          "failed": 0,
+          "sha256": "747ce3e7a84846081dccd8afa82429df6e6bfe6b3dcd4702d1b6e5a421a083a3"
+        }
+      },
+      "initialHttpFixture": [
+        {
+          "name": "native",
+          "passed": 42,
+          "total": 42,
+          "fixtureErrors": 0
+        },
+        {
+          "name": "public-attempt1",
+          "passed": 6,
+          "total": 6,
+          "fixtureErrors": 1,
+          "runBehaviorEstablished": false
+        },
+        {
+          "name": "public-attempt2",
+          "passed": 55,
+          "total": 55,
+          "fixtureErrors": 0
+        },
+        {
+          "name": "probe-path",
+          "passed": 23,
+          "total": 23,
+          "fixtureErrors": 0
+        },
+        {
+          "name": "controlled-seam",
+          "passed": 19,
+          "total": 20,
+          "failedFixturePredicates": 1
+        },
+        {
+          "name": "controlled-cancel-correction",
+          "passed": 3,
+          "total": 3,
+          "scope": "Fresh rerun of only the one incorrectly asserted cancellation case"
+        },
+        {
+          "name": "baseline-negative-control",
+          "passed": 3,
+          "total": 3
+        }
+      ]
+    },
+    "correctionIndependentQa": {
+      "reportSha256": "47f897b8362402533c5e10d082585529b6fa26f6dc724b4f971dd6e579ad4d66",
+      "sealSha256": "fc19e169a9dcb6fd70c330035c4f3362e12cc57c60eeb9ba1d95cda18a1ce7c6",
+      "verifiedSealEntries": 49,
+      "publicPredicates": 191,
+      "observationEntries": 30,
+      "publicObservationsSha256": "8218349aadd8eba0e4f3744294fb0b0aa8ec53caae4196434c6fe3cb3b830fed",
+      "counterfactualBuildSha256": "f473c8a6b8b1c6a07be95edb8654a8e63bff456979fd5c76441cc207d3fbd290",
+      "counterfactualExternalReboundSha256": "153e4e6b505d3ffa80a15b3c868fd1fc8264f6cf78946fc536ac6188b2b63603",
+      "failedApiAttempts": [
+        {
+          "driver": 1,
+          "passes": 10,
+          "failed": "auth-lost persisted fixed nonresumable failure",
+          "status": null
+        },
+        {
+          "driver": 2,
+          "passes": 12,
+          "failed": "auth-lost same process resume refused",
+          "status": 400
+        }
+      ],
+      "apiPredicates": 81,
+      "httpObservationsSha256": "0343e7d6aeb04f0e7d45bdd231bb8bd96058bf2da6a20cfabd1e247b76ec9a99",
+      "verifiedApiMatrix": {
+        "failedCases": 4,
+        "harmlessRealTurnCount": 1,
+        "reopenCases": 4,
+        "sameIntentSubmissionRecordsPerRefusal": 2,
+        "statusCounts": {
+          "200": 23,
+          "201": 1,
+          "202": 5,
+          "401": 1,
+          "409": 8,
+          "422": 4
+        }
+      },
+      "sourceAndBuild": [
+        {
+          "path": "packages/infrastructure/src/claude/harness.ts",
+          "sha256": "79fd47db7d2749dd2a966f93771e74f2a929a9a8ea01b5c3fb35a11732d8b3b5"
+        },
+        {
+          "path": "packages/infrastructure/src/claude/process.ts",
+          "sha256": "c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322"
+        },
+        {
+          "path": "packages/infrastructure/dist/claude/harness.js",
+          "sha256": "7e2ebe9a68d1cdee02c974c008250f34af5f1bb52653fa7c5a3a71a65b76f6c3"
+        },
+        {
+          "path": "packages/infrastructure/dist/claude/process.js",
+          "sha256": "4c83adaa22fcd22c92f9ff911c7ba2c89e2be704dae606f09cb34a43b014afa6"
+        },
+        {
+          "path": "apps/api/dist/app.js",
+          "sha256": "56091afbd989b25faac361a4d24bcb3729bef043b63eab39ec589c7f5305b216"
+        },
+        {
+          "path": "apps/api/dist/container.js",
+          "sha256": "b38ea5cf9cddeb9d6bd63f663ca0c2b6ecceddf8e84b353277875aceda640c6d"
+        }
+      ],
+      "releaseReceipt": {
+        "sha256": "7c3743974bda2359ef60ab5d133077406c0675d942e38db5fc720559bd74a2c4",
+        "pidRecordsAbsentAtRelease": 83,
+        "loopbackRefusalsAtRelease": 7,
+        "probeFoldersAtRelease": 0
+      },
+      "inactiveExternalFilesVerified": 11
+    },
+    "references": {
+      "i4-549-final-astra-BRIEF-03.md": "efcd69cf6ffbdd7de33e5b16d1433af5fd5a91852f48931314de01437fd3ea49",
+      "i4-364-author-01/REPORT.md": "c946dfafed9bd25f74d8b9d19cce5e587d9a07815ae979e8ac15552d5dc987fb",
+      "i4-364-probe-author-01/author/REPORT.md": "0f8e3f64d5cf5a684f751b6091eff4df59eb23443e3d41fcf66e6696147c0ca8",
+      "i4-364-gpt-review-01/REVIEW.md": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+      "i4-549-final-astra-01/REPORT.md": "4948e0b8d2c46044fa16da1fc04e77547c87ac2c40e31c75b2b34e386a95c637",
+      "i4-364-probe-independent-01/REPORT.md": "47f897b8362402533c5e10d082585529b6fa26f6dc724b4f971dd6e579ad4d66",
+      "i4-364-probe-independent-01/PREDICTIONS.md": "96c409a9b19456408eb51fd827d40d0e1851bc2ea1ffc19f256faeca331fa9f9",
+      "i4-364-probe-independent-01/driver-01.mjs": "2248c33a88a9e8fefae9402393b2e8916eec838b6a3b93ee281111a58d078af5",
+      "i4-364-probe-independent-01/api-driver-03.mjs": "3e87f8c25a19c4ce295470f8101dd19eb132fa1e7dbcc988ce46ff8e2e9f60f4",
+      "i4-364-independent-01/REPORT.md": "a349b81c533ffa1c5a98a9076b4ec9f22e048a3d3fc22392e66ef3301fb15b53",
+      "i4-549-current-4cec-ci-publication.json": "4f6b1a9a967e6133fd123a4da52088ed7c4ea7ee57fdc19efca37b32c1877641"
+    }
+  },
+  "hostedCIAndPublicRecords": {
+    "collectedUtc": "2026-11-21T14:53:50.535487+00:00",
+    "head": "580aded6d295061897b047ac16811e5da230d9e0",
+    "target": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+    "synthetic": "bab7d3c2316a57edc09a53effff9c2a6b74a594a",
+    "tree": "49f4ae66198c4699867cab6c4f95c9ab4bf863b7",
+    "githubBaseVerifiedSignature": true,
+    "run": 44913144773,
+    "attempt": 1,
+    "jobs": {
+      "Coverage": {
+        "id": 136873017609,
+        "conclusion": "success"
+      },
+      "Template image": {
+        "id": 136873017690,
+        "conclusion": "success"
+      },
+      "Windows launcher": {
+        "id": 136873017774,
+        "conclusion": "success"
+      },
+      "Browser": {
+        "id": 136873017783,
+        "conclusion": "success"
+      },
+      "Repository checks": {
+        "id": 136873017855,
+        "conclusion": "success"
+      },
+      "Gates": {
+        "id": 136878311934,
+        "conclusion": "success"
+      }
+    },
+    "directLogDownloadSha256": {
+      "coverage.log": "bf4dc0438829092bf1a27d30f175bd2fb6e27a39de53db3fbe9857071c43969a",
+      "template-image.log": "eedbbea07f30d2d4df2c682c021e68232cea231ad4718dff75d2eaa4a23c8e66",
+      "windows-launcher.log": "aad50db14b2908226c051b7881a7afcc4dbe76b2d1b7bab4e48261a3f24f0cc2",
+      "browser.log": "cfcd3f5b1dcc79a7510ac20f283ec1fded7611dcd403d6a5bc79efb8dfac7444",
+      "repository-checks.log": "a512810e367abcacf3d6e8fddd0c0b4c9e4f0a8dc54afb6cb0836abff33b9d5d",
+      "gates.log": "28759ff7f5f167462d48ad95f6973e7bac6baf6fe6c5211716c30195d022810d"
+    },
+    "ordinaryGateOutcomes": {
+      "unitPassed": 10149,
+      "unitSkipped": 62,
+      "browserPassed": 488,
+      "playwrightRetries": 0,
+      "windowsLauncherTestsPassed": 27,
+      "auditCounts": {
+        "low": 7,
+        "moderate": 13,
+        "high": 0,
+        "critical": 0
+      },
+      "auditCommand": "pnpm audit --audit-level=high"
+    },
+    "coverageArtifact": {
+      "id": 14711158196,
+      "bytes": 22452,
+      "sha256": "ced6c36d56a4a58518ce06ab61c3131638d7389eaa3d9fbe4e8926cfb186966c",
+      "packageSummaries": {
+        "packages/adapter-codex/coverage/coverage-summary.json": {
+          "lines": 99.22,
+          "branches": 95.29,
+          "sha256": "249ac582bdec5011b0cb2d764b2987559f5c255dcf47786ceb4f9f1d1afb8ebc"
+        },
+        "packages/api-client/coverage/coverage-summary.json": {
+          "lines": 100,
+          "branches": 97.3,
+          "sha256": "5c0d558e3d4177a6b3e4d727b3b1144f7ff1190e78bfc7297fd2555538f25ec9"
+        },
+        "packages/adapter-jev/coverage/coverage-summary.json": {
+          "lines": 98.8,
+          "branches": 96.77,
+          "sha256": "c703a4ede0c2b500c11e01e21768c87aad818abd38fc8dc5095cf844ee2f0c8b"
+        },
+        "packages/contracts/coverage/coverage-summary.json": {
+          "lines": 99.42,
+          "branches": 95.1,
+          "sha256": "47ff9a0abc4464fa985b9525e415c11fd92cd1dd81d6521a67083265b9bc7cf5"
+        },
+        "packages/domain/coverage/coverage-summary.json": {
+          "lines": 98.75,
+          "branches": 96,
+          "sha256": "6fcd112ca4b8f1994a0d47593c1c91f506eed8d893b858c60ba3a868c28dc371"
+        },
+        "packages/engine/coverage/coverage-summary.json": {
+          "lines": 96.94,
+          "branches": 91.22,
+          "sha256": "815e70d1527923f6d003a1c84893d3725d6d43fa98d722c67e5e46f8a09abf05"
+        },
+        "packages/infrastructure/coverage/coverage-summary.json": {
+          "lines": 97.85,
+          "branches": 93.4,
+          "sha256": "da69255cf2af7706259c26ffd7f82d6b93bf2d15590b93684a56ea94acec0f6a"
+        },
+        "apps/api/coverage/coverage-summary.json": {
+          "lines": 95.28,
+          "branches": 90.97,
+          "sha256": "cacc25054a01afb6fe82e6e0e0239d9a4e8ba94e3accea5a49ac41f238e0a6b0"
+        },
+        "apps/mcp/coverage/coverage-summary.json": {
+          "lines": 96.95,
+          "branches": 94.65,
+          "sha256": "d51a993d98511ea7eb47f6ee49d87f57ddc15c6c85bc577982dcc63ccc944a4c"
+        },
+        "apps/plugin-claude/coverage/coverage-summary.json": {
+          "lines": 95,
+          "branches": 95.23,
+          "sha256": "63716c289f26b238ca1ff3be8dced552f5864c63ce557f86d266089b587796c3"
+        },
+        "apps/plugin-codex/coverage/coverage-summary.json": {
+          "lines": 95.58,
+          "branches": 91.66,
+          "sha256": "56bc72bade6556216f3d3486169082085cf5d10381db8f6611ffd8492b9aed25"
+        },
+        "apps/web/coverage/coverage-summary.json": {
+          "lines": 98.63,
+          "branches": 94.39,
+          "sha256": "48ec730ddb18db05d5dd1e01490a762b4774b7ae4486c3a89a4631e0a465ed43"
+        },
+        "tooling/coverage/coverage-summary.json": {
+          "lines": 97.48,
+          "branches": 93.57,
+          "sha256": "ef90e6644e8d92c13a542ec70bdda5d255fed032f63d9fa9266af518c44586f1"
+        }
+      },
+      "minimumLines": 95,
+      "minimumBranches": 90.97
+    },
+    "nativeArtifact": {
+      "id": 14709934631,
+      "bytes": 9194,
+      "sha256": "9273927a67c99d3f0575262a39e594bf01377cf83322d4b3ea0bb3feb7c633fc",
+      "files": {
+        "manifest.json": "ff89a373ba7bbe6d3f93fb77fefc0155f7e6a530ade6bf99326e1d0a60683d37",
+        "result.json": "30ef38a8b838a0f7a105e0c1c47a6e4a10f8e9c0e240b881aabc9ef2c5d894df",
+        "observations.ndjson": "f48edbe1a5cd774b00da3ffcd45a6295106de07a66a1b420a1c7923fcde19a81"
+      },
+      "records": 338,
+      "cases": {
+        "installer": "pass",
+        "launcher": "pass",
+        "checkout-alias": "pass",
+        "lock-contention": "pass",
+        "bounded-logs": "pass"
+      },
+      "binding": {
+        "unavailable": [],
+        "repository": "Jacob-J-Thomas/GraphGoblin",
+        "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/pull/549/merge",
+        "job": "windows-launcher",
+        "runId": "44913144773",
+        "runAttempt": "1",
+        "event": "pull_request",
+        "ref": "refs/pull/549/merge",
+        "sha": "bab7d3c2316a57edc09a53effff9c2a6b74a594a",
+        "eventHead": "580aded6d295061897b047ac16811e5da230d9e0",
+        "eventBase": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+        "runnerOs": "Windows",
+        "runnerArch": "X64",
+        "imageVersion": "20261116.315.1",
+        "checkout": {
+          "state": "observed",
+          "head": "bab7d3c2316a57edc09a53effff9c2a6b74a594a",
+          "tree": "49f4ae66198c4699867cab6c4f95c9ab4bf863b7",
+          "parents": [
+            "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+            "580aded6d295061897b047ac16811e5da230d9e0"
+          ],
+          "matchesSha": true,
+          "headMatchesEventHead": null,
+          "baseParentMatchesEventBase": true,
+          "headParentMatchesEventHead": true
+        },
+        "node": "v22.23.5"
+      },
+      "canonicalHelperSha256": "a6699139e0ac185967416889578f2a3501a2272da81f3839ffe20be713edf449",
+      "savedCanonicalReplaySha256": "91cdad87df65e18316e133f2d986746a0779201fead42339ec996694d186b9e7",
+      "observationCounts": {
+        "recorder-open": 1,
+        "case-start": 27,
+        "fixture": 9,
+        "child": 219,
+        "cleanup": 15,
+        "case-end": 27,
+        "alias-round": 4,
+        "alias": 2,
+        "ownership-result": 15,
+        "contention": 3,
+        "ownership-check": 3,
+        "ownership-cleanup": 3,
+        "fixture-state": 9,
+        "recorder-closed": 1
+      }
+    },
+    "publicReadback": {
+      "draft": true,
+      "state": "open",
+      "bodySha256": "fb8b2c83361364a5716f0ef00057dd6bb75655f8711e7fe7923c11f83be8d87a",
+      "issue": 364,
+      "issueState": "open",
+      "issueLabels": [
+        "aidlc-ready",
+        "qa:touched-systems",
+        "impl:claude-opus-5.5",
+        "review:gpt-6.1-sol",
+        "type:bug",
+        "area:harness"
+      ],
+      "currentCiComment": 7064303478,
+      "currentCiCommentSha256": "c1fe50d7b392b57d66ba03f9084c433a164bdb0a9b1ea44d0359b7cc4003fbd3",
+      "comparedPublicCopies": {
+        "7060993847": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7060993847",
+          "originalSha256": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+          "publicBodySha256": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7062502810": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7062502810",
+          "originalSha256": "4948e0b8d2c46044fa16da1fc04e77547c87ac2c40e31c75b2b34e386a95c637",
+          "publicBodySha256": "4948e0b8d2c46044fa16da1fc04e77547c87ac2c40e31c75b2b34e386a95c637",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7062503002": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7062503002",
+          "originalSha256": "a0fd5c2d5a1b62c6290ab4e7b4b57a5689993ee1e0fe8a9b1e5f6f6496c382bb",
+          "publicBodySha256": "a0fd5c2d5a1b62c6290ab4e7b4b57a5689993ee1e0fe8a9b1e5f6f6496c382bb",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7062859416": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7062859416",
+          "originalSha256": "0ae91c94cb149b3fdc0760910997813c1346d14d9476a70ef4ce1bcdfdd0cad0",
+          "publicBodySha256": "0ae91c94cb149b3fdc0760910997813c1346d14d9476a70ef4ce1bcdfdd0cad0",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7062859601": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7062859601",
+          "originalSha256": "76a24e07e694e8e9450d17ac1f2ed86455c32abde955170d0abee36dd1b6d2e8",
+          "publicBodySha256": "76a24e07e694e8e9450d17ac1f2ed86455c32abde955170d0abee36dd1b6d2e8",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7063079147": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7063079147",
+          "originalSha256": "47f897b8362402533c5e10d082585529b6fa26f6dc724b4f971dd6e579ad4d66",
+          "publicBodySha256": "47f897b8362402533c5e10d082585529b6fa26f6dc724b4f971dd6e579ad4d66",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        },
+        "7060507495": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364#issuecomment-7060507495",
+          "originalSha256": "73925f800e6164f50e4e5454c606fde9afcd64771789be24835d7c058b6f7b77",
+          "publicBodySha256": "73925f800e6164f50e4e5454c606fde9afcd64771789be24835d7c058b6f7b77",
+          "publicBodyMatchesOriginalBytes": true,
+          "contentMatchesWithTerminalNewlineNormalization": true
+        }
+      },
+      "otherQaCommentIds": [
+        7060996178,
+        7060998599,
+        7063274103
+      ],
+      "reviewThreadsAndClosingRefs": "confirmed in separate final GraphQL readback"
+    }
+  },
+  "finalContextAndRawEvidence": {
+    "live": {
+      "defaultBranchRef": {
+        "name": "main",
+        "target": {
+          "oid": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f"
+        }
+      },
+      "pullRequest": {
+        "number": 549,
+        "state": "OPEN",
+        "isDraft": true,
+        "baseRefOid": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f",
+        "headRefOid": "580aded6d295061897b047ac16811e5da230d9e0",
+        "mergeStateStatus": "CLEAN",
+        "mergeable": "MERGEABLE",
+        "reviewDecision": null,
+        "updatedAt": "2026-11-21T14:42:48Z",
+        "closingIssuesReferences": {
+          "totalCount": 1,
+          "nodes": [
+            {
+              "number": 364,
+              "state": "OPEN"
+            }
+          ]
+        },
+        "reviewThreads": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "reviews": {
+          "totalCount": 0,
+          "nodes": []
+        },
+        "potentialMergeCommit": {
+          "oid": "bab7d3c2316a57edc09a53effff9c2a6b74a594a",
+          "tree": {
+            "oid": "49f4ae66198c4699867cab6c4f95c9ab4bf863b7"
+          },
+          "parents": {
+            "nodes": [
+              {
+                "oid": "4cec0f9bbe34f2ae13e4e38182c033b799c19f3f"
+              },
+              {
+                "oid": "580aded6d295061897b047ac16811e5da230d9e0"
+              }
+            ]
+          }
+        }
+      },
+      "i364": {
+        "number": 364,
+        "state": "OPEN",
+        "title": "A working-directory spawn ENOENT is reported as the Claude executable being missing"
+      },
+      "i279": {
+        "number": 279,
+        "state": "OPEN",
+        "title": "I01–I07 delivery register — scoped dispatch and independent acceptance"
+      },
+      "i448": {
+        "number": 448,
+        "state": "OPEN",
+        "title": "Offline preflight should account for missing startup model seeds without writing the store"
+      },
+      "i459": {
+        "number": 459,
+        "state": "OPEN",
+        "title": "Bound Windows launcher helper descendants after a helper timeout"
+      },
+      "i439": {
+        "number": 439,
+        "state": "OPEN",
+        "title": "Inherit the user's configured Codex plugins in loop turns"
+      },
+      "i452": {
+        "number": 452,
+        "state": "OPEN",
+        "title": "Stabilize rejected-pairing focus assertions against passive-effect timing"
+      },
+      "p501": {
+        "number": 501,
+        "state": "OPEN",
+        "isDraft": true,
+        "title": "Add a per-user macOS Finder and Dock launcher"
+      },
+      "p460": {
+        "number": 460,
+        "state": "OPEN",
+        "isDraft": false,
+        "title": "Fix Windows launcher helper timeouts and pipe draining"
+      },
+      "p552": {
+        "number": 552,
+        "state": "MERGED",
+        "isDraft": false,
+        "title": "Clarify Codex plugin readiness scope in CLI and Settings"
+      }
+    },
+    "readUtc": "2026-11-21T14:58:27.307203+00:00",
+    "authorLogs": {
+      "infrastructure-coverage-1.log": {
+        "sha256": "4ed0372d1ee8db04aed50db8fa3a357ef18fa65cbd748b8a59af93ab0fd2e189",
+        "endStats": [
+          "Tests  51 failed | 1153 passed | 2 skipped (1206)"
+        ]
+      },
+      "env-failures-no-redirect.log": {
+        "sha256": "0a4a5e3f3c5a94f008ef0eff1cd857b13584f25508cdd1bb184a273742d911a7",
+        "endStats": [
+          "Tests  50 failed | 149 passed (199)"
+        ]
+      },
+      "final-focused-checks-2.log": {
+        "sha256": "0b05544b8b7d0b647fba025ba80402c405ade334f086f2170cb852ca85f1f6a0",
+        "endStats": [
+          "Tests  259 passed | 2 skipped (261)"
+        ]
+      },
+      "10-B0-existing-tests-original.log": {
+        "sha256": "dde900ac145b78d9cf7c6b441df1db80697269f486ec98ff40cadf47263daba5",
+        "endStats": [
+          "Tests  120 passed (120)"
+        ]
+      },
+      "11-B1-new-tests-original-source.log": {
+        "sha256": "75e981a0ea3e63efb0b6a32cedf8564fe6b35c8decac8176ec0071c2e45c25f9",
+        "endStats": [
+          "Tests  19 failed | 138 passed (157)"
+        ]
+      },
+      "31-M1-focused-tests.log": {
+        "sha256": "e31db6f45b64b7a37e2da37ede03908a3358db6f7c99911dc1e042badc85f32d",
+        "endStats": [
+          "Tests  11 failed | 146 passed (157)"
+        ]
+      },
+      "34-M2-focused-tests.log": {
+        "sha256": "ffd833e47b1f11b3ef370215ec707223ad651b7fdc204c7e7a1f79060ebeb15b",
+        "endStats": [
+          "Tests  9 failed | 148 passed (157)"
+        ]
+      },
+      "37-M3-focused-tests.log": {
+        "sha256": "eb8d42847dbca58d0f9d503c1f65ea43fb769c650d1a31fea0b7313ba738c1b3",
+        "endStats": [
+          "Tests  4 failed | 153 passed (157)"
+        ]
+      },
+      "40-M4-focused-tests.log": {
+        "sha256": "f0c5ea1da71663ed1eaa90b9208e61d14e66955befd9a0a2f9232755243033d5",
+        "endStats": [
+          "Tests  4 failed | 153 passed (157)"
+        ]
+      },
+      "52-A-final-claude-scoped-coverage.log": {
+        "sha256": "b81a8dbf9761dc90af0f26d9887dab3353086946dcf82235050e37e3144b396f",
+        "endStats": [
+          "Tests  296 passed | 2 skipped (298)"
+        ]
+      },
+      "61-B3-final-tests-original-source-rollback.log": {
+        "sha256": "ad1782165b2c137b21d72c081e95285a7af67f83bebdaff565cd55793f62d0c8",
+        "endStats": [
+          "Tests  19 failed | 138 passed (157)"
+        ]
+      }
+    },
+    "correctiveAuthorCoverage": {
+      "lines": {
+        "total": 577,
+        "covered": 577,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 667,
+        "covered": 664,
+        "skipped": 0,
+        "pct": 99.55
+      },
+      "functions": {
+        "total": 104,
+        "covered": 104,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 704,
+        "covered": 695,
+        "skipped": 0,
+        "pct": 98.72
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "authorCorrectionSeal": {
+      "members": 110,
+      "sha256": "25adae224f2c88047be664c2726b01aa18f0240f08c9f56bdb610ce8c5d90d9a"
+    },
+    "boundedDisclosureScan": {
+      "scope": "Only explicitly selected original evidence; bounded publication check, not exhaustive security scan",
+      "patterns": [
+        "github_token",
+        "provider_key",
+        "aws_key",
+        "private_key",
+        "generated_graphgoblin_api_token",
+        "literal_bearer_value"
+      ],
+      "filesScanned": 202,
+      "bytesScanned": 5185830,
+      "candidateCount": 0,
+      "candidates": []
+    },
+    "publicOriginalQa": {
+      "ids": [
+        7060996178,
+        7060998599
+      ],
+      "bothExactSha256": "b6871f07831e087d76c2eb9b0892fb2c0e124c814f0146a1af357971a7c9a739",
+      "correctionIssueSummaryId": 7063274103,
+      "correctionIssueSummarySha256": "1a2473aeed0ced8026fdeebc29a66e24427b274b0c51402f5d0acfcfffa2e829"
+    },
+    "currentSourceReferences": {
+      "packages/infrastructure/src/claude/process.ts": {
+        "candidateGitBlob": "740f92c312ffa467d1ab48c203782a3c88876234",
+        "candidateSha256": "c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322",
+        "targetSha256": "397e7110641a9cb844cd7ec85df60d27c38056bad24fcc8b8f4b3e9bc89f0cc9",
+        "targetGitBlob": "400c903edfb30c81bbd26ada9b50f5f6f6cffca3"
+      },
+      "packages/infrastructure/src/claude/harness.ts": {
+        "candidateGitBlob": "b8cb02379064e83602dc1f4fd7b7acfb3eb360c7",
+        "candidateSha256": "79fd47db7d2749dd2a966f93771e74f2a929a9a8ea01b5c3fb35a11732d8b3b5"
+      },
+      "packages/contracts/src/nodes.ts": {
+        "candidateGitBlob": "89ef3441c926015f0eae661daeafc70d6fe71eba",
+        "candidateSha256": "364f89dbdbfaa1289cd8b5673b7761b765e15cf59a485a8bce56adbc17d5af87"
+      },
+      "packages/contracts/src/loop.ts": {
+        "candidateGitBlob": "90575882f0a16e8849b87c5c7cec7578aaafc3f3",
+        "candidateSha256": "e9e048868838881baab4868ab95706f3e7304a57aaf7c9d1a12342e8b62e082d"
+      },
+      "packages/engine/src/handlers/common.ts": {
+        "candidateGitBlob": "38f784b6bd5a82cf28d28029484e06960f9e9d1a",
+        "candidateSha256": "bc214e1dde677e727a65a3486c84c7925f9c60056d7bd6fc99acd591edd82067"
+      },
+      "packages/infrastructure/src/claude/process-failure.test.ts": {
+        "candidateGitBlob": "676641650617a84f7db892e05e3d7161d6914f35",
+        "candidateSha256": "ab1ce86fdefd6c5bfa58ffa70005a36a803af283c062b193179e7af60110fe4f"
+      },
+      "docs/qa/2026-11-21-i4-364-claude-start/independent/controlled-seam-qa.mjs": {
+        "candidateGitBlob": "dd2793542d1532ebb16a64de4d5a4cf7307e9796",
+        "candidateSha256": "a2880050c1c95828fe3258b096dbc17d163db7a08ee3d6da51b0fd24ae6b7487"
+      },
+      "packages/domain/src/readiness.ts": {
+        "candidateGitBlob": "963cc1d4c29ddeac2fcd46e3b91585751ea8f040",
+        "candidateSha256": "5c05285731c515d746a1554b2e80d8c56022ca906e67c2a182360b82984f44ed"
+      },
+      "apps/api/src/preflight.ts": {
+        "candidateGitBlob": "2b524f4a65d8a093d618ab3d852277d983cae448",
+        "candidateSha256": "2c73d022e3ad035ebc59c344bc6b9506bb1afa3351b70264bea91ca952813860"
+      },
+      "packages/infrastructure/src/claude/errors.ts": {
+        "candidateGitBlob": "960c756566c9efa1a1edcf5e50667adfcfcbdb7e",
+        "candidateSha256": "8890262da52c00ac0e85dee666060e20e26c28a9065c9a5ac16250a523c636ad"
+      },
+      "docs/06-harness-integration.md": {
+        "candidateGitBlob": "4b799ef1cbce6b195e5043648ef68b195a648307",
+        "candidateSha256": "48ed16748ec9e890694b29e1b5ebc4eaa43f3c9e14e75ed25a7476f3be140031"
+      },
+      "docs/guide/07-troubleshooting.md": {
+        "candidateGitBlob": "e619a3f428d5423296e270ec2b96336fa4e47ccb",
+        "candidateSha256": "df578ac99506704201c256fcfe6d3d26a2705d122af889957379e4d8e1754bee"
+      }
+    },
+    "reviewInstructions": {
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\AGENTS.md": "59d887677cb387ef540330c1ea20d67c6fbc4cbc0c149f234850d5b4508ea0c5",
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\docs\\README.md": "dae66b4d8ec8c5aff74cc1cbc0e2d5daf169343f4cbb43ce521bcb62cde04548",
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\docs\\12-implementation-plan.md": "16ec382cb281610c667866dd44fb1bdd697a92146af721e7f480c052fcdd9831",
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\docs\\15-issue-workflow.md": "57eaaed4c8ab33bc7b55b38477c4af2aaa992c6848c21e25592add3b37c6fb5a",
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\docs\\delivery\\2026-11-17-five-intents-register.md": "7e714e5e7e01d333ab6e73fa5ff0f93841b474593fa820c73aa989d1d2796477",
+      "G:\\ggq\\gg-i4-364-claude-start\\GraphGoblin\\docs\\delivery\\2026-10-18-i01-i07-register.md": "e477aaf727e0c204901c5bc9b320a12727c95a5f44380bad366200a20f88c456",
+      "C:\\Users\\98jak\\.codex\\skills\\run-agentic-pr-pipeline\\references\\review-policy.md": "d1d7bae7d2981494f144ac58842e7a0b1283ecec384ba380c31d93d3749bcd88"
+    },
+    "checkoutIndexSha256": "d68ad7bc9b0953e359372c21c0be9af8e50ca670e8d17da8da59f2a333fd3a78"
+  },
+  "limits": [
+    "No product test, build, native fixture, provider call, deployment or merge by the reviewer. No source, index or GitHub writes. Evidence is saved behavior plus a live GitHub source/CI check.",
+    "The public release receipt measured 83 PIDs absent and seven listeners refused at its recorded time. Harmless binaries and stores remain inactive local evidence. The audit did not rerun process cleanup.",
+    "The new finding establishes the control flow for a pending metadata read without a supplied watchdog. No naturally stalled filesystem, live Claude account, model turn or spontaneous started-process pipe loss was observed by this reviewer.",
+    "Original full Windows infrastructure attempt failed. Scoped author coverage and the subsequent hosted coverage capture their own environments. The two QA-driver failures and historical negative final review stand.",
+    "Earlier read-only audit tooling requested an unsupported gh pr view field and initially parsed ANSI-decorated unit lines literally. Direct GraphQL and ANSI-stripped summaries recovered those checks on the same bytes, without executing product code."
+  ],
+  "technicalScope": "Exact PR head/current target only. Closed diagnostics, post-refusal lifecycle, bounded optional metadata, stronger outcomes, safe submission/recovery, public entry points, privacy, maintainability, testability, published evidence and hosted gates. Separate owner/launcher items and inherited #442 behavior remain under their existing scope."
+}

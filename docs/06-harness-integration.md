@@ -467,6 +467,8 @@ over conflicting stdout because stderr is the CLI's primary error channel; stdou
 when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
 Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
 process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
+Lost check output comes next: a check whose stdout or stderr could not be read infers no state,
+sign-out included, from what it captured (#364).
 None of this inference applies to
 model-turn stdout or changes turn retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
@@ -761,7 +763,7 @@ The model catalog is authoritative for selected and effective models. Shared adm
 
 The product owner develops on Windows 11. Codex's native Windows sandbox applies. POSIX signals are not available, so process trees are killed with `taskkill /T /F` where GraphGoblin owns the process (scripts); for Codex sessions the CLI's own job object ends the tree on abort (see "Cancellation"). Every provider and tool process starts with `windowsHide: true` and piped stdio, which gives it its own hidden console: Codex preflight, Claude turns and probes, scripts, and Codex sessions. The SDK 0.160.0 spawns sessions without the option, so a pnpm patch adds it (ADR-0049 acceptance amendment); without it the CLI shared the gateway's console and a terminal Ctrl+C killed a running turn. Paths are normalised with `node:path` and never built by string concatenation.
 
-Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
+Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Node reports that refusal as spawn `ENOENT`, the code of a missing executable; the Claude adapter's [start refusals](#claude-code-adapter-26) say which operand it could establish (#364). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
 
 ### Fixtures (Decided)
 
@@ -943,6 +945,46 @@ catalog values fail rather than falling through. Fresh, `resume-previous`, and `
 policies keep their existing meanings. Session lookup filters by harness before selecting the
 newest matching session, so a Codex session is never passed to Claude or vice versa. The same
 resolved request is used for normal and structured-output repair turns. Version, help, and authentication probes run in a fresh empty temporary directory; only the actual turn uses the authored working directory.
+
+**Start refusals (#364).** A spawn `ENOENT` does not say which operand failed: on Windows 11 with
+Node 22.23.4, a missing working directory, one that is a file and an existing one longer than 258
+characters are all refused with the same `ENOENT` as a missing executable, and Node attributes
+each to the executable. After an actual refusal (Node created no process), the runner makes one
+read-only observation of the request's own executable and working directory and returns only a
+closed cause. The executable counts as missing only when its configured path is fully qualified
+and that path and its `.com` and `.exe` forms, the names Windows process start tries, are all
+absent or folders; an executable named without a full path is never resolved through `PATH`. A
+working directory that is absent (or below a file) or is not a folder is established from its own
+metadata. An existing folder establishes nothing, because it can still be unstartable, and a read
+that fails for any other reason leaves the cause unknown. The adapter reports only what was
+established, in fixed text without paths:
+
+| Established                              | Preflight                                                                                                                                                 | Turn                                                                                                                                                      |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Executable missing                       | `cli-missing`: "Claude CLI was not found at the configured path."                                                                                         | `HARNESS_NOT_INSTALLED` (restorable), raised by the turn's own readiness check                                                                            |
+| Turn working directory missing or a file | Not applicable                                                                                                                                            | `HARNESS_INVALID_CONFIGURATION`: "Claude could not be started because the working directory does not exist" (or "is not a folder"); pinned, not resumable |
+| Check folder missing or a file           | `unknown`: "Claude CLI could not be started because its temporary check folder does not exist." (or "is not a folder")                                    | The same detail as `HARNESS_TURN_FAILED`; the check folder is never configuration                                                                         |
+| Nothing, path over 258 characters        | `unknown`: "... from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory." | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows"                |
+| Nothing                                  | `unknown`: "Claude CLI could not be started (ENOENT)." (or the `EACCES`/`UNKNOWN` code)                                                                   | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory"               |
+
+Every refusal stays `definitely-not-submitted`, and the turn uses the working directory exactly as
+given. Unconfirmed termination and cancellation keep their precedence; an abort or deadline that
+arrives during the observation reports the refusal at once, without a cause and without a timeout.
+Optional metadata has its own private 1,000 ms monotonic budget, starting when the runner observes
+the refusal, even for a turn with no request deadline or watchdog. When that budget expires, the
+actual spawn code and definite non-submission remain; the cause stays unknown, without claiming
+a process timeout or cancellation. Only metadata accepted before the absolute deadline can add a
+cause. No subsequent lookup starts after expiry or settlement, and late results cannot change the
+returned failure. The runner releases its diagnostic timer and abort listener; an already issued
+filesystem read may finish later, because the budget bounds the wait rather than cancelling native
+`stat`. See [ADR-0089](decisions/ADR-0089-bounded-claude-refusal-diagnosis.md).
+A later error event of a started process, such as a failed kill, is not a refusal. From 260
+characters Windows also fails the refused process's stdout and stderr pipes (`read ENOTCONN`); the
+runner ignores pipe faults of a process that never started, where they previously escaped as an
+uncaught exception. A started process's stdout or stderr failure stops its tree and fails the turn
+(`HARNESS_TURN_FAILED`, delivery uncertain, ahead of any recognised stderr refusal, because lost
+output can hide acceptance) or the check ("Claude CLI check output could not be read."). The 258-character wording states the path's length against the documented limit; it is
+not proof of the cause.
 
 The CLI streams JSON lines. GraphGoblin records bounded progress, usage, the transcript artifact,
 and a policy-evidence item when transcript capture is enabled. Provider response bodies and raw

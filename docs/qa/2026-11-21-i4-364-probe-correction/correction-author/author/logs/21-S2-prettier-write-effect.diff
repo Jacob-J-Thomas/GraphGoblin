@@ -1,0 +1,52 @@
+--- G:/ggq/qa-scratch/i4-364-probe-correction-01/harness.test.ts.preformat	2026-11-21 06:36:12.946657500 -0600
++++ packages/infrastructure/src/claude/harness.test.ts	2026-11-21 06:36:13.948339900 -0600
+@@ -1344,11 +1344,7 @@
+       { terminationUnconfirmed: true },
+       'Claude CLI check process did not confirm that it stopped.',
+     ],
+-    [
+-      'HARNESS_TIMEOUT',
+-      { timedOut: true },
+-      'Claude CLI did not answer before the check deadline.',
+-    ],
++    ['HARNESS_TIMEOUT', { timedOut: true }, 'Claude CLI did not answer before the check deadline.'],
+     [
+       'HARNESS_OUTPUT_LIMIT',
+       { overflow: true },
+@@ -1405,9 +1401,7 @@
+         request,
+         new AbortController().signal,
+       );
+-      await vi.waitFor(() =>
+-        expect(calls.some((call) => call.args.includes(affected))).toBe(true),
+-      );
++      await vi.waitFor(() => expect(calls.some((call) => call.args.includes(affected))).toBe(true));
+       await session.cancel();
+       await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+       expect(await drain(session.events)).toEqual([]);
+--- G:/ggq/qa-scratch/i4-364-probe-correction-01/process-failure.test.ts.preformat	2026-11-21 06:36:12.995362800 -0600
++++ packages/infrastructure/src/claude/process-failure.test.ts	2026-11-21 06:36:14.042990700 -0600
+@@ -386,7 +386,10 @@
+         );
+         scripted.emit('close', code);
+       });
+-      const facts = await new ClaudeHarness({ platform: 'win32', binary: 'synthetic-cli' }).preflight();
++      const facts = await new ClaudeHarness({
++        platform: 'win32',
++        binary: 'synthetic-cli',
++      }).preflight();
+       expect(facts).toMatchObject({
+         state: 'unknown',
+         ok: false,
+@@ -405,7 +408,10 @@
+       scripted.stderr?.emit('data', Buffer.from(diagnosis));
+       scripted.emit('close', 1);
+     });
+-    const facts = await new ClaudeHarness({ platform: 'win32', binary: 'synthetic-cli' }).preflight();
++    const facts = await new ClaudeHarness({
++      platform: 'win32',
++      binary: 'synthetic-cli',
++    }).preflight();
+     expect(facts).toMatchObject({
+       state: 'auth',
+       ok: false,

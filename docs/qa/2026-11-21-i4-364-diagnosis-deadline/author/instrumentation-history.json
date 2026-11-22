@@ -1,0 +1,34 @@
+{
+  "distinct_instrumentation_corrections": 3,
+  "cap": 3,
+  "source_fixes_after_test_failures": 0,
+  "records": [
+    {
+      "number": 1,
+      "kind": "inventory scope",
+      "failure_or_limit": "Initial baseline unnecessarily streamed all 34048 historical QA paths. Stopped only own matching Python PID49024 before editing source, after about four minutes.",
+      "preserved_original": "record-v1-broad-snapshot.py",
+      "correction": "Stream hashes of the six relevant inherited packets (1929 files), preserve HEAD:docs/qa tree identity, exact clean head/index and whole workingtree scope."
+    },
+    {
+      "number": 2,
+      "kind": "console encoding",
+      "failure_or_limit": "After the expected old-source failure, record.py persisted its raw log and exit JSON then raised UnicodeEncodeError: 'charmap' codec can't encode character '\\u276f' in position 85: character maps to <undefined>, while printing to cp1252 console. This trace text is transcribed from the retained tool result; the test log is the exact original.",
+      "preserved_original": "record-v2-cp1252-output.py",
+      "correction": "Set only helper stdout to UTF-8 with replacement. Did not rerun the old source. Read back original log and command receipt to verify both intended failures and candidate restoration."
+    },
+    {
+      "number": 3,
+      "kind": "process-local TEMP path spelling",
+      "failure_or_limit": "focused-claude-01: 304 passed and 2 failed of 306. The unchanged native help fixture compares dirname(request.cwd) exactly to tmpdir(); task TEMP used forward slashes while dirname returns backslashes. native-temp-spelling-diagnosis-01 is the exact false-equality witness.",
+      "preserved_original": "record-v3-forward-slash-temp.py",
+      "correction": "Normalize only task helper process TEMP/TMP to the same resolved G directory using pathlib. No assertion, source, timeout, global environment or target directory change. focused-claude-02 then passed 306/306."
+    }
+  ],
+  "read_only_discovery_errors": [
+    "Missing guessed tooling/vitest.ts (actual tooling/vitest.shared.mjs).",
+    "PowerShell rg literal wildcard path rejected; corrected directory plus -g search.",
+    "Guessed __fixtures__ directory absent (actual fixtures directory)."
+  ],
+  "failed_unchanged_product_reruns": 0
+}

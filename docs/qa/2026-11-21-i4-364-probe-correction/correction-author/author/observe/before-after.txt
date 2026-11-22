@@ -1,0 +1,30 @@
+F1 auth-like partial stdout, output lost, exit 1
+  state: "auth"  ->  "unknown"
+  authenticated: false  ->  "(absent)"
+  problem: "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."  ->  "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+  turn: "HARNESS_NOT_AUTHENTICATED | Claude sign-in is missing or invalid."  ->  "HARNESS_TURN_FAILED | Claude CLI check output could not be read."
+  turnStarted: false  ->  false
+F1 auth-like partial stdout, output lost, exit null
+  state: "auth"  ->  "unknown"
+  authenticated: false  ->  "(absent)"
+  problem: "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."  ->  "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+  turn: "HARNESS_NOT_AUTHENTICATED | Claude sign-in is missing or invalid."  ->  "HARNESS_TURN_FAILED | Claude CLI check output could not be read."
+  turnStarted: false  ->  false
+F1 classified auth stderr, output lost, exit 1
+  state: "auth"  ->  "unknown"
+  authenticated: false  ->  "(absent)"
+  problem: "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."  ->  "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+  turn: "HARNESS_NOT_AUTHENTICATED | Claude sign-in is missing or invalid."  ->  "HARNESS_TURN_FAILED | Claude CLI check output could not be read."
+  turnStarted: false  ->  false
+F2 help-only refusal, check folder missing
+  state: "unknown"  ->  "unknown"
+  authenticated: true  ->  true
+  problem: "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight."  ->  "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight."
+  turn: "HARNESS_TURN_FAILED | Claude CLI 2.1.285 failed the --max-turns/--help check."  ->  "HARNESS_TURN_FAILED | Claude CLI could not be started because its temporary check folder does not exist."
+  turnStarted: false  ->  false
+F2 help-only output lost, exit 0
+  state: "unknown"  ->  "unknown"
+  authenticated: true  ->  true
+  problem: "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight."  ->  "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+  turn: "HARNESS_TURN_FAILED | Claude CLI 2.1.285 failed the --max-turns/--help check."  ->  "HARNESS_TURN_FAILED | Claude CLI check output could not be read."
+  turnStarted: false  ->  false

@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 58795,
+  "stop_reason": "end_turn",
+  "session_id": "41304956-3ec5-48d6-8cc1-f30061c9f869",
+  "total_cost_usd": 0.5206612,
+  "usage": {
+    "input_tokens": 6,
+    "cache_creation_input_tokens": 17154,
+    "cache_read_input_tokens": 18346,
+    "output_tokens": 6062,
+    "output_tokens_details": {
+      "thinking_tokens": 3524
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17154,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2069,
+        "cache_read_input_tokens": 13639,
+        "cache_creation_input_tokens": 3515,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 3515
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 6,
+      "outputTokens": 6062,
+      "cacheReadInputTokens": 18346,
+      "cacheCreationInputTokens": 17154,
+      "webSearchRequests": 0,
+      "costUSD": 0.5206612,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3524,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17154,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 12,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# D206 corrective review: ACCEPT FIX\n\n**Target:** head `67d5957cfeb5ed65c0b3e6708f3543a30fbe5b40`, `docs/guide/07-troubleshooting.md`, line 168, the code span `%USERPROFILE%\\.local\\bin\\claude.exe`.\n\nThe repaired literal is correct, and the one-line change introduces no defect.\n\n## Why\n\n- **Matches the constructor:** `harness.ts` lines 230-237 default the binary to `join(USERPROFILE ?? homedir(), '.local', 'bin', 'claude.exe')` when `options.binary` is absent. On Windows that is exactly the documented path, in the same order.\n- **Renders literally:** the path sits inside a backtick code span, where backslashes are not escapes. The span contains no pipe, so the table cell boundary is unaffected. Line 167 already uses the same convention with `%USERPROFILE%\\.codex\\sessions`.\n- **Corruption is gone:** my search of the current file found no remaining control characters (other than TAB/LF/CR) and no leftover `.localin` form.\n- **Row is intact:** line 168 still has three cells. Its last cell ends with exactly 75 padding spaces before the closing pipe, which agrees with the independent 77 to 75 figure.\n- **Padding count is settled:** the patch changes only this row. Its two-space padding removal is governed by the erratum and the independent report, and is not a source defect. A plausible cause, which I did not verify, is that the formatter counts the old BACKSPACE as zero width, so the visible content grew by two columns while the file grew by one byte.\n\n## Evidence inspected\n\n- Independent `REPORT.md` and `observations.json`.\n- `decision-206-erratum.md`.\n- Author `patch.diff` and `receipt.json`.\n- Guide lines 166-170 and `harness.ts` lines 228-237 in the working checkout.\n- Four pattern searches on the guide file only: control characters, the repaired code span, the old corrupt form, and the trailing padding on line 168.\n\n## One evidence-wording note (not a blocker)\n\n`observations.json` records `literal_found_once_in_backtick_span: true`. My search finds the identical code span on lines 160, 168 and 243. The field holds if it was scoped to line 168, but is inaccurate as a whole-file statement. I did not read lines 160 or 243 beyond the matched span. This does not affect the verdict.\n\n## Limits\n\n- **Byte-level facts are not mine:** the `08` to `5c62` replacement, file sizes, SHA-256 values, the 13 artifact hashes, unchanged blobs and modes, the clean source/index, and the head/tree/parent identity all come from the independent and root evidence. I had read-only file tools and no git or hashing.\n- **Working file, not the commit:** I read the working checkout and rely on the recorded clean status for it being the committed content.\n- **Unchanged clause not rechecked:** I did not confirm how `GG_CLAUDE_BINARY` reaches `options.binary`; that is outside the one literal.\n- **Nothing executed:** no rendering, browser, formatter, tests, builds, providers, GitHub calls or writes.\n- **Scope:** this is bounded corrective acceptance of one documentation literal. It is not a fourth general scan, renewed Astra approval, runtime QA or merge authorization, and original scan 3 remains negative.",
+  "ttft_ms": 3400,
+  "type": "result",
+  "duration_ms": 61721,
+  "uuid": "a057b1c8-9d8c-46c2-906c-0be8edba53a3",
+  "ttft_stream_ms": 3094,
+  "time_to_request_ms": 2732,
+  "first_content_frame_ms": 3095,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 6,
+      "outputTokens": 6062,
+      "cacheReadInputTokens": 18346,
+      "cacheCreationInputTokens": 17154,
+      "webSearchRequests": 0,
+      "costUSD": 0.5206612,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3524,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17154,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:05.666Z"
+}
