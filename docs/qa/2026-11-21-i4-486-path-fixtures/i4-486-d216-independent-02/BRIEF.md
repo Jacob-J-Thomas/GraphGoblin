@@ -1,0 +1,43 @@
+# Actual independent Opus D216 native-path supplement
+
+You are actual Claude Code Opus 5.5, claude-opus-5-5 at xhigh, in a fresh QA context separate from Sol author and root's actual Fable reviewer. This is one targeted D216 supplement, not a general source review, general scan4, cap reset, renewed Astra approval or merge permission. All three general scans remain consumed. No other provider/sub-agent.
+
+Admitted source: e630bb83679bdb055bdd90d2b30e25fbf60571ac, tree0713eef9779a14e68b8ca0461f784538ba116c9f, direct parent6de50cb8e22b92bfed5d6fe7bf14a2a10b95cd08. New detached checkout: G:/ggq/gg-i4-486-d216-qa/GraphGoblin. Read source-binding.json and the actual root admission named there. Only fs.test.ts differs; all production/dependency entries are identical. Offline frozen install is ALREADY complete. Do not install again or build the app.
+
+## Scope and efficient reuse
+
+Read AGENTS.md, docs/README.md and docs/15-issue-workflow.md first, then C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/decision-216.md, the two-site test delta and only the relevant existing QA harness. No full original-source/general54-path review is necessary. D216 changes the owned-temp expected data root and canonical journal-use expectation to realpathSync.native. Keep fixed/template cwd/result spelling lexical and all original exact journal/result/claim/cache/ownership assertions intact. D215's true-relative helper/cleanup stays unchanged.
+
+The prior6de session completed a six-scenario criterion pass, independently noted the nonnative-versus-native short-name gap, and explicitly did NOT cover e630. Its exact report/119-member QA seal/154-file closed-provider seal are referenced in prior-harness-bindings.json. Do not relabel any old result as new execution or edit the old checkout/packet.
+
+reference-tools contains byte-exact verified prior child-observer/runner/analyzers. Reuse relevant mechanics rather than redesign a framework. The original observer deliberately preserves realpathSync.native at line159 while wrapping the JS function; KEEP that property behavior. Bind any revision. The old runner has old hardcoded paths/source assumptions: derive a NEW runner in this packet before execution. Record-only/uninstrumented native controls must be distinguishable from passthrough-tapped observations. Do not mock realpath or filesystem identity, change returns, lower-case both sides to erase a mismatch, weaken assertions, add skips/retries/timeouts or chdir production.
+
+## Required actual new matrix
+
+1. Uppercase spelling of a real owned G TEMP directory: independently record JS realpathSync, realpathSync.native and fs/promises.realpath outputs. Native sync and promise identity should agree. Execute the exact6de owned-temp case as a negative control and e630 as positive under that same environment. Preserve full expected/received failure. Use a native record-only/untapped control.
+2. Probe genuine8.3 availability on a tiny UNIQUE owned C fixture using ordinary existing Windows behavior. No volume settings, privileges, mappings or owner data changes. If a real short spelling is available, prove it reaches the same physical fixture and independently run6de then e630 owned-temp AND engine fixed/template cases under that worker TEMP. Preserve negative cwd/journal observations and positive native identity while fixed/template script/result spelling remains supplied lexical. If unavailable, state NOT OBSERVED, never manufacture a pass. Root/author observations are not substitutes for your own.
+3. e630 ordinary G TEMP: run the actual fs.test.ts file once (prior source had20 tests; report actual counts, no assumed total).
+4. e630 native junction G TEMP: engine temp/fixed/template cases, preserving real file effects, claims/use, cache/reuse and lexical fixed spelling. Reuse the verified safe junction identity/unlink mechanics.
+5. e630 cwdG and worker-only tiny C TEMP: BOTH adapter mixed relative case and engine relative case must actually pass with relative input, targetG, real effects and exact cleanup. Retain actual worker environment/input observations; a label or standalone path.relative probe alone is insufficient.
+6. Final exact assertion/source/cleanup proof: only native resolver expectation sites changed from6de; restore candidate fixture after every old control and before corrected runs; HEAD/tree/index/fixture/lock/dependency metadata remain bound. No leftover task relative directories, C fixture or junction traversal. No source commit/stage/push/GitHub/owner-store action.
+
+Use baseline-fs.test.ts (exact6de) and candidate-fs.test.ts (exacte630) supplied by immutable Git blobs. Temporary swaps are allowed ONLY in this NEW QA checkout, with candidate hash checks and try/finally byte restoration per invocation. All production inputs are identical; describe this as a fixture control, not an independent pristine old checkout. Existing source/index setup is already verified; do not spend another source-wide audit on unchanged helper semantics.
+
+## Storage, execution and limits
+
+Node22.23.4 first PATH, pnpm.cmd12.8.1, dependencies installed once offline/frozen from G store. Parent tool TEMP/TMP, transform cache, compile/cache/logs and all raw evidence stay G. Only the test-executing worker gets a unique tiny C root, e.g. C:/Users/98jak/graphgoblin-qa/d216-small-native-temp-<unique>, with capacity/ownership/identity and exact removal checks. Use canonical Windows backslash environment strings. No global HOME/env/account configuration change.
+
+IMPORTANT: prior CLI automatically spilled two oversized tool-output copies on C despite primary records G. Avoid recurrence: every large Git/inventory/raw stdout AND stderr must be redirected directly into exclusive G files; print bounded summaries/hashes only. Do NOT run/print git status --ignored or broad long-path inventories. Do not truncate the evidence itself. Use bounded Read slices on saved G files. Do not delete prior C overflow copies or any cache.
+
+Run only the focused native matrix, no whole-app/chat/audio/regression investigation. The author's broad four chat/audio failures are author limits, not new work. No need to rerun the old emitting typecheck; author D216 gates and final CI are separate. If running scoped lint or test-inclusive no-emit typecheck, state exact scope, not full package script. Retain every attempted command, failure and observer revision; no unbounded retries. Meaningful native controls must run with exact assertions. Keep overlapping counts separate per head/environment/invocation.
+
+Write REPORT.md and the complete raw evidence under this packet, with PASS/FAIL/BLOCKED by criterion, actual source/platform/alias availability, independently observed versus test-asserted facts, instrumentation mode, cleanup and residual limits. Seal QA records/report, excluding the actively changing provider stream; the orchestrator separately seals closed raw provider records. Preserve original negative Astra/Fable reports and all prior raw evidence. This actual QA supplement grants no final CI/native, cap closure or merge acceptance.
+
+
+## Reset continuation and exact output protocol
+
+This is fresh attempt02 under D217. Attempt01 is an immutable weekly-quota failure with zero tools/tests and no e630 verdict. Its full seal and actual reset receipt are bound in source-binding.json. Do not edit attempt01 or the older6de packet. Current output root is G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-486-d216-independent-02; use it for your new harness, raw logs, REPORT.md and qa records. The controller already performed fresh exact frozen source/index/lock/dependency/admission checks. Existing dependencies are installed; do not install/build or inspect accounts.
+
+The controller binds decision C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/decision-217.md and the actual root quota/publication receipts at G:/ggq/delivery-evidence/2026-11-17-five-intents/d217-root-admission-01. These receipts authorize this same native matrix only. No new review, production fix or general scan is admitted.
+
+Write a final qa/SHA256SUMS.json with a files array containing path (relative to this attempt root), bytes and sha256. Cover REPORT.md plus all completed qa records/raw outputs, exclude this QA manifest itself and the active provider/controller stream. Use exact forward-slash relative paths with no parent traversal. The controller will preserve a separate closed-provider manifest after process exit. A criterion PASS never implies root final admission or CI/native/cap/merge completion. If any scenario cannot run, record the exact blocker without inventing a result. Leave the fixture restored in finally and state native cleanup limits.

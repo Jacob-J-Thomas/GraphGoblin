@@ -1,0 +1,9 @@
+136c136,137
+<         const path = kind === 'temp' ? join(realpathSync(dataDir), 'workspaces', run.id) : target;
+---
+>         const path =
+>           kind === 'temp' ? join(realpathSync.native(dataDir), 'workspaces', run.id) : target;
+145c146
+<         const actual = realpathSync(path);
+---
+>         const actual = realpathSync.native(path);

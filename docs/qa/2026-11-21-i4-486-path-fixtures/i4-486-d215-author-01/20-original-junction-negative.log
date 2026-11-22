@@ -1,0 +1,59 @@
+utc=2026-11-21T22:08:09.7402879Z cwd=G:\ggq\gg-i4-486-d215-fix\GraphGoblin TEMP=G:/ggq/gg-i4-486-d215-fix/junction-temp TMP=G:/ggq/gg-i4-486-d215-fix/junction-temp
+pnpm.cmd ["--filter","@graphgoblin/infrastructure","test","src/fs/fs.test.ts","--reporter=verbose","-t","uses real temp paths"]
+$ vitest run src/fs/fs.test.ts --reporter=verbose -t 'uses real temp paths'
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-d215-fix/GraphGoblin/packages/infrastructure
+
+ ↓ src/fs/fs.test.ts > FsWorkspace > resolves fixed, relative, and temporary directories and reuses them
+ ↓ src/fs/fs.test.ts > FsWorkspace > writes relative and absolute files, creating parent directories
+ ↓ src/fs/fs.test.ts > FsWorkspace > propagates mkdir failures and succeeds after the external path is repaired
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real fixed paths, caches resolution for delivery, and claims only new temporary directories
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real relative paths, caches resolution for delivery, and claims only new temporary directories
+ × src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories 86ms
+   → expected 'G:\ggq\gg-i4-486-d215-fix\junction-ph…' to be 'G:\ggq\gg-i4-486-d215-fix\junction-te…' // Object.is equality
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real template paths, caches resolution for delivery, and claims only new temporary directories
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (0)
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (1)
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (2)
+ ↓ src/fs/fs.test.ts > engine workspace filesystem boundary > keeps a journal rejection external after mkdir and does not cache the failed resolution
+ ↓ src/fs/fs.test.ts > FsArtifactStore > accepts verified bytes published by another writer while a read handle blocks replacement
+ ↓ src/fs/fs.test.ts > FsArtifactStore > rejects corrupted final bytes and atomically repairs a pre-existing partial file
+ ↓ src/fs/fs.test.ts > FsArtifactStore > does not accept truncated bytes on a repeated put
+ ↓ src/fs/fs.test.ts > FsArtifactStore > ignores interrupted temporary writes and converges under identical and different concurrent puts
+ ↓ src/fs/fs.test.ts > FsArtifactStore > stores content once by hash and reads it back by reference
+ ↓ src/fs/fs.test.ts > FsArtifactStore > verifies raw bytes before UTF-8 decoding
+ ↓ src/fs/fs.test.ts > FsArtifactStore > reports a typed publication failure without a final artifact when storage is unavailable
+ ↓ src/fs/fs.test.ts > FsArtifactStore > returns undefined for malformed or missing references
+ ↓ src/fs/fs.test.ts > FsArtifactStore > rethrows unexpected filesystem errors
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories
+AssertionError: expected 'G:\ggq\gg-i4-486-d215-fix\junction-ph…' to be 'G:\ggq\gg-i4-486-d215-fix\junction-te…' // Object.is equality
+
+Expected: "G:\ggq\gg-i4-486-d215-fix\junction-temp\gg-wp-e3-ZKg4LC\workspaces\00000000000000000000000001"
+Received: "G:\ggq\gg-i4-486-d215-fix\junction-physical\gg-wp-e3-ZKg4LC\workspaces\00000000000000000000000001"
+
+ ❯ src/fs/fs.test.ts:141:52
+    139|           run.id,
+    140|         );
+    141|         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
+       |                                                    ^
+    142|         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).…
+    143|         const actual = realpathSync(path);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 skipped (20)
+   Start at  16:08:10
+   Duration  4.44s (import 57%, transform 40%, tests 2%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-486-d215-
+  │ fix\GraphGoblin\packages\infrastructure
+
+exit=1

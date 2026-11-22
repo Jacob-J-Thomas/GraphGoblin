@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "issue": 486,
+  "pullRequest": 553,
+  "verdict": "CHANGES_REQUIRED",
+  "generalReview": {
+    "slot": 3,
+    "maximum": 3,
+    "reviewer": "gpt-6.2-astra",
+    "reasoningEffort": "max",
+    "freshIndependentContext": true
+  },
+  "source": {
+    "checkout": "G:/ggq/gg-i4-486-delivery/GraphGoblin",
+    "head": "b8126de18080b76b15cbbbbc00fd791030fec3e1",
+    "tree": "86f422bb091515defe3d612df660988e5b47ffeb",
+    "directParent": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "target": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+    "testedMerge": "dde965f4e2263b954bc6462f3985b985ae324aa5",
+    "testedMergeParents": [
+      "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "b8126de18080b76b15cbbbbc00fd791030fec3e1"
+    ],
+    "testedMergeTree": "86f422bb091515defe3d612df660988e5b47ffeb",
+    "currentMainAndPRReadbackUtc": "2026-11-21T21:44:37.433446+00:00",
+    "correctedSource4d": "4d982162ca60e885d5af22f66076383a048215db",
+    "correctedSource4dTree": "b9e4ce6463df9c47ba43bd47236ae61d60876aeb"
+  },
+  "scope": {
+    "functionalPaths": 54,
+    "productionAndTestSupport": 21,
+    "testFiles": 27,
+    "documents": 6,
+    "all54DirectParentIdentical": true,
+    "exactAtCorrectedSource4d": 50,
+    "combinedDocuments": [
+      "CHANGELOG.md",
+      "docs/04-node-catalog.md",
+      "docs/06-harness-integration.md",
+      "docs/guide/03-run-and-observe.md"
+    ],
+    "sourceMap": {
+      "path": "../i4-486-final-scan3-preparation-02/source54-carry.json",
+      "sha256": "40b5f6e39e1943fb630db60e31cb0f4197bb63e33af3765192813c4ea089f9be"
+    },
+    "archiveFilesAdded": 435,
+    "archivePayloadsVerified": 434,
+    "archiveManifestSha256": "8379d63fc5e1c25ad827b38d3b82711f131db0c4aefd6276a93615c78d92c6e7",
+    "preservedParentNonpolicyEntries": 37997,
+    "preservedParentQAEntries": 36246,
+    "policyAppendedBytes": {
+      ".gitattributes": 199,
+      ".prettierignore": 144
+    }
+  },
+  "admission": {
+    "dispatchAdmissionSha256": "a77263fff0967c82065db26fa04bf69c3e6c6578d99250a45d7efe9dc7e10f94",
+    "rootAdmissionSha256": "c49a2c5b727fe2811dd4c347bfef4283288d8173d638063fb14f77ebc2a41458",
+    "hashBoundReferencesChecked": 15
+  },
+  "ordinaryCI": {
+    "run": 44950929794,
+    "attempt": 1,
+    "jobsSucceeded": 6,
+    "unitPassed": 10328,
+    "unitSkipped": 53,
+    "browserPassed": 488,
+    "browserSkipped": 1,
+    "windowsLauncherPassed": 27,
+    "coverage": {
+      "packages": 13,
+      "minimumLinesPercent": 95,
+      "minimumBranchesPercent": 90.97,
+      "artifact": 14726141801,
+      "sha256": "3fa21516b75bca210b8a627429d2ecb22b8d7d341af8ac6d547f9d20e0aa0474"
+    },
+    "native": {
+      "artifact": 14725557325,
+      "bytes": 9224,
+      "sha256": "c3be57ecb79fd011d384dfe1868730941bfca0f8c81353a3e6393040bf7cb145",
+      "recordsChecked": 338,
+      "existingCanonicalReplayVerified": true,
+      "freshReplayPerformed": false
+    }
+  },
+  "historicalEvidence": {
+    "originalOpusAt633": "CONDITIONAL",
+    "originalNewChecks": 430,
+    "originalInheritedDomainChecks": 36,
+    "originalSealMembersVerified": 200,
+    "source4dSupplementalRecords": 29,
+    "supplementalSealMembersVerified": 158,
+    "oldRun": 44934348117,
+    "oldRunConclusion": "failure",
+    "d213IndependentSealMembersVerified": 67,
+    "d213Results": {
+      "passed": 4,
+      "failed": 1,
+      "targetPasses": 2
+    },
+    "pwaCause": "unknown",
+    "parked": [
+      554,
+      555,
+      556
+    ]
+  },
+  "findings": [
+    {
+      "priority": "P2",
+      "blocksTechnicalApproval": true,
+      "file": "packages/infrastructure/src/fs/fs.test.ts",
+      "line": 129,
+      "fact": "Exact lexical temp path conflicts with physical path when os.tmpdir() has an aliased ancestor.",
+      "basis": "Static trace of the new assertion, native resolver and an existing alias ownership control."
+    },
+    {
+      "priority": "P3",
+      "blocksTechnicalApproval": false,
+      "file": "packages/infrastructure/src/fs/fs.test.ts",
+      "lines": [
+        46,
+        111
+      ],
+      "fact": "Windows relative fixtures can pass absolute inputs if cwd and temporary root have different drive letters.",
+      "basis": "Static trace of fixture construction and assertions."
+    }
+  ],
+  "execution": {
+    "newTestsOrBuilds": false,
+    "providerDispatched": false,
+    "externalMutations": false,
+    "scope": "Frozen source and retained raw evidence. The filesystem configurations described in the findings were not executed in this review."
+  }
+}

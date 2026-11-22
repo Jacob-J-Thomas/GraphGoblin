@@ -1,0 +1,106 @@
+{
+  "at": "2026-11-22T14:48:41.708Z",
+  "method": "split stderr on \" FAIL \" headers; no editing",
+  "controls": [
+    {
+      "id": "s1a-baseline6de-upper-g-temp-engine-temp-recordonly",
+      "stderr": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-486-d216-independent-02\\qa\\raw\\s1a-baseline6de-upper-g-temp-engine-temp-recordonly.stderr.txt",
+        "bytes": 1238,
+        "sha256": "d9ca9d02e53661ff21f2c512bbe2e02638b92ddf7ab3dbccaf53557ec7e9b592"
+      },
+      "failures": [
+        {
+          "header": " FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "kind": "temp",
+          "location": "fs.test.ts:143:52",
+          "expectedLine": "Expected: \"G:\\GGQ\\QA-SCRATCH\\I4-486-D216-INDEPENDENT-02\\OPUS-QA-MWRY6CL9-8930F76E\\UPPER-TEMP\\gg-wp-e3-7Gzz36\\workspaces\\00000000000000000000000001\"",
+          "receivedLine": "Received: \"G:\\ggq\\qa-scratch\\i4-486-d216-independent-02\\opus-qa-mwry6cl9-8930f76e\\upper-temp\\gg-wp-e3-7Gzz36\\workspaces\\00000000000000000000000001\"",
+          "diffMinusLines": [],
+          "diffPlusLines": [],
+          "sourceExcerpt": [
+            " ❯ src/fs/fs.test.ts:143:52",
+            "    141|           run.id,",
+            "    142|         );",
+            "    143|         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);",
+            "    144|         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).…",
+            "    145|         const actual = realpathSync(path);"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s2a-baseline6de-c-short-temp-engine-fixed-temp-template-recordonly",
+      "stderr": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-486-d216-independent-02\\qa\\raw\\s2a-baseline6de-c-short-temp-engine-fixed-temp-template-recordonly.stderr.txt",
+        "bytes": 3728,
+        "sha256": "7fcb20040c7a8fccc888b54bc33c2b9861669eaf84d9b1365d580c7afe9e4041"
+      },
+      "failures": [
+        {
+          "header": " FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real fixed paths, caches resolution for delivery, and claims only new temporary directories",
+          "kind": "fixed",
+          "location": "fs.test.ts:147:29",
+          "expectedLine": null,
+          "receivedLine": null,
+          "diffMinusLines": [
+            "-   \"workspace:c:\\\\users\\\\98jak\\\\gr58b7~1\\\\d216-s~1\\\\short-~1\\\\gg-wp-e3-ng68q4\\\\user-owned\",",
+            "-   \"c:\\\\users\\\\98jak\\\\gr58b7~1\\\\d216-s~1\\\\short-~1\\\\gg-wp-e3-ng68q4\\\\user-owned\","
+          ],
+          "diffPlusLines": [
+            "+   \"workspace:c:\\\\users\\\\98jak\\\\graphgoblin-qa\\\\d216-small-native-temp-mwry6cl9-8930f76e\\\\short-alias-worker-temp\\\\gg-wp-e3-ng68q4\\\\user-owned\",",
+            "+   \"c:\\\\users\\\\98jak\\\\graphgoblin-qa\\\\d216-small-native-temp-mwry6cl9-8930f76e\\\\short-alias-worker-temp\\\\gg-wp-e3-ng68q4\\\\user-owned\","
+          ],
+          "sourceExcerpt": [
+            " ❯ src/fs/fs.test.ts:147:29",
+            "    145|         const actual = realpathSync(path);",
+            "    146|         const canonical = process.platform === 'win32' ? actual.toLowe…",
+            "    147|         expect(journal.use).toHaveBeenCalledExactlyOnceWith(",
+            "    148|           run.id,",
+            "    149|           `workspace:${canonical}`,"
+          ]
+        },
+        {
+          "header": " FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "kind": "temp",
+          "location": "fs.test.ts:143:52",
+          "expectedLine": "Expected: \"C:\\Users\\98jak\\GR58B7~1\\D216-S~1\\SHORT-~1\\gg-wp-e3-IXHTYt\\workspaces\\00000000000000000000000001\"",
+          "receivedLine": "Received: \"C:\\Users\\98jak\\graphgoblin-qa\\d216-small-native-temp-mwry6cl9-8930f76e\\short-alias-worker-temp\\gg-wp-e3-IXHTYt\\workspaces\\00000000000000000000000001\"",
+          "diffMinusLines": [],
+          "diffPlusLines": [],
+          "sourceExcerpt": [
+            " ❯ src/fs/fs.test.ts:143:52",
+            "    141|           run.id,",
+            "    142|         );",
+            "    143|         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);",
+            "    144|         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).…",
+            "    145|         const actual = realpathSync(path);"
+          ]
+        },
+        {
+          "header": " FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real template paths, caches resolution for delivery, and claims only new temporary directories",
+          "kind": "template",
+          "location": "fs.test.ts:147:29",
+          "expectedLine": null,
+          "receivedLine": null,
+          "diffMinusLines": [
+            "-   \"workspace:c:\\\\users\\\\98jak\\\\gr58b7~1\\\\d216-s~1\\\\short-~1\\\\gg-wp-e3-fjrwca\\\\user-owned\",",
+            "-   \"c:\\\\users\\\\98jak\\\\gr58b7~1\\\\d216-s~1\\\\short-~1\\\\gg-wp-e3-fjrwca\\\\user-owned\","
+          ],
+          "diffPlusLines": [
+            "+   \"workspace:c:\\\\users\\\\98jak\\\\graphgoblin-qa\\\\d216-small-native-temp-mwry6cl9-8930f76e\\\\short-alias-worker-temp\\\\gg-wp-e3-fjrwca\\\\user-owned\",",
+            "+   \"c:\\\\users\\\\98jak\\\\graphgoblin-qa\\\\d216-small-native-temp-mwry6cl9-8930f76e\\\\short-alias-worker-temp\\\\gg-wp-e3-fjrwca\\\\user-owned\","
+          ],
+          "sourceExcerpt": [
+            " ❯ src/fs/fs.test.ts:147:29",
+            "    145|         const actual = realpathSync(path);",
+            "    146|         const canonical = process.platform === 'win32' ? actual.toLowe…",
+            "    147|         expect(journal.use).toHaveBeenCalledExactlyOnceWith(",
+            "    148|           run.id,",
+            "    149|           `workspace:${canonical}`,"
+          ]
+        }
+      ]
+    }
+  ]
+}

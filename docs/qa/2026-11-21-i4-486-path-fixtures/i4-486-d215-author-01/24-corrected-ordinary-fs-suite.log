@@ -1,0 +1,145 @@
+utc=2026-11-21T22:09:54.3456506Z cwd=G:\ggq\gg-i4-486-d215-fix\GraphGoblin TEMP=G:/ggq/gg-i4-486-d215-fix/process-temp TMP=G:/ggq/gg-i4-486-d215-fix/process-temp
+pnpm.cmd ["--filter","@graphgoblin/infrastructure","test","src/fs","--reporter=verbose"]
+$ vitest run src/fs --reporter=verbose
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-d215-fix/GraphGoblin/packages/infrastructure
+
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > preserves binary bytes, hashes the bounded stream, and derives an absolute internal path 25ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > creates private storage and tightens an existing directory before writing 8ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > publishes a complete file after streaming and excludes concurrent same-ID writes and cleanup 15ms
+ × src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks 18ms
+   → EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "../outside" 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01arz3ndektsv4rrffq69g5fa0" 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\n" 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "01ARZ3NDEKTSV4RRFFQ69G5FA0\\x" 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "OOOOOOOOOOOOOOOOOOOOOOOOOO" 2ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects noncanonical identifiers before any filesystem access: "" 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 0 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit -1 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 1.5 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit Infinity 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > refuses an invalid byte limit 10485761 1ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > accepts the exact size limit, and stops an oversized stream before reading more bytes 14ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > rejects empty bodies and empty streams without leaving files 7ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > cleans up an interrupted body and preserves its cause behind a bounded message 5ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports ENOSPC during publication, removes temporary bytes, and allows a retry 12ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > does not hide publication failures when best-effort temporary cleanup also fails 7ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > leaves a failed lock cleanup for the protected orphan scanner without losing successful bytes 8ms
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports unexpected exclusive-lock and destination inspection errors 5ms
+ × src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root 4ms
+   → EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\chat-audio'
+ × src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink 18ms
+   → EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ✓ src/fs/chat-audio.test.ts > ChatAudioStore > reports a failed exact deletion without recursively removing directories 8ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > does not create a directory when there are no uploads 2ms
+ × src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata 17ms
+   → ENOENT: no such file or directory, open 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-CNdSej\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+'
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > rechecks the current file before deletion and tolerates concurrent exact deletion 13ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > closes a cursor after a filesystem failure and can start another bounded scan 26ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > preserves the cleanup failure if closing its directory cursor also fails 11ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > releases an unfinished directory cursor explicitly at shutdown 16ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 0 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit -1 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 1.5 2ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit 1001 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an unbounded or invalid batch limit Infinity 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff NaN 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff Infinity 1ms
+ ✓ src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > refuses an invalid cutoff -Infinity 1ms
+ ✓ src/fs/artifact-references.test.ts > resolves only the exact canonical artifact spelling returned by put 18ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > resolves fixed, relative, and temporary directories and reuses them 11ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > writes relative and absolute files, creating parent directories 14ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > propagates mkdir failures and succeeds after the external path is repaired 10ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real fixed paths, caches resolution for delivery, and claims only new temporary directories 73ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real relative paths, caches resolution for delivery, and claims only new temporary directories 57ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories 49ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real template paths, caches resolution for delivery, and claims only new temporary directories 44ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (0) 35ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (1) 28ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (2) 31ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > keeps a journal rejection external after mkdir and does not cache the failed resolution 62ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > accepts verified bytes published by another writer while a read handle blocks replacement 847ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > rejects corrupted final bytes and atomically repairs a pre-existing partial file 22ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > does not accept truncated bytes on a repeated put 19ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > ignores interrupted temporary writes and converges under identical and different concurrent puts 95ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > stores content once by hash and reads it back by reference 38ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > verifies raw bytes before UTF-8 decoding 10ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > reports a typed publication failure without a final artifact when storage is unavailable 4ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > returns undefined for malformed or missing references 1ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > rethrows unexpected filesystem errors 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks
+Error: EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:106:5
+    104|     const outside = join(dataDir, 'outside');
+    105|     await fs.writeFile(outside, 'untouched');
+    106|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    107|     await expect(store.write(id('2'), Buffer.of(2))).rejects.toMatchOb…
+    108|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\outside', dest: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-nqMlNK\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root
+Error: EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\chat-audio'
+ ❯ src/fs/chat-audio.test.ts:230:5
+    228|     const outside = join(dataDir, 'outside');
+    229|     await fs.mkdir(outside);
+    230|     await fs.symlink(outside, directory, 'dir');
+       |     ^
+    231|     await expect(store.write(id(), Buffer.of(1))).rejects.toMatchObjec…
+    232|     await expect(store.remove(id())).rejects.toMatchObject({ code: 'st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\outside', dest: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-rKo3ni\chat-audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink
+Error: EPERM: operation not permitted, symlink 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\outside' -> 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:248:5
+    246|     const outside = join(dataDir, 'outside');
+    247|     await fs.writeFile(outside, 'untouched');
+    248|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    249|     expect(await store.remove(id('2'))).toBe(true);
+    250|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4048, code: 'EPERM', syscall: 'symlink', path: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\outside', dest: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-S2scJ3\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata
+Error: ENOENT: no such file or directory, open 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-CNdSej\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+'
+ ❯ src/fs/chat-audio.test.ts:284:5
+    282|     await fs.writeFile(join(directory, lock), '');
+    283|     await fs.writeFile(join(directory, 'unknown-file'), 'preserved');
+    284|     await fs.writeFile(join(directory, `${id('5')}.audio\n`), 'preserv…
+       |     ^
+    285|     await fs.mkdir(store.resolve(id('6')));
+    286|     const outside = join(dataDir, 'outside');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4058, code: 'ENOENT', syscall: 'open', path: 'G:\ggq\gg-i4-486-d215-fix\process-temp\gg-chat-audio-CNdSej\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 failed | 56 passed (60)
+   Start at  16:09:55
+   Duration  5.15s (import 53%, transform 24%, tests 23%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-486-d215-
+  │ fix\GraphGoblin\packages\infrastructure
+
+exit=1

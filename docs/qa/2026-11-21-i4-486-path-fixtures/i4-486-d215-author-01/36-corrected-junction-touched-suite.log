@@ -1,0 +1,34 @@
+utc=2026-11-21T22:10:30.7488121Z cwd=G:\ggq\gg-i4-486-d215-fix\GraphGoblin TEMP=G:/ggq/gg-i4-486-d215-fix/junction-temp TMP=G:/ggq/gg-i4-486-d215-fix/junction-temp
+pnpm.cmd ["--filter","@graphgoblin/infrastructure","test","src/fs/fs.test.ts","src/fs/artifact-references.test.ts","--reporter=verbose"]
+$ vitest run src/fs/fs.test.ts src/fs/artifact-references.test.ts --reporter=verbose
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-d215-fix/GraphGoblin/packages/infrastructure
+
+ ✓ src/fs/artifact-references.test.ts > resolves only the exact canonical artifact spelling returned by put 24ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > resolves fixed, relative, and temporary directories and reuses them 18ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > writes relative and absolute files, creating parent directories 9ms
+ ✓ src/fs/fs.test.ts > FsWorkspace > propagates mkdir failures and succeeds after the external path is repaired 11ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real fixed paths, caches resolution for delivery, and claims only new temporary directories 78ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real relative paths, caches resolution for delivery, and claims only new temporary directories 50ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories 32ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > uses real template paths, caches resolution for delivery, and claims only new temporary directories 44ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (0) 32ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (1) 40ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > rejects an invalid engine template with zero resolve, mkdir and journal effects (2) 36ms
+ ✓ src/fs/fs.test.ts > engine workspace filesystem boundary > keeps a journal rejection external after mkdir and does not cache the failed resolution 43ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > accepts verified bytes published by another writer while a read handle blocks replacement 640ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > rejects corrupted final bytes and atomically repairs a pre-existing partial file 16ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > does not accept truncated bytes on a repeated put 12ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > ignores interrupted temporary writes and converges under identical and different concurrent puts 60ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > stores content once by hash and reads it back by reference 15ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > verifies raw bytes before UTF-8 decoding 7ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > reports a typed publication failure without a final artifact when storage is unavailable 3ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > returns undefined for malformed or missing references 1ms
+ ✓ src/fs/fs.test.ts > FsArtifactStore > rethrows unexpected filesystem errors 7ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  16:10:31
+   Duration  4.61s (import 56%, transform 25%, tests 18%)
+
+exit=0
