@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.test.tsx (27 tests) 34907ms
+   ✓ appended values in a selected patch (#385) (1)
+     ✓ shows each recorded append to messages and a variable list, absent before it 694ms
+   ✓ RunInspectorPage (20)
+     ✓ keeps the previous resolved thread and identifiers while a selected server boundary is pending 719ms
+     ✓ streams the timeline, replays the thread at any event, and shows the patch diff 1329ms
+     ✓ resumes the stream after the stored cursor on reload 1180ms
+     ✓ renders the input form from the wait node schema and submits input 2732ms
+     ✓ sends a signal to a run waiting for one, and describes timer waits 3159ms
+     ✓ cancels, pauses, and resumes runs 5574ms
+     ✓ keeps the keyboard order: loop, parent run, child runs, then the run controls 2339ms
+     ✓ explains a deleted child while preserving the parent inspector history 1805ms
+     ✓ links an available child from a child-finished event 4965ms
+     ✓ shows failures, results, parent links, and stream errors 716ms
+     ✓ links a subloop failure to the child run that failed (#251) 628ms
+     ✓ confirms a finished succeeded cursor and catches up delivery audits while retaining the result 680ms
+     ✓ confirms a finished exhausted cursor and catches up delivery audits while retaining the result 558ms
+     ✓ bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 2365ms
+   ✓ RunInspectorPage exit evidence (5)
+     ✓ says a quiet exit returned nothing by configuration, at the top and in its details 1504ms
+     ✓ names the exit and start-request destinations that a None return left empty 569ms
+     ✓ does not claim a None configuration when an expression exit recorded no value 1527ms
+   ✓ shows cancellation instead of a stale provider failure on a cancelled run (#255) 468ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx (14 tests) 5155ms
+   ✓ run header status follows observed lifecycle events (#386) (14)
+     ✓ shows the terminal status when the refresh after the terminal event is… 541ms
+     ✓ replaces an outcome superseded by a resume that parks in a wait again until the record catches up 709ms
+     ✓ replaces an outcome superseded by a new attempt until the record catches up 704ms
+     ✓ keeps a newer streamed outcome when a later observation still reports the older start 725ms
+     ✓ starts over for another run, ignoring the previous run’s outcome 400ms
+ ✓ src/runs/projections.exact-values.test.ts (19 tests) 32ms
+ ✓ src/runs/run-header-status.test.ts (10 tests) 16ms
+ ✓ src/runs/useRunHeaderStatus.test.tsx (2 tests) 37ms
+
+ Test Files  5 passed (5)
+      Tests  72 passed (72)
+   Start at  10:37:57
+   Duration  60.60s (tests 68%, environment 16%, import 7%, setup 5%, transform 4%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-385-independent-qa-01/candidate-components.json

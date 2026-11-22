@@ -1,0 +1,327 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bd776eec..fec3f28f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
++  after its event is published, so a refresh could still be in flight, or return the earlier status
++  at the terminal event's sequence, and the header kept saying running. The header now also follows
++  the latest observed lifecycle event (streamed batches, whatever history window is browsed, and the
++  run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
++  **Status from event #N; the run record is updating.** in place of the stale position, and shows
++  **Updating status…** while a start or resume has superseded an outcome, or a newer record could
++  include an unseen resume. Presentation only: the record, controls, recovery, delivery and refresh
++  polling are unchanged. Regressions also cover appended patch values (#385), which already show
++  each `add` operation's recorded value with Before absent. No store, export or contract change.
++
+ - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+ 
+ - Claude no longer reports a missing CLI when Windows refused the working directory (#364).
+diff --git a/apps/web/src/runs/RunInspectorPage.test.tsx b/apps/web/src/runs/RunInspectorPage.test.tsx
+index 525bf4ec..19e986a7 100644
+--- a/apps/web/src/runs/RunInspectorPage.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.test.tsx
+@@ -55,6 +55,77 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
+   return run;
+ }
+ 
++describe('appended values in a selected patch (#385)', () => {
++  it('shows each recorded append to messages and a variable list, absent before it', async () => {
++    const api = new FakeApi();
++    const run = api.addRun({ status: 'running', lastEventSeq: 5 });
++    const r = run.id;
++    const message = (id: string, content: string) => ({
++      id,
++      role: 'note',
++      content,
++      nodeId: 'append',
++      ts: '2026-10-02T12:00:00.000Z',
++    });
++    api.pushEvent(r, event(r, 1, 'run.queued', queuedFields()));
++    api.pushEvent(r, event(r, 2, 'run.started', { attempt: 1 }));
++    api.pushEvent(
++      r,
++      event(r, 3, 'node.finished', {
++        nodeId: 'prep',
++        durationMs: 1,
++        patch: [
++          { op: 'add', path: '/messages/-', value: message('m0', 'seed message') },
++          { op: 'add', path: '/vars/list', value: ['seed value'] },
++        ],
++      }),
++    );
++    api.pushEvent(
++      r,
++      event(r, 4, 'node.started', { nodeId: 'append', kind: 'mutate', attempt: 1, configHash: 'h' }),
++    );
++    api.pushEvent(
++      r,
++      event(r, 5, 'node.finished', {
++        nodeId: 'append',
++        durationMs: 1,
++        patch: [
++          { op: 'add', path: '/messages/-', value: message('m1', 'first appended') },
++          { op: 'add', path: '/messages/-', value: message('m2', 'second appended') },
++          { op: 'add', path: '/vars/list/-', value: { nested: [1, ['deep value', null]] } },
++          { op: 'add', path: '/vars/list/-', value: ['inner value', ['array value']] },
++        ],
++      }),
++    );
++    renderApp(`/runs/${r}`, api);
++    const timeline = await screen.findByRole('list', { name: 'Timeline' });
++    await userEvent.setup().click(await within(timeline).findByText('#5'));
++    const diff = await screen.findByRole('list', { name: 'Patch diff' });
++    const lines = within(diff).getAllByRole('listitem');
++    expect(lines).toHaveLength(4);
++    // Each line shows its own recorded value; the final array's last element, or the whole
++    // array, would repeat a neighbour's value or the earlier contents.
++    const expected = [
++      ['/messages/-', 'first appended', ['second appended', 'seed message']],
++      ['/messages/-', 'second appended', ['first appended', 'seed message']],
++      ['/vars/list/-', 'deep value', ['inner value', 'seed value']],
++      ['/vars/list/-', 'inner value', ['deep value', 'seed value']],
++    ] as const;
++    for (const [index, [path, shown, others]] of expected.entries()) {
++      const line = lines[index]!;
++      expect(within(line).getByText('Added value')).toBeVisible();
++      expect(within(line).getByLabelText(`Value before ${path}`)).toHaveTextContent('(absent)');
++      const after = within(line).getByLabelText(`Value after ${path}`);
++      await waitFor(() => expect(after).toHaveTextContent(shown));
++      for (const other of others) expect(after).not.toHaveTextContent(other);
++    }
++    expect(within(lines[2]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent('null');
++    expect(within(lines[3]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent(
++      'array value',
++    );
++  });
++});
++
+ describe('RunInspectorPage', () => {
+   it('keeps the previous resolved thread and identifiers while a selected server boundary is pending', async () => {
+     const user = userEvent.setup();
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index b0c163ba..3d91f254 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -1,5 +1,5 @@
+ import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
+-import type { RunEvent } from '@graphgoblin/contracts';
++import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
+ import { RunLimits } from './inspector/RunLimits.js';
+ import { HistoryEligibility } from './HistoryEligibility.js';
+ import { formatDateTime } from '../lib/utils.js';
+@@ -10,7 +10,7 @@ import { Link, useParams } from 'react-router';
+ import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
+ import { Page } from '../components/layout/index.js';
+ import { QueryState, RunStatusBadge } from '../components/status.js';
+-import { Alert, BoundedValue, Card } from '../components/ui/index.js';
++import { Alert, Badge, BoundedValue, Card } from '../components/ui/index.js';
+ import { ProgressDrawer } from './inspector/ProgressDrawer.js';
+ import { EvaluationDetails } from './inspector/EvaluationDetails.js';
+ import { RunControls } from './inspector/RunControls.js';
+@@ -21,6 +21,8 @@ import { Timeline } from './inspector/Timeline.js';
+ import { WaitPanel } from './inspector/WaitPanel.js';
+ import { DeliveryPanel } from './inspector/DeliveryPanel.js';
+ import { useRunEvents } from './useRunEvents.js';
++import { useRunHeaderStatus } from './useRunHeaderStatus.js';
++import type { HeaderStatus } from './run-header-status.js';
+ import { useRunHistory } from './useRunHistory.js';
+ import { useLiveRefresh } from './useLiveRefresh.js';
+ import { useApi } from '../api/context.js';
+@@ -70,6 +72,41 @@ function FailedChildLink({ details }: { details: unknown }) {
+   );
+ }
+ 
++/**
++ * The header's execution status (#386): the record's, or a lifecycle event the record has not
++ * caught up with yet. Presentation only; controls, recovery and the failure stay the record's.
++ */
++function HeaderStatusBadge({ status }: { status: HeaderStatus }) {
++  return status.kind === 'updating' ? (
++    <Badge tone="neutral" data-status-updating="">Updating status…</Badge>
++  ) : (
++    <RunStatusBadge status={status.status} />
++  );
++}
++
++/**
++ * Where the run is, beside the header status. A record's position is shown only with the
++ * record's own status: beside a newer event's status or an unresolved one it could be stale.
++ */
++function HeaderPosition({
++  status,
++  nodeId,
++  definition,
++}: {
++  status: HeaderStatus;
++  nodeId: string | undefined;
++  definition: LoopDefinition | undefined;
++}) {
++  if (status.kind === 'event')
++    return (
++      <span className="min-w-0 wrap-anywhere">
++        Status from event #{status.seq}; the run record is updating.
++      </span>
++    );
++  if (status.kind === 'updating' || !nodeId) return null;
++  return <span className="min-w-0 wrap-anywhere">at {nodeName(definition, nodeId)}</span>;
++}
++
+ /**
+  * One run: its status and controls, failure or result, the waiting-for-input form, then the
+  * timeline beside the thread at the chosen event (with that event's patch) and node progress.
+@@ -79,16 +116,21 @@ export function RunInspectorPage() {
+   const runQuery = useRun(runId);
+   const threadQuery = useRunThread(runId);
+   const live = useLiveRefresh(runId);
+-  const log = useRunEvents(runId, live.notify);
+   const client = useApi();
+-  const history = useRunHistory(runId, log);
+-  const selectedSeq = history.selectedSeq;
+-  const seq = selectedSeq ?? log.lastSeq;
+-  const selectedEvent = history.selectedEvent;
+   const observation = useQuery({
+     queryKey: keys.observation(runId),
+     queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
+   });
++  // Every accepted batch reaches the header's lifecycle evidence, whatever window is shown (#386).
++  const header = useRunHeaderStatus(runId, observation.data?.lifecycle);
++  const log = useRunEvents(runId, (events) => {
++    if (events) header.observe(runId, events);
++    live.notify(events);
++  });
++  const history = useRunHistory(runId, log);
++  const selectedSeq = history.selectedSeq;
++  const seq = selectedSeq ?? log.lastSeq;
++  const selectedEvent = history.selectedEvent;
+   const present = (events: (RunEvent | undefined)[]) =>
+     events.filter((event): event is RunEvent => event !== undefined);
+   const evidence = present([
+@@ -171,14 +213,14 @@ export function RunInspectorPage() {
+                     {run.id}
+                   </span>
+                 </h1>
+-                <RunStatusBadge status={run.status} />
++                <HeaderStatusBadge status={header.status(run)} />
+               </div>
+               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+-                {run.currentNodeId ? (
+-                  <span className="min-w-0 wrap-anywhere">
+-                    at {nodeName(definition, run.currentNodeId)}
+-                  </span>
+-                ) : null}
++                <HeaderPosition
++                  status={header.status(run)}
++                  nodeId={run.currentNodeId}
++                  definition={definition}
++                />
+                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
+                   loop
+                 </Link>
+diff --git a/apps/web/src/runs/projections.exact-values.test.ts b/apps/web/src/runs/projections.exact-values.test.ts
+index bf7189b3..ceb5ee23 100644
+--- a/apps/web/src/runs/projections.exact-values.test.ts
++++ b/apps/web/src/runs/projections.exact-values.test.ts
+@@ -2,7 +2,7 @@ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+ import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+ import { applyPatch } from '@graphgoblin/domain';
+ import { describe, expect, it } from 'vitest';
+-import { event } from '../__fixtures__/fake-api.js';
++import { event, TS } from '../__fixtures__/fake-api.js';
+ import {
+   patchDiff,
+   describeEvent,
+@@ -30,6 +30,46 @@ describe('exact recorded execution projections (#255)', () => {
+     expect(before.vars['items']).toEqual(['already present']);
+   });
+ 
++  it('shows each append to messages and a variable list as absent before and its recorded value after (#385)', () => {
++    const seed = { id: 'm0', role: 'note', content: 'seed', nodeId: 'prep', ts: TS };
++    const before = applyPatch(sampleThread(), [
++      { op: 'add' as const, path: '/messages/-', value: seed },
++      { op: 'add' as const, path: '/vars/list', value: ['seed'] },
++    ]);
++    const first = { ...seed, id: 'm1', content: 'first appended' };
++    const second = { ...seed, id: 'm2', content: 'second appended' };
++    const patch = [
++      { op: 'add' as const, path: '/messages/-', value: first },
++      { op: 'add' as const, path: '/messages/-', value: second },
++      { op: 'add' as const, path: '/vars/list/-', value: { nested: [1, ['deep', null]] } },
++      { op: 'add' as const, path: '/vars/list/-', value: ['inner', ['array']] },
++    ];
++    const after = applyPatch(before, patch);
++    // A final-array shortcut would show the last message for both appends.
++    expect(after.messages.slice(-3).map((message) => message.id)).toEqual(['m0', 'm1', 'm2']);
++    expect(patchDiff(before, after, patch)).toEqual([
++      { op: 'add', path: '/messages/-', before: undefined, after: first },
++      { op: 'add', path: '/messages/-', before: undefined, after: second },
++      { op: 'add', path: '/vars/list/-', before: undefined, after: { nested: [1, ['deep', null]] } },
++      { op: 'add', path: '/vars/list/-', before: undefined, after: ['inner', ['array']] },
++    ]);
++  });
++
++  it('keeps the before and after of the completed patch for operations other than add', () => {
++    const before = sampleThread();
++    before.vars = { list: ['a', 'b'], name: 'old', object: { '-': 'dash' } };
++    const patch = [
++      { op: 'replace' as const, path: '/vars/name', value: 'new' },
++      { op: 'remove' as const, path: '/vars/list/0' },
++      { op: 'replace' as const, path: '/vars/object/-', value: 'replaced dash' },
++    ];
++    expect(patchDiff(before, applyPatch(before, patch), patch)).toEqual([
++      { op: 'replace', path: '/vars/name', before: 'old', after: 'new' },
++      { op: 'remove', path: '/vars/list/0', before: 'a', after: 'b' },
++      { op: 'replace', path: '/vars/object/-', before: 'dash', after: 'replaced dash' },
++    ]);
++  });
++
+   it('resolves escaped append parents and keeps an object property named dash literal', () => {
+     const before = sampleThread();
+     before.vars = { 'a/b~c': [1], object: { '-': 'old' } };
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 885683ba..7b7795b6 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -43,6 +43,39 @@ shows authentication recipe, secret names, body/extraction/key settings or unava
+ | Settings      | Model catalog, classifier models, defaults for model and effort, secrets, API keys, harness preflight status, scheduler status                 |
+ | Events        | Inbound events and webhook deliveries, with what they triggered                                                                                |
+ 
++### Run inspector header status (#386)
++
++The server writes a run record's `lastEventSeq` with each event and publishes the event before it
++projects the record's status, so a record read at, or after, a terminal event's sequence can still
++name the earlier phase, and a refresh can still be in flight when the Timeline shows the outcome.
++The inspector header therefore compares the record with the latest lifecycle marker it has
++observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
++`run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
++the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
++observation or batch cannot undo it; the evidence is held in memory, keeps only sequence numbers and
++terminal statuses, and starts over for another run. Cached history from an earlier visit and a
++selected historical event are not evidence.
++
++- A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
++  `cancelled`; never success for a non-terminal finish status) while the record has not moved past
++  the events this view has seen, including later delivery events it has seen. The header then says
++  **Status from event #N; the run record is updating.** in place of the record's position.
++- A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
++  active status could be a lagging projection or an unseen resume, so the header shows a neutral
++  **Updating status…** until the stream or observation catches up.
++- A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
++  a wait again): a terminal record, or an active one from no later than the known outcome, shows
++  **Updating status…** until a record that has caught up arrives.
++
++This is presentation only. The record's status, failure, result, recovery tokens and permissions,
++delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
++terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
++or a dropped connection is never taken as an outcome, and refresh polling is unchanged.
++
++A selected `node.finished` patch shows each `add` operation's recorded value as **Added value**,
++with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
++their own value, not the final array's last element (#385).
++
+ ## Native Chat and the Goblin PWA (#443)
+ 
+ Chat is the management application's first navigation item and index destination at `/app/chat`.

@@ -1,0 +1,1404 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index bd776eec..fec3f28f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
++  after its event is published, so a refresh could still be in flight, or return the earlier status
++  at the terminal event's sequence, and the header kept saying running. The header now also follows
++  the latest observed lifecycle event (streamed batches, whatever history window is browsed, and the
++  run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
++  **Status from event #N; the run record is updating.** in place of the stale position, and shows
++  **Updating status…** while a start or resume has superseded an outcome, or a newer record could
++  include an unseen resume. Presentation only: the record, controls, recovery, delivery and refresh
++  polling are unchanged. Regressions also cover appended patch values (#385), which already show
++  each `add` operation's recorded value with Before absent. No store, export or contract change.
++
+ - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+ 
+ - Claude no longer reports a missing CLI when Windows refused the working directory (#364).
+diff --git a/apps/web/e2e/inspector-truthfulness.spec.ts b/apps/web/e2e/inspector-truthfulness.spec.ts
+new file mode 100644
+index 00000000..30f4096a
+--- /dev/null
++++ b/apps/web/e2e/inspector-truthfulness.spec.ts
+@@ -0,0 +1,164 @@
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import type { APIRequestContext, Request } from '@playwright/test';
++import { expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
++
++interface RecordedEvent {
++  seq: number;
++  type: string;
++  status?: string;
++}
++
++/** An ordinary run of a published minimal loop on the disposable API, and its recorded finish. */
++async function finishedRun(request: APIRequestContext) {
++  const loopId = await publishLoop(request, {
++    ...minimalLoop(),
++    name: uniqueLoopName('Header truthfulness'),
++  });
++  const started = await request.post(`/loops/${loopId}/runs`, { data: { input: null } });
++  expect(started.status()).toBe(202);
++  const { run } = (await started.json()) as { run: { id: string } };
++  await expect
++    .poll(
++      async () =>
++        ((await (await request.get(`/runs/${run.id}`)).json()) as { status: string }).status,
++      { timeout: 30_000 },
++    )
++    .toBe('succeeded');
++  const page = (await (await request.get(`/runs/${run.id}/events`)).json()) as {
++    items: RecordedEvent[];
++  };
++  const terminal = page.items.find((item) => item.type === 'run.finished');
++  if (!terminal) throw new Error('the run recorded no run.finished event');
++  const response = await request.get(`/runs/${run.id}`);
++  expect(response.status()).toBe(200);
++  const {
++    finishedAt: _finishedAt,
++    finalizedAt: _finalizedAt,
++    outcome: _outcome,
++    result: _result,
++    ...row
++  } = (await response.json()) as Record<string, unknown>;
++  return { runId: run.id, terminal, row };
++}
++
++for (const lag of ['held', 'stale'] as const) {
++  test(`the header shows the outcome the Timeline shows while the run record ${
++    lag === 'held' ? 'refresh is held' : 'still says running at the outcome sequence'
++  } (#386)`, async ({ page, request }) => {
++    const { runId, terminal, row } = await finishedRun(request);
++    expect(terminal.status).toBe('succeeded');
++    let reads = 0;
++    const runRequests: Request[] = [];
++    let returnedReads = 0;
++    let observationReads = 0;
++    let returnedObservations = 0;
++    let activeRoutes = 0;
++    let releaseRun!: () => void;
++    let releaseObservation!: () => void;
++    const heldRun = new Promise<void>((resolve) => {
++      releaseRun = resolve;
++    });
++    const heldObservation = new Promise<void>((resolve) => {
++      releaseObservation = resolve;
++    });
++    // Neither read model can supply the outcome before the streamed event does.
++    await page.route(
++      (url) => url.pathname === `/runs/${runId}/observation`,
++      async (route) => {
++        observationReads += 1;
++        activeRoutes += 1;
++        try {
++          await heldObservation;
++          await route.continue();
++          returnedObservations += 1;
++        } finally {
++          activeRoutes -= 1;
++        }
++      },
++    );
++    // The record as read before the outcome's status projection: still running, at its
++    // position, one event before the outcome or exactly at it. Capture the real row once,
++    // so released handlers do not fetch through a request context being torn down.
++    await page.route(
++      (url) => url.pathname === `/runs/${runId}`,
++      async (route) => {
++        const read = ++reads;
++        runRequests.push(route.request());
++        activeRoutes += 1;
++        try {
++          if (read > 1) await heldRun;
++          await route.fulfill({
++            json: {
++              ...row,
++              status: 'running',
++              currentNodeId: 'done',
++              lastEventSeq: read === 1 && lag === 'held' ? terminal.seq - 1 : terminal.seq,
++            },
++          });
++          returnedReads += 1;
++        } finally {
++          activeRoutes -= 1;
++        }
++      },
++    );
++    try {
++      await page.goto(`/app/runs/${runId}`);
++      const timeline = page.getByRole('list', { name: 'Timeline' });
++      await expect(
++        timeline.getByRole('button', { name: /run\.finished.*succeeded/ }),
++      ).toBeVisible();
++      const header = page
++        .locator('header')
++        .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });
++      await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'succeeded');
++      await expect(
++        header.getByText(`Status from event #${terminal.seq}; the run record is updating.`, {
++          exact: true,
++        }),
++      ).toBeVisible();
++      // The stale record's position is not claimed beside the outcome.
++      await expect(header.getByText(/^at /)).toHaveCount(0);
++      await expect.poll(() => reads).toBeGreaterThan(1);
++      expect(observationReads).toBeGreaterThan(0);
++      expect(returnedObservations).toBe(0);
++      expect(returnedReads).toBe(1);
++
++      // Complete a stale refresh at the outcome sequence while observations remain held.
++      // Wait for every held browser response body and rendering before checking again;
++      // this covers both the run query and the attempt follower's overlapping reads.
++      const heldReads = reads;
++      const refreshed = Promise.all(runRequests.slice(1).map((read) => read.response()));
++      releaseRun();
++      for (const response of await refreshed) {
++        if (!response) throw new Error('a held run refresh ended without a response');
++        expect(await response.finished()).toBeNull();
++        expect(await response.json()).toMatchObject({
++          status: 'running',
++          lastEventSeq: terminal.seq,
++        });
++      }
++      await expect.poll(() => returnedReads).toBeGreaterThanOrEqual(heldReads);
++      await page.evaluate(
++        () =>
++          new Promise<void>((resolve) =>
++            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
++          ),
++      );
++      expect(returnedObservations).toBe(0);
++      await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'succeeded');
++      await expect(
++        header.getByText(`Status from event #${terminal.seq}; the run record is updating.`, {
++          exact: true,
++        }),
++      ).toBeVisible();
++      await expect(header.getByText(/^at /)).toHaveCount(0);
++    } finally {
++      releaseRun();
++      releaseObservation();
++      // Stop the inspector creating more reads, then finish callbacks before removing routes.
++      await page.goto('about:blank');
++      await expect.poll(() => activeRoutes).toBe(0);
++      await page.unrouteAll({ behavior: 'wait' });
++    }
++  });
++}
+diff --git a/apps/web/src/runs/RunInspectorPage.lifecycle.test.tsx b/apps/web/src/runs/RunInspectorPage.lifecycle.test.tsx
+new file mode 100644
+index 00000000..e96e730b
+--- /dev/null
++++ b/apps/web/src/runs/RunInspectorPage.lifecycle.test.tsx
+@@ -0,0 +1,450 @@
++import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
++import { act, screen, waitFor, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it } from 'vitest';
++import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++import { keys } from '../api/queries.js';
++import { MAX_HISTORY_BYTES, useRunEventStore } from './event-store.js';
++
++const actor = { kind: 'user' as const, id: 'local' };
++const UPDATED = /Status from event #\d+; the run record is updating\./;
++
++/** A running record at `run.started`, with that history recorded. */
++function startedRun(api: FakeApi, overrides: Partial<RunRecord> = {}) {
++  const run = api.addRun({ status: 'running', lastEventSeq: 2, ...overrides });
++  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
++  api.pushEvent(run.id, event(run.id, 2, 'run.started', { attempt: 1 }));
++  return run;
++}
++
++/** Holds every run read once `state.blocking` is set, until `release`; records what each returned. */
++function heldRunReads(api: FakeApi, runId: string) {
++  let release!: () => void;
++  const gate = new Promise<void>((resolve) => {
++    release = resolve;
++  });
++  const state = {
++    blocking: false,
++    held: 0,
++    returned: [] as { status: string; lastEventSeq: number }[],
++  };
++  api.override('GET /runs/:id', async (call) => {
++    if (state.blocking) {
++      state.held += 1;
++      await gate;
++      const row = api.runs.get(runId)!;
++      state.returned.push({ status: row.status, lastEventSeq: row.lastEventSeq });
++    }
++    return api.builtIn(call);
++  });
++  return { state, release: () => release() };
++}
++
++/** Answers the run observation with `choose(the server's lifecycle)` as its lifecycle. */
++function observedLifecycle(
++  api: FakeApi,
++  choose: (current: RunEvent | undefined) => RunEvent | undefined,
++) {
++  api.override('GET /runs/:id/observation', async (call) => {
++    const body = (await (await api.builtIn(call)).json()) as { lifecycle?: RunEvent };
++    return new Response(JSON.stringify({ ...body, lifecycle: choose(body.lifecycle) }), {
++      status: 200,
++      headers: { 'content-type': 'application/json' },
++    });
++  });
++}
++
++async function openInspector(runId: string) {
++  const heading = await screen.findByRole('heading', { name: 'Run ' + runId });
++  const header = heading.closest('header')!;
++  const timeline = await screen.findByRole('list', { name: 'Timeline' });
++  await within(timeline).findAllByRole('button', { name: /run\.started/ });
++  return { header, timeline };
++}
++
++const badge = (header: HTMLElement) => header.querySelector('[data-status]');
++
++describe('run header status follows observed lifecycle events (#386)', () => {
++  it.each([
++    { name: 'the refresh after the terminal event is held', releaseStaleRow: false },
++    {
++      name: 'the refreshed record has the terminal sequence but the earlier status',
++      releaseStaleRow: true,
++    },
++  ])('shows the terminal status when $name', async ({ releaseStaleRow }) => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      expect(badge(header)).toHaveAttribute('data-status', 'running');
++      expect(
++        api
++          .callsTo('GET', `/runs/${run.id}/events`)
++          .some((call) => call.headers.get('accept') === 'text/event-stream'),
++      ).toBe(true);
++
++      const terminal = event(run.id, 3, 'run.finished', {
++        status: 'succeeded',
++        outcome: 'success',
++      });
++      reads.state.blocking = true;
++      api.runs.set(run.id, {
++        ...run,
++        status: 'running',
++        lastEventSeq: terminal.seq,
++        currentNodeId: 'stale-position',
++      });
++      act(() => api.pushEvent(run.id, terminal));
++      const terminalRow = await within(timeline).findByRole('button', {
++        name: /run\.finished.*succeeded/,
++      });
++      expect(terminalRow).toHaveTextContent('#3');
++      await waitFor(() => expect(reads.state.held).toBeGreaterThan(0), { timeout: 5000 });
++      expect(reads.state.returned).toHaveLength(0);
++
++      if (releaseStaleRow) {
++        reads.release();
++        // The stale record was read and is the one on screen.
++        await waitFor(() =>
++          expect(
++            view.queryClient.getQueryData<{ currentNodeId?: string }>(keys.run(run.id))
++              ?.currentNodeId,
++          ).toBe('stale-position'),
++        );
++        expect(reads.state.returned[0]).toEqual({ status: 'running', lastEventSeq: terminal.seq });
++      }
++
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', 'succeeded'));
++      expect(
++        within(header).getByText('Status from event #3; the run record is updating.'),
++      ).toBeVisible();
++      // The record's position is not claimed beside an outcome it has not caught up with.
++      expect(within(header).queryByText(/^at .*stale-position/)).toBeNull();
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it.each([
++    {
++      status: 'failed',
++      outcome: (id: string) =>
++        event(id, 3, 'run.failed', {
++          failure: { code: 'INTERNAL_ERROR', message: 'boom', resumable: false },
++        }),
++    },
++    { status: 'cancelled', outcome: (id: string) => event(id, 3, 'run.cancelled', {}) },
++    {
++      status: 'exhausted',
++      outcome: (id: string) =>
++        event(id, 3, 'run.finished', { status: 'exhausted', outcome: 'exhausted' }),
++    },
++  ])('shows the recorded $status outcome, not success', async ({ status, outcome }) => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      reads.state.blocking = true;
++      act(() => api.pushEvent(run.id, outcome(run.id)));
++      await within(timeline).findByText('#3');
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', status));
++      expect(within(header).getByText(UPDATED)).toBeVisible();
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it('does not turn a finish with a non-terminal status, or the stream completing, into success', async () => {
++    const api = new FakeApi();
++    // The fake server completes the stream after this finish, as it does after any outcome.
++    const run = startedRun(api, { currentNodeId: 'work' });
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      reads.state.blocking = true;
++      act(() =>
++        api.pushEvent(
++          run.id,
++          event(run.id, 3, 'run.finished', { status: 'running', outcome: 'success' }),
++        ),
++      );
++      await within(timeline).findByRole('button', { name: /run\.finished/ });
++      // The completed stream's follower reads the record; that read is held.
++      await waitFor(() => expect(reads.state.held).toBeGreaterThan(1), { timeout: 5000 });
++      expect(badge(header)).toHaveAttribute('data-status', 'running');
++      expect(header.querySelector('[data-status="succeeded"]')).toBeNull();
++      expect(within(header).queryByText(UPDATED)).toBeNull();
++      expect(within(header).getByText('at work')).toBeVisible();
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it('keeps the outcome through later delivery events it has seen while the record lags', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      reads.state.blocking = true;
++      api.runs.set(run.id, { ...run, status: 'running', lastEventSeq: 5 });
++      act(() => {
++        api.pushEvent(
++          run.id,
++          event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++        );
++        api.pushEvent(run.id, event(run.id, 4, 'return.delivered', { channel: { kind: 'log' } }));
++        api.pushEvent(run.id, event(run.id, 5, 'return.delivered', { channel: { kind: 'log' } }));
++      });
++      await within(timeline).findByText('#5');
++      reads.release();
++      await waitFor(() => expect(reads.state.returned.length).toBeGreaterThan(0));
++      expect(reads.state.returned[0]).toEqual({ status: 'running', lastEventSeq: 5 });
++      await waitFor(() =>
++        expect(
++          view.queryClient.getQueryData<{ lastEventSeq: number }>(keys.run(run.id))?.lastEventSeq,
++        ).toBe(5),
++      );
++      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
++      expect(
++        within(header).getByText('Status from event #3; the run record is updating.'),
++      ).toBeVisible();
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it('says the status is updating, never the old outcome, when a newer record has unseen history', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const failed = event(run.id, 3, 'run.failed', {
++      failure: { code: 'INTERNAL_ERROR', message: 'boom', resumable: false },
++    });
++    let frozen = false;
++    observedLifecycle(api, (current) => (frozen ? failed : current));
++    let releaseHistory!: () => void;
++    const history = new Promise<void>((resolve) => {
++      releaseHistory = resolve;
++    });
++    api.override('GET /runs/:id/events', async (call) => {
++      if (call.headers.get('accept') !== 'text/event-stream' && call.search.get('after') === '3')
++        await history;
++      return api.builtIn(call);
++    });
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      reads.state.blocking = true;
++      act(() => api.pushEvent(run.id, failed));
++      await within(timeline).findByRole('button', { name: /run\.failed/ });
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', 'failed'));
++      // Resumed and started again elsewhere after this view's stream completed.
++      frozen = true;
++      api.events
++        .get(run.id)!
++        .push(
++          event(run.id, 4, 'run.resumed', { actor }),
++          event(run.id, 5, 'run.started', { attempt: 2 }),
++        );
++      api.runs.set(run.id, { ...run, status: 'running', lastEventSeq: 5 });
++      reads.release();
++      await within(header).findByText('Updating status…');
++      expect(badge(header)).toBeNull();
++      releaseHistory();
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', 'running'), {
++        timeout: 5000,
++      });
++      expect(within(header).queryByText(UPDATED)).toBeNull();
++    } finally {
++      reads.release();
++      releaseHistory();
++      view.unmount();
++    }
++  });
++
++  it.each([
++    {
++      name: 'a resume that parks in a wait again',
++      supersede: (id: string) => event(id, 4, 'run.resumed', { actor }),
++      next: (id: string) =>
++        event(id, 5, 'run.waiting', {
++          nodeId: 'w',
++          wait: { waitId: 'fixture-wait', startedSeq: 5, nodeId: 'w', kind: 'input' },
++        }),
++      status: 'waiting',
++    },
++    {
++      name: 'a new attempt',
++      supersede: (id: string) => event(id, 4, 'run.started', { attempt: 2 }),
++      next: undefined,
++      status: 'running',
++    },
++  ])(
++    'replaces an outcome superseded by $name until the record catches up',
++    async ({ supersede, next, status }) => {
++      const api = new FakeApi();
++      const run = startedRun(api);
++      const reads = heldRunReads(api, run.id);
++      const view = renderApp('/runs/' + run.id, api);
++      try {
++        const { header, timeline } = await openInspector(run.id);
++        reads.state.blocking = true;
++        act(() => {
++          api.pushEvent(
++            run.id,
++            event(run.id, 3, 'run.failed', {
++              failure: { code: 'INTERNAL_ERROR', message: 'boom', resumable: true },
++            }),
++          );
++          api.pushEvent(run.id, supersede(run.id));
++        });
++        await within(timeline).findByText('#4');
++        await within(header).findByText('Updating status…');
++        expect(badge(header)).toBeNull();
++        expect(within(header).queryByText(UPDATED)).toBeNull();
++
++        const following = next?.(run.id);
++        api.runs.set(run.id, {
++          ...run,
++          status: status === 'waiting' ? 'waiting' : 'running',
++          lastEventSeq: following?.seq ?? 4,
++        });
++        if (following) {
++          act(() => api.pushEvent(run.id, following));
++          await within(timeline).findByText('#5');
++        }
++        reads.release();
++        await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', status), {
++          timeout: 5000,
++        });
++        expect(header.querySelector('[data-status="failed"]')).toBeNull();
++      } finally {
++        reads.release();
++        view.unmount();
++      }
++    },
++  );
++
++  it('keeps a newer streamed outcome when a later observation still reports the older start', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const started = api.events.get(run.id)![1]!;
++    observedLifecycle(api, () => started);
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      const observations = () => api.callsTo('GET', `/runs/${run.id}/observation`).length;
++      const before = observations();
++      reads.state.blocking = true;
++      act(() =>
++        api.pushEvent(
++          run.id,
++          event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++        ),
++      );
++      await within(timeline).findByText('#3');
++      await waitFor(() => expect(observations()).toBeGreaterThan(before), { timeout: 5000 });
++      await waitFor(() =>
++        expect(view.queryClient.isFetching({ queryKey: keys.observation(run.id) })).toBe(0),
++      );
++      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it('takes the outcome from a batch the browsed history window does not keep, however large', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api);
++    const reads = heldRunReads(api, run.id);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      // The reader browses history, as the Timeline's paging does.
++      act(() => useRunEventStore.getState().pause(run.id));
++      await screen.findByText(/Following paused\./);
++      reads.state.blocking = true;
++      act(() =>
++        api.pushEvent(
++          run.id,
++          event(run.id, 3, 'run.finished', {
++            status: 'succeeded',
++            outcome: 'success',
++            result: 'r'.repeat(MAX_HISTORY_BYTES),
++          }),
++        ),
++      );
++      await waitFor(() => expect(useRunEventStore.getState().runs[run.id]?.lastSeq).toBe(3));
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', 'succeeded'));
++      expect(within(timeline).queryByRole('button', { name: /run\.finished/ })).toBeNull();
++    } finally {
++      reads.release();
++      view.unmount();
++    }
++  });
++
++  it('ignores a cached terminal from an earlier visit and a selected historical outcome', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api, { lastEventSeq: 5 });
++    const failed = event(run.id, 3, 'run.failed', {
++      failure: { code: 'INTERNAL_ERROR', message: 'boom', resumable: true },
++    });
++    api.pushEvent(run.id, failed);
++    api.pushEvent(run.id, event(run.id, 4, 'run.resumed', { actor }));
++    api.pushEvent(run.id, event(run.id, 5, 'run.started', { attempt: 2 }));
++    const [queued, started] = api.events.get(run.id)!;
++    act(() => useRunEventStore.getState().append(run.id, queued!, started!, failed));
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      await within(timeline).findByText('#5');
++      expect(badge(header)).toHaveAttribute('data-status', 'running');
++      const failedRow = within(timeline).getByRole('button', { name: /run\.failed/ });
++      await userEvent.setup().click(failedRow);
++      await waitFor(() => expect(failedRow).toHaveAttribute('aria-current', 'true'));
++      expect(badge(header)).toHaveAttribute('data-status', 'running');
++      expect(within(header).queryByText(UPDATED)).toBeNull();
++    } finally {
++      view.unmount();
++    }
++  });
++
++  it('starts over for another run, ignoring the previous run’s outcome', async () => {
++    const api = new FakeApi();
++    const other = startedRun(api, { currentNodeId: 'other-work' });
++    const run = startedRun(api, { parentRunId: other.id });
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      act(() =>
++        api.pushEvent(
++          run.id,
++          event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++        ),
++      );
++      await within(timeline).findByText('#3');
++      await waitFor(() => expect(badge(header)).toHaveAttribute('data-status', 'succeeded'));
++      await userEvent.setup().click(within(header).getByRole('link', { name: 'parent run' }));
++      const next = await openInspector(other.id);
++      expect(badge(next.header)).toHaveAttribute('data-status', 'running');
++      expect(within(next.header).getByText('at other-work')).toBeVisible();
++      expect(within(next.header).queryByText(UPDATED)).toBeNull();
++    } finally {
++      view.unmount();
++    }
++  });
++});
+diff --git a/apps/web/src/runs/RunInspectorPage.test.tsx b/apps/web/src/runs/RunInspectorPage.test.tsx
+index 525bf4ec..7d424b22 100644
+--- a/apps/web/src/runs/RunInspectorPage.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.test.tsx
+@@ -55,6 +55,82 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
+   return run;
+ }
+ 
++describe('appended values in a selected patch (#385)', () => {
++  it('shows each recorded append to messages and a variable list, absent before it', async () => {
++    const api = new FakeApi();
++    const run = api.addRun({ status: 'running', lastEventSeq: 5 });
++    const r = run.id;
++    const message = (id: string, content: string) => ({
++      id,
++      role: 'note',
++      content,
++      nodeId: 'append',
++      ts: '2026-10-02T12:00:00.000Z',
++    });
++    api.pushEvent(r, event(r, 1, 'run.queued', queuedFields()));
++    api.pushEvent(r, event(r, 2, 'run.started', { attempt: 1 }));
++    api.pushEvent(
++      r,
++      event(r, 3, 'node.finished', {
++        nodeId: 'prep',
++        durationMs: 1,
++        patch: [
++          { op: 'add', path: '/messages/-', value: message('m0', 'seed message') },
++          { op: 'add', path: '/vars/list', value: ['seed value'] },
++        ],
++      }),
++    );
++    api.pushEvent(
++      r,
++      event(r, 4, 'node.started', {
++        nodeId: 'append',
++        kind: 'mutate',
++        attempt: 1,
++        configHash: 'h',
++      }),
++    );
++    api.pushEvent(
++      r,
++      event(r, 5, 'node.finished', {
++        nodeId: 'append',
++        durationMs: 1,
++        patch: [
++          { op: 'add', path: '/messages/-', value: message('m1', 'first appended') },
++          { op: 'add', path: '/messages/-', value: message('m2', 'second appended') },
++          { op: 'add', path: '/vars/list/-', value: { nested: [1, ['deep value', null]] } },
++          { op: 'add', path: '/vars/list/-', value: ['inner value', ['array value']] },
++        ],
++      }),
++    );
++    renderApp(`/runs/${r}`, api);
++    const timeline = await screen.findByRole('list', { name: 'Timeline' });
++    await userEvent.setup().click(await within(timeline).findByText('#5'));
++    const diff = await screen.findByRole('list', { name: 'Patch diff' });
++    const lines = within(diff).getAllByRole('listitem');
++    expect(lines).toHaveLength(4);
++    // Each line shows its own recorded value; the final array's last element, or the whole
++    // array, would repeat a neighbour's value or the earlier contents.
++    const expected = [
++      ['/messages/-', 'first appended', ['second appended', 'seed message']],
++      ['/messages/-', 'second appended', ['first appended', 'seed message']],
++      ['/vars/list/-', 'deep value', ['inner value', 'seed value']],
++      ['/vars/list/-', 'inner value', ['deep value', 'seed value']],
++    ] as const;
++    for (const [index, [path, shown, others]] of expected.entries()) {
++      const line = lines[index]!;
++      expect(within(line).getByText('Added value')).toBeVisible();
++      expect(within(line).getByLabelText(`Value before ${path}`)).toHaveTextContent('(absent)');
++      const after = within(line).getByLabelText(`Value after ${path}`);
++      await waitFor(() => expect(after).toHaveTextContent(shown));
++      for (const other of others) expect(after).not.toHaveTextContent(other);
++    }
++    expect(within(lines[2]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent('null');
++    expect(within(lines[3]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent(
++      'array value',
++    );
++  });
++});
++
+ describe('RunInspectorPage', () => {
+   it('keeps the previous resolved thread and identifiers while a selected server boundary is pending', async () => {
+     const user = userEvent.setup();
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index b0c163ba..9e7ea00e 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -1,5 +1,5 @@
+ import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
+-import type { RunEvent } from '@graphgoblin/contracts';
++import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
+ import { RunLimits } from './inspector/RunLimits.js';
+ import { HistoryEligibility } from './HistoryEligibility.js';
+ import { formatDateTime } from '../lib/utils.js';
+@@ -10,7 +10,7 @@ import { Link, useParams } from 'react-router';
+ import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
+ import { Page } from '../components/layout/index.js';
+ import { QueryState, RunStatusBadge } from '../components/status.js';
+-import { Alert, BoundedValue, Card } from '../components/ui/index.js';
++import { Alert, Badge, BoundedValue, Card } from '../components/ui/index.js';
+ import { ProgressDrawer } from './inspector/ProgressDrawer.js';
+ import { EvaluationDetails } from './inspector/EvaluationDetails.js';
+ import { RunControls } from './inspector/RunControls.js';
+@@ -21,6 +21,8 @@ import { Timeline } from './inspector/Timeline.js';
+ import { WaitPanel } from './inspector/WaitPanel.js';
+ import { DeliveryPanel } from './inspector/DeliveryPanel.js';
+ import { useRunEvents } from './useRunEvents.js';
++import { useRunHeaderStatus } from './useRunHeaderStatus.js';
++import type { HeaderStatus } from './run-header-status.js';
+ import { useRunHistory } from './useRunHistory.js';
+ import { useLiveRefresh } from './useLiveRefresh.js';
+ import { useApi } from '../api/context.js';
+@@ -70,6 +72,43 @@ function FailedChildLink({ details }: { details: unknown }) {
+   );
+ }
+ 
++/**
++ * The header's execution status (#386): the record's, or a lifecycle event the record has not
++ * caught up with yet. Presentation only; controls, recovery and the failure stay the record's.
++ */
++function HeaderStatusBadge({ status }: { status: HeaderStatus }) {
++  return status.kind === 'updating' ? (
++    <Badge tone="neutral" data-status-updating="">
++      Updating status…
++    </Badge>
++  ) : (
++    <RunStatusBadge status={status.status} />
++  );
++}
++
++/**
++ * Where the run is, beside the header status. A record's position is shown only with the
++ * record's own status: beside a newer event's status or an unresolved one it could be stale.
++ */
++function HeaderPosition({
++  status,
++  nodeId,
++  definition,
++}: {
++  status: HeaderStatus;
++  nodeId: string | undefined;
++  definition: LoopDefinition | undefined;
++}) {
++  if (status.kind === 'event')
++    return (
++      <span className="min-w-0 wrap-anywhere">
++        Status from event #{status.seq}; the run record is updating.
++      </span>
++    );
++  if (status.kind === 'updating' || !nodeId) return null;
++  return <span className="min-w-0 wrap-anywhere">at {nodeName(definition, nodeId)}</span>;
++}
++
+ /**
+  * One run: its status and controls, failure or result, the waiting-for-input form, then the
+  * timeline beside the thread at the chosen event (with that event's patch) and node progress.
+@@ -79,16 +118,21 @@ export function RunInspectorPage() {
+   const runQuery = useRun(runId);
+   const threadQuery = useRunThread(runId);
+   const live = useLiveRefresh(runId);
+-  const log = useRunEvents(runId, live.notify);
+   const client = useApi();
+-  const history = useRunHistory(runId, log);
+-  const selectedSeq = history.selectedSeq;
+-  const seq = selectedSeq ?? log.lastSeq;
+-  const selectedEvent = history.selectedEvent;
+   const observation = useQuery({
+     queryKey: keys.observation(runId),
+     queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
+   });
++  // Every accepted batch reaches the header's lifecycle evidence, whatever window is shown (#386).
++  const header = useRunHeaderStatus(runId, observation.data?.lifecycle);
++  const log = useRunEvents(runId, (events) => {
++    if (events) header.observe(runId, events);
++    live.notify(events);
++  });
++  const history = useRunHistory(runId, log);
++  const selectedSeq = history.selectedSeq;
++  const seq = selectedSeq ?? log.lastSeq;
++  const selectedEvent = history.selectedEvent;
+   const present = (events: (RunEvent | undefined)[]) =>
+     events.filter((event): event is RunEvent => event !== undefined);
+   const evidence = present([
+@@ -171,14 +215,14 @@ export function RunInspectorPage() {
+                     {run.id}
+                   </span>
+                 </h1>
+-                <RunStatusBadge status={run.status} />
++                <HeaderStatusBadge status={header.status(run)} />
+               </div>
+               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+-                {run.currentNodeId ? (
+-                  <span className="min-w-0 wrap-anywhere">
+-                    at {nodeName(definition, run.currentNodeId)}
+-                  </span>
+-                ) : null}
++                <HeaderPosition
++                  status={header.status(run)}
++                  nodeId={run.currentNodeId}
++                  definition={definition}
++                />
+                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
+                   loop
+                 </Link>
+diff --git a/apps/web/src/runs/projections.exact-values.test.ts b/apps/web/src/runs/projections.exact-values.test.ts
+index bf7189b3..95b5ae12 100644
+--- a/apps/web/src/runs/projections.exact-values.test.ts
++++ b/apps/web/src/runs/projections.exact-values.test.ts
+@@ -2,7 +2,7 @@ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+ import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+ import { applyPatch } from '@graphgoblin/domain';
+ import { describe, expect, it } from 'vitest';
+-import { event } from '../__fixtures__/fake-api.js';
++import { event, TS } from '../__fixtures__/fake-api.js';
+ import {
+   patchDiff,
+   describeEvent,
+@@ -30,6 +30,51 @@ describe('exact recorded execution projections (#255)', () => {
+     expect(before.vars['items']).toEqual(['already present']);
+   });
+ 
++  it('shows each append to messages and a variable list as absent before and its recorded value after (#385)', () => {
++    const seed = { id: 'm0', role: 'note', content: 'seed', nodeId: 'prep', ts: TS };
++    const before = applyPatch(sampleThread(), [
++      { op: 'add' as const, path: '/messages/-', value: seed },
++      { op: 'add' as const, path: '/vars/list', value: ['seed'] },
++    ]);
++    const first = { ...seed, id: 'm1', content: 'first appended' };
++    const second = { ...seed, id: 'm2', content: 'second appended' };
++    const patch = [
++      { op: 'add' as const, path: '/messages/-', value: first },
++      { op: 'add' as const, path: '/messages/-', value: second },
++      { op: 'add' as const, path: '/vars/list/-', value: { nested: [1, ['deep', null]] } },
++      { op: 'add' as const, path: '/vars/list/-', value: ['inner', ['array']] },
++    ];
++    const after = applyPatch(before, patch);
++    // A final-array shortcut would show the last message for both appends.
++    expect(after.messages.slice(-3).map((message) => message.id)).toEqual(['m0', 'm1', 'm2']);
++    expect(patchDiff(before, after, patch)).toEqual([
++      { op: 'add', path: '/messages/-', before: undefined, after: first },
++      { op: 'add', path: '/messages/-', before: undefined, after: second },
++      {
++        op: 'add',
++        path: '/vars/list/-',
++        before: undefined,
++        after: { nested: [1, ['deep', null]] },
++      },
++      { op: 'add', path: '/vars/list/-', before: undefined, after: ['inner', ['array']] },
++    ]);
++  });
++
++  it('keeps the before and after of the completed patch for operations other than add', () => {
++    const before = sampleThread();
++    before.vars = { list: ['a', 'b'], name: 'old', object: { '-': 'dash' } };
++    const patch = [
++      { op: 'replace' as const, path: '/vars/name', value: 'new' },
++      { op: 'remove' as const, path: '/vars/list/0' },
++      { op: 'replace' as const, path: '/vars/object/-', value: 'replaced dash' },
++    ];
++    expect(patchDiff(before, applyPatch(before, patch), patch)).toEqual([
++      { op: 'replace', path: '/vars/name', before: 'old', after: 'new' },
++      { op: 'remove', path: '/vars/list/0', before: 'a', after: 'b' },
++      { op: 'replace', path: '/vars/object/-', before: 'dash', after: 'replaced dash' },
++    ]);
++  });
++
+   it('resolves escaped append parents and keeps an object property named dash literal', () => {
+     const before = sampleThread();
+     before.vars = { 'a/b~c': [1], object: { '-': 'old' } };
+diff --git a/apps/web/src/runs/run-header-status.test.ts b/apps/web/src/runs/run-header-status.test.ts
+new file mode 100644
+index 00000000..dafebd01
+--- /dev/null
++++ b/apps/web/src/runs/run-header-status.test.ts
+@@ -0,0 +1,169 @@
++import type { RunEvent, RunStatus } from '@graphgoblin/contracts';
++import { describe, expect, it } from 'vitest';
++import { event } from '../__fixtures__/fake-api.js';
++import {
++  emptyEvidence,
++  headerStatus,
++  lifecycleMarker,
++  observeEvents,
++  observeLifecycle,
++} from './run-header-status.js';
++
++const R = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
++const OTHER = '01ARZ3NDEKTSV4RRFFQ69G5FAW';
++const actor = { kind: 'user' as const, id: 'local' };
++const succeeded = (seq: number, runId = R) =>
++  event(runId, seq, 'run.finished', { status: 'succeeded', outcome: 'success' });
++const failed = (seq: number) =>
++  event(R, seq, 'run.failed', {
++    failure: { code: 'INTERNAL_ERROR', message: 'boom', resumable: true },
++  });
++const delivered = (seq: number) => event(R, seq, 'return.delivered', { channel: { kind: 'log' } });
++const resumed = (seq: number) => event(R, seq, 'run.resumed', { actor });
++const started = (seq: number) => event(R, seq, 'run.started', { attempt: 2 });
++const seen = (...events: RunEvent[]) => observeEvents(emptyEvidence(R), events);
++const row = (status: RunStatus, lastEventSeq: number) => ({ status, lastEventSeq });
++
++describe('lifecycle markers', () => {
++  it('records the actual terminal status and no phase for a start, resume or unsupported finish', () => {
++    expect(lifecycleMarker(succeeded(3))).toEqual({ seq: 3, terminal: 'succeeded' });
++    expect(
++      lifecycleMarker(event(R, 3, 'run.finished', { status: 'exhausted', outcome: 'exhausted' })),
++    ).toEqual({ seq: 3, terminal: 'exhausted' });
++    expect(lifecycleMarker(failed(4))).toEqual({ seq: 4, terminal: 'failed' });
++    expect(lifecycleMarker(event(R, 5, 'run.cancelled', {}))).toEqual({
++      seq: 5,
++      terminal: 'cancelled',
++    });
++    expect(
++      lifecycleMarker(event(R, 6, 'run.finished', { status: 'running', outcome: 'success' })),
++    ).toEqual({ seq: 6 });
++    expect(lifecycleMarker(resumed(7))).toEqual({ seq: 7 });
++    expect(lifecycleMarker(started(8))).toEqual({ seq: 8 });
++    expect(lifecycleMarker(event(R, 9, 'run.paused', { actor }))).toBeUndefined();
++    expect(lifecycleMarker(delivered(10))).toBeUndefined();
++  });
++});
++
++describe('header status', () => {
++  it('shows the record until a lifecycle marker is observed', () => {
++    expect(headerStatus(emptyEvidence(R), row('running', 9))).toEqual({
++      kind: 'record',
++      status: 'running',
++    });
++    expect(headerStatus(seen(delivered(1)), row('queued', 1))).toEqual({
++      kind: 'record',
++      status: 'queued',
++    });
++  });
++
++  it('shows an observed outcome over a record at or before it, and the agreeing record as itself', () => {
++    const evidence = seen(started(2), succeeded(3));
++    const event3 = { kind: 'event', status: 'succeeded', seq: 3 };
++    expect(headerStatus(evidence, row('running', 2))).toEqual(event3);
++    // The record is written with the terminal sequence before its status is projected.
++    expect(headerStatus(evidence, row('running', 3))).toEqual(event3);
++    expect(headerStatus(evidence, row('succeeded', 3))).toEqual({
++      kind: 'record',
++      status: 'succeeded',
++    });
++    // An earlier attempt's failure is older than the outcome.
++    expect(headerStatus(evidence, row('failed', 1))).toEqual(event3);
++  });
++
++  it('keeps the outcome through later events it has seen, but not beyond them', () => {
++    const evidence = seen(succeeded(3), delivered(4), delivered(5));
++    expect(evidence.through).toBe(5);
++    expect(headerStatus(evidence, row('running', 5))).toMatchObject({ kind: 'event' });
++    // An unseen tail could be a delivery audit or a resume.
++    expect(headerStatus(evidence, row('running', 6))).toEqual({ kind: 'updating' });
++    // A newer terminal record is shown as recorded rather than latched to the older outcome.
++    expect(headerStatus(evidence, row('failed', 9))).toEqual({ kind: 'record', status: 'failed' });
++  });
++
++  it('does not extend coverage across a gap', () => {
++    const gapped = observeEvents(seen(succeeded(3)), [delivered(5), delivered(6)]);
++    expect(gapped.through).toBe(3);
++    expect(headerStatus(gapped, row('running', 6))).toEqual({ kind: 'updating' });
++    const filled = observeEvents(gapped, [delivered(4), delivered(5), delivered(6)]);
++    expect(filled.through).toBe(6);
++    expect(headerStatus(filled, row('running', 6))).toMatchObject({ kind: 'event' });
++  });
++
++  it('supersedes an outcome at once with a start or resume, without inventing a phase', () => {
++    for (const supersede of [resumed(4), started(4)]) {
++      const evidence = seen(failed(3), supersede);
++      expect(evidence.terminalSeq).toBe(3);
++      expect(headerStatus(evidence, row('failed', 3))).toEqual({ kind: 'updating' });
++      expect(headerStatus(evidence, row('failed', 4))).toEqual({ kind: 'updating' });
++      expect(headerStatus(evidence, row('running', 2))).toEqual({ kind: 'updating' });
++      expect(headerStatus(evidence, row('running', 3))).toEqual({ kind: 'updating' });
++      // A record that has caught up says where the run is, a parked wait included.
++      expect(headerStatus(evidence, row('waiting', 4))).toEqual({
++        kind: 'record',
++        status: 'waiting',
++      });
++      expect(headerStatus(evidence, row('running', 4))).toEqual({
++        kind: 'record',
++        status: 'running',
++      });
++      // A terminal record beyond what was seen is newer evidence.
++      expect(headerStatus(evidence, row('succeeded', 8))).toEqual({
++        kind: 'record',
++        status: 'succeeded',
++      });
++    }
++    const parked = observeEvents(seen(failed(3), resumed(4)), [
++      event(R, 5, 'run.waiting', {
++        nodeId: 'w',
++        wait: { waitId: 'fixture-wait', startedSeq: 5, nodeId: 'w', kind: 'input' },
++      }),
++    ]);
++    expect(parked.through).toBe(5);
++    expect(headerStatus(parked, row('failed', 5))).toEqual({ kind: 'updating' });
++  });
++
++  it('leaves an ordinary start, and a finish without a terminal status, to the record', () => {
++    expect(headerStatus(seen(started(2)), row('queued', 1))).toEqual({
++      kind: 'record',
++      status: 'queued',
++    });
++    const unsupported = seen(
++      event(R, 3, 'run.finished', { status: 'running', outcome: 'success' }),
++    );
++    expect(headerStatus(unsupported, row('running', 3))).toEqual({
++      kind: 'record',
++      status: 'running',
++    });
++    expect(headerStatus(unsupported, row('failed', 2))).toEqual({ kind: 'updating' });
++  });
++});
++
++describe('evidence ordering and identity', () => {
++  it('folds batches in sequence order and never lets an older marker undo a newer one', () => {
++    const evidence = seen(resumed(4), failed(3));
++    expect(evidence.marker).toEqual({ seq: 4 });
++    expect(observeEvents(evidence, [failed(3), succeeded(2)])).toBe(evidence);
++  });
++
++  it('ignores events of another run', () => {
++    expect(observeEvents(emptyEvidence(R), [succeeded(3, OTHER)])).toEqual(emptyEvidence(R));
++  });
++
++  it('takes a newer observation lifecycle, ignoring an older, foreign or non-lifecycle one', () => {
++    const evidence = seen(succeeded(3), delivered(4));
++    expect(observeLifecycle(evidence, undefined)).toBe(evidence);
++    expect(observeLifecycle(evidence, started(2))).toBe(evidence);
++    expect(observeLifecycle(evidence, succeeded(3))).toBe(evidence);
++    expect(observeLifecycle(evidence, succeeded(9, OTHER))).toBe(evidence);
++    expect(observeLifecycle(emptyEvidence(R), delivered(4))).toEqual(emptyEvidence(R));
++    const newer = observeLifecycle(evidence, resumed(6));
++    expect(newer).toEqual({ runId: R, marker: { seq: 6 }, terminalSeq: 3, through: 6 });
++    // Streamed events after the observed marker extend its coverage.
++    expect(observeEvents(newer, [resumed(6), started(7)]).marker).toEqual({ seq: 7 });
++    const observed = observeLifecycle(emptyEvidence(R), succeeded(3));
++    expect(headerStatus(observed, row('running', 3))).toMatchObject({ kind: 'event' });
++    expect(headerStatus(observed, row('running', 4))).toEqual({ kind: 'updating' });
++    expect(observeEvents(observed, [delivered(4)]).through).toBe(4);
++  });
++});
+diff --git a/apps/web/src/runs/run-header-status.ts b/apps/web/src/runs/run-header-status.ts
+new file mode 100644
+index 00000000..b2c4306d
+--- /dev/null
++++ b/apps/web/src/runs/run-header-status.ts
+@@ -0,0 +1,145 @@
++import type { RunEvent, RunStatus } from '@graphgoblin/contracts';
++import { isTerminal } from '@graphgoblin/domain';
++
++/**
++ * Header-only status evidence for one run (#386). The run record is projected after its event is
++ * appended and published, so a record read at, or even beyond, a terminal event's sequence can still
++ * name the earlier phase. The header compares the record with the latest lifecycle marker this view
++ * has observed: streamed batches as they are accepted, whatever history window is shown, and the
++ * whole-run observation's `lifecycle`. Nothing here changes the record, its recovery, failure,
++ * result, delivery or controls; they stay the server's.
++ */
++export interface LifecycleMarker {
++  seq: number;
++  /**
++   * The terminal status the marker records. Absent for a start or a resume, and for a finish
++   * whose recorded status is not terminal: those supersede an earlier outcome but establish no
++   * phase the header could show.
++   */
++  terminal?: RunStatus;
++}
++
++export interface HeaderEvidence {
++  readonly runId: string;
++  /** The latest lifecycle marker observed for `runId`. */
++  readonly marker?: LifecycleMarker;
++  /** The latest terminal marker's sequence, kept while a later start or resume supersedes it. */
++  readonly terminalSeq?: number;
++  /** Every event after `marker` through this sequence has been seen; none was a later marker. */
++  readonly through: number;
++}
++
++/**
++ * What the header shows: the record's own status, a terminal event the record has not caught up
++ * with, or that the status is being updated because the record and newer evidence disagree.
++ */
++export type HeaderStatus =
++  | { kind: 'record'; status: RunStatus }
++  | { kind: 'event'; status: RunStatus; seq: number }
++  | { kind: 'updating' };
++
++export interface RecordedPosition {
++  status: RunStatus;
++  lastEventSeq: number;
++}
++
++export function emptyEvidence(runId: string): HeaderEvidence {
++  return { runId, through: 0 };
++}
++
++/** The lifecycle markers the run observation reports; any other event is not one. */
++export function lifecycleMarker(event: RunEvent): LifecycleMarker | undefined {
++  switch (event.type) {
++    case 'run.finished':
++      return isTerminal(event.status)
++        ? { seq: event.seq, terminal: event.status }
++        : { seq: event.seq };
++    case 'run.failed':
++      return { seq: event.seq, terminal: 'failed' };
++    case 'run.cancelled':
++      return { seq: event.seq, terminal: 'cancelled' };
++    case 'run.started':
++    case 'run.resumed':
++      return { seq: event.seq };
++    default:
++      return undefined;
++  }
++}
++
++function withMarker(evidence: HeaderEvidence, marker: LifecycleMarker): HeaderEvidence {
++  const terminalSeq = marker.terminal ? marker.seq : evidence.terminalSeq;
++  return {
++    runId: evidence.runId,
++    marker,
++    through: marker.seq,
++    ...(terminalSeq === undefined ? {} : { terminalSeq }),
++  };
++}
++
++/**
++ * Folds an accepted batch, in sequence order. Only the run's own events count; an event at or
++ * before the known coverage changes nothing, so a replayed or older marker never undoes a newer
++ * one. Coverage grows only without gaps: an unseen event could be a resume.
++ */
++export function observeEvents(
++  evidence: HeaderEvidence,
++  events: readonly RunEvent[],
++): HeaderEvidence {
++  let next = evidence;
++  const ordered = events
++    .filter((event) => event.runId === evidence.runId)
++    .sort((a, b) => a.seq - b.seq);
++  for (const event of ordered) {
++    if (next.marker && event.seq <= next.through) continue;
++    const marker = lifecycleMarker(event);
++    if (marker) next = withMarker(next, marker);
++    else if (next.marker && event.seq === next.through + 1) next = { ...next, through: event.seq };
++  }
++  return next;
++}
++
++/**
++ * Folds the whole-run observation's latest lifecycle marker. A delayed or cached observation older
++ * than what this view has seen, or one for another run, changes nothing. The observation shows no
++ * event after its marker, so coverage starts at the marker itself.
++ */
++export function observeLifecycle(
++  evidence: HeaderEvidence,
++  lifecycle: RunEvent | undefined,
++): HeaderEvidence {
++  if (!lifecycle || lifecycle.runId !== evidence.runId) return evidence;
++  if (evidence.marker && lifecycle.seq <= evidence.marker.seq) return evidence;
++  const marker = lifecycleMarker(lifecycle);
++  return marker ? withMarker(evidence, marker) : evidence;
++}
++
++/**
++ * The header's status for `row`. A terminal marker shows its own status while the record has not
++ * moved past what this view has seen, which includes a record at exactly the marker's sequence
++ * that still names the earlier phase, and one whose later events (delivery audits) are all known.
++ * A record beyond that coverage is newer evidence: its terminal status is shown, but an active
++ * status there could be a stale projection or an unseen resume, so the header says it is updating.
++ * A start or resume supersedes an earlier outcome at once without naming a phase (a resume can park
++ * in a wait again), so a terminal record, or an active one older than a known outcome, is replaced
++ * by the updating state until a record that has caught up arrives.
++ */
++export function headerStatus(evidence: HeaderEvidence, row: RecordedPosition): HeaderStatus {
++  const record: HeaderStatus = { kind: 'record', status: row.status };
++  const { marker } = evidence;
++  if (!marker) return record;
++  const rowTerminal = isTerminal(row.status);
++  if (marker.terminal) {
++    if (row.status === marker.terminal) return record;
++    if (row.lastEventSeq <= evidence.through)
++      return { kind: 'event', status: marker.terminal, seq: marker.seq };
++    return rowTerminal ? record : { kind: 'updating' };
++  }
++  if (row.lastEventSeq < marker.seq) {
++    if (rowTerminal) return { kind: 'updating' };
++    const outcome = evidence.terminalSeq;
++    // An active record from no later than a known outcome predates that outcome's projection.
++    return outcome !== undefined && row.lastEventSeq <= outcome ? { kind: 'updating' } : record;
++  }
++  if (!rowTerminal) return record;
++  return row.lastEventSeq <= evidence.through ? { kind: 'updating' } : record;
++}
+diff --git a/apps/web/src/runs/useRunHeaderStatus.test.tsx b/apps/web/src/runs/useRunHeaderStatus.test.tsx
+new file mode 100644
+index 00000000..22c19ad9
+--- /dev/null
++++ b/apps/web/src/runs/useRunHeaderStatus.test.tsx
+@@ -0,0 +1,63 @@
++import type { RunEvent } from '@graphgoblin/contracts';
++import { act, renderHook } from '@testing-library/react';
++import { describe, expect, it } from 'vitest';
++import { event } from '../__fixtures__/fake-api.js';
++import { useRunHeaderStatus } from './useRunHeaderStatus.js';
++
++const A = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
++const B = '01ARZ3NDEKTSV4RRFFQ69G5FAW';
++const finished = (runId: string, seq: number) =>
++  event(runId, seq, 'run.finished', { status: 'succeeded', outcome: 'success' });
++const resumed = (runId: string, seq: number) =>
++  event(runId, seq, 'run.resumed', { actor: { kind: 'user', id: 'local' } });
++const running = (lastEventSeq: number) => ({ status: 'running' as const, lastEventSeq });
++
++function mount(runId: string, lifecycle?: RunEvent) {
++  return renderHook(
++    (props: { runId: string; lifecycle: RunEvent | undefined }) =>
++      useRunHeaderStatus(props.runId, props.lifecycle),
++    { initialProps: { runId, lifecycle } },
++  );
++}
++
++describe('useRunHeaderStatus (#386)', () => {
++  it('keeps the evidence for the run shown and starts over for another run', () => {
++    const { result, rerender } = mount(A);
++    act(() => result.current.observe(A, [finished(A, 3)]));
++    expect(result.current.status(running(3))).toEqual({
++      kind: 'event',
++      status: 'succeeded',
++      seq: 3,
++    });
++    // A batch streamed for another run is not this run's evidence.
++    act(() => result.current.observe(B, [finished(B, 9)]));
++    expect(result.current.status(running(9))).toEqual({ kind: 'updating' });
++
++    rerender({ runId: B, lifecycle: undefined });
++    expect(result.current.status(running(3))).toEqual({ kind: 'record', status: 'running' });
++    // A late batch from the previous run's stream changes nothing.
++    act(() => result.current.observe(A, [finished(A, 4)]));
++    expect(result.current.status(running(4))).toEqual({ kind: 'record', status: 'running' });
++    act(() => result.current.observe(B, [finished(B, 2)]));
++    expect(result.current.status(running(2))).toMatchObject({ kind: 'event', seq: 2 });
++  });
++
++  it('merges the observation lifecycle by run and order', () => {
++    const { result, rerender } = mount(A, event(A, 2, 'run.started', { attempt: 1 }));
++    expect(result.current.status(running(2))).toEqual({ kind: 'record', status: 'running' });
++    act(() => result.current.observe(A, [finished(A, 3)]));
++    // A delayed observation of the earlier start does not undo the observed outcome.
++    rerender({ runId: A, lifecycle: event(A, 2, 'run.started', { attempt: 1 }) });
++    expect(result.current.status(running(3))).toMatchObject({ kind: 'event', seq: 3 });
++    // Another run's observation is ignored.
++    rerender({ runId: A, lifecycle: resumed(B, 7) });
++    expect(result.current.status(running(3))).toMatchObject({ kind: 'event', seq: 3 });
++    // A newer observed resume supersedes the outcome until the record catches up.
++    rerender({ runId: A, lifecycle: resumed(A, 5) });
++    expect(result.current.status(running(3))).toEqual({ kind: 'updating' });
++    expect(result.current.status({ status: 'waiting', lastEventSeq: 5 })).toEqual({
++      kind: 'record',
++      status: 'waiting',
++    });
++  });
++});
+diff --git a/apps/web/src/runs/useRunHeaderStatus.ts b/apps/web/src/runs/useRunHeaderStatus.ts
+new file mode 100644
+index 00000000..9ad94ccf
+--- /dev/null
++++ b/apps/web/src/runs/useRunHeaderStatus.ts
+@@ -0,0 +1,38 @@
++import type { RunEvent } from '@graphgoblin/contracts';
++import { useCallback, useState } from 'react';
++import {
++  emptyEvidence,
++  headerStatus,
++  observeEvents,
++  observeLifecycle,
++  type HeaderStatus,
++  type RecordedPosition,
++} from './run-header-status.js';
++
++/**
++ * The run header's status evidence (#386), held by the inspector for the run it shows and reset
++ * when the run changes. `observe` takes each accepted streamed batch with the run it was streamed
++ * for; a batch for another run is ignored. `lifecycle` is the whole-run observation's latest
++ * marker. Only sequence numbers and terminal statuses are kept, never payloads, and nothing is
++ * stored on the device.
++ */
++export function useRunHeaderStatus(
++  runId: string,
++  lifecycle: RunEvent | undefined,
++): {
++  observe: (streamedFor: string, events: readonly RunEvent[]) => void;
++  status: (row: RecordedPosition) => HeaderStatus;
++} {
++  const [stored, setStored] = useState(() => emptyEvidence(runId));
++  const evidence = observeLifecycle(
++    stored.runId === runId ? stored : emptyEvidence(runId),
++    lifecycle,
++  );
++  if (evidence !== stored) setStored(evidence);
++  const observe = useCallback((streamedFor: string, events: readonly RunEvent[]) => {
++    setStored((current) =>
++      current.runId === streamedFor ? observeEvents(current, events) : current,
++    );
++  }, []);
++  return { observe, status: (row) => headerStatus(evidence, row) };
++}
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 885683ba..7b7795b6 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -43,6 +43,39 @@ shows authentication recipe, secret names, body/extraction/key settings or unava
+ | Settings      | Model catalog, classifier models, defaults for model and effort, secrets, API keys, harness preflight status, scheduler status                 |
+ | Events        | Inbound events and webhook deliveries, with what they triggered                                                                                |
+ 
++### Run inspector header status (#386)
++
++The server writes a run record's `lastEventSeq` with each event and publishes the event before it
++projects the record's status, so a record read at, or after, a terminal event's sequence can still
++name the earlier phase, and a refresh can still be in flight when the Timeline shows the outcome.
++The inspector header therefore compares the record with the latest lifecycle marker it has
++observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
++`run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
++the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
++observation or batch cannot undo it; the evidence is held in memory, keeps only sequence numbers and
++terminal statuses, and starts over for another run. Cached history from an earlier visit and a
++selected historical event are not evidence.
++
++- A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
++  `cancelled`; never success for a non-terminal finish status) while the record has not moved past
++  the events this view has seen, including later delivery events it has seen. The header then says
++  **Status from event #N; the run record is updating.** in place of the record's position.
++- A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
++  active status could be a lagging projection or an unseen resume, so the header shows a neutral
++  **Updating status…** until the stream or observation catches up.
++- A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
++  a wait again): a terminal record, or an active one from no later than the known outcome, shows
++  **Updating status…** until a record that has caught up arrives.
++
++This is presentation only. The record's status, failure, result, recovery tokens and permissions,
++delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
++terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
++or a dropped connection is never taken as an outcome, and refresh polling is unchanged.
++
++A selected `node.finished` patch shows each `add` operation's recorded value as **Added value**,
++with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
++their own value, not the final array's last element (#385).
++
+ ## Native Chat and the Goblin PWA (#443)
+ 
+ Chat is the management application's first navigation item and index destination at `/app/chat`.

@@ -1,0 +1,47 @@
+{
+  "reviewId": "i5-386-gpt-review-01",
+  "mode": "first general full-feature opposite-family GPT review of Claude production UI",
+  "verdict": "CHANGES_REQUIRED",
+  "reviewedHead": "58227ea02a00fcfe67775ddc8d337b3bab61406d",
+  "reviewedTree": "0585acf06f5f6a2ff7974ae1e8358b4ba09c4fb3",
+  "comparisonBase": "3a6943a136594162665667a7a55e2b46520912eb",
+  "comparisonTree": "a88175975c42062a08e3012a7f106396be0c685f",
+  "generalScansUsed": 1,
+  "generalScansMaximum": 3,
+  "finalIndependentAstraMaxAuditReserved": true,
+  "findings": [
+    {
+      "id": "R1",
+      "signature": "header-lifecycle/predecessor-terminal-lost-on-overtaking-observation",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "line": "apps/web/src/runs/run-header-status.ts:93",
+      "witness": "review-witness.test.tsx case 1",
+      "log": "witness-run-02.log"
+    },
+    {
+      "id": "R2",
+      "signature": "header-position/equal-status-cross-attempt-record",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "line": "apps/web/src/runs/run-header-status.ts:132",
+      "witness": "review-witness.test.tsx case 2",
+      "log": "witness-run-02.log"
+    },
+    {
+      "id": "R3",
+      "signature": "header-navigation/cached-observation-revives-superseded-terminal",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "line": "apps/web/src/runs/useRunHeaderStatus.ts:27",
+      "witness": "review-navigation.test.tsx case 1",
+      "log": "witness-run-03.log"
+    }
+  ],
+  "issue385": {
+    "disposition": "NO-CHANGE",
+    "scope": "existing production projection; retain the new public regressions"
+  },
+  "remoteWrites": 0,
+  "mergeApproval": false
+}

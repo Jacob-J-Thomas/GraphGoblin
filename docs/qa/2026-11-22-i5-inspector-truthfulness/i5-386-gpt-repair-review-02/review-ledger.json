@@ -1,0 +1,72 @@
+{
+  "reviewId": "i5-386-gpt-repair-review-02",
+  "mode": "independent targeted full corrective delta review",
+  "verdict": "CHANGES_REQUIRED",
+  "head": "0f500bd9355d22a7497f5e4e211a85376a53151f",
+  "tree": "a9154362e2938cb7645acc79f8ab3dc109953a3d",
+  "parent": "9a895ce29a53e568b540bfd7de1a0e8fb37fa5f9",
+  "comparisonHead": "58227ea02a00fcfe67775ddc8d337b3bab61406d",
+  "reviewScansUsed": 2,
+  "reviewScanMaximum": 3,
+  "freshAstraMaxAuditReserved": true,
+  "candidateIdentity": "source-and-inputs.json",
+  "originalFindings": {
+    "R1": "REPAIRED_ON_REVIEWED_SCHEDULES",
+    "R2": "REPAIRED_ON_REVIEWED_SCHEDULES",
+    "R3": "REPAIRED_ON_REVIEWED_SCHEDULES"
+  },
+  "findings": [
+    {
+      "id": "R2-1",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "signature": "header-status/uncertified-agreement-suppresses-current-terminal",
+      "primaryPath": "apps/web/src/runs/run-header-status.ts",
+      "line": 172,
+      "witness": "terminal-witness.test.tsx",
+      "witnessLine": 13,
+      "execution": "witness-run-02.log"
+    },
+    {
+      "id": "R2-2",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "signature": "header-row/foreign-id-borrows-same-position",
+      "primaryPath": "apps/web/src/api/queries.ts",
+      "line": 152,
+      "witness": "boundary-witness.test.tsx",
+      "witnessLine": 25,
+      "execution": "witness-run-01.log"
+    },
+    {
+      "id": "R2-3",
+      "priority": "P2",
+      "disposition": "FIX-IN-PR",
+      "signature": "header-auth/same-key-recovery-misses-quiet-run-read",
+      "primaryPath": "apps/web/src/runs/useRunEvents.ts",
+      "line": 150,
+      "relatedPath": "apps/web/src/api/ApiKeyPanel.tsx:55",
+      "witness": "boundary-witness.test.tsx",
+      "witnessLine": 45,
+      "execution": "witness-run-01.log"
+    }
+  ],
+  "issue385": "NO_PRODUCTION_CHANGE_EXISTING_BEHAVIOR_CONFIRMED",
+  "evidence": {
+    "correctiveDeltaFiles": 19,
+    "cumulativeFiles": 22,
+    "lastCommitSupportingFiles": 9,
+    "sourceBlobsInProbe": 494,
+    "reviewWitnessRuns": 2,
+    "reviewCharacterizationsOfDefectsPassed": 3,
+    "qaComponents": {"passed": 31, "total": 31},
+    "qaFirstHeldProjectionBrowser": {"passed": 4, "total": 5},
+    "qaOriginalHarnessInitialSelectorCases": 0,
+    "qaOriginalHarnessCorrectedSelector": {"passed": 1, "total": 1},
+    "reviewAcceptedCoverageOrCI": false,
+    "releaseOrOwnerAcceptance": false
+  },
+  "deferred": [],
+  "published": false,
+  "productionOrIndexWrites": false
+}

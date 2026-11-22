@@ -1,0 +1,582 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 56ee6da2..395e699a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -16,6 +16,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   memory. A record needs a successful, non-aborted, matching run read from the current client, query
+   cache and credential generation before its position can supply a status. Rejection and same-key
+   recovery retire old streams and follower reads; evicted entries cannot be restored by late work.
++  Current terminal evidence at the known tail stays event-qualified while an agreeing cached row
++  awaits its own fresh receipt. A response naming another run is refused before it replaces the
++  requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
++  evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
++  the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
++  A delayed 401 from the older credential generation cannot reject the recovered generation; a
++  matching current-generation 401 still does. An already accepted unchanged key causes no refresh.
+   A retained device cursor is only a negative hint against promoting an older outcome, never status
+   authority; fresh matching terminal reads still converge without new streamed events. A terminal
+   record's node is qualified as **Last node in run record**; event-derived outcomes and neutral
+diff --git a/apps/web/src/api/ApiKeyPanel.test.tsx b/apps/web/src/api/ApiKeyPanel.test.tsx
+new file mode 100644
+index 00000000..59aa3c5d
+--- /dev/null
++++ b/apps/web/src/api/ApiKeyPanel.test.tsx
+@@ -0,0 +1,216 @@
++import { act, screen, waitFor, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it } from 'vitest';
++import { event, FakeApi, problem, queuedFields } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++import { useRunEventStore } from '../runs/event-store.js';
++import { useApiKeyStore } from './api-key.js';
++import { createAppClient } from './context.js';
++import { keys } from './queries.js';
++
++const KEY = 'gg_same';
++
++function parkedRun(api: FakeApi) {
++  const run = api.addRun({ status: 'waiting', lastEventSeq: 3, currentNodeId: 'real-wait' });
++  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
++  api.pushEvent(run.id, event(run.id, 2, 'run.started', { attempt: 1 }));
++  api.pushEvent(
++    run.id,
++    event(run.id, 3, 'run.waiting', {
++      nodeId: 'real-wait',
++      wait: { waitId: 'fixture-wait', startedSeq: 3, nodeId: 'real-wait', kind: 'input' },
++    }),
++  );
++  // Returning to an acknowledged tail: neither the initial nor recovered stream has new frames.
++  useRunEventStore.getState().append(run.id, ...api.events.get(run.id)!);
++  api.requiredKey = KEY;
++  useApiKeyStore.getState().save(KEY);
++  return run;
++}
++
++async function headerFor(runId: string) {
++  return (await screen.findByRole('heading', { name: 'Run ' + runId })).closest('header')!;
++}
++
++async function rejectThroughHttp(api: FakeApi) {
++  api.override('GET /api-keys', () => problem(401, 'UNAUTHORIZED'));
++  const client = createAppClient('http://graphgoblin.test', api.fetch);
++  await act(async () => {
++    const { response } = await client.GET('/api-keys');
++    expect(response.status).toBe(401);
++  });
++  await screen.findByRole('form', { name: 'Enter API key' });
++  expect(useApiKeyStore.getState().rejected).toBe(true);
++}
++
++async function submitSameKey() {
++  const user = userEvent.setup();
++  await user.type(screen.getByLabelText('API key', { selector: 'input' }), KEY);
++  await user.click(screen.getByRole('button', { name: 'Use key' }));
++}
++
++function streams(api: FakeApi, runId: string) {
++  return api
++    .callsTo('GET', `/runs/${runId}/events`)
++    .filter((call) => call.headers.get('accept') === 'text/event-stream');
++}
++
++describe('same-key inspector recovery through the visible API key panel (R2-3)', () => {
++  it('reads the quiet parked run once after same-key submit, without injected refresh or new SSE data', async () => {
++    const api = new FakeApi();
++    const run = parkedRun(api);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      const header = await headerFor(run.id);
++      await within(header).findByText('at real-wait');
++      expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
++      const before = api.callsTo('GET', `/runs/${run.id}`).length;
++      await rejectThroughHttp(api);
++      expect(within(header).getByText('Updating status…')).toBeVisible();
++      expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(before);
++      await submitSameKey();
++      await within(header).findByText('at real-wait');
++      expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
++      expect(screen.queryByRole('form', { name: 'Enter API key' })).toBeNull();
++      expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(before + 1);
++      await waitFor(() => expect(streams(api, run.id)).toHaveLength(2));
++      expect(streams(api, run.id).every((call) => call.search.get('after') === '3')).toBe(true);
++      expect(useRunEventStore.getState().runs[run.id]?.lastSeq).toBe(3);
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++      useRunEventStore.getState().clear(run.id);
++    }
++  });
++
++  it.each([
++    { cache: 'warm', oldStatus: 200 },
++    { cache: 'warm', oldStatus: 401 },
++    { cache: 'empty', oldStatus: 200 },
++    { cache: 'empty', oldStatus: 401 },
++  ] as const)(
++    'retires an old pending $oldStatus read with a $cache cache before the fresh recovery read',
++    async ({ cache, oldStatus }) => {
++      const api = new FakeApi();
++      const run = parkedRun(api);
++      let holdOld = cache === 'empty';
++      let holdFresh = false;
++      let oldSignal: AbortSignal | undefined;
++      let oldGeneration: number | undefined;
++      let freshGeneration: number | undefined;
++      let freshReads = 0;
++      let releaseOld!: () => void;
++      let releaseFresh!: () => void;
++      const oldGate = new Promise<void>((resolve) => {
++        releaseOld = resolve;
++      });
++      const freshGate = new Promise<void>((resolve) => {
++        releaseFresh = resolve;
++      });
++      api.override('GET /runs/:id', async (call) => {
++        if (holdOld) {
++          holdOld = false;
++          oldSignal = call.signal;
++          oldGeneration = useApiKeyStore.getState().generation;
++          await oldGate;
++          return oldStatus === 401
++            ? problem(401, 'UNAUTHORIZED')
++            : Response.json({
++                ...run,
++                status: 'running',
++                lastEventSeq: 2,
++                currentNodeId: 'old-node',
++              });
++        }
++        if (holdFresh) {
++          freshReads += 1;
++          freshGeneration = useApiKeyStore.getState().generation;
++          await freshGate;
++        }
++        return api.builtIn(call);
++      });
++      const view = renderApp('/runs/' + run.id, api);
++      try {
++        if (cache === 'warm') {
++          await within(await headerFor(run.id)).findByText('at real-wait');
++          holdOld = true;
++          act(() => {
++            void view.queryClient.refetchQueries({ queryKey: keys.run(run.id), exact: true });
++          });
++        }
++        await waitFor(() => expect(oldSignal).toBeDefined());
++        expect(oldSignal?.aborted).toBe(false);
++        await rejectThroughHttp(api);
++        const rejectedReadCount = api.callsTo('GET', `/runs/${run.id}`).length;
++        holdFresh = true;
++        // From submission onward only the production panel schedules reads. The test releases bodies.
++        await submitSameKey();
++        await waitFor(() => expect(freshReads).toBe(1));
++        const generation = useApiKeyStore.getState().generation;
++        expect(freshGeneration).toBe(generation);
++        expect(freshGeneration).toBeGreaterThan(oldGeneration!);
++        expect(oldSignal?.aborted).toBe(true);
++        expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(rejectedReadCount + 1);
++        await act(async () => {
++          releaseOld();
++          await oldGate;
++        });
++        expect(useApiKeyStore.getState()).toMatchObject({ rejected: false, generation });
++        expect(screen.queryByRole('form', { name: 'Enter API key' })).toBeNull();
++        if (cache === 'warm') {
++          const header = await headerFor(run.id);
++          expect(within(header).getByText('Updating status…')).toBeVisible();
++          expect(within(header).queryByText(/^at /)).toBeNull();
++          expect(view.queryClient.getQueryData(keys.run(run.id))).toMatchObject({
++            id: run.id,
++            status: 'waiting',
++            currentNodeId: 'real-wait',
++          });
++        } else {
++          expect(view.queryClient.getQueryData(keys.run(run.id))).toBeUndefined();
++        }
++        await act(async () => {
++          releaseFresh();
++          await freshGate;
++        });
++        const header = await headerFor(run.id);
++        await within(header).findByText('at real-wait');
++        expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
++        expect(within(header).queryByText('Updating status…')).toBeNull();
++        expect(useApiKeyStore.getState()).toMatchObject({ rejected: false, generation });
++        expect(freshReads).toBe(1);
++        expect(useRunEventStore.getState().runs[run.id]?.lastSeq).toBe(3);
++        await waitFor(() => expect(streams(api, run.id)).toHaveLength(2));
++        expect(streams(api, run.id).every((call) => call.search.get('after') === '3')).toBe(true);
++      } finally {
++        releaseOld();
++        releaseFresh();
++        view.unmount();
++        view.queryClient.clear();
++        useRunEventStore.getState().clear(run.id);
++      }
++    },
++  );
++
++  it('does not refresh an already accepted unchanged key', async () => {
++    const api = new FakeApi();
++    const run = parkedRun(api);
++    const view = renderApp('/runs/' + run.id, api);
++    try {
++      await within(await headerFor(run.id)).findByText('at real-wait');
++      const before = api.callsTo('GET', `/runs/${run.id}`).length;
++      const generation = useApiKeyStore.getState().generation;
++      await act(async () => {
++        useApiKeyStore.getState().save(KEY);
++        await Promise.resolve();
++      });
++      expect(useApiKeyStore.getState().generation).toBe(generation);
++      expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(before);
++      expect(streams(api, run.id)).toHaveLength(1);
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++      useRunEventStore.getState().clear(run.id);
++    }
++  });
++});
+diff --git a/apps/web/src/api/api-key-fetch.test.ts b/apps/web/src/api/api-key-fetch.test.ts
+index b16d5b39..82c16316 100644
+--- a/apps/web/src/api/api-key-fetch.test.ts
++++ b/apps/web/src/api/api-key-fetch.test.ts
+@@ -55,6 +55,82 @@ describe('API key rejection belongs to the request credentials', () => {
+     },
+   );
+ 
++  it.each([false, true])(
++    'ignores an old same-key 401 after recovery, independently of cancellation=%s',
++    async (cancelled) => {
++      useApiKeyStore.getState().save('gg_same');
++      let finish!: (response: Response) => void;
++      const held = new Promise<Response>((resolve) => {
++        finish = resolve;
++      });
++      const controller = new AbortController();
++      const request = new Request('http://graphgoblin.test/api-keys', {
++        signal: controller.signal,
++      });
++      const pending = withApiKey(() => held)(request);
++      useApiKeyStore.getState().markRejected();
++      useApiKeyStore.getState().save('gg_same');
++      const recoveredGeneration = useApiKeyStore.getState().generation;
++      if (cancelled) controller.abort();
++      finish(new Response(null, { status: 401 }));
++      expect((await pending).status).toBe(401);
++      expect(useApiKeyStore.getState()).toMatchObject({
++        key: 'gg_same',
++        rejected: false,
++        generation: recoveredGeneration,
++      });
++      // A request actually sent in the recovered generation still rejects that generation.
++      await withApiKey(() => Promise.resolve(new Response(null, { status: 401 })))(
++        new Request('http://graphgoblin.test/api-keys'),
++      );
++      expect(useApiKeyStore.getState()).toMatchObject({
++        rejected: true,
++        generation: recoveredGeneration + 1,
++      });
++    },
++  );
++
++  it('does not treat cancellation alone as a new credential generation', async () => {
++    useApiKeyStore.getState().save('gg_same');
++    const sentGeneration = useApiKeyStore.getState().generation;
++    let finish!: (response: Response) => void;
++    const held = new Promise<Response>((resolve) => {
++      finish = resolve;
++    });
++    const controller = new AbortController();
++    const pending = withApiKey(() => held)(
++      new Request('http://graphgoblin.test/api-keys', { signal: controller.signal }),
++    );
++    controller.abort();
++    finish(new Response(null, { status: 401 }));
++    await pending;
++    expect(useApiKeyStore.getState()).toMatchObject({
++      rejected: true,
++      generation: sentGeneration + 1,
++    });
++  });
++
++  it('ignores a retired anonymous 401 after a fresh anonymous credential generation', async () => {
++    useApiKeyStore.getState().forget();
++    let finish!: (response: Response) => void;
++    const pending = withApiKey(
++      () =>
++        new Promise<Response>((resolve) => {
++          finish = resolve;
++        }),
++    )(new Request('http://graphgoblin.test/api-keys'));
++    useApiKeyStore.getState().markRejected();
++    useApiKeyStore.getState().forget();
++    const generation = useApiKeyStore.getState().generation;
++    finish(new Response(null, { status: 401 }));
++    await pending;
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key: undefined,
++      rejected: false,
++      generation,
++    });
++  });
++
+   it('keeps the key accepted on a non-401 response', async () => {
+     useApiKeyStore.setState({ key: 'gg_stored' });
+     await withApiKey(() => Promise.resolve(new Response(null, { status: 403 })))(
+diff --git a/apps/web/src/api/api-key.test.tsx b/apps/web/src/api/api-key.test.tsx
+index 1feeade6..62880dc1 100644
+--- a/apps/web/src/api/api-key.test.tsx
++++ b/apps/web/src/api/api-key.test.tsx
+@@ -46,6 +46,28 @@ describe('credential generation (#386)', () => {
+   });
+ });
+ 
++describe('same-key recovery across tabs (#386)', () => {
++  it('starts a fresh accepted generation on recovery, without repeating it for unchanged storage', () => {
++    const store = useApiKeyStore.getState;
++    store().save('gg_shared');
++    store().markRejected();
++    const rejectedGeneration = store().generation;
++    const stop = syncApiKeyAcrossTabs();
++    try {
++      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
++      expect(store()).toMatchObject({
++        key: 'gg_shared',
++        rejected: false,
++        generation: rejectedGeneration + 1,
++      });
++      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
++      expect(store().generation).toBe(rejectedGeneration + 1);
++    } finally {
++      stop();
++    }
++  });
++});
++
+ describe('API key entry', () => {
+   it('review: focuses the key input when access is rejected without stealing it on later renders', async () => {
+     const api = new FakeApi();
+diff --git a/apps/web/src/api/queries.reconnect.test.tsx b/apps/web/src/api/queries.reconnect.test.tsx
+index 692a81e2..0077e68c 100644
+--- a/apps/web/src/api/queries.reconnect.test.tsx
++++ b/apps/web/src/api/queries.reconnect.test.tsx
+@@ -344,15 +344,17 @@ describe('run query header receipts (#386)', () => {
+     }
+   });
+ 
+-  it('does not verify a successful response for a different run', async () => {
++  it('rejects a foreign run response before a cold query can install it', async () => {
+     const api = new FakeApi();
+     const requested = api.addRun({ status: 'running', lastEventSeq: 2 });
+     const foreign = api.addRun({ status: 'failed', lastEventSeq: 3 });
+     api.override('GET /runs/:id', () => Response.json(foreign));
+     const view = mountRun(api, requested.id);
+     try {
+-      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
+-      expect(view.result.current.query.data?.id).toBe(foreign.id);
++      await waitFor(() => expect(view.result.current.query.isError).toBe(true));
++      expect(view.result.current.query.error).toBeInstanceOf(Error);
++      expect(view.result.current.query.data).toBeUndefined();
++      expect(view.queryClient.getQueryData(keys.run(requested.id))).toBeUndefined();
+       expect(view.result.current.header.status(foreign)).toEqual({ kind: 'updating' });
+       expect(view.result.current.header.registry.snapshot(requested.id)?.receipts).toEqual([]);
+     } finally {
+@@ -361,6 +363,68 @@ describe('run query header receipts (#386)', () => {
+     }
+   });
+ 
++  it('keeps a warm matching receipt and its own row when a foreign same-position body is refused (S2)', async () => {
++    const api = new FakeApi();
++    const requested = api.addRun({
++      status: 'waiting',
++      lastEventSeq: 3,
++      currentNodeId: 'real-wait',
++    });
++    const foreign = api.addRun({
++      status: 'waiting',
++      lastEventSeq: 3,
++      currentNodeId: 'foreign-position',
++    });
++    const view = mountRun(api, requested.id);
++    try {
++      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++      const ownRow = view.result.current.query.data;
++      const registry = view.result.current.header.registry;
++      const ownEntry = registry.snapshot(requested.id);
++      expect(view.result.current.header.status(requested)).toEqual({
++        kind: 'record',
++        status: 'waiting',
++      });
++      expect(ownEntry?.receipts).toEqual([{ status: 'waiting', lastEventSeq: 3 }]);
++      api.override('GET /runs/:id', () => Response.json(foreign));
++      await act(async () => {
++        await view.result.current.query.refetch();
++      });
++      await waitFor(() => expect(view.result.current.query.isError).toBe(true));
++      expect(view.result.current.query.data).toBe(ownRow);
++      expect(view.queryClient.getQueryData(keys.run(requested.id))).toBe(ownRow);
++      expect(view.result.current.query.data).toMatchObject({
++        id: requested.id,
++        currentNodeId: 'real-wait',
++      });
++      expect(registry.snapshot(requested.id)).toBe(ownEntry);
++      expect(view.result.current.header.status(requested)).toEqual({
++        kind: 'record',
++        status: 'waiting',
++      });
++      // A later valid response recovers through the ordinary query path.
++      api.override('GET /runs/:id', () =>
++        Response.json({ ...requested, lastEventSeq: 4, currentNodeId: 'new-real-wait' }),
++      );
++      await act(async () => {
++        await view.result.current.query.refetch();
++      });
++      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++      expect(view.result.current.query.data).toMatchObject({
++        id: requested.id,
++        lastEventSeq: 4,
++        currentNodeId: 'new-real-wait',
++      });
++      expect(view.result.current.header.status({ status: 'waiting', lastEventSeq: 4 })).toEqual({
++        kind: 'record',
++        status: 'waiting',
++      });
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
+   it.each([200, 404])(
+     'ignores a late HTTP %i response after the run read is cancelled',
+     async (status) => {
+diff --git a/apps/web/src/runs/RunInspectorPage.corrective.test.tsx b/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
+index e371d9e6..8fd4a8b7 100644
+--- a/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
+@@ -1,11 +1,17 @@
++import { runs } from '@graphgoblin/api-client';
+ import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
+-import { act, screen, waitFor, within } from '@testing-library/react';
++import { QueryClient } from '@tanstack/react-query';
++import { act, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
++import { MemoryRouter } from 'react-router';
+ import { afterEach, describe, expect, it } from 'vitest';
+ import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
+ import { renderApp } from '../__fixtures__/render.js';
+ import { API_KEY_STORAGE, useApiKeyStore } from '../api/api-key.js';
+ import { keys } from '../api/queries.js';
++import { createAppClient } from '../api/context.js';
++import { App } from '../app/App.js';
++import { Providers } from '../app/bootstrap.js';
+ import { useRunEventStore } from './event-store.js';
+ 
+ const actor = { kind: 'user' as const, id: 'local' };
+@@ -177,6 +183,7 @@ describe('run header corrective cases (#386)', () => {
+       await within(header).findByText('Status from event #6; the run record is updating.');
+       expect(badge(header)).toHaveAttribute('data-status', 'failed');
+       expect(within(header).queryByText('Last node in run record: node-a')).toBeNull();
++      expect(within(header).queryByText(/^at /)).toBeNull();
+ 
+       // A record at the outcome's sequence whose position may not be projected yet.
+       api.runs.set(run.id, { ...run, status: 'failed', lastEventSeq: 6, currentNodeId: 'node-a' });
+@@ -305,6 +312,52 @@ describe('run header corrective cases (#386)', () => {
+     }
+   });
+ 
++  it('shows a witnessed terminal over an agreeing unread cached row while the current GET is held (R2-1)', async () => {
++    const api = new FakeApi();
++    const run = startedRun(api, {
++      status: 'succeeded',
++      lastEventSeq: 3,
++      currentNodeId: 'cached-node',
++    });
++    api.pushEvent(
++      run.id,
++      event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++    );
++    const client = createAppClient('http://graphgoblin.test', api.fetch);
++    // This successful read predates the providers/registry. It seeds a cache, not a header receipt.
++    const cached = await runs.get(client, run.id);
++    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++    queryClient.setQueryData(keys.run(run.id), cached);
++    const reads = heldRunReads(api);
++    reads.state.blocking = true;
++    const view = render(
++      <Providers client={client} queryClient={queryClient}>
++        <MemoryRouter initialEntries={['/runs/' + run.id]}>
++          <App />
++        </MemoryRouter>
++      </Providers>,
++    );
++    try {
++      const { header, timeline } = await openInspector(run.id);
++      await within(timeline).findByText('#3');
++      await waitFor(() => expect(reads.state.held).toBeGreaterThan(0));
++      await within(header).findByText('Status from event #3; the run record is updating.');
++      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
++      expect(queryClient.getQueryData(keys.run(run.id))).toBe(cached);
++      expect(within(header).queryByText('Last node in run record: cached-node')).toBeNull();
++      expect(within(header).queryByText(/^at /)).toBeNull();
++      api.runs.set(run.id, { ...run, currentNodeId: 'verified-node' });
++      reads.release();
++      await within(header).findByText('Last node in run record: verified-node');
++      expect(within(header).queryByText(/Status from event/)).toBeNull();
++      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
++    } finally {
++      reads.release();
++      view.unmount();
++      queryClient.clear();
++    }
++  });
++
+   it('settles a cold finished run past its delivery audits from real reads only', async () => {
+     const api = new FakeApi();
+     const run = startedRun(api, { status: 'succeeded', lastEventSeq: 5, currentNodeId: 'done' });
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 9f256f2f..d710a4ca 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -67,6 +67,9 @@ Cached history, cached query rows and selected historical events are not fresh e
+   seen, including contiguous later delivery events. The header then says
+   **Status from event #N; the run record is updating.** in place of the record's position. An
+   agreeing record settles only at or beyond the marker, after a matching current-scope run read.
++  Until that read succeeds, a current terminal event at the known tail keeps its event-qualified
++  status and sequence even when an unverified cached row has the same status and sequence; that
++  cached row cannot hide the event or supply its node.
+ - A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
+   active status could be a lagging projection or an unseen resume, so the header shows a neutral
+   **Updating status…** until the stream or observation catches up.
+@@ -76,7 +79,10 @@ Cached history, cached query rows and selected historical events are not fresh e
+   older outcome cannot replace the superseding marker.
+ - A record names a status only after a successful, non-aborted read for this run under the current
+   scope has returned its exact status and sequence. Rendering a cached row is no receipt. A 404
+-  drops that entry; other read failures do not establish deletion.
++  drops that entry; other read failures do not establish deletion. A successful response naming
++  another run is refused before it enters the requested run's query cache. It shows the ordinary
++  read error and preserves that run's earlier row and header evidence, even if the foreign row's
++  status and sequence match a previously accepted position.
+ - A new entry notes the event cursor already held on this device as a negative hint only: its
+   skipped events might contain a later resume. An outcome older than that hint stays neutral until
+   accepted contiguous coverage reaches it or a newer marker establishes the current outcome. The
+@@ -86,7 +92,16 @@ Cached history, cached query rows and selected historical events are not fresh e
+   **Last node in run record: …**. An event-derived outcome or neutral synchronization state shows
+   no stale record position; an active record retains its ordinary **at …** position.
+ 
+-This is presentation only. The record's status, failure, result, recovery tokens and permissions,
++Accepting the same key after rejection also refreshes active server reads through the existing API
++key panel. It first cancels outstanding queries, then invalidates active reads once if that accepted
++credential generation is still current. This gives a quiet inspector a fresh run receipt instead of
++joining an old pending first read; no new event, focus change or manual refresh is required. Saving
++an already accepted unchanged key triggers no recovery refresh. A delayed 401 is applied only when
++both the sent credential identity and generation still match: an older request cannot reject the
++recovered generation merely because its key text is unchanged. Cancelling a request alone does not
++change its credential generation or suppress a matching current-generation 401.
++
++The header changes are presentation only. The record's status, failure, result, recovery tokens and permissions,
+ delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
+ terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
+ or a dropped connection is never taken as an outcome, and refresh polling is unchanged.

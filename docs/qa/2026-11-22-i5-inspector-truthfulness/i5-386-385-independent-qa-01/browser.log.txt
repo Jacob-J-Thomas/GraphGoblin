@@ -1,0 +1,136 @@
+
+Running 6 tests using 1 worker
+
+(node:44444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (3.8s)
+  ok 2 [chromium] › e2e\inspector-independent-qa.spec.ts:9:1 › independent S1/S2: BOTH read models held, then equal-sequence stale run released before observation (1.5s)
+  x  3 [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 1440px (1.0m)
+(node:48532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 390px (1.0m)
+(node:54032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) (1.1s)
+(node:51624) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386) (1.3s)
+
+
+  1) [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 1440px 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.waitForEvent: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for event "download"
+    ============================================================
+
+      125 |     expect(longIndex).toBeGreaterThanOrEqual(0);
+      126 |     const longRow = rows.nth(longIndex);
+    > 127 |     const downloadPromise = page.waitForEvent('download');
+          |                                  ^
+      128 |     await longRow.getByRole('button', { name: /^Download Value after .* as JSON$/ }).click();
+      129 |     const download = await downloadPromise;
+      130 |     const downloadedPath = join(evidence, `P-${width}-exact-appended-message.json`);
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-independent-qa.spec.ts:127:34
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Patch diff' }).getByRole('listitem').nth(2).getByRole('button', { name: /^Download Value after .* as JSON$/ })
+
+
+      126 |     const longRow = rows.nth(longIndex);
+      127 |     const downloadPromise = page.waitForEvent('download');
+    > 128 |     await longRow.getByRole('button', { name: /^Download Value after .* as JSON$/ }).click();
+          |                                                                                      ^
+      129 |     const download = await downloadPromise;
+      130 |     const downloadedPath = join(evidence, `P-${width}-exact-appended-message.json`);
+      131 |     await download.saveAs(downloadedPath);
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-independent-qa.spec.ts:128:86
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-630b1-and-non-add-diffs-at-1440px-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-630b1-and-non-add-diffs-at-1440px-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-630b1-and-non-add-diffs-at-1440px-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 390px 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.waitForEvent: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for event "download"
+    ============================================================
+
+      125 |     expect(longIndex).toBeGreaterThanOrEqual(0);
+      126 |     const longRow = rows.nth(longIndex);
+    > 127 |     const downloadPromise = page.waitForEvent('download');
+          |                                  ^
+      128 |     await longRow.getByRole('button', { name: /^Download Value after .* as JSON$/ }).click();
+      129 |     const download = await downloadPromise;
+      130 |     const downloadedPath = join(evidence, `P-${width}-exact-appended-message.json`);
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-independent-qa.spec.ts:127:34
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('list', { name: 'Patch diff' }).getByRole('listitem').nth(2).getByRole('button', { name: /^Download Value after .* as JSON$/ })
+
+
+      126 |     const longRow = rows.nth(longIndex);
+      127 |     const downloadPromise = page.waitForEvent('download');
+    > 128 |     await longRow.getByRole('button', { name: /^Download Value after .* as JSON$/ }).click();
+          |                                                                                      ^
+      129 |     const download = await downloadPromise;
+      130 |     const downloadedPath = join(evidence, `P-${width}-exact-appended-message.json`);
+      131 |     await download.saveAs(downloadedPath);
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-independent-qa.spec.ts:128:86
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-8b858--and-non-add-diffs-at-390px-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-8b858--and-non-add-diffs-at-390px-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-independent-qa-i-8b858--and-non-add-diffs-at-390px-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+
+    Error: apiResponse.json: Response has been disposed
+
+      58 |           result: _result,
+      59 |           ...row
+    > 60 |         } = (await response.json()) as Record<string, unknown>;
+         |                             ^
+      61 |         await route.fulfill({
+      62 |           response,
+      63 |           json: {
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-truthfulness.spec.ts:60:29
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 1440px 
+    [chromium] › e2e\inspector-independent-qa.spec.ts:64:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 390px 
+    [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+  3 passed (2.4m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

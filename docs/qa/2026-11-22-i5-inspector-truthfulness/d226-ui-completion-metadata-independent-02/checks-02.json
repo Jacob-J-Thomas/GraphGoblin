@@ -1,0 +1,108 @@
+{
+  "version": "02",
+  "codeSha256": "7f3afa303764df1c45b580b0753c6dac34ba86c0bb7f0de8eb57024e21158acc",
+  "enclosingPinIsExactNestedFunction": true,
+  "realDiagnosticSealSha256": "725028420efaf3ae231631c10d5e270d502bd5c00268d40880738734e147dbde",
+  "members": 26,
+  "actualEmptyMember": {
+    "path": "qa-boundary-lint-corrected.log.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "verifiedCases": 19,
+  "checks": [
+    {
+      "case": "real 26-member chain accepts empty log alongside nonempty root pins",
+      "result": "pass"
+    },
+    {
+      "case": "generic metadata still refuses empty file",
+      "result": "refused-as-expected",
+      "reason": "EXACT_PATH_BYTES_HASH_REFERENCE_REQUIRED"
+    },
+    {
+      "case": "canonical 26-member synthetic seal accepts empty file",
+      "result": "pass"
+    },
+    {
+      "case": "reject missing",
+      "result": "refused-as-expected",
+      "reason": "FileNotFoundError"
+    },
+    {
+      "case": "reject boolean",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_REFERENCE_INVALID"
+    },
+    {
+      "case": "reject negative",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_REFERENCE_INVALID"
+    },
+    {
+      "case": "reject incorrect-size",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_BYTES_DIFFER"
+    },
+    {
+      "case": "reject inexact-digest",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_BYTES_DIFFER"
+    },
+    {
+      "case": "reject invalid-digest-type",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_REFERENCE_INVALID"
+    },
+    {
+      "case": "reject escape",
+      "result": "refused-as-expected",
+      "reason": "UNSAFE_UI_PATH"
+    },
+    {
+      "case": "reject case-only-duplicate",
+      "result": "refused-as-expected",
+      "reason": "UI_PATH_CASE_COLLISION"
+    },
+    {
+      "case": "reject absolute",
+      "result": "refused-as-expected",
+      "reason": "UNSAFE_UI_PATH"
+    },
+    {
+      "case": "reject 25 members",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBERSHIP_DIFFERS"
+    },
+    {
+      "case": "reject duplicate path",
+      "result": "refused-as-expected",
+      "reason": "UI_PATH_CASE_COLLISION"
+    },
+    {
+      "case": "reject empty-file contents changed on disk",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_BYTES_DIFFER"
+    },
+    {
+      "case": "reject nonempty file same size with hash drift",
+      "result": "refused-as-expected",
+      "reason": "NEGATIVE_DIAGNOSTIC_MEMBER_BYTES_DIFFER"
+    },
+    {
+      "case": "reject directory supplied as regular file",
+      "result": "refused-as-expected",
+      "reason": "REGULAR_FILE_REQUIRED"
+    },
+    {
+      "case": "restored synthetic manifest accepts",
+      "result": "pass"
+    },
+    {
+      "case": "restored actual immutable diagnostic chain accepts",
+      "result": "pass"
+    }
+  ],
+  "actualGitProviderCredentialCalls": 0,
+  "actualGeneratorCalled": false
+}

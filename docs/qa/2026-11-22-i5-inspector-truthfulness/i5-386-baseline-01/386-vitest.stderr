@@ -1,0 +1,28 @@
+$ vitest run src/runs/RunInspector386Baseline.test.tsx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspector386Baseline.test.tsx > shows the terminal header when refresh held after the terminal event (#386)
+ FAIL  src/runs/RunInspector386Baseline.test.tsx > shows the terminal header when refreshed row has the terminal sequence… (#386)
+Error: expect(element).toHaveAttribute("data-status", "running") // element.getAttribute("data-status") === "running"
+
+Expected the element to have attribute:
+  data-status="running"
+Received:
+  null
+ ❯ src/runs/RunInspector386Baseline.test.tsx:37:49
+     35|     const heading = await screen.findByRole('heading', { name: 'Run ' …
+     36|     const header = heading.closest('header')!;
+     37|     expect(within(header).getByText('running')).toHaveAttribute('data-…
+       |                                                 ^
+     38|     const timeline = await screen.findByRole('list', { name: 'Timeline…
+     39|     await within(timeline).findByRole('button', { name: /run.started/ …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i5-386-
+  │ baseline\GraphGoblin\apps\web
+

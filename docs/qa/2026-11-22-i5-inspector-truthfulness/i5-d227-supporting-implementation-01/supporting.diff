@@ -1,0 +1,648 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fec3f28f..56ee6da2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,9 +11,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
+   **Status from event #N; the run record is updating.** in place of the stale position, and shows
+   **Updating status…** while a start or resume has superseded an outcome, or a newer record could
+-  include an unseen resume. Presentation only: the record, controls, recovery, delivery and refresh
+-  polling are unchanged. Regressions also cover appended patch values (#385), which already show
+-  each `add` operation's recorded value with Before absent. No store, export or contract change.
++  include an unseen resume. Provider-owned evidence survives route changes for at most twenty
++  runs and keeps only lifecycle sequences/statuses and four recent record positions per run, in
++  memory. A record needs a successful, non-aborted, matching run read from the current client, query
++  cache and credential generation before its position can supply a status. Rejection and same-key
++  recovery retire old streams and follower reads; evicted entries cannot be restored by late work.
++  A retained device cursor is only a negative hint against promoting an older outcome, never status
++  authority; fresh matching terminal reads still converge without new streamed events. A terminal
++  record's node is qualified as **Last node in run record**; event-derived outcomes and neutral
++  synchronization hide stale positions. Presentation only: the record, controls, recovery, delivery
++  and refresh polling are unchanged. Regressions also cover appended patch values (#385), which
++  already show each `add` operation's recorded value with Before absent. No persistent format,
++  store, export or contract change.
+ 
+ - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+ 
+diff --git a/apps/web/e2e/inspector-truthfulness.spec.ts b/apps/web/e2e/inspector-truthfulness.spec.ts
+index 30f4096a..fc5f13a7 100644
+--- a/apps/web/e2e/inspector-truthfulness.spec.ts
++++ b/apps/web/e2e/inspector-truthfulness.spec.ts
+@@ -124,8 +124,8 @@ for (const lag of ['held', 'stale'] as const) {
+       expect(returnedReads).toBe(1);
+ 
+       // Complete a stale refresh at the outcome sequence while observations remain held.
+-      // Wait for every held browser response body and rendering before checking again;
+-      // this covers both the run query and the attempt follower's overlapping reads.
++      // Await the held browser responses and two animation frames before checking again;
++      // this does not establish React Query consumption of either overlapping read.
+       const heldReads = reads;
+       const refreshed = Promise.all(runRequests.slice(1).map((read) => read.response()));
+       releaseRun();
+diff --git a/apps/web/src/api/queries.reconnect.test.tsx b/apps/web/src/api/queries.reconnect.test.tsx
+index dc0c3166..692a81e2 100644
+--- a/apps/web/src/api/queries.reconnect.test.tsx
++++ b/apps/web/src/api/queries.reconnect.test.tsx
+@@ -9,11 +9,13 @@ import {
+ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+ import type { ReactNode } from 'react';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+-import { FakeApi, problem } from '../__fixtures__/fake-api.js';
++import { event, FakeApi, problem } from '../__fixtures__/fake-api.js';
++import { useRunHeaderStatus } from '../runs/useRunHeaderStatus.js';
+ import { createQueryClient, Providers } from '../app/bootstrap.js';
+ import { isOfflineError } from '../lib/utils.js';
+ import { createAppClient } from './context.js';
+ import {
++  keys,
+   useApiKeys,
+   useInboundEvents,
+   useLoop,
+@@ -27,11 +29,7 @@ import {
+   useSettings,
+ } from './queries.js';
+ 
+-function mountQuery<T>(
+-  api: FakeApi,
+-  useRead: () => UseQueryResult<T>,
+-  queryClient = createQueryClient(),
+-) {
++function mountQuery<T>(api: FakeApi, useRead: () => T, queryClient = createQueryClient()) {
+   const fetch = vi.fn(api.fetch);
+   const client = createAppClient('http://graphgoblin.test', fetch);
+   queryClient.setDefaultOptions({
+@@ -314,3 +312,141 @@ describe('query reconnect', () => {
+     }
+   });
+ });
++
++describe('run query header receipts (#386)', () => {
++  function mountRun(api: FakeApi, runId: string) {
++    return mountQuery(api, () => ({ query: useRun(runId), header: useRunHeaderStatus(runId) }));
++  }
++
++  it('verifies only a position returned by its own successful matching run read', async () => {
++    const api = new FakeApi();
++    const run = api.addRun({ status: 'running', lastEventSeq: 2 });
++    const view = mountRun(api, run.id);
++    try {
++      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++      expect(view.result.current.header.status(run)).toEqual({ kind: 'record', status: 'running' });
++      const newer = { ...view.result.current.query.data!, lastEventSeq: 5 };
++      act(() => {
++        view.queryClient.setQueryData(keys.run(run.id), newer);
++      });
++      expect(view.result.current.header.status(newer)).toEqual({ kind: 'updating' });
++      api.runs.set(run.id, { ...run, lastEventSeq: 5 });
++      await act(async () => {
++        await view.result.current.query.refetch();
++      });
++      expect(view.result.current.header.status(newer)).toEqual({
++        kind: 'record',
++        status: 'running',
++      });
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it('does not verify a successful response for a different run', async () => {
++    const api = new FakeApi();
++    const requested = api.addRun({ status: 'running', lastEventSeq: 2 });
++    const foreign = api.addRun({ status: 'failed', lastEventSeq: 3 });
++    api.override('GET /runs/:id', () => Response.json(foreign));
++    const view = mountRun(api, requested.id);
++    try {
++      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++      expect(view.result.current.query.data?.id).toBe(foreign.id);
++      expect(view.result.current.header.status(foreign)).toEqual({ kind: 'updating' });
++      expect(view.result.current.header.registry.snapshot(requested.id)?.receipts).toEqual([]);
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it.each([200, 404])(
++    'ignores a late HTTP %i response after the run read is cancelled',
++    async (status) => {
++      const api = new FakeApi();
++      const run = api.addRun({ status: 'running', lastEventSeq: 2 });
++      const view = mountRun(api, run.id);
++      let release!: (response: Response) => void;
++      const response = new Promise<Response>((resolve) => {
++        release = resolve;
++      });
++      try {
++        await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++        const before = view.result.current.header.registry.snapshot(run.id);
++        let signal: AbortSignal | undefined;
++        api.override('GET /runs/:id', (call) => {
++          signal = call.signal;
++          return response;
++        });
++        let pending!: ReturnType<typeof view.result.current.query.refetch>;
++        act(() => {
++          pending = view.result.current.query.refetch();
++        });
++        await waitFor(() => expect(signal).toBeDefined());
++        await act(async () => {
++          await view.queryClient.cancelQueries({ queryKey: keys.run(run.id), exact: true });
++          await pending;
++        });
++        expect(signal?.aborted).toBe(true);
++        await act(async () => {
++          release(
++            status === 404
++              ? problem(404, 'RUN_NOT_FOUND')
++              : Response.json({ ...run, lastEventSeq: 9 }),
++          );
++          await response;
++        });
++        expect(view.result.current.header.registry.snapshot(run.id)).toBe(before);
++        expect(view.result.current.header.status(run)).toEqual({
++          kind: 'record',
++          status: 'running',
++        });
++        expect(view.result.current.header.status({ status: 'running', lastEventSeq: 9 })).toEqual({
++          kind: 'updating',
++        });
++      } finally {
++        release(problem(404, 'RUN_NOT_FOUND'));
++        view.unmount();
++        view.queryClient.clear();
++      }
++    },
++  );
++
++  it.each([404, 500])(
++    'handles HTTP %i without treating other read failures as definitive deletion',
++    async (status) => {
++      const api = new FakeApi();
++      const run = api.addRun({ status: 'running', lastEventSeq: 2 });
++      const view = mountRun(api, run.id);
++      try {
++        await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
++        const registry = view.result.current.header.registry;
++        act(() => registry.events(registry.lease(run.id), [event(run.id, 3, 'run.cancelled', {})]));
++        expect(view.result.current.header.status(run)).toEqual({
++          kind: 'event',
++          status: 'cancelled',
++          seq: 3,
++        });
++        api.override('GET /runs/:id', () => problem(status, 'REFUSED'));
++        await act(async () => {
++          await view.result.current.query.refetch();
++        });
++        await waitFor(() => expect(view.result.current.query.error).toMatchObject({ status }));
++        if (status === 404) {
++          expect(registry.snapshot(run.id)).toBeUndefined();
++          expect(view.result.current.header.status(run)).toEqual({ kind: 'updating' });
++        } else {
++          expect(view.result.current.header.status(run)).toEqual({
++            kind: 'event',
++            status: 'cancelled',
++            seq: 3,
++          });
++        }
++      } finally {
++        view.unmount();
++        view.queryClient.clear();
++      }
++    },
++  );
++});
+diff --git a/apps/web/src/runs/RunInspectorPage.corrective.test.tsx b/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
+index 64a08e7d..e371d9e6 100644
+--- a/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.corrective.test.tsx
+@@ -10,7 +10,11 @@ import { useRunEventStore } from './event-store.js';
+ 
+ const actor = { kind: 'user' as const, id: 'local' };
+ const UPDATING = 'Updating status…';
+-const failure = (resumable: boolean) => ({ code: 'INTERNAL_ERROR', message: 'boom', resumable });
++const failure = (resumable: boolean) => ({
++  code: 'INTERNAL_ERROR' as const,
++  message: 'boom',
++  resumable,
++});
+ 
+ function startedRun(api: FakeApi, overrides: Partial<RunRecord> = {}) {
+   const run = api.addRun({ status: 'running', lastEventSeq: 2, ...overrides });
+@@ -172,7 +176,7 @@ describe('run header corrective cases (#386)', () => {
+       await act(() => view.queryClient.invalidateQueries({ queryKey: keys.observation(run.id) }));
+       await within(header).findByText('Status from event #6; the run record is updating.');
+       expect(badge(header)).toHaveAttribute('data-status', 'failed');
+-      expect(within(header).queryByText(/node-a/)).toBeNull();
++      expect(within(header).queryByText('Last node in run record: node-a')).toBeNull();
+ 
+       // A record at the outcome's sequence whose position may not be projected yet.
+       api.runs.set(run.id, { ...run, status: 'failed', lastEventSeq: 6, currentNodeId: 'node-a' });
+diff --git a/apps/web/src/runs/run-header-status.test.ts b/apps/web/src/runs/run-header-status.test.ts
+index 4a747bf1..64b3fb8c 100644
+--- a/apps/web/src/runs/run-header-status.test.ts
++++ b/apps/web/src/runs/run-header-status.test.ts
+@@ -96,6 +96,47 @@ describe('header status', () => {
+     });
+   });
+ 
++  it('withholds an older outcome behind a cold cursor without inventing a status (C1)', () => {
++    const evidence = observeLifecycle(emptyEvidence(R), failed(3));
++    // The saved cursor could cover a resume at #4; the current read is still missing.
++    expect(headerStatus(evidence, row('running', 2), false, 4)).toEqual({ kind: 'updating' });
++    expect(headerStatus(evidence, row('running', 3), true, 4)).toEqual({ kind: 'updating' });
++    // A cursor by itself cannot verify even a cached terminal row.
++    expect(headerStatus(emptyEvidence(R), row('failed', 4), false, 4)).toEqual({
++      kind: 'updating',
++    });
++  });
++
++  it('allows an older outcome once contiguous accepted events cover the cold cursor (C1)', () => {
++    const evidence = observeLifecycle(emptyEvidence(R), succeeded(3));
++    const gapped = observeEvents(evidence, [delivered(5)]);
++    expect(headerStatus(gapped, row('running', 3), true, 5)).toEqual({ kind: 'updating' });
++    const covered = observeEvents(gapped, [delivered(4), delivered(5)]);
++    expect(headerStatus(covered, row('running', 3), true, 5)).toEqual({
++      kind: 'event',
++      status: 'succeeded',
++      seq: 3,
++    });
++  });
++
++  it('accepts a new outcome at or beyond the cold cursor and lets a fresh agreeing row settle (C1)', () => {
++    const evidence = observeLifecycle(emptyEvidence(R), failed(3));
++    for (const seq of [5, 6]) {
++      const current = observeLifecycle(evidence, succeeded(seq));
++      expect(headerStatus(current, row('running', 2), false, 5)).toEqual({
++        kind: 'event',
++        status: 'succeeded',
++        seq,
++      });
++    }
++    // A fresh terminal record can agree with the older outcome even when no suffix is replayed.
++    expect(headerStatus(evidence, row('failed', 5), true, 5)).toEqual({
++      kind: 'record',
++      status: 'failed',
++    });
++    expect(headerStatus(evidence, row('failed', 5), false, 5)).toEqual({ kind: 'updating' });
++  });
++
+   it('keeps the outcome through later events it has seen, but not beyond them', () => {
+     const evidence = seen(succeeded(3), delivered(4), delivered(5));
+     expect(evidence.through).toBe(5);
+diff --git a/apps/web/src/runs/run-header-store.test.tsx b/apps/web/src/runs/run-header-store.test.tsx
+index 4d91e263..af1cf433 100644
+--- a/apps/web/src/runs/run-header-store.test.tsx
++++ b/apps/web/src/runs/run-header-store.test.tsx
+@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
+ import { event } from '../__fixtures__/fake-api.js';
+ import { API_KEY_STORAGE, syncApiKeyAcrossTabs, useApiKeyStore } from '../api/api-key.js';
+ import { createAppClient } from '../api/context.js';
++import { useRunEventStore } from './event-store.js';
+ import {
+   MAX_HEADER_RUNS,
+   RunHeaderProvider,
+@@ -28,6 +29,7 @@ function registry(capacity?: number) {
+ 
+ afterEach(() => {
+   useApiKeyStore.getState().forget();
++  useRunEventStore.getState().clear(A);
+ });
+ 
+ describe('run header registry (#386)', () => {
+@@ -85,6 +87,52 @@ describe('run header registry (#386)', () => {
+     expect(headers.snapshot(A)).toBeUndefined();
+   });
+ 
++  it('takes only a negative cursor hint for a new or evicted slot, never cached lifecycle evidence', () => {
++    useRunEventStore.getState().append(A, finished(A, 3));
++    const headers = registry(1);
++    const old = headers.lease(A);
++    expect(headers.snapshot(A)).toEqual({
++      evidence: { runId: A, through: 0 },
++      receipts: [],
++      cursorHint: 3,
++    });
++    headers.events(old, [finished(A, 3)]);
++    headers.receipt(old, { status: 'succeeded', lastEventSeq: 3 });
++    useRunEventStore
++      .getState()
++      .append(A, event(A, 4, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
++    // The hint belongs to the slot's initial state, not to later cached payloads.
++    expect(headers.snapshot(A)?.cursorHint).toBe(3);
++    headers.lease(B);
++    headers.lease(A);
++    expect(headers.snapshot(A)).toEqual({
++      evidence: { runId: A, through: 0 },
++      receipts: [],
++      cursorHint: 4,
++    });
++    headers.events(old, [finished(A, 5)]);
++    headers.receipt(old, { status: 'succeeded', lastEventSeq: 5 });
++    expect(headers.snapshot(A)?.evidence.marker).toBeUndefined();
++    expect(headers.snapshot(A)?.receipts).toEqual([]);
++  });
++
++  it('does not promote cached history to evidence in a recovered credential scope', () => {
++    useApiKeyStore.getState().save('same-key');
++    useRunEventStore.getState().append(A, finished(A, 3));
++    const headers = registry();
++    const old = headers.lease(A);
++    headers.events(old, [finished(A, 3)]);
++    useApiKeyStore.getState().markRejected();
++    useApiKeyStore.getState().save('same-key');
++    headers.lease(A);
++    headers.lifecycle(old, finished(A, 4));
++    expect(headers.snapshot(A)).toEqual({
++      evidence: { runId: A, through: 0 },
++      receipts: [],
++      cursorHint: 3,
++    });
++  });
++
+   it('keeps only recent positions, and only their status and sequence', () => {
+     const headers = registry();
+     const lease = headers.lease(A);
+diff --git a/apps/web/src/runs/useRunEvents.test.tsx b/apps/web/src/runs/useRunEvents.test.tsx
+index 01b236d2..2e489644 100644
+--- a/apps/web/src/runs/useRunEvents.test.tsx
++++ b/apps/web/src/runs/useRunEvents.test.tsx
+@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { event, runRecord } from '../__fixtures__/fake-api.js';
+ import { ApiProvider, createAppClient } from '../api/context.js';
++import { useApiKeyStore } from '../api/api-key.js';
+ import {
+   markApiReachable,
+   markApiUnreachable,
+@@ -13,6 +14,7 @@ import {
+   useReachability,
+ } from '../lib/reachability.js';
+ import { useRunEventStore } from './event-store.js';
++import { RunHeaderProvider, RunHeaderRegistry } from './run-header-store.js';
+ import { EVENT_BATCH_MS, useRunEvents } from './useRunEvents.js';
+ 
+ const subscribe = vi.hoisted(() => vi.fn<typeof ApiClient.subscribeRunEvents>());
+@@ -40,19 +42,24 @@ beforeEach(() => {
+ afterEach(() => {
+   cleanup();
+   queryClient.clear();
++  useApiKeyStore.getState().forget();
+   useRunEventStore.getState().clear(runId);
+   markApiReachable();
+   vi.useRealTimers();
+ });
+ 
+ function mountStream(client = createAppClient('http://graphgoblin.test')) {
+-  return renderHook(() => useRunEvents(runId), {
++  const registry = new RunHeaderRegistry({ client, queryClient });
++  const view = renderHook(() => useRunEvents(runId), {
+     wrapper: ({ children }: { children: ReactNode }) => (
+       <ApiProvider client={client}>
+-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
++        <QueryClientProvider client={queryClient}>
++          <RunHeaderProvider registry={registry}>{children}</RunHeaderProvider>
++        </QueryClientProvider>
+       </ApiProvider>
+     ),
+   });
++  return { ...view, registry };
+ }
+ function options(index = 0): SubscribeRunEventsOptions {
+   return subscribe.mock.calls[index]![0];
+@@ -390,6 +397,115 @@ describe('run stream reachability', () => {
+   });
+ });
+ 
++describe('run stream credential and cleanup boundaries (#386)', () => {
++  it('retires the old stream and its buffered events after same-key rejection and recovery (G2)', async () => {
++    vi.useFakeTimers();
++    useApiKeyStore.getState().save('same-key');
++    const view = mountStream();
++    const failure = event(runId, 3, 'run.failed', {
++      failure: { code: 'INTERNAL_ERROR', message: 'old attempt', resumable: true },
++    });
++    await act(async () => {
++      await emit(0, failure);
++    });
++    // The old batch has not yet advanced the device cursor.
++    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
++    act(() => useApiKeyStore.getState().markRejected());
++    expect(subscribe).toHaveBeenCalledTimes(1);
++    expect(subscribe.mock.results[0]!.value.close).toHaveBeenCalledTimes(1);
++    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
++    act(() => useApiKeyStore.getState().save('same-key'));
++    expect(subscribe).toHaveBeenCalledTimes(2);
++    expect(options(1).after).toBe(0);
++    await act(async () => {
++      options(0).onOpen?.();
++      await emit(0, failure);
++      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
++    });
++    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
++    expect(view.registry.snapshot(runId)?.evidence.marker).toBeUndefined();
++    await act(async () => {
++      await emit(1, event(runId, 4, 'run.finished', { status: 'succeeded', outcome: 'success' }));
++      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
++    });
++    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(4);
++    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({
++      seq: 4,
++      terminal: 'succeeded',
++    });
++  });
++
++  it('retires a held attempt-follower observation on same-key recovery (G2)', async () => {
++    vi.useFakeTimers();
++    useApiKeyStore.getState().save('same-key');
++    const failure = event(runId, 3, 'run.failed', {
++      failure: { code: 'INTERNAL_ERROR', message: 'old attempt', resumable: true },
++    });
++    useRunEventStore.getState().append(runId, failure);
++    let finish!: () => void;
++    let release!: (response: Response) => void;
++    let oldSignal: AbortSignal | undefined;
++    const observation = new Promise<Response>((resolve) => {
++      release = resolve;
++    });
++    const client = createAppClient('http://graphgoblin.test', (request) => {
++      if (new URL(request.url).pathname.endsWith('/observation')) {
++        oldSignal = request.signal;
++        return observation;
++      }
++      return Promise.resolve(
++        Response.json(runRecord({ id: runId, status: 'failed', lastEventSeq: 3 })),
++      );
++    });
++    subscribe.mockImplementation(() => ({
++      lastSeq: 0,
++      done: new Promise<void>((resolve) => {
++        finish = resolve;
++      }),
++      close: vi.fn(),
++    }));
++    const view = mountStream(client);
++    await act(async () => {
++      finish();
++      await vi.advanceTimersByTimeAsync(0);
++    });
++    expect(oldSignal).toBeDefined();
++    act(() => useApiKeyStore.getState().markRejected());
++    expect(oldSignal?.aborted).toBe(true);
++    act(() => useApiKeyStore.getState().save('same-key'));
++    expect(subscribe).toHaveBeenCalledTimes(2);
++    await act(async () => {
++      // This transport answers despite cancellation: its lifecycle belongs to the old generation.
++      release(Response.json({ lifecycle: failure, freshSessionChoices: [] }));
++      await vi.advanceTimersByTimeAsync(0);
++    });
++    expect(view.registry.snapshot(runId)?.evidence.marker).toBeUndefined();
++    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(3);
++    await act(async () => {
++      await emit(1, event(runId, 4, 'run.finished', { status: 'succeeded', outcome: 'success' }));
++      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
++    });
++    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({
++      seq: 4,
++      terminal: 'succeeded',
++    });
++  });
++
++  it('preserves a valid same-scope buffered lifecycle batch when the route unmounts', async () => {
++    vi.useFakeTimers();
++    const view = mountStream();
++    await act(async () => {
++      await emit(0, event(runId, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }));
++      await emit(0, event(runId, 4, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
++    });
++    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
++    view.unmount();
++    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(4);
++    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({ seq: 4, resumes: true });
++    expect(view.registry.snapshot(runId)?.evidence.terminalSeq).toBe(3);
++  });
++});
++
+ describe('explicit script recovery follows resumed attempts (#321)', () => {
+   it.each(['running', 'succeeded'] as const)(
+     'follows an explicit Resume observed as %s without reload or cached-terminal shortcuts',
+diff --git a/apps/web/src/runs/useRunHeaderStatus.test.tsx b/apps/web/src/runs/useRunHeaderStatus.test.tsx
+index 4eeab771..a05d4030 100644
+--- a/apps/web/src/runs/useRunHeaderStatus.test.tsx
++++ b/apps/web/src/runs/useRunHeaderStatus.test.tsx
+@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
+ import { event } from '../__fixtures__/fake-api.js';
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { createAppClient } from '../api/context.js';
++import { useRunEventStore } from './event-store.js';
+ import { RunHeaderProvider, RunHeaderRegistry } from './run-header-store.js';
+ import { useRunHeaderStatus } from './useRunHeaderStatus.js';
+ 
+@@ -31,7 +32,8 @@ function mount(runId: string) {
+ }
+ 
+ afterEach(() => {
+-  useApiKeyStore.setState({ rejected: false });
++  useApiKeyStore.getState().forget();
++  useRunEventStore.getState().clear(A);
+ });
+ 
+ describe('useRunHeaderStatus (#386)', () => {
+@@ -59,6 +61,44 @@ describe('useRunHeaderStatus (#386)', () => {
+     expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
+   });
+ 
++  it('keeps a cold acknowledged resume neutral despite an older fresh outcome observation (C1)', () => {
++    useRunEventStore.getState().append(A, finished(A, 3), resumed(A, 4));
++    const { result, registry } = mount(A);
++    const lease = registry.lease(A);
++    act(() => registry.lifecycle(lease, finished(A, 3)));
++    expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
++    // Even a fresh read of the earlier running position cannot establish the old outcome.
++    act(() => registry.receipt(lease, running(2)));
++    expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
++    const parked = { status: 'waiting' as const, lastEventSeq: 4 };
++    act(() => {
++      registry.lifecycle(lease, resumed(A, 4));
++      registry.receipt(lease, parked);
++    });
++    expect(result.current.status(parked)).toEqual({ kind: 'record', status: 'waiting' });
++  });
++
++  it('settles a fresh matching terminal receipt beyond the cold hint without new streamed events (C1)', () => {
++    useRunEventStore
++      .getState()
++      .append(
++        A,
++        finished(A, 3),
++        event(A, 4, 'return.delivered', { channel: { kind: 'log' } }),
++        event(A, 5, 'return.delivered', { channel: { kind: 'log' } }),
++      );
++    const { result, registry } = mount(A);
++    const lease = registry.lease(A);
++    const terminal = { status: 'succeeded' as const, lastEventSeq: 5 };
++    act(() => registry.lifecycle(lease, finished(A, 3)));
++    expect(result.current.status(terminal)).toEqual({ kind: 'updating' });
++    // An unrelated position is not a receipt for the cached terminal row.
++    act(() => registry.receipt(lease, running(5)));
++    expect(result.current.status(terminal)).toEqual({ kind: 'updating' });
++    act(() => registry.receipt(lease, terminal));
++    expect(result.current.status(terminal)).toEqual({ kind: 'record', status: 'succeeded' });
++  });
++
+   it('withholds everything while the key is rejected and after the credentials change', () => {
+     const { result, registry } = mount(A);
+     const lease = registry.lease(A);
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 7b7795b6..9f256f2f 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -52,20 +52,39 @@ The inspector header therefore compares the record with the latest lifecycle mar
+ observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
+ `run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
+ the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
+-observation or batch cannot undo it; the evidence is held in memory, keeps only sequence numbers and
+-terminal statuses, and starts over for another run. Cached history from an earlier visit and a
+-selected historical event are not evidence.
++observation or batch cannot undo it. The app providers retain this evidence across route changes
++for at most twenty runs, evicting the least recently used. It belongs to one API client, query cache
++and credential generation; replacing either provider source, replacing or forgetting credentials,
++rejecting a key, or accepting even the same key after rejection retires the prior authority. Late
++reads, follower results and stream callbacks from a retired generation or evicted entry cannot
++restore it. Evidence keeps only sequences, terminal statuses and up to four recent run-record
++positions (status and sequence), in memory. It is never written to the persistent event store.
++Cached history, cached query rows and selected historical events are not fresh evidence.
+ 
+ - A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
+-  `cancelled`; never success for a non-terminal finish status) while the record has not moved past
+-  the events this view has seen, including later delivery events it has seen. The header then says
+-  **Status from event #N; the run record is updating.** in place of the record's position.
++  `cancelled`; never success for a non-terminal finish status) over an older record, even one with
++  the same status label, or while a disagreeing record has not moved past the events this view has
++  seen, including contiguous later delivery events. The header then says
++  **Status from event #N; the run record is updating.** in place of the record's position. An
++  agreeing record settles only at or beyond the marker, after a matching current-scope run read.
+ - A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
+   active status could be a lagging projection or an unseen resume, so the header shows a neutral
+   **Updating status…** until the stream or observation catches up.
+ - A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
+-  a wait again): a terminal record, or an active one from no later than the known outcome, shows
+-  **Updating status…** until a record that has caught up arrives.
++  a wait again). An active record from before that marker and a terminal record no later than the
++  accepted coverage show **Updating status…** until a record that has caught up arrives. A delayed
++  older outcome cannot replace the superseding marker.
++- A record names a status only after a successful, non-aborted read for this run under the current
++  scope has returned its exact status and sequence. Rendering a cached row is no receipt. A 404
++  drops that entry; other read failures do not establish deletion.
++- A new entry notes the event cursor already held on this device as a negative hint only: its
++  skipped events might contain a later resume. An outcome older than that hint stays neutral until
++  accepted contiguous coverage reaches it or a newer marker establishes the current outcome. The
++  cursor never supplies a status or verifies a cached record. A fresh matching terminal record can
++  settle without replaying the skipped suffix or waiting for finalization.
++- When the record supplies a terminal status, its node is explicitly labelled
++  **Last node in run record: …**. An event-derived outcome or neutral synchronization state shows
++  no stale record position; an active record retains its ordinary **at …** position.
+ 
+ This is presentation only. The record's status, failure, result, recovery tokens and permissions,
+ delivery and finalization, and every control, Wait panel and recovery action stay the server's; a

@@ -1,0 +1,88 @@
+{
+  "scope": {
+    "checkout": "G:/ggq/gg-i5-truthful-inspector/GraphGoblin",
+    "baseCommit": "0776ad604e69d17f42a03b52ea27fd5e30b1318e",
+    "baseTree": "b05bb597e0d4e61c0b24c7a54a075d14375f0efa",
+    "modifiedRepositoryFiles": ["apps/web/e2e/inspector-truthfulness.spec.ts"],
+    "specSha256": "61322359a4e2fc0be4e02e10f5baf706f0ac203db094024ce7f79d30c845e218",
+    "originalClaudeSpecSha256": "e509374ea3e05cba35232ab0f59559b31f810a4c2c2fe5d228a5bf3ab07936f0",
+    "indexChanges": false,
+    "commitPushOrPublication": false,
+    "productionSourceChanges": false,
+    "dependencyTimeoutOrRetryChanges": false
+  },
+  "diagnosis": {
+    "confirmedBaselineFailures": [
+      "Candidate01: apiResponse.json encountered a disposed request context after the held gate was released during cleanup.",
+      "Candidate02: after release plus unrouteAll(wait), route.fulfill threw Route is already handled."
+    ],
+    "candidate02Trace": {
+      "path": "G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-385-independent-qa-01/output/playwright/candidate02-held-artifacts/inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium/trace.zip",
+      "fulfillStartsMs": [7254.496, 7390.376, 7403.179],
+      "thirdFulfillFailureMs": 7403.74,
+      "unrouteProtocolPatternUpdateMs": 7409.15,
+      "runRequestCancellationEstablished": false,
+      "recordedAbortedRequest": "/runs/{runId}/events?after=0 (SSE), net::ERR_ABORTED",
+      "limits": "The trace establishes a fixture route lifecycle failure. It does not establish cancellation of the run request, nor does the later protocol pattern update establish when unrouteAll began awaiting active handlers."
+    },
+    "installedPlaywrightEvidence": {
+      "version": "1.63.0",
+      "source": "node_modules/.pnpm/playwright-core@1.63.0/node_modules/playwright-core/lib/coreBundle.js",
+      "routeRemoveHandlerLine": 13682,
+      "routeStartHandlingLine": 13773,
+      "notifyRemovedHandlerLine": 52089,
+      "pageUnrouteAllLine": 61752,
+      "routeHandlerStopLine": 60168,
+      "finding": "A removed current server handler is continued. Client unrouteAll(wait) awaits active invocations before its traced pattern update. This is a reason to drain explicitly before removal, not proof that removal caused the exact recorded failure."
+    },
+    "noProductRegressionClaim": true
+  },
+  "correction": [
+    "Capture the real completed run row through the disposable API before navigation, then apply the same stale-running projection to that stable snapshot. No released handler uses route.fetch or an APIResponse body.",
+    "Capture each handler's read ordinal before waiting, rather than consulting a shared count after asynchronous work.",
+    "Hold observation responses in both cases, so observation evidence cannot mask the streamed terminal event race.",
+    "Hold run refreshes after the first row; assert succeeded status, updating explanation, and absence of a stale current-node position while both read models remain blocked.",
+    "Release run refreshes while observations remain held. Await every captured held browser response, its completed body, and its exact running status at the terminal event sequence, then two animation frames before repeating all header assertions.",
+    "During cleanup release both barriers, leave the inspector, wait for active callbacks to finish, and only then call unrouteAll(wait). No errors are caught or ignored."
+  ],
+  "verification": {
+    "commands": "verification-commands.ps1",
+    "runtime": "Node v22.23.4 / pnpm 12.8.1",
+    "browser": "installed msedge, Playwright chromium project",
+    "ownedPorts": [18794, 18795],
+    "ownedListenersAfterRun": 0,
+    "webBuild": "G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web/dist",
+    "webBuildProvenance": "production-input-verification.json: 655 tracked web, api-client, contracts, and domain source/build inputs match author candidate byte-for-byte; 0 mismatches. Existing independent QA build log records 9 successful build tasks.",
+    "focusedBrowser": {
+      "passed": 2,
+      "failed": 0,
+      "flaky": 0,
+      "skipped": 0,
+      "retries": 0,
+      "durationMs": 9244.022,
+      "heldCaseMs": 2136,
+      "staleCaseMs": 1248,
+      "results": "browser-results.json",
+      "log": "browser.log.txt",
+      "successTraces": "output/playwright/final-artifacts"
+    },
+    "typecheckExit": 0,
+    "scopedEslintExit": 0,
+    "prettierCheckExit": 0,
+    "gitDiffCheckExit": 0,
+    "scopedChecks": "final-scoped-checks.json",
+    "finalGitAndHashState": "final-state.json"
+  },
+  "iterationHistory": [
+    "Original candidate01 and candidate02 failure logs/results are retained unchanged.",
+    "Iteration01 incorrectly used a glob that also matched the app navigation. The JSON page caused both Timeline assertions to fail. Exact URL pathname predicates were restored; this is a fixture authoring mistake, not product evidence. Raw failures remain in iteration01-browser-results.json and output/playwright/corrected-artifacts.",
+    "Iteration02 passed both browser cases using a first-response completion barrier (iteration02-browser-results.json).",
+    "Final fixture strengthened the barrier to cover every captured held run request. Both cases passed again; no additional repeats were run."
+  ],
+  "limits": [
+    "Matching run GETs include the run query and attempt follower. Completed captured HTTP responses plus two animation frames establish response completion and a render boundary; they do not independently identify which response entered React Query. The root reports a separate public component stale-cache witness for actual query consumption; this worker did not rerun that component witness.",
+    "This is bounded fixture correction and focused verification, not formal product review, full browser regression, or independent QA of a subsequently frozen candidate.",
+    "No provider, account, credentials, private configuration, owner data, protected ports, or other source files were changed.",
+    "Root remains responsible for candidate freeze, designated independent QA, and formal delivery gates."
+  ]
+}

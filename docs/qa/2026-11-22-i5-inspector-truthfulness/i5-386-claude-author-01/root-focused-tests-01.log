@@ -1,0 +1,46 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthful-inspector/GraphGoblin/apps/web
+
+ ❯ src/runs/RunInspectorPage.lifecycle.test.tsx (14 tests | 1 failed) 5432ms
+   ❯ run header status follows observed lifecycle events (#386) (14)
+     × shows the terminal status when the refreshed record has the terminal s… 331ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the terminal status when the refreshed record has the terminal s…
+AssertionError: expected <option value="stale-position"></option> to be null
+
+- Expected:
+null
+
++ Received:
+<option
+  value="stale-position"
+>
+  Node
+   (
+  stale-position
+  )
+</option>
+
+ ❯ src/runs/RunInspectorPage.lifecycle.test.tsx:122:60
+    120|       ).toBeVisible();
+    121|       // The record's position is not claimed beside an outcome it has…
+    122|       expect(within(header).queryByText(/stale-position/)).toBeNull();
+       |                                                            ^
+    123|     } finally {
+    124|       reads.release();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 71 passed (72)
+   Start at  10:33:20
+   Duration  18.88s (tests 38%, environment 26%, import 17%, transform 11%, setup 8%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthful-
+  │ inspector\GraphGoblin\apps\web
+

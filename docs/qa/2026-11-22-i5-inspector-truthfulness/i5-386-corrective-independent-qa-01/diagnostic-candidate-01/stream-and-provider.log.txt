@@ -1,0 +1,79 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web
+
+ ❯ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx (15 tests | 1 failed | 13 skipped) 1010ms
+   ↓ boundary C1 negative: cold acknowledged resume tail cannot promote an older successful failure observation
+   ↓ boundary C1 positive: cold stable terminal with audit suffix settles without new event payload or finalizedAt
+   ↓ boundary G1: rejection immediately withholds header evidence and late old successful observation cannot restore it
+   ↓ boundary G2/G4: same-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G2/G4: replacement-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G2/G4: cross-tab-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G3: new API client with the same QueryClient withholds former source until current reads settle
+   ↓ boundary C3: cold actual 401 refuses a terminal claim
+   ↓ boundary C3: cold actual 404 refuses a terminal claim
+   ↓ boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery
+   ✓ boundary G3 provider replacement: same client with a new provider and QueryClient requires current receipts 620ms
+   × boundary G2 stream negative: a pre-rejection stream cannot become current evidence after same-key recovery 388ms
+   ↓ boundary G4: delayed old-key 401 does not reject replacement key; cross-tab forget withholds prior header
+   ↓ boundary C2: 21 public run visits evict A; a late old row cannot certify the new entry, then fresh terminal reads settle
+   ↓ boundary I1: live progress keeps the existing request budget, event-cache format and server action authority
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx > boundary G2 stream negative: a pre-rejection stream cannot become current evidence after same-key recovery
+AssertionError: expected <span …(2)>…(2)</span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"
+  data-status="failed"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="failed"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M6 6l12 12M18 6 6 18"
+    />
+  </svg>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    failed
+  </span>
+</span>
+
+ ❯ noClaim src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx:52:49
+     50|   if (!heading) return; // Existing QueryState may withhold the inspec…
+     51|   const region = heading.closest('header')!;
+     52|   expect(region.querySelector('[data-status]')).toBeNull();
+       |                                                 ^
+     53|   expect(within(region).queryByText(/^at |^Last node in run record:|^S…
+     54| }
+ ❯ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx:324:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 13 skipped (15)
+   Start at  12:16:59
+   Duration  6.32s (transform 30%, environment 28%, import 18%, tests 17%, setup 8%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-independent-qa-01/diagnostic-candidate-01/stream-and-provider.json
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

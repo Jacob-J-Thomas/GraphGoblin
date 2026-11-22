@@ -1,0 +1,85 @@
+
+Running 2 tests using 1 worker
+
+(node:50964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) (10.9s)
+(node:25672) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386) (10.9s)
+
+
+  1) [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ }) with timeout 10000ms
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ })
+
+
+      102 |       await expect(
+      103 |         timeline.getByRole('button', { name: /run\.finished.*succeeded/ }),
+    > 104 |       ).toBeVisible();
+          |         ^
+      105 |       const header = page
+      106 |         .locator('header')
+      107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });
+        at G:\ggq\gg-i5-truthful-inspector\GraphGoblin\apps\web\e2e\inspector-truthfulness.spec.ts:104:9
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386) 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ }) with timeout 10000ms
+      - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.finished.*succeeded/ })
+
+
+      102 |       await expect(
+      103 |         timeline.getByRole('button', { name: /run\.finished.*succeeded/ }),
+    > 104 |       ).toBeVisible();
+          |         ^
+      105 |       const header = page
+      106 |         .locator('header')
+      107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });
+        at G:\ggq\gg-i5-truthful-inspector\GraphGoblin\apps\web\e2e\inspector-truthfulness.spec.ts:104:9
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-b7910-t-the-outcome-sequence-386--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-b7910-t-the-outcome-sequence-386--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-browser-fixture-correction-01\output\playwright\corrected-artifacts\inspector-truthfulness-the-b7910-t-the-outcome-sequence-386--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+    [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386) 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthful-
+  │ inspector\GraphGoblin\apps\web
+

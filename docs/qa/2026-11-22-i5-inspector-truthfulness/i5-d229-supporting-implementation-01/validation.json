@@ -1,0 +1,95 @@
+{
+  "node": "v22.23.4",
+  "ownedTmp": "G:/ggq/gg-i5-d229-support-scratch",
+  "focused": {
+    "command": "pnpm.cmd --filter @graphgoblin/web test src/api/api-key.test.tsx src/api/api-key-fetch.test.ts src/api/queries.reconnect.test.tsx src/runs/RunInspectorPage.corrective.test.tsx src/api/ApiKeyPanel.test.tsx src/runs/run-header-status.test.ts src/runs/useRunHeaderStatus.test.tsx --reporter=default --reporter=json --outputFile=.../focused-tests.json",
+    "session": 79801,
+    "exitCode": 0,
+    "passed": 95,
+    "failed": 0,
+    "newCases": 13
+  },
+  "firstTypecheck": {
+    "session": 63040,
+    "exitCode": 0
+  },
+  "firstLint": {
+    "session": 47571,
+    "exitCode": 1,
+    "finding": "ApiKeyPanel.test.tsx:203 require-await; exact failed source and output retained",
+    "source": "failed-lint-source/ApiKeyPanel.test.tsx",
+    "log": "scoped-lint.log.txt"
+  },
+  "lintCorrection": "Add explicit Promise.resolve microtask await after same-key accepted save inside async act; unchanged assertions/requests/timeouts/retries.",
+  "changedPanelFile": {
+    "command": "pnpm.cmd --filter @graphgoblin/web test src/api/ApiKeyPanel.test.tsx --reporter=default --reporter=json --outputFile=.../panel-lint-corrected-tests.json",
+    "session": 94943,
+    "exitCode": 0,
+    "passed": 6,
+    "failed": 0
+  },
+  "finalTypecheck": {
+    "command": "pnpm.cmd --filter @graphgoblin/web typecheck",
+    "session": 22115,
+    "exitCode": 0,
+    "log": "web-typecheck-final.log.txt"
+  },
+  "finalLint": {
+    "command": "pnpm.cmd --filter @graphgoblin/web exec eslint src/api/api-key.test.tsx src/api/api-key-fetch.test.ts src/api/queries.reconnect.test.tsx src/runs/RunInspectorPage.corrective.test.tsx src/api/ApiKeyPanel.test.tsx",
+    "session": 80654,
+    "exitCode": 0,
+    "log": "scoped-lint-corrected.log.txt"
+  },
+  "prettier": {
+    "command": "pnpm.cmd exec prettier --check apps/web/src/api/api-key.test.tsx apps/web/src/api/api-key-fetch.test.ts apps/web/src/api/queries.reconnect.test.tsx apps/web/src/runs/RunInspectorPage.corrective.test.tsx apps/web/src/api/ApiKeyPanel.test.tsx docs/09-frontend-and-pwa.md CHANGELOG.md",
+    "exitCode": 0,
+    "sourceChangedByCheck": false,
+    "log": "prettier-check.log.txt"
+  },
+  "diffCheck": {
+    "command": "git diff --check",
+    "exitCode": 0
+  },
+  "finalSourceValidationParity": {
+    "unchangedSixFocusedFilesPassed": 89,
+    "finalCorrectedPanelFilePassed": 6,
+    "all95FinalCasesHavePassingScopedEvidence": true,
+    "singleFinal95RerunAfterLintCorrection": false,
+    "finalTypecheckLintFormattingBindFinalBytes": true,
+    "formatterChangesAfterFinalTests": false
+  },
+  "allWorkerSessionsClosed": true,
+  "closedSessions": [
+    {
+      "id": 79801,
+      "exitCode": 0
+    },
+    {
+      "id": 63040,
+      "exitCode": 0
+    },
+    {
+      "id": 47571,
+      "exitCode": 1
+    },
+    {
+      "id": 94943,
+      "exitCode": 0
+    },
+    {
+      "id": 80654,
+      "exitCode": 0
+    },
+    {
+      "id": 22115,
+      "exitCode": 0
+    }
+  ],
+  "productionDefectAttributed": false,
+  "limits": [
+    "Controlled public component/API-client/QueryClient/FakeApi/SSE jsdom evidence and direct credential-wrapper controls, not live backend/browser/provider acceptance.",
+    "No full coverage/build/general product scan/audit/CI/native/publication/merge performed by worker.",
+    "Fresh actual Claude targeted correction review of this final GPT support delta remains required; earlier D228 negative critique is not approval.",
+    "Production files, actual Claude selector unit, and both E2E files remain read-only."
+  ]
+}
