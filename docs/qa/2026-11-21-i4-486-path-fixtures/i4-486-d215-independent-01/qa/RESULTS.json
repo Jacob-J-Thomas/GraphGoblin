@@ -1,0 +1,780 @@
+{
+  "head": "6de50cb8e22b92bfed5d6fe7bf14a2a10b95cd08",
+  "tree": "34b80f155c8434abc69fc72105ae7462fc460377",
+  "parent": "b8126de18080b76b15cbbbbc00fd791030fec3e1",
+  "baselineFixtureSha256": "82039a8f984b276faafa3936db0753b06f79064420f9b863f9be2f2562bdd21c",
+  "correctedFixtureSha256": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+  "scenarios": [
+    {
+      "scenario": "1",
+      "id": "s1-baseline-ordinary-g-temp-engine-temp",
+      "fixture": "baseline",
+      "expected": "pass (positive control)",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "tmpdirLexicalEqualsPhysical": true,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "82039a8f984b276faafa3936db0753b06f79064420f9b863f9be2f2562bdd21c",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp\\gg-wp-e3-",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp\\gg-wp-e3-PnOcrY",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp\\gg-wp-e3-PnOcrY\\workspaces\\00000000000000000000000001",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp\\gg-wp-e3-PnOcrY\\workspaces\\00000000000000000000000001",
+          "differs": false,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:143:24"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "2",
+      "id": "s2-baseline-junction-g-temp-engine-temp",
+      "fixture": "baseline",
+      "expected": "fail at original cwd check (control)",
+      "observed": "fail",
+      "exitCode": 1,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 0,
+        "failed": 1,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "failed"
+        }
+      ],
+      "failureMessages": [
+        "AssertionError: expected 'G:\\ggq\\qa-scratch\\i4-486-d215-indepen…' to be 'G:\\ggq\\qa-scratch\\i4-486-d215-indepen…' // Object.is equality\n    at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:141:52\n    at async file:///G:/ggq/gg-i4-486-d215-qa/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "tmpdirLexicalEqualsPhysical": false,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "82039a8f984b276faafa3936db0753b06f79064420f9b863f9be2f2562bdd21c",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-jPSIr1",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "3",
+      "id": "s3-corrected-ordinary-g-temp-full-fs-file",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 20,
+        "failed": 0,
+        "skippedOrPending": 0
+      },
+      "executed": [
+        {
+          "name": "FsWorkspace resolves fixed, relative, and temporary directories and reuses them",
+          "status": "passed"
+        },
+        {
+          "name": "FsWorkspace writes relative and absolute files, creating parent directories",
+          "status": "passed"
+        },
+        {
+          "name": "FsWorkspace propagates mkdir failures and succeeds after the external path is repaired",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary uses real fixed paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary uses real relative paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary uses real template paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary rejects an invalid engine template with zero resolve, mkdir and journal effects (0)",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary rejects an invalid engine template with zero resolve, mkdir and journal effects (1)",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary rejects an invalid engine template with zero resolve, mkdir and journal effects (2)",
+          "status": "passed"
+        },
+        {
+          "name": "engine workspace filesystem boundary keeps a journal rejection external after mkdir and does not cache the failed resolution",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore accepts verified bytes published by another writer while a read handle blocks replacement",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore rejects corrupted final bytes and atomically repairs a pre-existing partial file",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore does not accept truncated bytes on a repeated put",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore ignores interrupted temporary writes and converges under identical and different concurrent puts",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore stores content once by hash and reads it back by reference",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore verifies raw bytes before UTF-8 decoding",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore reports a typed publication failure without a final artifact when storage is unavailable",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore returns undefined for malformed or missing references",
+          "status": "passed"
+        },
+        {
+          "name": "FsArtifactStore rethrows unexpected filesystem errors",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "tmpdirLexicalEqualsPhysical": true,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "4",
+      "id": "s4-corrected-junction-g-temp-engine-temp",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real temp paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "tmpdirLexicalEqualsPhysical": false,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-gZUDNr",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-gZUDNr",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical\\gg-wp-e3-gZUDNr",
+          "differs": true,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:136:45"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical\\gg-wp-e3-gZUDNr\\workspaces\\00000000000000000000000001",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical\\gg-wp-e3-gZUDNr\\workspaces\\00000000000000000000000001",
+          "differs": false,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:145:24"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "5a",
+      "id": "s5a-corrected-c-temp-adapter-mixed",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "FsWorkspace resolves fixed, relative, and temporary directories and reuses them",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "tmpdirDev": "2894493802",
+        "tmpdirRealpathNative": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "tmpdirLexicalEqualsPhysical": true,
+        "workerTempApplied": true,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-",
+          "out": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-ca4t4d",
+          "oldCrossDriveControl": {
+            "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+            "adapterOldFormula": "relative(process.cwd(), join(dataDir, 'relative'))",
+            "adapterOld": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-ca4t4d\\relative",
+            "adapterOldIsAbsolute": true,
+            "engineOldFormula": "relative(process.cwd(), join(dataDir, 'user-owned'))",
+            "engineOld": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-ca4t4d\\user-owned",
+            "engineOldIsAbsolute": true
+          },
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-",
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-rMiS7X",
+          "callSite": "at createRelativeWorkspaceTarget (G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:41:22)"
+        },
+        {
+          "kind": "path.relative",
+          "input": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-rMiS7X\\workspace",
+          "out": "gg-wp-relative-rMiS7X\\workspace",
+          "outIsAbsolute": false,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:52:26"
+        },
+        {
+          "kind": "path.resolve(relative input)",
+          "input": [
+            "gg-wp-relative-rMiS7X\\workspace"
+          ],
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-rMiS7X\\workspace",
+          "callSite": "at FsWorkspace.resolve (G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/workspace.ts:22:22)"
+        },
+        {
+          "kind": "path.resolve(relative input)",
+          "input": [
+            "gg-wp-relative-rMiS7X\\workspace"
+          ],
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-rMiS7X\\workspace",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:55:36"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "5b",
+      "id": "s5b-corrected-c-temp-engine-relative",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real relative paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "tmpdirDev": "2894493802",
+        "tmpdirRealpathNative": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "tmpdirLexicalEqualsPhysical": true,
+        "workerTempApplied": true,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-",
+          "out": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-OVACyH",
+          "oldCrossDriveControl": {
+            "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+            "adapterOldFormula": "relative(process.cwd(), join(dataDir, 'relative'))",
+            "adapterOld": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-OVACyH\\relative",
+            "adapterOldIsAbsolute": true,
+            "engineOldFormula": "relative(process.cwd(), join(dataDir, 'user-owned'))",
+            "engineOld": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a\\gg-wp-e3-OVACyH\\user-owned",
+            "engineOldIsAbsolute": true
+          },
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-",
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-watq6s",
+          "callSite": "at createRelativeWorkspaceTarget (G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:41:22)"
+        },
+        {
+          "kind": "path.relative",
+          "input": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-watq6s\\workspace",
+          "out": "gg-wp-relative-watq6s\\workspace",
+          "outIsAbsolute": false,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:95:47"
+        },
+        {
+          "kind": "path.resolve(relative input)",
+          "input": [
+            "gg-wp-relative-watq6s\\workspace"
+          ],
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-watq6s\\workspace",
+          "callSite": "at FsWorkspace.resolve (G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/workspace.ts:22:22)"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-watq6s\\workspace",
+          "out": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\gg-wp-relative-watq6s\\workspace",
+          "differs": false,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:145:24"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "6a",
+      "id": "s6a-corrected-junction-g-temp-engine-fixed",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real fixed paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "tmpdirLexicalEqualsPhysical": false,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-LEXvCU",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-LEXvCU\\user-owned",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical\\gg-wp-e3-LEXvCU\\user-owned",
+          "differs": true,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:145:24"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    },
+    {
+      "scenario": "6b",
+      "id": "s6b-corrected-junction-g-temp-engine-template",
+      "fixture": "corrected",
+      "expected": "pass",
+      "observed": "pass",
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "total": 20,
+        "passed": 1,
+        "failed": 0,
+        "skippedOrPending": 19
+      },
+      "executed": [
+        {
+          "name": "engine workspace filesystem boundary uses real template paths, caches resolution for delivery, and claims only new temporary directories",
+          "status": "passed"
+        }
+      ],
+      "failureMessages": [],
+      "worker": {
+        "version": "v22.23.4",
+        "cwd": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure",
+        "cwdDev": "810877956",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "tmpdirDev": "810877956",
+        "tmpdirRealpathNative": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "tmpdirLexicalEqualsPhysical": false,
+        "workerTempApplied": false,
+        "fixtureSha256AtStart": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41",
+        "fixtureMatchesIntended": true
+      },
+      "taps": [
+        {
+          "kind": "fs.mkdtempSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-RqWFsA",
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:33:13"
+        },
+        {
+          "kind": "fs.realpathSync",
+          "input": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias\\gg-wp-e3-RqWFsA\\user-owned",
+          "out": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical\\gg-wp-e3-RqWFsA\\user-owned",
+          "differs": true,
+          "callSite": "at G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts:145:24"
+        }
+      ],
+      "tempPostListingEmpty": true,
+      "checkoutLeftoversAfter": [],
+      "statusAfter": "",
+      "fixtureAfter": "b8012a8676b26641c845b78b94f2419cd1f225ece0e8eb417874215646db9e41"
+    }
+  ],
+  "allObservedMatchExpected": true,
+  "allWorkersRanIntendedFixture": true,
+  "gates": {
+    "typecheckNoEmit": 0,
+    "eslintFsTest": 0,
+    "prettierFsTest": 0,
+    "gitDiffCheck": 0,
+    "coverageConfirmation": {
+      "typecheckProgramFileCount": 1068,
+      "typecheckProgramIncludesFsTest": [
+        "G:/ggq/gg-i4-486-d215-qa/GraphGoblin/packages/infrastructure/src/fs/fs.test.ts"
+      ],
+      "eslintResults": [
+        {
+          "filePath": "G:\\ggq\\gg-i4-486-d215-qa\\GraphGoblin\\packages\\infrastructure\\src\\fs\\fs.test.ts",
+          "errorCount": 0,
+          "warningCount": 0,
+          "fatalErrorCount": 0,
+          "messages": []
+        }
+      ],
+      "exits": {
+        "list": 0,
+        "lint": 0
+      }
+    }
+  },
+  "crossSetup": {
+    "at": "2026-11-21T22:36:28.385Z",
+    "createdByPid": 12756,
+    "cdir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+    "parentRealpath": "C:\\Users\\98jak\\graphgoblin-qa",
+    "identity": {
+      "dev": "2894493802",
+      "ino": "3377699728867549",
+      "birthtimeNs": "1795300588386027800",
+      "isSymbolicLink": false,
+      "isDirectory": true
+    },
+    "realpathNative": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+    "dev": "2894493802",
+    "volumes": {
+      "cDev": "2894493802",
+      "gDev": "810877956",
+      "parentDev": "2894493802"
+    },
+    "capacityBefore": {
+      "path": "C:\\",
+      "bsize": "4096",
+      "freeBytes": "527224832",
+      "totalBytes": "510255951872"
+    },
+    "capacityAfterCreate": {
+      "path": "C:\\",
+      "bsize": "4096",
+      "freeBytes": "527224832",
+      "totalBytes": "510255951872"
+    }
+  },
+  "crossCleanup": {
+    "at": "2026-11-21T22:37:05.076Z",
+    "label": "c-temp",
+    "dir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+    "existedBefore": true,
+    "identityMatches": true,
+    "listingBeforeRemoval": [],
+    "method": "rmdir (empty, non-recursive)",
+    "existsAfter": false,
+    "capacityAfterRemoval": {
+      "path": "C:\\",
+      "bsize": "4096",
+      "freeBytes": "534593536",
+      "totalBytes": "510255951872"
+    },
+    "cParentEntriesMatchingPrefix": []
+  },
+  "cleanup": {
+    "at": "2026-11-21T22:38:13.825Z",
+    "junction": {
+      "lstat": {
+        "dev": "810877956",
+        "ino": "844424933534346",
+        "birthtimeNs": "1795300345810225100",
+        "isSymbolicLink": true,
+        "isDirectory": false
+      },
+      "readlink": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+      "matchesRecorded": true,
+      "targetMatches": true,
+      "physicalListingBefore": [],
+      "method": "fs.unlinkSync on the reparse point (no traversal)",
+      "existsAfter": false,
+      "physicalStillPresentAfterUnlink": true,
+      "physicalIdentityAfterUnlink": {
+        "dev": "810877956",
+        "ino": "844424933534345",
+        "birthtimeNs": "1795300345809218400",
+        "isSymbolicLink": false,
+        "isDirectory": true
+      }
+    },
+    "physical": {
+      "label": "junction-physical",
+      "dir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+      "existedBefore": true,
+      "identityMatches": true,
+      "listingBeforeRemoval": [],
+      "method": "rmdir (empty, non-recursive)",
+      "existsAfter": false
+    },
+    "ordinary": {
+      "label": "ordinary-temp",
+      "dir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+      "existedBefore": true,
+      "identityMatches": true,
+      "listingBeforeRemoval": [],
+      "method": "rmdir (empty, non-recursive)",
+      "existsAfter": false
+    },
+    "root": {
+      "label": "fixture-root",
+      "dir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a",
+      "existedBefore": true,
+      "identityMatches": true,
+      "listingBeforeRemoval": [],
+      "method": "rmdir (empty, non-recursive)",
+      "existsAfter": false
+    },
+    "scratchListingAfter": [
+      "node-compile-cache",
+      "process-temp"
+    ]
+  },
+  "sourceAfterMatchesBinding": {
+    "head": true,
+    "tree": true,
+    "parent": true,
+    "statusEmpty": true,
+    "indexBytesAndSha": true,
+    "trackedIndexSha256": true,
+    "fixture": true,
+    "lock": true
+  },
+  "residualRealpathProbe": {
+    "at": "2026-11-21T22:39:59.294Z",
+    "node": "v22.23.4",
+    "scenarioWorkerTempRealpathAgreement": [
+      {
+        "log": "s1-baseline-ordinary-g-temp-engine-temp.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "agree": true
+      },
+      {
+        "log": "s2-baseline-junction-g-temp-engine-temp.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "agree": true
+      },
+      {
+        "log": "s3-corrected-ordinary-g-temp-full-fs-file.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\ordinary-temp",
+        "agree": true
+      },
+      {
+        "log": "s4-corrected-junction-g-temp-engine-temp.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "agree": true
+      },
+      {
+        "log": "s5a-corrected-c-temp-adapter-mixed.child.jsonl",
+        "tmpdir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "js": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "native": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "agree": true
+      },
+      {
+        "log": "s5b-corrected-c-temp-engine-relative.child.jsonl",
+        "tmpdir": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "js": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "native": "C:\\Users\\98jak\\graphgoblin-qa\\d215-small-native-temp-mwqzh0i9-937e879a",
+        "agree": true
+      },
+      {
+        "log": "s6a-corrected-junction-g-temp-engine-fixed.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "agree": true
+      },
+      {
+        "log": "s6b-corrected-junction-g-temp-engine-template.child.jsonl",
+        "tmpdir": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-alias",
+        "js": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "native": "G:\\ggq\\qa-scratch\\i4-486-d215-independent-01\\opus-qa-mwqzh0i9-937e879a\\junction-physical",
+        "agree": true
+      }
+    ],
+    "allScenarioWorkersAgree": true,
+    "shortNameProbe": {
+      "input": "C:\\PROGRA~1",
+      "jsRealpathSync": "C:\\PROGRA~1",
+      "nativeRealpathSync": "C:\\Program Files",
+      "promisesRealpathProductionPrimitive": "C:\\Program Files",
+      "jsEqualsProductionPrimitive": false,
+      "nativeEqualsProductionPrimitive": true
+    },
+    "longNameControl": {
+      "input": "C:\\Program Files",
+      "jsRealpathSync": "C:\\Program Files",
+      "nativeRealpathSync": "C:\\Program Files",
+      "promisesRealpathProductionPrimitive": "C:\\Program Files",
+      "jsEqualsProductionPrimitive": true,
+      "nativeEqualsProductionPrimitive": true
+    }
+  }
+}

@@ -1,0 +1,30 @@
+import { SlugSchema, UlidSchema, type JsonValue, type RunFailure } from '@graphgoblin/contracts';
+import { deciderFailure } from './decider-errors.js';
+import { describeError, RunFailureError } from './errors.js';
+
+/** Engine-owned public copy for an internal fault with no raw diagnostic fields. */
+export class InternalRunFailureError extends RunFailureError {
+  constructor(message: string, options: RunFailureError['options']) {
+    super('INTERNAL_ERROR', message, options);
+  }
+}
+
+export const INTERNAL_FAILURE_MESSAGE =
+  'An unexpected error interrupted the run. See the server logs for this run.';
+
+export function errorDiagnostic(error: unknown): {
+  message: string;
+  name?: string;
+  stack?: string;
+} {
+  return {
+    message: describeError(error),
+    ...(error instanceof Error
+      ? { name: error.name, ...(error.stack ? { stack: error.stack } : {}) }
+      : {}),
+  };
+}
+
+export function boundedAuthoredCause(message: string): string {
+  const max = 1000;
+  return message.length > max ? message.slice(0, max - 1) + 'â€¦' : message;

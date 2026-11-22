@@ -1,0 +1,25 @@
+# #486 continuation preparation01
+
+Prepared 2026-11-21T13:21:01.686121+00:00. READY FOR ROOT'S GUARDED DISPATCH; neither provider was started. Root must confirm time >=2026-11-21T16:00:00Z and four-worker capacity. D199 retains same actual Claude roles/effort and requires fresh invocation envelopes because the inspected runner disables session persistence. No source/test/build/provider/network/Git-index/publication operation was performed; only read-only evidence/source/hash/targeted-PID inspections and creation of the six new packet files.
+
+## New invocation envelopes
+
+- i4-486-fable-review-02/BRIEF.md and spec.json: claude-fable-5-2/xhigh; frozen author cwd G:/ggq/gg-i4-486-authored-errors/GraphGoblin; readOnly true; outputDir .../i4-486-fable-review-02/provider. Continues UNFINISHED formal general cycle1, no new cycle or review slot.
+- i4-486-independent-02/BRIEF.md and spec.json: claude-opus-5-5/xhigh; frozen QA cwd G:/ggq/gg-i4-486-qa/GraphGoblin; readOnly false strictly for new task evidence/disposable scratch. OutputDir .../i4-486-independent-02/provider. Effective evidence packet/scratch change to02, original01 remains immutable. No prior results or helper state copied.
+- Manifest.json records exact source bindings, prior/provider/checkpoint/input hashes and new-file hashes. Provider output directories are intentionally absent until the runner creates them.
+
+## Provenance and unfinished work
+
+Candidate633d9ac72c10fe4b8d76f7ba50221f9ed8557cb9,tree d0e38c6c0212e312e6b605ac3d6bc8f7af5a129f,parent02351e2fb932b3be44e7cc3fb3943a61d568226c. Both live frozen checkouts have empty porcelain and52/52source bytes/hashes equal to freeze. QA1189/1189dist entries still equal original manifest;576emitted.js/.d.ts comparison was performed by original Opus, not repeated here. Web's original independent binding is hashes only. Current-main integration is outside these source bindings; root must rebind separately before accepting its CI/final outcomes.
+
+Fable sessiona0c70fbc-3dfc-4556-92ab-a64d61f0897e,result08c1a7e5-5373-491a-bcc4-e83decebe891: exit1,429,is_error=true,api_error,102turns; NONE verdict. Last source request was script-dispatch.ts after mutation call-site tracing. Partial reads/findings are never an approval. Finish whole review scope including tests and concrete counterexamples. Original reported list cost9.582874USD remains accounting only, not an overage authorization.
+
+Opus sessiondf484ec2-47c6-45c6-822c-ca13fe061be3,result58c6314c-815f-47f5-bbfc-2da1399f2289: exit1,429,is_error=true,api_error,97turns; NONE verdict. Binding00 complete,D1 exit0/36of36passed. Original reported list cost5.3835762USD retained. Native/API/MCP/browser/workspace/inference/children/persistence/historical-byte rows D2-D6 remain unverified; no REPORT.md exists in either original packet. Prepared harness/append fixture were written after D1 and not exercised in those scenarios. The API boot helper does not exist. New02 must construct/review it and continue ALL26boundaries,R1-R6/S1-S6 and protected controls, including both genuinely resumable parent-mapping dedup controls. Original plan contains tentative fixture choices, to be resolved explicitly against runtime-valid contracts or recorded as synthetic/unreachable gaps.
+
+## Preservation, ownership and limits
+
+Every original01 and checkpoint file is hashed before/after creation and preserved byte-for-byte. All checkpoint SHA256SUMS entries and original files listed in checkpoint.json were verified. New briefs carry exact original transcript/result/exit/extracted handoff hashes. No session resume identifiers are placed in specs. Both provider PIDs37132/27748 absent at targeted read, and exit1 records retained. Original scratch has rebuild,rebuild-bind-1795265515,tmp; no data directory or evidence of API/MCP/browser services. This is NOT a whole-host cleanup/port survey and no final original cleanup report exists. Old scratch remains intact; new02 must own new resources, scoped auth/drain and precise PID/listener absence proofs.
+
+Original run.sh/00-bind.sh/common.mjs target01 packet/scratch: running/importing unchanged would write old evidence. New brief expressly forbids this and requires02-owned wrappers/helpers with ancestry+hashes. D1's recorded lib_sha256 is common.mjs alone; harness.mjs was created later. No copied helper or live state is mislabelled as executed. No source/schema/contract/host-policy change is authorized. Existing failed4combinedcases/52infrafailures and clean-base controls remain historical preserved limits, not a local gate pass or coverage waiver; hosted full CI/current-target integration/native/fresh finalAstra remain required.
+
+Preparation inspection errors: one read used the nonexistent singular d1.result.json (actual d1.results.json); one Python default-codepage transcript read failed decoding UTF8 and was corrected to explicit UTF8. Both were read-only, produced no scenario/test/evidence mutation, and did not alter original bytes. No material dispatch ambiguity remains beyond root's time/capacity confirmation and the explicitly pending QA fixture reachability/cleanup obligations.

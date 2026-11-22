@@ -16,6 +16,7 @@ import type {
   HarnessId,
   RunEvent,
 } from '@graphgoblin/contracts';
+import type { TemplateFact } from '@graphgoblin/domain';
 import type { EnginePorts, EventDraft, EngineSettings } from './ports.js';
 
 /** Why a parked node was woken, with the payload that woke it. */
@@ -48,6 +49,9 @@ export interface ChildOutcome {
   thread?: ContextThread;
 }
 
+export type WorkingDirectoryResult =
+  { ok: true; directory: string } | { ok: false; reason: TemplateFact | 'empty-path' };
+
 /** Services the executor hands to handlers. Everything that touches the outside world goes through here. */
 export interface HandlerServices {
   /** Render a Liquid template against the thread view plus extras. */
@@ -79,7 +83,7 @@ export interface HandlerServices {
   /** Current depth of this run in the subloop tree (0 for a top-level run). */
   depth(): Promise<number>;
   /** Working directory for this run, resolved once per run. */
-  workingDirectory(): Promise<string>;
+  workingDirectory(): Promise<WorkingDirectoryResult>;
   /** Generate ids and read the clock. */
   newId(): string;
   now(): string;

@@ -1,0 +1,127 @@
+PASS B07-shape EXPRESSION_ERROR subloop.input.messages.where {"itemIndex":0} resumable false, fixed cause/message
+PASS B07-nochild zero child runs and zero child_run.started
+PASS B07-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B07-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B07-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+FAIL B07a-shape EXPRESSION_ERROR subloop.input.artifacts.where {"itemIndex":0} resumable false, fixed cause/message
+PASS B07a-nochild zero child runs and zero child_run.started
+PASS B07a-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B07a-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B07a-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B07c built-in selection all: child created and succeeded, parent succeeded
+PASS B08-shape EXPRESSION_ERROR subloop.input.vars {"mapIndex":1} resumable false, fixed cause/message
+PASS B08-nochild zero child runs and zero child_run.started
+PASS B08-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B08-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B08-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B09-shape TEMPLATE_ERROR subloop.input.inject.content {"messageIndex":1} resumable false, fixed cause/message
+PASS B09-nochild zero child runs and zero child_run.started
+PASS B09-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B09-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B09-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B10-shape EXPRESSION_ERROR subloop.input.trigger.payload {} resumable false, fixed cause/message
+PASS B10-nochild zero child runs and zero child_run.started
+PASS B10-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B10-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B10-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B11e-shape EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message
+PASS B11e-child exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent
+PASS B11e-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B11e-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B11e-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B11e-CH-DET after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself
+PASS B11s-shape EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message
+PASS B11s-child exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent
+PASS B11s-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B11s-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B11s-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B11s-CH-DET after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself
+PASS B11r-shape EXPRESSION_ERROR subloop.output.custom.patch {} resumable false, fixed cause/message
+PASS B11r-child exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent
+PASS B11r-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B11r-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B11r-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B11r-CH-DET after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself
+PASS B12-shape EXPRESSION_ERROR subloop.output.vars {"mapIndex":1} resumable false, fixed cause/message
+PASS B12-child exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent
+PASS B12-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B12-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B12-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B12-CH-DET after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself
+PASS B13-shape EXPRESSION_ERROR subloop.output.messages.where {"itemIndex":0} resumable false, fixed cause/message
+PASS B13-child exactly one child, succeeded; one child_run.finished(succeeded) immediately followed by run.failed; no child-failure keys; child result marker absent
+PASS B13-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B13-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B13-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B13-CH-DET after refused parent Resume the succeeded child is unchanged (events identical, no run.resumed) and is not resumable itself
+PASS B11c valid custom patch control succeeds and carries child result
+PASS CH-NEST-parity leaf code/boundary/beat/resumable/message/node identical inline, depth 1 and depth 2
+PASS CH-NEST-links parents use the existing wrapper (childRunId/childNodeId/childDetails), chain length 1 and 2, no inference copied into parents
+PASS CH-NEST-privacy leaf/parent failures omit QA486-LIT-NEST
+FAIL CH-INF-1 depth 1: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents
+PASS CH-INF-1-privacy leaf and parents omit QA486-LIT-CHINF / QA486-IN-CHINF
+FAIL CH-INF-2 depth 2: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents
+PASS CH-INF-2-privacy leaf and parents omit QA486-LIT-CHINF / QA486-IN-CHINF
+PASS CH-DEDUP-A-first ordinary mapping conversion fault: INTERNAL_ERROR safe copy, resumable true, one succeeded child, run.failed adjacent to child_run.finished
+PASS CH-DEDUP-A-resume Resume accepted; recurrence fails again; still one child; child_run.finished not re-recorded (1); run.failed 2; one run.woken; child never resumed and its events unchanged
+PASS CH-DEDUP-A-privlog raw conversion text is only in private log, not public failure
+PASS CH-DEDUP-B-first transient mapping fault: INTERNAL_ERROR resumable true; one succeeded child; run.failed.seq = child_run.finished.seq + 1
+PASS CH-DEDUP-B-resume Resume succeeds; one child; one child_run.finished (terminal seq reused); one run.woken; one run.failed; child never resumed and its events unchanged
+PASS LOG no captured log record contains QA486-LIT/IN/PATH
+PASS CLEANUP authenticated drain accepted; API port and listener refuse connections
+{
+ "name": "d3",
+ "total": 71,
+ "passed": 68,
+ "failed": [
+  "B07a-shape EXPRESSION_ERROR subloop.input.artifacts.where {\"itemIndex\":0} resumable false, fixed cause/message",
+  "CH-INF-1 depth 1: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents",
+  "CH-INF-2 depth 2: parent wrappers link to the child whose failure carries authoritative inference provenance; no inference copied into parents"
+ ],
+ "driverPid": 26772,
+ "apiPort": 5872,
+ "listenerPort": 60345,
+ "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3",
+ "harness": {
+  "starts": 3,
+  "resumes": 0,
+  "syncThrows": 0,
+  "resultsResolved": 3,
+  "resultsRejected": 0,
+  "cancels": 3,
+  "cancelRejects": 0,
+  "contextWindow": 0,
+  "calls": [
+   {
+    "kind": "start",
+    "prompt": "QA prompt QA486-IN-B07a",
+    "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF451E3V11SJM5XXJJX8HR",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "outputSchema": false,
+    "behaviour": "ok",
+    "t": 1795278640245
+   },
+   {
+    "kind": "start",
+    "prompt": "QA prompt QA486-IN-CHINF",
+    "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF4BGEYFPV9EBYPRETGSFM",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "outputSchema": false,
+    "behaviour": "ok",
+    "t": 1795278646882
+   },
+   {
+    "kind": "start",
+    "prompt": "QA prompt QA486-IN-CHINF",
+    "cwd": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d3-children-1\\data\\d3\\workspaces\\01M7ZF4BTWN61TKGVKP9MH999F",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "outputSchema": false,
+    "behaviour": "ok",
+    "t": 1795278647232
+   }
+  ]
+ }
+}

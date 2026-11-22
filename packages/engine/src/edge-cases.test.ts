@@ -123,16 +123,24 @@ describe('handler helpers', () => {
     const { messages, artifacts } = sampleThread({
       artifacts: [{ id: 'a', kind: 'file', ref: 'r', nodeId: 'n' }],
     });
-    expect(await selectMessages(messages, 'last', {})).toHaveLength(1);
-    expect(await selectMessages([], 'last', {})).toEqual([]);
-    expect(await selectMessages(messages, 1, {})).toEqual([messages[1]]);
-    expect(await selectMessages(messages, 'none', {})).toEqual([]);
-    expect(await selectMessages(messages, undefined, {})).toHaveLength(2);
-    expect(await selectMessages(messages, { where: 'role = "user"' }, {})).toEqual([messages[0]]);
-    expect(await selectCollection(artifacts, 'none', {})).toEqual([]);
-    expect(await selectCollection(artifacts, undefined, {})).toHaveLength(1);
-    expect(await selectCollection(artifacts, { where: 'kind = "file"' }, {})).toHaveLength(1);
-    expect(await selectCollection(artifacts, { where: 'kind = "diff"' }, {})).toHaveLength(0);
+    const messageSite = { nodeId: 'n', boundary: 'decision.context.messages.where' } as const;
+    const artifactSite = { nodeId: 'n', boundary: 'subloop.input.artifacts.where' } as const;
+    expect(await selectMessages(messages, 'last', {}, messageSite)).toHaveLength(1);
+    expect(await selectMessages([], 'last', {}, messageSite)).toEqual([]);
+    expect(await selectMessages(messages, 1, {}, messageSite)).toEqual([messages[1]]);
+    expect(await selectMessages(messages, 'none', {}, messageSite)).toEqual([]);
+    expect(await selectMessages(messages, undefined, {}, messageSite)).toHaveLength(2);
+    expect(await selectMessages(messages, { where: 'role = "user"' }, {}, messageSite)).toEqual([
+      messages[0],
+    ]);
+    expect(await selectCollection(artifacts, 'none', {}, artifactSite)).toEqual([]);
+    expect(await selectCollection(artifacts, undefined, {}, artifactSite)).toHaveLength(1);
+    expect(
+      await selectCollection(artifacts, { where: 'kind = "file"' }, {}, artifactSite),
+    ).toHaveLength(1);
+    expect(
+      await selectCollection(artifacts, { where: 'kind = "diff"' }, {}, artifactSite),
+    ).toHaveLength(0);
   });
 
   it('withTimeout forwards an already-aborted signal and disposes cleanly', () => {
@@ -194,7 +202,32 @@ describe('handler helpers', () => {
         else expect(thread?.vars['missing']).toBeNull();
       } else {
         expect(run.status).toBe('failed');
-        expect(run.failure?.code).toBe('INTERNAL_ERROR');
+        const cause = {
+          code: 'PATCH_ERROR',
+          message: 'The patch could not be applied. Check its target and input shape.',
+        };
+        expect(run.failure).toMatchObject({
+          code: 'MUTATION_ERROR',
+          nodeId: 'infer',
+          resumable: false,
+          message: `Inference output transform 3 (coerce) failed. ${cause.message} GraphGoblin received the provider result before this step failed.`,
+          details: {
+            boundary: 'inference.output.transforms',
+            operationIndex: 2,
+            operationKind: 'coerce',
+            cause,
+            phase: 'after-result',
+          },
+        });
+        expect(engine.events(run.id)).toContainEqual(
+          expect.objectContaining({ type: 'run.failed', failure: run.failure }),
+        );
+        expect(run.failure?.message).not.toContain(target);
+        await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
+          code: 'FAILURE_NOT_RESUMABLE',
+        });
+        expect(engine.ports.harness.started).toHaveLength(1);
+        expect(engine.ports.harness.resumed).toHaveLength(0);
         expect(engine.events(run.id)).not.toEqual(
           expect.arrayContaining([
             expect.objectContaining({ type: 'node.finished', nodeId: 'infer' }),
@@ -315,10 +348,12 @@ describe('fakes', () => {
 
     const ports = createFakePorts();
     expect(await ports.harness.preflight()).toMatchObject({ ok: true });
-    expect(await ports.workspace.resolve({ kind: 'fixed', path: '/fixed' }, {}, 'r')).toBe(
-      '/fixed',
-    );
-    expect(await ports.workspace.resolve({ kind: 'template', template: '/t' }, {}, 'r')).toBe('/t');
+    expect(await ports.workspace.resolve({ kind: 'fixed', path: '/fixed' }, 'r')).toBe('/fixed');
+    expect(await ports.workspace.resolve({ kind: 'temp' }, 'r')).toBe('/tmp/graphgoblin/r');
+    expect(ports.workspace.resolved).toEqual([
+      { spec: { kind: 'fixed', path: '/fixed' }, runId: 'r' },
+      { spec: { kind: 'temp' }, runId: 'r' },
+    ]);
     expect(await ports.loops.getPublished('nope', 1)).toBeUndefined();
   });
 });

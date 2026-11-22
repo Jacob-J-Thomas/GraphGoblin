@@ -6,13 +6,8 @@ import type {
   RunEvent,
 } from '@graphgoblin/contracts';
 import { JsonPatchSchema } from '@graphgoblin/contracts';
-import {
-  assertMutablePatch,
-  evaluateExpression,
-  isTerminal,
-  threadView,
-  type MutationError,
-} from '@graphgoblin/domain';
+import { assertMutablePatch, isTerminal, threadView, MutationError } from '@graphgoblin/domain';
+import { authoredFailure, evaluateAuthored, renderAuthored } from '../authored-failure.js';
 import { ChildCancelledError, RunFailureError } from '../errors.js';
 import {
   childFailureForPublication,
@@ -51,23 +46,44 @@ async function buildSeed(ctx: NodeContext<'subloop'>): Promise<Seed> {
     if (!excluded.has('outputs')) seed.outputs = { ...thread.outputs };
     if (!excluded.has('lastOutput') && thread.lastOutput) seed.lastOutput = thread.lastOutput;
   } else if (input.mode === 'project') {
-    seed.messages = await selectMessages(thread.messages, input.messages ?? 'none', view);
-    seed.artifacts = await selectCollection(thread.artifacts, input.artifacts ?? 'none', view);
+    seed.messages = await selectMessages(thread.messages, input.messages ?? 'none', view, {
+      nodeId: ctx.node.id,
+      boundary: 'subloop.input.messages.where',
+    });
+    seed.artifacts = await selectCollection(thread.artifacts, input.artifacts ?? 'none', view, {
+      nodeId: ctx.node.id,
+      boundary: 'subloop.input.artifacts.where',
+    });
   }
 
   if (input.vars) {
     const vars: Record<string, JsonValue> = { ...(seed.vars ?? {}) };
-    for (const [name, expression] of Object.entries(input.vars)) {
-      vars[name] = toJson(await evaluateExpression(expression, view));
+    for (const [mapIndex, [name, expression]] of Object.entries(input.vars).entries()) {
+      vars[name] = toJson(
+        await evaluateAuthored(
+          { nodeId: ctx.node.id, boundary: 'subloop.input.vars', mapIndex },
+          expression,
+          view,
+        ),
+      );
     }
     seed.vars = vars;
   }
 
   if (input.inject?.length) {
     const injected: Message[] = [];
-    for (const message of input.inject) {
+    for (const [messageIndex, message] of input.inject.entries()) {
       injected.push(
-        makeMessage(ctx, message.role, await ctx.services.render(message.content), message.tags),
+        makeMessage(
+          ctx,
+          message.role,
+          await renderAuthored(
+            { nodeId: ctx.node.id, boundary: 'subloop.input.inject.content', messageIndex },
+            message.content,
+            view,
+          ),
+          message.tags,
+        ),
       );
     }
     seed.messages = [...(seed.messages ?? []), ...injected];
@@ -96,7 +112,8 @@ async function outputMapping(
   const patch: PatchOperation[] = [];
 
   if (output.mode === 'custom') {
-    const value = await evaluateExpression(output.custom?.patch ?? '[]', {
+    const site = { nodeId: ctx.node.id, boundary: 'subloop.output.custom.patch' } as const;
+    const value = await evaluateAuthored(site, output.custom?.patch ?? '[]', {
       parent: parentView,
       child: childView ?? null,
       ...result,
@@ -104,21 +121,12 @@ async function outputMapping(
       status: child.status,
     });
     const checked = JsonPatchSchema.safeParse(value);
-    if (!checked.success) {
-      throw new RunFailureError(
-        'EXPRESSION_ERROR',
-        `custom output mapping did not produce a JSON patch: ${checked.error.issues.map((i) => i.message).join('; ')}`,
-        { nodeId: ctx.node.id },
-      );
-    }
+    if (!checked.success) throw authoredFailure(site, { kind: 'patch-shape' });
     try {
       assertMutablePatch(checked.data);
     } catch (error) {
-      throw new RunFailureError(
-        'EXPRESSION_ERROR',
-        `custom output mapping is outside the mutable regions: ${(error as MutationError).message}`,
-        { nodeId: ctx.node.id },
-      );
+      if (!(error instanceof MutationError)) throw error;
+      throw authoredFailure(site, { kind: 'patch-region' });
     }
     patch.push(...checked.data);
     return patch;
@@ -135,8 +143,16 @@ async function outputMapping(
     const childThread = child.thread;
     if (output.vars) {
       if (output.vars.strategy === 'explicit') {
-        for (const [name, expression] of Object.entries(output.vars.map ?? {})) {
-          vars[name] = toJson(await evaluateExpression(expression, childView));
+        for (const [mapIndex, [name, expression]] of Object.entries(
+          output.vars.map ?? {},
+        ).entries()) {
+          vars[name] = toJson(
+            await evaluateAuthored(
+              { nodeId: ctx.node.id, boundary: 'subloop.output.vars', mapIndex },
+              expression,
+              childView,
+            ),
+          );
         }
       } else if (output.vars.strategy === 'parent-wins') {
         vars = { ...childThread.vars, ...vars };
@@ -149,12 +165,14 @@ async function outputMapping(
       childThread.messages,
       output.messages ?? 'none',
       childView ?? {},
+      { nodeId: ctx.node.id, boundary: 'subloop.output.messages.where' },
     );
     for (const message of messages) patch.push(messagePatch(message));
     const artifacts = await selectCollection(
       childThread.artifacts,
       output.artifacts ?? 'none',
       childView ?? {},
+      { nodeId: ctx.node.id, boundary: 'subloop.output.artifacts.where' },
     );
     for (const artifact of artifacts)
       patch.push({ op: 'add', path: '/artifacts/-', value: toJson(artifact) });
@@ -219,7 +237,13 @@ export const subloopHandler: NodeHandler<'subloop'> = {
     const seed = await buildSeed(ctx);
     const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
     const triggerPayload = config.input.trigger
-      ? toJson(await evaluateExpression(config.input.trigger.payload, view))
+      ? toJson(
+          await evaluateAuthored(
+            { nodeId: ctx.node.id, boundary: 'subloop.input.trigger.payload' },
+            config.input.trigger.payload,
+            view,
+          ),
+        )
       : ctx.thread.invocation.trigger.payload;
     // The child and this visit's `child_run.started` are one commit (#320): a crash leaves both or
     // neither, so recovery finds this child above or starts the only one.

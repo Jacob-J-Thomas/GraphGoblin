@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+
 - Claude no longer reports a missing CLI when Windows refused the working directory (#364).
   Windows refuses a missing working directory, one that is a file and one longer than 258
   characters with the same spawn `ENOENT` as a missing executable. After a refused start the

@@ -1,4 +1,4 @@
-import { Liquid } from 'liquidjs';
+import { Liquid, LiquidError } from 'liquidjs';
 import { TemplateError } from './errors.js';
 
 /**
@@ -29,19 +29,56 @@ const engine = new Liquid({
   jsTruthy: true,
 });
 
+export interface TemplateFact {
+  phase: 'parse' | 'render';
+  line?: number;
+  column?: number;
+}
+
+/** Parse and render with the runtime dialect. Keep source and Liquid diagnostics out of the fact. */
+export async function observeTemplate(template: string, view: Record<string, unknown>) {
+  let phase: TemplateFact['phase'] = 'parse';
+  try {
+    const parsed = engine.parse(template);
+    phase = 'render';
+    const out: unknown = await engine.render(parsed, view);
+    return { ok: true as const, value: typeof out === 'string' ? out : String(out) };
+  } catch (error) {
+    const fact: TemplateFact = { phase };
+    if (error instanceof LiquidError && error.token.input === template) {
+      const [line, column] = error.token.getPosition();
+      if (
+        line !== undefined &&
+        column !== undefined &&
+        Number.isSafeInteger(line) &&
+        Number.isSafeInteger(column) &&
+        line > 0 &&
+        column > 0
+      ) {
+        fact.line = line;
+        fact.column = column;
+      }
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false as const,
+      fact,
+      error:
+        error instanceof TemplateError
+          ? error
+          : new TemplateError(`template failed: ${message}`, { template: template.slice(0, 200) }),
+    };
+  }
+}
+
 /** Render a template against a view. Throws TemplateError with the Liquid message on failure. */
 export async function renderTemplate(
   template: string,
   view: Record<string, unknown>,
 ): Promise<string> {
-  try {
-    const out: unknown = await engine.parseAndRender(template, view);
-    return typeof out === 'string' ? out : String(out);
-  } catch (error) {
-    if (error instanceof TemplateError) throw error;
-    const message = error instanceof Error ? error.message : String(error);
-    throw new TemplateError(`template failed: ${message}`, { template: template.slice(0, 200) });
-  }
+  const result = await observeTemplate(template, view);
+  if (!result.ok) throw result.error;
+  return result.value;
 }
 
 /** Parse only, to surface syntax errors at authoring time. Returns null when valid. */

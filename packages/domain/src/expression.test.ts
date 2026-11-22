@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { observeExpression, observePredicate } from './index.js';
 import { ExpressionError } from './errors.js';
 import { checkExpression, evaluateExpression, evaluatePredicate } from './expression.js';
 
@@ -178,5 +179,135 @@ describe('checkExpression', () => {
   it('returns null when valid and a message otherwise', () => {
     expect(checkExpression('a.b')).toBeNull();
     expect(checkExpression('a +')).toMatch(/compile/);
+  });
+});
+
+describe('invocation-local expression facts', () => {
+  it.each([
+    ['1 +', 'compile'],
+    ['/((a+)+)$/', 'unsafe-regex'],
+    ['$eval("a +")', 'evaluation-rejected'],
+    ['$eval("/((a+)+)$/")', 'evaluation-rejected'],
+    ['$error("private label")', 'evaluation-rejected'],
+  ])('observes only the failed phase for %s', async (source, reason) => {
+    expect(await observeExpression(source, {})).toMatchObject({ ok: false, reason });
+  });
+
+  it.each(['error', 'unrelated'])(
+    'prepares an enumerable getter for %s once and preserves its error',
+    async (key) => {
+      const external = new ExpressionError('external', { marker: 'private' });
+      const get = vi.fn(() => {
+        throw external;
+      });
+      const bindings = Object.defineProperty({}, key, { get, enumerable: true });
+      const result = await observeExpression('$error("x")', {}, { bindings });
+      expect(result).toEqual({ ok: false, error: external });
+      expect(get).toHaveBeenCalledTimes(1);
+      await expect(evaluateExpression('1', {}, { bindings })).rejects.toBe(external);
+      expect(get).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('retains legacy wrapping for an ordinary preparation exception and for evaluator calls', async () => {
+    const bindings = {
+      get other() {
+        throw new Error('marker');
+      },
+    };
+    const result = await observeExpression('1', {}, { bindings });
+    expect(result).toEqual({
+      ok: false,
+      error: new ExpressionError('expression failed: marker', { expression: '1' }),
+    });
+    await expect(evaluateExpression('1', {}, { bindings })).rejects.toMatchObject({
+      code: 'EXPRESSION_ERROR',
+      details: { expression: '1' },
+    });
+    const error = new ExpressionError('replacement');
+    expect(
+      await observeExpression(
+        '$error("x")',
+        {},
+        {
+          bindings: {
+            error: () => {
+              throw error;
+            },
+          },
+        },
+      ),
+    ).toEqual({
+      ok: false,
+      error,
+      reason: 'evaluation-rejected',
+    });
+  });
+
+  it('keeps own replacements, omission of hidden bindings and the built-in value', async () => {
+    const source = '$error("literal")';
+    const replacement = () => 'replaced';
+    for (const bindings of [
+      Object.create({ error: replacement }) as Record<string, unknown>,
+      Object.defineProperty({}, 'error', { value: replacement }),
+    ]) {
+      expect(await observeExpression(source, { error: replacement }, { bindings })).toMatchObject({
+        ok: false,
+        reason: 'evaluation-rejected',
+      });
+    }
+    expect(await observeExpression(source, {}, { bindings: { error: replacement } })).toEqual({
+      ok: true,
+      value: 'replaced',
+    });
+    const builtin = await evaluateExpression('$error', {});
+    expect(
+      await observeExpression(source, {}, { bindings: { error: builtin, $error: replacement } }),
+    ).toMatchObject({ ok: false, reason: 'evaluation-rejected' });
+    expect(await observeExpression('error', { error: 7 })).toEqual({ ok: true, value: 7 });
+  });
+
+  it('isolates real budget failures across concurrent calls, cache hits and rethrown authentic errors', async () => {
+    const source = '($f := function($n) { $n = 0 ? $end() : 1 + $f($n - 1) }; $f(8))';
+    const bindings = { end: () => 0 };
+    const [short, long] = await Promise.all([
+      observeExpression(source, {}, { maxDepth: 5, bindings }),
+      observeExpression(source, {}, { maxDepth: 100, bindings }),
+    ]);
+    expect(long).toEqual({ ok: true, value: 8 });
+    if (short.ok) throw new Error('expected a real depth failure');
+    expect(short.reason).toBe('depth');
+    const later = await observeExpression(
+      source,
+      {},
+      {
+        bindings: {
+          end: () => {
+            throw short.error;
+          },
+        },
+      },
+    );
+    expect(later).toEqual({ ok: false, error: short.error, reason: 'evaluation-rejected' });
+    expect(await observeExpression('1', {}, { timeoutMs: -1 })).toMatchObject({
+      ok: false,
+      reason: 'time',
+    });
+  });
+
+  it('leaves a predicate coercion exception outside the evaluator evidence', async () => {
+    const external = new ExpressionError('external ownKeys');
+    const value = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw external;
+        },
+      },
+    );
+    const options = { bindings: { value } };
+    expect(await observeExpression('$value', {}, options)).toMatchObject({ ok: true });
+    await expect(observePredicate('$value', {}, options)).rejects.toBe(external);
+    await expect(evaluatePredicate('$value', {}, options)).rejects.toBe(external);
   });
 });

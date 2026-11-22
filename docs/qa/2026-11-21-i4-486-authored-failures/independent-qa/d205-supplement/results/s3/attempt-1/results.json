@@ -1,0 +1,2237 @@
+{
+  "summary": {
+    "group": "s3",
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "pid": 42156
+  },
+  "rows": [
+    {
+      "id": "S3-structured-timeout",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 50 ms",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 50,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          },
+          "inference": {
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "calls": 1,
+        "recovery": {
+          "observedSeq": 12,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "effects": [],
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              }
+            }
+          ]
+        },
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "FW681N9SJFVC5AA4ED2YKN3STF",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 structured timeout",
+              "label": "D205 structured timeout v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": 50
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "992K290EZ28V02J5TBB7QN8JR6",
+                "versionId": "FW681N9SJFVC5AA4ED2YKN3STF",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "35e8fc9cc9c4565b"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "D205 exact original task"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "STRUCTURED_COMPLETION_TIMEOUT",
+              "message": "Structured completion exceeded its configured deadline of 50 ms",
+              "nodeId": "infer",
+              "resumable": true,
+              "details": {
+                "timeoutMs": 50,
+                "provenance": {
+                  "kind": "llm",
+                  "provider": "codex",
+                  "classifierId": null,
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              },
+              "inference": {
+                "visitId": "00000000000000000000000001:5",
+                "turnId": "00000000000000000000000003",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "STRUCTURED_COMPLETION_TIMEOUT",
+                "message": "Structured completion exceeded its configured deadline of 50 ms",
+                "resumable": true,
+                "nodeId": "infer",
+                "inference": {
+                  "visitId": "00000000000000000000000001:5",
+                  "turnId": "00000000000000000000000003",
+                  "promptKind": "authored",
+                  "submission": "delivery-uncertain",
+                  "sessionId": "fake-session-1"
+                },
+                "details": {
+                  "timeoutMs": 50,
+                  "provenance": {
+                    "kind": "llm",
+                    "provider": "codex",
+                    "classifierId": null,
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "starts": [
+          {
+            "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "options": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "D205 exact original task"
+            }
+          }
+        ],
+        "resumes": [],
+        "cancels": [
+          "fake-session-1"
+        ],
+        "sessions": [
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S3-artifact",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "first": {
+          "code": "ARTIFACT_WRITE_FAILED",
+          "message": "Artifact could not be published",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "ref": "artifact:transcript/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "inference": {
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "finalStatus": "succeeded",
+        "calls": 2,
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "MWR643YB26Q7GDEG383SWBS0KH",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 typed artifact",
+              "label": "D205 typed artifact v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "EF0KG6CPTK859KDJSXXJE0RHB1",
+                "versionId": "MWR643YB26Q7GDEG383SWBS0KH",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "48512fef081e6cd4"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "D205 exact original task"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "ARTIFACT_WRITE_FAILED",
+              "message": "Artifact could not be published",
+              "nodeId": "infer",
+              "resumable": true,
+              "details": {
+                "ref": "artifact:transcript/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "inference": {
+                "visitId": "00000000000000000000000001:5",
+                "turnId": "00000000000000000000000003",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 13,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "system",
+              "id": "engine"
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 14,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 2,
+            "configHash": "48512fef081e6cd4"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 15,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000004",
+            "harness": "codex",
+            "promptKind": "continuation",
+            "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+            "resumeSessionId": "fake-session-1"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 16,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000004",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 17,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 18,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 19,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 20,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "infer",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "00000000000000000000000005",
+                  "kind": "transcript",
+                  "ref": "mem://transcript/1",
+                  "nodeId": "infer",
+                  "bytes": 45,
+                  "label": "transcript infer"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "00000000000000000000000006",
+                  "role": "assistant",
+                  "content": "OK",
+                  "nodeId": "infer",
+                  "ts": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/infer",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "OK",
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "OK",
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 21,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 22,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 23,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 24,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "ARTIFACT_WRITE_FAILED",
+                "message": "Artifact could not be published",
+                "resumable": true,
+                "nodeId": "infer",
+                "inference": {
+                  "visitId": "00000000000000000000000001:5",
+                  "turnId": "00000000000000000000000003",
+                  "promptKind": "authored",
+                  "submission": "delivery-uncertain",
+                  "sessionId": "fake-session-1"
+                },
+                "details": {
+                  "ref": "artifact:transcript/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              }
+            }
+          }
+        ],
+        "starts": [
+          {
+            "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "options": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "D205 exact original task"
+            }
+          }
+        ],
+        "resumes": [
+          {
+            "sessionId": "fake-session-1",
+            "request": {
+              "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "options": {
+                "sandbox": "workspace-write",
+                "approval": "never"
+              },
+              "turn": {
+                "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."
+              }
+            }
+          }
+        ],
+        "cancels": [
+          "fake-session-1"
+        ],
+        "sessions": [
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 2,
+            "harness": "codex",
+            "status": "finished",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S3-accepted-structured-external",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "first": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "infer",
+          "resumable": true,
+          "inference": {
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "finalStatus": "succeeded",
+        "calls": 2,
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "AG7MNF7YS36C4EZ7MRBMYNBYR7",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 accepted structured external",
+              "label": "D205 accepted structured external v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "D4RQC5XNP6SDBX8QR3Q767ESSW",
+                "versionId": "AG7MNF7YS36C4EZ7MRBMYNBYR7",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "35e8fc9cc9c4565b"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "D205 exact original task"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "INTERNAL_ERROR",
+              "message": "An unexpected error interrupted the run. See the server logs for this run.",
+              "nodeId": "infer",
+              "resumable": true,
+              "inference": {
+                "visitId": "00000000000000000000000001:5",
+                "turnId": "00000000000000000000000003",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 13,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.resumed",
+            "actor": {
+              "kind": "system",
+              "id": "engine"
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 14,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 2,
+            "configHash": "35e8fc9cc9c4565b"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 15,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000006",
+            "harness": "codex",
+            "promptKind": "continuation",
+            "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+            "resumeSessionId": "fake-session-1"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 16,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000006",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 17,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 18,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 19,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "resumed",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 20,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "infer",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/artifacts/-",
+                "value": {
+                  "id": "00000000000000000000000007",
+                  "kind": "transcript",
+                  "ref": "mem://transcript/2",
+                  "nodeId": "infer",
+                  "bytes": 45,
+                  "label": "transcript infer"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/messages/-",
+                "value": {
+                  "id": "00000000000000000000000008",
+                  "role": "assistant",
+                  "content": "OK",
+                  "nodeId": "infer",
+                  "ts": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/outputs/infer",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "OK",
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "infer",
+                  "value": "OK",
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "replace",
+                "path": "/counters/usage",
+                "value": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              },
+              {
+                "op": "add",
+                "path": "/vars/repaired",
+                "value": true
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 21,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "done",
+            "kind": "exit",
+            "attempt": 1,
+            "configHash": "caacd31f1376b30f"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 22,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "exit.evaluated",
+            "nodeId": "done",
+            "outcome": "success"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 23,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "done",
+            "patch": [],
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 24,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.finished",
+            "status": "succeeded",
+            "outcome": "success"
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "inference execution failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "turnId": "00000000000000000000000003",
+              "error": {
+                "message": "D205 structured external private",
+                "name": "TemplateError",
+                "stack": "TemplateError: D205 structured external private\n    at Object.complete (file:///G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-486-supplemental-independent-01/drivers/s3.mjs:15:89)\n    at completeWithDeadline.runId (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/handlers/common.js:168:82)\n    at file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/completion-deadline.js:49:16\n    at async completeWithDeadline (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/completion-deadline.js:64:16)\n    at async repairValue (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/handlers/common.js:168:32)\n    at async runMutations (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/handlers/common.js:205:26)\n    at async Object.execute (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/handlers/inference.js:557:37)\n    at async RunManager.execute (file:///G:/ggq/gg-i4-486-d204-qa/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)"
+              }
+            }
+          },
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "INTERNAL_ERROR",
+                "message": "An unexpected error interrupted the run. See the server logs for this run.",
+                "resumable": true,
+                "nodeId": "infer",
+                "inference": {
+                  "visitId": "00000000000000000000000001:5",
+                  "turnId": "00000000000000000000000003",
+                  "promptKind": "authored",
+                  "submission": "delivery-uncertain",
+                  "sessionId": "fake-session-1"
+                }
+              }
+            }
+          }
+        ],
+        "starts": [
+          {
+            "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "options": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "D205 exact original task"
+            }
+          }
+        ],
+        "resumes": [
+          {
+            "sessionId": "fake-session-1",
+            "request": {
+              "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+              "model": "gpt-6-luna",
+              "effort": "low",
+              "options": {
+                "sandbox": "workspace-write",
+                "approval": "never"
+              },
+              "turn": {
+                "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."
+              }
+            }
+          }
+        ],
+        "cancels": [
+          "fake-session-1"
+        ],
+        "sessions": [
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 2,
+            "harness": "codex",
+            "status": "finished",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S3-output-coerce-prompt",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "failure": {
+          "code": "MUTATION_ERROR",
+          "message": "Inference output transform 1 (coerce) failed. The template could not be rendered at line 1, column 1. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "inference.output.transforms",
+            "operationIndex": 0,
+            "operationKind": "coerce",
+            "cause": {
+              "code": "TEMPLATE_ERROR",
+              "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+            },
+            "phase": "after-result"
+          },
+          "inference": {
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "calls": 0,
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "APJ3V3TKZ2EN3NXM0YSJB2C66J",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 output coerce prompt",
+              "label": "D205 output coerce prompt v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "EH9SXP5QD59XFZJNVFZSQ864FV",
+                "versionId": "APJ3V3TKZ2EN3NXM0YSJB2C66J",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "ab00f7547ed70b92"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "D205 exact original task"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "MUTATION_ERROR",
+              "message": "Inference output transform 1 (coerce) failed. The template could not be rendered at line 1, column 1. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "boundary": "inference.output.transforms",
+                "operationIndex": 0,
+                "operationKind": "coerce",
+                "cause": {
+                  "code": "TEMPLATE_ERROR",
+                  "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+                },
+                "phase": "after-result"
+              },
+              "inference": {
+                "visitId": "00000000000000000000000001:5",
+                "turnId": "00000000000000000000000003",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "MUTATION_ERROR",
+                "message": "Inference output transform 1 (coerce) failed. The template could not be rendered at line 1, column 1. Check its filters and input values. GraphGoblin received the provider result before this step failed.",
+                "resumable": false,
+                "nodeId": "infer",
+                "inference": {
+                  "visitId": "00000000000000000000000001:5",
+                  "turnId": "00000000000000000000000003",
+                  "promptKind": "authored",
+                  "submission": "delivery-uncertain",
+                  "sessionId": "fake-session-1"
+                },
+                "details": {
+                  "boundary": "inference.output.transforms",
+                  "operationIndex": 0,
+                  "operationKind": "coerce",
+                  "cause": {
+                    "code": "TEMPLATE_ERROR",
+                    "message": "The template could not be rendered at line 1, column 1. Check its filters and input values."
+                  },
+                  "phase": "after-result"
+                }
+              }
+            }
+          }
+        ],
+        "starts": [
+          {
+            "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "options": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "D205 exact original task"
+            }
+          }
+        ],
+        "resumes": [],
+        "cancels": [
+          "fake-session-1"
+        ],
+        "sessions": [
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S3-input-coerce-write",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "failure": {
+          "code": "MUTATION_ERROR",
+          "message": "Inference input transform 3 (coerce) failed. The patch could not be applied. Check its target and input shape.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "inference.input",
+            "operationIndex": 2,
+            "operationKind": "coerce",
+            "cause": {
+              "code": "PATCH_ERROR",
+              "message": "The patch could not be applied. Check its target and input shape."
+            }
+          }
+        },
+        "calls": 1,
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "1SREC07CCP0Q4T0VYZ9JTG00BP",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 input coerce write",
+              "label": "D205 input coerce write v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "Y6604VKSC0ECG1MSZAVATPP57Y",
+                "versionId": "1SREC07CCP0Q4T0VYZ9JTG00BP",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "16227f405346bb13"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "MUTATION_ERROR",
+              "message": "Inference input transform 3 (coerce) failed. The patch could not be applied. Check its target and input shape.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "boundary": "inference.input",
+                "operationIndex": 2,
+                "operationKind": "coerce",
+                "cause": {
+                  "code": "PATCH_ERROR",
+                  "message": "The patch could not be applied. Check its target and input shape."
+                }
+              }
+            }
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "MUTATION_ERROR",
+                "message": "Inference input transform 3 (coerce) failed. The patch could not be applied. Check its target and input shape.",
+                "resumable": false,
+                "nodeId": "infer",
+                "details": {
+                  "boundary": "inference.input",
+                  "operationIndex": 2,
+                  "operationKind": "coerce",
+                  "cause": {
+                    "code": "PATCH_ERROR",
+                    "message": "The patch could not be applied. Check its target and input shape."
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "starts": [],
+        "resumes": [],
+        "cancels": [],
+        "sessions": []
+      }
+    },
+    {
+      "id": "S3-output-coerce-write",
+      "pass": true,
+      "class": "BUILT-PUBLIC-RUNMANAGER+SCRIPTED",
+      "actual": {
+        "failure": {
+          "code": "MUTATION_ERROR",
+          "message": "Inference output transform 2 (coerce) failed. The patch could not be applied. Check its target and input shape. GraphGoblin received the provider result before this step failed.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "boundary": "inference.output.transforms",
+            "operationIndex": 1,
+            "operationKind": "coerce",
+            "cause": {
+              "code": "PATCH_ERROR",
+              "message": "The patch could not be applied. Check its target and input shape."
+            },
+            "phase": "after-result"
+          },
+          "inference": {
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "calls": 1,
+        "events": [
+          {
+            "type": "run.queued",
+            "versionId": "72Y69QHVZRNQXYY207A58V3AJ0",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "D205 output coerce write",
+              "label": "D205 output coerce write v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "codex": {
+                      "model": "gpt-6-luna",
+                      "effort": "low"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "00000000000000000000000001",
+                "loopId": "DW0HS3DSVQWN1X7QN6S8R88MK3",
+                "versionId": "72Y69QHVZRNQXYY207A58V3AJ0",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "00000000000000000000000002",
+                "source": "manual.api",
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "runId": "00000000000000000000000001",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-02T12:00:00.000Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 0
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "0cbbfeda9a7b7907"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "harness": "codex",
+            "promptKind": "authored",
+            "prompt": "D205 exact original task"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "nodeId": "infer",
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "mode": "fresh",
+            "model": "gpt-6-luna",
+            "effort": "low"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "nodeId": "infer",
+            "progress": {
+              "item": {
+                "id": "i1",
+                "summary": "OK",
+                "type": "message"
+              }
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "nodeId": "infer",
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "00000000000000000000000001:5",
+            "turnId": "00000000000000000000000003",
+            "submission": "delivery-uncertain"
+          },
+          {
+            "runId": "00000000000000000000000001",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "MUTATION_ERROR",
+              "message": "Inference output transform 2 (coerce) failed. The patch could not be applied. Check its target and input shape. GraphGoblin received the provider result before this step failed.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "boundary": "inference.output.transforms",
+                "operationIndex": 1,
+                "operationKind": "coerce",
+                "cause": {
+                  "code": "PATCH_ERROR",
+                  "message": "The patch could not be applied. Check its target and input shape."
+                },
+                "phase": "after-result"
+              },
+              "inference": {
+                "visitId": "00000000000000000000000001:5",
+                "turnId": "00000000000000000000000003",
+                "submission": "delivery-uncertain",
+                "promptKind": "authored",
+                "sessionId": "fake-session-1"
+              }
+            }
+          }
+        ],
+        "logs": [
+          {
+            "level": "error",
+            "msg": "node failed",
+            "obj": {
+              "runId": "00000000000000000000000001",
+              "nodeId": "infer",
+              "failure": {
+                "code": "MUTATION_ERROR",
+                "message": "Inference output transform 2 (coerce) failed. The patch could not be applied. Check its target and input shape. GraphGoblin received the provider result before this step failed.",
+                "resumable": false,
+                "nodeId": "infer",
+                "inference": {
+                  "visitId": "00000000000000000000000001:5",
+                  "turnId": "00000000000000000000000003",
+                  "promptKind": "authored",
+                  "submission": "delivery-uncertain",
+                  "sessionId": "fake-session-1"
+                },
+                "details": {
+                  "boundary": "inference.output.transforms",
+                  "operationIndex": 1,
+                  "operationKind": "coerce",
+                  "cause": {
+                    "code": "PATCH_ERROR",
+                    "message": "The patch could not be applied. Check its target and input shape."
+                  },
+                  "phase": "after-result"
+                }
+              }
+            }
+          }
+        ],
+        "starts": [
+          {
+            "workingDirectory": "/tmp/graphgoblin/00000000000000000000000001",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "options": {
+              "sandbox": "workspace-write",
+              "approval": "never"
+            },
+            "turn": {
+              "prompt": "D205 exact original task"
+            }
+          }
+        ],
+        "resumes": [],
+        "cancels": [
+          "fake-session-1"
+        ],
+        "sessions": [
+          {
+            "runId": "00000000000000000000000001",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z",
+            "sessionId": "fake-session-1"
+          }
+        ]
+      }
+    }
+  ]
+}

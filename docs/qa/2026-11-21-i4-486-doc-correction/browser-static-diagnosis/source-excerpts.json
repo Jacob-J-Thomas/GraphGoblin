@@ -1,0 +1,2941 @@
+[
+  {
+    "path": "apps/web/e2e/pwa.spec.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "2fd8cc2ec5af45416f5577601271d70d33358231",
+    "ranges": [
+      {
+        "start": 536,
+        "end": 553,
+        "lines": [
+          {
+            "line": 536,
+            "text": "test('another tab\u2019s unresolved voice upload vetoes update activation until that tab closes', async ({"
+          },
+          {
+            "line": 537,
+            "text": "  page,"
+          },
+          {
+            "line": 538,
+            "text": "  context,"
+          },
+          {
+            "line": 539,
+            "text": "  request,"
+          },
+          {
+            "line": 540,
+            "text": "}) => {"
+          },
+          {
+            "line": 541,
+            "text": "  const messages = await observeUpdateMessages(page);"
+          },
+          {
+            "line": 542,
+            "text": "  await page.goto('/app/loops');"
+          },
+          {
+            "line": 543,
+            "text": "  await ensureControlledPage(page);"
+          },
+          {
+            "line": 544,
+            "text": "  await expectGuardedWorker(page, 'active');"
+          },
+          {
+            "line": 545,
+            "text": "  const dirty = await context.newPage();"
+          },
+          {
+            "line": 546,
+            "text": "  // Exercise production session restoration on a non-chat route. No application hook or audio"
+          },
+          {
+            "line": 547,
+            "text": "  // payload is installed: this is the persisted identity of an unresolved frozen voice upload."
+          },
+          {
+            "line": 548,
+            "text": "  await dirty.addInitScript(() => {"
+          },
+          {
+            "line": 549,
+            "text": "    sessionStorage.setItem("
+          },
+          {
+            "line": 550,
+            "text": "      'graphgoblin.owner.chat.v1.voice-upload',"
+          },
+          {
+            "line": 551,
+            "text": "      JSON.stringify({"
+          },
+          {
+            "line": 552,
+            "text": "        uploadId: '018e9c20-7b33-4a9f-9036-2e2fcf5a1a23',"
+          },
+          {
+            "line": 553,
+            "text": "        sha256: 'a'.repeat(64),"
+          }
+        ]
+      },
+      {
+        "start": 590,
+        "end": 628,
+        "lines": [
+          {
+            "line": 590,
+            "text": "    await expect("
+          },
+          {
+            "line": 591,
+            "text": "      toast.getByText("
+          },
+          {
+            "line": 592,
+            "text": "        'Finish or discard voice drafts and resolve pending messages in all open tabs before updating.',"
+          },
+          {
+            "line": 593,
+            "text": "        { exact: true },"
+          },
+          {
+            "line": 594,
+            "text": "      ),"
+          },
+          {
+            "line": 595,
+            "text": "    ).toBeVisible();"
+          },
+          {
+            "line": 596,
+            "text": "    await expect(toast.getByRole('button', { name: 'Update', exact: true })).toBeEnabled();"
+          },
+          {
+            "line": 597,
+            "text": "    expectGuardedApply(messages, page);"
+          },
+          {
+            "line": 598,
+            "text": "    // Crossing the worker acknowledgement deadline must never expire a live dirty tab as safe."
+          },
+          {
+            "line": 599,
+            "text": "    await page.waitForTimeout(2_100);"
+          },
+          {
+            "line": 600,
+            "text": "    expect("
+          },
+          {
+            "line": 601,
+            "text": "      await page.evaluate(async (initial) => {"
+          },
+          {
+            "line": 602,
+            "text": "        const registration = await navigator.serviceWorker.getRegistration('/app/');"
+          },
+          {
+            "line": 603,
+            "text": "        return ("
+          },
+          {
+            "line": 604,
+            "text": "          registration?.active === initial.active &&"
+          },
+          {
+            "line": 605,
+            "text": "          registration.waiting === initial.waiting &&"
+          },
+          {
+            "line": 606,
+            "text": "          navigator.serviceWorker.controller === initial.controller &&"
+          },
+          {
+            "line": 607,
+            "text": "          performance.timeOrigin === initial.document"
+          },
+          {
+            "line": 608,
+            "text": "        );"
+          },
+          {
+            "line": 609,
+            "text": "      }, initial),"
+          },
+          {
+            "line": 610,
+            "text": "    ).toBe(true);"
+          },
+          {
+            "line": 611,
+            "text": "    expect(navigation).toHaveLength(0);"
+          },
+          {
+            "line": 612,
+            "text": "    await expect.poll(sharedLeases).toBe(2);"
+          },
+          {
+            "line": 613,
+            "text": "    await initial.dispose();"
+          },
+          {
+            "line": 614,
+            "text": "    await dirty.close();"
+          },
+          {
+            "line": 615,
+            "text": "    await expect.poll(sharedLeases).toBe(1);"
+          },
+          {
+            "line": 616,
+            "text": "    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());"
+          },
+          {
+            "line": 617,
+            "text": "    await toast.getByRole('button', { name: 'Update', exact: true }).click();"
+          },
+          {
+            "line": 618,
+            "text": "    await reloaded;"
+          },
+          {
+            "line": 619,
+            "text": "    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();"
+          },
+          {
+            "line": 620,
+            "text": "    await expect(toast).toBeHidden();"
+          },
+          {
+            "line": 621,
+            "text": "    await expectGuardedWorker(page, 'active');"
+          },
+          {
+            "line": 622,
+            "text": "    expectGuardedApply(messages, page, 2);"
+          },
+          {
+            "line": 623,
+            "text": "    expect(navigation).toHaveLength(1);"
+          },
+          {
+            "line": 624,
+            "text": "  } finally {"
+          },
+          {
+            "line": 625,
+            "text": "    if (!dirty.isClosed()) await dirty.close();"
+          },
+          {
+            "line": 626,
+            "text": "    await control(request, '/worker/reset');"
+          },
+          {
+            "line": 627,
+            "text": "  }"
+          },
+          {
+            "line": 628,
+            "text": "});"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/e2e/pwa-helpers.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "08cd86417119ba196de23afcd273e6741ffb2921",
+    "ranges": [
+      {
+        "start": 77,
+        "end": 101,
+        "lines": [
+          {
+            "line": 77,
+            "text": "export async function observeUpdateMessages(page: Page): Promise<unknown[]> {"
+          },
+          {
+            "line": 78,
+            "text": "  const messages: unknown[] = [];"
+          },
+          {
+            "line": 79,
+            "text": "  await page.exposeFunction('recordPwaWorkerMessage', (message: unknown) => {"
+          },
+          {
+            "line": 80,
+            "text": "    messages.push(message);"
+          },
+          {
+            "line": 81,
+            "text": "  });"
+          },
+          {
+            "line": 82,
+            "text": "  await page.addInitScript(() => {"
+          },
+          {
+            "line": 83,
+            "text": "    const original: unknown = Reflect.get(ServiceWorker.prototype, 'postMessage');"
+          },
+          {
+            "line": 84,
+            "text": "    if (typeof original !== 'function') throw new Error('missing native worker message method');"
+          },
+          {
+            "line": 85,
+            "text": "    ServiceWorker.prototype.postMessage = function ("
+          },
+          {
+            "line": 86,
+            "text": "      this: ServiceWorker,"
+          },
+          {
+            "line": 87,
+            "text": "      message: unknown,"
+          },
+          {
+            "line": 88,
+            "text": "      options?: Transferable[] | StructuredSerializeOptions,"
+          },
+          {
+            "line": 89,
+            "text": "    ) {"
+          },
+          {
+            "line": 90,
+            "text": "      if ("
+          },
+          {
+            "line": 91,
+            "text": "        typeof message === 'object' &&"
+          },
+          {
+            "line": 92,
+            "text": "        message !== null &&"
+          },
+          {
+            "line": 93,
+            "text": "        'type' in message &&"
+          },
+          {
+            "line": 94,
+            "text": "        (message.type === 'SKIP_WAITING' || message.type === 'APPLY')"
+          },
+          {
+            "line": 95,
+            "text": "      )"
+          },
+          {
+            "line": 96,
+            "text": "        void window.recordPwaWorkerMessage(message);"
+          },
+          {
+            "line": 97,
+            "text": "      Reflect.apply(original, this, options === undefined ? [message] : [message, options]);"
+          },
+          {
+            "line": 98,
+            "text": "    };"
+          },
+          {
+            "line": 99,
+            "text": "  });"
+          },
+          {
+            "line": 100,
+            "text": "  return messages;"
+          },
+          {
+            "line": 101,
+            "text": "}"
+          }
+        ]
+      },
+      {
+        "start": 103,
+        "end": 148,
+        "lines": [
+          {
+            "line": 103,
+            "text": "/** Query the real worker boundary; capability proves the imported production guard executed. */"
+          },
+          {
+            "line": 104,
+            "text": "export async function workerCapability(page: Page, target: 'active' | 'waiting') {"
+          },
+          {
+            "line": 105,
+            "text": "  return page.evaluate(async (target) => {"
+          },
+          {
+            "line": 106,
+            "text": "    const registration = await navigator.serviceWorker.getRegistration('/app/');"
+          },
+          {
+            "line": 107,
+            "text": "    const worker = registration?.[target];"
+          },
+          {
+            "line": 108,
+            "text": "    if (!registration || !worker) throw new Error(`missing ${target} worker`);"
+          },
+          {
+            "line": 109,
+            "text": "    const channel = new MessageChannel();"
+          },
+          {
+            "line": 110,
+            "text": "    const attempt = crypto.randomUUID();"
+          },
+          {
+            "line": 111,
+            "text": "    return new Promise<Record<string, unknown> | null>((resolve) => {"
+          },
+          {
+            "line": 112,
+            "text": "      const timer = setTimeout(() => {"
+          },
+          {
+            "line": 113,
+            "text": "        channel.port1.close();"
+          },
+          {
+            "line": 114,
+            "text": "        resolve(null);"
+          },
+          {
+            "line": 115,
+            "text": "      }, 3_000);"
+          },
+          {
+            "line": 116,
+            "text": "      channel.port1.onmessage = (event: MessageEvent<Record<string, unknown>>) => {"
+          },
+          {
+            "line": 117,
+            "text": "        if (event.data.attempt !== attempt) return;"
+          },
+          {
+            "line": 118,
+            "text": "        clearTimeout(timer);"
+          },
+          {
+            "line": 119,
+            "text": "        channel.port1.close();"
+          },
+          {
+            "line": 120,
+            "text": "        resolve(event.data);"
+          },
+          {
+            "line": 121,
+            "text": "      };"
+          },
+          {
+            "line": 122,
+            "text": "      worker.postMessage("
+          },
+          {
+            "line": 123,
+            "text": "        {"
+          },
+          {
+            "line": 124,
+            "text": "          protocol: 'graphgoblin-chat-update-v1',"
+          },
+          {
+            "line": 125,
+            "text": "          scope: registration.scope,"
+          },
+          {
+            "line": 126,
+            "text": "          type: 'CAPABILITY',"
+          },
+          {
+            "line": 127,
+            "text": "          attempt,"
+          },
+          {
+            "line": 128,
+            "text": "        },"
+          },
+          {
+            "line": 129,
+            "text": "        [channel.port2],"
+          },
+          {
+            "line": 130,
+            "text": "      );"
+          },
+          {
+            "line": 131,
+            "text": "    });"
+          },
+          {
+            "line": 132,
+            "text": "  }, target);"
+          },
+          {
+            "line": 133,
+            "text": "}"
+          },
+          {
+            "line": 134,
+            "text": ""
+          },
+          {
+            "line": 135,
+            "text": "export async function expectGuardedWorker(page: Page, target: 'active' | 'waiting') {"
+          },
+          {
+            "line": 136,
+            "text": "  expect(await workerCapability(page, target)).toEqual({"
+          },
+          {
+            "line": 137,
+            "text": "    protocol: 'graphgoblin-chat-update-v1',"
+          },
+          {
+            "line": 138,
+            "text": "    scope: new URL('/app/', page.url()).href,"
+          },
+          {
+            "line": 139,
+            "text": "    generation: 'chat-session-web-lock-v1',"
+          },
+          {
+            "line": 140,
+            "text": "    attempt: expect.any(String),"
+          },
+          {
+            "line": 141,
+            "text": "  });"
+          },
+          {
+            "line": 142,
+            "text": "}"
+          },
+          {
+            "line": 143,
+            "text": ""
+          },
+          {
+            "line": 144,
+            "text": "export function expectGuardedApply(messages: readonly unknown[], page: Page, count = 1) {"
+          },
+          {
+            "line": 145,
+            "text": "  expect(messages).toEqual("
+          },
+          {
+            "line": 146,
+            "text": "    Array.from({ length: count }, () => ({"
+          },
+          {
+            "line": 147,
+            "text": "      protocol: 'graphgoblin-chat-update-v1',"
+          },
+          {
+            "line": 148,
+            "text": "      scope: new URL('/app/', page.url()).href,"
+          }
+        ]
+      },
+      {
+        "start": 150,
+        "end": 203,
+        "lines": [
+          {
+            "line": 150,
+            "text": "      attempt: expect.any(String),"
+          },
+          {
+            "line": 151,
+            "text": "    })),"
+          },
+          {
+            "line": 152,
+            "text": "  );"
+          },
+          {
+            "line": 153,
+            "text": "}"
+          },
+          {
+            "line": 154,
+            "text": ""
+          },
+          {
+            "line": 155,
+            "text": "export async function ensureControlledPage(page: Page) {"
+          },
+          {
+            "line": 156,
+            "text": "  await page.evaluate(async () => {"
+          },
+          {
+            "line": 157,
+            "text": "    await navigator.serviceWorker.ready;"
+          },
+          {
+            "line": 158,
+            "text": "  });"
+          },
+          {
+            "line": 159,
+            "text": "  if (!(await page.evaluate(() => navigator.serviceWorker.controller !== null)))"
+          },
+          {
+            "line": 160,
+            "text": "    await page.reload();"
+          },
+          {
+            "line": 161,
+            "text": "  await expect"
+          },
+          {
+            "line": 162,
+            "text": "    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))"
+          },
+          {
+            "line": 163,
+            "text": "    .toBe(true);"
+          },
+          {
+            "line": 164,
+            "text": "}"
+          },
+          {
+            "line": 165,
+            "text": ""
+          },
+          {
+            "line": 166,
+            "text": "/** Publish byte-different real worker bytes and wait for the browser's installed update. */"
+          },
+          {
+            "line": 167,
+            "text": "export async function showWaitingWorker(page: Page, request: APIRequestContext = page.request) {"
+          },
+          {
+            "line": 168,
+            "text": "  await ensureControlledPage(page);"
+          },
+          {
+            "line": 169,
+            "text": "  await control(request, '/worker/build');"
+          },
+          {
+            "line": 170,
+            "text": "  await page.evaluate(async () => {"
+          },
+          {
+            "line": 171,
+            "text": "    const registration = await navigator.serviceWorker.getRegistration('/app/');"
+          },
+          {
+            "line": 172,
+            "text": "    if (!registration) throw new Error('missing service worker registration');"
+          },
+          {
+            "line": 173,
+            "text": "    await registration.update();"
+          },
+          {
+            "line": 174,
+            "text": "  });"
+          },
+          {
+            "line": 175,
+            "text": "  const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });"
+          },
+          {
+            "line": 176,
+            "text": "  await expect(toast).toBeVisible({ timeout: 20_000 });"
+          },
+          {
+            "line": 177,
+            "text": "  await expect"
+          },
+          {
+            "line": 178,
+            "text": "    .poll(() =>"
+          },
+          {
+            "line": 179,
+            "text": "      page.evaluate("
+          },
+          {
+            "line": 180,
+            "text": "        async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting?.state,"
+          },
+          {
+            "line": 181,
+            "text": "      ),"
+          },
+          {
+            "line": 182,
+            "text": "    )"
+          },
+          {
+            "line": 183,
+            "text": "    .toBe('installed');"
+          },
+          {
+            "line": 184,
+            "text": "  await expectGuardedWorker(page, 'waiting');"
+          },
+          {
+            "line": 185,
+            "text": "  return toast;"
+          },
+          {
+            "line": 186,
+            "text": "}"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/e2e/fixtures.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "5f07eae92d263ebd675e584a164c758e042fc035",
+    "ranges": [
+      {
+        "start": 108,
+        "end": 115,
+        "lines": [
+          {
+            "line": 108,
+            "text": "/** Drive the E2E server's control port, for example to script the fake harness. */"
+          },
+          {
+            "line": 109,
+            "text": "export async function control(request: APIRequestContext, path: string, body: unknown = {}) {"
+          },
+          {
+            "line": 110,
+            "text": "  const base = process.env['GG_E2E_CONTROL_URL'];"
+          },
+          {
+            "line": 111,
+            "text": "  if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');"
+          },
+          {
+            "line": 112,
+            "text": "  const res = await request.post(`${base}${path}`, { data: body });"
+          },
+          {
+            "line": 113,
+            "text": "  expect(res.ok()).toBe(true);"
+          },
+          {
+            "line": 114,
+            "text": "  return (await res.json()) as Record<string, unknown>;"
+          },
+          {
+            "line": 115,
+            "text": "}"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/e2e/server.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "398316fac0460ad399cd39c2803a0eee4d243f90",
+    "ranges": [
+      {
+        "start": 212,
+        "end": 232,
+        "lines": [
+          {
+            "line": 212,
+            "text": "const main = await startApp({}, false, false, { id: 'main' });"
+          },
+          {
+            "line": 213,
+            "text": "const workerPath = join(dist, 'sw.js');"
+          },
+          {
+            "line": 214,
+            "text": "// A stopped legacy-fallback test can leave its marked omission in the disposable build. Recover"
+          },
+          {
+            "line": 215,
+            "text": "// the exact original import expression before taking the baseline, just as build markers recover."
+          },
+          {
+            "line": 216,
+            "text": "const originalWorker = cleanWorker(await readFile(workerPath, 'utf8')).replace("
+          },
+          {
+            "line": 217,
+            "text": "  /\\/\\* E2E legacy guard: (importScripts\\(\\s*([\"'])chat-update-worker\\.js\\2\\s*\\)) \\*\\/void 0/g,"
+          },
+          {
+            "line": 218,
+            "text": "  '$1',"
+          },
+          {
+            "line": 219,
+            "text": ");"
+          },
+          {
+            "line": 220,
+            "text": "const guardImport = /\\bimportScripts\\(\\s*([\"'])chat-update-worker\\.js\\1\\s*\\)/;"
+          },
+          {
+            "line": 221,
+            "text": "if (!guardImport.test(originalWorker) || !existsSync(join(dist, 'chat-update-worker.js')))"
+          },
+          {
+            "line": 222,
+            "text": "  throw new Error("
+          },
+          {
+            "line": 223,
+            "text": "    'E2E PWA checks require the current built worker and chat-update-worker.js. Rebuild the web app.',"
+          },
+          {
+            "line": 224,
+            "text": "  );"
+          },
+          {
+            "line": 225,
+            "text": "// Keep the real precache/navigation worker. Omitting its helper models an active pre-guard build"
+          },
+          {
+            "line": 226,
+            "text": "// with no capability response; the reversible marker also preserves interrupted-run recovery."
+          },
+          {
+            "line": 227,
+            "text": "const legacyWorker = originalWorker.replace("
+          },
+          {
+            "line": 228,
+            "text": "  guardImport,"
+          },
+          {
+            "line": 229,
+            "text": "  (statement) => `/* E2E legacy guard: ${statement} */void 0`,"
+          },
+          {
+            "line": 230,
+            "text": ");"
+          },
+          {
+            "line": 231,
+            "text": "let workerBuild = 0;"
+          },
+          {
+            "line": 232,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "start": 339,
+        "end": 351,
+        "lines": [
+          {
+            "line": 339,
+            "text": "    case '/worker/build': {"
+          },
+          {
+            "line": 340,
+            "text": "      const mode = z.enum(['guarded', 'legacy']).parse(body['mode'] ?? 'guarded');"
+          },
+          {
+            "line": 341,
+            "text": "      workerBuild += 1;"
+          },
+          {
+            "line": 342,
+            "text": "      await writeFile("
+          },
+          {
+            "line": 343,
+            "text": "        workerPath,"
+          },
+          {
+            "line": 344,
+            "text": "        `${mode === 'legacy' ? legacyWorker : originalWorker}\\n// E2E build ${workerBuild}\\n`,"
+          },
+          {
+            "line": 345,
+            "text": "      );"
+          },
+          {
+            "line": 346,
+            "text": "      return { build: workerBuild, mode };"
+          },
+          {
+            "line": 347,
+            "text": "    }"
+          },
+          {
+            "line": 348,
+            "text": "    case '/worker/reset':"
+          },
+          {
+            "line": 349,
+            "text": "      await writeFile(workerPath, originalWorker);"
+          },
+          {
+            "line": 350,
+            "text": "      return { ok: true };"
+          },
+          {
+            "line": 351,
+            "text": "    case '/harness/script':"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/e2e-support/worker.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "142d94344dd3f69f14d3d4edf0896d0fac05a114",
+    "ranges": [
+      {
+        "start": 1,
+        "end": 4,
+        "lines": [
+          {
+            "line": 1,
+            "text": "/** Recover a clean baseline even if an earlier E2E process was killed before teardown. */"
+          },
+          {
+            "line": 2,
+            "text": "export function originalWorker(source: string): string {"
+          },
+          {
+            "line": 3,
+            "text": "  return source.replace(/(?:\\n\\/\\/ E2E build \\d+\\n)+$/, '');"
+          },
+          {
+            "line": 4,
+            "text": "}"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/public/chat-update-worker.js",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "0514f67e6057f9af91cf225e2f0084acc76a5c0d",
+    "ranges": [
+      {
+        "start": 19,
+        "end": 50,
+        "lines": [
+          {
+            "line": 19,
+            "text": ""
+          },
+          {
+            "line": 20,
+            "text": "  const compatibleActiveWorker = (attempt) =>"
+          },
+          {
+            "line": 21,
+            "text": "    new Promise((resolve) => {"
+          },
+          {
+            "line": 22,
+            "text": "      const active = self.registration.active;"
+          },
+          {
+            "line": 23,
+            "text": "      if (!active || active.state !== 'activated') {"
+          },
+          {
+            "line": 24,
+            "text": "        resolve(false);"
+          },
+          {
+            "line": 25,
+            "text": "        return;"
+          },
+          {
+            "line": 26,
+            "text": "      }"
+          },
+          {
+            "line": 27,
+            "text": "      const channel = new MessageChannel();"
+          },
+          {
+            "line": 28,
+            "text": "      const finish = (safe) => {"
+          },
+          {
+            "line": 29,
+            "text": "        clearTimeout(timer);"
+          },
+          {
+            "line": 30,
+            "text": "        channel.port1.close();"
+          },
+          {
+            "line": 31,
+            "text": "        resolve(safe);"
+          },
+          {
+            "line": 32,
+            "text": "      };"
+          },
+          {
+            "line": 33,
+            "text": "      const timer = setTimeout(() => finish(false), 2_000);"
+          },
+          {
+            "line": 34,
+            "text": "      channel.port1.onmessage = (event) => {"
+          },
+          {
+            "line": 35,
+            "text": "        const data = event.data;"
+          },
+          {
+            "line": 36,
+            "text": "        finish("
+          },
+          {
+            "line": 37,
+            "text": "          data?.protocol === protocol &&"
+          },
+          {
+            "line": 38,
+            "text": "            data.scope === scope &&"
+          },
+          {
+            "line": 39,
+            "text": "            data.attempt === attempt &&"
+          },
+          {
+            "line": 40,
+            "text": "            data.generation === generation,"
+          },
+          {
+            "line": 41,
+            "text": "        );"
+          },
+          {
+            "line": 42,
+            "text": "      };"
+          },
+          {
+            "line": 43,
+            "text": "      try {"
+          },
+          {
+            "line": 44,
+            "text": "        active.postMessage({ protocol, scope, type: 'CAPABILITY', attempt }, [channel.port2]);"
+          },
+          {
+            "line": 45,
+            "text": "      } catch {"
+          },
+          {
+            "line": 46,
+            "text": "        finish(false);"
+          },
+          {
+            "line": 47,
+            "text": "      }"
+          },
+          {
+            "line": 48,
+            "text": "    });"
+          },
+          {
+            "line": 49,
+            "text": ""
+          },
+          {
+            "line": 50,
+            "text": "  const scopedClients = async () => {"
+          }
+        ]
+      },
+      {
+        "start": 52,
+        "end": 97,
+        "lines": [
+          {
+            "line": 52,
+            "text": "    return clients.filter((client) => client.url.startsWith(scope));"
+          },
+          {
+            "line": 53,
+            "text": "  };"
+          },
+          {
+            "line": 54,
+            "text": ""
+          },
+          {
+            "line": 55,
+            "text": "  const tell = (client, type, attempt) => {"
+          },
+          {
+            "line": 56,
+            "text": "    try {"
+          },
+          {
+            "line": 57,
+            "text": "      client.postMessage({ protocol, scope, type, attempt });"
+          },
+          {
+            "line": 58,
+            "text": "    } catch {"
+          },
+          {
+            "line": 59,
+            "text": "      // A document can close after matchAll; its gone audio cannot be preserved by reloading it."
+          },
+          {
+            "line": 60,
+            "text": "    }"
+          },
+          {
+            "line": 61,
+            "text": "  };"
+          },
+          {
+            "line": 62,
+            "text": ""
+          },
+          {
+            "line": 63,
+            "text": "  const prepare = (client, attempt) =>"
+          },
+          {
+            "line": 64,
+            "text": "    new Promise((resolve) => {"
+          },
+          {
+            "line": 65,
+            "text": "      const channel = new MessageChannel();"
+          },
+          {
+            "line": 66,
+            "text": "      const timer = setTimeout(() => {"
+          },
+          {
+            "line": 67,
+            "text": "        channel.port1.close();"
+          },
+          {
+            "line": 68,
+            "text": "        resolve('unknown');"
+          },
+          {
+            "line": 69,
+            "text": "      }, 2_000);"
+          },
+          {
+            "line": 70,
+            "text": "      channel.port1.onmessage = (event) => {"
+          },
+          {
+            "line": 71,
+            "text": "        const data = event.data;"
+          },
+          {
+            "line": 72,
+            "text": "        if (!data || data.protocol !== protocol || data.attempt !== attempt) return;"
+          },
+          {
+            "line": 73,
+            "text": "        clearTimeout(timer);"
+          },
+          {
+            "line": 74,
+            "text": "        channel.port1.close();"
+          },
+          {
+            "line": 75,
+            "text": "        resolve(data.safe === true ? 'safe' : data.safe === false ? 'dirty' : 'unknown');"
+          },
+          {
+            "line": 76,
+            "text": "      };"
+          },
+          {
+            "line": 77,
+            "text": "      client.postMessage({ protocol, scope, type: 'PREPARE', attempt }, [channel.port2]);"
+          },
+          {
+            "line": 78,
+            "text": "    });"
+          },
+          {
+            "line": 79,
+            "text": ""
+          },
+          {
+            "line": 80,
+            "text": "  // Keep the exclusive lock until activation has actually finished, including activate waitUntil."
+          },
+          {
+            "line": 81,
+            "text": "  const activate = async () => {"
+          },
+          {
+            "line": 82,
+            "text": "    const worker = self.registration.waiting;"
+          },
+          {
+            "line": 83,
+            "text": "    if (!worker || worker.scriptURL !== self.location.href)"
+          },
+          {
+            "line": 84,
+            "text": "      throw new Error('not the waiting worker');"
+          },
+          {
+            "line": 85,
+            "text": "    const activated = new Promise((resolve) => {"
+          },
+          {
+            "line": 86,
+            "text": "      const changed = () => {"
+          },
+          {
+            "line": 87,
+            "text": "        if (worker.state !== 'activated' && worker.state !== 'redundant') return;"
+          },
+          {
+            "line": 88,
+            "text": "        worker.removeEventListener('statechange', changed);"
+          },
+          {
+            "line": 89,
+            "text": "        resolve(worker.state === 'activated');"
+          },
+          {
+            "line": 90,
+            "text": "      };"
+          },
+          {
+            "line": 91,
+            "text": "      worker.addEventListener('statechange', changed);"
+          },
+          {
+            "line": 92,
+            "text": "      changed();"
+          },
+          {
+            "line": 93,
+            "text": "    });"
+          },
+          {
+            "line": 94,
+            "text": "    await self.skipWaiting();"
+          },
+          {
+            "line": 95,
+            "text": "    if (!(await activated)) throw new Error('worker did not activate');"
+          },
+          {
+            "line": 96,
+            "text": "  };"
+          },
+          {
+            "line": 97,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "start": 99,
+        "end": 155,
+        "lines": [
+          {
+            "line": 99,
+            "text": "    const { attempt } = event.data;"
+          },
+          {
+            "line": 100,
+            "text": "    const port = event.ports[0];"
+          },
+          {
+            "line": 101,
+            "text": "    const reply = (accepted, reason) =>"
+          },
+          {
+            "line": 102,
+            "text": "      port?.postMessage({ protocol, attempt, accepted, ...(reason ? { reason } : {}) });"
+          },
+          {
+            "line": 103,
+            "text": "    if (applying) {"
+          },
+          {
+            "line": 104,
+            "text": "      reply(false, unknownReason);"
+          },
+          {
+            "line": 105,
+            "text": "      return;"
+          },
+          {
+            "line": 106,
+            "text": "    }"
+          },
+          {
+            "line": 107,
+            "text": "    if (!navigator.locks) {"
+          },
+          {
+            "line": 108,
+            "text": "      reply(false, unsupportedReason);"
+          },
+          {
+            "line": 109,
+            "text": "      return;"
+          },
+          {
+            "line": 110,
+            "text": "    }"
+          },
+          {
+            "line": 111,
+            "text": "    applying = true;"
+          },
+          {
+            "line": 112,
+            "text": "    // Existing clean acks cannot prove that a newly opened pre-guard cached shell will take a"
+          },
+          {
+            "line": 113,
+            "text": "    // shared lease. The first upgrade from such a worker must wait for all app windows to close."
+          },
+          {
+            "line": 114,
+            "text": "    if (!(await compatibleActiveWorker(attempt))) {"
+          },
+          {
+            "line": 115,
+            "text": "      applying = false;"
+          },
+          {
+            "line": 116,
+            "text": "      reply(false, legacyReason);"
+          },
+          {
+            "line": 117,
+            "text": "      return;"
+          },
+          {
+            "line": 118,
+            "text": "    }"
+          },
+          {
+            "line": 119,
+            "text": "    const abort = new AbortController();"
+          },
+          {
+            "line": 120,
+            "text": "    const prepared = new Map();"
+          },
+          {
+            "line": 121,
+            "text": "    let ready;"
+          },
+          {
+            "line": 122,
+            "text": "    const preparation = new Promise((resolve) => {"
+          },
+          {
+            "line": 123,
+            "text": "      ready = resolve;"
+          },
+          {
+            "line": 124,
+            "text": "    });"
+          },
+          {
+            "line": 125,
+            "text": "    let accepted = false;"
+          },
+          {
+            "line": 126,
+            "text": "    let reason = unknownReason;"
+          },
+          {
+            "line": 127,
+            "text": "    let timer;"
+          },
+          {
+            "line": 128,
+            "text": "    // Queue the exclusive lock FIRST. A new page must acquire shared before creating dirty state,"
+          },
+          {
+            "line": 129,
+            "text": "    // so it cannot slip between the final clients snapshot and worker activation."
+          },
+          {
+            "line": 130,
+            "text": "    const exclusive = navigator.locks.request("
+          },
+          {
+            "line": 131,
+            "text": "      lockName,"
+          },
+          {
+            "line": 132,
+            "text": "      { mode: 'exclusive', signal: abort.signal },"
+          },
+          {
+            "line": 133,
+            "text": "      async () => {"
+          },
+          {
+            "line": 134,
+            "text": "        if (!(await preparation)) return;"
+          },
+          {
+            "line": 135,
+            "text": "        clearTimeout(timer);"
+          },
+          {
+            "line": 136,
+            "text": "        const current = await scopedClients();"
+          },
+          {
+            "line": 137,
+            "text": "        for (const client of current) {"
+          },
+          {
+            "line": 138,
+            "text": "          if (prepared.has(client.id)) continue;"
+          },
+          {
+            "line": 139,
+            "text": "          prepared.set(client.id, client);"
+          },
+          {
+            "line": 140,
+            "text": "          const safety = await prepare(client, attempt);"
+          },
+          {
+            "line": 141,
+            "text": "          if (safety !== 'safe') {"
+          },
+          {
+            "line": 142,
+            "text": "            if (safety === 'dirty') reason = dirtyReason;"
+          },
+          {
+            "line": 143,
+            "text": "            throw new Error('client safety unknown');"
+          },
+          {
+            "line": 144,
+            "text": "          }"
+          },
+          {
+            "line": 145,
+            "text": "        }"
+          },
+          {
+            "line": 146,
+            "text": "        // Existing pages remain locally frozen through controllerchange/reload. New pages remain"
+          },
+          {
+            "line": 147,
+            "text": "        // behind this worker's exclusive lock until the new worker is fully activated."
+          },
+          {
+            "line": 148,
+            "text": "        for (const client of prepared.values()) tell(client, 'COMMIT', attempt);"
+          },
+          {
+            "line": 149,
+            "text": "        await activate();"
+          },
+          {
+            "line": 150,
+            "text": "        accepted = true;"
+          },
+          {
+            "line": 151,
+            "text": "      },"
+          },
+          {
+            "line": 152,
+            "text": "    );"
+          },
+          {
+            "line": 153,
+            "text": "    void exclusive.catch(() => undefined);"
+          },
+          {
+            "line": 154,
+            "text": "    try {"
+          },
+          {
+            "line": 155,
+            "text": "      const clients = await scopedClients();"
+          }
+        ]
+      },
+      {
+        "start": 157,
+        "end": 200,
+        "lines": [
+          {
+            "line": 157,
+            "text": "        throw new Error('unknown requester');"
+          },
+          {
+            "line": 158,
+            "text": "      for (const client of clients) prepared.set(client.id, client);"
+          },
+          {
+            "line": 159,
+            "text": "      const checks = await Promise.all(clients.map((client) => prepare(client, attempt)));"
+          },
+          {
+            "line": 160,
+            "text": "      if (checks.some((safety) => safety !== 'safe')) {"
+          },
+          {
+            "line": 161,
+            "text": "        reason = checks.includes('dirty') ? dirtyReason : unknownReason;"
+          },
+          {
+            "line": 162,
+            "text": "        ready(false);"
+          },
+          {
+            "line": 163,
+            "text": "        abort.abort();"
+          },
+          {
+            "line": 164,
+            "text": "      } else {"
+          },
+          {
+            "line": 165,
+            "text": "        ready(true);"
+          },
+          {
+            "line": 166,
+            "text": "        // An unresponsive/older tab that still owns a shared lease is a veto, not an expired vote."
+          },
+          {
+            "line": 167,
+            "text": "        timer = setTimeout(() => abort.abort(), 2_000);"
+          },
+          {
+            "line": 168,
+            "text": "      }"
+          },
+          {
+            "line": 169,
+            "text": "      await exclusive;"
+          },
+          {
+            "line": 170,
+            "text": "    } catch {"
+          },
+          {
+            "line": 171,
+            "text": "      ready(false);"
+          },
+          {
+            "line": 172,
+            "text": "      abort.abort();"
+          },
+          {
+            "line": 173,
+            "text": "      // Always observe lock rejection, including cancellation before its callback starts."
+          },
+          {
+            "line": 174,
+            "text": "      await exclusive.catch(() => undefined);"
+          },
+          {
+            "line": 175,
+            "text": "    } finally {"
+          },
+          {
+            "line": 176,
+            "text": "      clearTimeout(timer);"
+          },
+          {
+            "line": 177,
+            "text": "      if (!accepted) {"
+          },
+          {
+            "line": 178,
+            "text": "        for (const client of prepared.values()) tell(client, 'ABORT', attempt);"
+          },
+          {
+            "line": 179,
+            "text": "      }"
+          },
+          {
+            "line": 180,
+            "text": "      applying = false;"
+          },
+          {
+            "line": 181,
+            "text": "      reply(accepted, accepted ? undefined : reason);"
+          },
+          {
+            "line": 182,
+            "text": "    }"
+          },
+          {
+            "line": 183,
+            "text": "  };"
+          },
+          {
+            "line": 184,
+            "text": ""
+          },
+          {
+            "line": 185,
+            "text": "  self.addEventListener('message', (event) => {"
+          },
+          {
+            "line": 186,
+            "text": "    if (event.data?.type === 'SKIP_WAITING') {"
+          },
+          {
+            "line": 187,
+            "text": "      // generateSW also adds this listener; stop it from bypassing the safety barrier."
+          },
+          {
+            "line": 188,
+            "text": "      event.stopImmediatePropagation();"
+          },
+          {
+            "line": 189,
+            "text": "      return;"
+          },
+          {
+            "line": 190,
+            "text": "    }"
+          },
+          {
+            "line": 191,
+            "text": "    if ("
+          },
+          {
+            "line": 192,
+            "text": "      event.data?.protocol !== protocol ||"
+          },
+          {
+            "line": 193,
+            "text": "      event.data.scope !== scope ||"
+          },
+          {
+            "line": 194,
+            "text": "      typeof event.data.attempt !== 'string'"
+          },
+          {
+            "line": 195,
+            "text": "    )"
+          },
+          {
+            "line": 196,
+            "text": "      return;"
+          },
+          {
+            "line": 197,
+            "text": "    if (event.data.type === 'CAPABILITY') {"
+          },
+          {
+            "line": 198,
+            "text": "      event.ports[0]?.postMessage({ protocol, scope, attempt: event.data.attempt, generation });"
+          },
+          {
+            "line": 199,
+            "text": "      return;"
+          },
+          {
+            "line": 200,
+            "text": "    }"
+          }
+        ]
+      },
+      {
+        "start": 202,
+        "end": 231,
+        "lines": [
+          {
+            "line": 202,
+            "text": "    event.stopImmediatePropagation();"
+          },
+          {
+            "line": 203,
+            "text": "    event.waitUntil(apply(event));"
+          },
+          {
+            "line": 204,
+            "text": "  });"
+          },
+          {
+            "line": 205,
+            "text": "})();"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/pwa/chat-update-guard.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "0c886cb2d292929844e2760fea931968a8835867",
+    "ranges": [
+      {
+        "start": 133,
+        "end": 184,
+        "lines": [
+          {
+            "line": 133,
+            "text": "    lockChatUpdate(leaseKey);"
+          },
+          {
+            "line": 134,
+            "text": "    const ownGeneration = ++generation;"
+          },
+          {
+            "line": 135,
+            "text": "    const abort = new AbortController();"
+          },
+          {
+            "line": 136,
+            "text": "    acquiring = abort;"
+          },
+          {
+            "line": 137,
+            "text": "    void locks"
+          },
+          {
+            "line": 138,
+            "text": "      .request(name, { mode: 'shared', signal: abort.signal }, async () => {"
+          },
+          {
+            "line": 139,
+            "text": "        if (disposed || ownGeneration !== generation || prepared.size > 0) return;"
+          },
+          {
+            "line": 140,
+            "text": "        acquiring = undefined;"
+          },
+          {
+            "line": 141,
+            "text": "        await new Promise<void>((resolve) => {"
+          },
+          {
+            "line": 142,
+            "text": "          releaseShared = resolve;"
+          },
+          {
+            "line": 143,
+            "text": "          unlockChatUpdate(leaseKey);"
+          },
+          {
+            "line": 144,
+            "text": "        });"
+          },
+          {
+            "line": 145,
+            "text": "        releaseShared = undefined;"
+          },
+          {
+            "line": 146,
+            "text": "      })"
+          },
+          {
+            "line": 147,
+            "text": "      .catch(() => {"
+          },
+          {
+            "line": 148,
+            "text": "        if (ownGeneration === generation) acquiring = undefined;"
+          },
+          {
+            "line": 149,
+            "text": "        // A failed acquisition never enables new dirty state without owning the barrier."
+          },
+          {
+            "line": 150,
+            "text": "      });"
+          },
+          {
+            "line": 151,
+            "text": "  };"
+          },
+          {
+            "line": 152,
+            "text": ""
+          },
+          {
+            "line": 153,
+            "text": "  const releaseLease = () => {"
+          },
+          {
+            "line": 154,
+            "text": "    generation++;"
+          },
+          {
+            "line": 155,
+            "text": "    acquiring?.abort();"
+          },
+          {
+            "line": 156,
+            "text": "    acquiring = undefined;"
+          },
+          {
+            "line": 157,
+            "text": "    releaseShared?.();"
+          },
+          {
+            "line": 158,
+            "text": "    releaseShared = undefined;"
+          },
+          {
+            "line": 159,
+            "text": "  };"
+          },
+          {
+            "line": 160,
+            "text": ""
+          },
+          {
+            "line": 161,
+            "text": "  const message = (event: MessageEvent<unknown>) => {"
+          },
+          {
+            "line": 162,
+            "text": "    const data = event.data as Record<string, unknown> | undefined;"
+          },
+          {
+            "line": 163,
+            "text": "    if ("
+          },
+          {
+            "line": 164,
+            "text": "      !data ||"
+          },
+          {
+            "line": 165,
+            "text": "      data.protocol !== CHAT_UPDATE_PROTOCOL ||"
+          },
+          {
+            "line": 166,
+            "text": "      data.scope !== scope ||"
+          },
+          {
+            "line": 167,
+            "text": "      typeof data.attempt !== 'string' ||"
+          },
+          {
+            "line": 168,
+            "text": "      typeof data.type !== 'string'"
+          },
+          {
+            "line": 169,
+            "text": "    )"
+          },
+          {
+            "line": 170,
+            "text": "      return;"
+          },
+          {
+            "line": 171,
+            "text": "    const source = event.source as ServiceWorker | null;"
+          },
+          {
+            "line": 172,
+            "text": "    // Only this registration's worker may coordinate its pages; /app/ and /goblin/ stay separate."
+          },
+          {
+            "line": 173,
+            "text": "    if (!source || source.scriptURL !== new URL('sw.js', scope).href) return;"
+          },
+          {
+            "line": 174,
+            "text": "    const attempt = data.attempt;"
+          },
+          {
+            "line": 175,
+            "text": "    const key = `${owner}:${attempt}`;"
+          },
+          {
+            "line": 176,
+            "text": "    if (data.type === 'PREPARE') {"
+          },
+          {
+            "line": 177,
+            "text": "      prepared.add(attempt);"
+          },
+          {
+            "line": 178,
+            "text": "      const safe = lockChatUpdate(key) && !!locks && storageKnown;"
+          },
+          {
+            "line": 179,
+            "text": "      if (safe) releaseLease();"
+          },
+          {
+            "line": 180,
+            "text": "      event.ports[0]?.postMessage({ protocol: CHAT_UPDATE_PROTOCOL, attempt, safe });"
+          },
+          {
+            "line": 181,
+            "text": "    } else if (data.type === 'ABORT') {"
+          },
+          {
+            "line": 182,
+            "text": "      if (!prepared.delete(attempt)) return;"
+          },
+          {
+            "line": 183,
+            "text": "      // Reacquire first; removing the transaction lock must not enable actions ahead of a lease."
+          },
+          {
+            "line": 184,
+            "text": "      if (locks && !releaseShared) acquireShared();"
+          }
+        ]
+      },
+      {
+        "start": 186,
+        "end": 235,
+        "lines": [
+          {
+            "line": 186,
+            "text": "    } else if (data.type === 'COMMIT' && prepared.has(attempt)) {"
+          },
+          {
+            "line": 187,
+            "text": "      committed(source);"
+          },
+          {
+            "line": 188,
+            "text": "    }"
+          },
+          {
+            "line": 189,
+            "text": "  };"
+          },
+          {
+            "line": 190,
+            "text": "  container?.addEventListener('message', message);"
+          },
+          {
+            "line": 191,
+            "text": "  acquireShared();"
+          },
+          {
+            "line": 192,
+            "text": ""
+          },
+          {
+            "line": 193,
+            "text": "  return {"
+          },
+          {
+            "line": 194,
+            "text": "    apply: (worker) => {"
+          },
+          {
+            "line": 195,
+            "text": "      if (isChatUpdateUnsafe())"
+          },
+          {
+            "line": 196,
+            "text": "        return Promise.resolve({ accepted: false, reason: CHAT_UPDATE_DIRTY_REASON });"
+          },
+          {
+            "line": 197,
+            "text": "      if (!locks || !container || !worker)"
+          },
+          {
+            "line": 198,
+            "text": "        return Promise.resolve({ accepted: false, reason: CHAT_UPDATE_UNSUPPORTED_REASON });"
+          },
+          {
+            "line": 199,
+            "text": "      if (!storageKnown)"
+          },
+          {
+            "line": 200,
+            "text": "        return Promise.resolve({ accepted: false, reason: CHAT_UPDATE_UNKNOWN_REASON });"
+          },
+          {
+            "line": 201,
+            "text": "      return new Promise<ChatUpdateResult>((resolve) => {"
+          },
+          {
+            "line": 202,
+            "text": "        const channel = new MessageChannel();"
+          },
+          {
+            "line": 203,
+            "text": "        const attempt = crypto.randomUUID();"
+          },
+          {
+            "line": 204,
+            "text": "        // A timeout is failure to prove safety, never permission to release a peer's dirty state."
+          },
+          {
+            "line": 205,
+            "text": "        const timer = setTimeout(() => {"
+          },
+          {
+            "line": 206,
+            "text": "          channel.port1.close();"
+          },
+          {
+            "line": 207,
+            "text": "          resolve({ accepted: false, reason: CHAT_UPDATE_UNKNOWN_REASON });"
+          },
+          {
+            "line": 208,
+            "text": "        }, 15_000);"
+          },
+          {
+            "line": 209,
+            "text": "        channel.port1.onmessage = (event: MessageEvent<unknown>) => {"
+          },
+          {
+            "line": 210,
+            "text": "          const result = event.data as Record<string, unknown> | undefined;"
+          },
+          {
+            "line": 211,
+            "text": "          if (!result || result.protocol !== CHAT_UPDATE_PROTOCOL || result.attempt !== attempt)"
+          },
+          {
+            "line": 212,
+            "text": "            return;"
+          },
+          {
+            "line": 213,
+            "text": "          clearTimeout(timer);"
+          },
+          {
+            "line": 214,
+            "text": "          channel.port1.close();"
+          },
+          {
+            "line": 215,
+            "text": "          resolve({"
+          },
+          {
+            "line": 216,
+            "text": "            accepted: result.accepted === true,"
+          },
+          {
+            "line": 217,
+            "text": "            ...(result.accepted === true"
+          },
+          {
+            "line": 218,
+            "text": "              ? {}"
+          },
+          {
+            "line": 219,
+            "text": "              : {"
+          },
+          {
+            "line": 220,
+            "text": "                  reason:"
+          },
+          {
+            "line": 221,
+            "text": "                    typeof result.reason === 'string' ? result.reason : CHAT_UPDATE_UNKNOWN_REASON,"
+          },
+          {
+            "line": 222,
+            "text": "                }),"
+          },
+          {
+            "line": 223,
+            "text": "          });"
+          },
+          {
+            "line": 224,
+            "text": "        };"
+          },
+          {
+            "line": 225,
+            "text": "        try {"
+          },
+          {
+            "line": 226,
+            "text": "          worker.postMessage({ protocol: CHAT_UPDATE_PROTOCOL, scope, type: 'APPLY', attempt }, ["
+          },
+          {
+            "line": 227,
+            "text": "            channel.port2,"
+          },
+          {
+            "line": 228,
+            "text": "          ]);"
+          },
+          {
+            "line": 229,
+            "text": "        } catch {"
+          },
+          {
+            "line": 230,
+            "text": "          clearTimeout(timer);"
+          },
+          {
+            "line": 231,
+            "text": "          channel.port1.close();"
+          },
+          {
+            "line": 232,
+            "text": "          resolve({ accepted: false, reason: CHAT_UPDATE_UNKNOWN_REASON });"
+          },
+          {
+            "line": 233,
+            "text": "        }"
+          },
+          {
+            "line": 234,
+            "text": "      });"
+          },
+          {
+            "line": 235,
+            "text": "    },"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/pwa/register.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "be52c028bcd554dd5dc9ac3df8300380a68ac9f1",
+    "ranges": [
+      {
+        "start": 44,
+        "end": 102,
+        "lines": [
+          {
+            "line": 44,
+            "text": "  let controlled = false;"
+          },
+          {
+            "line": 45,
+            "text": "  let committedWorker: ServiceWorker | undefined;"
+          },
+          {
+            "line": 46,
+            "text": "  let reloaded = false;"
+          },
+          {
+            "line": 47,
+            "text": "  const maybeReload = () => {"
+          },
+          {
+            "line": 48,
+            "text": "    if (!disposed && reloadRequested && controlled && !reloaded && !isChatUpdateUnsafe()) {"
+          },
+          {
+            "line": 49,
+            "text": "      reloaded = true;"
+          },
+          {
+            "line": 50,
+            "text": "      reload();"
+          },
+          {
+            "line": 51,
+            "text": "    }"
+          },
+          {
+            "line": 52,
+            "text": "  };"
+          },
+          {
+            "line": 53,
+            "text": "  const guard = (options.createUpdateGuard ?? startChatUpdateGuard)(scope, (worker) => {"
+          },
+          {
+            "line": 54,
+            "text": "    committedWorker = worker;"
+          },
+          {
+            "line": 55,
+            "text": "    controlled = navigator.serviceWorker?.controller === worker;"
+          },
+          {
+            "line": 56,
+            "text": "    reloadRequested = true;"
+          },
+          {
+            "line": 57,
+            "text": "    maybeReload();"
+          },
+          {
+            "line": 58,
+            "text": "  });"
+          },
+          {
+            "line": 59,
+            "text": "  const unsubscribeGuard = subscribeChatUpdateGuard(maybeReload);"
+          },
+          {
+            "line": 60,
+            "text": "  cleanup = () => {"
+          },
+          {
+            "line": 61,
+            "text": "    unsubscribeGuard();"
+          },
+          {
+            "line": 62,
+            "text": "    guard.dispose();"
+          },
+          {
+            "line": 63,
+            "text": "  };"
+          },
+          {
+            "line": 64,
+            "text": ""
+          },
+          {
+            "line": 65,
+            "text": "  const lifecycle = {"
+          },
+          {
+            "line": 66,
+            "text": "    dispose: () => {"
+          },
+          {
+            "line": 67,
+            "text": "      disposed = true;"
+          },
+          {
+            "line": 68,
+            "text": "      cleanup();"
+          },
+          {
+            "line": 69,
+            "text": "    },"
+          },
+          {
+            "line": 70,
+            "text": "  };"
+          },
+          {
+            "line": 71,
+            "text": ""
+          },
+          {
+            "line": 72,
+            "text": "  if (!supported) return lifecycle;"
+          },
+          {
+            "line": 73,
+            "text": "  const create ="
+          },
+          {
+            "line": 74,
+            "text": "    options.createWorkbox ??"
+          },
+          {
+            "line": 75,
+            "text": "    ((swUrl: string, swScope: string) =>"
+          },
+          {
+            "line": 76,
+            "text": "      new Workbox(swUrl, { scope: swScope, updateViaCache: 'none' }));"
+          },
+          {
+            "line": 77,
+            "text": "  const wb = create(url, scope);"
+          },
+          {
+            "line": 78,
+            "text": "  wb.addEventListener('controlling', () => {"
+          },
+          {
+            "line": 79,
+            "text": "    // For external updates Workbox reports its previously tracked worker in event.sw. The"
+          },
+          {
+            "line": 80,
+            "text": "    // browser's actual controller is the authority for whether our committed worker took over."
+          },
+          {
+            "line": 81,
+            "text": "    controlled = !committedWorker || navigator.serviceWorker?.controller === committedWorker;"
+          },
+          {
+            "line": 82,
+            "text": "    maybeReload();"
+          },
+          {
+            "line": 83,
+            "text": "  });"
+          },
+          {
+            "line": 84,
+            "text": "  const promptedWorkers = new WeakSet<ServiceWorker>();"
+          },
+          {
+            "line": 85,
+            "text": "  const prompt = (worker?: ServiceWorker) => {"
+          },
+          {
+            "line": 86,
+            "text": "    if (disposed || (worker && promptedWorkers.has(worker))) return;"
+          },
+          {
+            "line": 87,
+            "text": "    if (worker) promptedWorkers.add(worker);"
+          },
+          {
+            "line": 88,
+            "text": "    const apply = async () => {"
+          },
+          {
+            "line": 89,
+            "text": "      controlled = false;"
+          },
+          {
+            "line": 90,
+            "text": "      const result = await guard.apply(worker ?? registration?.waiting ?? undefined);"
+          },
+          {
+            "line": 91,
+            "text": "      if (disposed || usePwaStore.getState().applyUpdate !== apply) return false;"
+          },
+          {
+            "line": 92,
+            "text": "      if (!result.accepted) {"
+          },
+          {
+            "line": 93,
+            "text": "        store.setUpdateBlocked(result.reason ?? 'The update could not be checked. Try again.');"
+          },
+          {
+            "line": 94,
+            "text": "        return false;"
+          },
+          {
+            "line": 95,
+            "text": "      }"
+          },
+          {
+            "line": 96,
+            "text": "      reloadRequested = true;"
+          },
+          {
+            "line": 97,
+            "text": "      maybeReload();"
+          },
+          {
+            "line": 98,
+            "text": "      return true;"
+          },
+          {
+            "line": 99,
+            "text": "    };"
+          },
+          {
+            "line": 100,
+            "text": "    store.promptUpdate(apply);"
+          },
+          {
+            "line": 101,
+            "text": "  };"
+          },
+          {
+            "line": 102,
+            "text": "  wb.addEventListener('waiting', (event) => prompt(event.sw));"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/pwa/store.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "112e07bb95755b6a9ec69cc0f01180c014e138b4",
+    "ranges": [
+      {
+        "start": 34,
+        "end": 76,
+        "lines": [
+          {
+            "line": 34,
+            "text": "    const apply = get().applyUpdate;"
+          },
+          {
+            "line": 35,
+            "text": "    if (!apply) return;"
+          },
+          {
+            "line": 36,
+            "text": "    set({ applying: true, blockedReason: undefined });"
+          },
+          {
+            "line": 37,
+            "text": "    const finish = (accepted: void | boolean) => {"
+          },
+          {
+            "line": 38,
+            "text": "      if (get().applyUpdate !== apply) return;"
+          },
+          {
+            "line": 39,
+            "text": "      set("
+          },
+          {
+            "line": 40,
+            "text": "        accepted === false"
+          },
+          {
+            "line": 41,
+            "text": "          ? { applying: false }"
+          },
+          {
+            "line": 42,
+            "text": "          : {"
+          },
+          {
+            "line": 43,
+            "text": "              needRefresh: false,"
+          },
+          {
+            "line": 44,
+            "text": "              applyUpdate: undefined,"
+          },
+          {
+            "line": 45,
+            "text": "              applying: false,"
+          },
+          {
+            "line": 46,
+            "text": "              blockedReason: undefined,"
+          },
+          {
+            "line": 47,
+            "text": "            },"
+          },
+          {
+            "line": 48,
+            "text": "      );"
+          },
+          {
+            "line": 49,
+            "text": "    };"
+          },
+          {
+            "line": 50,
+            "text": "    const failed = () => {"
+          },
+          {
+            "line": 51,
+            "text": "      if (get().applyUpdate === apply)"
+          },
+          {
+            "line": 52,
+            "text": "        set({ applying: false, blockedReason: 'The update could not be checked. Try again.' });"
+          },
+          {
+            "line": 53,
+            "text": "    };"
+          },
+          {
+            "line": 54,
+            "text": "    try {"
+          },
+          {
+            "line": 55,
+            "text": "      const result = apply();"
+          },
+          {
+            "line": 56,
+            "text": "      if (result instanceof Promise) void result.then(finish, failed);"
+          },
+          {
+            "line": 57,
+            "text": "      else finish(result);"
+          },
+          {
+            "line": 58,
+            "text": "    } catch {"
+          },
+          {
+            "line": 59,
+            "text": "      failed();"
+          },
+          {
+            "line": 60,
+            "text": "    }"
+          },
+          {
+            "line": 61,
+            "text": "  },"
+          },
+          {
+            "line": 62,
+            "text": "}));"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/pwa/UpdateToast.tsx",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "6334ef676213a8fbc9362705709c105b8a5501c7",
+    "ranges": [
+      {
+        "start": 26,
+        "end": 46,
+        "lines": [
+          {
+            "line": 26,
+            "text": "        A new version is available"
+          },
+          {
+            "line": 27,
+            "text": "        {blockedReason && <span className=\"block text-xs text-muted\">{blockedReason}</span>}"
+          },
+          {
+            "line": 28,
+            "text": "      </span>"
+          },
+          {
+            "line": 29,
+            "text": "      <Button size=\"sm\" onClick={confirm} disabled={applying}>"
+          },
+          {
+            "line": 30,
+            "text": "        {applying ? 'Checking\u2026' : 'Update'}"
+          },
+          {
+            "line": 31,
+            "text": "      </Button>"
+          },
+          {
+            "line": 32,
+            "text": "      <Button size=\"sm\" variant=\"ghost\" onClick={dismiss} disabled={applying}>"
+          },
+          {
+            "line": 33,
+            "text": "        Later"
+          },
+          {
+            "line": 34,
+            "text": "      </Button>"
+          },
+          {
+            "line": 35,
+            "text": "    </div>"
+          },
+          {
+            "line": 36,
+            "text": "  );"
+          },
+          {
+            "line": 37,
+            "text": "}"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/pwa/chat-update-lock.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "48415dde57c5645f7772e1751005440b5375c56b",
+    "ranges": [
+      {
+        "start": 1,
+        "end": 39,
+        "lines": [
+          {
+            "line": 1,
+            "text": "// This leaf owns only the local action gate. It never imports recorder or submission state:"
+          },
+          {
+            "line": 2,
+            "text": "// the recorder can check the gate without importing the coordinator that inspects its drafts."
+          },
+          {
+            "line": 3,
+            "text": "const updateLocks = new Set<string>();"
+          },
+          {
+            "line": 4,
+            "text": "let guardRuntimes = 0;"
+          },
+          {
+            "line": 5,
+            "text": "let guardExpected = true;"
+          },
+          {
+            "line": 6,
+            "text": ""
+          },
+          {
+            "line": 7,
+            "text": "/** Entry points declare this before rendering; startup failures and disposal never disable it. */"
+          },
+          {
+            "line": 8,
+            "text": "export function setChatUpdateGuardExpected(expected: boolean): void {"
+          },
+          {
+            "line": 9,
+            "text": "  guardExpected = expected;"
+          },
+          {
+            "line": 10,
+            "text": "}"
+          },
+          {
+            "line": 11,
+            "text": ""
+          },
+          {
+            "line": 12,
+            "text": "/** A transaction lock is separate from ordinary draft dirtiness. */"
+          },
+          {
+            "line": 13,
+            "text": "export function getChatUpdateLocked(): boolean {"
+          },
+          {
+            "line": 14,
+            "text": "  // The first paint can precede registration's React effect. New documents must stay gated even"
+          },
+          {
+            "line": 15,
+            "text": "  // in that gap, otherwise a user event could create dirty state ahead of its shared lease."
+          },
+          {
+            "line": 16,
+            "text": "  return ("
+          },
+          {
+            "line": 17,
+            "text": "    updateLocks.size > 0 ||"
+          },
+          {
+            "line": 18,
+            "text": "    (guardRuntimes === 0 &&"
+          },
+          {
+            "line": 19,
+            "text": "      typeof navigator !== 'undefined' &&"
+          },
+          {
+            "line": 20,
+            "text": "      'serviceWorker' in navigator &&"
+          },
+          {
+            "line": 21,
+            "text": "      !!navigator.locks &&"
+          },
+          {
+            "line": 22,
+            "text": "      // Development can explicitly omit registration, but an existing controller can still"
+          },
+          {
+            "line": 23,
+            "text": "      // update this page. Skipping registration alone does not make that page safe to use."
+          },
+          {
+            "line": 24,
+            "text": "      (guardExpected || !!navigator.serviceWorker?.controller))"
+          },
+          {
+            "line": 25,
+            "text": "  );"
+          },
+          {
+            "line": 26,
+            "text": "}"
+          },
+          {
+            "line": 27,
+            "text": ""
+          },
+          {
+            "line": 28,
+            "text": "export function addChatUpdateLock(attempt: string): void {"
+          },
+          {
+            "line": 29,
+            "text": "  updateLocks.add(attempt);"
+          },
+          {
+            "line": 30,
+            "text": "}"
+          },
+          {
+            "line": 31,
+            "text": ""
+          },
+          {
+            "line": 32,
+            "text": "export function removeChatUpdateLock(attempt: string): boolean {"
+          },
+          {
+            "line": 33,
+            "text": "  return updateLocks.delete(attempt);"
+          },
+          {
+            "line": 34,
+            "text": "}"
+          },
+          {
+            "line": 35,
+            "text": ""
+          },
+          {
+            "line": 36,
+            "text": "export function startChatUpdateRuntime(): void {"
+          },
+          {
+            "line": 37,
+            "text": "  guardRuntimes++;"
+          },
+          {
+            "line": 38,
+            "text": "}"
+          },
+          {
+            "line": 39,
+            "text": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/vite.config.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "730fc41a819c87585999501195699bc3ade9adbf",
+    "ranges": [
+      {
+        "start": 89,
+        "end": 105,
+        "lines": [
+          {
+            "line": 89,
+            "text": "      },"
+          },
+          {
+            "line": 90,
+            "text": "      workbox: {"
+          },
+          {
+            "line": 91,
+            "text": "        // Precache the app shell only. API responses are never cached: there is no runtime"
+          },
+          {
+            "line": 92,
+            "text": "        // caching, and navigations outside /app/ are never answered from the cache."
+          },
+          {
+            "line": 93,
+            "text": "        // The fonts are part of the shell, every face Settings offers included (public/fonts), so"
+          },
+          {
+            "line": 94,
+            "text": "        // the offline app keeps whichever typeface was chosen."
+          },
+          {
+            "line": 95,
+            "text": "        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,woff2}'],"
+          },
+          {
+            "line": 96,
+            "text": "        navigateFallback: `${APP_BASE}index.html`,"
+          },
+          {
+            "line": 97,
+            "text": "        navigateFallbackAllowlist: [/^\\/app\\//],"
+          },
+          {
+            "line": 98,
+            "text": "        runtimeCaching: [],"
+          },
+          {
+            "line": 99,
+            "text": "        cleanupOutdatedCaches: true,"
+          },
+          {
+            "line": 100,
+            "text": "        clientsClaim: false,"
+          },
+          {
+            "line": 101,
+            "text": "        skipWaiting: false,"
+          },
+          {
+            "line": 102,
+            "text": "        importScripts: ['chat-update-worker.js'],"
+          },
+          {
+            "line": 103,
+            "text": "        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,"
+          },
+          {
+            "line": 104,
+            "text": "      },"
+          },
+          {
+            "line": 105,
+            "text": "      devOptions: { enabled: false },"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/playwright.config.ts",
+    "commit": "29e165e14fdda138300ba2a34585ddd47268b475",
+    "blob": "1d80daef02c5e1c3fb1b7fa337548bbed05a40a5",
+    "ranges": [
+      {
+        "start": 17,
+        "end": 48,
+        "lines": [
+          {
+            "line": 17,
+            "text": "  globalSetup: './e2e/global-setup.ts',"
+          },
+          {
+            "line": 18,
+            "text": "  fullyParallel: false,"
+          },
+          {
+            "line": 19,
+            "text": "  workers: 1,"
+          },
+          {
+            "line": 20,
+            "text": "  // A pass only after retry is a flaky failure, locally and in the mandatory browser job."
+          },
+          {
+            "line": 21,
+            "text": "  retries: 0,"
+          },
+          {
+            "line": 22,
+            "text": "  // A focused test left in a spec would silently skip the rest of the gate."
+          },
+          {
+            "line": 23,
+            "text": "  forbidOnly: Boolean(process.env['CI']),"
+          },
+          {
+            "line": 24,
+            "text": "  timeout: 60_000,"
+          },
+          {
+            "line": 25,
+            "text": "  expect: { timeout: 10_000 },"
+          },
+          {
+            "line": 26,
+            "text": "  reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : [['list']],"
+          },
+          {
+            "line": 27,
+            "text": "  outputDir: 'test-results',"
+          },
+          {
+            "line": 28,
+            "text": "  use: {"
+          },
+          {
+            "line": 29,
+            "text": "    trace: 'retain-on-failure',"
+          },
+          {
+            "line": 30,
+            "text": "    serviceWorkers: 'allow',"
+          },
+          {
+            "line": 31,
+            "text": "    viewport: { width: 1440, height: 900 },"
+          },
+          {
+            "line": 32,
+            "text": "  },"
+          },
+          {
+            "line": 33,
+            "text": "  projects: ["
+          },
+          {
+            "line": 34,
+            "text": "    {"
+          },
+          {
+            "line": 35,
+            "text": "      name: 'chromium',"
+          },
+          {
+            "line": 36,
+            "text": "      use: {"
+          },
+          {
+            "line": 37,
+            "text": "        ...devices['Desktop Chrome'],"
+          },
+          {
+            "line": 38,
+            "text": "        viewport: { width: 1440, height: 900 },"
+          },
+          {
+            "line": 39,
+            "text": "        ...(channel ? { channel } : {}),"
+          },
+          {
+            "line": 40,
+            "text": "      },"
+          },
+          {
+            "line": 41,
+            "text": "    },"
+          },
+          {
+            "line": 42,
+            "text": "  ],"
+          },
+          {
+            "line": 43,
+            "text": "});"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -64,6 +64,10 @@ it.each(matrix)(
         resumable: expected.resumable,
         inference: { promptKind: 'repair', submission: spec.state },
       });
+      expect(run.failure?.details ?? {}).not.toHaveProperty('phase');
+      expect(run.failure?.message).not.toContain(
+        'GraphGoblin received the provider result before this step failed.',
+      );
       if (fired) expect.soft(run.failure?.details).toMatchObject({ recording: expect.any(Array) });
       const resumed = await test.app.inject({
         method: 'POST',

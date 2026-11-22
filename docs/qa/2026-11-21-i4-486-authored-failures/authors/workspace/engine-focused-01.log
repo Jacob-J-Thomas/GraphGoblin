@@ -1,0 +1,79 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/edge-cases.test.ts (29 tests | 4 failed) 1343ms
+   ❯ handler helpers (11)
+     × inference raw repair handles target /vars/a/5 safely 48ms
+     × inference raw repair handles target /vars/a/x safely 18ms
+     × inference raw repair handles target /vars/a/01/b safely 31ms
+     × inference raw repair handles target /vars/s/0 safely 31ms
+ ❯ src/run-manager.test.ts (41 tests | 3 failed) 4591ms
+   ❯ working directory preparation (14)
+     × keeps a local file-return workspace failure inside the terminal receipt catch (0) 45ms
+     × keeps a local file-return workspace failure inside the terminal receipt catch (1) 34ms
+     × retains the external exception text for a terminal file-return failure 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/edge-cases.test.ts > handler helpers > inference raw repair handles target /vars/a/5 safely
+ FAIL  src/edge-cases.test.ts > handler helpers > inference raw repair handles target /vars/a/x safely
+ FAIL  src/edge-cases.test.ts > handler helpers > inference raw repair handles target /vars/a/01/b safely
+ FAIL  src/edge-cases.test.ts > handler helpers > inference raw repair handles target /vars/s/0 safely
+AssertionError: expected 'MUTATION_ERROR' to be 'INTERNAL_ERROR' // Object.is equality
+
+Expected: "INTERNAL_ERROR"
+Received: "MUTATION_ERROR"
+
+ ❯ src/edge-cases.test.ts:205:35
+    203|       } else {
+    204|         expect(run.status).toBe('failed');
+    205|         expect(run.failure?.code).toBe('INTERNAL_ERROR');
+       |                                   ^
+    206|         expect(engine.events(run.id)).not.toEqual(
+    207|           expect.arrayContaining([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/run-manager.test.ts > working directory preparation > keeps a local file-return workspace failure inside the terminal receipt catch (0)
+ FAIL  src/run-manager.test.ts > working directory preparation > keeps a local file-return workspace failure inside the terminal receipt catch (1)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/run-manager.test.ts:231:22
+    229|       expect(run.failure).toBeUndefined();
+    230|       const failed = engine.events(run.id).filter((event) => event.typ…
+    231|       expect(failed).toHaveLength(1);
+       |                      ^
+    232|       expect(failed[0]).toMatchObject({
+    233|         error: expect.stringMatching(/^Working directory template fail…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/run-manager.test.ts > working directory preparation > retains the external exception text for a terminal file-return failure
+AssertionError: expected "resolve" to be called 1 times, but got 0 times
+ ❯ src/run-manager.test.ts:253:21
+    251|     expect(run.status).toBe('succeeded');
+    252|     expect(run.failure).toBeUndefined();
+    253|     expect(resolve).toHaveBeenCalledTimes(1);
+       |                     ^
+    254|     expect(engine.events(run.id)).toContainEqual(
+    255|       expect.objectContaining({ type: 'return.failed', error: 'private…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 63 passed (70)
+   Start at  05:41:20
+   Duration  7.35s (tests 54%, import 28%, transform 18%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

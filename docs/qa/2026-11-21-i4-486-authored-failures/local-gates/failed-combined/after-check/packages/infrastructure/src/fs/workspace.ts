@@ -1,0 +1,33 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
+import type { WorkspacePort } from '@graphgoblin/engine';
+
+/**
+ * Working directories on the local filesystem. The engine resolves templates to fixed paths;
+ * temporary directories live under `<dataDir>/workspaces/<runId>`.
+ */
+export class FsWorkspace implements WorkspacePort {
+  constructor(private readonly dataDir: string) {}
+
+  async resolve(spec: Parameters<WorkspacePort['resolve']>[0], runId: string): Promise<string> {
+    let dir: string;
+    switch (spec.kind) {
+      case 'fixed':
+        dir = spec.path;
+        break;
+      case 'temp':
+        dir = join(this.dataDir, 'workspaces', runId);
+        break;
+    }
+    const absolute = resolve(dir);
+    await mkdir(absolute, { recursive: true });
+    return absolute;
+  }
+
+  async writeFile(dir: string, path: string, content: string): Promise<string> {
+    const absolute = isAbsolute(path) ? resolve(path) : resolve(dir, path);
+    await mkdir(dirname(absolute), { recursive: true });
+    await writeFile(absolute, content, 'utf8');
+    return absolute;
+  }
+}

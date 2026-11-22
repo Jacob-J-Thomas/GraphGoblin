@@ -1,0 +1,128 @@
+PASS L-PUB-compile top-level compile expression refused at publish
+PASS L-PUB-unsafe top-level unsafe expression refused at publish
+PASS L-PUB-liquid Liquid parse error refused at publish
+PASS L-PUB-runs no runs created by refused publications
+PASS B01-shape TEMPLATE_ERROR script.args {"argumentIndex":3} resumable false, fixed cause/message
+PASS B01-effects native counter +0 and zero script.dispatched
+PASS B01-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B01-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B01-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B01c valid args: succeeded, native counter +1 with exact args, one script.dispatched, cwd = temp workspace
+PASS B01u nonexistent command keeps existing script start/uncertain policy (no authored boundary)
+PASS EXT-W missing secret keeps SECRET_MISSING; counter +0
+PASS B02-shape TEMPLATE_ERROR heartbeat.probe.headers {"headerIndex":1} resumable false, fixed cause/message
+PASS B02-effects listener +0, heartbeat.beat 0, not waiting
+PASS B02-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B02-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B02-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B03u-shape TEMPLATE_ERROR heartbeat.probe.url {} resumable false, fixed cause/message
+PASS B03u-effects listener +0, heartbeat.beat 0, not waiting
+PASS B03u-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B03u-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B03u-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B03b-shape TEMPLATE_ERROR heartbeat.probe.body {} resumable false, fixed cause/message
+PASS B03b-effects listener +0, heartbeat.beat 0, not waiting
+PASS B03b-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B03b-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B03b-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B03c valid probe: succeeded, listener +1 with rendered header/body, one beat
+PASS B04-shape TEMPLATE_ERROR heartbeat.probe.args {"argumentIndex":2} resumable false, fixed cause/message
+PASS B04-effects listener +0, heartbeat.beat 0, not waiting
+PASS B04-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B04-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B04-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B04-native script-probe counter +0 and no temp workspace resolved for the run
+PASS B04c valid script probe: succeeded, counter +1, cwd = temp workspace
+PASS B05-shape EXPRESSION_ERROR heartbeat.until {"beat":1} resumable false, fixed cause/message
+PASS B05-effects listener +1, heartbeat.beat 1, not waiting
+PASS B05-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B05-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B05-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B05b-shape EXPRESSION_ERROR heartbeat.until {"beat":2} resumable false, fixed cause/message
+PASS B05b-effects listener +2, heartbeat.beat 2, not waiting
+PASS B05b-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B05b-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B05b-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B05d-shape EXPRESSION_ERROR heartbeat.until {"beat":1} resumable false, fixed cause/message
+PASS B05d-effects listener +1, heartbeat.beat 1, not waiting
+PASS B05d-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B05d-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B05d-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B06t-shape TEMPLATE_ERROR heartbeat.deadline {"beat":1} resumable false, fixed cause/message
+PASS B06t-effects listener +1, heartbeat.beat 1, not waiting
+PASS B06t-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B06t-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B06t-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B06l-shape TEMPLATE_ERROR heartbeat.deadline {"beat":1} resumable false, fixed cause/message
+PASS B06l-effects listener +1, heartbeat.beat 1, not waiting
+PASS B06l-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B06l-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B06l-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B06c until true wins: invalid deadline never rendered, succeeded
+PASS B21l-shape TEMPLATE_ERROR decision.instructions {} resumable false, fixed cause/message
+PASS B21l-provider SCRIPTED decider/classifier calls +0
+PASS B21l-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B21l-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B21l-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+FAIL B21c-setup fixture publishes (setup)
+PASS B22-shape EXPRESSION_ERROR decision.context.messages.where {"itemIndex":0} resumable false, fixed cause/message
+PASS B22-provider SCRIPTED decider/classifier calls +0
+PASS B22-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B22-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B22-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B22c valid selector: succeeded, decider called once
+PASS B20 route expression keeps EVALUATION_EXPRESSION_FAILED fixed copy, false, no boundary, literal absent
+PASS B20-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B20-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B20-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+FAIL EXT-C-real-setup fixture publishes (setup)
+FAIL EXT-C-name-setup fixture publishes (setup)
+FAIL EXT-C-code-setup fixture publishes (setup)
+PASS B23-shape TEMPLATE_ERROR wait.prompt {} resumable false, fixed cause/message
+PASS B23-effects never parked: no run.waiting/wait events, status failed
+PASS B23-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B23-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B23-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B24-shape TEMPLATE_ERROR wait.timestamp {} resumable false, fixed cause/message
+PASS B24-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS B24-privacy new authored projection omits canaries QA486-LIT/QA486-IN/QA486-PATH/QA486-EXT
+PASS B24-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS B25 rejected signal: HTTP 400 EXPRESSION_ERROR request copy; run still waiting with same waitId; zero added events
+PASS B25c valid filter: signal wakes and run succeeds
+PASS P01 Mutate keeps MUTATION_ERROR "Mutation operation 1 (set) failed: <bounded authored text>" with literal present, false
+PASS P01-parity stored row failure == run.failed failure == REST snapshot failure (canonical JSON)
+PASS P01-privacy new authored projection omits canaries QA486-IN/QA486-PATH/QA486-EXT
+PASS P01-resume-refused recovery.resume.allowed false; actual Resume 409 FAILURE_NOT_RESUMABLE; events and effects unchanged after it
+PASS P02 Exit keeps EXPRESSION_ERROR with bounded expression message (literal present), false, no boundary
+PASS EXT-H-real probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0
+PASS EXT-H-name probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0
+PASS EXT-H-code probe port rejection -> INTERNAL_ERROR safe copy, resumable true, no boundary, marker absent; 0 beats; listener +0
+PASS EXT-S-real runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent
+PASS EXT-S-name runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent
+PASS EXT-S-code runner rejection after dispatch -> SCRIPT_OUTCOME_UNCERTAIN, 1 script.dispatched, outcome-uncertain, no boundary, marker absent
+PASS LOG no captured log record contains QA486-LIT/IN/PATH (P01/P02 literal excluded only if present by established contract)
+PASS CLEANUP authenticated drain accepted, API port and probe listener refuse connections after shutdown
+{
+ "name": "d2",
+ "total": 104,
+ "passed": 100,
+ "failed": [
+  "B21c-setup fixture publishes (setup)",
+  "EXT-C-real-setup fixture publishes (setup)",
+  "EXT-C-name-setup fixture publishes (setup)",
+  "EXT-C-code-setup fixture publishes (setup)"
+ ],
+ "driverPid": 40280,
+ "apiPort": 5871,
+ "listenerPort": 61590,
+ "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d2-leaf-1\\data\\d2",
+ "harness": 0,
+ "deciderCalls": 1,
+ "classifierCalls": 0,
+ "inject": {
+  "probeCalls": 11,
+  "probeInjected": 3,
+  "scriptCalls": 6,
+  "scriptInjected": 3
+ }
+}

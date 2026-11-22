@@ -1,0 +1,928 @@
+diff --git a/apps/api/src/history-cleanup.test.ts b/apps/api/src/history-cleanup.test.ts
+index c0cf42ab..1cf65f3b 100644
+--- a/apps/api/src/history-cleanup.test.ts
++++ b/apps/api/src/history-cleanup.test.ts
+@@ -669,9 +669,9 @@ it('reclaims approved workspaces through the API with 1000 retained workspace us
+       sampleThread(),
+     );
+     await api.container.repos.runs.markFinalized(id);
++    // This fixture represents the path already rendered by the engine from {{vars.path}}.
+     await api.container.ports.workspace.resolve(
+-      version.definition.settings.workingDirectory,
+-      { vars: { path: paths[i % 75]! } },
++      { kind: 'fixed', path: i % 2 === 0 ? root : paths[i % 75]! },
+       id,
+     );
+   }
+diff --git a/packages/engine/src/edge-cases.test.ts b/packages/engine/src/edge-cases.test.ts
+index 47cc3782..139eba84 100644
+--- a/packages/engine/src/edge-cases.test.ts
++++ b/packages/engine/src/edge-cases.test.ts
+@@ -123,16 +123,24 @@ describe('handler helpers', () => {
+     const { messages, artifacts } = sampleThread({
+       artifacts: [{ id: 'a', kind: 'file', ref: 'r', nodeId: 'n' }],
+     });
+-    expect(await selectMessages(messages, 'last', {})).toHaveLength(1);
+-    expect(await selectMessages([], 'last', {})).toEqual([]);
+-    expect(await selectMessages(messages, 1, {})).toEqual([messages[1]]);
+-    expect(await selectMessages(messages, 'none', {})).toEqual([]);
+-    expect(await selectMessages(messages, undefined, {})).toHaveLength(2);
+-    expect(await selectMessages(messages, { where: 'role = "user"' }, {})).toEqual([messages[0]]);
+-    expect(await selectCollection(artifacts, 'none', {})).toEqual([]);
+-    expect(await selectCollection(artifacts, undefined, {})).toHaveLength(1);
+-    expect(await selectCollection(artifacts, { where: 'kind = "file"' }, {})).toHaveLength(1);
+-    expect(await selectCollection(artifacts, { where: 'kind = "diff"' }, {})).toHaveLength(0);
++    const messageSite = { nodeId: 'n', boundary: 'decision.context.messages.where' } as const;
++    const artifactSite = { nodeId: 'n', boundary: 'subloop.input.artifacts.where' } as const;
++    expect(await selectMessages(messages, 'last', {}, messageSite)).toHaveLength(1);
++    expect(await selectMessages([], 'last', {}, messageSite)).toEqual([]);
++    expect(await selectMessages(messages, 1, {}, messageSite)).toEqual([messages[1]]);
++    expect(await selectMessages(messages, 'none', {}, messageSite)).toEqual([]);
++    expect(await selectMessages(messages, undefined, {}, messageSite)).toHaveLength(2);
++    expect(await selectMessages(messages, { where: 'role = "user"' }, {}, messageSite)).toEqual([
++      messages[0],
++    ]);
++    expect(await selectCollection(artifacts, 'none', {}, artifactSite)).toEqual([]);
++    expect(await selectCollection(artifacts, undefined, {}, artifactSite)).toHaveLength(1);
++    expect(
++      await selectCollection(artifacts, { where: 'kind = "file"' }, {}, artifactSite),
++    ).toHaveLength(1);
++    expect(
++      await selectCollection(artifacts, { where: 'kind = "diff"' }, {}, artifactSite),
++    ).toHaveLength(0);
+   });
+ 
+   it('withTimeout forwards an already-aborted signal and disposes cleanly', () => {
+@@ -194,7 +202,32 @@ describe('handler helpers', () => {
+         else expect(thread?.vars['missing']).toBeNull();
+       } else {
+         expect(run.status).toBe('failed');
+-        expect(run.failure?.code).toBe('INTERNAL_ERROR');
++        const cause = {
++          code: 'PATCH_ERROR',
++          message: 'The patch could not be applied. Check its target and input shape.',
++        };
++        expect(run.failure).toMatchObject({
++          code: 'MUTATION_ERROR',
++          nodeId: 'infer',
++          resumable: false,
++          message: `Inference output transform 3 (coerce) failed. ${cause.message} GraphGoblin received the provider result before this step failed.`,
++          details: {
++            boundary: 'inference.output.transforms',
++            operationIndex: 2,
++            operationKind: 'coerce',
++            cause,
++            phase: 'after-result',
++          },
++        });
++        expect(engine.events(run.id)).toContainEqual(
++          expect.objectContaining({ type: 'run.failed', failure: run.failure }),
++        );
++        expect(run.failure?.message).not.toContain(target);
++        await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
++          code: 'FAILURE_NOT_RESUMABLE',
++        });
++        expect(engine.ports.harness.started).toHaveLength(1);
++        expect(engine.ports.harness.resumed).toHaveLength(0);
+         expect(engine.events(run.id)).not.toEqual(
+           expect.arrayContaining([
+             expect.objectContaining({ type: 'node.finished', nodeId: 'infer' }),
+@@ -315,10 +348,12 @@ describe('fakes', () => {
+ 
+     const ports = createFakePorts();
+     expect(await ports.harness.preflight()).toMatchObject({ ok: true });
+-    expect(await ports.workspace.resolve({ kind: 'fixed', path: '/fixed' }, {}, 'r')).toBe(
+-      '/fixed',
+-    );
+-    expect(await ports.workspace.resolve({ kind: 'template', template: '/t' }, {}, 'r')).toBe('/t');
++    expect(await ports.workspace.resolve({ kind: 'fixed', path: '/fixed' }, 'r')).toBe('/fixed');
++    expect(await ports.workspace.resolve({ kind: 'temp' }, 'r')).toBe('/tmp/graphgoblin/r');
++    expect(ports.workspace.resolved).toEqual([
++      { spec: { kind: 'fixed', path: '/fixed' }, runId: 'r' },
++      { spec: { kind: 'temp' }, runId: 'r' },
++    ]);
+     expect(await ports.loops.getPublished('nope', 1)).toBeUndefined();
+   });
+ });
+diff --git a/packages/engine/src/run-manager.test.ts b/packages/engine/src/run-manager.test.ts
+index cda6c337..626bda83 100644
+--- a/packages/engine/src/run-manager.test.ts
++++ b/packages/engine/src/run-manager.test.ts
+@@ -1,6 +1,7 @@
+-import { describe, expect, it } from 'vitest';
+-import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
++import { describe, expect, it, vi } from 'vitest';
++import type { LoopDefinitionInput, RunEvent, WorkingDirectorySpec } from '@graphgoblin/contracts';
+ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
++import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+ import {
+   FIXTURE_IDS,
+   FIXTURE_TS,
+@@ -19,6 +20,7 @@ import {
+ import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+ import { FakeHarness, createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
+ import { createInitialThread } from './thread.js';
++import { INTERNAL_FAILURE_MESSAGE } from './failure-publication.js';
+ 
+ function barrier() {
+   let resolve = () => {};
+@@ -28,6 +30,249 @@ function barrier() {
+   return { promise, resolve };
+ }
+ 
++describe('working directory preparation', () => {
++  it.each([
++    {
++      template: 'private-parse-marker\n{% invalid_private %}',
++      cause: 'The template could not be parsed at line 2, column 1. Check its Liquid syntax.',
++    },
++    {
++      template: 'private-render-marker\n{% include "private-path-marker" %}',
++      cause:
++        'The template could not be rendered at line 2, column 1. Check its filters and input values.',
++    },
++    {
++      template: '\t {{vars.missing}}\r\n',
++      cause: 'The template rendered to an empty path. Supply a nonempty directory.',
++    },
++  ])(
++    'rejects a local workspace template before resolution: $cause',
++    async ({ template, cause }) => {
++      const engine = await createTestEngine();
++      const loop = singleNodeLoop('invalid workspace template', {
++        id: 'script',
++        kind: 'script',
++        label: 'Script',
++        config: { command: 'unused', cwd: 'workspace' },
++      });
++      loop.settings = { workingDirectory: { kind: 'template', template } };
++      const run = await engine.runToIdle(engine.publish(loop).loopId);
++      expect(run.status).toBe('failed');
++      expect(run.failure).toEqual({
++        code: 'TEMPLATE_ERROR',
++        nodeId: 'script',
++        resumable: false,
++        message: `Working directory template failed. ${cause}`,
++        details: {
++          boundary: 'settings.workingDirectory.template',
++          cause: { code: 'TEMPLATE_ERROR', message: cause },
++        },
++      });
++      const failed = engine.events(run.id).find((event) => event.type === 'run.failed');
++      expect(failed).toMatchObject({ failure: run.failure });
++      expect(JSON.stringify([run.failure, failed])).not.toContain('private-');
++      await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
++        code: 'FAILURE_NOT_RESUMABLE',
++      });
++      expect(engine.ports.workspace.resolved).toEqual([]);
++      expect(engine.ports.workspace.files.size).toBe(0);
++      expect(engine.ports.scripts.calls).toEqual([]);
++      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
++      engine.manager.stop();
++    },
++  );
++
++  it.each<WorkingDirectorySpec>([
++    { kind: 'fixed', path: 'relative/workspace' },
++    { kind: 'temp' },
++    { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' },
++  ])(
++    'passes only a resolved $kind spec and caches it across nodes and file delivery',
++    async (spec) => {
++      const engine = await createTestEngine();
++      const loop = singleNodeLoop(
++        'workspace cache',
++        {
++          id: 'script',
++          kind: 'script',
++          label: 'Script',
++          config: { command: 'unused', cwd: 'workspace' },
++        },
++        {
++          returns: '"returned bytes"',
++          destinations: [{ kind: 'file', path: 'result.txt', format: 'text' }],
++        },
++      );
++      loop.settings = { workingDirectory: spec };
++      const run = await engine.runToIdle(engine.publish(loop).loopId, {
++        path: 'relative/workspace',
++      });
++      const directory = spec.kind === 'temp' ? `/tmp/graphgoblin/${run.id}` : 'relative/workspace';
++      expect(run.status).toBe('succeeded');
++      expect(engine.ports.workspace.resolved).toEqual([
++        {
++          spec: spec.kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: directory },
++          runId: run.id,
++        },
++      ]);
++      expect(engine.ports.scripts.calls).toHaveLength(1);
++      expect(engine.ports.scripts.calls[0]?.cwd).toBe(directory);
++      expect(engine.ports.workspace.files.get(`${directory}/result.txt`)).toBe('returned bytes');
++      expect(engine.events(run.id)).toContainEqual(
++        expect.objectContaining({ type: 'return.delivered', target: `${directory}/result.txt` }),
++      );
++      engine.manager.stop();
++    },
++  );
++
++  it.each([
++    new TemplateError('private-external-template', {
++      boundary: 'settings.workingDirectory.template',
++    }),
++    new ExpressionError('private-external-expression'),
++    Object.assign(new Error('private-external-lookalike'), {
++      name: 'TemplateError',
++      code: 'TEMPLATE_ERROR',
++    }),
++    { name: 'TemplateError', code: 'TEMPLATE_ERROR', message: 'private-external-object' },
++  ])(
++    'keeps a workspace port rejection external and retries resolution after repair (%#)',
++    async (fault) => {
++      const engine = await createTestEngine();
++      const resolve = vi.spyOn(engine.ports.workspace, 'resolve').mockRejectedValueOnce(fault);
++      const loop = singleNodeLoop('external workspace failure', {
++        id: 'script',
++        kind: 'script',
++        label: 'Script',
++        config: { command: 'unused', cwd: 'workspace' },
++      });
++      loop.settings = {
++        workingDirectory: { kind: 'template', template: ' {{trigger.payload.path}} ' },
++      };
++      const run = await engine.runToIdle(engine.publish(loop).loopId, { path: '/repaired' });
++      expect(run.failure).toEqual({
++        code: 'INTERNAL_ERROR',
++        nodeId: 'script',
++        message: INTERNAL_FAILURE_MESSAGE,
++        resumable: true,
++      });
++      expect(engine.events(run.id)).toContainEqual(
++        expect.objectContaining({ type: 'run.failed', failure: run.failure }),
++      );
++      expect(engine.ports.scripts.calls).toEqual([]);
++      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
++      expect(engine.ports.workspace.resolved).toEqual([]);
++      expect(JSON.stringify(run.failure)).not.toContain('private-external');
++      await engine.manager.resume(run.id);
++      expect((await engine.settle(run.id)).status).toBe('succeeded');
++      expect(resolve).toHaveBeenCalledTimes(2);
++      expect(resolve).toHaveBeenNthCalledWith(2, { kind: 'fixed', path: '/repaired' }, run.id);
++      expect(engine.ports.workspace.resolved).toEqual([
++        { spec: { kind: 'fixed', path: '/repaired' }, runId: run.id },
++      ]);
++      expect(engine.ports.scripts.calls).toHaveLength(1);
++      engine.manager.stop();
++    },
++  );
++
++  it('reuses a successful resolution when the script later fails and resumes', async () => {
++    const engine = await createTestEngine();
++    const resolve = vi.spyOn(engine.ports.workspace, 'resolve');
++    engine.ports.scripts.respondWith(() => ({
++      exitCode: 1,
++      stdout: '',
++      stderr: '',
++      stdoutBytes: 0,
++      stderrBytes: 0,
++      stdoutOverflow: false,
++      stderrOverflow: false,
++      state: 'completed',
++      timedOut: false,
++    }));
++    const loop = singleNodeLoop('cache survives later failure', {
++      id: 'script',
++      kind: 'script',
++      label: 'Script',
++      config: { command: 'unused', cwd: 'workspace' },
++    });
++    loop.settings = { workingDirectory: { kind: 'template', template: ' /cached ' } };
++    const run = await engine.runToIdle(engine.publish(loop).loopId);
++    expect(run.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
++    engine.ports.scripts.respondWith(() => ({
++      exitCode: 0,
++      stdout: '',
++      stderr: '',
++      stdoutBytes: 0,
++      stderrBytes: 0,
++      stdoutOverflow: false,
++      stderrOverflow: false,
++      state: 'completed',
++      timedOut: false,
++    }));
++    await engine.manager.resume(run.id);
++    expect((await engine.settle(run.id)).status).toBe('succeeded');
++    expect(resolve).toHaveBeenCalledExactlyOnceWith({ kind: 'fixed', path: '/cached' }, run.id);
++    expect(engine.ports.scripts.calls.map((call) => call.cwd)).toEqual(['/cached', '/cached']);
++    engine.manager.stop();
++  });
++
++  it.each(['\t\n', '{% include "private-receipt-marker" %}'])(
++    'keeps a local file-return workspace failure inside the terminal receipt catch (%#)',
++    async (template) => {
++      const engine = await createTestEngine();
++      const loop = minimalLoop();
++      loop.settings = { workingDirectory: { kind: 'template', template } };
++      loop.nodes[1] = {
++        id: 'done',
++        kind: 'exit',
++        label: 'Done',
++        config: { returns: '"file return payload"' },
++      };
++      const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
++        returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
++      });
++      expect(run.status).toBe('succeeded');
++      expect(run.failure).toBeUndefined();
++      const failed = engine.events(run.id).filter((event) => event.type === 'return.failed');
++      expect(failed).toHaveLength(1);
++      expect(failed[0]).toMatchObject({
++        error: expect.stringMatching(/^Working directory template failed\./),
++      });
++      expect(JSON.stringify(failed)).not.toContain('private-receipt-marker');
++      expect(engine.eventTypes(run.id)).not.toContain('run.failed');
++      expect(engine.ports.workspace.resolved).toEqual([]);
++      expect(engine.ports.workspace.files.size).toBe(0);
++      engine.manager.stop();
++    },
++  );
++
++  it('retains the external exception text for a terminal file-return failure', async () => {
++    const engine = await createTestEngine();
++    const resolve = vi
++      .spyOn(engine.ports.workspace, 'resolve')
++      .mockRejectedValue(new TemplateError('private-external-receipt'));
++    const loop = minimalLoop();
++    loop.nodes[1] = {
++      id: 'done',
++      kind: 'exit',
++      label: 'Done',
++      config: { returns: '"file return payload"' },
++    };
++    const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
++      returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
++    });
++    expect(run.status).toBe('succeeded');
++    expect(run.failure).toBeUndefined();
++    expect(resolve).toHaveBeenCalledTimes(1);
++    expect(engine.events(run.id)).toContainEqual(
++      expect.objectContaining({ type: 'return.failed', error: 'private-external-receipt' }),
++    );
++    expect(engine.eventTypes(run.id)).not.toContain('run.failed');
++    expect(engine.ports.workspace.files.size).toBe(0);
++    engine.manager.stop();
++  });
++});
++
+ describe('a minimal run', () => {
+   it.each(['DECIDER_HTTP_ERROR', 'DECIDER_private-marker'])(
+     'guards raw coded exceptions at the manager boundary (%s)',
+diff --git a/packages/engine/src/testing/fakes.ts b/packages/engine/src/testing/fakes.ts
+index 8ba56e20..9b2b2f79 100644
+--- a/packages/engine/src/testing/fakes.ts
++++ b/packages/engine/src/testing/fakes.ts
+@@ -18,7 +18,6 @@ import type {
+   RunRecord,
+   RunStatus,
+   Usage,
+-  WorkingDirectorySpec,
+   WebhookAttemptResult,
+ } from '@graphgoblin/contracts';
+ import {
+@@ -766,15 +765,10 @@ export class FakeScripts implements ScriptPort {
+ 
+ export class FakeWorkspace implements WorkspacePort {
+   readonly files = new Map<string, string>();
+-  readonly resolved: { spec: WorkingDirectorySpec; runId: string }[] = [];
+-  resolve(
+-    spec: WorkingDirectorySpec,
+-    _view: Record<string, unknown>,
+-    runId: string,
+-  ): Promise<string> {
++  readonly resolved: { spec: Parameters<WorkspacePort['resolve']>[0]; runId: string }[] = [];
++  resolve(spec: Parameters<WorkspacePort['resolve']>[0], runId: string): Promise<string> {
+     this.resolved.push({ spec, runId });
+     if (spec.kind === 'fixed') return Promise.resolve(spec.path);
+-    if (spec.kind === 'template') return Promise.resolve(spec.template);
+     return Promise.resolve(`/tmp/graphgoblin/${runId}`);
+   }
+   writeFile(dir: string, path: string, content: string): Promise<string> {
+diff --git a/packages/infrastructure/src/fs/fs.test.ts b/packages/infrastructure/src/fs/fs.test.ts
+index 5af6b596..a966e087 100644
+--- a/packages/infrastructure/src/fs/fs.test.ts
++++ b/packages/infrastructure/src/fs/fs.test.ts
+@@ -1,10 +1,12 @@
+ import {
+   closeSync,
++  existsSync,
+   mkdirSync,
+   mkdtempSync,
+   openSync,
+   readFileSync,
+   readdirSync,
++  realpathSync,
+   rmSync,
+   statSync,
+   watch,
+@@ -12,10 +14,18 @@ import {
+ } from 'node:fs';
+ import { createHash } from 'node:crypto';
+ import { tmpdir } from 'node:os';
+-import { isAbsolute, join } from 'node:path';
+-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
++import { isAbsolute, join, relative, resolve } from 'node:path';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import type { WorkingDirectorySpec } from '@graphgoblin/contracts';
++import { TemplateError } from '@graphgoblin/domain';
++import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
+ import { FsArtifactStore } from './artifacts.js';
+ import { FsWorkspace } from './workspace.js';
++import {
++  OwnedRunResources,
++  type OwnedRunResource,
++  type RunResourceJournal,
++} from './owned-resources.js';
+ 
+ let dataDir: string;
+ 
+@@ -28,28 +38,24 @@ afterEach(() => {
+ });
+ 
+ describe('FsWorkspace', () => {
+-  it('resolves fixed, templated, and temporary directories and creates them', async () => {
++  it('resolves fixed, relative, and temporary directories and reuses them', async () => {
+     const ws = new FsWorkspace(dataDir);
+-    const fixed = await ws.resolve({ kind: 'fixed', path: join(dataDir, 'fixed') }, {}, 'run1');
++    const fixed = await ws.resolve({ kind: 'fixed', path: join(dataDir, 'fixed') }, 'run1');
+     expect(statSync(fixed).isDirectory()).toBe(true);
+-    const templated = await ws.resolve(
+-      { kind: 'template', template: '{{ root }}/t/{{ name }}' },
+-      { root: dataDir, name: 'x' },
+-      'run1',
+-    );
+-    expect(templated.endsWith(join('t', 'x'))).toBe(true);
+-    expect(statSync(templated).isDirectory()).toBe(true);
+-    const temp = await ws.resolve({ kind: 'temp' }, {}, 'run1');
++    expect(await ws.resolve({ kind: 'fixed', path: fixed }, 'run2')).toBe(fixed);
++    const relativePath = relative(process.cwd(), join(dataDir, 'relative'));
++    const relativeDirectory = await ws.resolve({ kind: 'fixed', path: relativePath }, 'run1');
++    expect(relativeDirectory).toBe(resolve(relativePath));
++    expect(statSync(relativeDirectory).isDirectory()).toBe(true);
++    const temp = await ws.resolve({ kind: 'temp' }, 'run1');
+     expect(temp).toBe(join(dataDir, 'workspaces', 'run1'));
+     expect(statSync(temp).isDirectory()).toBe(true);
+-    await expect(
+-      ws.resolve({ kind: 'template', template: '{{ missing }}' }, {}, 'run1'),
+-    ).rejects.toThrow(/empty path/);
++    expect(await ws.resolve({ kind: 'temp' }, 'run1')).toBe(temp);
+   });
+ 
+   it('writes relative and absolute files, creating parent directories', async () => {
+     const ws = new FsWorkspace(dataDir);
+-    const dir = await ws.resolve({ kind: 'temp' }, {}, 'run2');
++    const dir = await ws.resolve({ kind: 'temp' }, 'run2');
+     const rel = await ws.writeFile(dir, 'out/nested/result.json', '{"a":1}');
+     expect(rel).toBe(join(dir, 'out', 'nested', 'result.json'));
+     expect(readFileSync(rel, 'utf8')).toBe('{"a":1}');
+@@ -58,6 +64,192 @@ describe('FsWorkspace', () => {
+     expect(isAbsolute(abs)).toBe(true);
+     expect(readFileSync(absTarget, 'utf8')).toBe('hi');
+   });
++
++  it('propagates mkdir failures and succeeds after the external path is repaired', async () => {
++    const blocker = join(dataDir, 'blocker');
++    writeFileSync(blocker, 'blocks a directory');
++    const ws = new FsWorkspace(dataDir);
++    const spec = { kind: 'fixed', path: join(blocker, 'child') } as const;
++    await expect(ws.resolve(spec, 'run')).rejects.toThrow();
++    expect(readFileSync(blocker, 'utf8')).toBe('blocks a directory');
++    rmSync(blocker);
++    expect(await ws.resolve(spec, 'run')).toBe(spec.path);
++    expect(statSync(spec.path).isDirectory()).toBe(true);
++  });
++});
++
++describe('engine workspace filesystem boundary', () => {
++  // RunManager and the workspace are real; script execution and the journal are controlled ports.
++  it.each(['fixed', 'relative', 'temp', 'template'] as const)(
++    'uses real %s paths, caches resolution for delivery, and claims only new temporary directories',
++    async (kind) => {
++      const claims: OwnedRunResource[] = [];
++      const journal: RunResourceJournal = {
++        find: () => Promise.resolve(undefined),
++        claim: vi.fn((resource) => {
++          claims.push(resource);
++          return Promise.resolve();
++        }),
++        use: vi.fn(() => Promise.resolve()),
++      };
++      const resources = new OwnedRunResources(dataDir, journal);
++      const engine = await createTestEngine();
++      const port = vi
++        .spyOn(engine.ports.workspace, 'resolve')
++        .mockImplementation(resources.workspace.resolve);
++      vi.spyOn(engine.ports.workspace, 'writeFile').mockImplementation(
++        resources.workspace.writeFile,
++      );
++      const target = join(dataDir, 'user-owned');
++      const spec: WorkingDirectorySpec =
++        kind === 'temp'
++          ? { kind: 'temp' }
++          : kind === 'template'
++            ? { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' }
++            : {
++                kind: 'fixed',
++                path: kind === 'relative' ? relative(process.cwd(), target) : target,
++              };
++      const loop = singleNodeLoop(
++        `real workspace ${kind}`,
++        {
++          id: 'script',
++          kind: 'script',
++          label: 'Script',
++          config: { command: 'controlled-script', cwd: 'workspace' },
++        },
++        {
++          returns: '"real file bytes"',
++          destinations: [{ kind: 'file', path: 'nested/result.txt', format: 'text' }],
++        },
++      );
++      loop.settings = { workingDirectory: spec };
++      try {
++        const run = await engine.runToIdle(engine.publish(loop).loopId, { path: target });
++        const path = kind === 'temp' ? join(dataDir, 'workspaces', run.id) : target;
++        expect(run.status).toBe('succeeded');
++        expect(port).toHaveBeenCalledTimes(1);
++        expect(port).toHaveBeenCalledWith(
++          kind === 'temp'
++            ? { kind: 'temp' }
++            : {
++                kind: 'fixed',
++                path: kind === 'relative' ? relative(process.cwd(), target) : target,
++              },
++          run.id,
++        );
++        expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
++        expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).toBe('real file bytes');
++        const actual = realpathSync(path);
++        const canonical = process.platform === 'win32' ? actual.toLowerCase() : actual;
++        expect(journal.use).toHaveBeenCalledExactlyOnceWith(
++          run.id,
++          `workspace:${canonical}`,
++          canonical,
++        );
++        expect(claims).toHaveLength(kind === 'temp' ? 1 : 0);
++        if (kind === 'temp') {
++          expect(claims[0]).toMatchObject({ ownerRunId: run.id, kind: 'workspace', path });
++          expect(claims[0]?.identity).toEqual(expect.any(String));
++          expect(await resources.workspace.resolve({ kind: 'temp' }, run.id)).toBe(path);
++          expect(claims).toHaveLength(1);
++        }
++      } finally {
++        engine.manager.stop();
++      }
++    },
++  );
++
++  it.each([
++    '\t {{vars.missing}}\n',
++    'private-marker\n{% invalid_private %}',
++    '{% include "private-marker" %}',
++  ])(
++    'rejects an invalid engine template with zero resolve, mkdir and journal effects (%#)',
++    async (template) => {
++      const journal: RunResourceJournal = {
++        find: vi.fn(() => Promise.resolve(undefined)),
++        claim: vi.fn(() => Promise.resolve()),
++        use: vi.fn(() => Promise.resolve()),
++      };
++      const resources = new OwnedRunResources(dataDir, journal);
++      const engine = await createTestEngine();
++      const port = vi
++        .spyOn(engine.ports.workspace, 'resolve')
++        .mockImplementation(resources.workspace.resolve);
++      const loop = singleNodeLoop('reject before fs', {
++        id: 'script',
++        kind: 'script',
++        label: 'Script',
++        config: { command: 'controlled-script', cwd: 'workspace' },
++      });
++      loop.settings = { workingDirectory: { kind: 'template', template } };
++      try {
++        const run = await engine.runToIdle(engine.publish(loop).loopId);
++        expect(run.failure).toMatchObject({
++          code: 'TEMPLATE_ERROR',
++          nodeId: 'script',
++          resumable: false,
++          details: { boundary: 'settings.workingDirectory.template' },
++        });
++        await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
++          code: 'FAILURE_NOT_RESUMABLE',
++        });
++        expect(port).not.toHaveBeenCalled();
++        expect(engine.ports.scripts.calls).toEqual([]);
++        expect(readdirSync(dataDir)).toEqual([]);
++        expect(journal.claim).not.toHaveBeenCalled();
++        expect(journal.use).not.toHaveBeenCalled();
++        expect(journal.find).not.toHaveBeenCalled();
++      } finally {
++        engine.manager.stop();
++      }
++    },
++  );
++
++  it('keeps a journal rejection external after mkdir and does not cache the failed resolution', async () => {
++    const fault = new TemplateError('private-journal-marker');
++    const journal: RunResourceJournal = {
++      find: () => Promise.resolve(undefined),
++      claim: vi.fn(() => Promise.resolve()),
++      use: vi.fn(() => Promise.resolve()).mockRejectedValueOnce(fault),
++    };
++    const resources = new OwnedRunResources(dataDir, journal);
++    const engine = await createTestEngine();
++    const port = vi
++      .spyOn(engine.ports.workspace, 'resolve')
++      .mockImplementation(resources.workspace.resolve);
++    const loop = singleNodeLoop('journal repair', {
++      id: 'script',
++      kind: 'script',
++      label: 'Script',
++      config: { command: 'controlled-script', cwd: 'workspace' },
++    });
++    const target = join(dataDir, 'created-before-journal-fault');
++    loop.settings = {
++      workingDirectory: { kind: 'template', template: ' {{trigger.payload.path}} ' },
++    };
++    try {
++      const run = await engine.runToIdle(engine.publish(loop).loopId, { path: target });
++      expect(run.failure).toMatchObject({
++        code: 'INTERNAL_ERROR',
++        nodeId: 'script',
++        resumable: true,
++      });
++      expect(JSON.stringify(run.failure)).not.toContain('private-journal-marker');
++      expect(run.failure?.details).toBeUndefined();
++      expect(existsSync(target)).toBe(true);
++      expect(engine.ports.scripts.calls).toEqual([]);
++      expect(journal.claim).not.toHaveBeenCalled();
++      await engine.manager.resume(run.id);
++      expect((await engine.settle(run.id)).status).toBe('succeeded');
++      expect(port).toHaveBeenCalledTimes(2);
++      expect(journal.use).toHaveBeenCalledTimes(2);
++      expect(engine.ports.scripts.calls[0]?.cwd).toBe(target);
++    } finally {
++      engine.manager.stop();
++    }
++  });
+ });
+ 
+ describe('FsArtifactStore', () => {
+diff --git a/packages/infrastructure/src/fs/owned-resources.ts b/packages/infrastructure/src/fs/owned-resources.ts
+index 33fb9eaa..e69a90a1 100644
+--- a/packages/infrastructure/src/fs/owned-resources.ts
++++ b/packages/infrastructure/src/fs/owned-resources.ts
+@@ -92,7 +92,7 @@ export class OwnedRunResources {
+     const workspace = new FsWorkspace(dataDir);
+     const artifactStore = async () => new FsArtifactStore(await this.physicalDataDir());
+     this.workspace = {
+-      resolve: (spec, view, runId) =>
++      resolve: (spec, runId) =>
+         this.exclusive(async () => {
+           let path: string;
+           if (spec.kind === 'temp') {
+@@ -106,8 +106,7 @@ export class OwnedRunResources {
+             } catch (error) {
+               if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+             }
+-            if (!created)
+-              await new FsWorkspace(await this.physicalDataDir()).resolve(spec, view, runId);
++            if (!created) await new FsWorkspace(await this.physicalDataDir()).resolve(spec, runId);
+             if (created)
+               await this.journal.claim({
+                 key: `workspace:${canonical(path)}`,
+@@ -116,7 +115,7 @@ export class OwnedRunResources {
+                 path,
+                 identity: identity(await info(path)),
+               });
+-          } else path = await workspace.resolve(spec, view, runId);
++          } else path = await workspace.resolve(spec, runId);
+           // Record canonical use even for a user-owned/shared directory, without claiming it.
+           const actual = await realpath(path);
+           await this.journal.use(runId, `workspace:${canonical(actual)}`, canonical(actual));
+diff --git a/packages/infrastructure/src/fs/workspace.ts b/packages/infrastructure/src/fs/workspace.ts
+index 63b7a313..4980de8b 100644
+--- a/packages/infrastructure/src/fs/workspace.ts
++++ b/packages/infrastructure/src/fs/workspace.ts
+@@ -1,31 +1,20 @@
+ import { mkdir, writeFile } from 'node:fs/promises';
+ import { dirname, isAbsolute, join, resolve } from 'node:path';
+-import type { WorkingDirectorySpec } from '@graphgoblin/contracts';
+-import { renderTemplate } from '@graphgoblin/domain';
+ import type { WorkspacePort } from '@graphgoblin/engine';
+ 
+ /**
+- * Working directories on the local filesystem. Fixed paths are used as given, templates are
+- * rendered against the thread view, and temporary directories live under `<dataDir>/workspaces/<runId>`.
++ * Working directories on the local filesystem. The engine resolves templates to fixed paths;
++ * temporary directories live under `<dataDir>/workspaces/<runId>`.
+  */
+ export class FsWorkspace implements WorkspacePort {
+   constructor(private readonly dataDir: string) {}
+ 
+-  async resolve(
+-    spec: WorkingDirectorySpec,
+-    view: Record<string, unknown>,
+-    runId: string,
+-  ): Promise<string> {
++  async resolve(spec: Parameters<WorkspacePort['resolve']>[0], runId: string): Promise<string> {
+     let dir: string;
+     switch (spec.kind) {
+       case 'fixed':
+         dir = spec.path;
+         break;
+-      case 'template': {
+-        dir = (await renderTemplate(spec.template, view)).trim();
+-        if (dir === '') throw new Error('working directory template rendered to an empty path');
+-        break;
+-      }
+       case 'temp':
+         dir = join(this.dataDir, 'workspaces', runId);
+         break;
+diff --git a/packages/infrastructure/src/sqlite/history-cleanup.test.ts b/packages/infrastructure/src/sqlite/history-cleanup.test.ts
+index 2fe082d1..b369373d 100644
+--- a/packages/infrastructure/src/sqlite/history-cleanup.test.ts
++++ b/packages/infrastructure/src/sqlite/history-cleanup.test.ts
+@@ -107,7 +107,7 @@ it.each(['succeeded', 'failed', 'cancelled', 'exhausted'] as const)(
+     const retained = await seed('unused-template', undefined, version);
+     await repo.update(retained, { status });
+     const owner = await seed('ordinary-workspace');
+-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
++    const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
+     await writeFile(join(workspace, 'owned'), 'reclaim');
+     await mark([owner]);
+     expect(await store.prepareBatch('local')).toBe(1);
+@@ -154,7 +154,6 @@ it('backfills only live unused template obligations and restores them on Resume'
+   }
+   const path = await resources.workspace.resolve(
+     { kind: 'fixed', path: join(directory, 'user') },
+-    {},
+     terminal,
+   );
+   expect(await pending()).toEqual([]);
+@@ -191,12 +190,12 @@ it('protects live dynamic templates until termination, and bounds literal templa
+   };
+   const dynamic = await create('live-dynamic-template', '{{trigger.payload.dir}}');
+   const sharedOwner = await seed('literal-shared-owner');
+-  const shared = await resources.workspace.resolve({ kind: 'temp' }, {}, sharedOwner);
++  const shared = await resources.workspace.resolve({ kind: 'temp' }, sharedOwner);
+   await writeFile(join(shared, 'keep'), 'shared');
+   const literal = await create('live-literal-template', `\t ${shared}\n`);
+   const empty = await create('live-empty-template', '\t \n');
+   const owner = await seed('template-owner');
+-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
++  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
+   await writeFile(join(workspace, 'owned'), 'reclaim');
+   await mark([owner, sharedOwner]);
+   await store.prepareBatch('local');
+@@ -233,7 +232,7 @@ it.each(process.platform === 'win32' ? ['junction', 'short-name'] : ['junction']
+     resources = new OwnedRunResources(dataDir, new SqliteRunResources(handle.db));
+     store = new SqliteHistoryCleanup(handle.db, resources);
+     const id = await seed('alias-data-owner');
+-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
++    const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
+     await resources.workspace.writeFile(workspace, 'owned', 'workspace');
+     const artifact = await resources.artifacts.put('transcript', 'transcript', id);
+     expect(await resources.artifacts.get(artifact.ref)).toBe('transcript');
+@@ -259,7 +258,7 @@ it.each(process.platform === 'win32' ? ['junction', 'short-name'] : ['junction']
+     await rename(join(physical, 'workspaces'), join(physical, 'old-workspaces'));
+     await symlink(target, join(physical, 'workspaces'), 'junction');
+     await expect(
+-      resources.workspace.resolve({ kind: 'temp' }, {}, fakeUlid('refuse-link')),
++      resources.workspace.resolve({ kind: 'temp' }, fakeUlid('refuse-link')),
+     ).rejects.toThrow('Managed resource root is a link');
+   },
+ );
+@@ -314,11 +313,11 @@ it('bounds each root batch and eventually covers approved history without broade
+ 
+ it('reaps a positively owned workspace and artifact but preserves run-shaped, fixed and unrelated paths', async () => {
+   const id = await seed('owned');
+-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
++  const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
+   await resources.workspace.writeFile(workspace, 'result.txt', 'owned bytes');
+   const artifact = await resources.artifacts.put('text', 'owned artifact', id);
+   const fixed = join(directory, 'user-owned');
+-  await resources.workspace.resolve({ kind: 'fixed', path: fixed }, {}, id);
++  await resources.workspace.resolve({ kind: 'fixed', path: fixed }, id);
+   await writeFile(join(fixed, 'keep'), 'user bytes');
+   const shaped = join(directory, 'workspaces', fakeUlid('unproven'));
+   await mkdir(shaped);
+@@ -341,15 +340,15 @@ it('keeps an existing unproven workspace, shared directory, shared artifact and
+   const id = await seed('owned'),
+     kept = await seed('kept'),
+     unproven = await seed('unproven');
+-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
++  const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
+   await writeFile(join(workspace, 'keep'), 'shared');
+-  await resources.workspace.resolve({ kind: 'fixed', path: workspace }, {}, kept);
++  await resources.workspace.resolve({ kind: 'fixed', path: workspace }, kept);
+   const file = await resources.artifacts.put('text', 'shared artifact', id);
+   await resources.artifacts.put('text', 'shared artifact', kept);
+   const unprovenPath = join(directory, 'workspaces', unproven);
+   await mkdir(unprovenPath);
+   await writeFile(join(unprovenPath, 'keep'), 'pre-existing');
+-  await resources.workspace.resolve({ kind: 'temp' }, {}, unproven);
++  await resources.workspace.resolve({ kind: 'temp' }, unproven);
+   const linked = await resources.artifacts.put('text', 'hard-linked', id);
+   const linkedPath = join(directory, 'artifacts', ...linked.ref.slice(9).split('/'));
+   const outside = join(directory, 'unrelated-link');
+@@ -407,7 +406,7 @@ it('does not infer ownership of old artifact bytes and refuses a replaced worksp
+   const id = await seed('owned');
+   const legacy = await new FsArtifactStore(directory).put('text', 'old bytes');
+   await resources.artifacts.put('text', 'old bytes', id);
+-  const path = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
++  const path = await resources.workspace.resolve({ kind: 'temp' }, id);
+   await writeFile(join(path, 'owned'), 'old workspace');
+   await rename(path, join(directory, 'moved'));
+   await mkdir(path);
+@@ -422,11 +421,11 @@ it('does not infer ownership of old artifact bytes and refuses a replaced worksp
+ it('preserves an entire workspace containing a hard link and bounds oversized inventories before removing files', async () => {
+   const linked = await seed('linked'),
+     large = await seed('large');
+-  const linkedPath = await resources.workspace.resolve({ kind: 'temp' }, {}, linked);
++  const linkedPath = await resources.workspace.resolve({ kind: 'temp' }, linked);
+   const target = join(directory, 'outside');
+   await writeFile(target, 'keep linked bytes');
+   await link(target, join(linkedPath, 'link'));
+-  const largePath = await resources.workspace.resolve({ kind: 'temp' }, {}, large);
++  const largePath = await resources.workspace.resolve({ kind: 'temp' }, large);
+   for (let i = 0; i < 2000; i += 32)
+     await Promise.all(
+       Array.from({ length: Math.min(32, 2000 - i) }, (_, offset) =>
+@@ -563,7 +562,7 @@ it.each(['alias', 'missing-descendant', 'case', 'error', 'deep'] as const)(
+   async (mode) => {
+     const owner = await seed('owner'),
+       retained = await seed('retained');
+-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
++    const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
+     await writeFile(join(workspace, 'keep.txt'), 'retained bytes');
+     const alias = join(directory, 'alias');
+     await symlink(workspace, alias, 'junction');
+@@ -609,7 +608,7 @@ it('reports every preserved resource across repeated passes instead of alternati
+ it('defers workspaces until a bounded 2048-reference refresh completes, then reclaims them', async () => {
+   const owner = await seed('owner'),
+     retained = await seed('retained');
+-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
++  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
+   await writeFile(join(workspace, 'keep.txt'), 'unproven bytes');
+   const paths = Array.from({ length: 2050 }, (_, i) => join(directory, `missing-${i}`));
+   await handle.client.execute({
+@@ -728,7 +727,7 @@ it('rechecks retained usage added after inventory before moving anything out of
+ 
+ it('refreshes a fixed alias created after publication before staging an owned workspace', async () => {
+   const owner = await seed('late-alias-owner');
+-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
++  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
+   await writeFile(join(workspace, 'keep'), 'later alias still protects');
+   const alias = join(directory, 'later');
+   const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+@@ -780,7 +779,7 @@ describe('large retained stores', () => {
+     for (let i = 0; i < 61; i++) {
+       const id = await seed('window-' + i);
+       ids.push(id);
+-      const path = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
++      const path = await resources.workspace.resolve({ kind: 'temp' }, id);
+       workspacePaths.push(path);
+       await writeFile(join(path, 'result'), 'owned');
+       const value = 'protected-' + i;
+@@ -826,7 +825,7 @@ describe('large retained stores', () => {
+       remove: (r, p, signal) => resources.remove(r, p, signal),
+     });
+     const small = await seed('small-owner');
+-    const smallPath = await resources.workspace.resolve({ kind: 'temp' }, {}, small);
++    const smallPath = await resources.workspace.resolve({ kind: 'temp' }, small);
+     await writeFile(join(smallPath, 'result'), 'small');
+     await mark([small]);
+     await store.prepareBatch('local');
+@@ -844,8 +843,8 @@ describe('large retained stores', () => {
+     const templateVersion = (await loops.publish(template.loop.id))!;
+     const owner = await seed('large-owner'),
+       sharedOwner = await seed('large-shared');
+-    const free = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+-    const shared = await resources.workspace.resolve({ kind: 'temp' }, {}, sharedOwner);
++    const free = await resources.workspace.resolve({ kind: 'temp' }, owner);
++    const shared = await resources.workspace.resolve({ kind: 'temp' }, sharedOwner);
+     await writeFile(join(free, 'result'), 'reclaim these bytes');
+     await writeFile(join(shared, 'keep'), 'retained shared bytes');
+     const alias = join(directory, 'shared-alias');
+diff --git a/packages/infrastructure/src/sqlite/workspace-references.ts b/packages/infrastructure/src/sqlite/workspace-references.ts
+index d54c8a9c..4cb631ad 100644
+--- a/packages/infrastructure/src/sqlite/workspace-references.ts
++++ b/packages/infrastructure/src/sqlite/workspace-references.ts
+@@ -52,7 +52,7 @@ export class SqliteWorkspaceReferences {
+       }[] = [];
+       for (const row of rows.slice(offset, offset + 32)) {
+         if (signal?.aborted) return;
+-        // Pending paths are literal Liquid templates; WorkspacePort trims their rendered value.
++        // Pending paths are literal Liquid templates; the engine trims their rendered value.
+         // An empty literal can only fail resolution, so it has no possible future workspace use.
+         const path = row.id.startsWith('pending:') ? row.path?.trim() : row.path;
+         if (row.id.startsWith('pending:') && row.path !== null && path === '') {

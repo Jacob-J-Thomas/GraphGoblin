@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 620680,
+  "stop_reason": "end_turn",
+  "session_id": "24c1fd39-e47a-4c87-9ee7-e6ac16a472c6",
+  "total_cost_usd": 5.8571666,
+  "usage": {
+    "input_tokens": 36,
+    "cache_creation_input_tokens": 181996,
+    "cache_read_input_tokens": 1745113,
+    "output_tokens": 64898,
+    "output_tokens_details": {
+      "thinking_tokens": 50263
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 181996,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 9940,
+        "cache_read_input_tokens": 170510,
+        "cache_creation_input_tokens": 11486,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 11486
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 36,
+      "outputTokens": 64898,
+      "cacheReadInputTokens": 1745113,
+      "cacheCreationInputTokens": 181996,
+      "webSearchRequests": 0,
+      "costUSD": 5.8571666,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 50263,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 181996,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 95,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# D215 bounded correction review — GraphGoblin #486 / PR 553\n\n**Verdict: CHANGES REQUIRED.** The P2 half leaves the admitted defect open for a second class of Windows path alias. The P3 half is sound. This review executed nothing; every statement is source-traced unless attributed to the author's logs.\n\nReviewed head `6de50cb8e22b92bfed5d6fe7bf14a2a10b95cd08`, tree `34b80f155c8434abc69fc72105ae7462fc460377`, direct parent `b8126de18080b76b15cbbbbc00fd791030fec3e1`, one path, as recorded in `dispatch-source-before.json` and author logs 47/49. `correction.patch` agrees with the current `fs.test.ts` and with `fs.test.before.ts`. I did not recompute hashes.\n\n## F1 (material): the temp expectation uses a different resolver from production\n\n`fs.test.ts:136` derives the expected workspace from `realpathSync(dataDir)`, the non-native resolver. Production derives it from `realpath` of `node:fs/promises` (`owned-resources.ts:200-204`, used at `:99-100` and `:207-212`), which is native.\n\n- **Production is native:** `@types/node@22.20.5` `fs/promises.d.ts:914` says promises `realpath` uses \"the same semantics as the `fs.realpath.native()` function\".\n- **The test's resolver is not:** `fs.d.ts:1415-1417` says of the non-native form, \"No case conversion is performed on case-insensitive file systems\".\n- **The repository knows the difference:** `physical-path.ts:11` reads \"Native realpath resolves junctions/short names\".\n- **Short names:** the non-native resolver only substitutes link components, so 8.3 names and spelling case survive. This is my knowledge of Node's implementation, not executed here.\n\nConsequence: when the `os.tmpdir()` spelling is not the on-disk canonical spelling, production returns the canonical path and the test expects the spelled one. `fs.test.ts:143` then fails, which is the same assertion as P2. Two spellings trigger it: an 8.3 short component (profile names over eight characters, `RUNNER~1`) or a case-variant `TEMP`. Author log 18 shows `os.tmpdir()` returning `TEMP` verbatim.\n\nThe repository treats this alias class as supported for this exact class. `history-cleanup.test.ts:212-232` runs `OwnedRunResources` through a Windows `short-name` data directory, the control scan 3 cited. Comparable fixtures canonicalise natively: `voice.test.ts:90`, `reset.test.ts:694`, `windows-launcher-evidence.test.mjs:59`.\n\n- **Not a regression against `b812`:** those hosts failed there too. The correction leaves admitted P2 open for them.\n- **Invisible to the author's runs:** the junction and temp roots were spelled in exact on-disk case with no short components.\n- **Invisible to hosted CI:** unit tests run on Ubuntu only (`ci.yml:147-176`); the Windows job runs launcher acceptance only (`:13-51`).\n\n**Remedy:** one token, `realpathSync.native(dataDir)` at `:136`.\n\n**Falsifiable control for the native QA:** run `-t \"uses real temp paths\"` with process-local `TEMP`/`TMP` set to an upper-cased spelling of an existing temp directory. I predict the head fails at `:143` (expected upper-case, received on-disk) and passes with `.native`. If the head passes, F1 should be withdrawn.\n\n**Adjacent, not introduced by this correction — needs coordinator disposition.** Unchanged `:145` uses the same non-native resolver for the `journal.use` key (`b812` `:143`; scan 3 did not flag it).\n- Under a short-name `TEMP`, the fixed and template cases fail at `:147` even after `:136` is fixed.\n- The P3 relocation makes the relative case's key depend on checkout spelling. A `subst` or mapped-drive checkout is the likely trigger; I have not verified it.\n- `.native` at `:145` closes both.\n\n## Checked and found sound\n\n- **P2, link aliases:** the junction case is fixed. Exact script cwd, file bytes, journal, claim and reuse assertions are retained (`:143-157`). Fixed and template stay lexical. The adapter temp check (`:58`) is rightly lexical, because `FsWorkspace` does not resolve (`workspace.ts:19-24`).\n- **P3, relative input:** the fixture root is under `process.cwd()`, so `relative()` cannot return an absolute path or `..`. It is asserted at `:53` and `:96` before use, and `:96` precedes engine creation. There is no `chdir`.\n- **Cleanup:** the helper (`:40-44`) removes the exact `mkdtemp` root. Vitest 5.0.3 runs `onFinished` hooks after `afterEach` whatever the result (`vitest/dist/chunks/run.BTlFXlnv.js:3898-3909`) and throws outside a test (`:2162-2167`). These tests are not concurrent and do not call `ctx.skip()`.\n- **Untouched:** production, contracts, dependencies, timeouts, retries, skips and coverage configuration. The file still has 20 tests.\n\n## Author evidence\n\nSupported by the logs:\n- The original source fails under a real junction at `:141` with exit 1 (log 20; source bound in 19; junction proven in 18). This negative outcome stands.\n- The corrected source passes 21/21 on ordinary temp (34) and under the junction (36).\n- Both relative cases pass with a G: checkout and C: temp (29). Probe 28 shows the original placement absolute and the corrected one relative.\n- Package typecheck, file-scoped ESLint and file-scoped Prettier each exit 0 (31–33).\n\nLimits:\n1. **Missing receipts:** four cited cleanup logs (22, 25, 27, 35) are absent from the folder and from the 56-entry manifest. Log 30 holds only the C-root removal line. `Assert-TestCleanup` prints through `Out-Host`, so nothing reached `Tee-Object`. Zero residue is supported indirectly: the script continued past each check, `untrackedBeforeStaging` is empty (37), status is empty (46), and I found no `gg-wp-*` in the checkout.\n2. **Failure-path cleanup:** no run shows cleanup after a failing relative case. That rests on the hook semantics above.\n3. **Source binding:** corrected runs carry no per-run source hash. Log 29 would also pass on the original source, so the relative input is evidenced by the in-source assertion plus the probe.\n4. **Cross-volume coverage:** two cases ran and 18 were skipped.\n5. **Folder sweep:** the `src/fs` sweep (24) exited 1 with four failures in unchanged `chat-audio.test.ts` (three symlink `EPERM`, one newline-filename `ENOENT`). No full package, coverage or `pnpm check` run exists for this head.\n6. **Wrapper error:** the original-control wrapper threw at its own regex (disclosed). Its result was read back from the log.\n\n## Residual assumptions\n\n- Relative fixtures now sit in `packages/infrastructure/` and are not gitignored. A hard-killed worker would leave an untracked directory in the checkout. D215 authorises the placement, so I ask for no change.\n- Short-form `TEMP` prevalence is platform knowledge, not observed on this host (`98jak` has no short component).\n- I did not read the D035/D042 texts, `setup.ps1`, logs 01–17 or 38–45, or `fs.test.after.ts`.\n- Independent Opus native QA and corrected-head/current-target CI and native verification remain gates.\n- Run 44934348117 stays failed and causally unresolved under D213. Run 44950929794 on the parent is not evidence for this head.\n- Original final 3 remains CHANGES_REQUIRED on `b812`.\n- This is not general scan 4, a reset, a renewed Astra approval, or an acceptance or deployment claim.",
+  "ttft_ms": 4036,
+  "type": "result",
+  "duration_ms": 628063,
+  "uuid": "97028f9c-4629-4d5b-973e-de8229e90a69",
+  "ttft_stream_ms": 3248,
+  "time_to_request_ms": 2742,
+  "first_content_frame_ms": 3248,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 36,
+      "outputTokens": 64898,
+      "cacheReadInputTokens": 1745113,
+      "cacheCreationInputTokens": 181996,
+      "webSearchRequests": 0,
+      "costUSD": 5.8571666,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 50263,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 181996,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:05.666Z"
+}

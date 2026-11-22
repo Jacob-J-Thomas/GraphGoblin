@@ -2,9 +2,9 @@ import type { PatchOperation } from '@graphgoblin/contracts';
 import { JsonPatchSchema, SCRIPT_PROGRESS_STDERR_MAX } from '@graphgoblin/contracts';
 import { assertMutablePatch, threadView, type MutationError } from '@graphgoblin/domain';
 import { RunCancelledError, RunFailureError } from '../errors.js';
+import { nodeWorkingDirectory, renderAuthored } from '../authored-failure.js';
 import type { NodeHandler } from '../handler.js';
 import { jsonOrText, outputPatch, withTimeout } from './common.js';
-import { renderTemplate } from '@graphgoblin/domain';
 import { scriptVisit, SCRIPT_UNCERTAIN_MESSAGE } from './script-dispatch.js';
 
 const SECRET_PREFIX = 'secret:';
@@ -16,7 +16,10 @@ export const scriptHandler: NodeHandler<'script'> = {
     const visitId = scriptVisit(await ctx.services.events(), ctx.run.id, ctx.node.id);
     const { config } = ctx;
     const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-    const cwd = config.cwd === 'workspace' ? await ctx.services.workingDirectory() : config.cwd;
+    const cwd =
+      config.cwd === 'workspace'
+        ? nodeWorkingDirectory(await ctx.services.workingDirectory(), ctx.node.id)
+        : config.cwd;
 
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(config.env ?? {})) {
@@ -37,7 +40,14 @@ export const scriptHandler: NodeHandler<'script'> = {
     }
 
     const args: string[] = [];
-    for (const arg of config.args) args.push(await renderTemplate(arg, view));
+    for (const [argumentIndex, arg] of config.args.entries())
+      args.push(
+        await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'script.args', argumentIndex },
+          arg,
+          view,
+        ),
+      );
 
     const stdin =
       config.stdin === 'thread'

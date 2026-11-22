@@ -1,0 +1,713 @@
+v22.23.4
+TEMP=G:\ggq\qa-scratch\i4-486-review-fixes-author-01 TMP=G:\ggq\qa-scratch\i4-486-review-fixes-author-01
+codex/gg-i4-486-review-fixes
+633d9ac72c10fe4b8d76f7ba50221f9ed8557cb9
+d0e38c6c0212e312e6b605ac3d6bc8f7af5a129f
+import { SlugSchema, UlidSchema, type JsonValue, type RunFailure } from '@graphgoblin/contracts';
+import { deciderFailure } from './decider-errors.js';
+import { describeError, RunFailureError } from './errors.js';
+
+/** Engine-owned public copy for an internal fault with no raw diagnostic fields. */
+export class InternalRunFailureError extends RunFailureError {
+  constructor(message: string, options: RunFailureError['options']) {
+    super('INTERNAL_ERROR', message, options);
+  }
+}
+
+export const INTERNAL_FAILURE_MESSAGE =
+  'An unexpected error interrupted the run. See the server logs for this run.';
+
+export function errorDiagnostic(error: unknown): {
+  message: string;
+  name?: string;
+  stack?: string;
+} {
+  return {
+    message: describeError(error),
+    ...(error instanceof Error
+      ? { name: error.name, ...(error.stack ? { stack: error.stack } : {}) }
+      : {}),
+  };
+}
+
+export function boundedAuthoredCause(message: string): string {
+  const max = 1000;
+  return message.length > max ? message.slice(0, max - 1) + 'â€¦' : message;
+}
+
+const RECORDING_OPERATIONS = [
+  'harness.submission',
+  'turn.intent.reconcile',
+  'harness.status',
+] as const;
+export type InferenceRecordingOperation = (typeof RECORDING_OPERATIONS)[number];
+
+type JsonObject = Record<string, JsonValue>;
+
+function isObject(value: JsonValue | undefined): value is JsonObject {
+  return (
+    value !== undefined && value !== null && typeof value === 'object' && !Array.isArray(value)
+  );
+}
+
+function isChildWrapper(details: JsonObject): details is JsonObject & { childRunId: string } {
+  return (
+    UlidSchema.safeParse(details.childRunId).success &&
+    (details.childNodeId === undefined || SlugSchema.safeParse(details.childNodeId).success) &&
+    Object.keys(details).every(
+      (key) => key === 'childRunId' || key === 'childNodeId' || key === 'childDetails',
+    )
+  );
+}
+
+function isLegacyRecording(
+  entry: JsonValue,
+): entry is JsonObject & { operation: InferenceRecordingOperation } {
+  return (
+    isObject(entry) &&
+    RECORDING_OPERATIONS.some((operation) => operation === entry.operation) &&
+    typeof entry.message === 'string' &&
+    (entry.name === undefined || typeof entry.name === 'string') &&
+    (entry.stack === undefined || typeof entry.stack === 'string') &&
+    Object.keys(entry).every(
+      (key) => key === 'operation' || key === 'message' || key === 'name' || key === 'stack',
+    )
+  );
+}
+
+function internalMessage(details: JsonObject): string {
+  if (
+    typeof details.code === 'string' &&
+    (details.strategy === undefined ||
+      details.strategy === 'codex' ||
+      details.strategy === 'jev') &&
+    Object.keys(details).every((key) => key === 'code' || key === 'strategy')
+  ) {
+    const provider = deciderFailure(details);
+    // Reconstruct fixed copy from the known code. Historical message text is untrusted.
+    if (provider.details.code === details.code) return provider.message;
+  }
+  return INTERNAL_FAILURE_MESSAGE;
+}
+
+function childDetails(
+  details: JsonValue | undefined,
+  internal: boolean,
+  diagnostics: JsonValue[],
+): { details: JsonValue | undefined; internalMessage: string } {
+  if (!isObject(details)) return { details, internalMessage: INTERNAL_FAILURE_MESSAGE };
+  if (isChildWrapper(details)) {
+    const child = childDetails(details.childDetails, internal, diagnostics);
+    return {
+      details: child.details === undefined ? details : { ...details, childDetails: child.details },
+      internalMessage: `subloop child ${details.childRunId} failed: ${child.internalMessage}`,
+    };
+  }
+
+  const message = internalMessage(details);
+  if (
+    internal &&
+    typeof details.name === 'string' &&
+    (typeof details.stack === 'string' || details.stack === null)
+  ) {
+    const { name, stack, ...publicDetails } = details;
+    diagnostics.push({ name, stack });
+    details = publicDetails;
+  }
+  if (Array.isArray(details.recording)) {
+    const recording = details.recording.map((entry) => {
+      if (!isLegacyRecording(entry)) return entry;
+      diagnostics.push(entry);
+      return { operation: entry.operation };
+    });
+    details = { ...details, recording };
+  }
+  return { details, internalMessage: message };
+}
+
+/** Redact only the old engine slots on the child-failure chain being copied into a new run. */
+export function childFailureForPublication(failure: RunFailure) {
+  const diagnostics: JsonValue[] = [];
+  const internal = failure.code === 'INTERNAL_ERROR';
+  const projected = childDetails(failure.details, internal, diagnostics);
+  const message = internal ? projected.internalMessage : failure.message;
+  if (message !== failure.message) diagnostics.unshift({ message: failure.message });
+  return { message, details: projected.details, diagnostics };
+}
+import { ChatLoopInputSchema, JsonValueSchema, type ContextThread } from '@graphgoblin/contracts';
+import {
+  renderTemplate,
+  threadView,
+  SYSTEM_CHAT_TEXT_PROMPT,
+  SYSTEM_CHAT_SCRIPT_PROMPT,
+  SYSTEM_CHAT_SUBLOOP_PROMPT,
+} from '@graphgoblin/domain';
+import { InternalRunFailureError, INTERNAL_FAILURE_MESSAGE } from '../failure-publication.js';
+import { RunFailureError } from '../errors.js';
+import type { HarnessPort } from '../ports.js';
+
+type Window = Awaited<ReturnType<NonNullable<HarnessPort['contextWindow']>>>;
+const canonicalPrompts = new Set([
+  SYSTEM_CHAT_TEXT_PROMPT,
+  SYSTEM_CHAT_SCRIPT_PROMPT,
+  SYSTEM_CHAT_SUBLOOP_PROMPT,
+]);
+
+function overflow(): never {
+  throw new RunFailureError(
+    'INFERENCE_CONTEXT_LIMIT',
+    'The complete prompt exceeds this Ollama context allocation, including instructions and reply reserve. Shorten the current message or workflow prompt, start a new conversation, or choose another qualified model. Required input was not submitted or truncated.',
+    { resumable: false },
+  );
+}
+
+function renderCanonical(template: string, thread: ContextThread): Promise<string> {
+  const view = { ...threadView(thread) };
+  return renderTemplate(template, view).catch(() => {
+    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, { resumable: true });
+  });
+}
+
+/** Trim only a known history slot, never an arbitrary rendered prompt or the stored thread. */
+export async function admitInferencePrompt(options: {
+  prompt: string;
+  template: string;
+  thread: ContextThread;
+  allowHistoryTrim: boolean;
+  window: Window;
+}) {
+  const { window } = options;
+  const parsed = ChatLoopInputSchema.safeParse(options.thread.invocation.trigger.payload);
+  const history = parsed.success ? parsed.data.history : undefined;
+  const paired =
+    history !== undefined &&
+    history.length % 2 === 0 &&
+    history.every((entry, index) => entry.role === (index % 2 === 0 ? 'user' : 'assistant'));
+  const canTrim = options.allowHistoryTrim && canonicalPrompts.has(options.template) && paired;
+  const pairs = paired ? history.length / 2 : 0;
+  const report = (retainedHistoryPairs: number) => ({
+    profile: window.profile,
+    contextTokens: window.contextTokens,
+    outputReserveTokens: window.outputReserveTokens,
+    retainedHistoryPairs,
+    omittedHistoryPairs: pairs - retainedHistoryPairs,
+  });
+  if (window.fits(options.prompt)) return { prompt: options.prompt, context: report(pairs) };
+  if (!canTrim || !parsed.success) overflow();
+  const candidateThread = structuredClone(options.thread);
+  candidateThread.invocation.trigger.payload = JsonValueSchema.parse({
+    ...parsed.data,
+    history: [],
+  });
+  let prompt = await renderCanonical(options.template, candidateThread);
+  // Authored instructions and required current/normalized input must fit on their own.
+  if (!window.fits(prompt)) overflow();
+  let retained = 0;
+  for (let count = 1; count <= pairs; count += 1) {
+    candidateThread.invocation.trigger.payload = JsonValueSchema.parse({
+      ...parsed.data,
+      history: parsed.data.history.slice(-count * 2),
+    });
+    const candidate = await renderCanonical(options.template, candidateThread);
+    if (!window.fits(candidate)) break;
+    prompt = candidate;
+    retained = count;
+  }
+  return { prompt, context: report(retained) };
+}
+import * as domain from '@graphgoblin/domain';
+import { describe, expect, it, vi } from 'vitest';
+import { RunEventSchema } from '@graphgoblin/contracts';
+import { visitTurn, provenance } from './inference-turn.js';
+import { sampleThread, fakeUlid } from '@graphgoblin/contracts/testing';
+import { renderTemplate, threadView, SYSTEM_CHAT_TEXT_PROMPT } from '@graphgoblin/domain';
+import type { HarnessPort } from '../ports.js';
+import { createTestEngine } from '../testing/scenario.js';
+import { admitInferencePrompt } from './inference-context.js';
+
+const payload = {
+  protocol: 'graphgoblin.chat.v1',
+  conversationId: fakeUlid('conversation'),
+  requestId: '33d911ae-7293-4acb-ab74-910e67293f1d',
+  turn: 3,
+  history: [
+    { role: 'user', text: 'old question ' + 'x'.repeat(80) },
+    { role: 'assistant', text: 'old answer ' + 'x'.repeat(80) },
+    { role: 'user', text: 'new question' },
+    { role: 'assistant', text: 'new answer ðŸ¦Ž' },
+  ],
+  input: { kind: 'text', text: 'Required current question' },
+};
+function fixture() {
+  const thread = sampleThread();
+  thread.invocation.trigger.payload = structuredClone(payload);
+  return thread;
+}
+const window = (limit: number) => ({
+  contextTokens: 4096,
+  outputReserveTokens: 1024,
+  profile: 'test/byte-ceiling',
+  fits: (prompt: string) => Buffer.byteLength(prompt) <= limit,
+});
+async function options() {
+  const thread = fixture();
+  return {
+    thread,
+    template: SYSTEM_CHAT_TEXT_PROMPT,
+    prompt: await renderTemplate(SYSTEM_CHAT_TEXT_PROMPT, { ...threadView(thread) }),
+    allowHistoryTrim: true,
+    window: window(400),
+  };
+}
+describe('rendered prompt admission and whole-pair history', () => {
+  it('reuses the persisted prompt and admission facts across recovery, including unconfirmed intent', () => {
+    const base = { runId: fakeUlid('run'), ts: '2026-11-08T00:00:00.000Z' };
+    const turn = RunEventSchema.parse({
+      ...base,
+      seq: 2,
+      type: 'harness.turn',
+      nodeId: 'respond',
+      visitId: base.runId + ':1',
+      turnId: fakeUlid('turn'),
+      harness: 'ollama',
+      promptKind: 'authored',
+      prompt: 'Exact retained prompt',
+      context: {
+        profile: 'test/bytes',
+        contextTokens: 4096,
+        outputReserveTokens: 1024,
+        retainedHistoryPairs: 1,
+        omittedHistoryPairs: 2,
+      },
+    });
+    if (turn.type !== 'harness.turn') throw new Error('fixture');
+    const state = visitTurn(
+      [
+        RunEventSchema.parse({
+          ...base,
+          seq: 1,
+          type: 'node.started',
+          nodeId: 'respond',
+          kind: 'inference',
+          attempt: 1,
+          configHash: 'hash',
+        }),
+        turn,
+      ],
+      'respond',
+    );
+    expect(state.pending?.turn.prompt).toBe(turn.prompt);
+    expect(state.pending?.turn.context).toEqual(turn.context);
+    if (!state.pending) throw new Error('fixture');
+    expect(provenance({ ...state.pending, intentUnconfirmed: true }).retry?.context).toEqual(
+      turn.context,
+    );
+  });
+
+  it('keeps the newest complete pair, preserving the required input and immutable thread', async () => {
+    const input = await options();
+    const before = structuredClone(input.thread);
+    const admitted = await admitInferencePrompt(input);
+    expect(admitted.context).toMatchObject({ omittedHistoryPairs: 1, retainedHistoryPairs: 1 });
+    expect(admitted.prompt).toContain('new question');
+    expect(admitted.prompt).toContain('new answer ðŸ¦Ž');
+    expect(admitted.prompt).toContain(payload.input.text);
+    expect(admitted.prompt).not.toContain('old question');
+    expect(input.thread).toEqual(before);
+  });
+  it('can omit every pair while preserving all required current input', async () => {
+    const input = await options();
+    const requiredOnly = structuredClone(input.thread);
+    requiredOnly.invocation.trigger.payload = { ...payload, history: [] };
+    const requiredPrompt = await renderTemplate(input.template, { ...threadView(requiredOnly) });
+    const admitted = await admitInferencePrompt({
+      ...input,
+      window: window(Buffer.byteLength(requiredPrompt)),
+    });
+    expect(admitted.prompt).toBe(requiredPrompt);
+    expect(admitted.context).toMatchObject({ retainedHistoryPairs: 0, omittedHistoryPairs: 2 });
+  });
+
+  it('preserves full history when the complete rendered prompt fits', async () => {
+    const input = await options();
+    const admitted = await admitInferencePrompt({ ...input, window: window(10000) });
+    expect(admitted.prompt).toBe(input.prompt);
+    expect(admitted.context).toMatchObject({ omittedHistoryPairs: 0, retainedHistoryPairs: 2 });
+  });
+  it.each([false, true])(
+    'reports fitting paired history regardless of trim permission: %s',
+    async (allowHistoryTrim) => {
+      const input = await options();
+      const admitted = await admitInferencePrompt({
+        ...input,
+        allowHistoryTrim,
+        window: window(10000),
+      });
+      expect(admitted.prompt).toBe(input.prompt);
+      expect(admitted.context).toMatchObject({ retainedHistoryPairs: 2, omittedHistoryPairs: 0 });
+    },
+  );
+
+  it('rejects required input/instructions that cannot fit even with empty history', async () => {
+    const input = await options();
+    await expect(admitInferencePrompt({ ...input, window: window(10) })).rejects.toMatchObject({
+      code: 'INFERENCE_CONTEXT_LIMIT',
+      options: { resumable: false },
+    });
+  });
+  it('never rewrites a custom prompt or an inherited retry intent', async () => {
+    const input = await options();
+    for (const changed of [
+      { template: 'Custom {{ trigger.payload.history }}' },
+      { allowHistoryTrim: false },
+    ])
+      await expect(admitInferencePrompt({ ...input, ...changed })).rejects.toThrow(
+        /Required input was not submitted/,
+      );
+  });
+  it('rejects opaque payloads without guessing a history location', async () => {
+    const input = await options();
+    input.thread.invocation.trigger.payload = { history: 'opaque' };
+    await expect(admitInferencePrompt(input)).rejects.toThrow(/complete prompt exceeds/);
+  });
+
+  it('refuses to trim malformed or incomplete history', async () => {
+    for (const history of [payload.history.slice(1), [...payload.history].reverse()]) {
+      const input = await options();
+      input.thread.invocation.trigger.payload = { ...payload, history };
+      await expect(admitInferencePrompt(input)).rejects.toThrow(/complete prompt exceeds/);
+    }
+  });
+});
+
+it.each([1, 2])(
+  'keeps a synthetic failure in canonical rerender %i engine-owned and pre-turn resumable',
+  async (call) => {
+    const input = await options();
+    const original = domain.renderTemplate;
+    const render = vi.spyOn(domain, 'renderTemplate');
+    try {
+      if (call === 2) render.mockImplementationOnce(original);
+      render.mockRejectedValueOnce(new domain.TemplateError('private canonical failure'));
+      const error: unknown = await admitInferencePrompt(input).catch((fault: unknown) => fault);
+      expect(render).toHaveBeenCalledTimes(call);
+      expect(error).toMatchObject({ code: 'INTERNAL_ERROR', options: { resumable: true } });
+      expect(JSON.stringify(error)).not.toContain('private canonical failure');
+    } finally {
+      render.mockRestore();
+    }
+  },
+);
+
+it('publishes a canonical rerender fault on the current inference node before provider invocation', async () => {
+  const engine = await createTestEngine();
+  const harness: HarnessPort = engine.ports.harness;
+  const version = engine.publish(
+    domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
+  );
+  // Synthetic fault confined to the pure system rerender. The initial prompt has already rendered.
+  const render = vi.spyOn(domain, 'renderTemplate');
+  try {
+    harness.contextWindow = () => {
+      render.mockRejectedValueOnce(new domain.TemplateError('private renderer diagnostic'));
+      return Promise.resolve(window(400));
+    };
+    const run = await engine.runToIdle(version.loopId, payload);
+    expect(render).toHaveBeenCalled();
+    expect(run.failure).toEqual({
+      code: 'INTERNAL_ERROR',
+      nodeId: 'respond',
+      resumable: true,
+      message: 'An unexpected error interrupted the run. See the server logs for this run.',
+    });
+    expect(engine.events(run.id).filter((event) => event.type === 'run.failed')).toMatchObject([
+      { failure: run.failure },
+    ]);
+    expect(engine.eventTypes(run.id)).not.toContain('harness.turn');
+    expect(engine.ports.harness.started).toHaveLength(0);
+  } finally {
+    render.mockRestore();
+  }
+});
+        ) {
+          await this.failRun(runId, deadlineFailure().toFailure(nodeId));
+          return;
+        }
+        if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
+          await this.finalizeCancel(runId);
+          return;
+        }
+        const providerFailure =
+          !(error instanceof RunFailureError) && isDeciderError(error)
+            ? deciderFailure(error)
+            : undefined;
+        let failure =
+          error instanceof InternalRunFailureError
+            ? error
+            : error instanceof RunFailureError
+              ? error.toFailure(nodeId)
+              : providerFailure
+                ? new InternalRunFailureError(providerFailure.message, {
+                    nodeId,
+                    details: providerFailure.details,
+                  })
+                : {
+                    code: 'INTERNAL_ERROR' as const,
+                    message: INTERNAL_FAILURE_MESSAGE,
+                    nodeId,
+                    resumable: true,
+                  };
+        // Preparation can fail before a resumed inference visit records its next intent.
+        // The previous task remains informative while the ordinary error classification and
+        // recovery policy stay in charge. Never synthesize retry data or a submission event.
+        if (
+          node.kind === 'inference' &&
+          !events.some((event) => event.seq > startedSeq && event.type === 'harness.turn')
+        ) {
+          const prior = visitTurn(events, nodeId).pending;
+          if (failure instanceof InternalRunFailureError) {
+            failure = new InternalRunFailureError(failure.message, {
+              ...failure.options,
+              nodeId: failure.options.nodeId ?? nodeId,
+              ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
+            });
+          } else if (prior && !failure.inference) {
+            failure = { ...failure, inference: provenance(prior) };
+          }
+        }
+        if (providerFailure)
+          this.ports.logger.warn(
+            { runId, nodeId, ...providerFailure.diagnostic },
+            'node provider failed',
+          );
+        else
+          this.ports.logger.error(
+            {
+              runId,
+              nodeId,
+              failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
+              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+                ? { error: errorDiagnostic(error) }
+                : {}),
+            },
+            'node failed',
+          );
+        await this.failRun(
+          runId,
+          failure,
+          error instanceof RunFailureError ? error.options.records : undefined,
+        );
+        return;
+      }
+      // A late result cannot replace a deadline/cancel outcome, even if a port ignored abort.
+      if (this.forcing) {
+        await this.interruptRun(runId);
+        return;
+      }
+      const afterNode = await this.mustGet(runId);
+      if (this.forcing) {
+        await this.interruptRun(runId);
+        return;
+      }
+      if (afterNode.cancelRequestedAt) {
+        await this.finalizeCancel(runId);
+        return;
+      }
+      if (
+105:- **Failure diagnostics are projected before the terminal append.** Newly emitted `run.failed`
+107:  with raw exception diagnostics in the server log. The engine preserves dispatch and retry
+109:  and order in the public failure, and raw diagnostics are logged privately with the run, node, turn
+111:  evidence and projects recognized private diagnostic slots out of the copied child chain.
+113:  [ADR-0080](decisions/ADR-0080-run-failure-diagnostics.md) defines these boundaries.
+196:Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+213:Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
+227:**Child failures follow the inline rules (Decided, #251).** A child's execution error is the parent's, exactly as if the failing node had run inline in the parent; nesting adds no silent success and consumes no error. The parent fails at its subloop node with the child's failure code and resumability, the message `subloop child <id> failed: <child message>`, and `details: { childRunId, childNodeId?, childDetails? }`; its `child_run.finished` records `status: failed`. For a child with `INTERNAL_ERROR`, the copied message is the projected safe message; recognized legacy name/stack and secondary recording diagnostics are logged and not republished. Deterministic failures stay non-resumable in the parent as they are in the child. Explicitly resuming such a parent re-executes its subloop node, which resumes the same child in place (`run.resumed` with actor `{ kind: 'run', id: <parent> }`): the child's failed node runs again under the ordinary crash-recovery rules, with its thread, pins and recorded sessions intact, and no second child is started. A parent re-executed by crash recovery (not resumed) fails again with the child's failure instead of resuming the child. A child resumed directly while its parent stays failed finishes on its own; the parent's later resume then maps that outcome. Cancelling a child (operator or API) cancels the parent that awaits it, as cancelling inline work cancels its run: the parent records `run.cancel_requested` with actor `{ kind: 'run', id: <child> }` and `run.cancelled`, and its own parent follows in turn. An authored outcome is not an execution error: a child that finishes through a Failure (or Exhausted) exit returns its configured output as ordinary data, and the parent continues.
+293:candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
+308:`GET /runs/diagnostics` (owner-scoped, `runs:read`) is the identification path for damaged
+311:events. This read-only diagnostic does not change lifecycle status: a damaged snapshot
+324:**One run manager per store.** There is no execution lease: two run managers over the same database would both pick up a queued or recovered run and execute it twice (the review demonstrated a doubled inference). 1.0 enforces one API process with one run manager per data directory and SQLite file using `<dataDir>/graphgoblin.lock` and `<database-file>.graphgoblin.lock`, exclusively acquired before opening SQLite, migrations, or recovery. A live PID refuses startup with `another GraphGoblin process holds <path>` and exit code 1, regardless of port or a different data directory pointing at the same external database. Database paths resolve directory aliases canonically; multiply hard-linked database files are refused. A confirmed dead PID or this process's own PID without an in-process hold permits stale-lock replacement. The container holds both locks until `stop()` has stopped scheduling, waited for active runs, and closed SQLite; main also stops it on startup failure, clean HTTP close, SIGINT, or SIGTERM. `--create-api-key` and confirmed reset use the same writer locks, while read-only `--preflight` may run alongside the server. Keep the same data directory with an external database to preserve its key/artifact association. Execution and scheduler leases belong with the post-1.0 hosted work (11).
+333:  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues a usable session, or stops non-resumably. An inherited previous/named/own ID alone is unusable for unaccepted authored work. A missing session also stops. See below.
+351:The optional authored `resetAfterVisits` accepts positive safe integers (1 through
+398:cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
+414:adds `failure.details.recording` diagnostics without replacing the primary cause, submission,
+424:These authored prompts are part of private run
+444:Under previous/named/own policy, an authored or retried authored turn with no durable acceptance
+463:inherit no pending turn or submission state; an explicitly authored named-session policy keeps
+480:| Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with the safe `INTERNAL_ERROR` message, node when known, and existing resumability. Raw diagnostics go to server logs correlated by run and node when available; historical rows and events retain their earlier content. Fix the defect in GraphGoblin. |
+482:For a newly recognized authored failure, the failure message identifies the field and the one-based position when a particular item failed. Details carry the fixed `boundary`, zero-based indices and a `cause` with a code and corrective message. A map or header ordinal follows the order of its own enumerable string keys. Liquid can identify a line and column. JSONata reports syntax or regex safety for a failure compiling the pinned source, or a limit that the current evaluation reached. Other evaluation rejections, including a failed dynamic `$eval`, give a fixed direction for checking the input and mapping. These projections use the existing `TEMPLATE_ERROR`, `EXPRESSION_ERROR` and `MUTATION_ERROR` codes. [ADR-0088](decisions/ADR-0088-authored-execution-failures.md)
+486:Provider exceptions from decision evaluation use a shared fixed summary instead of raw diagnostics. The catch-all also sanitizes errors carrying `DECIDER_*`: it stores a recognized code and the selected strategy when available, without provider messages or stacks. Engine provider warnings contain only safe name, code, numeric HTTP status, and run/node/strategy identifiers. Newly recorded ordinary internal defects expose the safe `INTERNAL_ERROR` message; their raw diagnostics are in server logs correlated by run and node when available. Historical rows and events retain their earlier content.
+504:Timer keys are `<kind>@<waitId>`. The opaque `waitId` combines the run ID and the durable `node.started` sequence for this park; it is recorded in the event and snapshot, rather than kept in memory. A due delivery before parking is visible returns a deferred acknowledgement: the row is conditionally requeued one configured polling interval later. A paused run acknowledges its timer without waking; resume and recovery re-arm its recorded deadline. Timers for unreadable run history are also acknowledged, leaving that history for diagnostics and explicit deletion rather than logging on every poll. This prevents deferred rows from starving other overdue timers in a full batch. The original deadline stays in the wait spec. Resume re-arms the original deadline and the next poll wakes a passed deadline. A stale timer cannot wake a later park. Wake events are conditional appends. Their status acknowledgements also compare the recorded `waitId`, so a delayed acknowledgement cannot move a later wait to running. Redelivery after a lost status response completes or queues the durable wake without appending it twice, including when the running status committed before its response was lost. The scheduler acknowledges only after all listeners accept delivery and only while the row still has the fired deadline. It also serializes same-run timer mutations and preserves any re-arm overlapping delivery, including an identical deadline on resume; an old acknowledgement cannot delete that resumed timer.
+518:- The filesystem artifact store publishes flushed temporary files by atomic same-directory rename and verifies content hashes on reads (11). Failed publication raises the resumable node failure `ARTIFACT_WRITE_FAILED`, carrying its reference and publishing no transcript/output patch. After repairing storage, explicitly resume: inference continues the recorded provider session with the continuation prompt instead of resending the authored prompt. Corrupt downloads return the API problem `ARTIFACT_CORRUPT` (07); it is not a run failure code.
+567:- Fork admission atomically writes the row, initial state, first event and `(sourceRunId, nodeId, observedSeq)` intent. Migration 0024 adds nullable node and observed-sequence intent columns and a unique index using #412's canonical `replay_source_run_id`; it does not duplicate the source. A failed transaction consumes nothing. A lost commit acknowledgement finds the same admitted fork; a repeated caller receives `RECOVERY_STALE` with its exact `replayRunId`. Re-reading unchanged history does not mint another intent for that same node. New execution events give a new observation. No event is appended to the source, so terminal history, SSE completion and finalization records retain their original boundary.
+581:- **Inference recovery follows visit submission provenance**, rather than attempt numbers or a session row alone. Proven refusal retains the authored task; uncertainty never blindly resends it.
+629:and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+633:The gate's authored non-repeat routes and explicit time check still apply. Disable loop controls, completion deadlines,
+634:pass limits and any authored watchdogs to permit intentionally indefinite
+635:execution, ending through authored exits, Cancel or an external/resource failure.
+671:explicit run deadlines, node watchdogs, authored gate limits and Cancel still apply.
+750:`priorContextCarried: false` and the original authored prompt when available.
+753:The next attempt starts fresh for that visit and reruns its authored task, rather
+779:One pass considers 20 approved roots and up to 500 run records, preserving complete components. History and durable resource jobs commit together. Read at most 256 pending candidates and inventory/stage at most 32 resources; stream and cap each inventory at 2,000 entries outside the database lock. Refresh up to 2,048 workspace obligations outside locks per pass, continuing the sweep across passes; incomplete or unknown proof keeps workspaces. A short transaction uses indexed physical-directory overlap checks and rechecks ownership and renames into quarantine with a durable generation key. Unlink quarantined entries after commit, outside database and publication locks, yielding after every entry. Unknown ownership, retained/shared references, links, identity substitutions and reference-proof budgets preserve resources. A crash leaves retryable jobs; a missing already-unlinked file completes without additional byte credit. Stop aborts between removal entries, waits for active bounded work and starts no new pass. Pending counts cover the whole store; unexamined removable work keeps the pressure status. Replay admission rechecks source existence inside its transaction so a fork cannot appear after cleanup removed its source. Existing event append SQL and its measured instruction bound are unchanged.
+781:Resource publication receives the producing run ID through `ArtifactStorePort.put`. The filesystem journal uses exclusive creation identity rather than path shape; fixed/template workspaces are uses, never ownership claims. SQLite free pages are reusable allocation, not OS-reclaimed space. No low-space `VACUUM`, automatic reset or deletion-scope expansion is performed.
+docs/decisions\ADR-0088-authored-execution-failures.md
+# 12 - Implementation plan
+
+Milestones are sequential. Each has a goal, the packages it touches, the tasks, and acceptance criteria. "Done" for every milestone includes the definition of done in 10. Sizes are relative: S is days, M is a week or two, L is several weeks for one engineer working with coding agents.
+
+## M0 - Repository and gates (S) - DONE 2026-10-02
+
+Notes: TypeScript 6.x (typescript-eslint does not yet support 7.x), ESLint 10, Vitest 5, Zod 4, pnpm 12. Installation, development, gates and built apps use Node 22 LTS; select it for the whole shell before running commands (ADR-0040).
+
+Goal: an empty monorepo where every CI gate already runs and passes.
+
+Packages: `tooling`, `contracts` skeleton, `domain` skeleton.
+
+Tasks:
+
+1. `pnpm` workspace, Turborepo pipeline, base tsconfig with project references, ESLint, Prettier.
+2. dependency-cruiser rules encoding the layer table in 02; a deliberately failing test import to prove the rule fires.
+3. Vitest config template with 90/90 thresholds; one real test per skeleton package.
+4. Licence allowlist script and the research licence ledger.
+5. GitHub Actions workflow with all ten gates; Renovate config.
+6. `docs/` linked from the repository README.
+
+Acceptance: CI green on a pull request; a layer violation and a coverage shortfall each fail CI when introduced on purpose.
+
+## M1 - Contracts and domain (M) - DONE 2026-10-02
+
+Notes: the context thread was implemented to the proposed defaults and recorded as ADR-0013 (Draft) rather than waiting for the co-design session. jsonata 2.x keys its evaluation hooks by `Symbol.for('jsonata.__evaluate_entry')`; the time-box relies on that.
+
+Goal: the loop definition, node config schemas, run and event schemas, and the first version of the context thread, with pure validation and thread operations.
+
+Packages: `contracts`, `domain`.
+
+Tasks:
+
+1. Zod schemas for `LoopDefinition`, every node config in 04, `Invocation`, `Run`, `RunEvent`, `ContextThread`.
+2. Co-design session on the context thread, closing the five questions in 03 and 13. Record the outcome as ADR-0013.
+3. Graph validation with precise, user-facing error messages.
+4. Thread operations: JSON Patch apply and validate, every mutation operation in 04, token estimation for truncation.
+5. Expression and template evaluation helpers over JSONata and LiquidJS with a sandboxed context object.
+6. Exit criteria evaluation, iteration counters, run state machine.
+7. Export and import format for definitions.
+
+Acceptance: a definition with every node kind validates; invalid graphs produce the expected errors; property-based tests over patch apply and truncate; coverage above threshold.
+
+## M2 - Engine (L) - DONE 2026-10-02
+
+Notes: all nine handlers, the run manager, fakes for every port, and a scenario helper are in `packages/engine`. Replay-at-node was left for M8. See the implementation notes in 05.
+
+Goal: a run executes end to end against fake ports, including parking, resuming, cancellation, subloops, and crash recovery.
+
+Packages: `engine`.
+
+Tasks:
+
+1. Ports from 02 as interfaces, with in-memory fakes and a fake clock.
+2. Run manager: queue, worker pool, status transitions, persisted intents.
+3. Executor loop and the node handler contract.
+4. Handlers: trigger, decision with the expression strategy, script, mutate, subloop, wait, heartbeat, exit, and inference against the `FakeHarness`.
+5. Event store contract and projections.
+6. Crash recovery and resume-from-failure.
+7. Return channel delivery for `caller`, `event`, `log`, and `file` through the workspace port, `webhook` through the HTTP port.
+8. Replay-at-node (Draft) if time allows.
+
+Acceptance: scenario tests for every node kind; a loop-back loop that exhausts; a subloop two levels deep; cancel during an inference node; kill the process mid-node in a test and recover; coverage above threshold.
+
+## M3 - Persistence and API (M)
+
+M3 notes: the intermittent 0xC0000005 crash in the `apps/api` suite comes from libsql's native addon, which on Windows can crash or hang the process when it is loaded only inside a worker thread and that thread exits, as Vitest's `threads` and `vmThreads` pools do. `apps/api` and `adapter-sqlite` (now `infrastructure`) therefore pin Vitest to `pool: 'forks'`, where the crash never reproduced; production loads libsql on the main thread and is unaffected. Fixing the suite also surfaced a real bug: revoking an already revoked API key returned 204 instead of 404, so `SqliteApiKeys.revoke` now matches only active keys. Details are in `research/sqlite-libsql.md`.
+
+Goal: the engine runs behind a real API with SQLite, usable from curl before any UI exists.
+
+Packages: `infrastructure` (`src/sqlite`, `src/scheduler` for timers only, `src/fs`, `src/process`, `src/http`), `apps/api`. Built as five `adapter-*` packages and merged by ADR-0014.
+
+Tasks:
+
+1. Drizzle schema and migrations for every table in 03; event store with transactional append.
+2. Repositories; owner id on every row.
+3. Fastify app: routes in 07, Zod validation, OpenAPI generation, generated client package.
+4. SSE endpoint with cursor resume and heartbeats.
+5. Local trusted mode and API keys.
+6. Manual triggers end to end: start, stream, input, cancel, pause, resume.
+7. Boot sequence: migrations, recovery scan, timer re-arm.
+
+Acceptance: a curl script creates, publishes, runs, and streams a loop; SSE reconnect replays missed events; restart during a waiting run resumes correctly; coverage above threshold.
+
+## M4 - Codex, Jev, and real nodes (L)
+
+Goal: real inferencing and decisions.
+
+Packages: `adapter-codex`, `adapter-jev`, `infrastructure/src/http`.
+
+Tasks:
+
+1. Codex adapter: preflight, start, resume, event normalisation, cancellation with tree kill, usage capture, transcript artifact. Verify every SDK option name against the pinned version and update `research/codex-sdk.md`.
+2. Session policies: fresh, resume-previous, resume-named.
+3. Prompt and context-file rendering; input and output transforms.
+4. Structured output with native schema and the configurable repair policy.
+5. Codex-backed decider and the coerce repair path.
+6. Jev adapter with the Choice primitive and confidence threshold.
+7. Script node over the real process port, Windows tree kill included.
+8. Heartbeat and poll probes over the HTTP port.
+9. Model catalog seeding and settings.
+10. Fixture recorder and the recorded fixtures; nightly live smoke job.
+
+Acceptance: a loop that triggers manually, asks Codex to change a file in a working directory, validates a structured result, decides with Jev, loops back once, and returns a payload through the `file` channel; runs on the owner's Windows machine; coverage above threshold.
+
+M4 wiring notes (WP-I): `apps/api` composes the Codex and Claude harnesses when no override is given, plus the Codex structured port and deciders `[jev, codex]` (see "Composition" in 06). Claude is available only on supported native Windows setups. `GG_CODEX_BINARY` optionally points at a `codex` executable. Jev reads `jev-api-key` from the local owner's secrets after migrations run at `start()`, and `PUT`/`DELETE /secrets/jev-api-key` refresh it through `Container.onSecretChanged`, so a new key needs no restart. `HarnessPort.resume` takes the full `HarnessStartRequest`, so resumed, repair, and crash-recovery turns keep the node's model, effort, sandbox, and working directory. Session lookup is filtered by harness before selecting the newest eligible session. The SSE stream ends right after the replay when the run is already terminal (07). A `LIVE=1` smoke in `apps/api/src/live.test.ts` runs trigger, Codex inference (`gpt-6-luna`, `low`, read-only), and exit through the API and the real Codex CLI; it passed on 2026-10-03. Jev was verified live on 2026-10-03 with Choice, five-label classification, Noul, direct SDK Score, and a published API loop that succeeded via the Jev route (see `research/jev.md`).
+
+M4 extension (#26): the API also registers the owner-installed Claude Code CLI adapter on native Windows. It requires CLI 2.1.285 or newer, required capabilities and `claude.ai` login, uses no Anthropic SDK dependency, and admits the exact supported `claude-opus-5-5` and `claude-fable-5-1` models (Sonnet 5.5 and Haiku 5.5 followed in #206). Claude-specific defaults use `defaults.byHarness.claude`. The accepted policy pairs are read-only/never and explicitly selected danger-full-access/never; this read-only mode is tool-restricted, not OS or filesystem-read confinement. Both models use ordinary technical admission and owner enable switches (ADR-0029). The adapter implementation and focused web gates are recorded in [the #26 QA report](qa/2026-10-07-issue-26.md); full coverage, Edge E2E, the live hostile-config canary, live fresh/resume, and review remain pending.
+
+## M5 - Web editor and PWA (L)
+
+Goal: the product is usable without curl.
+
+Packages: `apps/web`.
+
+Tasks:
+
+1. App shell, routing, generated client, auth-less local mode.
+2. Loops list, create, import, export, publish.
+3. Editor: canvas, palette, property panels from schemas, validation panel (since #15, issue badges on the nodes and counts beside Publish), variables, subloop picker, templates with preview.
+{
+  "name": "@graphgoblin/engine",
+  "version": "1.0.0",
+  "description": "The loop executor, run manager, and node handlers, written against ports. Boots fully with fake ports.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "development": "./src/testing/index.ts",
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -b tsconfig.build.json && tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@graphgoblin/contracts": "workspace:*",
+    "@graphgoblin/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@graphgoblin/tooling": "workspace:*",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.11.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

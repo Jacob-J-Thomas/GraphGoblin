@@ -1,0 +1,24 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories
+AssertionError: expected 'G:\ggq\qa-scratch\i4-486-d216-indepen…' to be 'G:\GGQ\QA-SCRATCH\I4-486-D216-INDEPEN…' // Object.is equality
+
+Expected: "G:\GGQ\QA-SCRATCH\I4-486-D216-INDEPENDENT-02\OPUS-QA-MWRY6CL9-8930F76E\UPPER-TEMP\gg-wp-e3-7Gzz36\workspaces\00000000000000000000000001"
+Received: "G:\ggq\qa-scratch\i4-486-d216-independent-02\opus-qa-mwry6cl9-8930f76e\upper-temp\gg-wp-e3-7Gzz36\workspaces\00000000000000000000000001"
+
+ ❯ src/fs/fs.test.ts:143:52
+    141|           run.id,
+    142|         );
+    143|         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
+       |                                                    ^
+    144|         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).…
+    145|         const actual = realpathSync(path);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-d216-
+  │ qa\GraphGoblin\packages\infrastructure
+

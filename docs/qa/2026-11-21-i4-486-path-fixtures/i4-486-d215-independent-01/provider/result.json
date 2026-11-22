@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 1291484,
+  "stop_reason": "end_turn",
+  "session_id": "b3350e60-93ec-450a-a50a-0213b8badc34",
+  "total_cost_usd": 7.1196551999999995,
+  "usage": {
+    "input_tokens": 126,
+    "cache_creation_input_tokens": 268902,
+    "cache_read_input_tokens": 10028976,
+    "output_tokens": 148107,
+    "output_tokens_details": {
+      "thinking_tokens": 82517
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 268902,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1743,
+        "cache_read_input_tokens": 267857,
+        "cache_creation_input_tokens": 1045,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1045
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 126,
+      "outputTokens": 148107,
+      "cacheReadInputTokens": 10028976,
+      "cacheCreationInputTokens": 268902,
+      "webSearchRequests": 0,
+      "costUSD": 7.1196551999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 82517,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 268902,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 81,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "**Verdict: CRITERION PASS** for the admitted D215 scope at `6de50cb`, with one residual limit you should decide on before disposition. This is criterion QA only: not a scan 4, Astra approval, cap completion or merge permission. Scan 3 stays CHANGES_REQUIRED. CI/native, the Fable review and the D035/D042 disposition remain yours.\n\n## Scenarios\n\nAll eight runs came out as planned. Each test worker recorded at startup which fixture it actually ran: baseline for 1–2, corrected for 3–6.\n\n| # | Setup | Result |\n|---|---|---|\n| 1 | Baseline fixture, ordinary G TEMP | Passes (positive control) |\n| 2 | Baseline fixture, real Windows junction TEMP | Fails as expected at `fs.test.ts:141:52`. Expected `…\\junction-alias\\gg-wp-e3-jPSIr1\\workspaces\\…01`, received `…\\junction-physical\\…` |\n| 3 | Corrected fixture, whole file, ordinary G TEMP | 20 of 20 pass |\n| 4 | Corrected engine temp case, same junction | Passes; the test compared against the physical path, and a 15-byte result file appeared in the physical directory |\n| 5a/5b | Corrected fixture, cwd on G, test TEMP on C | Both pass (details below) |\n| 6a/6b | Corrected fixed and template cases, junction TEMP | Pass; assertions used the supplied alias spelling, and the temp-only realpath step was not applied |\n\nIn 5a/5b the old b812 formula, evaluated in the same worker with that run's C data dir, gave absolute `C:\\…` paths. The corrected inputs were genuinely relative (`gg-wp-relative-rMiS7X\\workspace` and `gg-wp-relative-watq6s\\workspace`). The production `FsWorkspace.resolve` received them, and the real files were created and then removed in the G checkout. Nothing relative landed on C.\n\n## Gates and preservation\n\n- Infrastructure typecheck, eslint on the file, prettier and `git diff --check` all exit 0; I confirmed both typecheck and lint actually covered fs.test.ts.\n- All 77 original `expect(` lines survive unchanged. The only additions are the two `isAbsolute(...) === false` checks.\n- No skip, timeout, retry or chdir was added, and no production file changed.\n\n## Cleanup\n\nThe junction was unlinked without touching its target, and every owned fixture was removed after an identity check, including the tiny C directory. The checkout ends clean at `6de50cb`, with index, fixture and lock bytes identical to the binding.\n\n## What you need to decide\n\n- **Newer author commit:** while this QA was running, the author committed `e630bb8`, a child of `6de50cb`. It switches both realpath calls in the test to `realpathSync.native`. **This QA does not cover `e630bb8`.** If that becomes the head under disposition, it needs its own QA.\n- **Short-name gap (traced, not run):** the corrected expectation uses JS `fs.realpathSync`, but production uses native realpath. On this host, `realpathSync('C:\\PROGRA~1')` returns `C:\\PROGRA~1` while native returns `C:\\Program Files`. With a TEMP spelled through an 8.3 short name (such as `RUNNER~1`), the corrected temp assertion would likely still fail. The baseline fails there too, so it isn't a D215 regression. I didn't run that configuration because it wasn't admitted. In every scenario I did run, the two agreed.\n\n## Other limits\n\n- **Worker-only C TEMP:** in scenario 5 only the test worker got the C TEMP. Vitest's main process writes about 220 transformed-module files to its own TEMP, so I kept it on G to keep that cache off C. The test only reads the worker's TEMP and cwd, and both were recorded.\n- **Typecheck half not run:** the emitting `tsc -b` part of the package typecheck was skipped. It excludes test files, writes `dist/`, and its inputs are identical to b812.\n- **Instrumentation changed mid-run:** I revised the runner and observer three times. The old copies are preserved, and no test was re-run because of a revision.\n- **Harness copies on C:** the harness saved two oversized tool outputs on C under `.claude\\projects\\…\\tool-results`. They are not QA logs or fixtures, and I left them alone.\n\nEverything is in `G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-486-d215-independent-01`:\n- REPORT.md\n- qa\\RESULTS.json\n- qa\\SHA256SUMS.json — sha256 `3114f1fc…f6d7b1`, 119 files\n- qa\\raw\\ (per-run outputs)\n- qa\\tools\\ (runner and analysis scripts)",
+  "ttft_ms": 3727,
+  "type": "result",
+  "duration_ms": 1465768,
+  "uuid": "3733bbaa-2532-470b-9964-b264b100cc80",
+  "ttft_stream_ms": 3273,
+  "time_to_request_ms": 2770,
+  "first_content_frame_ms": 3273,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 126,
+      "outputTokens": 148107,
+      "cacheReadInputTokens": 10028976,
+      "cacheCreationInputTokens": 268902,
+      "webSearchRequests": 0,
+      "costUSD": 7.1196551999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 82517,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 268902,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:05.666Z"
+}

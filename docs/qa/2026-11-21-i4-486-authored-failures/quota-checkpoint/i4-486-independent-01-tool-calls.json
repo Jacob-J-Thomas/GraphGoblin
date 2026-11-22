@@ -1,0 +1,774 @@
+[
+  {
+    "timestamp": "2026-11-21T12:43:17.327Z",
+    "name": "Bash",
+    "input": {
+      "command": "git rev-parse HEAD && git rev-parse HEAD^{tree} && git status --porcelain | head -20 && git log -1 --format='%H %s' && ls",
+      "description": "Verify checkout commit, tree and cleanliness"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:18.232Z",
+    "name": "Bash",
+    "input": {
+      "command": "ls -la /c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/ | head -100; ls /c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/ | wc -l",
+      "description": "List QA packet directory"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:21.731Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; ls -d $Q/i4-486* ; ls $Q/decision-18* $Q/i4-486-qa-candidate-preparation-01 2>&1; ls $Q/i4-486-independent-01 2>&1",
+      "description": "List 486-related packets"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:24.410Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-qa-candidate-preparation-01/receipt.json; echo ----; tail -30 $Q/i4-486-qa-candidate-preparation-01/build.log; echo ----; ls -la $Q/i4-486-independent-01 $Q/i4-486-independent-01/provider; cat $Q/i4-486-independent-01/spec.json",
+      "description": "Read candidate preparation receipt and packet spec"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:27.251Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-independent-01/BRIEF.md | head -5; echo; cat $Q/decision-188.md",
+      "description": "Read brief header and decision-188"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:29.405Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; ls -la $Q/i4-486-architecture-03; cat $Q/i4-486-architecture-03/README.md",
+      "description": "Read architecture-03 README"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:31.303Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-architecture-03/boundaries.md",
+      "description": "Read 26 boundaries document"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:34.139Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-architecture-03/verification.md",
+      "description": "Read verification matrix (acceptance contract)"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:34.879Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-architecture-03/expression-provenance.md",
+      "description": "Read expression provenance design"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:37.212Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-architecture-03/critique-disposition.md; ls $Q/i4-486-implementation-routing-01",
+      "description": "Read critique disposition, list routing packet"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:38.123Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; cat $Q/i4-486-implementation-routing-01/90-independent-review-qa-handoff.md",
+      "description": "Read independent review/QA handoff"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:40.886Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; ls -la $Q/i4-486-source-freeze-01; python -c \"import json;d=json.load(open(r'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-source-freeze-01/receipt.json'));print(json.dumps({k:v for k,v in d.items() if k!='files'},indent=1)[:3000]);print(type(d.get('files')))\"",
+      "description": "Inspect source freeze receipt structure"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:44.225Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents; python -c \"\nimport json;d=json.load(open(r'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-source-freeze-01/receipt.json'))\nprint([k for k in d.keys()])\nf=d['files'];print(len(f));print(json.dumps(f[:3],indent=1))\n\"",
+      "description": "Inspect frozen file hash entries"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:43:49.139Z",
+    "name": "Bash",
+    "input": {
+      "command": "mkdir -p /g/ggq/qa-scratch/i4-486-independent-01 && cd /g/ggq/gg-i4-486-qa/GraphGoblin && python -c \"\nimport json,hashlib,os\nd=json.load(open(r'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-source-freeze-01/receipt.json'))\nok=0;bad=[]\nfor f in d['files']:\n  b=open(f['path'],'rb').read()\n  h=hashlib.sha256(b).hexdigest()\n  if h==f['sha256'] and len(b)==f['bytes']: ok+=1\n  else: bad.append((f['path'],h,len(b)))\nprint('ok',ok,'bad',bad)\n\" && git diff --name-only 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD | wc -l && git status --porcelain --ignored | grep -v node_modules | head -40",
+      "description": "Verify 52 frozen hashes and diff file count"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:31.455Z",
+    "name": "Bash",
+    "input": {
+      "command": "git status --porcelain 2>/dev/null | head; echo \"exit=$?\"; git diff --name-only 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD",
+      "description": "Check porcelain status and list changed files"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:34.369Z",
+    "name": "Bash",
+    "input": {
+      "command": "cat AGENTS.md && ls docs docs/decisions | head -150",
+      "description": "Read AGENTS.md and list docs"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:36.538Z",
+    "name": "Bash",
+    "input": {
+      "command": "cat docs/README.md | head -80 && echo ======= && cat docs/decisions/ADR-0088-authored-execution-failures.md",
+      "description": "Read docs README and ADR-0088"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:38.481Z",
+    "name": "Bash",
+    "input": {
+      "command": "grep -n -i \"QA\\|independent\" docs/15-issue-workflow.md | head -60",
+      "description": "Scan docs15 for QA guidance"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:42.922Z",
+    "name": "Bash",
+    "input": {
+      "command": "cat apps/api/src/index.ts && sed -n 1,200p apps/api/src/container.ts",
+      "description": "Read API index and container composition"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:44.857Z",
+    "name": "Bash",
+    "input": {
+      "command": "sed -n 200,520p apps/api/src/container.ts",
+      "description": "Read more of container composition"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:47.090Z",
+    "name": "Bash",
+    "input": {
+      "command": "cat apps/api/src/testing/test-app.ts | head -200; ls apps/api/scripts/failure-evidence/ ; ls apps/api/dist | head -50",
+      "description": "Read test-app and list failure-evidence scripts"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:49.951Z",
+    "name": "Bash",
+    "input": {
+      "command": "sed -n 1,200p apps/api/scripts/failure-evidence/classification-storage.mjs",
+      "description": "Read existing failure-evidence boot script pattern"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:44:53.945Z",
+    "name": "Bash",
+    "input": {
+      "command": "node -e \"const p=require('./packages/engine/package.json');console.log(JSON.stringify(p.exports,null,1))\"; ls packages/engine/dist | head; ls packages/engine/dist/testing 2>/dev/null | head; ls apps/mcp/dist | head -30; cat apps/mcp/package.json | head -40",
+      "description": "Inspect engine exports and MCP build outputs"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:04.875Z",
+    "name": "Bash",
+    "input": {
+      "command": "cat packages/engine/tsconfig.build.json tsconfig.base.json; ls -la --time-style=full-iso packages/engine/dist/run-manager.js packages/domain/dist/expression.js packages/infrastructure/dist/fs/workspace.js apps/api/dist/container.js apps/mcp/dist/main.js apps/web/dist/index.html 2>&1; grep -n \"turbo\\|Cached\\|cache hit\\|cache miss\" /c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-qa-candidate-preparation-01/build.log | head -30",
+      "description": "Inspect build config, dist timestamps, cache status"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:08.997Z",
+    "name": "Bash",
+    "input": {
+      "command": "export PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"; node --version; which node pnpm pnpm.cmd; ls node_modules/.bin/tsc* 2>/dev/null | head -3; cd /g/ggq/gg-i4-486-qa/GraphGoblin; ls node_modules/.bin | grep -i tsc; ls node_modules/typescript/bin 2>/dev/null",
+      "description": "Confirm project Node and tsc availability"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:12.293Z",
+    "name": "Bash",
+    "input": {
+      "command": "ls $HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/ | head -30; ls $HOME/.claude/codex-runs/GraphGoblin/runtime/",
+      "description": "List project runtime directory contents"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:21.488Z",
+    "name": "Bash",
+    "input": {
+      "command": "export PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"; S=/g/ggq/qa-scratch/i4-486-independent-01; export TEMP=$(cygpath -w $S/tmp) TMP=$(cygpath -w $S/tmp); mkdir -p $S/tmp $S/rebuild; cd /g/ggq/gg-i4-486-qa/GraphGoblin; ls /c/nvm4w/nodejs/ | grep -i pnpm; for p in domain engine infrastructure; do (cd packages/$p && node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json --outDir $(cygpath -w $S/rebuild/$p) --tsBuildInfoFile $(cygpath -w $S/rebuild/$p.tsbuildinfo) ; echo \"$p tsc exit=$?\"); done",
+      "description": "Recompile changed packages into scratch for binding",
+      "timeout": 300000
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:45.479Z",
+    "name": "Bash",
+    "input": {
+      "command": "S=/g/ggq/qa-scratch/i4-486-independent-01; cd /g/ggq/gg-i4-486-qa/GraphGoblin; python - <<'EOF'\nimport os,hashlib\nS='G:/ggq/qa-scratch/i4-486-independent-01/rebuild'\ntot=0;diff=[];missing=[]\nfor p in ['domain','engine','infrastructure']:\n  base=os.path.join(S,p)\n  for r,_,fs in os.walk(base):\n    for f in fs:\n      if not (f.endswith('.js') or f.endswith('.d.ts')): continue\n      a=os.path.join(r,f); rel=os.path.relpath(a,base)\n      b=os.path.join('packages',p,'dist',rel)\n      tot+=1\n      if not os.path.exists(b): missing.append(b); continue\n      if open(a,'rb').read()!=open(b,'rb').read(): diff.append(b)\nprint('compared',tot,'diff',len(diff),diff[:10],'missing',len(missing),missing[:10])\nEOF",
+      "description": "Compare scratch compile vs dist JS/d.ts"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:45:51.530Z",
+    "name": "Bash",
+    "input": {
+      "command": "export PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"; S=/g/ggq/qa-scratch/i4-486-independent-01; export TEMP=$(cygpath -w $S/tmp) TMP=$(cygpath -w $S/tmp); cd /g/ggq/gg-i4-486-qa/GraphGoblin; for p in packages/contracts packages/adapter-codex packages/api-client apps/api apps/mcp; do n=$(basename $p); if [ -f $p/tsconfig.build.json ]; then (cd $p && node $(cygpath -w /g/ggq/gg-i4-486-qa/GraphGoblin/node_modules/typescript/bin/tsc) -p tsconfig.build.json --outDir $(cygpath -w $S/rebuild/$n) --tsBuildInfoFile $(cygpath -w $S/rebuild/$n.tsbuildinfo); echo \"$n exit=$?\"); else echo \"$n no build cfg\"; fi; done; ls packages apps",
+      "description": "Recompile remaining runtime packages to scratch",
+      "timeout": 300000
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:20.131Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; python - <<'EOF'\nimport os\nS='G:/ggq/qa-scratch/i4-486-independent-01/rebuild'\nm={'contracts':'packages/contracts','adapter-codex':'packages/adapter-codex','api-client':'packages/api-client','api':'apps/api','mcp':'apps/mcp'}\nfor p,d in m.items():\n  base=os.path.join(S,p);tot=0;diff=[];missing=[]\n  for r,_,fs in os.walk(base):\n    for f in fs:\n      if not (f.endswith('.js') or f.endswith('.d.ts')): continue\n      a=os.path.join(r,f); rel=os.path.relpath(a,base)\n      b=os.path.join(d,'dist',rel); tot+=1\n      if not os.path.exists(b): missing.append(b); continue\n      if open(a,'rb').read()!=open(b,'rb').read(): diff.append(b)\n  print(p,'compared',tot,'diff',len(diff),diff[:5],'missing',len(missing),missing[:5])\nEOF\ngrep -n '\"build\"' apps/api/package.json",
+      "description": "Compare remaining scratch compiles vs dist"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:26.091Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; wc -l packages/engine/src/authored-failure.ts; cat packages/engine/src/authored-failure.ts",
+      "description": "Read authored-failure engine module"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:29.607Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff 02351e2 HEAD -- packages/domain/src/expression.ts packages/domain/src/template.ts packages/domain/src/index.ts",
+      "description": "Read domain evaluator/template diff"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:35.659Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,40p packages/domain/src/template.ts; sed -n 80,140p packages/domain/src/template.ts; sed -n 1,140p packages/domain/src/expression.ts",
+      "description": "Read template engine config and expression module"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:41.041Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rn \"checkTemplate\\|checkExpression\" packages/*/src apps/api/src --include=*.ts | grep -v test | head -30",
+      "description": "Find publish-time template/expression validation"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:43.829Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rln \"parseAuthoredTemplate\\|expressionAst\\|jsonata(\" packages/*/src apps/api/src --include=*.ts | grep -v test | head; grep -rn \"validateLoop\\|function validate\" packages/domain/src/*.ts | grep -v test | head -20",
+      "description": "Locate loop validation of templates/expressions"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:46.081Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 100,335p packages/domain/src/graph.ts",
+      "description": "Read validateLoop"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:48.806Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"authoredSourceIssues\" -r packages/domain/src --include=*.ts | grep -v test; sed -n 1,200p packages/domain/src/source-analysis.ts",
+      "description": "Read authored source analysis validation"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:46:51.479Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 260,300p packages/domain/src/expression.ts; sed -n 100,260p packages/domain/src/node-references.ts",
+      "description": "Read expressionAst and authored source issue scope"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:07.826Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"include\\|render\\b\\|{%\" packages/domain/src/template.test.ts | head -40; grep -rhn \"template: '[^']*{%[^']*'\" packages/engine/src/handlers/*.test.ts packages/engine/src/*.test.ts apps/api/src/*.test.ts | head -30",
+      "description": "Find Liquid render-failure fixtures used in tests"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:22.591Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; ls packages/contracts/src; grep -n \"export const .*ConfigSchema\" packages/contracts/src/*.ts | head -60",
+      "description": "List contracts and node config schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:24.815Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,80p packages/contracts/src/nodes.ts | grep -v \"^\\s*//\" | head -80; sed -n 180,520p packages/contracts/src/nodes.ts",
+      "description": "Read inference/script/mutate node schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:25.676Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 520,800p packages/contracts/src/nodes.ts",
+      "description": "Read subloop/wait/heartbeat/exit schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:26.467Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,180p packages/contracts/src/mutations.ts",
+      "description": "Read mutation operation schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:28.014Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,200p packages/contracts/src/loop.ts | grep -n \"settings\\|workingDirectory\\|WorkingDirectory\\|maxNodeVisits\\|Settings\" | head -30; grep -n \"WorkingDirectorySchema\\|workingDirectory\" packages/contracts/src/*.ts | grep -v test | head",
+      "description": "Locate workingDirectory settings schema"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:29.269Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"LoopDefinitionSchema\\b\\|export const LoopDefinition\\|LoopSettingsSchema\\|variables\\|returns\\|vars\" packages/contracts/src/loop.ts | head -30",
+      "description": "Locate loop definition schema"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:32.031Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,125p packages/contracts/src/loop.ts; grep -n \"ValueSourceSchema\\|TemplateSchema =\\|ExpressionSchema =\\|RepairPolicySchema\" -A8 packages/contracts/src/common.ts | head -70",
+      "description": "Read loop definition and common value schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:34.900Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; cat packages/engine/src/handlers/script.ts | sed -n 1,120p",
+      "description": "Read script handler"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:38.083Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; cat packages/engine/src/handlers/heartbeat.ts",
+      "description": "Read heartbeat handler"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:43.678Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff --stat 02351e2 HEAD -- . ':!*.test.ts' ':!*.md'; git diff 02351e2 HEAD -- packages/engine/src/handlers/wait.ts packages/engine/src/handlers/decision.ts",
+      "description": "Diff stats and wait/decision handler changes"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:47.886Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff 02351e2 HEAD -- packages/engine/src/handlers/subloop.ts packages/engine/src/handlers/common.ts",
+      "description": "Read subloop and common handler diffs"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:50.920Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff 02351e2 HEAD -- packages/engine/src/handlers/inference.ts packages/engine/src/handlers/inference-context.ts",
+      "description": "Read inference handler diff"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:54.443Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff 02351e2 HEAD -- packages/engine/src/run-manager.ts packages/engine/src/handler.ts packages/engine/src/ports.ts packages/infrastructure/src/fs/",
+      "description": "Read run-manager, ports and workspace diffs"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:47:59.955Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"export interface HarnessPort\" -A60 packages/engine/src/ports.ts; grep -n \"export interface HarnessSession\\|export interface HarnessResult\\|export interface StructuredPort\\|export interface HttpProbePort\\|export interface ClassifierRegistryPort\\|export interface DeciderPort\\|export interface ModelCatalogPort\" -A25 packages/engine/src/ports.ts | head -230",
+      "description": "Read harness and other port interfaces"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:03.492Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"export class FakeHarness\" -A120 packages/engine/src/testing/fakes.ts | head -170; grep -n \"HarnessEvent =\" -A20 packages/engine/src/ports.ts | head -30",
+      "description": "Read FakeHarness and HarnessEvent types"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:07.940Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,200p packages/engine/src/handlers/inference-turn.ts",
+      "description": "Read inference-turn visit reconstruction"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:13.818Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; git diff 02351e2 HEAD --stat -- '*.test.ts'; git diff 02351e2 HEAD -- apps/api/src/prompt-provenance.test.ts | head -250",
+      "description": "Review author's prompt-provenance test diff for scope"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:25.689Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 1,80p apps/api/src/create-api-key.ts; grep -n \"authorization\\|x-api-key\\|Bearer\" apps/api/src/plugins/auth.ts | head -20; grep -n \"GG_[A-Z_]*\" -o apps/api/src/config.ts | sort -u | head -60",
+      "description": "Read API key creation, auth header and config env"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:31.782Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 80,140p apps/api/src/create-api-key.ts; grep -rn \"localStorage\\|sessionStorage\" apps/web/src --include=*.ts --include=*.tsx | grep -i \"key\\|token\" | head -10",
+      "description": "Read createApiKey and web credential storage"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:35.498Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"API_KEY_STORAGE =\" -r apps/web/src/api/api-key.ts; ls node_modules/.pnpm | grep -i \"^playwright\\|^@playwright\" | head; ls $LOCALAPPDATA/ms-playwright 2>/dev/null | head; head -60 /c/Users/98jak/.codex/skills/playwright/SKILL.md",
+      "description": "Check Playwright install and skill workflow"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:41.380Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; cat apps/mcp/src/config.ts | head -60; grep -n \"name: '\\(get_run\\|wait_for_run\\|list_runs\\|list\\)\" -r apps/mcp/src/*.ts | head; grep -n \"registerTool\\|server.tool(\" apps/mcp/src/*.ts | head -40",
+      "description": "Read MCP config and tool registrations"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:45.530Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 60,130p apps/mcp/src/tools.ts; sed -n 180,330p apps/mcp/src/tools.ts | grep -n \"name\\|'get_run'\\|'wait_for_run'\\|'list_runs'\\|summar\\|failure\" | head -40",
+      "description": "Read MCP run tool shapes"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:48.334Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rn \"export function summarizeRun\" -A30 apps/mcp/src/*.ts | head -40; grep -n \"'/runs/:id/resume'\\|resume\\b\" apps/api/src/routes/runs.ts | head -20; ls apps/api/src/routes",
+      "description": "Read MCP run summary and resume route"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:48:50.943Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 380,470p apps/api/src/routes/runs.ts; grep -n \"ResumeRequestSchema\\|freshSession\\|observedSeq\" packages/contracts/src/run.ts | head -20",
+      "description": "Read resume route and request schema"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:23.051Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"app\\.\\(get\\|post\\|put\\|delete\\)(\" -A1 apps/api/src/routes/runs.ts apps/api/src/routes/loops.ts | grep \"'/\" | head -50; grep -n \"StartRunRequestSchema\\|export const StartRun\" -A12 packages/contracts/src/run.ts | head -30",
+      "description": "List run/loop routes and start request schema"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:26.636Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 70,100p apps/api/src/routes/runs.ts; sed -n 330,360p apps/api/src/routes/runs.ts; grep -n \"\\\"@libsql\\|better-sqlite\\|node:sqlite\" packages/infrastructure/package.json packages/infrastructure/src/sqlite/*.ts | head -5",
+      "description": "Read start-run, observation routes and SQLite driver"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:32.048Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"resolveModel\" packages/engine/src/run-manager.ts | head; grep -n \"EVALUATION_UNAVAILABLE\\|EVALUATION_INVALID_CONFIGURATION\" packages/engine/src/*.ts | grep -v test | head -20",
+      "description": "Locate model resolver failure mapping"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:34.104Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 2440,2505p packages/engine/src/run-manager.ts",
+      "description": "Read resolveModel service implementation"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:39.425Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"'/settings/[a-z/:-]*'\\|'/models[a-z/:-]*'\\|'/catalog[a-z/:-]*'\" apps/api/src/routes/*.ts | head -30; grep -n \"unavailable\" packages/domain/src/model-resolution.ts | head -10",
+      "description": "Find catalog editing routes and unavailable status"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:42.455Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 55,130p packages/domain/src/model-resolution.ts; sed -n 90,140p apps/api/src/routes/settings.ts; grep -n \"class SqliteModelCatalog\" -A30 packages/infrastructure/src/sqlite/*.ts | grep -n \"async \\|availability\" | head",
+      "description": "Read model availability logic and settings route"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:45.063Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rn \"'/model-catalog\\|'/catalog\\|modelCatalog\\|catalog\\.\" apps/api/src/routes/system.ts apps/api/src/routes/settings.ts | head -15; grep -rln \"repos.catalog\" apps/api/src | grep -v test | head",
+      "description": "Find model catalog REST endpoints"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:50.501Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 355,382p apps/api/src/routes/settings.ts; grep -n \"DEFAULT_MODEL_CATALOG\" -A12 packages/infrastructure/src/sqlite/*.ts | grep -m8 \"model:\\|harness:\"; grep -rn \"MODEL_CATALOG\\b\\|DEFAULT_MODEL_CATALOG =\" packages/*/src --include=*.ts | grep -v test | head -3",
+      "description": "Read catalog enable route and default catalog"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:49:53.680Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 364,420p packages/infrastructure/src/sqlite/settings.ts | grep -n \"model:\\|efforts\\|harness:\" | head -20; grep -n \"GG_DEFAULTS\\|defaults\" apps/api/src/config.ts | head -10",
+      "description": "Check default catalog models/efforts and defaults config"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:51:31.245Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/PLAN.md",
+      "content": "# #486 independent touched-system behavior QA \u00b7 PLAN\n\nWritten 2026-11-21 before any scenario execution. Author: actual Claude Code (Opus 5.5, xhigh) in the independent QA role, not author/reviewer/auditor. Any later amendment to this plan is appended in the \"Plan amendments\" section with time and reason; nothing above it is rewritten.\n\n## Identity and preconditions (verified before writing this plan)\n\n- Checkout `G:/ggq/gg-i4-486-qa/GraphGoblin`, detached HEAD `633d9ac72c10fe4b8d76f7ba50221f9ed8557cb9`, tree `d0e38c6c0212e312e6b605ac3d6bc8f7af5a129f`, parent `02351e2fb932b3be44e7cc3fb3943a61d568226c`. `git status --porcelain` empty.\n- Root preparation `i4-486-qa-candidate-preparation-01/receipt.json`: sourceClean true, filesVerified 52, buildExitCode 0, Node v22.23.4.\n- Independent source binding: all 52 `i4-486-source-freeze-01/receipt.json` paths re-hashed in this checkout, 52/52 SHA-256 and byte length equal; `git diff --name-only 02351e2..HEAD` is exactly those 52 paths.\n- Independent build binding: the root build replayed 9/12 Turbo tasks from cache, so I recompiled `contracts, domain, engine, infrastructure, adapter-codex, api-client, api, mcp` with the checkout's own `tsc -p tsconfig.build.json --outDir <scratch>` and compared every emitted `.js`/`.d.ts`: 576 files, 0 differences, 0 missing. Web `dist/` was a Turbo cache miss (fresh Vite build); web source is unchanged versus parent and is bound by hash manifest only (no independent Vite rebuild, to avoid mutating `dist`).\n- Runtime: project Node v22.23.4 first on PATH. Every owned process gets `TEMP`/`TMP` under `G:/ggq/qa-scratch/i4-486-independent-01`. No global HOME/CODEX_HOME change. No product source, index, commit, push, GitHub mutation, install or dependency change.\n\n## Evidence classes (used on every result row)\n\n- **NATIVE**: real Node child process (`ProcessScripts`) appending to a disposable counter file; real filesystem workspace/context/file-return bytes (`OwnedRunResources`); real disk-backed SQLite file (libsql) with shutdown/reopen; real loopback HTTP listener owned by the driver reached through the production `HttpProbes` adapter.\n- **PUBLIC-API**: built API composed by `loadConfig \u2192 createContainer(config, overrides) \u2192 start \u2192 buildApp \u2192 listen(127.0.0.1)` with Bearer API key created by the exported `createApiKey`; REST over real loopback sockets.\n- **SCRIPTED**: QA-written harness/structured/decider/classifier ports passed through the existing `ContainerOverrides`; every call counted per port (starts, resumes, results resolved/rejected, cancels, contextWindow, structured completes, decider/classifier calls). A QA-written wrapper around `container.ports.events` is used only for injected storage faults (precedent: `apps/api/scripts/failure-evidence/classification-storage.mjs`); it is labelled SCRIPTED-STORAGE.\n- **DOMAIN-PUBLIC**: direct calls of exported `@graphgoblin/domain` built functions (`observeExpression`, `observePredicate`, `observeTemplate`, `evaluateExpression`, `evaluatePredicate`, `renderTemplate`, `checkExpression`).\n- **SYNTHETIC-SEAM**: a QA-owned Node module-resolution hook that substitutes a controllable `renderTemplate` export for the engine's import of `@graphgoblin/domain` (B17 only). No product file changes. Reachability is synthetic-only and stated as such.\n- **MCP-STDIO**: built `apps/mcp/dist/main.js` as a child process over stdio, driven by the repository's installed `@modelcontextprotocol/sdk` client.\n- **BROWSER**: installed `playwright-core@1.63.0` with its already-present Chromium against the owned API serving built `apps/web/dist`; DOM, network log, viewport and screenshots retained.\n- **STATIC**: source reading only; never counted as behavior evidence.\n\n## Owned resources\n\n- Ports: one API port per driver chosen from 5871\u20135879 (never 4747/4748/11434); loopback HTTP probe listener on an OS-assigned port (listen 0) on 127.0.0.1. MCP uses stdio only.\n- Each driver records its PID, listener ports, child PIDs it spawns (MCP), and performs authenticated `POST /system/shutdown`-style drain only if that route exists; otherwise `app.close()` + `container.stop()` (the composition's own drain) and then verifies the port no longer accepts connections and the MCP child has exited. No broad process termination.\n- Data: per-driver data directory under `G:/ggq/qa-scratch/i4-486-independent-01/data/<driver>-<attempt>`; disk SQLite in that directory (default `GG_DB_URL`). Retained after the run for byte checks.\n\n## Fixture rules\n\n- Every loop is published through `POST /loops` + `POST /loops/:id/publish` and must publish (HTTP 200) \u2014 a fixture rejected at publish counts as a setup failure, not a boundary pass. Liquid runtime faults use `{% include \"<marker>\" %}` (parses; fails at render because includes are disabled) or a taken-branch filter fault; JSONata runtime faults use runtime-only constructs (`$error`, `$assert`, type errors, `$eval` of malformed/unsafe strings, recursion depth).\n- Canary markers: `QA486-LIT-*` (literal `$error`/`$assert` arguments, author-label text), `QA486-IN-*` (evaluated input data: trigger payload, probe response, child result), `QA486-EXT-*` (injected external exception messages), `QA486-PATH-*` (include/path names), `QA486-HAR-*` (harness adapter text, positive-control raw contract).\n- \"Absent\" checks apply only to new authored/canonical causes. Positive raw controls (unknown harness text, unexpected file receipt error, P01/P02 text, B25 request copy) assert presence where the existing contract publishes it.\n\n## Acceptance matrix (expected outcome written before execution)\n\nNotation: code / `details.boundary` / indices / `resumable`; effect counts are deltas measured on the real sink unless marked SCRIPTED. \"Resume refused\" means `POST /runs/:id/resume` with current `observedSeq` returns 409 `FAILURE_NOT_RESUMABLE` and event bytes are unchanged afterwards.\n\n### D1 \u00b7 domain-observe (DOMAIN-PUBLIC)\n\n| ID | Input | Expected |\n| --- | --- | --- |\n| J01 | `$error(\"QA486-LIT-J01\")` on `{a:1}` | observe: ok false, reason `evaluation-rejected`; legacy `evaluateExpression` rejects ExpressionError whose message contains the literal (legacy contract retained) |\n| J02 | grouped `($x := 1; $error(\"QA486-LIT-J02\"))` | reason `evaluation-rejected` |\n| J03 | conditional taken `a = 1 ? $error(\"\u2026\") : 2` / untaken `a = 2 ? $error(\"\u2026\") : 7` | taken: `evaluation-rejected`; untaken: ok true value 7 |\n| J04 | nested function `($f := function($v){ $error(\"\u2026\") }; $f(1))` | `evaluation-rejected` |\n| J05 | dynamic `$error(\"QA486-\" & a)` with input carrying `QA486-IN-J05` | `evaluation-rejected` |\n| J06 | `$assert(false, \"QA486-LIT-J06\")` | `evaluation-rejected` |\n| J07 | length: `$error` literal of 5,000 chars; character: literal with newline, quotes, emoji, `<script>` | `evaluation-rejected` for both |\n| J08 | type error `$length(123)`, `$substring(1)` | `evaluation-rejected` |\n| J09 | `$eval(\"1 +\")` (malformed runtime string) and `$eval(\"$match('a', /(a+)+$/)\")` (unsafe runtime regex) | `evaluation-rejected` (A1: never `compile`/`unsafe-regex`) |\n| J10 | top-level malformed `1 +` and top-level unsafe regex `$match(a, /(a+)+$/)` | reason `compile` / `unsafe-regex` (SYNTHETIC reachability: publication refuses these, see L-PUB) |\n| J11 | depth `($f := function($n){ $n = 0 ? 0 : 1 + $f($n-1) }; $f(5000))` | reason `depth` |\n| J12 | time: CPU-heavy expression with `timeoutMs: 50` | reason `time` |\n| J13 | binding preparation: options.bindings with enumerable getter that throws ExpressionError / plain Error | no `reason`; error identity preserved for ExpressionError; plain error legacy-wrapped; getter read once |\n| J14 | external callback: binding function that throws a genuine ExpressionError (rethrown earlier depth error from J11) | identity preserved; reason `evaluation-rejected`, NOT `depth` (cross-call ownership) |\n| J15 | external name-spoof `Error{name:'ExpressionError'}` and code-spoof `{code:'EXPRESSION_ERROR',message}` thrown by binding | reason `evaluation-rejected` only; error wrapped by legacy policy; no reason derived from name/code |\n| J16 | predicate coercion: `observePredicate` with result a Proxy whose ownKeys trap throws | observation rejects/throws without authored reason (SYNTHETIC: unreachable with JSON run data) |\n| J17 | predicate success controls true/false/null/[]/[1]/{}/{a:1} | values false/false/false/false/true/false/true... per existing coercion |\n| J18 | overlapping evaluations of same cached source, one failing one succeeding | independent outcomes |\n| J19 | Liquid `observeTemplate`: `{% include \"QA486-PATH-T\" %}` at line 2; render error via missing filter arg in taken branch; untaken-branch control; parse error | render fact with line 2/column; parse fact for parse error; untaken succeeds; fact contains only phase/line/column |\n| J20 | fact closure | every observation's keys \u2286 {ok,value,error,reason}; reason \u2208 closed set; template fact keys \u2286 {phase,line,column} |\n\n### D2 \u00b7 leaf boundaries over the built API (PUBLIC-API + NATIVE + SCRIPTED)\n\n| ID | Boundary | Fixture | Expected |\n| --- | --- | --- | --- |\n| L-PUB | publish validation | top-level malformed expression / unsafe regex / Liquid parse error in a selector | publish refused (4xx), zero runs; shows J10 is synthetic-only |\n| B01 | script.args | native append script; args[0] ok, args[1] `{% include \"QA486-PATH-B01\" %}` | TEMPLATE_ERROR, `script.args`, argumentIndex 1, message \"Script argument 2 failed. The template could not be rendered at line 1, column 1\u2026\", false; native counter lines +0; 0 `script.dispatched`; Resume refused, counter still +0 |\n| B01c | control | same loop, args valid | succeeded; counter +1 exactly, same file |\n| B01u | uncertain dispatch control | script command path that cannot spawn? (see note) | existing SCRIPT_START_FAILED/SCRIPT_OUTCOME_UNCERTAIN policy unchanged (record only) |\n| B02 | heartbeat.probe.headers | http probe, headers `{a:\"ok\", b:\"{% include %}\"}` | TEMPLATE_ERROR, headerIndex 1, \"Heartbeat probe header 2 failed\u2026\", false; listener requests +0; 0 beats |\n| B03 | heartbeat.probe.url / body | url include fault; body include fault (POST) | TEMPLATE_ERROR url/body; listener +0; 0 beats |\n| B03c | control | valid url/body/headers, until `probe.status = 200` | succeeded; listener +1; 1 beat; headers/body received byte-exact |\n| B04 | heartbeat.probe.args | script probe args[1] include fault | TEMPLATE_ERROR argumentIndex 1; native counter +0; 0 beats; workspace not resolved (temp dir absent) |\n| B05 | heartbeat.until | http probe; until `$error(\"QA486-LIT-B05\")` | EXPRESSION_ERROR `heartbeat.until`, beat 1, \"Heartbeat until predicate, beat 1 failed. The expression could not evaluate this input\u2026\", false; listener +1 exactly; 1 `heartbeat.beat`; no timer/park; Resume refused; listener still +1 |\n| B05b | beat-2 variant | until `beat = 2 ? $error(...) : false`, interval 1s, maxBeats 5 | fails at beat 2 after one park; listener +2; 2 beats |\n| B06 | heartbeat.deadline | until false, deadline `not-a-date` (renders) and deadline include fault | TEMPLATE_ERROR fixed \"must render to a timestamp\" (no rendered value echoed) / Liquid reason; false; listener +1; 1 beat |\n| B06c | until wins | until true, deadline invalid | succeeded (deadline never rendered) |\n| B21 | decision.instructions / question | LLM decision with include fault; classifier decision question include fault | TEMPLATE_ERROR; SCRIPTED decider/classifier calls +0 |\n| B22 | decision.context.messages.where | messages where `$error(...)` on item 2 (index 1 first true for index 0) | EXPRESSION_ERROR itemIndex per first failing item; decider calls +0 |\n| B20 | expression decision route | route expression `$error(\"QA486-LIT-B20\")` | existing `EVALUATION_EXPRESSION_FAILED`, fixed existing message, false, no `details.boundary`; literal absent |\n| B23 | wait.prompt | input wait with include fault | TEMPLATE_ERROR `wait.prompt`; no waiting, no wait identity/timer |\n| B24 | wait.timestamp | until-wait renders `QA486-IN-B24` (from payload) | TEMPLATE_ERROR fixed timestamp cause, false; payload marker absent |\n| B25 | signal filter | signal wait with filter `$error(\"QA486-LIT-B25\")`; send signal | HTTP 400 EXPRESSION_ERROR with existing request copy (literal presence recorded as established contract); run still waiting with same waitId; events added 0 (no signal/wake/failure) |\n| P01 | Mutate | mutate set expression `$error(\"QA486-LIT-P01\")` | existing MUTATION_ERROR shape with bounded authored text (literal present = established P01 contract), resumable false |\n| P02 | Exit | exit returns `$error(\"QA486-LIT-P02\")` | existing EXPRESSION_ERROR exit shape retained (record literal presence), false |\n| PRIV | privacy | B05/B22/B24 stored failure + run.failed + REST | `QA486-LIT-*`, `QA486-IN-*`, `QA486-PATH-*` absent from new causes; failure JSON == run.failed failure JSON == REST snapshot failure |\n| LOG | logging | capturing logger passed via overrides | no log record containing any `QA486-` canary emitted by new JSONata/Liquid sites |\n| EXT-H | heartbeat HTTP port rejection | scripted `probes` override throwing (a) real `ExpressionError`, (b) Error named `ExpressionError`, (c) object `{code:'EXPRESSION_ERROR'}` | each: INTERNAL_ERROR safe copy, resumable true, no `details.boundary`, `QA486-EXT` absent; 0 beats |\n| EXT-S | script runner rejection after dispatch | scripted `scripts` override throwing the same three | SCRIPT_OUTCOME_UNCERTAIN, 1 dispatch marker, no authored boundary |\n| EXT-W | workspace/secret | secret lookup missing \u2192 SECRET_MISSING unchanged | SECRET_MISSING retained |\n\nNote on B01u: if a non-spawnable command yields `SCRIPT_START_FAILED` it is recorded as an existing-policy control only.\n\n### D3 \u00b7 children (PUBLIC-API + NATIVE counter in child + SCRIPTED harness where used)\n\n| ID | Fixture | Expected |\n| --- | --- | --- |\n| B07 | parent project mode, input messages where `$error` on item 2 | EXPRESSION_ERROR `subloop.input.messages.where` itemIndex 1, parent node, 0 child runs, 0 `child_run.started` |\n| B07a | artifacts where variant | same on `subloop.input.artifacts.where` (requires a seeded artifact; if no public way to seed an artifact without a harness transcript, use inference transcript artifact) |\n| B07c | built-in selection modes `all`/`last` | no evaluation, child created |\n| B08 | input.vars map 2nd key `$error` | `subloop.input.vars` mapIndex 1 \"\u2026variable mapping 2\u2026\"; 0 children |\n| B09 | inject[1] content include fault | `subloop.input.inject.content` messageIndex 1; 0 children |\n| B10 | trigger.payload `$error` | `subloop.input.trigger.payload`; 0 children |\n| B11 | custom patch `$error` / non-patch result / region outside mutable | E patch eval; \"result is not a JSON patch\"; \"writes outside the mutable regions\"; all false; child succeeded (1 child), one `child_run.finished`, adjacent failure; no `childRunId/childNodeId/childDetails` in parent failure details |\n| B12 | output.vars explicit map 2nd key `$error` reading child result marker | mapIndex 1; 1 child succeeded; child's own failure absent; parent Resume refused; child count still 1; child not resumable action |\n| B13 | output messages where `$error` | itemIndex; same completion semantics |\n| CH-NEST | inline vs direct child vs depth-two: same B22-style decision selector fault (or B05) inside leaf | leaf code/boundary/resumable identical at depth 0/1/2; parent failures are the existing child-failure wrapper with `childRunId/childNodeId/childDetails`; following links reaches leaf; no `inference`/turn copied into parent |\n| CH-INF | depth-one and depth-two inference child with after-result B19 failure | parent wrapper links child; child snapshot carries authoritative `failure.inference`; parent failure has no `inference` field copied from child |\n| CH-DEDUP | genuinely resumable parent mapping fault: output vars map reads a child-produced value through an injected storage fault? \u2014 chosen: transient `INTERNAL_ERROR` from SCRIPTED-STORAGE on the parent's first post-child append | one child, adjacent completion/failure, Resume allowed, after Resume: still one child, `child_run.finished` not duplicated (terminal-seq reuse), one wake, child never resumed |\n| CH-DET | deterministic mapping fault (B12) | Resume refused, 1 child, child status unchanged |\n\n### D4 \u00b7 inference (PUBLIC-API + SCRIPTED harness/structured + NATIVE context files)\n\n| ID | Fixture | Expected |\n| --- | --- | --- |\n| B14 | input transform set expression `$error` op index 1 | MUTATION_ERROR `inference.input` operationIndex 1 operationKind `set`; harness starts +0; no `harness.turn`; false |\n| B14m | input transform each op kind (set template, append-message, truncate where, drop where, replace where/pattern, coerce target) one fault each | fixed safe cause per kind; regex invalid \u2192 \"regular expression is invalid or unsafe\" |\n| B15 | contextFiles [ok, include-fault, ok] | TEMPLATE_ERROR fileIndex 1; file 0 exists byte-exact; file 1 and 2 absent; harness +0 |\n| B16 | prompt include fault | TEMPLATE_ERROR `inference.prompt.template`; harness +0; no harness.turn |\n| B18 | schema repair prompt include fault; harness returns invalid structured | TEMPLATE_ERROR `inference.output.schema.repair.prompt` attempt 1, `phase:\"after-result\"`, received-result sentence, no uncertainty suffix, false; harness starts 1, resumes 0 (no repair turn) |\n| B19 | output transform `$error` | MUTATION_ERROR `inference.output.transforms`, phase after-result, sentence, false; starts 1; `failure.inference` = last turn (turnId/visitId/kind/submission) |\n| B19-ns | B19 with harness announcing no session and no accepted marker | same; submission `delivery-uncertain`; no \"no usable session\" suffix |\n| B19-art | artifact/schema control: invalid structured, repair disabled \u2192 OUTPUT_SCHEMA_MISMATCH | established code/policy, no `phase` |\n| H-D | harness `start` throws synchronously before handle (plain Error with code, and domain-lookalike TemplateError / name spoof / code spoof) | HARNESS_TURN_FAILED, submission definitely-not-submitted, adapter text public (QA486-HAR marker present = established contract); Resume allowed for codex (H); resume re-sends exact stored prompt (same turnId), starts +1 |\n| H-Q | iterator/result rejection after handle with session + accepted marker | HARNESS_DELIVERY_UNCERTAIN, Q, Resume allowed (H&&U) \u2192 harness.resume with same session id |\n| H-Qn | result rejection after handle, no session | HARNESS_DELIVERY_UNCERTAIN, false, uncertainty suffix present |\n| H-UG | unusable Q guard: after H-Qn, force a Resume path? (Resume refused) \u2014 and replay not used. Additionally: a run whose prior Q is unusable reaching the handler again through a resumable prep failure | guard fires before resolver: catalog disable has no effect on the code (HARNESS_DELIVERY_UNCERTAIN), 0 prep effects (no context-file writes, no input-transform evaluation) |\n| RES | resolver: disable model via `PATCH /model-catalog/codex/<model>` then start | EVALUATION_UNAVAILABLE, true, no harness.turn; re-enable; Resume \u2192 succeeded |\n| RES-SM | session-missing then resolver unavailable then restored | first: HARNESS_SESSION_MISSING (resume-own session, harness error session-missing); disable model; Resume refused (session-missing false) \u2192 use recover-session? Per contract: missing-session is false; resolver failure on re-entry keeps prior provenance informational. Sequence driven: fail Q\u2192 resumable prep failure w/ prior; then restore; reaches HARNESS_SESSION_MISSING actionable failure; then `recover-session` (explicit fresh) with saved prompt \u2192 new start with same prompt |\n| FRESH | explicit fresh session with saved prompt vs without (prompt rendered) | recover-session submits stored prompt (no re-render: template now irrelevant) |\n| RETRY | exact retry evidence: SCRIPTED-STORAGE fault on `harness.turn` append (commit then throw) \u2192 run.failed.inference.retry; then resumable prep failure (catalog disabled) on Resume \u2192 second run.failed has no `retry`; restore catalog; Resume \u2192 harness start with exact stored prompt, same turnId/context/resumeSessionId | as stated; no repeated retry object; starts +1 total after repair |\n| B17 | SYNTHETIC-SEAM: canonical rerender throws `TemplateError(\"QA486-EXT-B17\")` during trimming | INTERNAL_ERROR fixed internal message, resumable true, node `respond`, no harness.turn, marker absent; positive control: same chat run without fault trims history and succeeds (harness start +1, prompt fits) |\n| B17h | contextWindow throws / fits throws (no seam) | HARNESS_TURN_FAILED generic harness mapping (adapter text public), not INTERNAL_ERROR |\n| STRONG | abort/cancel race: harness result held; cancel run while output transform would fail | run cancelled; no after-result phase; no new run.failed |\n| TERM | termination-unconfirmed stronger outcome vs B19 | stronger evidence keeps HARNESS_TERMINATION_UNCONFIRMED code/copy (if reachable via harness error event `HARNESS_TERMINATION_UNCONFIRMED`) |\n| PRIOR | prep failure on re-entry with prior accepted turn | failure carries prior `inference` provenance (same turnId), no new harness.turn/submission; no invented marker |\n\n### D5 \u00b7 workspace and file return (PUBLIC-API + NATIVE)\n\n| ID | Fixture | Expected |\n| --- | --- | --- |\n| W-T | template working directory `  {{trigger.payload.dir}}\\n` | script cwd equals trimmed absolute path; directory created; file-return written there; same path reused by file return |\n| W-F / W-R / W-TMP | fixed absolute, fixed relative, temp | created/reused; temp under `<dataDir>/workspaces/<runId>` |\n| W-E | template rendering empty (`{{ vars.missing }}`) | TEMPLATE_ERROR `settings.workingDirectory.template` \"rendered to an empty path\", false; no mkdir anywhere; script counter +0 |\n| W-L | template include fault | TEMPLATE_ERROR Liquid reason; no mkdir |\n| B26 | exit file-return in a loop whose workspace template is bad but no node used workspace | run terminal status per exit (succeeded) unchanged; `return.failed` receipt with error = fixed safe message; no file written; no run failure; one failed receipt |\n| B26c | file-return control (valid) | `return.delivered`/success receipt, file bytes exact |\n| B26x | unexpected file write error (path collides with an existing directory) | existing `describeError` raw receipt text (positive raw control) |\n| W-OWN | after runs: temp workspace journal claims (via history deletion eligibility / owned resources) | temp claimed only for temp runs (observed via `/runs/:id/sessions`? or deletion eligibility) \u2014 recorded best-effort |\n\n### D6 \u00b7 public surfaces, persistence and history (PUBLIC-API + MCP-STDIO + BROWSER + NATIVE SQLite)\n\n| ID | Check | Expected |\n| --- | --- | --- |\n| S-AUTH | unauthenticated `POST /loops`, `POST /loops/:id/runs`, `GET /runs/:id`, resume | 401 each; zero loops/runs/events/effects added; read-only scoped key cannot start runs (403) |\n| S-PAR | for B05 (authored leaf), B19 (after-result), CH-NEST depth-two wrapper, B12 parent mapping | stored row failure JSON == run.failed failure == REST `/runs/:id` failure; MCP `get_run` full structured failure equal to REST; MCP `wait_for_run` terminal finished true with same failure; MCP `list_runs` reduced `{code,message}` equal to the same fields; browser inspector alert text contains the full message, recovery controls reflect resumable false (no enabled Resume), child link present for the wrapper and navigates to the child |\n| S-PRIV | same runs | QA486 canaries absent in all of: row, event, REST, MCP get/wait/list, DOM text, screenshots' DOM |\n| S-RESTART | clean shutdown, reopen same data dir with a fresh container | rows/events byte-identical (SHA-256 of sorted canonical query output) before vs after reopen and after new publication + reads; REST/MCP outputs identical |\n| S-HIST | rows captured before later publications and reads | byte-identical afterwards |\n\n## Effect accounting\n\nEvery scenario records before/after: native counter file lines and bytes, listener request log (method/path/headers/body), directory listings of workspace targets, event counts by type, SCRIPTED port counters. Expected deltas are those in the tables above; any mismatch is a FAIL row with raw data retained.\n\n## Stop rules\n\n- Max three attempts per driver for instrumentation fixes; each attempt kept under `results/<driver>/attempt-N` with its exact driver bytes hash.\n- A valid product failure stops only the dependent scenarios and is reported immediately in `BLOCKERS.md` and the final report.\n- Known gate limits (combined gates failed 4 timing cases; Windows serial coverage infra failures D195/D196) are not rerun or reinterpreted.\n\n## Plan amendments\n\n(none yet)\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:51:36.220Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01; mkdir -p $Q/drivers $Q/results $Q/fixtures; ls $Q",
+      "description": "Create packet directory structure"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:51:52.887Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/00-bind.sh",
+      "content": "#!/usr/bin/env bash\n# Independent source and build binding for #486 QA. Read-only on the checkout except tsc emitting\n# into a scratch outDir. Usage: bash 00-bind.sh <attempt-dir>\nset -u\nOUT=\"$1\"; mkdir -p \"$OUT\"\nexport PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"\nS=/g/ggq/qa-scratch/i4-486-independent-01\nexport TEMP=$(cygpath -w $S/tmp) TMP=$(cygpath -w $S/tmp)\nmkdir -p $S/tmp\nREB=$S/rebuild-bind-$(date +%s); mkdir -p $REB\nCO=/g/ggq/gg-i4-486-qa/GraphGoblin\ncd $CO\n{\n  echo \"node=$(node --version)\"\n  echo \"head=$(git rev-parse HEAD)\"\n  echo \"tree=$(git rev-parse 'HEAD^{tree}')\"\n  echo \"porcelain_lines=$(git status --porcelain 2>/dev/null | wc -l)\"\n  echo \"diff_files=$(git diff --name-only 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD | wc -l)\"\n} > \"$OUT/identity.txt\"\ngit diff --name-only 02351e2fb932b3be44e7cc3fb3943a61d568226c HEAD > \"$OUT/diff-names.txt\"\nTSC=$(cygpath -w $CO/node_modules/typescript/bin/tsc)\nfor p in packages/contracts packages/domain packages/engine packages/infrastructure packages/adapter-codex packages/api-client apps/api apps/mcp; do\n  n=$(basename $p)\n  (cd $p && node \"$TSC\" -p tsconfig.build.json --outDir \"$(cygpath -w $REB/$n)\" --tsBuildInfoFile \"$(cygpath -w $REB/$n.tsbuildinfo)\"; echo \"$n tsc_exit=$?\") >> \"$OUT/tsc.txt\" 2>&1\ndone\npython - \"$OUT\" \"$REB\" <<'EOF'\nimport os, sys, json, hashlib\nout, reb = sys.argv[1], sys.argv[2]\nco = 'G:/ggq/gg-i4-486-qa/GraphGoblin'\nos.chdir(co)\nfreeze = json.load(open('C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-source-freeze-01/receipt.json'))\nsrc = []\nfor f in freeze['files']:\n    b = open(f['path'], 'rb').read()\n    src.append({'path': f['path'], 'sha256': hashlib.sha256(b).hexdigest(), 'bytes': len(b),\n                'match': hashlib.sha256(b).hexdigest() == f['sha256'] and len(b) == f['bytes']})\nnames = set(open(os.path.join(out, 'diff-names.txt')).read().split())\nm = {'contracts': 'packages/contracts', 'domain': 'packages/domain', 'engine': 'packages/engine',\n     'infrastructure': 'packages/infrastructure', 'adapter-codex': 'packages/adapter-codex',\n     'api-client': 'packages/api-client', 'api': 'apps/api', 'mcp': 'apps/mcp'}\ncmp = {}\nfor p, d in m.items():\n    base = os.path.join(reb, p); tot = 0; diff = []; missing = []\n    for r, _, fs in os.walk(base):\n        for fn in fs:\n            if not (fn.endswith('.js') or fn.endswith('.d.ts')): continue\n            a = os.path.join(r, fn); rel = os.path.relpath(a, base); b = os.path.join(d, 'dist', rel); tot += 1\n            if not os.path.exists(b): missing.append(b); continue\n            if open(a, 'rb').read() != open(b, 'rb').read(): diff.append(b)\n    cmp[p] = {'compared': tot, 'different': diff, 'missing': missing}\ndist = {}\nfor d in ['packages/contracts/dist', 'packages/domain/dist', 'packages/engine/dist', 'packages/infrastructure/dist',\n          'packages/adapter-codex/dist', 'packages/api-client/dist', 'apps/api/dist', 'apps/mcp/dist', 'apps/web/dist']:\n    for r, _, fs in os.walk(d):\n        for fn in fs:\n            pth = os.path.join(r, fn).replace('\\\\', '/')\n            if fn.endswith('.tsbuildinfo'): continue\n            dist[pth] = hashlib.sha256(open(pth, 'rb').read()).hexdigest()\nagg = hashlib.sha256('\\n'.join(f'{k} {v}' for k, v in sorted(dist.items())).encode()).hexdigest()\nres = {'sourceFiles': len(src), 'sourceMatches': sum(1 for s in src if s['match']),\n       'diffNamesEqualFreeze': names == set(f['path'] for f in freeze['files']),\n       'rebuildComparison': cmp, 'distFiles': len(dist), 'distAggregateSha256': agg}\njson.dump(res, open(os.path.join(out, 'binding.json'), 'w'), indent=1)\njson.dump(src, open(os.path.join(out, 'source-hashes.json'), 'w'), indent=1)\njson.dump(dist, open(os.path.join(out, 'dist-manifest.json'), 'w'), indent=1, sort_keys=True)\nprint(json.dumps({k: v for k, v in res.items() if k != 'rebuildComparison'}))\nprint({k: (v['compared'], len(v['different']), len(v['missing'])) for k, v in cmp.items()})\nEOF\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:51:55.457Z",
+    "name": "Bash",
+    "input": {
+      "command": "Q=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01; bash $Q/drivers/00-bind.sh $Q/results/00-bind/attempt-1 2>&1 | tail -5; cat $Q/results/00-bind/attempt-1/identity.txt $Q/results/00-bind/attempt-1/tsc.txt",
+      "description": "Run binding driver attempt 1",
+      "timeout": 400000
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:52:55.158Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/lib/common.mjs",
+      "content": "// Shared QA helpers. No product code is modified; built packages are imported by file URL.\nimport { createHash } from 'node:crypto';\nimport { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';\nimport { join } from 'node:path';\nimport { pathToFileURL } from 'node:url';\n\nexport const CHECKOUT = 'G:/ggq/gg-i4-486-qa/GraphGoblin';\nexport const SCRATCH = 'G:/ggq/qa-scratch/i4-486-independent-01';\nexport const imp = (rel) => import(pathToFileURL(join(CHECKOUT, rel)).href);\n\nexport function sha256(value) {\n  return createHash('sha256')\n    .update(typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value))\n    .digest('hex');\n}\n\n/** A result recorder: every check is kept, pass or fail, with raw actual data. */\nexport function recorder(outDir, name) {\n  mkdirSync(outDir, { recursive: true });\n  const rows = [];\n  const raw = join(outDir, `${name}.raw.jsonl`);\n  writeFileSync(raw, '');\n  return {\n    rows,\n    raw(kind, data) {\n      appendFileSync(raw, JSON.stringify({ t: new Date().toISOString(), kind, data }) + '\\n');\n    },\n    check(id, description, pass, actual, cls) {\n      const row = { id, description, pass: !!pass, class: cls, actual };\n      rows.push(row);\n      appendFileSync(raw, JSON.stringify({ t: new Date().toISOString(), kind: 'check', row }) + '\\n');\n      process.stdout.write(`${pass ? 'PASS' : 'FAIL'} ${id} ${description}\\n`);\n      return !!pass;\n    },\n    finish(extra = {}) {\n      const summary = {\n        name,\n        total: rows.length,\n        passed: rows.filter((r) => r.pass).length,\n        failed: rows.filter((r) => !r.pass).map((r) => r.id + ' ' + r.description),\n        ...extra,\n      };\n      writeFileSync(join(outDir, `${name}.results.json`), JSON.stringify({ summary, rows }, null, 1));\n      process.stdout.write(JSON.stringify(summary, null, 1) + '\\n');\n      return summary;\n    },\n  };\n}\n\nexport function containsAny(value, markers) {\n  const text = typeof value === 'string' ? value : JSON.stringify(value ?? null);\n  return markers.filter((m) => text.includes(m));\n}\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:53:34.364Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/d1-domain-observe.mjs",
+      "content": "// D1: exported @graphgoblin/domain evaluator and template observation (DOMAIN-PUBLIC).\n// Usage: node d1-domain-observe.mjs <outDir>\nimport { imp, recorder } from './lib/common.mjs';\n\nconst out = process.argv[2];\nconst r = recorder(out, 'd1');\nconst D = await imp('packages/domain/dist/index.js');\nconst { observeExpression, observePredicate, observeTemplate, evaluateExpression, checkExpression, ExpressionError, TemplateError, renderTemplate } = D;\nconst C = 'DOMAIN-PUBLIC';\nconst REASONS = new Set(['compile', 'unsafe-regex', 'depth', 'time', 'evaluation-rejected']);\nconst shape = (o) => ({ ok: o.ok, reason: o.reason, keys: Object.keys(o).sort(), errorClass: o.error?.constructor?.name, errorMessage: o.error?.message });\n\nasync function obs(expr, input = {}, options) {\n  const o = await observeExpression(expr, input, options);\n  r.raw('observe', { expr: expr.length > 200 ? expr.slice(0, 200) + '\u2026' : expr, result: shape(o), value: o.ok ? o.value : undefined });\n  return o;\n}\nconst closed = (o) => Object.keys(o).every((k) => ['ok', 'value', 'error', 'reason'].includes(k)) && (o.reason === undefined || REASONS.has(o.reason));\n\n// J01 direct literal + legacy contract\n{\n  const o = await obs('$error(\"QA486-LIT-J01\")', { a: 1 });\n  r.check('J01', 'direct literal $error -> evaluation-rejected', !o.ok && o.reason === 'evaluation-rejected' && closed(o), shape(o), C);\n  let legacy;\n  try { await evaluateExpression('$error(\"QA486-LIT-J01\")', { a: 1 }); } catch (e) { legacy = e; }\n  r.check('J01-legacy', 'legacy evaluateExpression still rejects ExpressionError carrying the literal (legacy contract)', legacy instanceof ExpressionError && legacy.message.includes('QA486-LIT-J01'), { cls: legacy?.constructor?.name, message: legacy?.message, details: legacy?.details }, C);\n}\n// J02 grouped\n{\n  const o = await obs('($x := 1; $error(\"QA486-LIT-J02\"))');\n  r.check('J02', 'grouped block -> evaluation-rejected', !o.ok && o.reason === 'evaluation-rejected', shape(o), C);\n}\n// J03 conditional taken / untaken\n{\n  const t = await obs('a = 1 ? $error(\"QA486-LIT-J03\") : 2', { a: 1 });\n  const u = await obs('a = 2 ? $error(\"QA486-LIT-J03\") : 7', { a: 1 });\n  r.check('J03-taken', 'taken conditional -> evaluation-rejected', !t.ok && t.reason === 'evaluation-rejected', shape(t), C);\n  r.check('J03-untaken', 'untaken conditional -> ordinary value 7', u.ok && u.value === 7, { ...shape(u), value: u.value }, C);\n}\n// J04 nested function\n{\n  const o = await obs('($f := function($v){ $error(\"QA486-LIT-J04\") }; $f(1))');\n  r.check('J04', 'nested function -> evaluation-rejected', !o.ok && o.reason === 'evaluation-rejected', shape(o), C);\n}\n// J05 dynamic message from input\n{\n  const o = await obs('$error(\"QA486-\" & a)', { a: 'IN-J05' });\n  r.check('J05', 'dynamic $error message -> evaluation-rejected', !o.ok && o.reason === 'evaluation-rejected', shape(o), C);\n}\n// J06 assertion\n{\n  const o = await obs('$assert(false, \"QA486-LIT-J06\")');\n  r.check('J06', '$assert -> evaluation-rejected', !o.ok && o.reason === 'evaluation-rejected', shape(o), C);\n}\n// J07 length / characters\n{\n  const long = 'QA486-LIT-J07L' + 'x'.repeat(5000);\n  const o1 = await obs(`$error(\"${long}\")`);\n  const o2 = await obs('$error(\"QA486-LIT-J07C\\\\n\\\\\"quote\\\\\" <script>alert(1)</script> \\u{1F642} \u2028\")');\n  r.check('J07-length', '5,000-char literal -> evaluation-rejected', !o1.ok && o1.reason === 'evaluation-rejected', shape(o1), C);\n  r.check('J07-chars', 'special-character literal -> evaluation-rejected', !o2.ok && o2.reason === 'evaluation-rejected', shape(o2), C);\n}\n// J08 type errors\n{\n  const a = await obs('$length(123)');\n  const b = await obs('$substring(1)');\n  r.check('J08', 'runtime type errors -> evaluation-rejected', !a.ok && a.reason === 'evaluation-rejected' && !b.ok && b.reason === 'evaluation-rejected', [shape(a), shape(b)], C);\n}\n// J09 $eval malformed / unsafe runtime strings\n{\n  const a = await obs('$eval(\"1 +\")');\n  const b = await obs('$eval(\"$match(\\'aaaa\\', /(a+)+$/)\")');\n  const c = await obs('$eval(src)', { src: '1 +' });\n  r.check('J09-malformed', '$eval malformed runtime string -> evaluation-rejected (never compile)', !a.ok && a.reason === 'evaluation-rejected', shape(a), C);\n  r.check('J09-unsafe', '$eval unsafe runtime regex -> evaluation-rejected (never unsafe-regex)', !b.ok && b.reason === 'evaluation-rejected', shape(b), C);\n  r.check('J09-input', '$eval of input-supplied malformed source -> evaluation-rejected', !c.ok && c.reason === 'evaluation-rejected', shape(c), C);\n  const ok = await obs('$eval(\"1 + 2\")');\n  r.check('J09-control', '$eval valid string succeeds', ok.ok && ok.value === 3, shape(ok), C);\n}\n// J10 top-level compile / unsafe regex (synthetic reachability)\n{\n  const a = await obs('1 +');\n  const b = await obs('$match(a, /(a+)+$/)', { a: 'aaa' });\n  r.check('J10-compile', 'top-level malformed -> compile (SYNTHETIC: publish refuses)', !a.ok && a.reason === 'compile', shape(a), C + '/SYNTHETIC');\n  r.check('J10-unsafe', 'top-level unsafe regex -> unsafe-regex (SYNTHETIC: publish refuses)', !b.ok && b.reason === 'unsafe-regex', shape(b), C + '/SYNTHETIC');\n  r.check('J10-check', 'checkExpression refuses both (publish-time validator input)', checkExpression('1 +') !== null && checkExpression('$match(a, /(a+)+$/)') !== null, { a: checkExpression('1 +'), b: checkExpression('$match(a, /(a+)+$/)') }, C);\n}\n// J11 depth\nlet depthError;\n{\n  const o = await obs('($f := function($n){ $n = 0 ? 0 : 1 + $f($n-1) }; $f(5000))');\n  depthError = o.error;\n  r.check('J11', 'recursion beyond maxDepth -> depth', !o.ok && o.reason === 'depth', shape(o), C);\n}\n// J12 time\n{\n  const o = await obs('$count([1..3000000].($ + 1))', {}, { timeoutMs: 20 });\n  r.check('J12', 'controlled deadline -> time', !o.ok && o.reason === 'time', shape(o), C);\n}\n// J13 binding preparation getters\n{\n  let reads = 0;\n  const genuine = new ExpressionError('QA486-EXT-J13-genuine');\n  const b1 = Object.defineProperty({}, 'unrelated', { enumerable: true, get() { reads += 1; throw genuine; } });\n  const o1 = await obs('1', {}, { bindings: b1 });\n  r.check('J13-genuine', 'getter throwing genuine ExpressionError: no reason, same identity, one read', !o1.ok && o1.reason === undefined && o1.error === genuine && reads === 1, { ...shape(o1), reads, identity: o1.error === genuine }, C);\n  let reads2 = 0;\n  const plain = new Error('QA486-EXT-J13-plain');\n  const b2 = Object.defineProperty({}, 'error', { enumerable: true, get() { reads2 += 1; throw plain; } });\n  const o2 = await obs('1', {}, { bindings: b2 });\n  r.check('J13-plain', 'getter on `error` throwing plain Error: no reason, legacy-wrapped ExpressionError, one read', !o2.ok && o2.reason === undefined && o2.error instanceof ExpressionError && o2.error !== plain && reads2 === 1, { ...shape(o2), reads2 }, C);\n}\n// J14 rethrow earlier genuine depth error via a later callback\n{\n  const o = await obs('$boom()', {}, { bindings: { boom: () => { throw depthError; } } });\n  r.check('J14', 'earlier depth error rethrown by later callback: identity kept, reason evaluation-rejected (not depth)', !o.ok && o.error === depthError && o.reason === 'evaluation-rejected', { ...shape(o), identity: o.error === depthError }, C);\n}\n// J15 name / code spoofs from external callback\n{\n  const named = Object.assign(new Error('QA486-EXT-J15-name'), { name: 'ExpressionError' });\n  const coded = { code: 'EXPRESSION_ERROR', message: 'QA486-EXT-J15-code' };\n  const a = await obs('$boom()', {}, { bindings: { boom: () => { throw named; } } });\n  const b = await obs('$boom()', {}, { bindings: { boom: () => { throw coded; } } });\n  r.check('J15-name', 'name-spoofed Error -> only evaluation-rejected; legacy wrapped (not identity)', !a.ok && a.reason === 'evaluation-rejected' && a.error !== named && a.error instanceof ExpressionError, shape(a), C);\n  r.check('J15-code', 'code-spoofed object -> only evaluation-rejected; legacy wrapped', !b.ok && b.reason === 'evaluation-rejected' && b.error instanceof ExpressionError, shape(b), C);\n  const ok = await obs('$fine()', {}, { bindings: { fine: () => 5 } });\n  r.check('J15-control', 'successful callback returns value', ok.ok && ok.value === 5, shape(ok), C);\n}\n// J16 predicate coercion fault (synthetic)\n{\n  const hostile = new Proxy({}, { ownKeys() { throw new Error('QA486-EXT-J16-coerce'); } });\n  let thrown; let obsResult;\n  try { obsResult = await observePredicate('$p()', {}, { bindings: { p: () => hostile } }); } catch (e) { thrown = e; }\n  r.raw('J16', { thrown: thrown?.message, obsResult: obsResult && shape(obsResult) });\n  r.check('J16', 'predicate coercion failure carries no authored reason (propagates or rejects without reason)', thrown !== undefined ? !('reason' in Object(thrown)) : obsResult && obsResult.reason === undefined, { thrown: thrown && { cls: thrown.constructor.name, message: thrown.message }, obsResult: obsResult && shape(obsResult) }, C + '/SYNTHETIC');\n}\n// J17 predicate success controls\n{\n  const cases = [['true', true], ['false', false], ['null', false], ['[]', false], ['[1]', true], ['{}', false], ['{\"a\":1}', true], ['0', false], ['\"x\"', true], ['missing', false]];\n  const got = [];\n  for (const [e, want] of cases) { const o = await observePredicate(e, {}); got.push({ e, ok: o.ok, value: o.value, want }); }\n  r.check('J17', 'predicate coercion outcomes unchanged', got.every((g) => g.ok && g.value === g.want), got, C);\n  const f = await observePredicate('$error(\"QA486-LIT-J17\")', {});\n  r.check('J17-fail', 'failing predicate expression -> evaluation-rejected', !f.ok && f.reason === 'evaluation-rejected', shape(f), C);\n}\n// J18 overlapping evaluations of the same cached source\n{\n  const src = 'v = 1 ? $error(\"QA486-LIT-J18\") : v * 2';\n  const [a, b, c] = await Promise.all([obs(src, { v: 1 }), obs(src, { v: 3 }), obs(src, { v: 1 })]);\n  r.check('J18', 'overlapping same-source invocations are independent', !a.ok && a.reason === 'evaluation-rejected' && b.ok && b.value === 6 && !c.ok && c.reason === 'evaluation-rejected', [shape(a), { ...shape(b), value: b.value }, shape(c)], C);\n}\n// J19 Liquid observation\n{\n  const inc = await observeTemplate('first\\n{% include \"QA486-PATH-T\" %}', {});\n  r.raw('J19-include', { ok: inc.ok, fact: inc.fact, errorClass: inc.error?.constructor?.name, errorMessage: inc.error?.message });\n  r.check('J19-include', 'include at line 2 -> render fact line 2 column 1', !inc.ok && inc.fact.phase === 'render' && inc.fact.line === 2 && inc.fact.column === 1 && inc.error instanceof TemplateError, { fact: inc.fact }, C);\n  const taken = await observeTemplate('{% if flag %}{{ \"QA486-LIT-T\" | append }}{% else %}Main{% endif %}', { flag: true });\n  const untaken = await observeTemplate('{% if flag %}{{ \"QA486-LIT-T\" | append }}{% else %}Main{% endif %}', { flag: false });\n  r.raw('J19-filter', { taken: { ok: taken.ok, fact: taken.fact, msg: taken.error?.message }, untaken });\n  r.check('J19-taken', 'taken-branch filter fault -> render fact', !taken.ok && taken.fact.phase === 'render', { fact: taken.fact }, C);\n  r.check('J19-untaken', 'untaken branch renders ordinary text', untaken.ok && untaken.value === 'Main', untaken, C);\n  const parse = await observeTemplate('ok\\n{% if %}', {});\n  r.check('J19-parse', 'parse error -> parse fact (SYNTHETIC at runtime: publish refuses)', !parse.ok && parse.fact.phase === 'parse', { fact: parse.fact }, C + '/SYNTHETIC');\n  let legacy;\n  try { await renderTemplate('{% include \"QA486-PATH-T\" %}', {}); } catch (e) { legacy = e; }\n  r.check('J19-legacy', 'legacy renderTemplate still rejects TemplateError', legacy instanceof TemplateError, { cls: legacy?.constructor?.name, message: legacy?.message }, C);\n  const facts = [inc.fact, taken.fact, parse.fact];\n  r.check('J20-template', 'template facts contain only phase/line/column with numeric positions', facts.every((f) => Object.keys(f).every((k) => ['phase', 'line', 'column'].includes(k)) && ['parse', 'render'].includes(f.phase) && (f.line === undefined || Number.isSafeInteger(f.line))), facts, C);\n}\nr.finish();\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:53:43.902Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/run.sh",
+      "content": "#!/usr/bin/env bash\n# Run one QA driver attempt with the project runtime and task-scoped TEMP/TMP; keep every attempt.\n# Usage: bash run.sh <driver-file-name> <attempt-number> [extra args]\nset -u\nQ=/c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01\nDRIVER=\"$1\"; ATTEMPT=\"$2\"; shift 2\nNAME=\"${DRIVER%.mjs}\"\nOUT=\"$Q/results/$NAME/attempt-$ATTEMPT\"\nif [ -e \"$OUT\" ]; then echo \"refusing to overwrite $OUT\"; exit 3; fi\nmkdir -p \"$OUT\"\nexport PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"\nS=/g/ggq/qa-scratch/i4-486-independent-01\nmkdir -p \"$S/tmp/$NAME-$ATTEMPT\"\nexport TEMP=$(cygpath -w \"$S/tmp/$NAME-$ATTEMPT\") TMP=$(cygpath -w \"$S/tmp/$NAME-$ATTEMPT\")\ncd /g/ggq/gg-i4-486-qa/GraphGoblin\n{\n  echo \"driver=$DRIVER attempt=$ATTEMPT\"\n  echo \"driver_sha256=$(sha256sum \"$Q/drivers/$DRIVER\" | cut -d' ' -f1)\"\n  echo \"lib_sha256=$(cat \"$Q\"/drivers/lib/*.mjs | sha256sum | cut -d' ' -f1)\"\n  echo \"node=$(node --version) head=$(git rev-parse HEAD)\"\n  echo \"started=$(date -u +%Y-%m-%dT%H:%M:%SZ) TEMP=$TEMP\"\n} > \"$OUT/attempt.txt\"\ncp \"$Q/drivers/$DRIVER\" \"$OUT/driver-copy.mjs\"\nmkdir -p \"$OUT/lib-copy\"; cp \"$Q\"/drivers/lib/*.mjs \"$OUT/lib-copy/\"\nnode \"$(cygpath -w \"$Q/drivers/$DRIVER\")\" \"$(cygpath -w \"$OUT\")\" \"$@\" > \"$OUT/stdout.txt\" 2> \"$OUT/stderr.txt\"\nCODE=$?\necho \"exit=$CODE finished=$(date -u +%Y-%m-%dT%H:%M:%SZ)\" >> \"$OUT/attempt.txt\"\ntail -40 \"$OUT/stdout.txt\"; echo \"--- stderr (tail)\"; tail -20 \"$OUT/stderr.txt\"; echo \"exit=$CODE\"\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:53:44.943Z",
+    "name": "Bash",
+    "input": {
+      "command": "bash /c/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/run.sh d1-domain-observe.mjs 1",
+      "description": "Run D1 domain-observe driver attempt 1",
+      "timeout": 180000
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:53:55.498Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; ls apps/api/src/*.ts | grep -v test | head -40; grep -n \"listen\\|afterListen\\|buildApp\\|createContainer\\|start()\" apps/api/src/main.ts apps/api/src/serve.ts 2>/dev/null | head -30",
+      "description": "Locate API serve composition"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:53:58.642Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 29,200p apps/api/src/serve.ts",
+      "description": "Read serve composition fully"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:02.021Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"'/system[a-z/:-]*'\\|'/shutdown[a-z/:-]*'\" apps/api/src/routes/*.ts | head; grep -n \"scopes\\|SCOPE\" apps/api/src/plugins/auth.ts | head -20; grep -n \"timerPollMs\\|GG_TIMER_POLL_MS\" apps/api/src/config.ts | head -3",
+      "description": "Find shutdown route, auth scopes, timer poll"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:04.374Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 45,120p apps/api/src/routes/system.ts; sed -n 80,130p apps/api/src/plugins/auth.ts",
+      "description": "Read shutdown route and scope mapping"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:13.911Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 540,640p packages/engine/src/handlers/inference.ts",
+      "description": "Read inference invocation/consumption code"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:17.036Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"^async function consume\\|^export async function consume\\|function consume\" -A60 packages/engine/src/handlers/inference*.ts | head -90",
+      "description": "Read harness session consume logic"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:20.663Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"export class FakeStructured\\|export class FakeDecider\\|export class FakeClassifierRegistry\\|export class FakeClassifier\\b\\|export class CapturingLogger\\|export function singleNodeLoop\" -A25 packages/engine/src/testing/fakes.ts packages/engine/src/testing/*.ts | grep -v \"^\\s*$\" | head -150",
+      "description": "Read scripted structured/decider/classifier fakes"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:24.222Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 300,470p packages/contracts/src/evaluation.ts",
+      "description": "Read decision config schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:27.163Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"ExpressionSourceSchema =\\|RouteDeclarationsSchema =\\|DecisionContextSchema =\\|ModelSelectionSchema =\\|EffortSelectionSchema =\\|RouteDeclarationSchema =\" -A14 packages/contracts/src/evaluation.ts | head -90; grep -n \"NoulConfigSchema = z\" -A30 packages/contracts/src/evaluation.ts | head -36",
+      "description": "Read route, context and selection schemas"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:30.340Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; sed -n 60,116p packages/contracts/src/evaluation.ts; grep -n \"export function singleNodeLoop\" -A40 packages/engine/src/testing/*.ts | head -50",
+      "description": "Read choice answer config and singleNodeLoop"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:33.861Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rn \"export function threadView\" -A30 packages/domain/src/*.ts | head -40",
+      "description": "Read threadView shape"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:36.910Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"spawn(\\|shell\\|inheritEnv\\|windowsHide\" packages/infrastructure/src/process/scripts.ts | head -15; ls packages/infrastructure/src/process/",
+      "description": "Check ProcessScripts spawn options"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:42.170Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/fixtures/append.mjs",
+      "content": "// Native harmless script: append one line to a disposable counter file and echo JSON.\n// Usage: node append.mjs <counterFile> <tag> [more args...]\nimport { appendFileSync } from 'node:fs';\nconst [counter, ...rest] = process.argv.slice(2);\nappendFileSync(counter, JSON.stringify({ pid: process.pid, args: rest, cwd: process.cwd(), t: Date.now() }) + '\\n');\nprocess.stdout.write(JSON.stringify({ appended: true, args: rest }));\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:55.442Z",
+    "name": "Write",
+    "input": {
+      "file_path": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-486-independent-01/drivers/lib/harness.mjs",
+      "content": "// SCRIPTED harness port with explicit per-call behaviours and separate counters.\n// Behaviours are consumed in order (one per start/resume call); a missing plan entry returns 'ok'.\n\nexport class ScriptedHarness {\n  constructor(id = 'codex') {\n    this.id = id;\n    this.plan = [];\n    this.counters = { starts: 0, resumes: 0, resultsResolved: 0, resultsRejected: 0, syncThrows: 0, cancels: 0, contextWindow: 0 };\n    this.calls = [];\n    this.sessionSeq = 0;\n    this.contextWindowImpl = undefined;\n    this.held = [];\n  }\n  reset() {\n    this.plan = [];\n    for (const k of Object.keys(this.counters)) this.counters[k] = 0;\n    this.calls = [];\n    this.contextWindowImpl = undefined;\n  }\n  script(...behaviours) {\n    this.plan.push(...behaviours);\n  }\n  snapshot() {\n    return { ...this.counters, calls: this.calls.map((c) => ({ ...c })) };\n  }\n  preflight() {\n    return Promise.resolve({ state: 'ready', ok: true, version: 'qa-scripted', authenticated: true, problems: [] });\n  }\n  get contextWindow() {\n    if (!this.contextWindowImpl) return undefined;\n    return (request, signal) => {\n      this.counters.contextWindow += 1;\n      return this.contextWindowImpl(request, signal);\n    };\n  }\n  start(request, signal) {\n    return this.#open('start', undefined, request, signal);\n  }\n  resume(sessionId, request, signal) {\n    return this.#open('resume', sessionId, request, signal);\n  }\n  #open(kind, resumeId, request, signal) {\n    if (kind === 'start') this.counters.starts += 1;\n    else this.counters.resumes += 1;\n    const b = this.plan.shift() ?? { kind: 'ok' };\n    const call = { kind, resumeId, prompt: request?.turn?.prompt, promptKind: request?.turn?.promptKind, turnId: request?.turn?.turnId, cwd: request?.workingDirectory, model: request?.model, effort: request?.effort, behaviour: b.kind };\n    this.calls.push(call);\n    if (b.kind === 'throwSync') {\n      this.counters.syncThrows += 1;\n      throw b.error;\n    }\n    const sessionId = resumeId ?? `qa-${this.id}-session-${++this.sessionSeq}`;\n    const counters = this.counters;\n    const announce = b.session !== false;\n    const accepted = b.accepted ?? b.kind === 'ok';\n    let release;\n    const gate = b.kind === 'hold' ? new Promise((resolve) => (release = resolve)) : Promise.resolve();\n    if (b.kind === 'hold') this.held.push({ release: () => release(), call });\n    const items = [{ id: 'i1', type: 'message', summary: b.finalText ?? 'OK' }];\n    const events = (async function* () {\n      if (announce) yield { type: 'session', sessionId, mode: resumeId ? 'resumed' : 'fresh' };\n      if (accepted) yield { type: 'submitted', marker: 'fake.accepted' };\n      for (const item of items) yield { type: 'item', item };\n      if (b.kind === 'errorEvent') {\n        yield { type: 'error', code: b.code, message: b.message, retriable: b.retriable ?? false, submission: b.submission ?? 'delivery-uncertain' };\n        return;\n      }\n      if (b.kind === 'iteratorThrow') throw b.error;\n      await gate;\n      if (b.kind === 'ok' || b.kind === 'hold') {\n        yield { type: 'usage', usage: { inputTokens: 1, outputTokens: 1, cachedInputTokens: 0, reasoningTokens: 0 } };\n        yield { type: 'turn-complete' };\n      }\n    })();\n    const result = (async () => {\n      await gate;\n      if (signal?.aborted) {\n        counters.resultsRejected += 1;\n        throw new DOMException('aborted', 'AbortError');\n      }\n      if (b.kind === 'rejectAfterHandle' || b.kind === 'iteratorThrow') {\n        counters.resultsRejected += 1;\n        throw b.error;\n      }\n      if (b.kind === 'errorEvent') {\n        counters.resultsRejected += 1;\n        throw Object.assign(new Error(b.message), { code: b.code, retriable: b.retriable ?? false });\n      }\n      counters.resultsResolved += 1;\n      return {\n        finalText: b.finalText ?? 'OK',\n        ...(b.structured !== undefined ? { structured: b.structured } : {}),\n        usage: { inputTokens: 1, outputTokens: 1, cachedInputTokens: 0, reasoningTokens: 0 },\n        items,\n      };\n    })();\n    result.catch(() => undefined);\n    return {\n      sessionId: announce ? Promise.resolve(sessionId) : new Promise(() => undefined),\n      events,\n      result,\n      cancel: () => {\n        counters.cancels += 1;\n        if (b.cancelError) return Promise.reject(b.cancelError);\n        return Promise.resolve();\n      },\n    };\n  }\n}\n"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:54:59.375Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -n \"await session.sessionId\\|session.sessionId\\|\\.sessionId\\b.*then\" packages/engine/src/handlers/inference.ts | head; grep -rn \"ZERO_USAGE\\b.*=\" -A3 packages/contracts/src/*.ts packages/engine/src/*.ts | head -8",
+      "description": "Check sessionId awaiting and usage shape"
+    }
+  },
+  {
+    "timestamp": "2026-11-21T12:55:02.000Z",
+    "name": "Bash",
+    "input": {
+      "command": "cd /g/ggq/gg-i4-486-qa/GraphGoblin; grep -rn \"ZERO_USAGE\" packages/*/src --include=*.ts | grep -v test | grep \"const\\|export\" | head -3; grep -n \"UsageSchema = \" -A10 packages/contracts/src/*.ts | head -14",
+      "description": "Find usage schema fields"
+    }
+  }
+]

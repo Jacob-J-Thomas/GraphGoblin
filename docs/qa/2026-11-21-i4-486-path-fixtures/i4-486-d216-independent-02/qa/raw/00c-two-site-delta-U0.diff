@@ -1,0 +1,11 @@
+diff --git a/packages/infrastructure/src/fs/fs.test.ts b/packages/infrastructure/src/fs/fs.test.ts
+index 3e385dc2..6720acba 100644
+--- a/packages/infrastructure/src/fs/fs.test.ts
++++ b/packages/infrastructure/src/fs/fs.test.ts
+@@ -136 +136,2 @@ describe('engine workspace filesystem boundary', () => {
+-        const path = kind === 'temp' ? join(realpathSync(dataDir), 'workspaces', run.id) : target;
++        const path =
++          kind === 'temp' ? join(realpathSync.native(dataDir), 'workspaces', run.id) : target;
+@@ -145 +146 @@ describe('engine workspace filesystem boundary', () => {
+-        const actual = realpathSync(path);
++        const actual = realpathSync.native(path);

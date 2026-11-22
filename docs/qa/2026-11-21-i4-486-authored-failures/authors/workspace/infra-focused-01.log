@@ -1,0 +1,32 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/infrastructure
+
+{"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+ ❯ src/sqlite/history-cleanup.test.ts (38 tests | 1 failed) 10736ms
+   × publishes and reclaims owned workspaces/transcripts through a short-name data directory 138ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-cleanup.test.ts > publishes and reclaims owned workspaces/transcripts through a short-name data directory
+AssertionError: expected 'g:\ggq\qa-scratch\i4-486-workspace\gg…' not to be 'g:\ggq\qa-scratch\i4-486-workspace\gg…' // Object.is equality
+ ❯ src/sqlite/history-cleanup.test.ts:227:41
+    225|       expect(short.status).toBe(0);
+    226|       dataDir = short.stdout.trim();
+    227|       expect(dataDir.toLowerCase()).not.toBe(physical.toLowerCase());
+       |                                         ^
+    228|     } else {
+    229|       dataDir = join(directory, 'data-alias');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 49 passed | 8 skipped (58)
+   Start at  05:38:03
+   Duration  16.78s (tests 50%, import 41%, transform 9%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\infrastructure
+

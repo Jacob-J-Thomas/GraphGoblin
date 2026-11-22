@@ -1,0 +1,339 @@
+import type { RecoveryCommand } from '@graphgoblin/contracts';
+/**
+ * Thin convenience wrappers over the typed client, grouped by resource. Every function takes the
+ * client first, returns the response body, and throws `GraphGoblinApiError` on a non-2xx response.
+ * Argument and return types come from the generated OpenAPI schema.
+ */
+import type { GraphGoblinClient, paths } from './client.js';
+import { unwrap } from './errors.js';
+
+export const cron = {
+  preview: async (
+    client: GraphGoblinClient,
+    body: RequestBody<'/triggers/cron/preview', 'post'>,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.POST('/triggers/cron/preview', { body, ...options })),
+};
+
+type Method = 'get' | 'put' | 'patch' | 'post' | 'delete';
+
+/** The JSON request body of an operation. */
+export type RequestBody<P extends keyof paths, M extends Method> = paths[P][M] extends {
+  requestBody?: { content: { 'application/json': infer B } };
+}
+  ? B
+  : never;
+
+/** The query parameters of an operation. */
+export type QueryParams<P extends keyof paths, M extends Method> = paths[P][M] extends {
+  parameters: { query?: infer Q };
+}
+  ? NonNullable<Q>
+  : never;
+
+/** The 2xx JSON response body of an operation. */
+export type ResponseBody<P extends keyof paths, M extends Method> = paths[P][M] extends {
+  responses: infer R;
+}
+  ? {
+      [S in keyof R]: S extends 200 | 201 | 202
+        ? R[S] extends { content: { 'application/json': infer B } }
+          ? B
+          : never
+        : never;
+    }[keyof R]
+  : never;
+
+export type LoopDefinitionBody = RequestBody<'/loops', 'post'>['definition'];
+export type StartRunBody = RequestBody<'/loops/{id}/runs', 'post'>;
+export type ListRunsQuery = QueryParams<'/runs', 'get'>;
+export type RunSnapshot = ResponseBody<'/runs/{id}', 'get'>;
+export type ListEventsQuery = QueryParams<'/events', 'get'>;
+export type RunEventsPage = ResponseBody<'/runs/{id}/events', 'get'>;
+
+const id = (value: string) => ({ params: { path: { id: value } } });
+
+export const loops = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/loops')).items,
+  create: async (client: GraphGoblinClient, definition: LoopDefinitionBody) =>
+    unwrap(await client.POST('/loops', { body: { definition } })),
+  get: async (client: GraphGoblinClient, loopId: string) =>
+    unwrap(await client.GET('/loops/{id}', id(loopId))),
+  /**
+   * Save the draft. With `ifMatch` (a `draftToken` from `get` or an earlier save) a stale copy is
+   * refused with `DRAFT_CONFLICT` (409) instead of overwriting a newer server draft; the error's
+   * `problem.draftToken` is the server's current token.
+   */
+  saveDraft: async (
+    client: GraphGoblinClient,
+    loopId: string,
+    definition: LoopDefinitionBody,
+    options: { ifMatch?: string } = {},
+  ) =>
+    unwrap(
+      await client.PUT('/loops/{id}/draft', {
+        params: {
+          path: { id: loopId },
+          ...(options.ifMatch ? { header: { 'if-match': `"${options.ifMatch}"` } } : {}),
+        },
+        body: { definition },
+      }),
+    ),
+  validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) => {
+    const result = unwrap(
+      await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } }),
+    );
+    // JSON omits undefined fields. Preserve that guarantee for exact optional consumer types.
+    return {
+      ...result,
+      issues: result.issues.map(({ path, ...issue }) =>
+        path === undefined ? issue : { ...issue, path },
+      ),
+    };
+  },
+  publish: async (client: GraphGoblinClient, loopId: string) =>
+    unwrap(await client.POST('/loops/{id}/publish', id(loopId))).version,
+  versions: async (client: GraphGoblinClient, loopId: string) =>
+    unwrap(await client.GET('/loops/{id}/versions', id(loopId))).items,
+  version: async (client: GraphGoblinClient, loopId: string, versionId: string) =>
+    unwrap(
+      await client.GET('/loops/{id}/versions/{versionId}', {
+        params: { path: { id: loopId, versionId } },
+      }),
+    ),
+  /** The published version as portable JSON; `{ draft: true }` exports the draft instead. */
+  export: async (client: GraphGoblinClient, loopId: string, options: { draft?: boolean } = {}) =>
+    unwrap(
+      await client.GET('/loops/{id}/export', {
+        params: {
+          path: { id: loopId },
+          ...(options.draft ? { query: { draft: 'true' as const } } : {}),
+        },
+      }),
+    ),
+  import: async (
+    client: GraphGoblinClient,
+    exported: RequestBody<'/loops/import', 'post'>,
+    query?: QueryParams<'/loops/import', 'post'>,
+  ) =>
+    unwrap(
+      await client.POST('/loops/import', {
+        body: exported,
+        ...(query ? { params: { query } } : {}),
+      }),
+    ),
+  remove: async (client: GraphGoblinClient, loopId: string): Promise<void> => {
+    unwrap(await client.DELETE('/loops/{id}', id(loopId)));
+  },
+};
+
+export const runs = {
+  previewDeletion: async (client: GraphGoblinClient, runIds: string[]) =>
+    unwrap(await client.POST('/runs/deletion-eligibility/preview', { body: { runIds } })),
+  confirmDeletion: async (
+    client: GraphGoblinClient,
+    body: RequestBody<'/runs/deletion-eligibility', 'post'>,
+  ) => unwrap(await client.POST('/runs/deletion-eligibility', { body })),
+  /** Start a run from a manual trigger. Returns the queued run; it executes in the background. */
+  start: async (client: GraphGoblinClient, loopId: string, body: StartRunBody = {}) =>
+    unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,
+  list: async (
+    client: GraphGoblinClient,
+    query: ListRunsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
+  get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
+  thread: async (
+    client: GraphGoblinClient,
+    runId: string,
+    query: { at?: number } = {},
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/thread', { params: { path: { id: runId }, query }, ...options }),
+    ),
+  observation: async (
+    client: GraphGoblinClient,
+    runId: string,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs/{id}/observation', { ...id(runId), ...options })),
+  /** Forward replay uses `after`; browsing seeks `around` then passes opaque older/newer cursors unchanged. Use `subscribeRunEvents` for a live tail. */
+  events: async (
+    client: GraphGoblinClient,
+    runId: string,
+    query: QueryParams<'/runs/{id}/events', 'get'> = {},
+    options: { signal?: AbortSignal } = {},
+  ) =>
+    unwrap(
+      await client.GET('/runs/{id}/events', { params: { path: { id: runId }, query }, ...options }),
+    ),
+  cancel: async (client: GraphGoblinClient, runId: string) =>
+    unwrap(await client.POST('/runs/{id}/cancel', id(runId))),
+  pause: async (client: GraphGoblinClient, runId: string) =>
+    unwrap(await client.POST('/runs/{id}/pause', id(runId))),
+  resume: async (client: GraphGoblinClient, runId: string, command: RecoveryCommand) =>
+    unwrap(await client.POST('/runs/{id}/resume', { ...id(runId), body: command })),
+  /** Deliberately abandon the missing provider context for this observed failed node. */
+  recoverSession: async (
+    client: GraphGoblinClient,
+    runId: string,
+    body: RequestBody<'/runs/{id}/recover-session', 'post'>,
+  ) => unwrap(await client.POST('/runs/{id}/recover-session', { ...id(runId), body })),
+  /** Answer the observed input wait; take waitId from runs.get(...).waiting.waitId. */
+  provideInput: async (
+    client: GraphGoblinClient,
+    runId: string,
+    waitId: string,
+    input: RequestBody<'/runs/{id}/input', 'post'>['input'],
+  ) => unwrap(await client.POST('/runs/{id}/input', { ...id(runId), body: { waitId, input } })),
+  /** Deliver a named signal; `woke` says whether a waiting node consumed it. */
+  signal: async (
+    client: GraphGoblinClient,
+    runId: string,
+    name: string,
+    waitId: string,
+    payload?: RequestBody<'/runs/{id}/signals/{name}', 'post'>['payload'],
+  ) =>
+    unwrap(
+      await client.POST('/runs/{id}/signals/{name}', {
+        params: { path: { id: runId, name } },
+        body: payload === undefined ? { waitId } : { waitId, payload },
+      }),
+    ),
+  sessions: async (client: GraphGoblinClient, runId: string) =>
+    unwrap(await client.GET('/runs/{id}/sessions', id(runId))).items,
+  /** Fork a new run at `nodeId` with the thread from just before that node. Returns the queued fork. */
+  replay: async (
+    client: GraphGoblinClient,
+    runId: string,
+    nodeId: string,
+    command: RecoveryCommand,
+  ) =>
+    unwrap(await client.POST('/runs/{id}/replay', { ...id(runId), body: { nodeId, ...command } }))
+      .run,
+};
+
+export const settings = {
+  get: async (client: GraphGoblinClient) => unwrap(await client.GET('/settings')),
+  update: async (client: GraphGoblinClient, values: RequestBody<'/settings', 'put'>) =>
+    unwrap(await client.PUT('/settings', { body: values })),
+  remove: async (client: GraphGoblinClient, key: string): Promise<void> => {
+    unwrap(await client.DELETE('/settings/{key}', { params: { path: { key } } }));
+  },
+};
+
+export const secrets = {
+  /** Names and timestamps only; values are never returned. */
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/secrets')).items,
+  set: async (client: GraphGoblinClient, name: string, value: string) =>
+    unwrap(await client.PUT('/secrets/{name}', { params: { path: { name } }, body: { value } })),
+  remove: async (client: GraphGoblinClient, name: string): Promise<void> => {
+    unwrap(await client.DELETE('/secrets/{name}', { params: { path: { name } } }));
+  },
+};
+
+export const apiKeys = {
+  list: async (client: GraphGoblinClient, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/api-keys', options)).items,
+  /** Create a key. The plaintext `token` is returned once and never again. */
+  create: async (client: GraphGoblinClient, body: RequestBody<'/api-keys', 'post'>) =>
+    unwrap(await client.POST('/api-keys', { body })),
+  revoke: async (client: GraphGoblinClient, keyId: string): Promise<void> => {
+    unwrap(await client.DELETE('/api-keys/{id}', id(keyId)));
+  },
+};
+
+export const modelCatalog = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/model-catalog')).items,
+  setEnabled: async (client: GraphGoblinClient, harness: string, model: string, enabled: boolean) =>
+    unwrap(
+      await client.PATCH('/model-catalog/{harness}/{model}', {
+        params: { path: { harness, model } },
+        body: { enabled },
+      }),
+    ),
+  upsert: async (
+    client: GraphGoblinClient,
+    harness: string,
+    model: string,
+    entry: RequestBody<'/model-catalog/{harness}/{model}', 'put'>,
+  ) =>
+    unwrap(
+      await client.PUT('/model-catalog/{harness}/{model}', {
+        params: { path: { harness, model } },
+        body: entry,
+      }),
+    ),
+  remove: async (client: GraphGoblinClient, harness: string, model: string): Promise<void> => {
+    unwrap(
+      await client.DELETE('/model-catalog/{harness}/{model}', {
+        params: { path: { harness, model } },
+      }),
+    );
+  },
+};
+
+export const classifierModels = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/classifier-models')).items,
+  upsert: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) => unwrap(await client.PUT('/classifier-models/{id}', { ...id(modelId), body: metadata })),
+  /**
+   * Create a custom classifier, never replacing one: sends `If-None-Match: *`, so an id that
+   * already exists is refused with `CLASSIFIER_EXISTS` (409) and nothing changes.
+   */
+  create: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) =>
+    unwrap(
+      await client.PUT('/classifier-models/{id}', {
+        params: { path: { id: modelId }, header: { 'if-none-match': '*' } },
+        body: metadata,
+      }),
+    ),
+  setEnabled: async (client: GraphGoblinClient, modelId: string, enabled: boolean) =>
+    unwrap(await client.PATCH('/classifier-models/{id}', { ...id(modelId), body: { enabled } })),
+  remove: async (client: GraphGoblinClient, modelId: string): Promise<void> => {
+    unwrap(await client.DELETE('/classifier-models/{id}', id(modelId)));
+  },
+};
+
+export const events = {
+  /** Durably accept an external Event for one published loop and eligible trigger. */
+  publish: async (client: GraphGoblinClient, event: RequestBody<'/events', 'post'>) =>
+    unwrap(await client.POST('/events', { body: event })),
+  list: async (
+    client: GraphGoblinClient,
+    query: ListEventsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/events', { params: { query }, ...options })),
+};
+
+export const system = {
+  modelDefaults: async (client: GraphGoblinClient) =>
+    unwrap(await client.GET('/system/model-defaults')),
+  health: async (client: GraphGoblinClient) => unwrap(await client.GET('/healthz')),
+  version: async (client: GraphGoblinClient) => unwrap(await client.GET('/version')),
+  /** Is each configured harness installed and authenticated? */
+  preflight: async (client: GraphGoblinClient) =>
+    unwrap(await client.GET('/harness/preflight')).items,
+  /** First-run checks for the whole installation: `{ ok, checks: [{ id, label, status, message }] }`. */
+  installation: async (client: GraphGoblinClient) => unwrap(await client.GET('/system/preflight')),
+};
+
+/** Installed starting points copied into ordinary editable drafts. */
+export const templates = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/templates')).items,
+  get: async (client: GraphGoblinClient, templateId: string) =>
+    unwrap(await client.GET('/templates/{id}', id(templateId))),
+  createDraft: async (
+    client: GraphGoblinClient,
+    templateId: string,
+    body: RequestBody<'/templates/{id}/draft', 'post'> = {},
+  ) => unwrap(await client.POST('/templates/{id}/draft', { ...id(templateId), body })),
+};

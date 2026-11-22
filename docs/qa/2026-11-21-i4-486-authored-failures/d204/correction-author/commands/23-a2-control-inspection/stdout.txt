@@ -1,0 +1,212 @@
+
+  it('applies output transforms after the message is appended', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([{ finalText: 'token sk-abc123 leaked' }]);
+    const version = engine.publish(
+      inferenceLoop('redact', {
+        output: { transforms: [{ op: 'redact', patterns: ['sk-[a-z0-9]+'] }] },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.messages.at(-1)?.content).toBe('token [REDACTED] leaked');
+  });
+});
+
+async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error('condition not met in time');
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
+const badLiquid = '{{ "PRIVATE_TEMPLATE" | append }}';
+const badExpression = {
+  op: 'set',
+  path: '/vars/value',
+  value: { kind: 'expression', jsonata: '$error("PRIVATE_EXPRESSION")' },
+};
+const repairBoolean = {
+  op: 'coerce',
+  source: '/vars/missing',
+  target: '/vars/boolean',
+  jsonSchema: { type: 'boolean' },
+  repair: { maxAttempts: 1 },
+};
+
+describe('inference authored fields and effects', () => {
+  it.each(['input', 'output'] as const)(
+    'classifies only the failing %s transform after an earlier real structured callback',
+    async (stage) => {
+      const e = await createTestEngine();
+      e.ports.structuredFake.respondWith(() => true);
+      e.ports.harness.script([{ finalText: 'received', announceSession: false, accepted: false }]);
+      const transforms = [repairBoolean, badExpression];
+      const v = e.publish(
+        inferenceLoop(
+          'typed transform',
+          stage === 'input' ? { input: transforms } : { output: { transforms } },
+        ),
+      );
+      const run = await e.runToIdle(v.loopId);
+      const output = stage === 'output';
+      const details = {
+        boundary: output ? 'inference.output.transforms' : 'inference.input',
+        operationIndex: 1,
+        operationKind: 'set',
+        cause: {
+          code: 'EXPRESSION_ERROR',
+          message:
+            'The expression could not evaluate this input. Check its input type and mapping.',
+        },
+        ...(output ? { phase: 'after-result' } : {}),
+      };
+      expect(run.failure).toMatchObject({
+        code: 'MUTATION_ERROR',
+        nodeId: 'infer',
+        resumable: false,
+      });
+      expect(run.failure?.details).toEqual(details);
+      expect(e.events(run.id).filter((x) => x.type === 'run.failed')).toMatchObject([
+        { failure: run.failure },
+      ]);
+      expect(e.ports.structuredFake.requests).toHaveLength(1);
+      expect(e.ports.harness.started).toHaveLength(output ? 1 : 0);
+      const turns = e.events(run.id).filter((x) => x.type === 'harness.turn');
+      expect(turns).toHaveLength(output ? 1 : 0);
+      if (output) {
+        expect(run.failure?.inference).toEqual({
+          turnId: turns[0]!.turnId,
+          visitId: turns[0]!.visitId,
+          promptKind: 'authored',
+          submission: 'delivery-uncertain',
+        });
+        expect(run.failure?.message).toContain(
+          'GraphGoblin received the provider result before this step failed.',
+        );
+        expect(run.failure?.message).not.toContain('no usable session');
+        expect(e.events(run.id).filter((x) => x.type === 'harness.submission')).toMatchObject([
+          { submission: 'delivery-uncertain' },
+        ]);
+        expect(
+          e
+            .events(run.id)
+            .filter((x) => x.type === 'harness.submission')
+            .some((x) => x.marker),
+        ).toBe(false);
+      } else expect(run.failure?.inference).toBeUndefined();
+      expect(await e.manager.getThread(run.id)).not.toHaveProperty(['vars', 'boolean']);
+      expect(JSON.stringify([run.failure, e.ports.logger.lines])).not.toContain(
+        'PRIVATE_EXPRESSION',
+      );
+      await expect(e.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+      expect(e.ports.harness.cancelled).toHaveLength(output ? 1 : 0);
+    },
+  );
+
+  it.each([
+    [{ op: 'append-message', content: badLiquid }, 'TEMPLATE_ERROR'],
+    [
+      { op: 'inject', position: 'end', messages: [{ role: 'user', content: badLiquid }] },
+      'TEMPLATE_ERROR',
+    ],
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { describe, expect, it } from 'vitest';
+import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+import type { NodeContext } from '../handler.js';
+import type { ChoiceResult } from '../ports.js';
+import { createTestEngine, singleNodeLoop, type TestEngine } from '../testing/scenario.js';
+import { scriptHandler } from './script.js';
+import { waitHandler } from './wait.js';
+
+const malformedLeafTemplate = 'first\n{% PRIVATE_SOURCE %}';
+const leafParseCause =
+  'The template could not be parsed at line 2, column 1. Check its Liquid syntax.';
+const leafExpressionCause =
+  'The expression could not evaluate this input. Check its input type and mapping.';
+
+async function assertLeafFailure(
+  e: TestEngine,
+  run: RunRecord,
+  nodeId: string,
+  boundary: string,
+  label: string,
+  cause: string,
+  indices: Record<string, number> = {},
+) {
+  const code = boundary.endsWith('.where') ? 'EXPRESSION_ERROR' : 'TEMPLATE_ERROR';
+  expect(run.failure).toEqual({
+    code,
+    nodeId,
+    resumable: false,
+    message: `${label} failed. ${cause}`,
+    details: { boundary, ...indices, cause: { code, message: cause } },
+  });
+  expect(e.events(run.id).findLast((event) => event.type === 'run.failed')).toMatchObject({
+    failure: run.failure,
+  });
+  const before = e.events(run.id);
+  await expect(e.manager.resume(run.id)).rejects.toThrow();
+  await e.manager.waitForIdle();
+  expect(e.events(run.id)).toEqual(before);
+  for (const data of [run.failure, e.ports.logger.lines])
+    expect(JSON.stringify(data)).not.toContain('PRIVATE');
+}
+
+type DecisionInput = Extract<LoopDefinitionInput['nodes'][number], { kind: 'decision' }>['config'];
+type DecisionSettings =
+  | Omit<Extract<DecisionInput, { kind: 'expression' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'llm' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'classifier' }>, 'answer'>;
+const classifier = {
+  kind: 'classifier',
+  model: 'jev',
+  question: 'Is {{ trigger.payload.value }} good?',
+} as const;
+const llm = {
+  kind: 'llm',
+  harness: 'codex',
+  model: { mode: 'inherit' },
+  effort: { mode: 'inherit' },
+  instructions: 'Q',
+} as const;
+function decisionLoop(
+  name: string,
+  evaluation: DecisionSettings,
+  recordAlternatives = true,
+): LoopDefinitionInput {
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      {
+        id: 'decide',
+        kind: 'decision',
+        label: 'Choose',
+        config:
+          evaluation.kind === 'classifier'
+            ? {
+                ...evaluation,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
+                    { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
+                  ],
+                },
+                recordAlternatives,
+              }
+            : {
+                ...evaluation,
+                routes: [
+                  { id: 'good', label: 'Good outcome' },
+                  { id: 'bad', label: 'Bad outcome' },
+                ],
+              },
+633d9ac72c10fe4b8d76f7ba50221f9ed8557cb9
+d0e38c6c0212e312e6b605ac3d6bc8f7af5a129f

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { RunManager } from './run-manager.js';
@@ -110,6 +110,10 @@ describe('D-022 inherited-session recovery', () => {
       });
       await durable;
       manager.stop();
+      const catalogue = vi
+        .spyOn(e.ports.modelCatalog, 'list')
+        .mockRejectedValue(new Error('unavailable'));
+      const workspace = vi.spyOn(e.ports.workspace, 'resolve');
       const restarted = new RunManager(e.ports, e.settings);
       await restarted.start();
       await restarted.waitForIdle();
@@ -121,6 +125,8 @@ describe('D-022 inherited-session recovery', () => {
       expect(e.ports.harness.resumed).toHaveLength(0);
       expect(e.ports.harness.started).toHaveLength(1);
       expect((await restarted.getThread(run.id))?.outputs['b']).toBeUndefined();
+      expect(catalogue).not.toHaveBeenCalled();
+      expect(workspace).not.toHaveBeenCalled();
       restarted.stop();
     },
   );
@@ -277,9 +283,35 @@ describe('D-022 inherited-session recovery', () => {
     });
     await durable;
     manager.stop();
+    const entries = e.ports.modelCatalog.entries;
+    e.ports.modelCatalog.entries = [];
+    const workspace = vi.spyOn(e.ports.workspace, 'resolve');
+    const turns = e.events(run.id).filter((event) => event.type === 'harness.turn');
+    const submissions = e.events(run.id).filter((event) => event.type === 'harness.submission');
     const restarted = new RunManager(e.ports, e.settings);
     await restarted.start();
     await restarted.waitForIdle();
+    const temporary = (await e.ports.runs.get(run.id))?.failure;
+    expect(temporary).toMatchObject({
+      code: 'EVALUATION_UNAVAILABLE',
+      resumable: true,
+      inference: {
+        visitId: turns.at(-1)?.visitId,
+        turnId: turns.at(-1)?.turnId,
+        promptKind: 'authored',
+        submission: 'session-missing',
+      },
+    });
+    expect(temporary?.missingSession).toBeUndefined();
+    expect(workspace).not.toHaveBeenCalled();
+    e.ports.modelCatalog.entries = entries;
+    await restarted.resume(run.id);
+    await restarted.waitForIdle();
+    expect(workspace).not.toHaveBeenCalled();
+    expect(e.events(run.id).filter((event) => event.type === 'harness.turn')).toEqual(turns);
+    expect(e.events(run.id).filter((event) => event.type === 'harness.submission')).toEqual(
+      submissions,
+    );
     expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
       code: 'HARNESS_SESSION_MISSING',
       resumable: false,

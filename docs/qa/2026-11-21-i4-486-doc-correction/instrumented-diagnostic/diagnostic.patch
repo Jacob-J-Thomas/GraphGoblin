@@ -1,0 +1,301 @@
+diff --git a/apps/web/e2e/global-setup.ts b/apps/web/e2e/global-setup.ts
+index 705c0b1c..258893eb 100644
+--- a/apps/web/e2e/global-setup.ts
++++ b/apps/web/e2e/global-setup.ts
+@@ -19,6 +19,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
+     },
+   );
+ 
++  console.error('__GG_PWA_SERVER_PID__' + JSON.stringify({ pid: child.pid, parentPid: process.pid }));
+   const url = await new Promise<string>((resolveUrl, reject) => {
+     let buffer = '';
+     const timer = setTimeout(
+diff --git a/apps/web/e2e/pwa.spec.ts b/apps/web/e2e/pwa.spec.ts
+index 2fd8cc2e..7f9ef923 100644
+--- a/apps/web/e2e/pwa.spec.ts
++++ b/apps/web/e2e/pwa.spec.ts
+@@ -1,3 +1,7 @@
++import { installDiagnostic, diagnosticFailure } from './pwa-diagnostic.js';
++let stopDiagnostic: (() => void) | undefined;
++test.beforeEach(async ({ context, browser }, info) => { stopDiagnostic = await installDiagnostic(context, browser, info); });
++test.afterEach(() => { stopDiagnostic?.(); stopDiagnostic = undefined; });
+ import {
+   ageWorkboxRegistration,
+   ensureControlledPage,
+@@ -621,9 +625,13 @@ test('another tab’s unresolved voice upload vetoes update activation until tha
+     await expectGuardedWorker(page, 'active');
+     expectGuardedApply(messages, page, 2);
+     expect(navigation).toHaveLength(1);
++  } catch (error) {
++    diagnosticFailure('first-body-error', error);
++    throw error;
+   } finally {
+     if (!dirty.isClosed()) await dirty.close();
+-    await control(request, '/worker/reset');
++    try { await control(request, '/worker/reset'); }
++    catch (error) { diagnosticFailure('cleanup-error', error); throw error; }
+   }
+ });
+ 
+diff --git a/apps/web/public/chat-update-worker.js b/apps/web/public/chat-update-worker.js
+index 0514f67e..bef53c6c 100644
+--- a/apps/web/public/chat-update-worker.js
++++ b/apps/web/public/chat-update-worker.js
+@@ -16,16 +16,27 @@
+   const legacyReason =
+     'An older version is still running. Close all app windows to finish updating.';
+   let applying = false;
++  const diagnostic = (stage, details = {}) => {
++    console.info('__GG_PWA_DIAG__' + JSON.stringify({ realm: 'worker', stage, at: performance.now(), timeOrigin: performance.timeOrigin, ...details }));
++  };
++  const lockSnapshot = (stage, attempt) => {
++    void navigator.locks?.query().then((locks) => diagnostic(stage, { attempt,
++      held: locks.held?.filter((lock) => lock.name === lockName),
++      pending: locks.pending?.filter((lock) => lock.name === lockName) }));
++  };
++
+ 
+   const compatibleActiveWorker = (attempt) =>
+     new Promise((resolve) => {
+       const active = self.registration.active;
++      diagnostic('active-capability-start', { attempt, state: active?.state });
+       if (!active || active.state !== 'activated') {
+         resolve(false);
+         return;
+       }
+       const channel = new MessageChannel();
+       const finish = (safe) => {
++        diagnostic('active-capability-result', { attempt, safe });
+         clearTimeout(timer);
+         channel.port1.close();
+         resolve(safe);
+@@ -49,11 +60,14 @@
+ 
+   const scopedClients = async () => {
+     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+-    return clients.filter((client) => client.url.startsWith(scope));
++    const selected = clients.filter((client) => client.url.startsWith(scope));
++    diagnostic('scoped-clients', { clients: selected.map((client) => ({ id: client.id, path: new URL(client.url).pathname })) });
++    return selected;
+   };
+ 
+   const tell = (client, type, attempt) => {
+     try {
++      diagnostic('tell', { attempt, type, clientId: client.id });
+       client.postMessage({ protocol, scope, type, attempt });
+     } catch {
+       // A document can close after matchAll; its gone audio cannot be preserved by reloading it.
+@@ -62,8 +76,10 @@
+ 
+   const prepare = (client, attempt) =>
+     new Promise((resolve) => {
++      diagnostic('prepare-start', { attempt, clientId: client.id });
+       const channel = new MessageChannel();
+       const timer = setTimeout(() => {
++        diagnostic('prepare-timeout', { attempt, clientId: client.id });
+         channel.port1.close();
+         resolve('unknown');
+       }, 2_000);
+@@ -72,6 +88,7 @@
+         if (!data || data.protocol !== protocol || data.attempt !== attempt) return;
+         clearTimeout(timer);
+         channel.port1.close();
++        diagnostic('prepare-reply', { attempt, clientId: client.id, safe: data.safe });
+         resolve(data.safe === true ? 'safe' : data.safe === false ? 'dirty' : 'unknown');
+       };
+       client.postMessage({ protocol, scope, type: 'PREPARE', attempt }, [channel.port2]);
+@@ -80,10 +97,12 @@
+   // Keep the exclusive lock until activation has actually finished, including activate waitUntil.
+   const activate = async () => {
+     const worker = self.registration.waiting;
++    diagnostic('activate-start', { waiting: worker?.state, active: self.registration.active?.state });
+     if (!worker || worker.scriptURL !== self.location.href)
+       throw new Error('not the waiting worker');
+     const activated = new Promise((resolve) => {
+       const changed = () => {
++        diagnostic('activation-state', { state: worker.state });
+         if (worker.state !== 'activated' && worker.state !== 'redundant') return;
+         worker.removeEventListener('statechange', changed);
+         resolve(worker.state === 'activated');
+@@ -91,15 +110,22 @@
+       worker.addEventListener('statechange', changed);
+       changed();
+     });
++    diagnostic('skip-waiting-start');
+     await self.skipWaiting();
++    diagnostic('skip-waiting-resolved');
+     if (!(await activated)) throw new Error('worker did not activate');
++    diagnostic('activate-resolved');
+   };
+ 
+   const apply = async (event) => {
+     const { attempt } = event.data;
++    diagnostic('apply-received', { attempt, applying, sourceId: event.source?.id });
++    lockSnapshot('apply-locks', attempt);
+     const port = event.ports[0];
+-    const reply = (accepted, reason) =>
++    const reply = (accepted, reason) => {
++      diagnostic('apply-reply', { attempt, accepted, reason });
+       port?.postMessage({ protocol, attempt, accepted, ...(reason ? { reason } : {}) });
++    };
+     if (applying) {
+       reply(false, unknownReason);
+       return;
+@@ -127,11 +153,15 @@
+     let timer;
+     // Queue the exclusive lock FIRST. A new page must acquire shared before creating dirty state,
+     // so it cannot slip between the final clients snapshot and worker activation.
++    diagnostic('exclusive-queued', { attempt });
+     const exclusive = navigator.locks.request(
+       lockName,
+       { mode: 'exclusive', signal: abort.signal },
+       async () => {
++        diagnostic('exclusive-granted', { attempt });
++        lockSnapshot('exclusive-locks', attempt);
+         if (!(await preparation)) return;
++        diagnostic('preparation-accepted', { attempt });
+         clearTimeout(timer);
+         const current = await scopedClients();
+         for (const client of current) {
+@@ -148,6 +178,7 @@
+         for (const client of prepared.values()) tell(client, 'COMMIT', attempt);
+         await activate();
+         accepted = true;
++        diagnostic('accepted', { attempt });
+       },
+     );
+     void exclusive.catch(() => undefined);
+@@ -157,6 +188,7 @@
+         throw new Error('unknown requester');
+       for (const client of clients) prepared.set(client.id, client);
+       const checks = await Promise.all(clients.map((client) => prepare(client, attempt)));
++      diagnostic('checks-complete', { attempt, checks });
+       if (checks.some((safety) => safety !== 'safe')) {
+         reason = checks.includes('dirty') ? dirtyReason : unknownReason;
+         ready(false);
+@@ -164,7 +196,7 @@
+       } else {
+         ready(true);
+         // An unresponsive/older tab that still owns a shared lease is a veto, not an expired vote.
+-        timer = setTimeout(() => abort.abort(), 2_000);
++        timer = setTimeout(() => { diagnostic('exclusive-timeout', { attempt }); abort.abort(); }, 2_000);
+       }
+       await exclusive;
+     } catch {
+@@ -173,6 +205,7 @@
+       // Always observe lock rejection, including cancellation before its callback starts.
+       await exclusive.catch(() => undefined);
+     } finally {
++      diagnostic('apply-finally', { attempt, accepted, reason });
+       clearTimeout(timer);
+       if (!accepted) {
+         for (const client of prepared.values()) tell(client, 'ABORT', attempt);
+@@ -182,6 +215,7 @@
+     }
+   };
+ 
++  self.addEventListener('activate', () => diagnostic('worker-activate-event'));
+   self.addEventListener('message', (event) => {
+     if (event.data?.type === 'SKIP_WAITING') {
+       // generateSW also adds this listener; stop it from bypassing the safety barrier.
+diff --git a/apps/web/src/pwa/chat-update-guard.ts b/apps/web/src/pwa/chat-update-guard.ts
+index 0c886cb2..f928fe31 100644
+--- a/apps/web/src/pwa/chat-update-guard.ts
++++ b/apps/web/src/pwa/chat-update-guard.ts
+@@ -7,6 +7,10 @@ import {
+ } from './chat-update-lock.js';
+ export { getChatUpdateLocked } from './chat-update-lock.js';
+ 
++function diagnostic(stage: string, details: Record<string, unknown> = {}): void {
++  console.info('__GG_PWA_DIAG__' + JSON.stringify({ realm: 'page-guard', stage, at: performance.now(), timeOrigin: performance.timeOrigin, ...details }));
++}
++
+ const unresolvedSubmissions = new Set<string>();
+ const listeners = new Set<() => void>();
+ 
+@@ -151,6 +155,7 @@ export function startChatUpdateGuard(
+   };
+ 
+   const releaseLease = () => {
++    diagnostic('release-lease', { owner, prepared: [...prepared] });
+     generation++;
+     acquiring?.abort();
+     acquiring = undefined;
+@@ -172,10 +177,12 @@ export function startChatUpdateGuard(
+     // Only this registration's worker may coordinate its pages; /app/ and /goblin/ stay separate.
+     if (!source || source.scriptURL !== new URL('sw.js', scope).href) return;
+     const attempt = data.attempt;
++    diagnostic('message', { owner, attempt, type: data.type, workerState: source.state });
+     const key = `${owner}:${attempt}`;
+     if (data.type === 'PREPARE') {
+       prepared.add(attempt);
+       const safe = lockChatUpdate(key) && !!locks && storageKnown;
++      diagnostic('prepare-ack', { owner, attempt, safe });
+       if (safe) releaseLease();
+       event.ports[0]?.postMessage({ protocol: CHAT_UPDATE_PROTOCOL, attempt, safe });
+     } else if (data.type === 'ABORT') {
+@@ -184,6 +191,7 @@ export function startChatUpdateGuard(
+       if (locks && !releaseShared) acquireShared();
+       unlockChatUpdate(key);
+     } else if (data.type === 'COMMIT' && prepared.has(attempt)) {
++      diagnostic('commit', { owner, attempt });
+       committed(source);
+     }
+   };
+@@ -201,8 +209,10 @@ export function startChatUpdateGuard(
+       return new Promise<ChatUpdateResult>((resolve) => {
+         const channel = new MessageChannel();
+         const attempt = crypto.randomUUID();
++        diagnostic('apply-send', { owner, attempt, workerState: worker.state });
+         // A timeout is failure to prove safety, never permission to release a peer's dirty state.
+         const timer = setTimeout(() => {
++          diagnostic('apply-timeout', { owner, attempt });
+           channel.port1.close();
+           resolve({ accepted: false, reason: CHAT_UPDATE_UNKNOWN_REASON });
+         }, 15_000);
+@@ -210,6 +220,7 @@ export function startChatUpdateGuard(
+           const result = event.data as Record<string, unknown> | undefined;
+           if (!result || result.protocol !== CHAT_UPDATE_PROTOCOL || result.attempt !== attempt)
+             return;
++          diagnostic('apply-result', { owner, attempt, accepted: result.accepted, reason: result.reason });
+           clearTimeout(timer);
+           channel.port1.close();
+           resolve({
+diff --git a/apps/web/src/pwa/register.ts b/apps/web/src/pwa/register.ts
+index be52c028..f8046824 100644
+--- a/apps/web/src/pwa/register.ts
++++ b/apps/web/src/pwa/register.ts
+@@ -44,13 +44,17 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
+   let controlled = false;
+   let committedWorker: ServiceWorker | undefined;
+   let reloaded = false;
++  const diagnostic = (stage: string, details: Record<string, unknown> = {}) => console.info('__GG_PWA_DIAG__' + JSON.stringify({ realm: 'register', stage, at: performance.now(), timeOrigin: performance.timeOrigin, ...details }));
+   const maybeReload = () => {
++    diagnostic('maybe-reload', { disposed, reloadRequested, controlled, reloaded, unsafe: isChatUpdateUnsafe() });
+     if (!disposed && reloadRequested && controlled && !reloaded && !isChatUpdateUnsafe()) {
+       reloaded = true;
++      diagnostic('reload');
+       reload();
+     }
+   };
+   const guard = (options.createUpdateGuard ?? startChatUpdateGuard)(scope, (worker) => {
++    diagnostic('committed', { state: worker.state, isController: navigator.serviceWorker?.controller === worker });
+     committedWorker = worker;
+     controlled = navigator.serviceWorker?.controller === worker;
+     reloadRequested = true;
+@@ -76,6 +80,7 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
+       new Workbox(swUrl, { scope: swScope, updateViaCache: 'none' }));
+   const wb = create(url, scope);
+   wb.addEventListener('controlling', () => {
++    diagnostic('controlling', { committedState: committedWorker?.state, isCommittedController: navigator.serviceWorker?.controller === committedWorker });
+     // For external updates Workbox reports its previously tracked worker in event.sw. The
+     // browser's actual controller is the authority for whether our committed worker took over.
+     controlled = !committedWorker || navigator.serviceWorker?.controller === committedWorker;
+@@ -88,6 +93,7 @@ export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: v
+     const apply = async () => {
+       controlled = false;
+       const result = await guard.apply(worker ?? registration?.waiting ?? undefined);
++      diagnostic('guard-result', { accepted: result.accepted, reason: result.reason });
+       if (disposed || usePwaStore.getState().applyUpdate !== apply) return false;
+       if (!result.accepted) {
+         store.setUpdateBlocked(result.reason ?? 'The update could not be checked. Try again.');

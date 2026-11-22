@@ -1,0 +1,1563 @@
+diff --git a/apps/api/src/prompt-evidence-matrix.test.ts b/apps/api/src/prompt-evidence-matrix.test.ts
+index d7846bc5..f6d0b4bb 100644
+--- a/apps/api/src/prompt-evidence-matrix.test.ts
++++ b/apps/api/src/prompt-evidence-matrix.test.ts
+@@ -64,6 +64,10 @@ it.each(matrix)(
+         resumable: expected.resumable,
+         inference: { promptKind: 'repair', submission: spec.state },
+       });
++      expect(run.failure?.details ?? {}).not.toHaveProperty('phase');
++      expect(run.failure?.message).not.toContain(
++        'GraphGoblin received the provider result before this step failed.',
++      );
+       if (fired) expect.soft(run.failure?.details).toMatchObject({ recording: expect.any(Array) });
+       const resumed = await test.app.inject({
+         method: 'POST',
+diff --git a/apps/api/src/prompt-failure-boundaries.test.ts b/apps/api/src/prompt-failure-boundaries.test.ts
+index eca4c0e9..e428f77d 100644
+--- a/apps/api/src/prompt-failure-boundaries.test.ts
++++ b/apps/api/src/prompt-failure-boundaries.test.ts
+@@ -1,5 +1,5 @@
+ import { expect, it } from 'vitest';
+-import type { HarnessId, RunEvent, RunRecord } from '@graphgoblin/contracts';
++import type { HarnessId, RunEvent, RunRecord, RunRecovery } from '@graphgoblin/contracts';
+ import type { HarnessEvent, HarnessPort, HarnessResult } from '@graphgoblin/engine';
+ import { FakeHarness, singleNodeLoop } from '@graphgoblin/engine/testing';
+ import { createTestApp } from './testing/test-app.js';
+@@ -122,6 +122,10 @@ it.each(
+           },
+         },
+       });
++      expect(failed.failure?.details ?? {}).not.toHaveProperty('phase');
++      expect(failed.failure?.message).not.toContain(
++        'GraphGoblin received the provider result before this step failed.',
++      );
+       const history = (
+         await test.app.inject({ method: 'GET', url: `/runs/${runId}/events` })
+       ).json<{ items: RunEvent[] }>().items;
+@@ -142,6 +146,160 @@ it.each(
+   },
+ );
+ 
++it.each(
++  families.flatMap((family) =>
++    (['primary', 'repair', 'output'] as const).flatMap((stage) =>
++      [false, true].map((fails) => ({ family, stage, fails })),
++    ),
++  ),
++)(
++  '#486 HTTP $family $stage authored fails=$fails has row/event/REST parity and effect counts',
++  async ({ family, stage, fails }) => {
++    const fake = new FakeHarness(
++      [{ finalText: stage === 'repair' ? 'invalid' : '42', accepted: false }, { finalText: '42' }],
++      family,
++    );
++    const test = await createTestApp({ harnesses: { [family]: fake } });
++    try {
++      const loop = singleNodeLoop('Authored failure parity', {
++        id: 'infer',
++        kind: 'inference',
++        label: 'Infer',
++        config: {
++          harness: family,
++          model: family === 'claude' ? 'claude-opus-5-5' : 'gpt-6-luna',
++          effort: 'low',
++          harnessOptions: { sandbox: 'read-only', approval: 'never' },
++          prompt: {
++            template:
++              stage === 'primary' && fails
++                ? '{{ "private-template-486" | append }}'
++                : 'Original task',
++          },
++          output:
++            stage === 'repair'
++              ? {
++                  schema: {
++                    jsonSchema: { type: 'number' },
++                    repair: {
++                      enabled: true,
++                      maxAttempts: 1,
++                      prompt: fails
++                        ? '{{ "private-template-486" | append }}'
++                        : 'Repair exactly: {{ value }}',
++                    },
++                  },
++                }
++              : stage === 'output'
++                ? {
++                    transforms: [
++                      {
++                        op: 'set',
++                        path: '/vars/mapped',
++                        value: {
++                          kind: 'expression',
++                          jsonata: fails ? '$error("private-transform-486")' : '42',
++                        },
++                      },
++                    ],
++                  }
++                : {},
++        },
++      });
++      const loopId = await test.publishLoop(loop);
++      const start = await test.app.inject({
++        method: 'POST',
++        url: `/loops/${loopId}/runs`,
++        payload: {},
++      });
++      expect(start.statusCode).toBe(202);
++      const id = start.json<{ run: RunRecord }>().run.id;
++      await test.idle();
++      const snapshot = (await test.app.inject(`/runs/${id}`)).json<
++        RunRecord & { recovery: RunRecovery }
++      >();
++      const row = await test.container.ports.runs.get(id);
++      const events = (await test.app.inject(`/runs/${id}/events`)).json<{ items: RunEvent[] }>()
++        .items;
++      const turns = events.filter((event) => event.type === 'harness.turn');
++      expect(snapshot.failure).toEqual(row?.failure);
++      if (!fails) {
++        expect(snapshot.status).toBe('succeeded');
++        expect(turns).toHaveLength(stage === 'repair' ? 2 : 1);
++        if (stage === 'output')
++          expect((await test.container.manager.getThread(id))?.vars['mapped']).toBe(42);
++        return;
++      }
++      const boundary =
++        stage === 'primary'
++          ? 'inference.prompt.template'
++          : stage === 'repair'
++            ? 'inference.output.schema.repair.prompt'
++            : 'inference.output.transforms';
++      const cause =
++        stage === 'output'
++          ? 'The expression could not evaluate this input. Check its input type and mapping.'
++          : 'The template could not be rendered at line 1, column 1. Check its filters and input values.';
++      const causeCode = stage === 'output' ? 'EXPRESSION_ERROR' : 'TEMPLATE_ERROR';
++      const label =
++        stage === 'primary'
++          ? 'Inference prompt template'
++          : stage === 'repair'
++            ? 'Inference schema repair prompt, attempt 1'
++            : 'Inference output transform 1 (set)';
++      expect(snapshot.failure).toMatchObject({
++        code: stage === 'output' ? 'MUTATION_ERROR' : 'TEMPLATE_ERROR',
++        nodeId: 'infer',
++        resumable: false,
++        message: `${label} failed. ${cause}${stage === 'primary' ? '' : ' GraphGoblin received the provider result before this step failed.'}`,
++        details: {
++          boundary,
++          cause: { code: causeCode, message: cause },
++          ...(stage === 'repair'
++            ? { attempt: 1, phase: 'after-result' }
++            : stage === 'output'
++              ? { operationIndex: 0, operationKind: 'set', phase: 'after-result' }
++              : {}),
++        },
++      });
++      expect(events.filter((event) => event.type === 'run.failed')).toMatchObject([
++        { failure: snapshot.failure },
++      ]);
++      expect(turns).toHaveLength(stage === 'primary' ? 0 : 1);
++      if (stage === 'primary') expect(snapshot.failure?.inference).toBeUndefined();
++      else
++        expect(snapshot.failure?.inference).toMatchObject({
++          visitId: turns[0]!.visitId,
++          turnId: turns[0]!.turnId,
++          promptKind: 'authored',
++          submission: 'delivery-uncertain',
++        });
++      expect(fake.started).toHaveLength(stage === 'primary' ? 0 : 1);
++      expect(fake.resumed).toHaveLength(0);
++      const before = JSON.stringify(events);
++      const refusal = await test.app.inject({
++        method: 'POST',
++        url: `/runs/${id}/resume`,
++        payload: { observedSeq: snapshot.recovery.observedSeq },
++      });
++      expect(refusal.statusCode).toBe(409);
++      expect(refusal.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
++      await test.idle();
++      expect(
++        JSON.stringify(
++          (await test.app.inject(`/runs/${id}/events`)).json<{ items: RunEvent[] }>().items,
++        ),
++      ).toBe(before);
++      expect(fake.resumed).toHaveLength(0);
++      expect(JSON.stringify(snapshot.failure)).not.toMatch(
++        /private-transform-486|private-template-486/,
++      );
++    } finally {
++      await test.close();
++    }
++  },
++);
++
+ it.each(families)('retains the committed %s repair when its append then throws', async (family) => {
+   const test = await createTestApp();
+   const fake = new FakeHarness([{ finalText: 'invalid' }, { finalText: '42' }], family);
+diff --git a/apps/api/src/prompt-provenance.test.ts b/apps/api/src/prompt-provenance.test.ts
+index 5824cc37..5d4e6f42 100644
+--- a/apps/api/src/prompt-provenance.test.ts
++++ b/apps/api/src/prompt-provenance.test.ts
+@@ -1,10 +1,151 @@
+-import { describe, expect, it } from 'vitest';
++import { describe, expect, it, vi } from 'vitest';
++import * as domain from '@graphgoblin/domain';
+ import { CodexHarness } from '@graphgoblin/adapter-codex';
+ import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
+ import type { HarnessPort } from '@graphgoblin/engine';
+ import { FakeHarness, singleNodeLoop } from '@graphgoblin/engine/testing';
+ import { createTestApp } from './testing/test-app.js';
+ 
++it('#486 an output failure after a result without a session keeps the real turn and refuses Resume', async () => {
++  const fake = new FakeHarness([
++    { finalText: 'received', announceSession: false, accepted: false },
++  ]);
++  const test = await createTestApp({ harnesses: { codex: fake } });
++  try {
++    const loopId = await test.publishLoop(
++      singleNodeLoop('No-session result', {
++        id: 'infer',
++        kind: 'inference',
++        label: 'Infer',
++        config: {
++          prompt: { template: 'go' },
++          output: {
++            transforms: [
++              {
++                op: 'set',
++                path: '/vars/value',
++                value: { kind: 'expression', jsonata: '$error("private-no-session-486")' },
++              },
++            ],
++          },
++        },
++      }),
++    );
++    const start = await test.app.inject({
++      method: 'POST',
++      url: `/loops/${loopId}/runs`,
++      payload: {},
++    });
++    expect(start.statusCode).toBe(202);
++    const id = start.json<{ run: RunRecord }>().run.id;
++    await test.idle();
++    const snapshot = (await test.app.inject(`/runs/${id}`)).json<RunRecord>();
++    const events = (await test.app.inject(`/runs/${id}/events`)).json<{ items: RunEvent[] }>()
++      .items;
++    const turns = events.filter((event) => event.type === 'harness.turn');
++    expect(turns).toHaveLength(1);
++    expect(snapshot.failure).toMatchObject({
++      code: 'MUTATION_ERROR',
++      nodeId: 'infer',
++      resumable: false,
++      details: { boundary: 'inference.output.transforms', phase: 'after-result' },
++    });
++    expect(snapshot.failure?.inference).toEqual({
++      turnId: turns[0]!.turnId,
++      visitId: turns[0]!.visitId,
++      promptKind: 'authored',
++      submission: 'delivery-uncertain',
++    });
++    expect(snapshot.failure?.message).toContain(
++      'GraphGoblin received the provider result before this step failed.',
++    );
++    expect(snapshot.failure?.message).not.toContain('no usable session');
++    expect((await test.container.ports.runs.get(id))?.failure).toEqual(snapshot.failure);
++    expect(events.filter((event) => event.type === 'run.failed')).toMatchObject([
++      { failure: snapshot.failure },
++    ]);
++    const before = JSON.stringify(events);
++    const refusal = await test.app.inject({
++      method: 'POST',
++      url: `/runs/${id}/resume`,
++      payload: { observedSeq: (await test.container.manager.getRecovery(id)).observedSeq },
++    });
++    expect(refusal.statusCode).toBe(409);
++    expect(refusal.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
++    expect(JSON.stringify(await test.container.ports.events.read(id))).toBe(before);
++    expect(fake.started).toHaveLength(1);
++    expect(fake.resumed).toHaveLength(0);
++  } finally {
++    await test.close();
++  }
++});
++
++it('#486 a synthetic canonical rerender fault is safe, engine-owned and resumable over HTTP', async () => {
++  const fake = new FakeHarness();
++  const render = vi.spyOn(domain, 'renderTemplate');
++  const harness: HarnessPort = {
++    id: 'codex',
++    preflight: () => fake.preflight(),
++    start: (request, signal) => fake.start(request, signal),
++    resume: (id, request, signal) => fake.resume(id, request, signal),
++    contextWindow: () => {
++      render.mockRejectedValueOnce(new domain.TemplateError('private canonical rerender marker'));
++      return Promise.resolve({
++        contextTokens: 4096,
++        outputReserveTokens: 1024,
++        profile: 'test/bytes',
++        fits: (prompt: string) => Buffer.byteLength(prompt) <= 400,
++      });
++    },
++  };
++  const test = await createTestApp({ harnesses: { codex: harness } });
++  try {
++    const loopId = await test.publishLoop(
++      domain.createSystemChatDefinition({ name: 'Canonical rerender', harness: 'codex' }),
++    );
++    const started = await test.app.inject({
++      method: 'POST',
++      url: `/loops/${loopId}/runs`,
++      payload: {
++        input: {
++          protocol: 'graphgoblin.chat.v1',
++          conversationId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
++          requestId: '33d911ae-7293-4acb-ab74-910e67293f1d',
++          turn: 2,
++          history: [
++            { role: 'user', text: 'old question ' + 'x'.repeat(80) },
++            { role: 'assistant', text: 'old answer ' + 'x'.repeat(80) },
++          ],
++          input: { kind: 'text', text: 'Required current question' },
++        },
++      },
++    });
++    expect(started.statusCode).toBe(202);
++    const id = started.json<{ run: RunRecord }>().run.id;
++    await test.idle();
++    const run = (await test.app.inject(`/runs/${id}`)).json<RunRecord>();
++    expect(render).toHaveBeenCalled();
++    expect(run.failure).toEqual({
++      code: 'INTERNAL_ERROR',
++      nodeId: 'respond',
++      resumable: true,
++      message: 'An unexpected error interrupted the run. See the server logs for this run.',
++    });
++    expect((await test.container.ports.runs.get(id))?.failure).toEqual(run.failure);
++    const events = (await test.app.inject(`/runs/${id}/events`)).json<{ items: RunEvent[] }>()
++      .items;
++    expect(events.filter((event) => event.type === 'run.failed')).toMatchObject([
++      { failure: run.failure },
++    ]);
++    expect(events.filter((event) => event.type === 'harness.turn')).toHaveLength(0);
++    expect(fake.started).toHaveLength(0);
++    expect(JSON.stringify(run.failure)).not.toContain('private canonical rerender marker');
++  } finally {
++    render.mockRestore();
++    await test.close();
++  }
++});
++
+ describe('inference recovery contract over the API', () => {
+   it.each(
+     (['codex', 'claude'] as const).flatMap((family) =>
+@@ -119,6 +260,10 @@ describe('inference recovery contract over the API', () => {
+         const history = await test.app.inject({ method: 'GET', url: `/runs/${runId}/events` });
+         const events = history.json<{ items: RunEvent[] }>().items;
+         const repair = events.filter((event) => event.type === 'harness.turn').at(-1)!;
++        expect(failed.json<RunRecord>().failure?.details ?? {}).not.toHaveProperty('phase');
++        expect(failed.json<RunRecord>().failure?.message).not.toContain(
++          'GraphGoblin received the provider result before this step failed.',
++        );
+         expect(repair.prompt).toBe('Repair exactly: "invalid"');
+         expect
+           .soft(events.filter((event) => event.type === 'harness.submission').at(-1))
+diff --git a/apps/api/src/prompt-sdk-storage-matrix.test.ts b/apps/api/src/prompt-sdk-storage-matrix.test.ts
+index 84ef0ee1..1b42ea00 100644
+--- a/apps/api/src/prompt-sdk-storage-matrix.test.ts
++++ b/apps/api/src/prompt-sdk-storage-matrix.test.ts
+@@ -118,6 +118,10 @@ it.each(matrix)(
+         resumable: expected.resumable,
+         inference: { promptKind: 'repair', submission: expected.state },
+       });
++      expect(run.failure?.details ?? {}).not.toHaveProperty('phase');
++      expect(run.failure?.message).not.toContain(
++        'GraphGoblin received the provider result before this step failed.',
++      );
+       if (storage !== 'ok') {
+         expect.soft(fired).toBe(true);
+         expect.soft(run.failure?.details).toMatchObject({ recording: expect.any(Array) });
+diff --git a/apps/api/src/subloop-failure.test.ts b/apps/api/src/subloop-failure.test.ts
+index 49fdce38..e47143e9 100644
+--- a/apps/api/src/subloop-failure.test.ts
++++ b/apps/api/src/subloop-failure.test.ts
+@@ -42,6 +42,218 @@ async function start(app: TestApp, loopId: string): Promise<RunRecord> {
+ }
+ 
+ describe('subloop child failures over the API (#251)', () => {
++  it.each(['input', 'output'] as const)(
++    '#486 parent-authored %s mapping failure owns its location and refuses Resume',
++    async (stage) => {
++      t = await createTestApp();
++      const childId = await t.publishLoop(
++        chain('Successful child', {
++          id: 'work',
++          kind: 'mutate',
++          label: 'Work',
++          config: {
++            operations: [
++              {
++                op: 'set',
++                path: '/vars/value',
++                value: { kind: 'literal', value: 'actual-child-value' },
++              },
++            ],
++          },
++        }),
++      );
++      const parentId = await t.publishLoop(
++        chain('Mapping parent', {
++          id: 'sub',
++          kind: 'subloop',
++          label: 'Sub',
++          config: {
++            loopRef: { loopId: childId },
++            ...(stage === 'input'
++              ? { input: { vars: { first: '1', privateName: '$error("private-map-486")' } } }
++              : {
++                  output: {
++                    mode: 'merge',
++                    vars: {
++                      strategy: 'explicit',
++                      map: { first: '1', privateName: '$error("private-map-486")' },
++                    },
++                  },
++                }),
++          },
++        }),
++      );
++      const parent = await start(t, parentId);
++      const cause =
++        'The expression could not evaluate this input. Check its input type and mapping.';
++      expect(parent.failure).toEqual({
++        code: 'EXPRESSION_ERROR',
++        nodeId: 'sub',
++        resumable: false,
++        message: `Subloop ${stage} variable mapping 2 failed. ${cause}`,
++        details: {
++          boundary: `subloop.${stage}.vars`,
++          mapIndex: 1,
++          cause: { code: 'EXPRESSION_ERROR', message: cause },
++        },
++      });
++      const row = await t.container.ports.runs.get(parent.id);
++      expect(row?.failure).toEqual(parent.failure);
++      const events = (await t.app.inject(`/runs/${parent.id}/events`)).json<{ items: RunEvent[] }>()
++        .items;
++      const failure = events.filter((event) => event.type === 'run.failed');
++      expect(failure).toMatchObject([{ failure: parent.failure }]);
++      const children = (await t.app.inject(`/runs?parent=${parent.id}`)).json<{
++        items: RunRecord[];
++      }>().items;
++      const finishes = events.filter((event) => event.type === 'child_run.finished');
++      expect(children).toHaveLength(stage === 'input' ? 0 : 1);
++      expect(finishes).toHaveLength(stage === 'input' ? 0 : 1);
++      if (stage === 'output') {
++        expect(children[0]).toMatchObject({ status: 'succeeded' });
++        expect(finishes[0]).toMatchObject({ status: 'succeeded', childRunId: children[0]!.id });
++        expect(failure[0]!.seq).toBe(finishes[0]!.seq + 1);
++      }
++      const recovery = await t.container.manager.getRecovery(parent.id);
++      expect(recovery.resume).toMatchObject({ allowed: false, code: 'FAILURE_NOT_RESUMABLE' });
++      const before = JSON.stringify(events);
++      const refused = await t.app.inject({
++        method: 'POST',
++        url: `/runs/${parent.id}/resume`,
++        payload: { observedSeq: recovery.observedSeq },
++      });
++      expect(refused.statusCode).toBe(409);
++      expect(refused.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
++      expect(
++        JSON.stringify(
++          (await t.app.inject(`/runs/${parent.id}/events`)).json<{ items: RunEvent[] }>().items,
++        ),
++      ).toBe(before);
++      expect(t.harness.started).toHaveLength(0);
++    },
++  );
++
++  it.each([1, 2])(
++    '#486 actual failed-child links remain authoritative through depth %i',
++    async (depth) => {
++      t = await createTestApp();
++      t.harness.script([{ finalText: 'actual provider result', accepted: false }]);
++      let loopId = await t.publishLoop(
++        chain('Authored output leaf', {
++          id: 'infer',
++          kind: 'inference',
++          label: 'Infer',
++          config: {
++            prompt: { template: 'go' },
++            output: {
++              transforms: [
++                {
++                  op: 'set',
++                  path: '/vars/value',
++                  value: { kind: 'expression', jsonata: '$error("private-leaf-486")' },
++                },
++              ],
++            },
++          },
++        }),
++      );
++      for (let level = 0; level < depth; level += 1)
++        loopId = await t.publishLoop(
++          chain(`Parent level ${level}`, {
++            id: 'sub',
++            kind: 'subloop',
++            label: 'Sub',
++            config: { loopRef: { loopId } },
++          }),
++        );
++      const root = await start(t, loopId);
++      let current = root;
++      for (let level = 0; level < depth; level += 1) {
++        const [child] = (await t.app.inject(`/runs?parent=${current.id}`)).json<{
++          items: RunRecord[];
++        }>().items;
++        expect(child).toBeDefined();
++        expect(current.failure).toMatchObject({
++          code: 'MUTATION_ERROR',
++          nodeId: 'sub',
++          resumable: false,
++          details: {
++            childRunId: child!.id,
++            childNodeId: level + 1 === depth ? 'infer' : 'sub',
++            childDetails: child!.failure!.details,
++          },
++        });
++        expect(current.failure).not.toHaveProperty('inference');
++        expect(current.failure?.details ?? {}).not.toHaveProperty('phase');
++        expect((await t.container.ports.runs.get(current.id))?.failure).toEqual(current.failure);
++        const events = (await t.app.inject(`/runs/${current.id}/events`)).json<{
++          items: RunEvent[];
++        }>().items;
++        expect(events.filter((event) => event.type === 'run.failed')).toMatchObject([
++          { failure: current.failure },
++        ]);
++        expect(events.filter((event) => event.type === 'child_run.finished')).toMatchObject([
++          { childRunId: child!.id, status: 'failed' },
++        ]);
++        current = child!;
++      }
++      expect(current.failure).toMatchObject({
++        nodeId: 'infer',
++        details: { boundary: 'inference.output.transforms', phase: 'after-result' },
++        inference: { promptKind: 'authored' },
++      });
++      expect(current.failure?.message).toContain(
++        'GraphGoblin received the provider result before this step failed.',
++      );
++      const before = JSON.stringify(await t.container.ports.events.read(root.id));
++      const refused = await t.app.inject({
++        method: 'POST',
++        url: `/runs/${root.id}/resume`,
++        payload: { observedSeq: (await t.container.manager.getRecovery(root.id)).observedSeq },
++      });
++      expect(refused.statusCode).toBe(409);
++      expect(refused.json()).toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
++      expect(JSON.stringify(await t.container.ports.events.read(root.id))).toBe(before);
++      expect(t.harness.started).toHaveLength(1);
++      expect(t.harness.resumed).toHaveLength(0);
++    },
++  );
++
++  it('#486 B25 signal expression remains a request error with the same parked wait and zero effects', async () => {
++    t = await createTestApp();
++    const loopId = await t.publishLoop(
++      chain('Signal request control', {
++        id: 'wait',
++        kind: 'wait',
++        label: 'Wait',
++        config: { mode: 'signal', name: 'go', filter: '$error("B25 existing request marker")' },
++      }),
++    );
++    const parked = await start(t, loopId);
++    expect(parked.status).toBe('waiting');
++    const before = JSON.stringify(await t.container.ports.events.read(parked.id));
++    const response = await t.app.inject({
++      method: 'POST',
++      url: `/runs/${parked.id}/signals/go`,
++      payload: { waitId: parked.waiting!.waitId, payload: { value: 42 } },
++    });
++    expect(response.statusCode).toBe(400);
++    expect(response.json()).toMatchObject({
++      code: 'EXPRESSION_ERROR',
++      detail: expect.stringContaining('B25 existing request marker'),
++    });
++    const after = (await t.app.inject(`/runs/${parked.id}`)).json<RunRecord>();
++    expect(after.status).toBe('waiting');
++    expect(after.waiting).toEqual(parked.waiting);
++    expect(after.failure).toBeUndefined();
++    expect(JSON.stringify(await t.container.ports.events.read(parked.id))).toBe(before);
++    const events = await t.container.ports.events.read(parked.id);
++    expect(
++      events.filter((event) => ['signal.received', 'run.woken', 'run.failed'].includes(event.type)),
++    ).toEqual([]);
++    expect(t.harness.started).toHaveLength(0);
++  });
++
+   it('a provider failure in a child fails the parent visibly, and resuming the parent resumes the child', async () => {
+     t = await createTestApp();
+     t.harness.script([
+diff --git a/packages/engine/src/adversarial.test.ts b/packages/engine/src/adversarial.test.ts
+index 3e3f4ef7..4351f558 100644
+--- a/packages/engine/src/adversarial.test.ts
++++ b/packages/engine/src/adversarial.test.ts
+@@ -28,6 +28,101 @@ const subLoop = (name: string, loopId: string, output: Record<string, unknown> =
+     config: { loopRef: { loopId }, output },
+   });
+ 
++it.each(['bad-template', 'empty'] as const)(
++  '#486 file return %s remains a failed receipt on a successful run',
++  async (kind) => {
++    const e = await createTestEngine();
++    const resolve = vi.spyOn(e.ports.workspace, 'resolve');
++    const write = vi.spyOn(e.ports.workspace, 'writeFile');
++    const definition = minimalLoop();
++    definition.settings = {
++      workingDirectory: { kind: 'template', template: kind === 'empty' ? '  ' : '{% if %}' },
++    };
++    const done = definition.nodes.find((node) => node.kind === 'exit')!;
++    if (done.kind !== 'exit') throw new Error('missing exit');
++    done.config = {
++      returns: '42',
++      destinations: [{ kind: 'file', path: 'result.json' }, { kind: 'caller' }],
++    };
++    try {
++      const run = await e.runToIdle(e.publish(definition).loopId);
++      expect(run).toMatchObject({ status: 'succeeded', result: 42 });
++      expect(run.failure).toBeUndefined();
++      expect(resolve).not.toHaveBeenCalled();
++      expect(write).not.toHaveBeenCalled();
++      expect(e.events(run.id).filter((event) => event.type === 'return.failed')).toMatchObject([
++        {
++          channel: { kind: 'file' },
++          error:
++            kind === 'empty'
++              ? 'Working directory template failed. The template rendered to an empty path. Supply a nonempty directory.'
++              : 'Working directory template failed. The template could not be parsed at line 1, column 6. Check its Liquid syntax.',
++        },
++      ]);
++      expect(e.eventTypes(run.id)).not.toContain('run.failed');
++      expect(e.eventTypes(run.id).filter((type) => type === 'run.finished')).toHaveLength(1);
++    } finally {
++      e.manager.stop();
++    }
++  },
++);
++
++it.each(['write', 'receipt-before', 'receipt-after'] as const)(
++  '#486 external file %s retains receipt behavior without a second write on recovery',
++  async (fault) => {
++    const e = await createTestEngine();
++    const write = vi.spyOn(e.ports.workspace, 'writeFile');
++    if (fault === 'write')
++      write.mockRejectedValue(new Error('external file marker ' + 'x'.repeat(4100)));
++    const append = e.ports.events.append.bind(e.ports.events);
++    let fired = false;
++    vi.spyOn(e.ports.events, 'append').mockImplementation(async (id, drafts, options) => {
++      if (
++        fault !== 'write' &&
++        !fired &&
++        drafts.some((draft) => draft.type === 'return.delivered' && draft.channel.kind === 'file')
++      ) {
++        fired = true;
++        if (fault === 'receipt-after') await append(id, drafts, options);
++        throw new Error('external success receipt marker');
++      }
++      return append(id, drafts, options);
++    });
++    const definition = minimalLoop();
++    const done = definition.nodes.find((node) => node.kind === 'exit')!;
++    if (done.kind !== 'exit') throw new Error('missing exit');
++    done.config = { returns: '42', destinations: [{ kind: 'file', path: 'result.json' }] };
++    try {
++      const run = await e.runToIdle(e.publish(definition).loopId);
++      expect(run).toMatchObject({ status: 'succeeded', result: 42 });
++      expect(write).toHaveBeenCalledTimes(1);
++      const receipts = e.events(run.id).filter((event) => event.type === 'return.failed');
++      expect(receipts).toHaveLength(1);
++      expect(receipts[0]?.error).toBe(
++        fault === 'write'
++          ? ('external file marker ' + 'x'.repeat(4100)).slice(0, 4000)
++          : 'external success receipt marker',
++      );
++      expect(e.events(run.id).filter((event) => event.type === 'return.delivered')).toHaveLength(
++        fault === 'receipt-after' ? 1 : 0,
++      );
++      const before = JSON.stringify(e.events(run.id));
++      e.manager.stop();
++      const recovered = new RunManager(e.ports, e.settings);
++      try {
++        await recovered.start();
++        await recovered.waitForIdle();
++      } finally {
++        recovered.stop();
++      }
++      expect(write).toHaveBeenCalledTimes(1);
++      expect(JSON.stringify(e.events(run.id))).toBe(before);
++    } finally {
++      e.manager.stop();
++    }
++  },
++);
++
+ describe('adversarial engine invariants', () => {
+   it('1: queued pause, invalid resume, waiting cancel and terminal signals are typed', async () => {
+     const e = await createTestEngine();
+@@ -507,7 +602,20 @@ describe('adversarial engine invariants', () => {
+       const r = await e.runToIdle(parent.loopId);
+       expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+       expect(r.failure?.message).toMatch(/outside the mutable regions/);
+-      expect(r.failure?.message).toContain(location);
++      expect(r.failure).toMatchObject({
++        nodeId: 'child',
++        resumable: false,
++        details: {
++          boundary: 'subloop.output.custom.patch',
++          cause: {
++            code: 'EXPRESSION_ERROR',
++            message: 'The patch writes outside the mutable regions. Change the patch target.',
++          },
++        },
++      });
++      expect(r.failure?.message).not.toContain(location);
++      expect(r.failure?.details).not.toHaveProperty('childRunId');
++      await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+     },
+   );
+ 
+diff --git a/packages/engine/src/awaited-children.test.ts b/packages/engine/src/awaited-children.test.ts
+index 5c024b63..d02201fd 100644
+--- a/packages/engine/src/awaited-children.test.ts
++++ b/packages/engine/src/awaited-children.test.ts
+@@ -4,11 +4,512 @@
+  * child's configured output (or its absence) is what the parent receives.
+  */
+ import { describe, expect, it, vi } from 'vitest';
+-import type { LoopDefinitionInput, RunEvent, RunFailure, RunRecord } from '@graphgoblin/contracts';
++import type {
++  JsonValue,
++  LoopDefinitionInput,
++  RunEvent,
++  RunFailure,
++  RunRecord,
++} from '@graphgoblin/contracts';
+ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ import { RunManager } from './run-manager.js';
++import { defaultHandlers, subloopHandler } from './handlers/index.js';
++import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+ import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
+ 
++const expressionCause486 =
++  'The expression could not evaluate this input. Check its input type and mapping.';
++const seed486 = {
++  messages: ['first', 'second'].map((content, index) => ({
++    id: `message-${index}`,
++    role: 'note' as const,
++    content,
++    nodeId: 'start',
++    ts: '2026-10-02T11:00:00.000Z',
++  })),
++  artifacts: ['first.txt', 'second.txt'].map((ref, index) => ({
++    id: `artifact-${index}`,
++    kind: 'file' as const,
++    ref,
++    nodeId: 'start',
++  })),
++  vars: { original: true },
++};
++
++const failures486 = [
++  {
++    boundary: 'subloop.input.messages.where',
++    config: {
++      input: {
++        mode: 'project',
++        messages: { where: '$index = 0 ? true : $error("private-selector-message")' },
++      },
++    },
++    details: { itemIndex: 1 },
++    label: 'Subloop input message selector, item 2',
++  },
++  {
++    boundary: 'subloop.input.artifacts.where',
++    config: {
++      input: {
++        mode: 'project',
++        artifacts: { where: '$index = 0 ? true : $error("private-selector-artifact")' },
++      },
++    },
++    details: { itemIndex: 1 },
++    label: 'Subloop input artifact selector, item 2',
++  },
++  {
++    boundary: 'subloop.input.vars',
++    config: {
++      input: {
++        vars: {
++          first: '1',
++          privateName: '$error("private-input-var")',
++          later: '$error("later-map")',
++        },
++      },
++    },
++    details: { mapIndex: 1 },
++    label: 'Subloop input variable mapping 2',
++  },
++  {
++    boundary: 'subloop.input.inject.content',
++    config: {
++      input: {
++        inject: [
++          { role: 'note', content: 'good' },
++          { role: 'note', content: '{% if %}' },
++        ],
++      },
++    },
++    details: { messageIndex: 1 },
++    label: 'Subloop injected message 2',
++    template: true,
++  },
++  {
++    boundary: 'subloop.input.trigger.payload',
++    config: { input: { trigger: { payload: '$error("private-trigger")' } } },
++    details: {},
++    label: 'Subloop trigger payload expression',
++  },
++  {
++    boundary: 'subloop.output.custom.patch',
++    config: { output: { mode: 'custom', custom: { patch: '$error("private-patch")' } } },
++    details: {},
++    label: 'Subloop output patch expression',
++  },
++  {
++    boundary: 'subloop.output.custom.patch',
++    config: { output: { mode: 'custom', custom: { patch: '"not-a-patch"' } } },
++    details: {},
++    label: 'Subloop output patch expression',
++    cause: 'The result is not a JSON patch. Return an array of valid patch operations.',
++  },
++  {
++    boundary: 'subloop.output.custom.patch',
++    config: {
++      output: {
++        mode: 'custom',
++        custom: { patch: '[{"op":"replace","path":"/run/id","value":"private-target"}]' },
++      },
++    },
++    details: {},
++    label: 'Subloop output patch expression',
++    cause: 'The patch writes outside the mutable regions. Change the patch target.',
++  },
++  {
++    boundary: 'subloop.output.vars',
++    config: {
++      output: {
++        mode: 'merge',
++        vars: {
++          strategy: 'explicit',
++          map: {
++            first: '1',
++            privateName: '$error("private-output-var")',
++            later: '$error("later-map")',
++          },
++        },
++      },
++    },
++    details: { mapIndex: 1 },
++    label: 'Subloop output variable mapping 2',
++  },
++  {
++    boundary: 'subloop.output.messages.where',
++    config: {
++      output: {
++        mode: 'merge',
++        messages: { where: '$index = 0 ? true : $error("private-output-message")' },
++      },
++    },
++    details: { itemIndex: 1 },
++    label: 'Subloop output message selector, item 2',
++  },
++  {
++    boundary: 'subloop.output.artifacts.where',
++    config: {
++      output: {
++        mode: 'merge',
++        artifacts: { where: '$index = 0 ? true : $error("private-output-artifact")' },
++      },
++    },
++    details: { itemIndex: 1 },
++    label: 'Subloop output artifact selector, item 2',
++  },
++  // A1: the pinned field parses; only its runtime string fails inside $eval.
++  {
++    boundary: 'subloop.input.vars',
++    config: { input: { vars: { value: '$eval("(")' } } },
++    details: { mapIndex: 0 },
++    label: 'Subloop input variable mapping 1',
++  },
++  {
++    boundary: 'subloop.input.vars',
++    config: { input: { vars: { value: '$eval("/(a+)+$/")' } } },
++    details: { mapIndex: 0 },
++    label: 'Subloop input variable mapping 1',
++  },
++];
++
++describe('#486 authored subloop boundaries through RunManager', () => {
++  it.each(['input', 'output'] as const)(
++    'a synthetic non-JSON %s value failing conversion stays outside authored evaluation',
++    async (stage) => {
++      // Published JSON cannot contain a toJSON callback. This isolates the conversion seam after
++      // a successful expression, without claiming native reachability for this injected object.
++      const converted = {
++        toJSON() {
++          throw new ExpressionError('private conversion callback');
++        },
++      } as unknown as JsonValue;
++      const handlers = defaultHandlers();
++      handlers.subloop = {
++        kind: 'subloop',
++        execute: (ctx) =>
++          subloopHandler.execute({
++            ...ctx,
++            ...(stage === 'input'
++              ? { thread: { ...ctx.thread, vars: { ...ctx.thread.vars, converted } } }
++              : {}),
++            services: {
++              ...ctx.services,
++              childOutcome: async (id) => {
++                const child = await ctx.services.childOutcome(id);
++                return stage === 'output' && child.thread
++                  ? {
++                      ...child,
++                      thread: { ...child.thread, vars: { ...child.thread.vars, converted } },
++                    }
++                  : child;
++              },
++            },
++          }),
++      };
++      const e = await createTestEngine({ maxConcurrentRuns: 2 }, { handlers });
++      try {
++        const leaf = e.publish(
++          singleNodeLoop(
++            'conversion child',
++            {
++              id: 'work',
++              kind: 'mutate',
++              label: 'Work',
++              config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
++            },
++            { returns: '"received"' },
++          ),
++        );
++        const parent = await e.runToIdle(
++          e.publish(
++            singleNodeLoop(
++              'conversion parent',
++              subNode(
++                leaf.loopId,
++                stage === 'input'
++                  ? { input: { vars: { value: 'vars.converted' } } }
++                  : {
++                      output: {
++                        mode: 'merge',
++                        vars: { strategy: 'explicit', map: { value: 'vars.converted' } },
++                      },
++                    },
++              ),
++            ),
++          ).loopId,
++        );
++        expect(parent.failure).toEqual({
++          code: 'INTERNAL_ERROR',
++          nodeId: 'sub',
++          resumable: true,
++          message: 'An unexpected error interrupted the run. See the server logs for this run.',
++        });
++        const children = await e.ports.runs.listChildren(parent.id);
++        expect(children).toHaveLength(stage === 'input' ? 0 : 1);
++        if (stage === 'output') {
++          expect(children[0]).toMatchObject({ status: 'succeeded', result: 'received' });
++          const finish = childEvents(e, parent.id)[0]!;
++          const failed = e.events(parent.id).find((event) => event.type === 'run.failed')!;
++          expect(failed.seq).toBe(finish.seq + 1);
++        }
++      } finally {
++        e.manager.stop();
++      }
++    },
++  );
++
++  it.each(failures486)(
++    '$boundary reports the winning local cause and preserves admission/completion',
++    async (scenario) => {
++      const e = await createTestEngine({ maxConcurrentRuns: 2 });
++      try {
++        const leaf = e.publish(
++          singleNodeLoop(
++            'boundary leaf',
++            {
++              id: 'work',
++              kind: 'mutate',
++              label: 'Work',
++              config: {
++                operations: [
++                  { op: 'set', path: '/vars/child', value: { kind: 'literal', value: true } },
++                ],
++              },
++            },
++            { returns: '"actual-result"' },
++          ),
++        );
++        const parent = await e.runToIdle(
++          e.publish(singleNodeLoop('boundary parent', subNode(leaf.loopId, scenario.config)))
++            .loopId,
++          null,
++          { seed: seed486 },
++        );
++        const code = scenario.template ? 'TEMPLATE_ERROR' : 'EXPRESSION_ERROR';
++        const cause = scenario.template
++          ? 'The template could not be parsed at line 1, column 6. Check its Liquid syntax.'
++          : (scenario.cause ?? expressionCause486);
++        expect(parent.failure).toEqual({
++          code,
++          nodeId: 'sub',
++          resumable: false,
++          message: `${scenario.label} failed. ${cause}`,
++          details: {
++            boundary: scenario.boundary,
++            ...scenario.details,
++            cause: { code, message: cause },
++          },
++        });
++        const failed = e.events(parent.id).filter((event) => event.type === 'run.failed');
++        expect(failed).toMatchObject([{ failure: parent.failure }]);
++        const children = await e.ports.runs.listChildren(parent.id);
++        if (scenario.boundary.startsWith('subloop.input.')) {
++          expect(children).toEqual([]);
++          expect(childEvents(e, parent.id)).toEqual([]);
++          expect(e.eventTypes(parent.id)).not.toContain('child_run.started');
++        } else {
++          expect(children).toHaveLength(1);
++          expect(children[0]).toMatchObject({ status: 'succeeded', result: 'actual-result' });
++          expect(childEvents(e, parent.id)).toMatchObject([
++            { childRunId: children[0]!.id, status: 'succeeded' },
++          ]);
++          expect(failed[0]!.seq).toBe(childEvents(e, parent.id)[0]!.seq + 1);
++          expect(e.events(parent.id).filter((event) => event.type === 'run.woken')).toHaveLength(1);
++        }
++        const before = JSON.stringify(e.events(parent.id));
++        await expect(e.manager.resume(parent.id)).rejects.toMatchObject({
++          code: 'FAILURE_NOT_RESUMABLE',
++        });
++        expect(JSON.stringify(e.events(parent.id))).toBe(before);
++        expect(e.ports.harness.started).toHaveLength(0);
++        expect(e.ports.scripts.calls).toHaveLength(0);
++        expect(JSON.stringify(e.ports.logger.lines)).not.toMatch(
++          /private-|privateName|later-map|\$error|\$eval/,
++        );
++      } finally {
++        e.manager.stop();
++      }
++    },
++  );
++
++  it('projects selectors, ordered vars, injected content and trigger data, then maps the actual successful child', async () => {
++    const e = await createTestEngine({ maxConcurrentRuns: 2 });
++    try {
++      const leaf = e.publish(
++        singleNodeLoop(
++          'successful projection leaf',
++          {
++            id: 'work',
++            kind: 'mutate',
++            label: 'Work',
++            config: {
++              operations: [
++                { op: 'set', path: '/vars/child', value: { kind: 'literal', value: true } },
++              ],
++            },
++          },
++          {
++            returns:
++              '{"payload":trigger.payload,"vars":vars,"messages":messages.content,"artifacts":artifacts.ref}',
++          },
++        ),
++      );
++      const parent = await e.runToIdle(
++        e.publish(
++          singleNodeLoop(
++            'successful projection parent',
++            subNode(leaf.loopId, {
++              input: {
++                mode: 'project',
++                messages: { where: '$index = 1' },
++                artifacts: { where: '$index = 1' },
++                vars: { a: '1', b: '2' },
++                inject: [{ role: 'note', content: 'injected {{ vars.original }}' }],
++                trigger: { payload: '{"selected":true}' },
++              },
++              output: {
++                mode: 'merge',
++                vars: { strategy: 'explicit', map: { mapped: 'vars.b' } },
++                messages: { where: '$index = 0' },
++                artifacts: { where: '$index = 0' },
++                resultTo: { var: 'received' },
++              },
++            }),
++            { returns: 'vars.received' },
++          ),
++        ).loopId,
++        null,
++        { seed: seed486 },
++      );
++      expect(parent).toMatchObject({
++        status: 'succeeded',
++        result: {
++          payload: { selected: true },
++          vars: { a: 1, b: 2, child: true },
++          messages: ['second', 'injected true'],
++          artifacts: 'second.txt',
++        },
++      });
++      const thread = await e.manager.getThread(parent.id);
++      expect(thread?.vars['mapped']).toBe(2);
++      expect(thread?.messages.map((message) => message.content)).toEqual([
++        'first',
++        'second',
++        'second',
++      ]);
++      expect(thread?.artifacts.map((artifact) => artifact.ref)).toEqual([
++        'first.txt',
++        'second.txt',
++        'second.txt',
++      ]);
++      expect(await e.ports.runs.listChildren(parent.id)).toHaveLength(1);
++      expect(childEvents(e, parent.id)).toHaveLength(1);
++    } finally {
++      e.manager.stop();
++    }
++  });
++
++  it.each(['all', 'none', 'last', 1] as const)(
++    'built-in message selection %s and artifact selection preserve their ordinary values',
++    async (selection) => {
++      const e = await createTestEngine({ maxConcurrentRuns: 2 });
++      try {
++        const leaf = e.publish(
++          singleNodeLoop(
++            'built-in child',
++            {
++              id: 'work',
++              kind: 'mutate',
++              label: 'Work',
++              config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
++            },
++            { returns: '{"messages": [messages.content], "artifacts": [artifacts.ref]}' },
++          ),
++        );
++        const parent = await e.runToIdle(
++          e.publish(
++            singleNodeLoop(
++              'built-in parent',
++              subNode(leaf.loopId, {
++                input: {
++                  mode: 'project',
++                  messages: selection,
++                  artifacts: selection === 'none' ? 'none' : 'all',
++                },
++              }),
++              { returns: 'outputs.sub.value.result' },
++            ),
++          ).loopId,
++          null,
++          { seed: seed486 },
++        );
++        expect(parent).toMatchObject({
++          status: 'succeeded',
++          result: {
++            messages:
++              selection === 'all' ? ['first', 'second'] : selection === 'none' ? [] : ['second'],
++            artifacts: selection === 'none' ? [] : ['first.txt', 'second.txt'],
++          },
++        });
++      } finally {
++        e.manager.stop();
++      }
++    },
++  );
++
++  it.each(['admission', 'message-id'] as const)(
++    'an external %s callback with an authored error class is not source-owned',
++    async (boundary) => {
++      const handlers = defaultHandlers();
++      handlers.subloop = {
++        kind: 'subloop',
++        execute: (ctx) =>
++          subloopHandler.execute({
++            ...ctx,
++            services: {
++              ...ctx.services,
++              ...(boundary === 'admission'
++                ? {
++                    startChild: () =>
++                      Promise.reject(new ExpressionError('private external admission')),
++                  }
++                : {
++                    newId: () => {
++                      throw new TemplateError('private external message identity');
++                    },
++                  }),
++            },
++          }),
++      };
++      const e = await createTestEngine({}, { handlers });
++      try {
++        const leaf = e.publish(inputLoop('external callback child'));
++        const parent = await e.runToIdle(
++          e.publish(
++            singleNodeLoop(
++              'external callback parent',
++              subNode(leaf.loopId, {
++                input: { inject: [{ role: 'note', content: 'valid content' }] },
++              }),
++            ),
++          ).loopId,
++        );
++        expect(parent.failure).toEqual({
++          code: 'INTERNAL_ERROR',
++          nodeId: 'sub',
++          resumable: true,
++          message: 'An unexpected error interrupted the run. See the server logs for this run.',
++        });
++        expect(await e.ports.runs.listChildren(parent.id)).toEqual([]);
++        expect(e.eventTypes(parent.id)).not.toContain('child_run.started');
++      } finally {
++        e.manager.stop();
++      }
++    },
++  );
++});
++
+ const inputLoop = (name: string): LoopDefinitionInput =>
+   singleNodeLoop(
+     name,
+@@ -994,54 +1495,94 @@ describe('awaiting a child across failures and restarts (#242)', () => {
+     },
+   );
+ 
+-  it('the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398)', async () => {
+-    const e = await createTestEngine({ maxConcurrentRuns: 3 });
+-    const leaf = e.publish(
+-      singleNodeLoop(
+-        'mapping-leaf',
+-        {
+-          id: 'work',
+-          kind: 'mutate',
+-          label: 'Work',
+-          config: {
+-            operations: [{ op: 'set', path: '/vars/x', value: { kind: 'literal', value: true } }],
+-          },
+-        },
+-        { returns: '"child-result"' },
+-      ),
+-    );
+-    const parent = await e.runToIdle(
+-      e.publish(
+-        singleNodeLoop(
+-          'mapping-parent',
+-          subNode(leaf.loopId, {
+-            output: { mode: 'custom', custom: { patch: '$error("broken")' } },
++  it.each(['authored', 'unexpected'] as const)(
++    'the first durable %s mapping failure records its child completion once (#320, #398)',
++    async (kind) => {
++      let broken = true;
++      const handlers = defaultHandlers();
++      handlers.subloop = {
++        kind: 'subloop',
++        execute: (ctx) =>
++          subloopHandler.execute({
++            ...ctx,
++            services: {
++              ...ctx.services,
++              now: () => {
++                if (kind === 'unexpected' && broken) throw new Error('unexpected mapping clock');
++                return ctx.services.now();
++              },
++            },
+           }),
++      };
++      const e = await createTestEngine({ maxConcurrentRuns: 3 }, { handlers });
++      const leaf = e.publish(
++        singleNodeLoop(
++          'mapping-leaf',
++          {
++            id: 'work',
++            kind: 'mutate',
++            label: 'Work',
++            config: {
++              operations: [{ op: 'set', path: '/vars/x', value: { kind: 'literal', value: true } }],
++            },
++          },
++          { returns: '"child-result"' },
+         ),
+-      ).loopId,
+-    );
+-    expect(parent.failure?.resumable).toBe(true);
+-    const [kid] = await e.ports.runs.listChildren(parent.id);
+-    expect(kid?.status).toBe('succeeded');
+-    // The mapping failure is written with the completion the attempt observed.
+-    const pairs = () =>
+-      e
+-        .events(parent.id)
+-        .map((event) => event.type)
+-        .filter((type) => type === 'child_run.finished' || type === 'run.failed');
+-    expect(pairs()).toEqual(['child_run.finished', 'run.failed']);
+-    await e.manager.resume(parent.id);
+-    await e.manager.waitForIdle();
+-    e.manager.stop();
+-    expect(e.events(kid!.id).filter((event) => event.type === 'run.resumed')).toHaveLength(0);
+-    // The retry has no new child terminal identity: reuse its committed completion.
+-    expect(pairs()).toEqual(['child_run.finished', 'run.failed', 'run.failed']);
+-    const finish = e.events(parent.id).find((event) => event.type === 'child_run.finished')!;
+-    const firstFailure = e.events(parent.id).find((event) => event.type === 'run.failed')!;
+-    expect(firstFailure.seq).toBe(finish.seq + 1);
+-    const wakes = e.events(parent.id).filter((event) => event.type === 'run.woken');
+-    expect(wakes).toHaveLength(1);
+-  });
++      );
++      const parent = await e.runToIdle(
++        e.publish(
++          singleNodeLoop(
++            'mapping-parent',
++            subNode(leaf.loopId, {
++              ...(kind === 'authored'
++                ? { output: { mode: 'custom', custom: { patch: '$error("broken")' } } }
++                : {}),
++            }),
++          ),
++        ).loopId,
++      );
++      expect(parent.failure).toMatchObject({
++        code: kind === 'authored' ? 'EXPRESSION_ERROR' : 'INTERNAL_ERROR',
++        nodeId: 'sub',
++        resumable: kind === 'unexpected',
++      });
++      const [kid] = await e.ports.runs.listChildren(parent.id);
++      expect(kid?.status).toBe('succeeded');
++      // The mapping failure is written with the completion the attempt observed.
++      const pairs = () =>
++        e
++          .events(parent.id)
++          .map((event) => event.type)
++          .filter((type) => type === 'child_run.finished' || type === 'run.failed');
++      expect(pairs()).toEqual(['child_run.finished', 'run.failed']);
++      const before = JSON.stringify(e.events(parent.id));
++      if (kind === 'authored') {
++        await expect(e.manager.resume(parent.id)).rejects.toMatchObject({
++          code: 'FAILURE_NOT_RESUMABLE',
++        });
++        expect(JSON.stringify(e.events(parent.id))).toBe(before);
++      } else {
++        broken = false;
++        await e.manager.resume(parent.id);
++        expect((await e.settle(parent.id)).status).toBe('succeeded');
++      }
++      await e.manager.waitForIdle();
++      e.manager.stop();
++      expect(e.events(kid!.id).filter((event) => event.type === 'run.resumed')).toHaveLength(0);
++      // The retry has no new child terminal identity: reuse its committed completion.
++      expect(pairs()).toEqual(['child_run.finished', 'run.failed']);
++      const finish = e.events(parent.id).find((event) => event.type === 'child_run.finished')!;
++      const firstFailure = e.events(parent.id).find((event) => event.type === 'run.failed')!;
++      expect(firstFailure.seq).toBe(finish.seq + 1);
++      const wakes = e.events(parent.id).filter((event) => event.type === 'run.woken');
++      expect(wakes).toHaveLength(1);
++      const terminal = e.events(kid!.id).find((event) => event.type === 'run.finished')!;
++      expect(wakes[0]).toMatchObject({
++        payload: { childRunId: kid!.id, childFinishedSeq: terminal.seq },
++      });
++      expect(await e.ports.runs.listChildren(parent.id)).toHaveLength(1);
++    },
++  );
+ 
+   it.each([
+     { name: 'a missing path', patch: '[{"op":"replace","path":"/vars/missing","value":1}]' },
+diff --git a/packages/engine/src/child-creation.test.ts b/packages/engine/src/child-creation.test.ts
+index dd950391..c2634c93 100644
+--- a/packages/engine/src/child-creation.test.ts
++++ b/packages/engine/src/child-creation.test.ts
+@@ -10,6 +10,7 @@ import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
+ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ import type { EventDraft, EventStorePort, ScriptRunResult } from './ports.js';
+ import { RunManager } from './run-manager.js';
++import { defaultHandlers, subloopHandler } from './handlers/index.js';
+ import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
+ 
+ const result = (exitCode: number): ScriptRunResult => ({
+@@ -174,20 +175,61 @@ describe('child creation and finish across a process death (#320)', () => {
+     expect(calls).toBe(2);
+   });
+ 
+-  it('retrying the parent output mapping does not record an unchanged child outcome again', async () => {
+-    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+-    const child = e.publish(scriptChild('mapping child'));
+-    const definition = parentLoop('mapping parent', child.loopId);
+-    const sub = definition.nodes.find((node) => node.kind === 'subloop')!;
+-    if (sub.kind !== 'subloop') throw new Error('missing subloop');
+-    sub.config.output = { mode: 'custom', custom: { patch: '"bad patch"' } };
+-    const failed = await e.runToIdle(e.publish(definition).loopId);
+-    expect(failed.status).toBe('failed');
+-    await e.manager.resume(failed.id);
+-    expect((await e.settle(failed.id)).status).toBe('failed');
+-    expect(ofType(e, failed.id, 'child_run.finished')).toHaveLength(1);
+-    expect(await e.ports.runs.listChildren(failed.id)).toHaveLength(1);
+-  });
++  it.each(['authored', 'unexpected'] as const)(
++    '%s parent mapping failure preserves the child outcome and its recovery policy',
++    async (kind) => {
++      let broken = true;
++      const handlers = defaultHandlers();
++      handlers.subloop = {
++        kind: 'subloop',
++        execute: (ctx) =>
++          subloopHandler.execute({
++            ...ctx,
++            services: {
++              ...ctx.services,
++              now: () => {
++                if (kind === 'unexpected' && broken) throw new Error('unexpected mapping clock');
++                return ctx.services.now();
++              },
++            },
++          }),
++      };
++      const e = await createTestEngine({ maxConcurrentRuns: 2 }, { handlers });
++      const child = e.publish(scriptChild('mapping child'));
++      const definition = parentLoop('mapping parent', child.loopId);
++      const sub = definition.nodes.find((node) => node.kind === 'subloop')!;
++      if (sub.kind !== 'subloop') throw new Error('missing subloop');
++      if (kind === 'authored')
++        sub.config.output = { mode: 'custom', custom: { patch: '"bad patch"' } };
++      const failed = await e.runToIdle(e.publish(definition).loopId);
++      expect(failed.status).toBe('failed');
++      expect(failed.failure).toMatchObject({
++        code: kind === 'authored' ? 'EXPRESSION_ERROR' : 'INTERNAL_ERROR',
++        nodeId: 'sub',
++        resumable: kind === 'unexpected',
++      });
++      const [kid] = await e.ports.runs.listChildren(failed.id);
++      const terminal = e.events(kid!.id).find((event) => event.type === 'run.finished')!;
++      const before = JSON.stringify(e.events(failed.id));
++      if (kind === 'authored') {
++        await expect(e.manager.resume(failed.id)).rejects.toMatchObject({
++          code: 'FAILURE_NOT_RESUMABLE',
++        });
++        expect(JSON.stringify(e.events(failed.id))).toBe(before);
++      } else {
++        broken = false;
++        await e.manager.resume(failed.id);
++        expect((await e.settle(failed.id)).status).toBe('succeeded');
++      }
++      expect(ofType(e, failed.id, 'child_run.finished')).toHaveLength(1);
++      expect(await e.ports.runs.listChildren(failed.id)).toHaveLength(1);
++      expect(ofType(e, kid!.id, 'run.resumed')).toHaveLength(0);
++      expect(ofType(e, failed.id, 'run.woken')).toMatchObject([
++        { payload: { childRunId: kid!.id, childFinishedSeq: terminal.seq } },
++      ]);
++      e.manager.stop();
++    },
++  );
+ 
+   it('an explicit retry records a second failed outcome of the same child', async () => {
+     const e = await createTestEngine({ maxConcurrentRuns: 2 });
+diff --git a/packages/engine/src/child-failure-parity.test.ts b/packages/engine/src/child-failure-parity.test.ts
+index d603b7c0..236203a7 100644
+--- a/packages/engine/src/child-failure-parity.test.ts
++++ b/packages/engine/src/child-failure-parity.test.ts
+@@ -165,6 +165,57 @@ interface Scenario {
+ }
+ 
+ const scenarios: Scenario[] = [
++  {
++    name: 'an authored repair prompt fails after receiving the result',
++    kind: 'authored',
++    work: {
++      id: 'work',
++      kind: 'inference',
++      label: 'Work',
++      config: {
++        prompt: { template: 'go' },
++        output: {
++          schema: {
++            jsonSchema: { type: 'number' },
++            repair: { enabled: true, maxAttempts: 1, prompt: '{% if %}' },
++          },
++        },
++      },
++    },
++    arrange(e) {
++      e.ports.harness.script([{ finalText: 'invalid' }, { finalText: 'invalid' }]);
++      return () => undefined;
++    },
++    code: 'TEMPLATE_ERROR',
++    resumable: false,
++  },
++  {
++    name: 'an authored output transform fails after receiving the result',
++    kind: 'authored',
++    work: {
++      id: 'work',
++      kind: 'inference',
++      label: 'Work',
++      config: {
++        prompt: { template: 'go' },
++        output: {
++          transforms: [
++            {
++              op: 'set',
++              path: '/vars/value',
++              value: { kind: 'expression', jsonata: '$error("private-output")' },
++            },
++          ],
++        },
++      },
++    },
++    arrange(e) {
++      e.ports.harness.script([{ finalText: 'actual result' }, { finalText: 'actual result' }]);
++      return () => undefined;
++    },
++    code: 'MUTATION_ERROR',
++    resumable: false,
++  },
+   {
+     name: 'script exits non-zero',
+     kind: 'transient',
+@@ -302,6 +353,21 @@ describe('child failures follow the inline rules (#251)', () => {
+       });
+       expect(parent.failure?.message).toContain(inline.failure!.message);
+       expect(parent.failure?.message).toContain(child!.id);
++      if (
++        inline.failure?.details &&
++        typeof inline.failure.details === 'object' &&
++        'phase' in inline.failure.details
++      ) {
++        expect(inline.failure.details['phase']).toBe('after-result');
++        expect(child?.failure?.details).toEqual(inline.failure.details);
++        expect(parent.failure?.details).toMatchObject({ childDetails: child?.failure?.details });
++        expect(parent.failure).not.toHaveProperty('inference');
++        expect(parent.failure?.details).not.toHaveProperty('phase');
++        expect(inline.failure.message).toContain(
++          'GraphGoblin received the provider result before this step failed.',
++        );
++        expect(ofType(e, child!.id, 'harness.turn')).toHaveLength(1);
++      }
+       expect(startsOf(e, parent.id, 'after')).toEqual([]);
+       expect(ofType(e, parent.id, 'child_run.finished')).toMatchObject([
+         { childRunId: child!.id, status: 'failed' },

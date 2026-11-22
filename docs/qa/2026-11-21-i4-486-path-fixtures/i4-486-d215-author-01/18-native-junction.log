@@ -1,0 +1,4 @@
+utc=2026-11-21T22:08:09.5386308Z cwd=G:\ggq\gg-i4-486-d215-fix\GraphGoblin TEMP=G:/ggq/gg-i4-486-d215-fix/junction-temp TMP=G:/ggq/gg-i4-486-d215-fix/junction-temp
+node ["-e","const fs = require(\"node:fs\"); const os = require(\"node:os\"); const path = require(\"node:path\"); const root = os.tmpdir(); const real = fs.realpathSync(root); const link = fs.readlinkSync(root); console.log(JSON.stringify({ platform: process.platform, root, real, link, isSymbolicLink: fs.lstatSync(root).isSymbolicLink() })); if (process.platform !== \"win32\" || path.resolve(root) === real || path.resolve(link) !== real) process.exit(1);"]
+{"platform":"win32","root":"G:/ggq/gg-i4-486-d215-fix/junction-temp","real":"G:\\ggq\\gg-i4-486-d215-fix\\junction-physical","link":"G:\\ggq\\gg-i4-486-d215-fix\\junction-physical","isSymbolicLink":true}
+exit=0

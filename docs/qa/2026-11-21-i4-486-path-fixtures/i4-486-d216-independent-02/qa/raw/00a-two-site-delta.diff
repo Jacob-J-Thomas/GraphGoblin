@@ -1,0 +1,23 @@
+diff --git a/packages/infrastructure/src/fs/fs.test.ts b/packages/infrastructure/src/fs/fs.test.ts
+index 3e385dc2..6720acba 100644
+--- a/packages/infrastructure/src/fs/fs.test.ts
++++ b/packages/infrastructure/src/fs/fs.test.ts
+@@ -133,7 +133,8 @@ describe('engine workspace filesystem boundary', () => {
+       loop.settings = { workingDirectory: spec };
+       try {
+         const run = await engine.runToIdle(engine.publish(loop).loopId, { path: target });
+-        const path = kind === 'temp' ? join(realpathSync(dataDir), 'workspaces', run.id) : target;
++        const path =
++          kind === 'temp' ? join(realpathSync.native(dataDir), 'workspaces', run.id) : target;
+         expect(run.status).toBe('succeeded');
+         expect(port).toHaveBeenCalledTimes(1);
+         expect(port).toHaveBeenCalledWith(
+@@ -142,7 +143,7 @@ describe('engine workspace filesystem boundary', () => {
+         );
+         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
+         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).toBe('real file bytes');
+-        const actual = realpathSync(path);
++        const actual = realpathSync.native(path);
+         const canonical = process.platform === 'win32' ? actual.toLowerCase() : actual;
+         expect(journal.use).toHaveBeenCalledExactlyOnceWith(
+           run.id,

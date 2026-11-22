@@ -1,0 +1,80 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real fixed paths, caches resolution for delivery, and claims only new temporary directories
+AssertionError: expected "vi.fn()" to be called once with arguments: [ '00000000000000000000000001', …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "00000000000000000000000001",
+-   "workspace:c:\\users\\98jak\\gr58b7~1\\d216-s~1\\short-~1\\gg-wp-e3-ng68q4\\user-owned",
+-   "c:\\users\\98jak\\gr58b7~1\\d216-s~1\\short-~1\\gg-wp-e3-ng68q4\\user-owned",
++   "workspace:c:\\users\\98jak\\graphgoblin-qa\\d216-small-native-temp-mwry6cl9-8930f76e\\short-alias-worker-temp\\gg-wp-e3-ng68q4\\user-owned",
++   "c:\\users\\98jak\\graphgoblin-qa\\d216-small-native-temp-mwry6cl9-8930f76e\\short-alias-worker-temp\\gg-wp-e3-ng68q4\\user-owned",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/fs/fs.test.ts:147:29
+    145|         const actual = realpathSync(path);
+    146|         const canonical = process.platform === 'win32' ? actual.toLowe…
+    147|         expect(journal.use).toHaveBeenCalledExactlyOnceWith(
+       |                             ^
+    148|           run.id,
+    149|           `workspace:${canonical}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real temp paths, caches resolution for delivery, and claims only new temporary directories
+AssertionError: expected 'C:\Users\98jak\graphgoblin-qa\d216-sm…' to be 'C:\Users\98jak\GR58B7~1\D216-S~1\SHOR…' // Object.is equality
+
+Expected: "C:\Users\98jak\GR58B7~1\D216-S~1\SHORT-~1\gg-wp-e3-IXHTYt\workspaces\00000000000000000000000001"
+Received: "C:\Users\98jak\graphgoblin-qa\d216-small-native-temp-mwry6cl9-8930f76e\short-alias-worker-temp\gg-wp-e3-IXHTYt\workspaces\00000000000000000000000001"
+
+ ❯ src/fs/fs.test.ts:143:52
+    141|           run.id,
+    142|         );
+    143|         expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
+       |                                                    ^
+    144|         expect(readFileSync(join(path, 'nested/result.txt'), 'utf8')).…
+    145|         const actual = realpathSync(path);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/fs/fs.test.ts > engine workspace filesystem boundary > uses real template paths, caches resolution for delivery, and claims only new temporary directories
+AssertionError: expected "vi.fn()" to be called once with arguments: [ '00000000000000000000000001', …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "00000000000000000000000001",
+-   "workspace:c:\\users\\98jak\\gr58b7~1\\d216-s~1\\short-~1\\gg-wp-e3-fjrwca\\user-owned",
+-   "c:\\users\\98jak\\gr58b7~1\\d216-s~1\\short-~1\\gg-wp-e3-fjrwca\\user-owned",
++   "workspace:c:\\users\\98jak\\graphgoblin-qa\\d216-small-native-temp-mwry6cl9-8930f76e\\short-alias-worker-temp\\gg-wp-e3-fjrwca\\user-owned",
++   "c:\\users\\98jak\\graphgoblin-qa\\d216-small-native-temp-mwry6cl9-8930f76e\\short-alias-worker-temp\\gg-wp-e3-fjrwca\\user-owned",
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/fs/fs.test.ts:147:29
+    145|         const actual = realpathSync(path);
+    146|         const canonical = process.platform === 'win32' ? actual.toLowe…
+    147|         expect(journal.use).toHaveBeenCalledExactlyOnceWith(
+       |                             ^
+    148|           run.id,
+    149|           `workspace:${canonical}`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-d216-
+  │ qa\GraphGoblin\packages\infrastructure
+

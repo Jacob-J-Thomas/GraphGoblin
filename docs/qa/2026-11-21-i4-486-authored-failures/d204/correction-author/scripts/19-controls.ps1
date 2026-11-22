@@ -1,0 +1,3 @@
+$ErrorActionPreference = 'Stop'
+pnpm.cmd --filter @graphgoblin/engine test src/handlers/inference-context.test.ts src/handlers/inference-workspace.test.ts src/handlers/inference.test.ts src/handlers/flow.test.ts src/prompt-provenance.test.ts src/prompt-recovery.test.ts src/run-manager.test.ts
+exit $LASTEXITCODE

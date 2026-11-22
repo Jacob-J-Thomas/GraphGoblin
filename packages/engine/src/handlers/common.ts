@@ -13,19 +13,21 @@ import type {
   Effort,
 } from '@graphgoblin/contracts';
 import {
-  evaluatePredicate,
+  observeTemplate,
   formatPointer,
-  renderTemplate,
   threadView,
   validateJson,
   PatchError,
-  TemplateError,
+  type TemplateError,
   type MutationContext,
+  type MutationFactMapper,
+  type TemplateFact,
   type MutationFailureMapper,
   type RepairRequest,
 } from '@graphgoblin/domain';
 import { applyMutations, completeRepair, applyPatch } from '@graphgoblin/domain';
 import type { MutationOperation, NodeKind } from '@graphgoblin/contracts';
+import { predicateAuthored, type AuthoredSite } from '../authored-failure.js';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext } from '../handler.js';
 import { completeWithDeadline } from '../completion-deadline.js';
@@ -109,6 +111,7 @@ export async function selectMessages(
   messages: readonly Message[],
   selection: MessageSelection | undefined,
   view: Record<string, unknown>,
+  site: AuthoredSite,
 ): Promise<Message[]> {
   if (selection === undefined || selection === 'all') return [...messages];
   if (selection === 'none') return [];
@@ -118,7 +121,11 @@ export async function selectMessages(
     return messages.slice(Math.max(0, messages.length - selection));
   const out: Message[] = [];
   for (const [index, message] of messages.entries()) {
-    if (await evaluatePredicate(selection.where, message, { bindings: { thread: view, index } }))
+    if (
+      await predicateAuthored({ ...site, itemIndex: index }, selection.where, message, {
+        bindings: { thread: view, index },
+      })
+    )
       out.push(message);
   }
   return out;
@@ -128,12 +135,17 @@ export async function selectCollection<T>(
   items: readonly T[],
   selection: CollectionSelection | undefined,
   view: Record<string, unknown>,
+  site: AuthoredSite,
 ): Promise<T[]> {
   if (selection === undefined || selection === 'all') return [...items];
   if (selection === 'none') return [];
   const out: T[] = [];
   for (const [index, item] of items.entries()) {
-    if (await evaluatePredicate(selection.where, item, { bindings: { thread: view, index } }))
+    if (
+      await predicateAuthored({ ...site, itemIndex: index }, selection.where, item, {
+        bindings: { thread: view, index },
+      })
+    )
       out.push(item);
   }
   return out;
@@ -199,6 +211,7 @@ export async function repairValue<K extends NodeKind>(
     repair: RepairPolicy;
     model?: string;
     effort?: Effort;
+    onPromptFact?: (fact: TemplateFact) => unknown;
     onPromptFailure?: (error: TemplateError) => unknown;
   },
 ): Promise<{ value: JsonValue; repaired: boolean }> {
@@ -222,13 +235,12 @@ export async function repairValue<K extends NodeKind>(
         errors,
         attempt,
       };
-      const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, view).catch(
-        (error: unknown) => {
-          throw error instanceof TemplateError && input.onPromptFailure
-            ? input.onPromptFailure(error)
-            : error;
-        },
-      );
+      const rendered = await observeTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, view);
+      if (!rendered.ok) {
+        if (input.onPromptFact) throw input.onPromptFact(rendered.fact);
+        throw input.onPromptFailure ? input.onPromptFailure(rendered.error) : rendered.error;
+      }
+      const prompt = rendered.value;
       const completion = await completeWithDeadline(
         (signal) => structured.complete({ prompt, schema: input.schema, model, effort }, signal),
         ctx.signal,
@@ -268,13 +280,14 @@ export async function runMutations<K extends NodeKind>(
   thread: ContextThread,
   ops: readonly MutationOperation[],
   mapFailure?: MutationFailureMapper,
+  mapFact?: MutationFactMapper,
 ): Promise<{ thread: ContextThread; patch: PatchOperation[] }> {
   const mctx = mutationContext(ctx);
   let current = thread;
   const patch: PatchOperation[] = [];
   let startAt = 0;
   for (;;) {
-    const result = await applyMutations(current, ops, mctx, startAt, mapFailure);
+    const result = await applyMutations(current, ops, mctx, startAt, mapFailure, mapFact);
     current = result.thread;
     patch.push(...result.patch);
     if (!result.pending) return { thread: current, patch };
@@ -284,6 +297,12 @@ export async function runMutations<K extends NodeKind>(
       schema: pending.jsonSchema,
       errors: pending.errors,
       repair: pending.repair,
+      ...(mapFact
+        ? {
+            onPromptFact: (fact: TemplateFact) =>
+              mapFact({ kind: 'template', fact }, pending.opIndex, 'coerce'),
+          }
+        : {}),
       ...(mapFailure
         ? { onPromptFailure: (error) => mapFailure(error, pending.opIndex, 'coerce') }
         : {}),
@@ -304,6 +323,8 @@ export async function runMutations<K extends NodeKind>(
       }
     } catch (error) {
       // Only the authored target write. A provider result rejected by validation stays a repair fault.
+      if (error instanceof PatchError && mapFact)
+        throw mapFact({ kind: 'patch' }, pending.opIndex, 'coerce');
       throw error instanceof PatchError && mapFailure
         ? mapFailure(error, pending.opIndex, 'coerce')
         : error;

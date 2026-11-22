@@ -51,6 +51,7 @@ import {
   evaluatePredicate,
   isTerminal,
   nodeById,
+  observeTemplate,
   nodesOfKind,
   outcomeStatus,
   outgoingEdge,
@@ -87,7 +88,9 @@ import type {
   NodeContext,
   NodeResult,
   WakeInfo,
+  WorkingDirectoryResult,
 } from './handler.js';
+import { workspaceFailure } from './authored-failure.js';
 import { defaultHandlers } from './handlers/index.js';
 import { classifyScriptFailure } from './handlers/script-dispatch.js';
 import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from './ports.js';
@@ -97,7 +100,7 @@ import { boundedFailure } from './event-validation.js';
 import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
 import { finalizationHistory } from './finalization-history.js';
 import { FreshEntries } from './fresh-entries.js';
-import { visitTurn } from './handlers/inference-turn.js';
+import { provenance, visitTurn } from './handlers/inference-turn.js';
 import { runRecovery, replayAction, refused } from './run-recovery.js';
 import { childSessionRecovered } from './session-recovery.js';
 
@@ -2642,7 +2645,7 @@ export class RunManager {
           !(error instanceof RunFailureError) && isDeciderError(error)
             ? deciderFailure(error)
             : undefined;
-        const failure =
+        let failure =
           error instanceof InternalRunFailureError
             ? error
             : error instanceof RunFailureError
@@ -2658,6 +2661,28 @@ export class RunManager {
                     nodeId,
                     resumable: true,
                   };
+        // Preparation can fail before a resumed inference visit records its next intent.
+        // The previous task remains informative while the ordinary error classification and
+        // recovery policy stay in charge. Never synthesize retry data or a submission event.
+        if (
+          node.kind === 'inference' &&
+          !events.some((event) => event.seq > startedSeq && event.type === 'harness.turn')
+        ) {
+          const prior = visitTurn(events, nodeId).pending;
+          if (failure instanceof InternalRunFailureError) {
+            failure = new InternalRunFailureError(
+              failure.message,
+              {
+                ...failure.options,
+                nodeId: failure.options.nodeId ?? nodeId,
+                ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
+              },
+              failure.diagnostic,
+            );
+          } else if (prior && !failure.inference) {
+            failure = { ...failure, inference: provenance(prior) };
+          }
+        }
         if (providerFailure)
           this.ports.logger.warn(
             { runId, nodeId, ...providerFailure.diagnostic },
@@ -2669,9 +2694,11 @@ export class RunManager {
               runId,
               nodeId,
               failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
-              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
-                ? { error: errorDiagnostic(error) }
-                : {}),
+              ...(failure instanceof InternalRunFailureError && failure.diagnostic
+                ? { error: failure.diagnostic }
+                : failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+                  ? { error: errorDiagnostic(error) }
+                  : {}),
             },
             'node failed',
           );
@@ -3011,7 +3038,10 @@ export class RunManager {
             this.ports.delivery.log(run.id, payload);
             break;
           case 'file': {
-            const dir = await this.workingDirectory(run, def, thread);
+            const directory = await this.workingDirectory(run, def, thread);
+            if (!directory.ok)
+              throw new Error(workspaceFailure(run.currentNodeId, directory.reason).message);
+            const dir = directory.directory;
             const content =
               channel.format === 'json'
                 ? JSON.stringify(payload, null, 2)
@@ -3339,16 +3369,20 @@ export class RunManager {
     run: RunRecord,
     def: LoopDefinition,
     thread: ContextThread,
-  ): Promise<string> {
+  ): Promise<WorkingDirectoryResult> {
     const cached = this.directories.get(run.id);
-    if (cached) return cached;
-    const dir = await this.ports.workspace.resolve(
-      def.settings.workingDirectory,
-      threadView(thread) as unknown as Record<string, unknown>,
-      run.id,
-    );
-    this.directories.set(run.id, dir);
-    return dir;
+    if (cached !== undefined) return { ok: true, directory: cached };
+    let spec = def.settings.workingDirectory;
+    if (spec.kind === 'template') {
+      const rendered = await observeTemplate(spec.template, { ...threadView(thread) });
+      if (!rendered.ok) return { ok: false, reason: rendered.fact };
+      const path = rendered.value.trim();
+      if (!path) return { ok: false, reason: 'empty-path' };
+      spec = { kind: 'fixed', path };
+    }
+    const directory = await this.ports.workspace.resolve(spec, run.id);
+    this.directories.set(run.id, directory);
+    return { ok: true, directory };
   }
 
   /** Execution and public reads share the same verified-checkpoint reconstruction. */

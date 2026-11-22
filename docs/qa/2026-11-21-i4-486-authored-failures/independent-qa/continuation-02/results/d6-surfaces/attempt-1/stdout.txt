@@ -1,0 +1,78 @@
+PASS S-AUTH no key / bad key -> 401 on every write/read; runs:read key -> 403 to start, 200 to read; loops/runs/events/native counter unchanged
+PASS setup-runs surface runs failed as designed
+PASS S-PAR-rest for every surface run: stored row failure == run.failed failure == REST snapshot failure
+PASS MCP-get-leaf MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-leaf MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-top MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-top MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-inf MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-inf MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-map MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-map MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-p01 MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-p01 MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-ext MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-ext MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-mid MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-mid MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-get-leaf2 MCP get_run full failure equals REST failure (structured and text)
+PASS MCP-wait-leaf2 MCP wait_for_run terminal: finished true with the same failure
+PASS MCP-list MCP list_runs reduced failure {code,message} equals REST for every surface run (reduced projection, not full DTO)
+PASS MCP-privacy new authored/internal causes in MCP get/wait/list omit QA486 canaries (P01 legacy excluded)
+PASS MCP-p01-control P01 legacy literal remains visible through MCP (established contract)
+PASS MCP-cleanup MCP stdio child exited after client close
+PASS DOM-leaf inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-leaf rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-top inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-top rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-inf inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-inf rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-map inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-map rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-p01 inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-ext inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-ext rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-mid inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-mid rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-leaf2 inspector alert shows "Failed: <code>" and the full stored message; Resume control matches stored recovery; child link only for actual child wrappers
+PASS DOM-privacy-leaf2 rendered page text omits QA486 canaries for new authored/internal causes
+PASS DOM-follow clicking "failed child run" twice navigates depth-two parent -> child -> leaf, whose alert shows the leaf heartbeat.until cause
+PASS DOM-mapping-nolink parent mapping failure (B12) renders no failed-child link
+PASS BROWSER-network browser only contacted the owned loopback API origin
+PASS BROWSER-cleanup browser process exited after close
+PASS S-HIST after a new publication/run and REST/MCP/browser reads, pre-existing row/event/REST bytes are unchanged
+PASS RESTART-shutdown authenticated drain then close; port 5875 refuses
+PASS S-RESTART-api after reopen on the same store: rows, events and REST snapshots byte-identical to before shutdown
+PASS S-RESTART-disk raw SQLite rows/events of the surface runs byte-identical across reopen + reads (read-only client, server stopped)
+PASS CLEANUP reopened API drained and closed; 5876 and listener refuse
+{
+ "name": "d6",
+ "total": 47,
+ "passed": 47,
+ "failed": [],
+ "pids": {
+  "driver": 30096,
+  "mcp": [
+   41992
+  ],
+  "browser": [
+   null
+  ]
+ },
+ "ids": {
+  "leaf": "01M7ZFP2SSM7KHRGK9KNTP8ETB",
+  "top": "01M7ZFP2XPKJ3XWS8GZYCE83FF",
+  "inf": "01M7ZFP36F0ABWWTGQY1VA27S6",
+  "map": "01M7ZFP39PZ9VQ6EQN4NKTEYTN",
+  "p01": "01M7ZFP3GW8R0C6CQKJBVF4P4V",
+  "ext": "01M7ZFP3MDHMY83BCET0E075PH",
+  "mid": "01M7ZFP2Z2JVXR78DBJXTZT6YN",
+  "leaf2": "01M7ZFP30HG8792X0MD0AT8JQK"
+ },
+ "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d6-surfaces-1\\data\\d6",
+ "ports": [
+  5875,
+  5876,
+  56282
+ ]
+}

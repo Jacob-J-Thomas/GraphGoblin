@@ -1,0 +1,341 @@
+{
+  "scope": "Retained successful-job log observations, no newly executed acceptance",
+  "repositoryLog": {
+    "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-head29e-targeta608-ci\\repository-checks.log",
+    "bytes": 68534,
+    "sha256": "d3b54b6807ba4c2c9b5d155c6af2866422cb0f33a5c7ccba12dd8f6172d1f6f7"
+  },
+  "tapCounts": {
+    "test:reset": {
+      "tests": {
+        "value": 1,
+        "line": 475
+      },
+      "pass": {
+        "value": 1,
+        "line": 477
+      },
+      "fail": {
+        "value": 0,
+        "line": 478
+      },
+      "skipped": {
+        "value": 0,
+        "line": 480
+      }
+    },
+    "test:recovery-process": {
+      "tests": {
+        "value": 1,
+        "line": 501
+      },
+      "pass": {
+        "value": 1,
+        "line": 503
+      },
+      "fail": {
+        "value": 0,
+        "line": 504
+      },
+      "skipped": {
+        "value": 0,
+        "line": 506
+      }
+    },
+    "test:chat-restart": {
+      "tests": {
+        "value": 1,
+        "line": 525
+      },
+      "pass": {
+        "value": 1,
+        "line": 527
+      },
+      "fail": {
+        "value": 0,
+        "line": 528
+      },
+      "skipped": {
+        "value": 0,
+        "line": 530
+      }
+    },
+    "test:prompt-restart": {
+      "tests": {
+        "value": 6,
+        "line": 603
+      },
+      "pass": {
+        "value": 6,
+        "line": 605
+      },
+      "fail": {
+        "value": 0,
+        "line": 606
+      },
+      "skipped": {
+        "value": 0,
+        "line": 608
+      }
+    },
+    "test:upgrade": {
+      "tests": {
+        "value": 2,
+        "line": 640
+      },
+      "pass": {
+        "value": 2,
+        "line": 642
+      },
+      "fail": {
+        "value": 0,
+        "line": 643
+      },
+      "skipped": {
+        "value": 0,
+        "line": 645
+      }
+    }
+  },
+  "waitRestart": [
+    {
+      "line": 545,
+      "observation": {
+        "poll": 50,
+        "dataDir": "/tmp/gg-c2-native-Yz4n0s",
+        "inputIdentity": true,
+        "timerWakes": 1,
+        "pausedWakes": 1,
+        "heartbeatCount": 2
+      }
+    },
+    {
+      "line": 551,
+      "observation": {
+        "poll": 1000,
+        "dataDir": "/tmp/gg-c2-native-2843vr",
+        "inputIdentity": true,
+        "timerWakes": 1,
+        "pausedWakes": 1,
+        "heartbeatCount": 2
+      }
+    }
+  ],
+  "webhookRetry": {
+    "line": 618,
+    "observation": {
+      "failureRequests": 5,
+      "crashRequests": 2,
+      "matrix": [
+        {
+          "path": "/success",
+          "attempts": 1,
+          "delivery": {
+            "id": "01M7ZN7VRSHXQCBHYMMV5TRPWD",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/success"
+            },
+            "status": "delivered",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": false
+          }
+        },
+        {
+          "path": "/retry",
+          "attempts": 2,
+          "delivery": {
+            "id": "01M7ZN7VT0DZCMX2WVAR03WMRH",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/retry"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        },
+        {
+          "path": "/permanent",
+          "attempts": 1,
+          "delivery": {
+            "id": "01M7ZN7VVCHCB702TP1V11F8MJ",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/permanent"
+            },
+            "status": "failed",
+            "attempts": 1,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "rejected",
+            "effectMayHaveHappened": false,
+            "acknowledgementUncertain": false,
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 400.",
+              "retryable": false,
+              "acknowledgement": "rejected",
+              "httpStatus": 400
+            }
+          }
+        },
+        {
+          "path": "/late",
+          "attempts": 2,
+          "delivery": {
+            "id": "01M7ZN7VWZX85MXQXQFCB50GX5",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/late"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "timeout",
+              "message": "Webhook acknowledgement timed out; the effect may have happened.",
+              "retryable": true,
+              "acknowledgement": "unknown"
+            }
+          }
+        },
+        {
+          "path": "/drop",
+          "attempts": 2,
+          "delivery": {
+            "id": "01M7ZN7VYBHYN17JH2WYQ9BAX6",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/drop"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "transport",
+              "message": "Webhook acknowledgement lost; the effect may have happened.",
+              "retryable": true,
+              "acknowledgement": "unknown"
+            }
+          }
+        }
+      ],
+      "drain": [
+        {
+          "phase": "backoff",
+          "elapsedMs": 19,
+          "requestsDuringDrain": 0,
+          "resumed": {
+            "id": "01M7ZN8AD176V7MV5KJH2K4WB6",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/drain-backoff"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "http",
+              "message": "Webhook returned HTTP 503.",
+              "retryable": true,
+              "acknowledgement": "unknown",
+              "httpStatus": 503
+            }
+          }
+        },
+        {
+          "phase": "attempt",
+          "elapsedMs": 10014,
+          "requestsDuringDrain": 0,
+          "resumed": {
+            "id": "01M7ZN8DB0PBZ57FXR8395SJX7",
+            "channel": {
+              "kind": "webhook",
+              "url": "http://127.0.0.1:38591/drain-attempt"
+            },
+            "status": "delivered",
+            "attempts": 2,
+            "maxAttempts": 5,
+            "inFlight": false,
+            "acknowledgement": "accepted",
+            "effectMayHaveHappened": true,
+            "acknowledgementUncertain": true,
+            "lastError": {
+              "code": "timeout",
+              "message": "Webhook acknowledgement timed out; the effect may have happened.",
+              "retryable": true,
+              "acknowledgement": "unknown"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "templateLog": {
+    "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-553-head29e-targeta608-ci\\template-image.log",
+    "bytes": 40946,
+    "sha256": "ee5acaf1d5c13ce707001f9a491ee61b70809b4db35627081f39b78ab3ec3402"
+  },
+  "templates": [
+    {
+      "line": 493,
+      "observation": {
+        "template": "starter",
+        "version": "2.0.0",
+        "draftNodes": 4
+      }
+    },
+    {
+      "line": 494,
+      "observation": {
+        "template": "implementation",
+        "version": "2.0.0",
+        "draftNodes": 11
+      }
+    },
+    {
+      "line": 495,
+      "observation": {
+        "template": "review",
+        "version": "2.0.0",
+        "draftNodes": 10
+      }
+    },
+    {
+      "line": 496,
+      "observation": {
+        "template": "qa",
+        "version": "2.0.0",
+        "draftNodes": 11
+      }
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "cwd": "G:\\ggq\\gg-i4-486-authored-errors\\GraphGoblin",
+  "runtime": "v22.23.4",
+  "temp": "G:/ggq/qa-scratch/i4-486-public-tests-01",
+  "buildGate": "Coordinator i4-486-combined-build-01 PASS received before direct API execution",
+  "commands": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-creation.test.ts src/awaited-children.test.ts src/child-failure-parity.test.ts src/adversarial.test.ts",
+      "log": "engine-01.log",
+      "exit": 1,
+      "tests": {
+        "passed": 102,
+        "failed": 18
+      },
+      "note": "New fixture setup errors: wrong Liquid column, overbroad zero-error-log expectation, empty mutation operations."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-creation.test.ts src/awaited-children.test.ts src/child-failure-parity.test.ts src/adversarial.test.ts",
+      "log": "engine-02.log",
+      "exit": 1,
+      "tests": {
+        "passed": 119,
+        "failed": 1
+      },
+      "note": "One unchanged stale-child-wake waitFor timed out during overlapping API group. No timeout/behavior change. Normal final group passed."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/child-creation.test.ts src/awaited-children.test.ts src/child-failure-parity.test.ts src/adversarial.test.ts",
+      "log": "engine-03.log",
+      "exit": 0,
+      "tests": {
+        "passed": 122,
+        "failed": 0
+      }
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-failure.test.ts src/prompt-failure-boundaries.test.ts src/prompt-evidence-matrix.test.ts src/prompt-provenance.test.ts src/prompt-sdk-storage-matrix.test.ts",
+      "log": "api-01.log",
+      "exit": 1,
+      "tests": {
+        "passed": 539,
+        "failed": 9
+      },
+      "note": "All failures new fixture setup: publish-time Liquid rejection, missing Claude supported sandbox, signal key signalName instead of name."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-failure.test.ts src/prompt-failure-boundaries.test.ts -t '#486'",
+      "log": "api-focused-01.log",
+      "exit": 1,
+      "tests": {
+        "passed": 8,
+        "failed": 9,
+        "skipped": 12
+      },
+      "note": "Diagnostic run of same fixture errors while full matrix was completing; no production discrepancy."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-failure.test.ts src/prompt-failure-boundaries.test.ts src/prompt-provenance.test.ts",
+      "log": "api-02.log",
+      "exit": 1,
+      "tests": {
+        "passed": 41,
+        "failed": 1
+      },
+      "note": "Subloop 7/7 and boundary 22/22 pass; canonical extra fixture used payload instead of input request property. Other 12 provenance tests pass."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/prompt-provenance.test.ts",
+      "log": "api-provenance-03.log",
+      "exit": 0,
+      "tests": {
+        "passed": 13,
+        "failed": 0
+      }
+    },
+    {
+      "command": "pnpm.cmd exec prettier --write packages/engine/src/child-creation.test.ts packages/engine/src/awaited-children.test.ts packages/engine/src/child-failure-parity.test.ts packages/engine/src/adversarial.test.ts apps/api/src/subloop-failure.test.ts apps/api/src/prompt-failure-boundaries.test.ts apps/api/src/prompt-evidence-matrix.test.ts apps/api/src/prompt-provenance.test.ts apps/api/src/prompt-sdk-storage-matrix.test.ts",
+      "log": "format-01.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check packages/engine/src/child-creation.test.ts packages/engine/src/awaited-children.test.ts packages/engine/src/child-failure-parity.test.ts packages/engine/src/adversarial.test.ts apps/api/src/subloop-failure.test.ts apps/api/src/prompt-failure-boundaries.test.ts apps/api/src/prompt-evidence-matrix.test.ts apps/api/src/prompt-provenance.test.ts apps/api/src/prompt-sdk-storage-matrix.test.ts",
+      "log": "format-check-02.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd exec eslint packages/engine/src/child-creation.test.ts packages/engine/src/awaited-children.test.ts packages/engine/src/child-failure-parity.test.ts packages/engine/src/adversarial.test.ts apps/api/src/subloop-failure.test.ts apps/api/src/prompt-failure-boundaries.test.ts apps/api/src/prompt-evidence-matrix.test.ts apps/api/src/prompt-provenance.test.ts apps/api/src/prompt-sdk-storage-matrix.test.ts",
+      "log": "lint-01.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd exec eslint apps/api/src/prompt-provenance.test.ts",
+      "log": "lint-provenance-02.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec tsc -p tsconfig.json",
+      "log": "engine-types-01.log",
+      "exit": 1,
+      "note": "Only other-owned handlers/flow.test.ts:1117 TS2322; no T diagnostics. Reported to coordinator for L. noEmit true / composite false / incremental false."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec tsc -p tsconfig.json",
+      "log": "api-types-01.log",
+      "exit": 0,
+      "note": "noEmit true / composite false / incremental false."
+    },
+    {
+      "command": "git diff --check -- packages/engine/src/child-creation.test.ts packages/engine/src/awaited-children.test.ts packages/engine/src/child-failure-parity.test.ts packages/engine/src/adversarial.test.ts apps/api/src/subloop-failure.test.ts apps/api/src/prompt-failure-boundaries.test.ts apps/api/src/prompt-evidence-matrix.test.ts apps/api/src/prompt-provenance.test.ts apps/api/src/prompt-sdk-storage-matrix.test.ts",
+      "log": "diff-check-01.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/flow.test.ts -t 'does not render the .* field again on wake'",
+      "log": "flow-wake-transfer-01.log",
+      "exit": 0,
+      "tests": {
+        "passed": 2,
+        "skipped": 86
+      }
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine exec tsc -p tsconfig.json",
+      "log": "engine-types-02.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check packages/engine/src/handlers/flow.test.ts",
+      "log": "format-transfer-01.log",
+      "exit": 0
+    },
+    {
+      "command": "pnpm.cmd exec eslint packages/engine/src/handlers/flow.test.ts",
+      "log": "lint-transfer-01.log",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check -- packages/engine/src/child-creation.test.ts packages/engine/src/awaited-children.test.ts packages/engine/src/child-failure-parity.test.ts packages/engine/src/adversarial.test.ts apps/api/src/subloop-failure.test.ts apps/api/src/prompt-failure-boundaries.test.ts apps/api/src/prompt-evidence-matrix.test.ts apps/api/src/prompt-provenance.test.ts apps/api/src/prompt-sdk-storage-matrix.test.ts packages/engine/src/handlers/flow.test.ts",
+      "log": "diff-check-transfer-02.log",
+      "exit": 0
+    }
+  ]
+}

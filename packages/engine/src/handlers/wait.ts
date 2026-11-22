@@ -1,4 +1,6 @@
 import type { WaitSpec } from '@graphgoblin/contracts';
+import { threadView } from '@graphgoblin/domain';
+import { authoredFailure, renderAuthored } from '../authored-failure.js';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { makeMessage, messagePatch, outputPatch, toJson } from './common.js';
@@ -6,10 +8,9 @@ import { makeMessage, messagePatch, outputPatch, toJson } from './common.js';
 function isoFromTemplate(ctx: NodeContext<'wait'>, rendered: string): string {
   const ms = Date.parse(rendered.trim());
   if (Number.isNaN(ms)) {
-    throw new RunFailureError(
-      'TEMPLATE_ERROR',
-      `wait "until" rendered "${rendered}", which is not a timestamp`,
-      { nodeId: ctx.node.id },
+    throw authoredFailure(
+      { nodeId: ctx.node.id, boundary: 'wait.timestamp' },
+      { kind: 'timestamp' },
     );
   }
   return new Date(ms).toISOString();
@@ -24,21 +25,35 @@ export const waitHandler: NodeHandler<'wait'> = {
     if (!ctx.wake) {
       let wait: Omit<WaitSpec, 'waitId' | 'startedSeq'>;
       switch (config.mode) {
-        case 'input':
+        case 'input': {
+          const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
           wait = {
             nodeId: ctx.node.id,
             kind: 'input',
-            prompt: await ctx.services.render(config.prompt),
+            prompt: await renderAuthored(
+              { nodeId: ctx.node.id, boundary: 'wait.prompt' },
+              config.prompt,
+              view,
+            ),
             ...(config.inputSchema ? { inputSchema: config.inputSchema } : {}),
           };
           break;
+        }
         case 'duration': {
           const until = new Date(now + config.seconds * 1000).toISOString();
           wait = { nodeId: ctx.node.id, kind: 'timer', until };
           break;
         }
         case 'until': {
-          const until = isoFromTemplate(ctx, await ctx.services.render(config.timestamp));
+          const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
+          const until = isoFromTemplate(
+            ctx,
+            await renderAuthored(
+              { nodeId: ctx.node.id, boundary: 'wait.timestamp' },
+              config.timestamp,
+              view,
+            ),
+          );
           wait = { nodeId: ctx.node.id, kind: 'timer', until };
           break;
         }

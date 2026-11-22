@@ -1,0 +1,77 @@
+{
+ "summary": {
+  "name": "d5b",
+  "total": 3,
+  "passed": 3,
+  "failed": [],
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\data\\d5"
+ },
+ "rows": [
+  {
+   "id": "W-OWN-temp",
+   "description": "temp-workspace run owns exactly its <dataDir>/workspaces/<runId> claim",
+   "pass": true,
+   "class": "NATIVE-SQLITE",
+   "actual": {
+    "tmpRuns": [
+     "01M7ZFGVRYAAB5H44CJ3J638VX"
+    ],
+    "claims": [
+     {
+      "key": "workspace:g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\data\\d5\\workspaces\\01m7zfgvryaab5h44cj3j638vx",
+      "owner_run_id": "01M7ZFGVRYAAB5H44CJ3J638VX",
+      "kind": "workspace",
+      "path": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\data\\d5\\workspaces\\01M7ZFGVRYAAB5H44CJ3J638VX"
+     }
+    ]
+   }
+  },
+  {
+   "id": "W-OWN-fixed",
+   "description": "fixed/relative/template-workspace runs have no ownership claim (no deletion authority over shared dirs)",
+   "pass": true,
+   "class": "NATIVE-SQLITE",
+   "actual": {
+    "fixedRuns": [
+     "01M7ZFGV281F1093QSWSJSVWJB",
+     "01M7ZFGVCZZAF3FFWH1SBPRFSY",
+     "01M7ZFGTME2NE5Y33EK1ESSN27",
+     "01M7ZFGW4Y9YX4BE7HR1MJZ2WS"
+    ],
+    "owned": [
+     "01M7ZFGVRYAAB5H44CJ3J638VX"
+    ]
+   }
+  },
+  {
+   "id": "W-OWN-journal",
+   "description": "shared journal references recorded for fixed/template runs (canonical-use journal)",
+   "pass": true,
+   "class": "NATIVE-SQLITE",
+   "actual": {
+    "refs": [
+     {
+      "id": "use:01M7ZFGTME2NE5Y33EK1ESSN27:workspace:g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\tmpl-dir",
+      "run_id": "01M7ZFGTME2NE5Y33EK1ESSN27",
+      "path": "g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\tmpl-dir"
+     },
+     {
+      "id": "use:01M7ZFGV281F1093QSWSJSVWJB:workspace:g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\fixed-dir",
+      "run_id": "01M7ZFGV281F1093QSWSJSVWJB",
+      "path": "g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\fixed-dir"
+     },
+     {
+      "id": "use:01M7ZFGVCZZAF3FFWH1SBPRFSY:workspace:g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\cwd\\rel-ws-dir",
+      "run_id": "01M7ZFGVCZZAF3FFWH1SBPRFSY",
+      "path": "g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\cwd\\rel-ws-dir"
+     },
+     {
+      "id": "use:01M7ZFGW4Y9YX4BE7HR1MJZ2WS:workspace:g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\tmpl-dir",
+      "run_id": "01M7ZFGW4Y9YX4BE7HR1MJZ2WS",
+      "path": "g:\\ggq\\qa-scratch\\i4-486-independent-02\\d5-workspace-1\\wsroot\\tmpl-dir"
+     }
+    ]
+   }
+  }
+ ]
+}
