@@ -1,0 +1,48 @@
+
+Running 1 test using 1 worker
+
+(node:15144) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\owner-chat-cross-route.qa.spec.ts:12:1 › D230 B1: a retired Devices 401 preserves the recovered quiet inspector through real route navigation (11.8s)
+
+
+  1) [chromium] › e2e\owner-chat-cross-route.qa.spec.ts:12:1 › D230 B1: a retired Devices 401 preserves the recovered quiet inspector through real route navigation 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('header').filter({ has: getByRole('heading', { name: 'Run 01M3Y7RKG03TB5EE6VYG75GYHM' }) }).getByText('at approve', { exact: true })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('header').filter({ has: getByRole('heading', { name: 'Run 01M3Y7RKG03TB5EE6VYG75GYHM' }) }).getByText('at approve', { exact: true }) with timeout 10000ms
+      - waiting for locator('header').filter({ has: getByRole('heading', { name: 'Run 01M3Y7RKG03TB5EE6VYG75GYHM' }) }).getByText('at approve', { exact: true })
+
+
+      37 |   const warmHeader = page.locator('header').filter({ has: page.getByRole('heading', { name: `Run ${run.id}` }) });
+      38 |   await expect(warmHeader.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+    > 39 |   await expect(warmHeader.getByText('at approve', { exact: true })).toBeVisible();
+         |                                                                     ^
+      40 |   const devices = gate();
+      41 |   const rejection = gate();
+      42 |   let chatCalls = 0;
+        at G:\ggq\gg-i5-d231-correction-qa\GraphGoblin\apps\web\e2e\owner-chat-cross-route.qa.spec.ts:39:69
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-d231-independent-correction-qa-01\execution-01\output\playwright\B1\owner-chat-cross-route.qa--17491-rough-real-route-navigation-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-d231-independent-correction-qa-01\execution-01\output\playwright\B1\owner-chat-cross-route.qa--17491-rough-real-route-navigation-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-d231-independent-correction-qa-01\execution-01\output\playwright\B1\owner-chat-cross-route.qa--17491-rough-real-route-navigation-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\owner-chat-cross-route.qa.spec.ts:12:1 › D230 B1: a retired Devices 401 preserves the recovered quiet inspector through real route navigation 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-d231-correction-
+  │ qa\GraphGoblin\apps\web
+

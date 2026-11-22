@@ -1,0 +1,46 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-d231-correction-qa/GraphGoblin/apps/web
+
+ ✓ src/api/api-key.test.tsx > credential generation (#386) > changes on replacement, forgetting, the first rejection and recovery, here or in another tab 8ms
+ ✓ src/api/api-key.test.tsx > same-key recovery across tabs (#386) > starts a fresh accepted generation on recovery, without repeating it for unchanged storage 1ms
+ ✓ src/api/api-key.test.tsx > API key entry > review: focuses the key input when access is rejected without stealing it on later renders 404ms
+ ✓ src/api/api-key.test.tsx > API key entry > waits for an open modal to release focus before focusing the rejected-key input 202ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > reads the quiet parked run once after same-key submit, without injected refresh or new SSE data 928ms
+ ✓ src/api/api-key.test.tsx > API key entry > asks for a key on a 401, sends the stored key, and lets Settings forget it 1009ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > retires an old pending 200 read with a warm cache before the fresh recovery read 665ms
+ ✓ src/api/api-key.test.tsx > API key entry > restarts a run inspector stream that a 401 ended once a key is entered 470ms
+ ✓ src/api/api-key.test.tsx > API key entry > follows a key forgotten or entered in another tab 1ms
+ ✓ src/api/api-key.test.tsx > API key entry > reads a key stored by an earlier session 2ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > retires an old pending 401 read with a warm cache before the fresh recovery read 687ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > retires an old pending 200 read with a empty cache before the fresh recovery read 408ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > retires an old pending 401 read with a empty cache before the fresh recovery read 483ms
+ ✓ src/api/ApiKeyPanel.test.tsx > same-key inspector recovery through the visible API key panel (R2-3) > does not refresh an already accepted unchanged key 187ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > injects only the current owner key and marks a current 401 rejected 40ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > does not reject a replacement key after an older request fails 6ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > keeps same-key recovery from an older 401 and rejects a current 401 on the same client 7ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > rejects a current 401 from a client reused across same-key recovery 4ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > rejects only a current 401 after the key is forgotten and accepted again 6ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > rejects only a current 401 after the key is replaced and accepted again 4ms
+ ✓ src/app/useOwnerChatClient.test.tsx > owner chat credential composition > rejects only a current 401 after the key is forgotten 3ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores a late 401 after changing from gg_A to B 7ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores a late 401 after changing from undefined to B 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > does not reject the stored key for explicit Bearer gg_other 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > does not reject the stored key for explicit Basic other 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=undefined 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=Bearer gg_stored 0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=bearer   gg_stored 0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored=undefined 0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored= 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored=    0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores an old same-key 401 after recovery, independently of cancellation=false 2ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores an old same-key 401 after recovery, independently of cancellation=true 1ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > does not treat cancellation alone as a new credential generation 0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores a retired anonymous 401 after a fresh anonymous credential generation 0ms
+ ✓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > keeps the key accepted on a non-401 response 0ms
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  17:23:25
+   Duration  11.15s (environment 33%, tests 27%, transform 17%, import 14%, setup 9%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d231-independent-correction-qa-01/execution-01/existing-auth.json

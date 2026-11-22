@@ -1,0 +1,22 @@
+--- a/apps/web/src/app/owner-chat-request-generation.qa.test.tsx
++++ b/apps/web/src/app/owner-chat-request-generation.qa.test.tsx
+@@ -6,6 +6,10 @@
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { createAppClient } from '../api/context.js';
+ import { useOwnerChatClient } from './useOwnerChatClient.js';
++
++function requestUrl(input: RequestInfo | URL): string {
++  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++}
+ 
+ afterEach(() => vi.unstubAllGlobals());
+ 
+@@ -24,7 +28,7 @@
+   const current = heldResponse();
+   let requests = 0;
+   const fetch = vi.fn<typeof globalThis.fetch>((input) => {
+-    expect(String(input)).toBe('/chat/devices');
++    expect(requestUrl(input)).toBe('/chat/devices');
+     requests++;
+     const gate = requests === 1 ? old : current;
+     if (requests > 2) throw new Error('Unplanned owner Chat request');
