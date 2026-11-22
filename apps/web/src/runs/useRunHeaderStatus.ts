@@ -11,8 +11,9 @@ import { useRunHeaderRegistry, type RunHeaderRegistry } from './run-header-store
 /**
  * The run header's status (#386) for the run shown, from the app's run header registry: the
  * evidence its stream and successful observation reads delivered, and the positions its own run
- * reads returned under the current credentials. Reading it never adds evidence; a cached query
- * value seen on render is not a new read. Only sequences and statuses are kept, in memory.
+ * reads returned under the current credentials, with the event cursor the device held when that
+ * evidence began. Reading it never adds evidence; a cached query value or cached event seen on
+ * render is not a new read. Only sequences and statuses are kept, in memory.
  */
 export function useRunHeaderStatus(runId: string): {
   registry: RunHeaderRegistry;
@@ -32,6 +33,7 @@ export function useRunHeaderStatus(runId: string): {
         entry?.evidence ?? emptyEvidence(runId),
         row,
         entry?.receipts.some((receipt) => samePosition(receipt, row)) ?? false,
+        entry?.cursorHint ?? 0,
       ),
   };
 }

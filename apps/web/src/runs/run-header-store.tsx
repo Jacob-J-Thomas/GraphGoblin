@@ -3,6 +3,7 @@ import type { RunEvent } from '@graphgoblin/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 import { createContext, use, type ReactNode } from 'react';
 import { useApiKeyStore } from '../api/api-key.js';
+import { useRunEventStore } from './event-store.js';
 import {
   emptyEvidence,
   observeEvents,
@@ -22,6 +23,22 @@ export interface HeaderEntry {
   readonly evidence: HeaderEvidence;
   /** Status and sequence only: no other field of the record is kept. */
   readonly receipts: readonly RecordedPosition[];
+  /**
+   * The event cursor this device already held for the run when the entry began (absent when none).
+   * The events up to it were never this entry's evidence and could include a later resume, so an
+   * older outcome is not shown until evidence reaches it. A sequence only, never a status.
+   */
+  readonly cursorHint?: number;
+}
+
+/** A new entry, noting once the cursor the device already holds for the run. */
+function newEntry(runId: string): HeaderEntry {
+  const cursorHint = useRunEventStore.getState().runs[runId]?.lastSeq ?? 0;
+  return {
+    evidence: emptyEvidence(runId),
+    receipts: [],
+    ...(cursorHint > 0 ? { cursorHint } : {}),
+  };
 }
 
 interface Slot {
@@ -49,8 +66,9 @@ export interface RunHeaderLease {
  * providers. It outlives a route, so returning to a run keeps what its stream delivered there, and
  * belongs to one API client, query cache and credential generation: another generation starts an
  * empty scope. It holds only sequences, terminal statuses and record positions, in memory, for at
- * most `MAX_HEADER_RUNS` runs (least recently used first out). Writes happen where a batch is
- * accepted or a read succeeds, never in render.
+ * most `MAX_HEADER_RUNS` runs (least recently used first out). A new entry, including one after an
+ * eviction or in a new scope, notes the event cursor the device already holds for the run. Writes
+ * happen where a batch is accepted or a read succeeds, never in render.
  */
 export class RunHeaderRegistry {
   readonly #capacity: number;
@@ -84,7 +102,7 @@ export class RunHeaderRegistry {
     if (auth.generation !== this.#scope.generation)
       this.#scope = { generation: auth.generation, slots: new Map() };
     const { slots } = this.#scope;
-    const slot = slots.get(runId) ?? { entry: { evidence: emptyEvidence(runId), receipts: [] } };
+    const slot = slots.get(runId) ?? { entry: newEntry(runId) };
     slots.delete(runId);
     slots.set(runId, slot);
     for (const oldest of slots.keys()) {

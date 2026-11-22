@@ -156,14 +156,23 @@ export function samePosition(a: RecordedPosition, b: RecordedPosition): boolean 
  *
  * `verified` says whether this credential scope's own run read returned `row`'s position. A record
  * it has not read itself names no status; an event's outcome stands on this view's own evidence.
+ *
+ * `cursorHint` is the event cursor the device already held when this evidence began. Those events
+ * were not observed here and may hold a later resume, so an outcome before the hint is shown only
+ * once accepted coverage reaches it (a marker at or beyond it starts coverage there); until then the
+ * header says it is updating. It never names a status, and never withholds a fresh agreeing record.
  */
 export function headerStatus(
   evidence: HeaderEvidence,
   row: RecordedPosition,
   verified = true,
+  cursorHint = 0,
 ): HeaderStatus {
   const status = fromEvidence(evidence, row);
-  return status.kind === 'record' && !verified ? { kind: 'updating' } : status;
+  if (status.kind === 'record') return verified ? status : { kind: 'updating' };
+  if (status.kind === 'event' && status.seq < cursorHint && evidence.through < cursorHint)
+    return { kind: 'updating' };
+  return status;
 }
 
 function fromEvidence(evidence: HeaderEvidence, row: RecordedPosition): HeaderStatus {

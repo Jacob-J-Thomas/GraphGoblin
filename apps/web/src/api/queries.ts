@@ -142,15 +142,17 @@ export function useRun(id: string) {
   return useQuery({
     queryKey: keys.run(id),
     // Each read is a receipt for the run header (#386): the status and sequence it returned under
-    // the credentials it was sent with. A definitively missing run drops its header evidence.
-    queryFn: async () => {
+    // the credentials it was sent with. A definitively missing run drops its header evidence. A
+    // cancelled read, or one answering for another run, is no receipt.
+    queryFn: async ({ signal }) => {
       const lease = headers?.lease(id);
       try {
-        const run = await runs.get(client, id);
-        headers?.receipt(lease, run);
+        const run = await runs.get(client, id, { signal });
+        if (!signal.aborted && run.id === id) headers?.receipt(lease, run);
         return run;
       } catch (error) {
-        if (error instanceof GraphGoblinApiError && error.status === 404) headers?.forget(lease);
+        if (!signal.aborted && error instanceof GraphGoblinApiError && error.status === 404)
+          headers?.forget(lease);
         throw error;
       }
     },
