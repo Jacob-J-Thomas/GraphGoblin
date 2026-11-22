@@ -143,11 +143,12 @@ export function samePosition(a: RecordedPosition, b: RecordedPosition): boolean 
 /**
  * The header's status for `row`. A record from before a terminal marker cannot confirm or deny it,
  * even with the same label, so the marker's own status and sequence are shown. At or after the
- * marker, an agreeing record is shown as itself; a disagreeing one is shown as the marker while
- * the record has not moved past what this view has seen (a record at exactly the marker's sequence
- * that still names the earlier phase, or one whose later events, such as delivery audits, are all
- * known). Beyond that coverage a terminal record is newer evidence, but an active status could be a
- * stale projection or an unseen resume, so the header says it is updating.
+ * marker, an agreeing record this scope has read is shown as itself; a disagreeing or unread one is
+ * shown as the marker while the record has not moved past what this view has seen (a record at
+ * exactly the marker's sequence that still names the earlier phase, or one whose later events, such
+ * as delivery audits, are all known). Beyond that coverage a terminal record is newer evidence, but
+ * an active status could be a stale projection or an unseen resume, so the header says it is
+ * updating.
  *
  * A resume, a later attempt's start, or any start after a known outcome supersedes that outcome at
  * once without naming a phase (a resume can park in a wait again): a record from before it, or a
@@ -155,7 +156,8 @@ export function samePosition(a: RecordedPosition, b: RecordedPosition): boolean 
  * caught up arrives. The ordinary first start leaves an active record as it is.
  *
  * `verified` says whether this credential scope's own run read returned `row`'s position. A record
- * it has not read itself names no status; an event's outcome stands on this view's own evidence.
+ * it has not read itself names no status and settles no outcome by agreeing with it, even at the
+ * same status and sequence; an event's outcome stands on this view's own evidence.
  *
  * `cursorHint` is the event cursor the device already held when this evidence began. Those events
  * were not observed here and may hold a later resume, so an outcome before the hint is shown only
@@ -168,14 +170,18 @@ export function headerStatus(
   verified = true,
   cursorHint = 0,
 ): HeaderStatus {
-  const status = fromEvidence(evidence, row);
+  const status = fromEvidence(evidence, row, verified);
   if (status.kind === 'record') return verified ? status : { kind: 'updating' };
   if (status.kind === 'event' && status.seq < cursorHint && evidence.through < cursorHint)
     return { kind: 'updating' };
   return status;
 }
 
-function fromEvidence(evidence: HeaderEvidence, row: RecordedPosition): HeaderStatus {
+function fromEvidence(
+  evidence: HeaderEvidence,
+  row: RecordedPosition,
+  verified: boolean,
+): HeaderStatus {
   const record: HeaderStatus = { kind: 'record', status: row.status };
   const { marker } = evidence;
   if (!marker) return record;
@@ -183,7 +189,9 @@ function fromEvidence(evidence: HeaderEvidence, row: RecordedPosition): HeaderSt
   if (marker.terminal) {
     const outcome: HeaderStatus = { kind: 'event', status: marker.terminal, seq: marker.seq };
     if (row.lastEventSeq < marker.seq) return outcome;
-    if (row.status === marker.terminal) return record;
+    // Only this scope's own read of an agreeing record settles the outcome (R2-1): a cached row at
+    // the same status and sequence is not that read, so the outcome stays shown until it arrives.
+    if (verified && row.status === marker.terminal) return record;
     if (row.lastEventSeq <= evidence.through) return outcome;
     return rowTerminal ? record : { kind: 'updating' };
   }

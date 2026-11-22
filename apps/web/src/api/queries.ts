@@ -143,12 +143,15 @@ export function useRun(id: string) {
     queryKey: keys.run(id),
     // Each read is a receipt for the run header (#386): the status and sequence it returned under
     // the credentials it was sent with. A definitively missing run drops its header evidence. A
-    // cancelled read, or one answering for another run, is no receipt.
+    // cancelled read is no receipt. A successful answer for another run is refused here, before it
+    // can replace this run's row or borrow a position this run's reads returned: an ordinary read
+    // error that keeps this run's cached row and evidence, unlike a 404.
     queryFn: async ({ signal }) => {
       const lease = headers?.lease(id);
       try {
         const run = await runs.get(client, id, { signal });
-        if (!signal.aborted && run.id === id) headers?.receipt(lease, run);
+        if (run.id !== id) throw new Error(`The API returned run ${run.id} for run ${id}.`);
+        if (!signal.aborted) headers?.receipt(lease, run);
         return run;
       } catch (error) {
         if (!signal.aborted && error instanceof GraphGoblinApiError && error.status === 404)

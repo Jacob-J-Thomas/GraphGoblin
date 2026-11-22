@@ -72,18 +72,24 @@ export function syncApiKeyAcrossTabs(): () => void {
 /** Wrap a fetch so it sends the stored key and reports a 401 to the key store. */
 export function withApiKey(fetch: (request: Request) => Promise<Response>) {
   return async (request: Request): Promise<Response> => {
-    const { key } = useApiKeyStore.getState();
+    const { key, generation } = useApiKeyStore.getState();
     if (key && !request.headers.has('authorization')) {
       request.headers.set('authorization', `Bearer ${key}`);
     }
     // A cancelled query can still deliver a response. Only reject the credentials it sent,
-    // including an explicit bearer header, while they still belong to this browser.
+    // including an explicit bearer header, while they still belong to this browser, and only in
+    // the credential generation it was sent under: the same key accepted again after a rejection
+    // is a new generation that an older request's 401 cannot reject (#386).
     const sentKey = /^Bearer\s+(.+)$/i
       .exec(request.headers.get('authorization') ?? '')?.[1]
       ?.trim();
     const response = await fetch(request);
     const current = useApiKeyStore.getState();
-    if (response.status === 401 && (current.key?.trim() || undefined) === sentKey)
+    if (
+      response.status === 401 &&
+      current.generation === generation &&
+      (current.key?.trim() || undefined) === sentKey
+    )
       current.markRejected();
     return response;
   };

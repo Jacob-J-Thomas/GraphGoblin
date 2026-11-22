@@ -87,7 +87,22 @@ describe('header status', () => {
   it('names no status from a record this scope has not read itself', () => {
     expect(headerStatus(emptyEvidence(R), row('running', 2), false)).toEqual({ kind: 'updating' });
     const evidence = seen(firstStart(2), succeeded(3));
-    expect(headerStatus(evidence, row('succeeded', 3), false)).toEqual({ kind: 'updating' });
+    const event3 = { kind: 'event', status: 'succeeded', seq: 3 };
+    // An unread record agreeing at the known tail settles nothing: the witnessed outcome stands
+    // with its own sequence (R2-1); only a matching read of the record settles it.
+    expect(headerStatus(evidence, row('succeeded', 3), false)).toEqual(event3);
+    expect(headerStatus(evidence, row('succeeded', 3), true)).toEqual({
+      kind: 'record',
+      status: 'succeeded',
+    });
+    const audited = seen(firstStart(2), succeeded(3), delivered(4));
+    expect(headerStatus(audited, row('succeeded', 4), false)).toEqual(event3);
+    // Beyond what was seen, behind a cold cursor or after a resume, it stays neutral.
+    expect(headerStatus(evidence, row('succeeded', 4), false)).toEqual({ kind: 'updating' });
+    expect(headerStatus(evidence, row('succeeded', 3), false, 4)).toEqual({ kind: 'updating' });
+    expect(headerStatus(observeEvents(evidence, [resumed(4)]), row('succeeded', 3), false)).toEqual(
+      { kind: 'updating' },
+    );
     // This view's own evidence still stands, without the record's position.
     expect(headerStatus(evidence, row('running', 2), false)).toEqual({
       kind: 'event',
