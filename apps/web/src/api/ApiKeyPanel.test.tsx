@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -43,6 +44,16 @@ async function rejectThroughHttp(api: FakeApi) {
   expect(useApiKeyStore.getState().rejected).toBe(true);
 }
 
+async function settleQueryActivity(queryClient: QueryClient) {
+  // Let cancellation/invalidation continuations run before checking for an unintended read.
+  await act(async () => {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  });
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+}
+
 async function submitSameKey() {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText('API key', { selector: 'input' }), KEY);
@@ -69,6 +80,7 @@ describe('same-key inspector recovery through the visible API key panel (R2-3)',
       expect(within(header).getByText('Updating status…')).toBeVisible();
       expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(before);
       await submitSameKey();
+      await settleQueryActivity(view.queryClient);
       await within(header).findByText('at real-wait');
       expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
       expect(screen.queryByRole('form', { name: 'Enter API key' })).toBeNull();
@@ -200,10 +212,10 @@ describe('same-key inspector recovery through the visible API key panel (R2-3)',
       await within(await headerFor(run.id)).findByText('at real-wait');
       const before = api.callsTo('GET', `/runs/${run.id}`).length;
       const generation = useApiKeyStore.getState().generation;
-      await act(async () => {
+      act(() => {
         useApiKeyStore.getState().save(KEY);
-        await Promise.resolve();
       });
+      await settleQueryActivity(view.queryClient);
       expect(useApiKeyStore.getState().generation).toBe(generation);
       expect(api.callsTo('GET', `/runs/${run.id}`)).toHaveLength(before);
       expect(streams(api, run.id)).toHaveLength(1);
