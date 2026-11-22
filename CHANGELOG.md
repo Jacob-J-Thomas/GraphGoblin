@@ -21,8 +21,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
   evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
   the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
-  A delayed 401 from the older credential generation cannot reject the recovered generation; a
-  matching current-generation 401 still does. An already accepted unchanged key causes no refresh.
+  Management API and owner Chat (Chat and Devices) requests each keep the credential identity and
+  generation they were sent under. A delayed 401 from an older generation, such as a Devices list
+  still pending after the owner opened a run, cannot reject the recovered key, reopen the key form
+  or clear the inspector's freshly verified status; its caller still receives that 401. A matching
+  current-generation 401 still rejects, including one sent through the same reused owner Chat
+  client. An already accepted unchanged key causes no refresh.
   A retained device cursor is only a negative hint against promoting an older outcome, never status
   authority; fresh matching terminal reads still converge without new streamed events. A terminal
   record's node is qualified as **Last node in run record**; event-derived outcomes and neutral

@@ -96,10 +96,14 @@ Accepting the same key after rejection also refreshes active server reads throug
 key panel. It first cancels outstanding queries, then invalidates active reads once if that accepted
 credential generation is still current. This gives a quiet inspector a fresh run receipt instead of
 joining an old pending first read; no new event, focus change or manual refresh is required. Saving
-an already accepted unchanged key triggers no recovery refresh. A delayed 401 is applied only when
-both the sent credential identity and generation still match: an older request cannot reject the
-recovered generation merely because its key text is unchanged. Cancelling a request alone does not
-change its credential generation or suppress a matching current-generation 401.
+an already accepted unchanged key triggers no recovery refresh. Management API requests and owner
+Chat requests (the management app's Chat and Devices pages) each note the credential identity and
+generation current when they are sent. A delayed 401 rejects the key only when both still match: an
+older request, such as a Devices list still pending after the owner opened a run, cannot reject the
+recovered generation merely because its key text is unchanged; its caller still receives its own
+401 error. A 401 to a request sent after recovery still rejects, including one sent through the
+same reused owner Chat client. Cancelling a request alone does not change its credential generation
+or suppress a matching current-generation 401.
 
 The header changes are presentation only. The record's status, failure, result, recovery tokens and permissions,
 delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
