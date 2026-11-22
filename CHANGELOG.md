@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
+  after its event is published, so a refresh could still be in flight, or return the earlier status
+  at the terminal event's sequence, and the header kept saying running. The header now also follows
+  the latest observed lifecycle event (streamed batches, whatever history window is browsed, and the
+  run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
+  **Status from event #N; the run record is updating.** in place of the stale position, and shows
+  **Updating status…** while a start or resume has superseded an outcome, or a newer record could
+  include an unseen resume. Presentation only: the record, controls, recovery, delivery and refresh
+  polling are unchanged. Regressions also cover appended patch values (#385), which already show
+  each `add` operation's recorded value with Before absent. No store, export or contract change.
+
 - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
 
 - Claude no longer reports a missing CLI when Windows refused the working directory (#364).

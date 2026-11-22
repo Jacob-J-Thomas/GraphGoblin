@@ -55,6 +55,82 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
   return run;
 }
 
+describe('appended values in a selected patch (#385)', () => {
+  it('shows each recorded append to messages and a variable list, absent before it', async () => {
+    const api = new FakeApi();
+    const run = api.addRun({ status: 'running', lastEventSeq: 5 });
+    const r = run.id;
+    const message = (id: string, content: string) => ({
+      id,
+      role: 'note',
+      content,
+      nodeId: 'append',
+      ts: '2026-10-02T12:00:00.000Z',
+    });
+    api.pushEvent(r, event(r, 1, 'run.queued', queuedFields()));
+    api.pushEvent(r, event(r, 2, 'run.started', { attempt: 1 }));
+    api.pushEvent(
+      r,
+      event(r, 3, 'node.finished', {
+        nodeId: 'prep',
+        durationMs: 1,
+        patch: [
+          { op: 'add', path: '/messages/-', value: message('m0', 'seed message') },
+          { op: 'add', path: '/vars/list', value: ['seed value'] },
+        ],
+      }),
+    );
+    api.pushEvent(
+      r,
+      event(r, 4, 'node.started', {
+        nodeId: 'append',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      }),
+    );
+    api.pushEvent(
+      r,
+      event(r, 5, 'node.finished', {
+        nodeId: 'append',
+        durationMs: 1,
+        patch: [
+          { op: 'add', path: '/messages/-', value: message('m1', 'first appended') },
+          { op: 'add', path: '/messages/-', value: message('m2', 'second appended') },
+          { op: 'add', path: '/vars/list/-', value: { nested: [1, ['deep value', null]] } },
+          { op: 'add', path: '/vars/list/-', value: ['inner value', ['array value']] },
+        ],
+      }),
+    );
+    renderApp(`/runs/${r}`, api);
+    const timeline = await screen.findByRole('list', { name: 'Timeline' });
+    await userEvent.setup().click(await within(timeline).findByText('#5'));
+    const diff = await screen.findByRole('list', { name: 'Patch diff' });
+    const lines = within(diff).getAllByRole('listitem');
+    expect(lines).toHaveLength(4);
+    // Each line shows its own recorded value; the final array's last element, or the whole
+    // array, would repeat a neighbour's value or the earlier contents.
+    const expected = [
+      ['/messages/-', 'first appended', ['second appended', 'seed message']],
+      ['/messages/-', 'second appended', ['first appended', 'seed message']],
+      ['/vars/list/-', 'deep value', ['inner value', 'seed value']],
+      ['/vars/list/-', 'inner value', ['deep value', 'seed value']],
+    ] as const;
+    for (const [index, [path, shown, others]] of expected.entries()) {
+      const line = lines[index]!;
+      expect(within(line).getByText('Added value')).toBeVisible();
+      expect(within(line).getByLabelText(`Value before ${path}`)).toHaveTextContent('(absent)');
+      const after = within(line).getByLabelText(`Value after ${path}`);
+      await waitFor(() => expect(after).toHaveTextContent(shown));
+      for (const other of others) expect(after).not.toHaveTextContent(other);
+    }
+    expect(within(lines[2]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent('null');
+    expect(within(lines[3]!).getByLabelText('Value after /vars/list/-')).toHaveTextContent(
+      'array value',
+    );
+  });
+});
+
 describe('RunInspectorPage', () => {
   it('keeps the previous resolved thread and identifiers while a selected server boundary is pending', async () => {
     const user = userEvent.setup();

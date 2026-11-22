@@ -2,7 +2,7 @@ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { applyPatch } from '@graphgoblin/domain';
 import { describe, expect, it } from 'vitest';
-import { event } from '../__fixtures__/fake-api.js';
+import { event, TS } from '../__fixtures__/fake-api.js';
 import {
   patchDiff,
   describeEvent,
@@ -28,6 +28,51 @@ describe('exact recorded execution projections (#255)', () => {
       ['nested array'],
     ]);
     expect(before.vars['items']).toEqual(['already present']);
+  });
+
+  it('shows each append to messages and a variable list as absent before and its recorded value after (#385)', () => {
+    const seed = { id: 'm0', role: 'note', content: 'seed', nodeId: 'prep', ts: TS };
+    const before = applyPatch(sampleThread(), [
+      { op: 'add' as const, path: '/messages/-', value: seed },
+      { op: 'add' as const, path: '/vars/list', value: ['seed'] },
+    ]);
+    const first = { ...seed, id: 'm1', content: 'first appended' };
+    const second = { ...seed, id: 'm2', content: 'second appended' };
+    const patch = [
+      { op: 'add' as const, path: '/messages/-', value: first },
+      { op: 'add' as const, path: '/messages/-', value: second },
+      { op: 'add' as const, path: '/vars/list/-', value: { nested: [1, ['deep', null]] } },
+      { op: 'add' as const, path: '/vars/list/-', value: ['inner', ['array']] },
+    ];
+    const after = applyPatch(before, patch);
+    // A final-array shortcut would show the last message for both appends.
+    expect(after.messages.slice(-3).map((message) => message.id)).toEqual(['m0', 'm1', 'm2']);
+    expect(patchDiff(before, after, patch)).toEqual([
+      { op: 'add', path: '/messages/-', before: undefined, after: first },
+      { op: 'add', path: '/messages/-', before: undefined, after: second },
+      {
+        op: 'add',
+        path: '/vars/list/-',
+        before: undefined,
+        after: { nested: [1, ['deep', null]] },
+      },
+      { op: 'add', path: '/vars/list/-', before: undefined, after: ['inner', ['array']] },
+    ]);
+  });
+
+  it('keeps the before and after of the completed patch for operations other than add', () => {
+    const before = sampleThread();
+    before.vars = { list: ['a', 'b'], name: 'old', object: { '-': 'dash' } };
+    const patch = [
+      { op: 'replace' as const, path: '/vars/name', value: 'new' },
+      { op: 'remove' as const, path: '/vars/list/0' },
+      { op: 'replace' as const, path: '/vars/object/-', value: 'replaced dash' },
+    ];
+    expect(patchDiff(before, applyPatch(before, patch), patch)).toEqual([
+      { op: 'replace', path: '/vars/name', before: 'old', after: 'new' },
+      { op: 'remove', path: '/vars/list/0', before: 'a', after: 'b' },
+      { op: 'replace', path: '/vars/object/-', before: 'dash', after: 'replaced dash' },
+    ]);
   });
 
   it('resolves escaped append parents and keeps an object property named dash literal', () => {

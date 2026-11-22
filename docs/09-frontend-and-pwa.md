@@ -43,6 +43,39 @@ shows authentication recipe, secret names, body/extraction/key settings or unava
 | Settings      | Model catalog, classifier models, defaults for model and effort, secrets, API keys, harness preflight status, scheduler status                 |
 | Events        | Inbound events and webhook deliveries, with what they triggered                                                                                |
 
+### Run inspector header status (#386)
+
+The server writes a run record's `lastEventSeq` with each event and publishes the event before it
+projects the record's status, so a record read at, or after, a terminal event's sequence can still
+name the earlier phase, and a refresh can still be in flight when the Timeline shows the outcome.
+The inspector header therefore compares the record with the latest lifecycle marker it has
+observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
+`run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
+the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
+observation or batch cannot undo it; the evidence is held in memory, keeps only sequence numbers and
+terminal statuses, and starts over for another run. Cached history from an earlier visit and a
+selected historical event are not evidence.
+
+- A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
+  `cancelled`; never success for a non-terminal finish status) while the record has not moved past
+  the events this view has seen, including later delivery events it has seen. The header then says
+  **Status from event #N; the run record is updating.** in place of the record's position.
+- A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
+  active status could be a lagging projection or an unseen resume, so the header shows a neutral
+  **Updating status…** until the stream or observation catches up.
+- A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
+  a wait again): a terminal record, or an active one from no later than the known outcome, shows
+  **Updating status…** until a record that has caught up arrives.
+
+This is presentation only. The record's status, failure, result, recovery tokens and permissions,
+delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
+terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
+or a dropped connection is never taken as an outcome, and refresh polling is unchanged.
+
+A selected `node.finished` patch shows each `add` operation's recorded value as **Added value**,
+with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
+their own value, not the final array's last element (#385).
+
 ## Native Chat and the Goblin PWA (#443)
 
 Chat is the management application's first navigation item and index destination at `/app/chat`.
