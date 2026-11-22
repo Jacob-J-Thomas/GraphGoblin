@@ -124,8 +124,8 @@ for (const lag of ['held', 'stale'] as const) {
       expect(returnedReads).toBe(1);
 
       // Complete a stale refresh at the outcome sequence while observations remain held.
-      // Wait for every held browser response body and rendering before checking again;
-      // this covers both the run query and the attempt follower's overlapping reads.
+      // Await the held browser responses and two animation frames before checking again;
+      // this does not establish React Query consumption of either overlapping read.
       const heldReads = reads;
       const refreshed = Promise.all(runRequests.slice(1).map((read) => read.response()));
       releaseRun();

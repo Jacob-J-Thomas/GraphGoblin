@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
 import { API_KEY_STORAGE, syncApiKeyAcrossTabs, useApiKeyStore } from '../api/api-key.js';
 import { createAppClient } from '../api/context.js';
+import { useRunEventStore } from './event-store.js';
 import {
   MAX_HEADER_RUNS,
   RunHeaderProvider,
@@ -28,6 +29,7 @@ function registry(capacity?: number) {
 
 afterEach(() => {
   useApiKeyStore.getState().forget();
+  useRunEventStore.getState().clear(A);
 });
 
 describe('run header registry (#386)', () => {
@@ -83,6 +85,52 @@ describe('run header registry (#386)', () => {
     expect(useApiKeyStore.getState().key).toBe('other-tab');
     headers.receipt(current, position(5));
     expect(headers.snapshot(A)).toBeUndefined();
+  });
+
+  it('takes only a negative cursor hint for a new or evicted slot, never cached lifecycle evidence', () => {
+    useRunEventStore.getState().append(A, finished(A, 3));
+    const headers = registry(1);
+    const old = headers.lease(A);
+    expect(headers.snapshot(A)).toEqual({
+      evidence: { runId: A, through: 0 },
+      receipts: [],
+      cursorHint: 3,
+    });
+    headers.events(old, [finished(A, 3)]);
+    headers.receipt(old, { status: 'succeeded', lastEventSeq: 3 });
+    useRunEventStore
+      .getState()
+      .append(A, event(A, 4, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
+    // The hint belongs to the slot's initial state, not to later cached payloads.
+    expect(headers.snapshot(A)?.cursorHint).toBe(3);
+    headers.lease(B);
+    headers.lease(A);
+    expect(headers.snapshot(A)).toEqual({
+      evidence: { runId: A, through: 0 },
+      receipts: [],
+      cursorHint: 4,
+    });
+    headers.events(old, [finished(A, 5)]);
+    headers.receipt(old, { status: 'succeeded', lastEventSeq: 5 });
+    expect(headers.snapshot(A)?.evidence.marker).toBeUndefined();
+    expect(headers.snapshot(A)?.receipts).toEqual([]);
+  });
+
+  it('does not promote cached history to evidence in a recovered credential scope', () => {
+    useApiKeyStore.getState().save('same-key');
+    useRunEventStore.getState().append(A, finished(A, 3));
+    const headers = registry();
+    const old = headers.lease(A);
+    headers.events(old, [finished(A, 3)]);
+    useApiKeyStore.getState().markRejected();
+    useApiKeyStore.getState().save('same-key');
+    headers.lease(A);
+    headers.lifecycle(old, finished(A, 4));
+    expect(headers.snapshot(A)).toEqual({
+      evidence: { runId: A, through: 0 },
+      receipts: [],
+      cursorHint: 3,
+    });
   });
 
   it('keeps only recent positions, and only their status and sequence', () => {

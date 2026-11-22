@@ -52,20 +52,39 @@ The inspector header therefore compares the record with the latest lifecycle mar
 observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
 `run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
 the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
-observation or batch cannot undo it; the evidence is held in memory, keeps only sequence numbers and
-terminal statuses, and starts over for another run. Cached history from an earlier visit and a
-selected historical event are not evidence.
+observation or batch cannot undo it. The app providers retain this evidence across route changes
+for at most twenty runs, evicting the least recently used. It belongs to one API client, query cache
+and credential generation; replacing either provider source, replacing or forgetting credentials,
+rejecting a key, or accepting even the same key after rejection retires the prior authority. Late
+reads, follower results and stream callbacks from a retired generation or evicted entry cannot
+restore it. Evidence keeps only sequences, terminal statuses and up to four recent run-record
+positions (status and sequence), in memory. It is never written to the persistent event store.
+Cached history, cached query rows and selected historical events are not fresh evidence.
 
 - A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
-  `cancelled`; never success for a non-terminal finish status) while the record has not moved past
-  the events this view has seen, including later delivery events it has seen. The header then says
-  **Status from event #N; the run record is updating.** in place of the record's position.
+  `cancelled`; never success for a non-terminal finish status) over an older record, even one with
+  the same status label, or while a disagreeing record has not moved past the events this view has
+  seen, including contiguous later delivery events. The header then says
+  **Status from event #N; the run record is updating.** in place of the record's position. An
+  agreeing record settles only at or beyond the marker, after a matching current-scope run read.
 - A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
   active status could be a lagging projection or an unseen resume, so the header shows a neutral
   **Updating status…** until the stream or observation catches up.
 - A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
-  a wait again): a terminal record, or an active one from no later than the known outcome, shows
-  **Updating status…** until a record that has caught up arrives.
+  a wait again). An active record from before that marker and a terminal record no later than the
+  accepted coverage show **Updating status…** until a record that has caught up arrives. A delayed
+  older outcome cannot replace the superseding marker.
+- A record names a status only after a successful, non-aborted read for this run under the current
+  scope has returned its exact status and sequence. Rendering a cached row is no receipt. A 404
+  drops that entry; other read failures do not establish deletion.
+- A new entry notes the event cursor already held on this device as a negative hint only: its
+  skipped events might contain a later resume. An outcome older than that hint stays neutral until
+  accepted contiguous coverage reaches it or a newer marker establishes the current outcome. The
+  cursor never supplies a status or verifies a cached record. A fresh matching terminal record can
+  settle without replaying the skipped suffix or waiting for finalization.
+- When the record supplies a terminal status, its node is explicitly labelled
+  **Last node in run record: …**. An event-derived outcome or neutral synchronization state shows
+  no stale record position; an active record retains its ordinary **at …** position.
 
 This is presentation only. The record's status, failure, result, recovery tokens and permissions,
 delivery and finalization, and every control, Wait panel and recovery action stay the server's; a

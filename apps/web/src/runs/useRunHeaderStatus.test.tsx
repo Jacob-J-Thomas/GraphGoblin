@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
 import { useApiKeyStore } from '../api/api-key.js';
 import { createAppClient } from '../api/context.js';
+import { useRunEventStore } from './event-store.js';
 import { RunHeaderProvider, RunHeaderRegistry } from './run-header-store.js';
 import { useRunHeaderStatus } from './useRunHeaderStatus.js';
 
@@ -31,7 +32,8 @@ function mount(runId: string) {
 }
 
 afterEach(() => {
-  useApiKeyStore.setState({ rejected: false });
+  useApiKeyStore.getState().forget();
+  useRunEventStore.getState().clear(A);
 });
 
 describe('useRunHeaderStatus (#386)', () => {
@@ -57,6 +59,44 @@ describe('useRunHeaderStatus (#386)', () => {
     act(() => registry.lifecycle(a, resumed(A, 4)));
     rerender({ runId: A });
     expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
+  });
+
+  it('keeps a cold acknowledged resume neutral despite an older fresh outcome observation (C1)', () => {
+    useRunEventStore.getState().append(A, finished(A, 3), resumed(A, 4));
+    const { result, registry } = mount(A);
+    const lease = registry.lease(A);
+    act(() => registry.lifecycle(lease, finished(A, 3)));
+    expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
+    // Even a fresh read of the earlier running position cannot establish the old outcome.
+    act(() => registry.receipt(lease, running(2)));
+    expect(result.current.status(running(2))).toEqual({ kind: 'updating' });
+    const parked = { status: 'waiting' as const, lastEventSeq: 4 };
+    act(() => {
+      registry.lifecycle(lease, resumed(A, 4));
+      registry.receipt(lease, parked);
+    });
+    expect(result.current.status(parked)).toEqual({ kind: 'record', status: 'waiting' });
+  });
+
+  it('settles a fresh matching terminal receipt beyond the cold hint without new streamed events (C1)', () => {
+    useRunEventStore
+      .getState()
+      .append(
+        A,
+        finished(A, 3),
+        event(A, 4, 'return.delivered', { channel: { kind: 'log' } }),
+        event(A, 5, 'return.delivered', { channel: { kind: 'log' } }),
+      );
+    const { result, registry } = mount(A);
+    const lease = registry.lease(A);
+    const terminal = { status: 'succeeded' as const, lastEventSeq: 5 };
+    act(() => registry.lifecycle(lease, finished(A, 3)));
+    expect(result.current.status(terminal)).toEqual({ kind: 'updating' });
+    // An unrelated position is not a receipt for the cached terminal row.
+    act(() => registry.receipt(lease, running(5)));
+    expect(result.current.status(terminal)).toEqual({ kind: 'updating' });
+    act(() => registry.receipt(lease, terminal));
+    expect(result.current.status(terminal)).toEqual({ kind: 'record', status: 'succeeded' });
   });
 
   it('withholds everything while the key is rejected and after the credentials change', () => {

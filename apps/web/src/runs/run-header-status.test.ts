@@ -96,6 +96,47 @@ describe('header status', () => {
     });
   });
 
+  it('withholds an older outcome behind a cold cursor without inventing a status (C1)', () => {
+    const evidence = observeLifecycle(emptyEvidence(R), failed(3));
+    // The saved cursor could cover a resume at #4; the current read is still missing.
+    expect(headerStatus(evidence, row('running', 2), false, 4)).toEqual({ kind: 'updating' });
+    expect(headerStatus(evidence, row('running', 3), true, 4)).toEqual({ kind: 'updating' });
+    // A cursor by itself cannot verify even a cached terminal row.
+    expect(headerStatus(emptyEvidence(R), row('failed', 4), false, 4)).toEqual({
+      kind: 'updating',
+    });
+  });
+
+  it('allows an older outcome once contiguous accepted events cover the cold cursor (C1)', () => {
+    const evidence = observeLifecycle(emptyEvidence(R), succeeded(3));
+    const gapped = observeEvents(evidence, [delivered(5)]);
+    expect(headerStatus(gapped, row('running', 3), true, 5)).toEqual({ kind: 'updating' });
+    const covered = observeEvents(gapped, [delivered(4), delivered(5)]);
+    expect(headerStatus(covered, row('running', 3), true, 5)).toEqual({
+      kind: 'event',
+      status: 'succeeded',
+      seq: 3,
+    });
+  });
+
+  it('accepts a new outcome at or beyond the cold cursor and lets a fresh agreeing row settle (C1)', () => {
+    const evidence = observeLifecycle(emptyEvidence(R), failed(3));
+    for (const seq of [5, 6]) {
+      const current = observeLifecycle(evidence, succeeded(seq));
+      expect(headerStatus(current, row('running', 2), false, 5)).toEqual({
+        kind: 'event',
+        status: 'succeeded',
+        seq,
+      });
+    }
+    // A fresh terminal record can agree with the older outcome even when no suffix is replayed.
+    expect(headerStatus(evidence, row('failed', 5), true, 5)).toEqual({
+      kind: 'record',
+      status: 'failed',
+    });
+    expect(headerStatus(evidence, row('failed', 5), false, 5)).toEqual({ kind: 'updating' });
+  });
+
   it('keeps the outcome through later events it has seen, but not beyond them', () => {
     const evidence = seen(succeeded(3), delivered(4), delivered(5));
     expect(evidence.through).toBe(5);

@@ -10,7 +10,11 @@ import { useRunEventStore } from './event-store.js';
 
 const actor = { kind: 'user' as const, id: 'local' };
 const UPDATING = 'Updating status…';
-const failure = (resumable: boolean) => ({ code: 'INTERNAL_ERROR', message: 'boom', resumable });
+const failure = (resumable: boolean) => ({
+  code: 'INTERNAL_ERROR' as const,
+  message: 'boom',
+  resumable,
+});
 
 function startedRun(api: FakeApi, overrides: Partial<RunRecord> = {}) {
   const run = api.addRun({ status: 'running', lastEventSeq: 2, ...overrides });
@@ -172,7 +176,7 @@ describe('run header corrective cases (#386)', () => {
       await act(() => view.queryClient.invalidateQueries({ queryKey: keys.observation(run.id) }));
       await within(header).findByText('Status from event #6; the run record is updating.');
       expect(badge(header)).toHaveAttribute('data-status', 'failed');
-      expect(within(header).queryByText(/node-a/)).toBeNull();
+      expect(within(header).queryByText('Last node in run record: node-a')).toBeNull();
 
       // A record at the outcome's sequence whose position may not be projected yet.
       api.runs.set(run.id, { ...run, status: 'failed', lastEventSeq: 6, currentNodeId: 'node-a' });
