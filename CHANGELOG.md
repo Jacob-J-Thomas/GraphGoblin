@@ -16,6 +16,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   memory. A record needs a successful, non-aborted, matching run read from the current client, query
   cache and credential generation before its position can supply a status. Rejection and same-key
   recovery retire old streams and follower reads; evicted entries cannot be restored by late work.
+  Current terminal evidence at the known tail stays event-qualified while an agreeing cached row
+  awaits its own fresh receipt. A response naming another run is refused before it replaces the
+  requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
+  evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
+  the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
+  A delayed 401 from the older credential generation cannot reject the recovered generation; a
+  matching current-generation 401 still does. An already accepted unchanged key causes no refresh.
   A retained device cursor is only a negative hint against promoting an older outcome, never status
   authority; fresh matching terminal reads still converge without new streamed events. A terminal
   record's node is qualified as **Last node in run record**; event-derived outcomes and neutral

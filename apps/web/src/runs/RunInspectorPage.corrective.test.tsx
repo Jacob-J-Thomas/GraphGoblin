@@ -1,11 +1,17 @@
+import { runs } from '@graphgoblin/api-client';
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { API_KEY_STORAGE, useApiKeyStore } from '../api/api-key.js';
 import { keys } from '../api/queries.js';
+import { createAppClient } from '../api/context.js';
+import { App } from '../app/App.js';
+import { Providers } from '../app/bootstrap.js';
 import { useRunEventStore } from './event-store.js';
 
 const actor = { kind: 'user' as const, id: 'local' };
@@ -177,6 +183,7 @@ describe('run header corrective cases (#386)', () => {
       await within(header).findByText('Status from event #6; the run record is updating.');
       expect(badge(header)).toHaveAttribute('data-status', 'failed');
       expect(within(header).queryByText('Last node in run record: node-a')).toBeNull();
+      expect(within(header).queryByText(/^at /)).toBeNull();
 
       // A record at the outcome's sequence whose position may not be projected yet.
       api.runs.set(run.id, { ...run, status: 'failed', lastEventSeq: 6, currentNodeId: 'node-a' });
@@ -302,6 +309,52 @@ describe('run header corrective cases (#386)', () => {
     } finally {
       reads.release();
       view.unmount();
+    }
+  });
+
+  it('shows a witnessed terminal over an agreeing unread cached row while the current GET is held (R2-1)', async () => {
+    const api = new FakeApi();
+    const run = startedRun(api, {
+      status: 'succeeded',
+      lastEventSeq: 3,
+      currentNodeId: 'cached-node',
+    });
+    api.pushEvent(
+      run.id,
+      event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+    );
+    const client = createAppClient('http://graphgoblin.test', api.fetch);
+    // This successful read predates the providers/registry. It seeds a cache, not a header receipt.
+    const cached = await runs.get(client, run.id);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(keys.run(run.id), cached);
+    const reads = heldRunReads(api);
+    reads.state.blocking = true;
+    const view = render(
+      <Providers client={client} queryClient={queryClient}>
+        <MemoryRouter initialEntries={['/runs/' + run.id]}>
+          <App />
+        </MemoryRouter>
+      </Providers>,
+    );
+    try {
+      const { header, timeline } = await openInspector(run.id);
+      await within(timeline).findByText('#3');
+      await waitFor(() => expect(reads.state.held).toBeGreaterThan(0));
+      await within(header).findByText('Status from event #3; the run record is updating.');
+      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
+      expect(queryClient.getQueryData(keys.run(run.id))).toBe(cached);
+      expect(within(header).queryByText('Last node in run record: cached-node')).toBeNull();
+      expect(within(header).queryByText(/^at /)).toBeNull();
+      api.runs.set(run.id, { ...run, currentNodeId: 'verified-node' });
+      reads.release();
+      await within(header).findByText('Last node in run record: verified-node');
+      expect(within(header).queryByText(/Status from event/)).toBeNull();
+      expect(badge(header)).toHaveAttribute('data-status', 'succeeded');
+    } finally {
+      reads.release();
+      view.unmount();
+      queryClient.clear();
     }
   });
 

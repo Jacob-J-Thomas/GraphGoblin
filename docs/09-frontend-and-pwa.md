@@ -67,6 +67,9 @@ Cached history, cached query rows and selected historical events are not fresh e
   seen, including contiguous later delivery events. The header then says
   **Status from event #N; the run record is updating.** in place of the record's position. An
   agreeing record settles only at or beyond the marker, after a matching current-scope run read.
+  Until that read succeeds, a current terminal event at the known tail keeps its event-qualified
+  status and sequence even when an unverified cached row has the same status and sequence; that
+  cached row cannot hide the event or supply its node.
 - A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
   active status could be a lagging projection or an unseen resume, so the header shows a neutral
   **Updating status…** until the stream or observation catches up.
@@ -76,7 +79,10 @@ Cached history, cached query rows and selected historical events are not fresh e
   older outcome cannot replace the superseding marker.
 - A record names a status only after a successful, non-aborted read for this run under the current
   scope has returned its exact status and sequence. Rendering a cached row is no receipt. A 404
-  drops that entry; other read failures do not establish deletion.
+  drops that entry; other read failures do not establish deletion. A successful response naming
+  another run is refused before it enters the requested run's query cache. It shows the ordinary
+  read error and preserves that run's earlier row and header evidence, even if the foreign row's
+  status and sequence match a previously accepted position.
 - A new entry notes the event cursor already held on this device as a negative hint only: its
   skipped events might contain a later resume. An outcome older than that hint stays neutral until
   accepted contiguous coverage reaches it or a newer marker establishes the current outcome. The
@@ -86,7 +92,16 @@ Cached history, cached query rows and selected historical events are not fresh e
   **Last node in run record: …**. An event-derived outcome or neutral synchronization state shows
   no stale record position; an active record retains its ordinary **at …** position.
 
-This is presentation only. The record's status, failure, result, recovery tokens and permissions,
+Accepting the same key after rejection also refreshes active server reads through the existing API
+key panel. It first cancels outstanding queries, then invalidates active reads once if that accepted
+credential generation is still current. This gives a quiet inspector a fresh run receipt instead of
+joining an old pending first read; no new event, focus change or manual refresh is required. Saving
+an already accepted unchanged key triggers no recovery refresh. A delayed 401 is applied only when
+both the sent credential identity and generation still match: an older request cannot reject the
+recovered generation merely because its key text is unchanged. Cancelling a request alone does not
+change its credential generation or suppress a matching current-generation 401.
+
+The header changes are presentation only. The record's status, failure, result, recovery tokens and permissions,
 delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
 terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
 or a dropped connection is never taken as an outcome, and refresh polling is unchanged.

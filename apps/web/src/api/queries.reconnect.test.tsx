@@ -344,17 +344,81 @@ describe('run query header receipts (#386)', () => {
     }
   });
 
-  it('does not verify a successful response for a different run', async () => {
+  it('rejects a foreign run response before a cold query can install it', async () => {
     const api = new FakeApi();
     const requested = api.addRun({ status: 'running', lastEventSeq: 2 });
     const foreign = api.addRun({ status: 'failed', lastEventSeq: 3 });
     api.override('GET /runs/:id', () => Response.json(foreign));
     const view = mountRun(api, requested.id);
     try {
-      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
-      expect(view.result.current.query.data?.id).toBe(foreign.id);
+      await waitFor(() => expect(view.result.current.query.isError).toBe(true));
+      expect(view.result.current.query.error).toBeInstanceOf(Error);
+      expect(view.result.current.query.data).toBeUndefined();
+      expect(view.queryClient.getQueryData(keys.run(requested.id))).toBeUndefined();
       expect(view.result.current.header.status(foreign)).toEqual({ kind: 'updating' });
       expect(view.result.current.header.registry.snapshot(requested.id)?.receipts).toEqual([]);
+    } finally {
+      view.unmount();
+      view.queryClient.clear();
+    }
+  });
+
+  it('keeps a warm matching receipt and its own row when a foreign same-position body is refused (S2)', async () => {
+    const api = new FakeApi();
+    const requested = api.addRun({
+      status: 'waiting',
+      lastEventSeq: 3,
+      currentNodeId: 'real-wait',
+    });
+    const foreign = api.addRun({
+      status: 'waiting',
+      lastEventSeq: 3,
+      currentNodeId: 'foreign-position',
+    });
+    const view = mountRun(api, requested.id);
+    try {
+      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
+      const ownRow = view.result.current.query.data;
+      const registry = view.result.current.header.registry;
+      const ownEntry = registry.snapshot(requested.id);
+      expect(view.result.current.header.status(requested)).toEqual({
+        kind: 'record',
+        status: 'waiting',
+      });
+      expect(ownEntry?.receipts).toEqual([{ status: 'waiting', lastEventSeq: 3 }]);
+      api.override('GET /runs/:id', () => Response.json(foreign));
+      await act(async () => {
+        await view.result.current.query.refetch();
+      });
+      await waitFor(() => expect(view.result.current.query.isError).toBe(true));
+      expect(view.result.current.query.data).toBe(ownRow);
+      expect(view.queryClient.getQueryData(keys.run(requested.id))).toBe(ownRow);
+      expect(view.result.current.query.data).toMatchObject({
+        id: requested.id,
+        currentNodeId: 'real-wait',
+      });
+      expect(registry.snapshot(requested.id)).toBe(ownEntry);
+      expect(view.result.current.header.status(requested)).toEqual({
+        kind: 'record',
+        status: 'waiting',
+      });
+      // A later valid response recovers through the ordinary query path.
+      api.override('GET /runs/:id', () =>
+        Response.json({ ...requested, lastEventSeq: 4, currentNodeId: 'new-real-wait' }),
+      );
+      await act(async () => {
+        await view.result.current.query.refetch();
+      });
+      await waitFor(() => expect(view.result.current.query.isSuccess).toBe(true));
+      expect(view.result.current.query.data).toMatchObject({
+        id: requested.id,
+        lastEventSeq: 4,
+        currentNodeId: 'new-real-wait',
+      });
+      expect(view.result.current.header.status({ status: 'waiting', lastEventSeq: 4 })).toEqual({
+        kind: 'record',
+        status: 'waiting',
+      });
     } finally {
       view.unmount();
       view.queryClient.clear();

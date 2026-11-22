@@ -46,6 +46,28 @@ describe('credential generation (#386)', () => {
   });
 });
 
+describe('same-key recovery across tabs (#386)', () => {
+  it('starts a fresh accepted generation on recovery, without repeating it for unchanged storage', () => {
+    const store = useApiKeyStore.getState;
+    store().save('gg_shared');
+    store().markRejected();
+    const rejectedGeneration = store().generation;
+    const stop = syncApiKeyAcrossTabs();
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+      expect(store()).toMatchObject({
+        key: 'gg_shared',
+        rejected: false,
+        generation: rejectedGeneration + 1,
+      });
+      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+      expect(store().generation).toBe(rejectedGeneration + 1);
+    } finally {
+      stop();
+    }
+  });
+});
+
 describe('API key entry', () => {
   it('review: focuses the key input when access is rejected without stealing it on later renders', async () => {
     const api = new FakeApi();
