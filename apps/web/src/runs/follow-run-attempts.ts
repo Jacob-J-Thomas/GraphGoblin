@@ -24,6 +24,8 @@ export function followRunAttempts(
     events(): readonly RunEvent[];
     append(events: RunEvent[]): void;
     changed(): void;
+    /** The latest lifecycle marker of each observation this follower read successfully (#386). */
+    lifecycle?(lifecycle: RunEvent | undefined): void;
     running(): void;
     finished(): void;
     error(error: unknown): void;
@@ -62,6 +64,7 @@ export function followRunAttempts(
       if (controller.signal.aborted) return;
       const observation = await runs.observation(client, runId, { signal: controller.signal });
       if (controller.signal.aborted) return;
+      observer.lifecycle?.(observation.lifecycle);
       // A lifecycle read can overtake the row/page snapshot. Reopen at the acknowledged cursor
       // rather than declaring an unseen outcome complete and omitting its intervening history.
       if (observation.lifecycle && observation.lifecycle.seq > observer.cursor()) {

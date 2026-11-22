@@ -3,6 +3,7 @@ import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
 import { HistoryEligibility } from './HistoryEligibility.js';
 import { formatDateTime } from '../lib/utils.js';
+import { isTerminal } from '@graphgoblin/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
@@ -88,7 +89,9 @@ function HeaderStatusBadge({ status }: { status: HeaderStatus }) {
 
 /**
  * Where the run is, beside the header status. A record's position is shown only with the
- * record's own status: beside a newer event's status or an unresolved one it could be stale.
+ * record's own status: beside a newer event's status or an unresolved one it could be stale. A
+ * finished record's node is the last one its record names, which need not be where the run ended:
+ * the event sequence can advance before the position is projected.
  */
 function HeaderPosition({
   status,
@@ -106,7 +109,12 @@ function HeaderPosition({
       </span>
     );
   if (status.kind === 'updating' || !nodeId) return null;
-  return <span className="min-w-0 wrap-anywhere">at {nodeName(definition, nodeId)}</span>;
+  return (
+    <span className="min-w-0 wrap-anywhere">
+      {isTerminal(status.status) ? 'Last node in run record: ' : 'at '}
+      {nodeName(definition, nodeId)}
+    </span>
+  );
 }
 
 /**
@@ -119,16 +127,23 @@ export function RunInspectorPage() {
   const threadQuery = useRunThread(runId);
   const live = useLiveRefresh(runId);
   const client = useApi();
+  const header = useRunHeaderStatus(runId);
   const observation = useQuery({
     queryKey: keys.observation(runId),
-    queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
+    // A successful read, under the credentials it was sent with, is lifecycle evidence for the
+    // header (#386); the answer itself is unchanged, and a cached one is not a new read.
+    queryFn: async ({ signal }) => {
+      const lease = header.registry.lease(runId);
+      const read = await runs.observation(client, runId, { signal });
+      if (!signal.aborted) header.registry.lifecycle(lease, read.lifecycle);
+      return read;
+    },
   });
-  // Every accepted batch reaches the header's lifecycle evidence, whatever window is shown (#386).
-  const header = useRunHeaderStatus(runId, observation.data?.lifecycle);
-  const log = useRunEvents(runId, (events) => {
-    if (events) header.observe(runId, events);
-    live.notify(events);
-  });
+  // The stream delivers every accepted batch to the header's evidence itself, whatever window
+  // is shown (#386).
+  const log = useRunEvents(runId, live.notify);
+  // One status for the header's badge and position; controls and recovery take the record.
+  const shownStatus = runQuery.data && header.status(runQuery.data);
   const history = useRunHistory(runId, log);
   const selectedSeq = history.selectedSeq;
   const seq = selectedSeq ?? log.lastSeq;
@@ -215,14 +230,16 @@ export function RunInspectorPage() {
                     {run.id}
                   </span>
                 </h1>
-                <HeaderStatusBadge status={header.status(run)} />
+                {shownStatus ? <HeaderStatusBadge status={shownStatus} /> : null}
               </div>
               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                <HeaderPosition
-                  status={header.status(run)}
-                  nodeId={run.currentNodeId}
-                  definition={definition}
-                />
+                {shownStatus ? (
+                  <HeaderPosition
+                    status={shownStatus}
+                    nodeId={run.currentNodeId}
+                    definition={definition}
+                  />
+                ) : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop
                 </Link>

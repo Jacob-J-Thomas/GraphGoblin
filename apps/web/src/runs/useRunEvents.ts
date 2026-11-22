@@ -13,6 +13,7 @@ import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
 import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
+import { useRunHeaderRegistry } from './run-header-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
 
@@ -44,6 +45,7 @@ export function useRunEvents(
   // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
   // with a key that was just forgotten (here or in another tab) closes.
   const apiKey = useApiKeyStore((s) => s.key);
+  const headers = useRunHeaderRegistry();
   const [status, setStatus] = useState<StreamStatus>('connecting');
   const [error, setError] = useState<string | undefined>();
 
@@ -56,6 +58,8 @@ export function useRunEvents(
     let buffer: RunEvent[] = [];
     let bufferBytes = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // This run's header evidence under the credentials the stream opened with (#386).
+    let lease = headers?.lease(runId);
     const flush = () => {
       clearTimeout(timer);
       timer = undefined;
@@ -64,6 +68,9 @@ export function useRunEvents(
       buffer = [];
       bufferBytes = 0;
       append(runId, ...batch);
+      // Every accepted batch, whatever window is shown, and the last one flushed on cleanup:
+      // the next stream for this run starts after it.
+      headers?.events(lease, batch);
       if (!active) return;
       setStatus('live');
       onEvents?.(batch);
@@ -82,6 +89,7 @@ export function useRunEvents(
         changed: () => {
           if (active) onEvents?.();
         },
+        lifecycle: (lifecycle) => headers?.lifecycle(lease, lifecycle),
         append: (events) => {
           buffer.push(...events);
           flush();
@@ -194,17 +202,25 @@ export function useRunEvents(
     const unsubscribe = subscribeApiRecovery(() => {
       if (active && inTransportBackoff) connect();
     });
+    // The same key accepted again after a rejection keeps this stream but is a new credential
+    // generation: what was buffered before it is not header evidence, what follows is.
+    const unsubscribeKey = useApiKeyStore.subscribe((state, previous) => {
+      if (state.rejected || !previous.rejected || state.key !== previous.key) return;
+      flush();
+      lease = headers?.lease(runId);
+    });
     connect();
     return () => {
       active = false;
       unsubscribe();
+      unsubscribeKey();
       stopHistory?.();
       flush();
       subscription?.close();
     };
     // `onEvents` is a notification hook; followRunAttempts follows resumed runs from the cursor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, queryClient, runId, apiKey]);
+  }, [client, queryClient, runId, apiKey, headers]);
 
   return { ...log, status, ...(error ? { error } : {}) };
 }

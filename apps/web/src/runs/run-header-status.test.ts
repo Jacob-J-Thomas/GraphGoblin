@@ -21,6 +21,7 @@ const failed = (seq: number) =>
 const delivered = (seq: number) => event(R, seq, 'return.delivered', { channel: { kind: 'log' } });
 const resumed = (seq: number) => event(R, seq, 'run.resumed', { actor });
 const started = (seq: number) => event(R, seq, 'run.started', { attempt: 2 });
+const firstStart = (seq: number) => event(R, seq, 'run.started', { attempt: 1 });
 const seen = (...events: RunEvent[]) => observeEvents(emptyEvidence(R), events);
 const row = (status: RunStatus, lastEventSeq: number) => ({ status, lastEventSeq });
 
@@ -38,8 +39,9 @@ describe('lifecycle markers', () => {
     expect(
       lifecycleMarker(event(R, 6, 'run.finished', { status: 'running', outcome: 'success' })),
     ).toEqual({ seq: 6 });
-    expect(lifecycleMarker(resumed(7))).toEqual({ seq: 7 });
-    expect(lifecycleMarker(started(8))).toEqual({ seq: 8 });
+    expect(lifecycleMarker(resumed(7))).toEqual({ seq: 7, resumes: true });
+    expect(lifecycleMarker(started(8))).toEqual({ seq: 8, resumes: true });
+    expect(lifecycleMarker(firstStart(2))).toEqual({ seq: 2 });
     expect(lifecycleMarker(event(R, 9, 'run.paused', { actor }))).toBeUndefined();
     expect(lifecycleMarker(delivered(10))).toBeUndefined();
   });
@@ -69,6 +71,29 @@ describe('header status', () => {
     });
     // An earlier attempt's failure is older than the outcome.
     expect(headerStatus(evidence, row('failed', 1))).toEqual(event3);
+  });
+
+  it('shows a newer outcome over an older record with the same label (R2)', () => {
+    const evidence = seen(started(5), failed(7));
+    const event7 = { kind: 'event', status: 'failed', seq: 7 };
+    // The earlier attempt's failed record cannot speak for the new failure.
+    expect(headerStatus(evidence, row('failed', 3))).toEqual(event7);
+    expect(headerStatus(evidence, row('failed', 6))).toEqual(event7);
+    // At or after the marker the agreeing record settles, beyond seen coverage too.
+    expect(headerStatus(evidence, row('failed', 7))).toEqual({ kind: 'record', status: 'failed' });
+    expect(headerStatus(evidence, row('failed', 9))).toEqual({ kind: 'record', status: 'failed' });
+  });
+
+  it('names no status from a record this scope has not read itself', () => {
+    expect(headerStatus(emptyEvidence(R), row('running', 2), false)).toEqual({ kind: 'updating' });
+    const evidence = seen(firstStart(2), succeeded(3));
+    expect(headerStatus(evidence, row('succeeded', 3), false)).toEqual({ kind: 'updating' });
+    // This view's own evidence still stands, without the record's position.
+    expect(headerStatus(evidence, row('running', 2), false)).toEqual({
+      kind: 'event',
+      status: 'succeeded',
+      seq: 3,
+    });
   });
 
   it('keeps the outcome through later events it has seen, but not beyond them', () => {
@@ -124,7 +149,7 @@ describe('header status', () => {
   });
 
   it('leaves an ordinary start, and a finish without a terminal status, to the record', () => {
-    expect(headerStatus(seen(started(2)), row('queued', 1))).toEqual({
+    expect(headerStatus(seen(firstStart(2)), row('queued', 1))).toEqual({
       kind: 'record',
       status: 'queued',
     });
@@ -142,8 +167,49 @@ describe('header status', () => {
 describe('evidence ordering and identity', () => {
   it('folds batches in sequence order and never lets an older marker undo a newer one', () => {
     const evidence = seen(resumed(4), failed(3));
-    expect(evidence.marker).toEqual({ seq: 4 });
+    expect(evidence.marker).toEqual({ seq: 4, resumes: true });
     expect(observeEvents(evidence, [failed(3), succeeded(2)])).toBe(evidence);
+  });
+
+  it('remembers an earlier outcome delivered after its resume, in either order (R1)', () => {
+    const observedFirst = observeLifecycle(emptyEvidence(R), resumed(4));
+    // Only the resume is known: the running #2 record is the earlier attempt's.
+    expect(headerStatus(observedFirst, row('running', 2))).toEqual({ kind: 'updating' });
+    const replayed = observeEvents(observedFirst, [firstStart(2), failed(3), resumed(4)]);
+    const streamedFirst = observeLifecycle(seen(firstStart(2), failed(3), resumed(4)), resumed(4));
+    for (const evidence of [replayed, streamedFirst]) {
+      expect(evidence).toEqual({
+        runId: R,
+        marker: { seq: 4, resumes: true },
+        terminalSeq: 3,
+        through: 4,
+      });
+      expect(headerStatus(evidence, row('running', 2))).toEqual({ kind: 'updating' });
+      expect(headerStatus(evidence, row('failed', 3))).toEqual({ kind: 'updating' });
+      // Duplicates change nothing.
+      expect(observeEvents(evidence, [failed(3), resumed(4)])).toBe(evidence);
+      expect(observeLifecycle(evidence, failed(3))).toBe(evidence);
+      // A record that has caught up names the phase, a parked wait included.
+      expect(headerStatus(evidence, row('waiting', 4))).toEqual({
+        kind: 'record',
+        status: 'waiting',
+      });
+    }
+    // The predecessor from a delayed observation raises the watermark only.
+    const delayed = observeLifecycle(observedFirst, failed(3));
+    expect(delayed).toEqual({ ...observedFirst, terminalSeq: 3 });
+    expect(observeLifecycle(delayed, succeeded(2))).toBe(delayed);
+    // Another run's outcome is not this run's predecessor.
+    expect(observeEvents(observedFirst, [succeeded(3, OTHER)])).toBe(observedFirst);
+  });
+
+  it('keeps an active record from before a resume neutral, even past the old outcome', () => {
+    const evidence = seen(firstStart(2), failed(3), delivered(4), resumed(5));
+    expect(headerStatus(evidence, row('running', 4))).toEqual({ kind: 'updating' });
+    expect(headerStatus(evidence, row('running', 5))).toEqual({
+      kind: 'record',
+      status: 'running',
+    });
   });
 
   it('ignores events of another run', () => {
@@ -158,9 +224,17 @@ describe('evidence ordering and identity', () => {
     expect(observeLifecycle(evidence, succeeded(9, OTHER))).toBe(evidence);
     expect(observeLifecycle(emptyEvidence(R), delivered(4))).toEqual(emptyEvidence(R));
     const newer = observeLifecycle(evidence, resumed(6));
-    expect(newer).toEqual({ runId: R, marker: { seq: 6 }, terminalSeq: 3, through: 6 });
+    expect(newer).toEqual({
+      runId: R,
+      marker: { seq: 6, resumes: true },
+      terminalSeq: 3,
+      through: 6,
+    });
     // Streamed events after the observed marker extend its coverage.
-    expect(observeEvents(newer, [resumed(6), started(7)]).marker).toEqual({ seq: 7 });
+    expect(observeEvents(newer, [resumed(6), started(7)]).marker).toEqual({
+      seq: 7,
+      resumes: true,
+    });
     const observed = observeLifecycle(emptyEvidence(R), succeeded(3));
     expect(headerStatus(observed, row('running', 3))).toMatchObject({ kind: 'event' });
     expect(headerStatus(observed, row('running', 4))).toEqual({ kind: 'updating' });

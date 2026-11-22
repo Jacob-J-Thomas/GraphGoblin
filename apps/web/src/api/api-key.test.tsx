@@ -8,6 +8,44 @@ import { API_KEY_STORAGE, syncApiKeyAcrossTabs, useApiKeyStore } from './api-key
 
 afterEach(() => useApiKeyStore.setState({ key: undefined, rejected: false }));
 
+describe('credential generation (#386)', () => {
+  it('changes on replacement, forgetting, the first rejection and recovery, here or in another tab', () => {
+    const store = useApiKeyStore.getState;
+    const generation = () => store().generation;
+    const start = generation();
+    store().save(' gg_one ');
+    expect(store()).toMatchObject({ key: 'gg_one', generation: start + 1 });
+    // The same accepted key again is not a new generation.
+    store().save('gg_one');
+    expect(generation()).toBe(start + 1);
+    store().markRejected();
+    expect(generation()).toBe(start + 2);
+    // Repeated 401s while rejected are the same rejection.
+    store().markRejected();
+    expect(generation()).toBe(start + 2);
+    // Recovery with the same key is a new generation.
+    store().save('gg_one');
+    expect(store()).toMatchObject({ rejected: false, generation: start + 3 });
+    store().save('gg_two');
+    expect(generation()).toBe(start + 4);
+    const stop = syncApiKeyAcrossTabs();
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+      // Another tab writing the key this tab already uses changes nothing.
+      expect(generation()).toBe(start + 4);
+      localStorage.setItem(API_KEY_STORAGE, 'gg_three');
+      window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+      expect(store()).toMatchObject({ key: 'gg_three', generation: start + 5 });
+    } finally {
+      stop();
+    }
+    store().forget();
+    expect(store()).toMatchObject({ key: undefined, generation: start + 6 });
+    // The generation is a count, never the key or anything derived from it.
+    expect(JSON.stringify(store())).not.toContain('gg_');
+  });
+});
+
 describe('API key entry', () => {
   it('review: focuses the key input when access is rejected without stealing it on later renders', async () => {
     const api = new FakeApi();

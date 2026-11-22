@@ -3,6 +3,7 @@ import {
   classifierModels,
   cron,
   events,
+  GraphGoblinApiError,
   loops,
   modelCatalog,
   runs,
@@ -33,6 +34,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { z } from 'zod';
+import { useRunHeaderRegistry } from '../runs/run-header-store.js';
 import { useApi } from './context.js';
 
 const HarnessPreflightItemSchema = HarnessPreflightSchema.extend({ harness: z.string() });
@@ -136,9 +138,22 @@ export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | fal
 
 export function useRun(id: string) {
   const client = useApi();
+  const headers = useRunHeaderRegistry();
   return useQuery({
     queryKey: keys.run(id),
-    queryFn: () => runs.get(client, id),
+    // Each read is a receipt for the run header (#386): the status and sequence it returned under
+    // the credentials it was sent with. A definitively missing run drops its header evidence.
+    queryFn: async () => {
+      const lease = headers?.lease(id);
+      try {
+        const run = await runs.get(client, id);
+        headers?.receipt(lease, run);
+        return run;
+      } catch (error) {
+        if (error instanceof GraphGoblinApiError && error.status === 404) headers?.forget(lease);
+        throw error;
+      }
+    },
     refetchInterval: (query) =>
       query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending') ||
       (query.state.data !== undefined &&
