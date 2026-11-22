@@ -1,0 +1,137 @@
+{
+  "issue": 364,
+  "reviewNumber": 1,
+  "role": "Independent GPT opposite-family code reviewer; not author or behavior QA for #364",
+  "verdict": "APPROVE",
+  "head": "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20",
+  "tree": "911b2400b7622b5b04b58b3b03092d9ea90f55a3",
+  "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+  "findings": [],
+  "reviewerTestsRun": 0,
+  "sourceOrIndexMutations": false,
+  "scope": {
+    "changedFiles": 10,
+    "wholeDiffRead": true,
+    "completeProcessAndHarnessRead": true,
+    "neighboringFiles": [
+      "claude/errors.ts",
+      "claude/policy.ts",
+      "claude/queue.ts",
+      "process/scripts.ts (killTree)",
+      "engine/handlers/inference-failure.ts"
+    ],
+    "decision": "D176"
+  },
+  "assessments": [
+    {
+      "area": "truthful diagnosis",
+      "result": "No introduced defect found",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:53",
+        "packages/infrastructure/src/claude/process.ts:75",
+        "packages/infrastructure/src/claude/harness.ts:112"
+      ]
+    },
+    {
+      "area": "started PID/refusal evidence",
+      "result": "Assigned PID blocks later error events from creating spawn refusal or safe non-submission",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:219",
+        "packages/infrastructure/src/claude/process.ts:232"
+      ]
+    },
+    {
+      "area": "abort and deadline during metadata observation",
+      "result": "No-process refusal settles without waiting for stat, invented timeout or tree kill",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:151",
+        "packages/infrastructure/src/claude/process.ts:170",
+        "packages/infrastructure/src/claude/process.ts:236"
+      ]
+    },
+    {
+      "area": "pipe loss and termination",
+      "result": "Never-started pipe faults consumed; started output loss kills owned tree and cannot be downgraded by stderr refusal",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:220",
+        "packages/infrastructure/src/claude/harness.ts:519",
+        "packages/infrastructure/src/claude/harness.ts:549"
+      ]
+    },
+    {
+      "area": "privacy",
+      "result": "New diagnostics carry only closed codes/cause, boolean and fixed messages; no new raw native diagnostics",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:26",
+        "packages/infrastructure/src/claude/process.ts:50",
+        "packages/infrastructure/src/claude/harness.ts:112"
+      ]
+    },
+    {
+      "area": "crossplatform",
+      "result": "Native Claude remains Windows-only by existing policy; runner candidate names branch by actual platform; no new crossplatform support claimed",
+      "refs": [
+        "packages/infrastructure/src/claude/process.ts:77",
+        "packages/infrastructure/src/claude/policy.ts:23"
+      ]
+    }
+  ],
+  "authorEvidence": {
+    "attribution": "Author-run artifacts inspected, not reproduced by reviewer",
+    "manifestEntriesChecked": 32,
+    "manifestMismatches": 0,
+    "latestFocused": {
+      "pass": 259,
+      "skip": 2,
+      "exit": 0,
+      "scope": "claude folder",
+      "lineCoverage": 99.82,
+      "branchCoverage": 98.15
+    },
+    "earlierScopedCoverage": {
+      "pass": 257,
+      "skip": 2,
+      "exit": 0,
+      "branchCoverage": 98.14
+    },
+    "aggregate": {
+      "pass": 1153,
+      "fail": 51,
+      "skip": 2,
+      "packageCoverageProduced": false,
+      "notClean": true
+    },
+    "followupThreeFilesWithoutHomeRedirect": {
+      "pass": 149,
+      "fail": 50,
+      "notClean": true
+    }
+  },
+  "remainingGates": [
+    "Fresh independent public/native QA",
+    "Exact current head/current target CI",
+    "Normal package-wide coverage gate",
+    "Reserved fresh independent Astra final audit",
+    "Any owner obligations separately retained"
+  ],
+  "preexistingFollowupCandidates": [
+    {
+      "candidate": "Synchronous native spawn throws remain generic conservative failure",
+      "status": "Pre-existing in base; no finding against patch"
+    },
+    {
+      "candidate": "Other adapters may share ENOENT/pipe issues",
+      "status": "Author-supplied only; not reviewed/reproduced in this scoped review"
+    },
+    {
+      "candidate": "Aggregate infrastructure symlink and SQLite test failures",
+      "status": "Explicit unresolved verification follow-ups; focused Claude coverage is not package gate"
+    }
+  ],
+  "limits": [
+    "Read-only code/evidence review only; no reviewer test execution",
+    "No live provider, installed owner Claude, built API or browser evidence",
+    "Started-child later-error and output-loss scenarios are controlled author tests, not native race proof",
+    "Author native evidence is attributed, not independent review execution"
+  ]
+}

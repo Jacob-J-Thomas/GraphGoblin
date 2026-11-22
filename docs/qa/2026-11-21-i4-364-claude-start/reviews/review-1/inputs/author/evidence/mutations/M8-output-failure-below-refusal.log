@@ -1,0 +1,72 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/harness.test.ts (74 tests | 2 failed) 703ms
+   ❯ Claude existing harness contract (31)
+     × preserves HARNESS_TURN_FAILED over a native zero-turn refusal envelope 16ms
+   ❯ Claude start refusal diagnostics (#364) (14)
+     × keeps a turn uncertain when its output pipe failed, even with a recognised refusal 3ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude existing harness contract > preserves HARNESS_TURN_FAILED over a native zero-turn refusal envelope
+AssertionError: expected ClaudeHarnessError: The recorded Claude c… { …(2) } to match object { code: 'HARNESS_TURN_FAILED' }
+(2 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- {
+-   "code": "HARNESS_TURN_FAILED",
++ ClaudeHarnessError {
++   "code": "HARNESS_SESSION_MISSING",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:135:6
+    133|     await expect(
+    134|       harness.resume(id, request, new AbortController().signal).result,
+    135|     ).rejects.toMatchObject({ code });
+       |      ^
+    136|   });
+    137|   it('does not let a refusal diagnostic conceal unconfirmed native ter…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > keeps a turn uncertain when its output pipe failed, even with a recognised refusal
+AssertionError: expected { type: 'error', …(4) } to deeply equal { type: 'error', …(4) }
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Claude turn failed",
++   "code": "HARNESS_NOT_AUTHENTICATED",
++   "message": "Claude requires authentication before submitting this turn",
+    "retriable": false,
+-   "submission": "delivery-uncertain",
++   "submission": "definitely-not-submitted",
+    "type": "error",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1099:50
+    1097|     });
+    1098|     const session = harness.start(request, new AbortController().signa…
+    1099|     expect((await drain(session.events)).at(-1)).toEqual({
+       |                                                  ^
+    1100|       type: 'error',
+    1101|       code: 'HARNESS_TURN_FAILED',
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 72 passed (74)
+   Start at  02:59:59
+   Duration  5.94s (transform 56%, import 32%, tests 12%)
+
+  Transform  transforming modules took 3.13s · 56% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+vitest-exit=1

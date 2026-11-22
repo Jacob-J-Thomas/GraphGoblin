@@ -63,6 +63,7 @@ describe('owned native Claude process transport', () => {
       args: [],
     });
     expect(result.spawnCode).toBe('ENOENT');
+    expect(result.startRefusal).toBe('executable-missing');
     expect(result.exitCode).toBeNull();
     expect(JSON.stringify(result)).not.toContain('missing-binary');
   });

@@ -1,0 +1,564 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports unconfirmed termination after abort instead of successful cancellation 12ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports unconfirmed termination after timeout instead of successful cancellation 2ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > confirmed close clears the kill deadline and distinguishes normal cancellation 2ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > retains only fixed typed parser diagnostics and kills the owned process 1ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > retains only fixed unknown parser diagnostics and kills the owned process 1ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports stdin delivery failure without claiming a successful turn 1ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > maps native spawn error EACCES without retaining its body 1ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > maps native spawn error EPERM without retaining its body 1ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > does not treat a later error of a started child, such as a failed kill, as a spawn refusal 3ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports a started child's stdout pipe failure and stops its tree 2ms
+ ✓ src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports a started child's stderr pipe failure and stops its tree 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > establishes a missing executable only when every name process start tries is absent or a folder 6ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is a file 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unreadable path 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unclassified read fault 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is missing without resolving a bare executable name 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is beneath a file without resolving a bare executable name 0ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is a file without resolving a bare executable name 0ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is an existing folder without resolving a bare executable name 0ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is unreadable without resolving a bare executable name 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is denied without resolving a bare executable name 0ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > never resolves a relative executable path 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > establishes a missing executable only from an ENOENT refusal 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > reports the refusal at once without a diagnosis or timeout when the abort arrives during the observation 1ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > reports the refusal at once without a diagnosis or timeout when the deadline arrives during the observation 2ms
+ ✓ src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > ignores the pipe faults and close that follow a refusal, settling once with the refusal 1ms
+ ✓ src/claude/process-failure.test.ts > classifies stdout without mining model/turn content 1ms
+ ✓ src/claude/process-failure.test.ts > classifies stderr without mining model/turn content 2ms
+ ✓ src/claude/process-failure.test.ts > does not infer turn causes from stderr 1ms
+ ✓ src/claude/process-failure.test.ts > reports nonzero tree acknowledgement even if the root independently closes 1ms
+ ✓ src/claude/process-failure.test.ts > completes cancellation when tree acknowledgement precedes child close 0ms
+ × src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stdout failed (close 1) 20ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(2) }
+(4 matching properties omitted from actual)
+ × src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stdout failed (close null) 9ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(2) }
+(4 matching properties omitted from actual)
+ × src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stderr failed (close 1) 8ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(2) }
+(4 matching properties omitted from actual)
+ × src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stderr failed (close null) 5ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(2) }
+(4 matching properties omitted from actual)
+ ✓ src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > still signs out on the same recognised auth stderr when the check output was complete 6ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves HARNESS_TERMINATION_UNCONFIRMED over a native zero-turn refusal envelope 11ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves HARNESS_TIMEOUT over a native zero-turn refusal envelope 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves HARNESS_OUTPUT_LIMIT over a native zero-turn refusal envelope 1ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves HARNESS_TURN_FAILED over a native zero-turn refusal envelope 1ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > does not let a refusal diagnostic conceal unconfirmed native termination 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > uses a fresh empty prerequisite directory and removes it after inspection 6ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing success disposition 5ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing unconfirmed disposition 4ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > creates the prerequisite directory under a system temporary directory of 226 characters (#102) 15ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > tries a fresh prerequisite directory name after a name collision and never removes the existing one 7ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after four name collisions 4ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after a creation fault 3ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > checks the installed capability/auth prerequisites and exposes explicit model support and policies 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > executes claude-fable-5-1 through strict native model verification with its requested effort 9ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > executes claude-sonnet-5-5 through strict native model verification with its requested effort 5ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > executes claude-haiku-5-5 through strict native model verification with its requested effort 5ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > checks auth before every start and resume, uses the same env, and maps current port events/result 6ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key before a model starts and hides raw status 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key_helper before a model starts and hides raw status 1ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses oauth_token before a model starts and hides raw status 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses third_party before a model starts and hides raw status 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses none before a model starts and hides raw status 1ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > refuses unknown before a model starts and hides raw status 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > fails unsupported request/capabilities/session IDs before any CLI launch 4ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > validates structured results through the existing schema contract 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > handles the native schema carrier without extending CLI execution tools or promoting carrier content 3ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > rejects malformed/incomplete/out-of-order streams and abnormal exit without final success evidence 9ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > converts private transport failures to typed fixed diagnostics 2ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > preserves the CLI version, safe refusal name and recovery hint in result and error events 9ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > aborts during auth without starting a model and makes cancel idempotent 78ms
+ ✓ src/claude/harness.test.ts > Claude existing harness contract > cancels an in-flight turn, reacts to the caller signal and never starts already aborted requests 23ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.284 independently of account login 24ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.285 independently of account login 26ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.287 independently of account login 33ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports a missing capability and failed login together without starting a turn 9ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports the detected version when the hidden max-turns capability probe fails and still checks login 9ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > returns fixed preflight problems for missing binary, unsupported platform/version/flags and bad auth 54ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > validates positive process bounds 13ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > requires resolved settings and preserves explicit effort and process bounds 10ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TIMEOUT safely 3ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_OUTPUT_LIMIT safely 4ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 3ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 4ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 2ms
+ ✓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > does not cancel a completed session or generate a replacement session on resume mismatch 9ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps timeout authoritative over positive auth-status text 17ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps missing executable authoritative over positive auth-status text 21ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps unexplained start refusal authoritative over positive auth-status text 13ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps unconfirmed termination authoritative over positive auth-status text 14ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps aborted process authoritative over positive auth-status text 27ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps output overflow authoritative over positive auth-status text 26ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for cancel and after completion 41ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > starts an ordinary turn in the requested working directory 553ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for signal and after completion 58ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > reports unconfirmed timeout termination before ordinary timeout handling 12ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate undefined instead of final-text fallback 140ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate null instead of final-text fallback 43ms
+ ✓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate { ok: 'wrong' } instead of final-text fallback 36ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from auth stderr classification 2ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from quota stderr classification 2ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from transport stderr classification 2ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with a missing working directory as fixed text and no submission 3ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with a working directory that is not a folder as fixed text and no submission 4ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with an absent executable as fixed text and no submission 3ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with an unexplained ENOENT as fixed text and no submission 2ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with an unexplained EACCES as fixed text and no submission 4ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports a turn refusal with an unexplained refusal in a long working directory as fixed text and no submission 4ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > keeps a turn uncertain when its output pipe failed, even with a recognised refusal 5ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > keeps cancellation ahead of a working-directory diagnosis 6ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { startRefusal: 'executable-missing' } as cli-missing; the check folder is never configuration 20ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown; the check folder is never configuration 8ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown; the check folder is never configuration 9ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal {} as unknown; the check folder is never configuration 7ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports an unreadable check output without trusting partial sign-in text 5ms
+ ✓ src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > names the Windows limit for an unexplained refusal from a long temporary check folder 16ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports a missing working directory as configuration, starting nothing 415ms
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite auth-like partial stdout at exit 1 19ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(3) }
+(3 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite auth-like partial stdout at exit null 7ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(3) }
+(3 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised auth stderr at exit 1 6ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(3) }
+(3 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised auth stderr at exit null 6ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(3) }
+(3 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised quota stderr at exit 1 6ms
+   → expected { state: 'quota', ok: false, …(5) } to match object { state: 'unknown', ok: false, …(3) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised transport stderr at exit null 5ms
+   → expected { state: 'transport', ok: false, …(5) } to match object { state: 'unknown', ok: false, …(3) }
+(2 matching properties omitted from actual)
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite explicit sign-out text at exit 1 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a completed sign-in check with structured sign-out signed out 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a completed sign-in check with recognised auth stderr signed out 5ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a completed sign-in check with auth-like stdout signed out 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the help check HARNESS_TERMINATION_UNCONFIRMED ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the help check HARNESS_TIMEOUT ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the help check HARNESS_OUTPUT_LIMIT ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the auth check HARNESS_TERMINATION_UNCONFIRMED ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the auth check HARNESS_TIMEOUT ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the auth check HARNESS_OUTPUT_LIMIT ahead of its lost output 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps cancellation ahead of a lost help check output 64ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps cancellation ahead of a lost auth check output 62ms
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a missing check folder when only the help check fails after the version check passed 6ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a check folder that is not a folder when only the help check fails after the version check passed 5ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps an unexplained ENOENT refusal when only the help check fails after the version check passed 5ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps an unexplained EACCES refusal when only the help check fails after the version check passed 5ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output at exit 0 when only the help check fails after the version check passed 5ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output with an unknown-option diagnosis at exit 1 when only the help check fails after the version check passed 6ms
+   → expected { state: 'cli-incompatible', …(7) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output without an exit code when only the help check fails after the version check passed 5ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the version-named guidance when the option check exits with code 1 5ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the version-named guidance when the option check stops without an exit code 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the version-named guidance when the option check cannot receive its input 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the version-named guidance when the option check reports an unknown option 6ms
+ ✓ src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps the version-named guidance when the option check lacks a required option 6ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports a working directory that is a file as configuration 267ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 258-character working directory truthful 369ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 259-character working directory truthful 261ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 260-character working directory truthful 279ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps an existing 300-character working directory truthful 258ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps preflight truthful when TEMP makes a 258-character check folder 253ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps preflight truthful when TEMP makes a 259-character check folder 18ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > keeps preflight truthful when TEMP makes a 300-character check folder 20ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports an absent executable in a valid directory as missing, before any turn 14ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > reports a configured executable path that names a folder as missing 9ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals (#364) > does not claim that an executable named without a path is missing 24ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals as run failures (#364) > keeps a missing working directory a non-resumable configuration failure that was not submitted 346ms
+ ✓ src/claude/start-refusal.test.ts > native Claude start refusals as run failures (#364) > keeps an established missing executable restorable 44ms
+ × src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a missing check folder when only the help check is refused 190ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+ × src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a check folder that is a file when only the help check is refused 172ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite auth-like partial stdout at exit 1
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite auth-like partial stdout at exit null
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised auth stderr at exit 1
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised auth stderr at exit null
+AssertionError: expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(3) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": null,
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "auth",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1294:21
+    1292|       });
+    1293|       const facts = await harness.preflight();
+    1294|       expect(facts).toMatchObject({
+       |                     ^
+    1295|         state: 'unknown',
+    1296|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised quota stderr at exit 1
+AssertionError: expected { state: 'quota', ok: false, …(5) } to match object { state: 'unknown', ok: false, …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": null,
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "quota",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1294:21
+    1292|       });
+    1293|       const facts = await harness.preflight();
+    1294|       expect(facts).toMatchObject({
+       |                     ^
+    1295|         state: 'unknown',
+    1296|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a lost sign-in check output unknown despite recognised transport stderr at exit null
+AssertionError: expected { state: 'transport', ok: false, …(5) } to match object { state: 'unknown', ok: false, …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": null,
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "transport",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1294:21
+    1292|       });
+    1293|       const facts = await harness.preflight();
+    1294|       expect(facts).toMatchObject({
+       |                     ^
+    1295|         state: 'unknown',
+    1296|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a missing check folder when only the help check fails after the version check passed
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps a check folder that is not a folder when only the help check fails after the version check passed
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder is not a folder. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps an unexplained ENOENT refusal when only the help check fails after the version check passed
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started (ENOENT). Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps an unexplained EACCES refusal when only the help check fails after the version check passed
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started (EACCES). Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output at exit 0 when only the help check fails after the version check passed
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output without an exit code when only the help check fails after the version check passed
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  src/claude/harness.test.ts > Claude lost check output and help-only check failures (#364) > keeps lost output with an unknown-option diagnosis at exit 1 when only the help check fails after the version check passed
+AssertionError: expected { state: 'cli-incompatible', …(7) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.285 failed the --max-turns/--help check. Update the Claude CLI, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "cli-incompatible",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/harness.test.ts:1444:21
+    1442|       const { harness, calls } = checks({ help: helpResult });
+    1443|       const facts = await harness.preflight();
+    1444|       expect(facts).toMatchObject({
+       |                     ^
+    1445|         state: 'unknown',
+    1446|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stdout failed (close 1)
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stdout failed (close null)
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stderr failed (close 1)
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > keeps recognised auth stderr from signing out a check whose stderr failed (close null)
+AssertionError: expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(2) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+    "problems": [
+-     "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.",
+    ],
+-   "state": "unknown",
++   "state": "auth",
+    "version": "2.1.285",
+  }
+
+ ❯ src/claude/process-failure.test.ts:393:21
+    391|         binary: 'synthetic-cli',
+    392|       }).preflight();
+    393|       expect(facts).toMatchObject({
+       |                     ^
+    394|         state: 'unknown',
+    395|         ok: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a missing check folder when only the help check is refused
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder does not exist. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.287 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.287",
+  }
+
+ ❯ helpOnlyRefusal src/claude/start-refusal.test.ts:338:19
+    336|     });
+    337|     const facts = await claude.preflight();
+    338|     expect(facts).toMatchObject({
+       |                   ^
+    339|       state: 'unknown',
+    340|       ok: false,
+ ❯ src/claude/start-refusal.test.ts:357:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  src/claude/start-refusal.test.ts > native Claude help-only check refusal (#364) > keeps a check folder that is a file when only the help check is refused
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'unknown', ok: false, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authMethod": "claude.ai",
+    "authenticated": true,
+    "ok": false,
+    "problems": [
+-     "Claude CLI could not be started because its temporary check folder is not a folder. Check that the Claude CLI starts and responds, then retry preflight.",
++     "Claude CLI 2.1.287 failed the --max-turns/--help check. Check that the Claude CLI starts and responds, then retry preflight.",
+    ],
+    "state": "unknown",
+    "version": "2.1.287",
+  }
+
+ ❯ helpOnlyRefusal src/claude/start-refusal.test.ts:338:19
+    336|     });
+    337|     const facts = await claude.preflight();
+    338|     expect(facts).toMatchObject({
+       |                   ^
+    339|       state: 'unknown',
+    340|       ok: false,
+ ❯ src/claude/start-refusal.test.ts:365:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  19 failed | 138 passed (157)
+   Start at  06:42:18
+   Duration  6.48s (tests 40%, import 37%, transform 23%)
+

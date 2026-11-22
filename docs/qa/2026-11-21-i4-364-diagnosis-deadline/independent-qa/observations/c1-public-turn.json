@@ -1,0 +1,2822 @@
+{
+  "driver": "c1-public-turn",
+  "utc": "2026-11-21T16:40:44.567Z",
+  "node": "v22.23.4",
+  "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "TEMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "TMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "passed": 109,
+  "failed": 0,
+  "predicates": [
+    {
+      "caseId": "setup",
+      "name": "seams bound for candidate process.js (fs, child, kill)",
+      "pass": true,
+      "observed": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ],
+      "expected": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ]
+    },
+    {
+      "caseId": "setup",
+      "name": "built harness passes timeoutMs: null for turns",
+      "pass": true,
+      "observed": null,
+      "expected": true
+    },
+    {
+      "caseId": "setup",
+      "name": "TEMP/TMP canonical backslash spelling",
+      "pass": true,
+      "observed": [
+        "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+        "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01"
+      ],
+      "expected": [
+        "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+        "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01"
+      ]
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "turn reached a terminal result without any external abort",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "external signal never aborted",
+      "pass": true,
+      "observed": false,
+      "expected": false
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "spawn sequence: three probes then exactly one turn attempt",
+      "pass": true,
+      "observed": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ],
+      "expected": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ]
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "probes started natively (pid) and closed 0",
+      "pass": true,
+      "observed": [
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        }
+      ],
+      "expected": "pid + close 0"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "turn spawn genuinely refused natively: no pid, spawn ENOENT error",
+      "pass": true,
+      "observed": {
+        "pid": false,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 762.4337,
+          "pidAtError": false
+        }
+      },
+      "expected": "no pid, ENOENT, spawn syscall"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "settled 0-999 ms after the native refusal",
+      "pass": true,
+      "observed": 2.044599999999946,
+      "expected": [
+        0,
+        999
+      ]
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "public events: exactly the fixed error with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "result rejects with the same fixed failure",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "sessionId rejects with the same code",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false
+        }
+      },
+      "expected": "HARNESS_INVALID_CONFIGURATION"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "no false timeout or cancellation",
+      "pass": true,
+      "observed": {
+        "name": "ClaudeHarnessError",
+        "constructor": "ClaudeHarnessError",
+        "code": "HARNESS_INVALID_CONFIGURATION",
+        "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+        "retriable": false
+      },
+      "expected": "not timeout/abort"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "event queue closed with the result",
+      "pass": true,
+      "observed": 0.008000000000038199,
+      "expected": "< 50 ms"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "no kill was requested (no process existed)",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "no request timer for the turn (timeoutMs:null): no runner timer before the refusal",
+      "pass": true,
+      "observed": [
+        {
+          "id": 4,
+          "caseId": "P0-timely-native",
+          "phase": "turn",
+          "delay": 1000,
+          "createdMs": 762.7022,
+          "firedMs": null,
+          "clearedMs": 764.1642
+        }
+      ],
+      "expected": "all turn timers created at/after refusal"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "no process/harness abort listener left attached",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "runner added and removed its abort listener on the turn signal",
+      "pass": true,
+      "observed": [
+        {
+          "owner": "harness",
+          "phase": "init",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-version",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-help",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-auth",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "turn",
+          "removed": true
+        }
+      ],
+      "expected": "process listener removed"
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "privacy: events and result has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P0-timely-native",
+      "name": "timely metadata: executable names then working directory",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "turn reached a terminal result without any external abort",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "external signal never aborted",
+      "pass": true,
+      "observed": false,
+      "expected": false
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "spawn sequence: three probes then exactly one turn attempt",
+      "pass": true,
+      "observed": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ],
+      "expected": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ]
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "probes started natively (pid) and closed 0",
+      "pass": true,
+      "observed": [
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        }
+      ],
+      "expected": "pid + close 0"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "turn spawn genuinely refused natively: no pid, spawn ENOENT error",
+      "pass": true,
+      "observed": {
+        "pid": false,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 1045.4938,
+          "pidAtError": false
+        }
+      },
+      "expected": "no pid, ENOENT, spawn syscall"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "settled 999-1300 ms after the native refusal",
+      "pass": true,
+      "observed": 1002.9613999999999,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "public events: exactly the fixed error with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "result rejects with the same fixed failure",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "sessionId rejects with the same code",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": "HARNESS_TURN_FAILED"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no false timeout or cancellation",
+      "pass": true,
+      "observed": {
+        "name": "ClaudeHarnessError",
+        "constructor": "ClaudeHarnessError",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "retriable": false
+      },
+      "expected": "not timeout/abort"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "event queue closed with the result",
+      "pass": true,
+      "observed": 0.0039999999999054126,
+      "expected": "< 50 ms"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no kill was requested (no process existed)",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no request timer for the turn (timeoutMs:null): no runner timer before the refusal",
+      "pass": true,
+      "observed": [
+        {
+          "id": 8,
+          "caseId": "P1-hold-executable-names",
+          "phase": "turn",
+          "delay": 1000,
+          "createdMs": 1045.533,
+          "firedMs": 2048.0915,
+          "clearedMs": null
+        }
+      ],
+      "expected": "all turn timers created at/after refusal"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no process/harness abort listener left attached",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "runner added and removed its abort listener on the turn signal",
+      "pass": true,
+      "observed": [
+        {
+          "owner": "harness",
+          "phase": "turn",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-version",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-help",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-auth",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "turn",
+          "removed": true
+        }
+      ],
+      "expected": "process listener removed"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "privacy: events and result has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "held metadata still undelivered at release time (pending past the budget)",
+      "pass": true,
+      "observed": 3,
+      "expected": "> 0 undelivered"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "late metadata delivered",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "immutable result/events/spawns/kills after late metadata",
+      "pass": true,
+      "observed": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\"]}",
+      "expected": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\"]}"
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no follow-on metadata lookup after late delivery",
+      "pass": true,
+      "observed": 3,
+      "expected": 3
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "only the executable-name lookups were issued; no working-directory lookup ever",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "P1-hold-executable-names",
+      "name": "late real outcomes were one success and two rejections",
+      "pass": true,
+      "observed": [
+        "stats:non-directory",
+        "error:ENOENT",
+        "error:ENOENT"
+      ],
+      "expected": [
+        "stats:non-directory",
+        "error:ENOENT",
+        "error:ENOENT"
+      ]
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "turn reached a terminal result without any external abort",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "external signal never aborted",
+      "pass": true,
+      "observed": false,
+      "expected": false
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "spawn sequence: three probes then exactly one turn attempt",
+      "pass": true,
+      "observed": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ],
+      "expected": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ]
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "probes started natively (pid) and closed 0",
+      "pass": true,
+      "observed": [
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        }
+      ],
+      "expected": "pid + close 0"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "turn spawn genuinely refused natively: no pid, spawn ENOENT error",
+      "pass": true,
+      "observed": {
+        "pid": false,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 4097.8843,
+          "pidAtError": false
+        }
+      },
+      "expected": "no pid, ENOENT, spawn syscall"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "settled 999-1300 ms after the native refusal",
+      "pass": true,
+      "observed": 1001.9669000000004,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "public events: exactly the fixed error with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "result rejects with the same fixed failure",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "sessionId rejects with the same code",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": "HARNESS_TURN_FAILED"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no false timeout or cancellation",
+      "pass": true,
+      "observed": {
+        "name": "ClaudeHarnessError",
+        "constructor": "ClaudeHarnessError",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "retriable": false
+      },
+      "expected": "not timeout/abort"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "event queue closed with the result",
+      "pass": true,
+      "observed": 0.004899999999906868,
+      "expected": "< 50 ms"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no kill was requested (no process existed)",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no request timer for the turn (timeoutMs:null): no runner timer before the refusal",
+      "pass": true,
+      "observed": [
+        {
+          "id": 12,
+          "caseId": "P2-hold-working-directory",
+          "phase": "turn",
+          "delay": 1000,
+          "createdMs": 4097.9208,
+          "firedMs": 5099.5904,
+          "clearedMs": null
+        }
+      ],
+      "expected": "all turn timers created at/after refusal"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no process/harness abort listener left attached",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "runner added and removed its abort listener on the turn signal",
+      "pass": true,
+      "observed": [
+        {
+          "owner": "harness",
+          "phase": "turn",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-version",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-help",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-auth",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "turn",
+          "removed": true
+        }
+      ],
+      "expected": "process listener removed"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "privacy: events and result has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "held metadata still undelivered at release time (pending past the budget)",
+      "pass": true,
+      "observed": 1,
+      "expected": "> 0 undelivered"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "late metadata delivered",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "immutable result/events/spawns/kills after late metadata",
+      "pass": true,
+      "observed": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\",\"cwd\"]}",
+      "expected": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\",\"cwd\"]}"
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no follow-on metadata lookup after late delivery",
+      "pass": true,
+      "observed": 4,
+      "expected": 4
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P2-hold-working-directory",
+      "name": "late real working-directory outcome was a rejection (ENOENT)",
+      "pass": true,
+      "observed": [
+        "error:ENOENT"
+      ],
+      "expected": [
+        "error:ENOENT"
+      ]
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "turn reached a terminal result without any external abort",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "external signal never aborted",
+      "pass": true,
+      "observed": false,
+      "expected": false
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "spawn sequence: three probes then exactly one turn attempt",
+      "pass": true,
+      "observed": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ],
+      "expected": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ]
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "probes started natively (pid) and closed 0",
+      "pass": true,
+      "observed": [
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        },
+        {
+          "pid": true,
+          "close": 0
+        }
+      ],
+      "expected": "pid + close 0"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "turn spawn genuinely refused natively: no pid, spawn ENOENT error",
+      "pass": true,
+      "observed": {
+        "pid": false,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 7131.7745,
+          "pidAtError": false
+        }
+      },
+      "expected": "no pid, ENOENT, spawn syscall"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "settled 999-1300 ms after the native refusal",
+      "pass": true,
+      "observed": 1009.6812,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "public events: exactly the fixed error with definite non-submission",
+      "pass": true,
+      "observed": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "expected": [
+        {
+          "type": "error",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false,
+          "submission": "definitely-not-submitted"
+        }
+      ]
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "result rejects with the same fixed failure",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "sessionId rejects with the same code",
+      "pass": true,
+      "observed": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      },
+      "expected": "HARNESS_TURN_FAILED"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no false timeout or cancellation",
+      "pass": true,
+      "observed": {
+        "name": "ClaudeHarnessError",
+        "constructor": "ClaudeHarnessError",
+        "code": "HARNESS_TURN_FAILED",
+        "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "retriable": false
+      },
+      "expected": "not timeout/abort"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "event queue closed with the result",
+      "pass": true,
+      "observed": 0.005199999999604188,
+      "expected": "< 50 ms"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no kill was requested (no process existed)",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no request timer for the turn (timeoutMs:null): no runner timer before the refusal",
+      "pass": true,
+      "observed": [
+        {
+          "id": 16,
+          "caseId": "P3-hold-wd-late-success",
+          "phase": "turn",
+          "delay": 1000,
+          "createdMs": 7131.8296,
+          "firedMs": 8141.2698,
+          "clearedMs": null
+        }
+      ],
+      "expected": "all turn timers created at/after refusal"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no process/harness abort listener left attached",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "runner added and removed its abort listener on the turn signal",
+      "pass": true,
+      "observed": [
+        {
+          "owner": "harness",
+          "phase": "turn",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-version",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-help",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "probe-auth",
+          "removed": true
+        },
+        {
+          "owner": "process",
+          "phase": "turn",
+          "removed": true
+        }
+      ],
+      "expected": "process listener removed"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "privacy: events and result has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "held metadata still undelivered at release time (pending past the budget)",
+      "pass": true,
+      "observed": 1,
+      "expected": "> 0 undelivered"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "late metadata delivered",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "immutable result/events/spawns/kills after late metadata",
+      "pass": true,
+      "observed": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\",\"cwd\"]}",
+      "expected": "{\"events\":[{\"type\":\"error\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false,\"submission\":\"definitely-not-submitted\"}],\"outcome\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"sessionId\":{\"ok\":false,\"error\":{\"name\":\"ClaudeHarnessError\",\"constructor\":\"ClaudeHarnessError\",\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"retriable\":false}},\"spawns\":4,\"kills\":0,\"stats\":[\"binary\",\"binary.com\",\"binary.exe\",\"cwd\"]}"
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no follow-on metadata lookup after late delivery",
+      "pass": true,
+      "observed": 4,
+      "expected": 4
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P3-hold-wd-late-success",
+      "name": "late working-directory outcome was a success (non-directory stats)",
+      "pass": true,
+      "observed": [
+        "stats:non-directory"
+      ],
+      "expected": [
+        "stats:non-directory"
+      ]
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "loop runDeadlineSeconds is the null default",
+      "pass": true,
+      "observed": null,
+      "expected": null
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "inference node has no watchdog (timeoutSeconds absent)",
+      "pass": true
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "default run reached a terminal record without abort or deadline",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "spawn sequence: three probes then exactly one turn attempt",
+      "pass": true,
+      "observed": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ],
+      "expected": [
+        "version",
+        "help",
+        "auth",
+        "turn"
+      ]
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "turn spawn genuinely refused natively",
+      "pass": true,
+      "observed": {
+        "code": "ENOENT",
+        "syscallIsSpawn": true,
+        "atMs": 10280.5581,
+        "pidAtError": false
+      },
+      "expected": "ENOENT, no pid"
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "run terminal 999-1500 ms after the native refusal",
+      "pass": true,
+      "observed": 1017.5028999999995,
+      "expected": [
+        999,
+        1500
+      ]
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "run status failed",
+      "pass": true,
+      "observed": "failed",
+      "expected": "failed"
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "engine failure mapping",
+      "pass": true,
+      "observed": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "resumable": false,
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "submission": "definitely-not-submitted"
+      },
+      "expected": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "resumable": false,
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "submission": "definitely-not-submitted"
+      }
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "pinned run deadline null",
+      "pass": true,
+      "observed": null,
+      "expected": null
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "no kill requested",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "no runner timer pending",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "no process/harness abort listener left attached",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "privacy: engine failure has no canary, path or native diagnostic text",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "run record unchanged after late metadata; no further turn",
+      "pass": true,
+      "observed": "{\"status\":\"failed\",\"failure\":{\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"harness turn failed: Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"nodeId\":\"infer\",\"resumable\":false,\"details\":{\"adapterCode\":\"HARNESS_TURN_FAILED\"},\"inference\":{\"visitId\":\"00000000000000000000000001:5\",\"turnId\":\"00000000000000000000000003\",\"submission\":\"definitely-not-submitted\",\"promptKind\":\"authored\"}},\"spawns\":4}",
+      "expected": "{\"status\":\"failed\",\"failure\":{\"code\":\"HARNESS_TURN_FAILED\",\"message\":\"harness turn failed: Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory\",\"nodeId\":\"infer\",\"resumable\":false,\"details\":{\"adapterCode\":\"HARNESS_TURN_FAILED\"},\"inference\":{\"visitId\":\"00000000000000000000000001:5\",\"turnId\":\"00000000000000000000000003\",\"submission\":\"definitely-not-submitted\",\"promptKind\":\"authored\"}},\"spawns\":4}"
+    },
+    {
+      "caseId": "P4-engine-default-loop",
+      "name": "no follow-on stat after late delivery",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no controlled stat left held at exit (released after observation)",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "cleanup",
+      "name": "every started native fixture process closed",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no unhandled rejection in this driver",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    }
+  ],
+  "selfCheck": {
+    "performanceNowReplaced": true,
+    "setTimeoutWrapped": true,
+    "dateNowWrapped": true
+  },
+  "results": {
+    "P0-timely-native": {
+      "elapsedFromRefusalMs": 2.044599999999946,
+      "statTargets": [
+        {
+          "target": "binary",
+          "mode": "pass:native",
+          "deliveredMs": 763.8609
+        },
+        {
+          "target": "binary.com",
+          "mode": "pass:native",
+          "deliveredMs": 763.9812
+        },
+        {
+          "target": "binary.exe",
+          "mode": "pass:native",
+          "deliveredMs": 763.9543
+        },
+        {
+          "target": "cwd",
+          "mode": "pass:native",
+          "deliveredMs": 764.1294
+        }
+      ],
+      "events": [
+        {
+          "atMs": 764.4451,
+          "event": {
+            "type": "error",
+            "code": "HARNESS_INVALID_CONFIGURATION",
+            "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        }
+      ],
+      "outcome": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "message": "Claude could not be started because the working directory does not exist; check the working directory setting",
+          "retriable": false
+        }
+      }
+    },
+    "P1-hold-executable-names": {
+      "elapsedFromRefusalMs": 1002.9613999999999,
+      "statTargets": [
+        {
+          "target": "binary",
+          "mode": "hold:native",
+          "deliveredMs": null
+        },
+        {
+          "target": "binary.com",
+          "mode": "hold:native",
+          "deliveredMs": null
+        },
+        {
+          "target": "binary.exe",
+          "mode": "hold:native",
+          "deliveredMs": null
+        }
+      ],
+      "heldBeforeRelease": [
+        {
+          "target": "binary",
+          "mode": "hold:native",
+          "nativeCompletedBeforeRelease": true,
+          "nativeOutcome": "stats:non-directory"
+        },
+        {
+          "target": "binary.com",
+          "mode": "hold:native",
+          "nativeCompletedBeforeRelease": true,
+          "nativeOutcome": "error:ENOENT"
+        },
+        {
+          "target": "binary.exe",
+          "mode": "hold:native",
+          "nativeCompletedBeforeRelease": true,
+          "nativeOutcome": "error:ENOENT"
+        }
+      ],
+      "releasedAtMsFromRefusal": 2504.3232,
+      "released": 3,
+      "events": [
+        {
+          "atMs": 2048.4496,
+          "event": {
+            "type": "error",
+            "code": "HARNESS_TURN_FAILED",
+            "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        }
+      ],
+      "outcome": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    "P2-hold-working-directory": {
+      "elapsedFromRefusalMs": 1001.9669000000004,
+      "statTargets": [
+        {
+          "target": "binary",
+          "mode": "pass:native",
+          "deliveredMs": 4098.5196
+        },
+        {
+          "target": "binary.com",
+          "mode": "pass:native",
+          "deliveredMs": 4098.5642
+        },
+        {
+          "target": "binary.exe",
+          "mode": "pass:native",
+          "deliveredMs": 4098.59
+        },
+        {
+          "target": "cwd",
+          "mode": "hold:native",
+          "deliveredMs": null
+        }
+      ],
+      "heldBeforeRelease": [
+        {
+          "target": "cwd",
+          "mode": "hold:native",
+          "nativeCompletedBeforeRelease": true,
+          "nativeOutcome": "error:ENOENT"
+        }
+      ],
+      "releasedAtMsFromRefusal": 2501.7369,
+      "released": 1,
+      "events": [
+        {
+          "atMs": 5099.8439,
+          "event": {
+            "type": "error",
+            "code": "HARNESS_TURN_FAILED",
+            "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        }
+      ],
+      "outcome": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    "P3-hold-wd-late-success": {
+      "elapsedFromRefusalMs": 1009.6812,
+      "statTargets": [
+        {
+          "target": "binary",
+          "mode": "pass:native",
+          "deliveredMs": 7132.325
+        },
+        {
+          "target": "binary.com",
+          "mode": "pass:native",
+          "deliveredMs": 7132.4828
+        },
+        {
+          "target": "binary.exe",
+          "mode": "pass:native",
+          "deliveredMs": 7132.4523
+        },
+        {
+          "target": "cwd",
+          "mode": "hold:override",
+          "deliveredMs": null
+        }
+      ],
+      "heldBeforeRelease": [
+        {
+          "target": "cwd",
+          "mode": "hold:override",
+          "nativeCompletedBeforeRelease": false,
+          "nativeOutcome": null
+        }
+      ],
+      "releasedAtMsFromRefusal": 2507.8352000000004,
+      "released": 1,
+      "events": [
+        {
+          "atMs": 8141.4481,
+          "event": {
+            "type": "error",
+            "code": "HARNESS_TURN_FAILED",
+            "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+            "retriable": false,
+            "submission": "definitely-not-submitted"
+          }
+        }
+      ],
+      "outcome": {
+        "ok": false,
+        "error": {
+          "name": "ClaudeHarnessError",
+          "constructor": "ClaudeHarnessError",
+          "code": "HARNESS_TURN_FAILED",
+          "message": "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+          "retriable": false
+        }
+      }
+    },
+    "P4-engine-default-loop": {
+      "elapsedFromRefusalMs": 1017.5028999999995,
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "00000000000000000000000001:5",
+          "turnId": "00000000000000000000000003",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "pinnedLimits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "eventTypes": [
+        "run.queued",
+        "run.started",
+        "node.started",
+        "node.finished",
+        "node.started",
+        "harness.turn",
+        "harness.submission",
+        "harness.submission",
+        "run.failed"
+      ]
+    }
+  },
+  "leftoverReleasedAtCleanup": 0,
+  "scratchRootRemoved": true,
+  "instrumentation": {
+    "redirects": [
+      {
+        "from": "candidate",
+        "specifier": "node:child_process"
+      },
+      {
+        "from": "candidate",
+        "specifier": "node:fs/promises"
+      },
+      {
+        "from": "candidate",
+        "specifier": "../process/index.js"
+      }
+    ],
+    "statCalls": [
+      {
+        "id": 1,
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 763.0016,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 763.8148,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 763.8609,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 2,
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 763.1716,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 763.9805,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 763.9812,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 3,
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 763.2002,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 763.9528,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 763.9543,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 4,
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 764.0155,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 764.1276,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 764.1294,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 5,
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 1045.6493,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 1045.9785,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 3549.8471,
+        "delivered": "stats:non-directory",
+        "releasedMs": 3549.8049
+      },
+      {
+        "id": 6,
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 1045.7624,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 1046.0149,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3549.8632,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3549.815
+      },
+      {
+        "id": 7,
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 1045.7866,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 1046.0362,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 3549.866,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3549.8157
+      },
+      {
+        "id": 8,
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 4097.9614,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4098.5176,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 4098.5196,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 9,
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 4098.0619,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4098.5626,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4098.5642,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 10,
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 4098.1813,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 4098.587,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 4098.59,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 11,
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 4098.6042,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 4098.7673,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 6599.6433,
+        "delivered": "error:ENOENT",
+        "releasedMs": 6599.6178
+      },
+      {
+        "id": 12,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 7131.8734,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 7132.3233,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 7132.325,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 13,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 7132.0879,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 7132.4821,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 7132.4828,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 14,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 7132.124,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 7132.4513,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 7132.4523,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 15,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 7132.4895,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 9639.6027,
+        "delivered": "stats:non-directory",
+        "releasedMs": 9639.5898
+      },
+      {
+        "id": 16,
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 10280.6367,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 10281.1982,
+        "nativeOutcome": "stats:non-directory",
+        "deliveredMs": 10281.1996,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 17,
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 10280.7548,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 10281.1326,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 10281.1392,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 18,
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 10280.7781,
+        "mode": "pass:native",
+        "native": true,
+        "nativeCompletedMs": 10281.18,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 10281.1812,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 19,
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 10281.2076,
+        "mode": "hold:native",
+        "native": true,
+        "nativeCompletedMs": 10281.3279,
+        "nativeOutcome": "error:ENOENT",
+        "deliveredMs": 12793.19,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12793.1557
+      }
+    ],
+    "spawnCalls": [
+      {
+        "id": 1,
+        "caseId": "P0-timely-native",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 511.3375,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 37012,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 605.2893
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 605.3358
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "caseId": "P0-timely-native",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 606.419,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 27764,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 682.5606
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 682.5838
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "caseId": "P0-timely-native",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 683.4226,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 24008,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 759.7127
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 759.7435
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "caseId": "P0-timely-native",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 761.1228,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 762.4337,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 763.7243
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "caseId": "P1-hold-executable-names",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 803.2317,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 30812,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 881.9682
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 881.9932
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "caseId": "P1-hold-executable-names",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 882.1522,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 16136,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 964.2484
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 964.2837
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "caseId": "P1-hold-executable-names",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 964.4619,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 22216,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 1044.0318
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 1044.0773
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "caseId": "P1-hold-executable-names",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 1044.8027,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 1045.4938,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 1045.9432
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "caseId": "P2-hold-working-directory",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3865.5331,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 41932,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 3941.3227
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 3941.3417
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "caseId": "P2-hold-working-directory",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 3941.5964,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 45404,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4015.0727
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4015.1045
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "caseId": "P2-hold-working-directory",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 4015.2675,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 2340,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 4096.3142
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 4096.4749
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "caseId": "P2-hold-working-directory",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 4097.1293,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 4097.8843,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 4098.3835
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "caseId": "P3-hold-wd-late-success",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6916.9601,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 4576,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 6989.1528
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 6989.1825
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "caseId": "P3-hold-wd-late-success",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 6989.3091,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 22416,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7060.409
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7060.4366
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "caseId": "P3-hold-wd-late-success",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 7060.5575,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 44408,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 7130.2742
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 7130.315
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "caseId": "P3-hold-wd-late-success",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 7130.9855,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 7131.7745,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 7132.3047
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "caseId": "P4-engine-default-loop",
+        "kind": "version",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 10019.3425,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 44108,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 10109.1258
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 10109.1464
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "caseId": "P4-engine-default-loop",
+        "kind": "help",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 10109.316,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 46676,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 10190.2441
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 10190.3194
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "caseId": "P4-engine-default-loop",
+        "kind": "auth",
+        "command": "binary",
+        "cwd": "probe-dir",
+        "shell": false,
+        "issuedMs": 10190.6662,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": true,
+        "pid": 41320,
+        "error": null,
+        "laterErrors": [],
+        "exits": [
+          {
+            "code": 0,
+            "atMs": 10278.6596
+          }
+        ],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 10278.7108
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "caseId": "P4-engine-default-loop",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 10279.7092,
+        "mode": "native",
+        "fixtureMode": "success",
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": true,
+          "atMs": 10280.5581,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 10281.0067
+          }
+        ]
+      }
+    ],
+    "killCalls": [],
+    "timers": [
+      {
+        "id": 1,
+        "caseId": "P0-timely-native",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 529.5485,
+        "firedMs": null,
+        "clearedMs": 605.4581
+      },
+      {
+        "id": 2,
+        "caseId": "P0-timely-native",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 613.8869,
+        "firedMs": null,
+        "clearedMs": 682.5895
+      },
+      {
+        "id": 3,
+        "caseId": "P0-timely-native",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 690.4733,
+        "firedMs": null,
+        "clearedMs": 759.7497
+      },
+      {
+        "id": 4,
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 762.7022,
+        "firedMs": null,
+        "clearedMs": 764.1642
+      },
+      {
+        "id": 5,
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 808.3336,
+        "firedMs": null,
+        "clearedMs": 881.9999
+      },
+      {
+        "id": 6,
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 888.1682,
+        "firedMs": null,
+        "clearedMs": 964.2909
+      },
+      {
+        "id": 7,
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 968.7009,
+        "firedMs": null,
+        "clearedMs": 1044.0852
+      },
+      {
+        "id": 8,
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 1045.533,
+        "firedMs": 2048.0915,
+        "clearedMs": null
+      },
+      {
+        "id": 9,
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 3870.3502,
+        "firedMs": null,
+        "clearedMs": 3941.3535
+      },
+      {
+        "id": 10,
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 3945.9869,
+        "firedMs": null,
+        "clearedMs": 4015.1116
+      },
+      {
+        "id": 11,
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 4022.0698,
+        "firedMs": null,
+        "clearedMs": 4096.4797
+      },
+      {
+        "id": 12,
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 4097.9208,
+        "firedMs": 5099.5904,
+        "clearedMs": null
+      },
+      {
+        "id": 13,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 6922.9389,
+        "firedMs": null,
+        "clearedMs": 6989.1858
+      },
+      {
+        "id": 14,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 6993.1384,
+        "firedMs": null,
+        "clearedMs": 7060.4408
+      },
+      {
+        "id": 15,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 7064.6265,
+        "firedMs": null,
+        "clearedMs": 7130.3236
+      },
+      {
+        "id": 16,
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 7131.8296,
+        "firedMs": 8141.2698,
+        "clearedMs": null
+      },
+      {
+        "id": 17,
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-version",
+        "delay": 15000,
+        "createdMs": 10027.5674,
+        "firedMs": null,
+        "clearedMs": 10109.149
+      },
+      {
+        "id": 18,
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-help",
+        "delay": 15000,
+        "createdMs": 10113.2631,
+        "firedMs": null,
+        "clearedMs": 10190.3275
+      },
+      {
+        "id": 19,
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-auth",
+        "delay": 15000,
+        "createdMs": 10195.9134,
+        "firedMs": null,
+        "clearedMs": 10278.7165
+      },
+      {
+        "id": 20,
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 10280.6026,
+        "firedMs": 11293.3185,
+        "clearedMs": null
+      }
+    ],
+    "listeners": [
+      {
+        "caseId": "P0-timely-native",
+        "phase": "init",
+        "owner": "harness",
+        "addedMs": 506.1713,
+        "removedMs": 764.3487,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P0-timely-native",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 529.6196,
+        "removedMs": 605.5329,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P0-timely-native",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 613.944,
+        "removedMs": 682.606,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P0-timely-native",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 690.5479,
+        "removedMs": 759.7731,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P0-timely-native",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 761.8643,
+        "removedMs": 764.1754,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 802.595,
+        "removedMs": 2048.4142,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 808.3991,
+        "removedMs": 882.0179,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 888.2435,
+        "removedMs": 964.3131,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P1-hold-executable-names",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 968.7545,
+        "removedMs": 1044.1063,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P1-hold-executable-names",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 1045.3257,
+        "removedMs": 2048.2154,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 3864.8184,
+        "removedMs": 5099.8156,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 3870.4065,
+        "removedMs": 3941.4497,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 3946.0348,
+        "removedMs": 4015.1427,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P2-hold-working-directory",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 4022.1188,
+        "removedMs": 4096.4946,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P2-hold-working-directory",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 4097.7041,
+        "removedMs": 5099.6427,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 6915.0741,
+        "removedMs": 8141.4252,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 6922.982,
+        "removedMs": 6989.2003,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 6993.1807,
+        "removedMs": 7060.4555,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 7064.6759,
+        "removedMs": 7130.3382,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P3-hold-wd-late-success",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 7131.5746,
+        "removedMs": 8141.3044,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "owner": "harness",
+        "addedMs": 10018.5464,
+        "removedMs": 11293.478,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-version",
+        "owner": "process",
+        "addedMs": 10027.6304,
+        "removedMs": 10109.1588,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-help",
+        "owner": "process",
+        "addedMs": 10113.3061,
+        "removedMs": 10190.3524,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P4-engine-default-loop",
+        "phase": "probe-auth",
+        "owner": "process",
+        "addedMs": 10195.9703,
+        "removedMs": 10278.7325,
+        "stillAttached": false
+      },
+      {
+        "caseId": "P4-engine-default-loop",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 10280.2889,
+        "removedMs": 11293.3524,
+        "stillAttached": false
+      }
+    ],
+    "unhandled": [],
+    "heldStillUndelivered": [],
+    "nativeFixturePids": [
+      37012,
+      27764,
+      24008,
+      30812,
+      16136,
+      22216,
+      41932,
+      45404,
+      2340,
+      4576,
+      22416,
+      44408,
+      44108,
+      46676,
+      41320
+    ]
+  }
+}

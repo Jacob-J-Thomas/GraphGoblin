@@ -1,0 +1,599 @@
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index 28642543..104c95ea 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -461,6 +461,8 @@ over conflicting stdout because stderr is the CLI's primary error channel; stdou
+ when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
+ Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
+ process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
++Lost check output comes next: a check whose stdout or stderr could not be read infers no state,
++sign-out included, from what it captured (#364).
+ None of this inference applies to
+ model-turn stdout or changes turn retry eligibility.
+ Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
+diff --git a/packages/infrastructure/src/claude/harness.test.ts b/packages/infrastructure/src/claude/harness.test.ts
+index f182f25e..de34ccf2 100644
+--- a/packages/infrastructure/src/claude/harness.test.ts
++++ b/packages/infrastructure/src/claude/harness.test.ts
+@@ -1,7 +1,7 @@
+ import { describe, expect, it, vi } from 'vitest';
+ import * as probeFs from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+-import { join } from 'node:path';
++import { basename, join } from 'node:path';
+ import { HarnessOptionsSchema } from '@graphgoblin/contracts';
+ import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
+ import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
+@@ -1214,3 +1214,303 @@ describe('Claude start refusal diagnostics (#364)', () => {
+     }
+   });
+ });
++
++// Controlled runner seam: each case scripts the runner's documented result for one check, so no
++// native pipe fault, owner CLI, provider or model turn is involved (#364).
++describe('Claude lost check output and help-only check failures (#364)', () => {
++  const CHECK = 'Check that the Claude CLI starts and responds, then retry preflight.';
++  const UPDATE = 'Update the Claude CLI, then retry preflight.';
++  const UNREADABLE = 'Claude CLI check output could not be read.';
++  const VERSIONED = 'Claude CLI 2.1.285 failed the --max-turns/--help check.';
++  // Truncated bodies: the first matches the sign-in classifier's `authenticat` wording.
++  const AUTH_BODY =
++    '{"authMethod":"claude.ai","email":"authentication+CANARY_364_AUTH_BODY@example.invalid';
++  const NEUTRAL_BODY = '{"authMethod":"claude.ai","email":"CANARY_364_AUTH_BODY';
++  const HELP_BODY = '--safe-mode --restricted CANARY_364_HELP_BODY';
++  const refusal = (extra: Partial<ClaudeProcessResult> = {}) =>
++    outcome('', { exitCode: null, spawnCode: 'ENOENT', ...extra });
++  /** Version always passes; help and sign-in pass unless a case supplies their result. */
++  function checks(results: { help?: ClaudeProcessResult; auth?: ClaudeProcessResult }) {
++    const calls: ClaudeProcessRequest[] = [];
++    const runner: ClaudeCliRunner = async (command, onStdout) => {
++      await Promise.resolve();
++      calls.push(command);
++      if (command.args.includes('--version')) return outcome('2.1.285 (Claude Code)');
++      if (command.args.includes('--help')) return results.help ?? outcome(help);
++      if (command.args.includes('auth'))
++        return results.auth ?? outcome('{"authMethod":"claude.ai"}');
++      for (const record of [init, final]) onStdout?.(Buffer.from(JSON.stringify(record) + '\n'));
++      return outcome();
++    };
++    const harness = new ClaudeHarness({
++      runner,
++      platform: 'win32',
++      binary: 'CANARY_364_BINARY/claude.exe',
++    });
++    return { calls, harness };
++  }
++  /** The turn's own readiness check refuses it: one unsubmitted error and no turn process. */
++  async function refusedTurn(
++    harness: ClaudeHarness,
++    calls: ClaudeProcessRequest[],
++    failure: { code: string; message: string; retriable: boolean },
++  ) {
++    const session = harness.start(
++      { ...request, turn: { prompt: 'CANARY_364_PROMPT' } },
++      new AbortController().signal,
++    );
++    const events = await drain(session.events);
++    await expect(session.result).rejects.toMatchObject(failure);
++    expect(events).toEqual([{ type: 'error', ...failure, submission: 'definitely-not-submitted' }]);
++    expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
++    return events;
++  }
++  /** No canary, binary, check-folder name or path reaches a public value. */
++  function expectPrivate(value: unknown, calls: ClaudeProcessRequest[]) {
++    const text = JSON.stringify(value);
++    const folders = [...new Set(calls.map((call) => call.cwd))];
++    expect(folders.length).toBeGreaterThan(0);
++    for (const fragment of ['CANARY_364', ...folders, ...folders.map((path) => basename(path))]) {
++      expect(text).not.toContain(fragment);
++      expect(text).not.toContain(JSON.stringify(fragment).slice(1, -1));
++    }
++  }
++
++  it.each([
++    ['auth-like partial stdout', 1, AUTH_BODY, {}],
++    ['auth-like partial stdout', null, AUTH_BODY, {}],
++    ['recognised auth stderr', 1, NEUTRAL_BODY, { failureState: 'auth' }],
++    ['recognised auth stderr', null, NEUTRAL_BODY, { failureState: 'auth' }],
++    ['recognised quota stderr', 1, '', { failureState: 'quota' }],
++    ['recognised transport stderr', null, '', { failureState: 'transport' }],
++    ['explicit sign-out text', 1, '{"loggedIn":false', { notLoggedIn: true }],
++  ] as const)(
++    'keeps a lost sign-in check output unknown despite %s at exit %s',
++    async (_case, exitCode, stdout, evidence) => {
++      const { harness, calls } = checks({
++        auth: outcome(stdout, { exitCode, outputFailed: true, ...evidence }),
++      });
++      const facts = await harness.preflight();
++      expect(facts).toMatchObject({
++        state: 'unknown',
++        ok: false,
++        version: '2.1.285',
++        authMethod: null,
++        problems: [`${UNREADABLE} ${CHECK}`],
++      });
++      expect(facts).not.toHaveProperty('authenticated');
++      const events = await refusedTurn(harness, calls, {
++        code: 'HARNESS_TURN_FAILED',
++        message: UNREADABLE,
++        retriable: false,
++      });
++      expectPrivate([facts, events], calls);
++    },
++  );
++  it.each([
++    [
++      'structured sign-out',
++      outcome('{"loggedIn":false,"authMethod":"none"}', { exitCode: 1 }),
++      'Claude is not signed in.',
++    ],
++    [
++      'recognised auth stderr',
++      outcome('', { exitCode: 1, failureState: 'auth' }),
++      'Claude sign-in is missing or invalid.',
++    ],
++    [
++      'auth-like stdout',
++      outcome(AUTH_BODY, { exitCode: 1 }),
++      'Claude sign-in is missing or invalid.',
++    ],
++  ] as const)('keeps a completed sign-in check with %s signed out', async (_case, auth, detail) => {
++    const { harness, calls } = checks({ auth });
++    expect(await harness.preflight()).toMatchObject({
++      state: 'auth',
++      ok: false,
++      authenticated: false,
++      authMethod: null,
++      problems: [`${detail} Run claude auth login, then retry preflight.`],
++    });
++    await refusedTurn(harness, calls, {
++      code: 'HARNESS_NOT_AUTHENTICATED',
++      message: detail,
++      retriable: false,
++    });
++  });
++  const stronger = [
++    [
++      'HARNESS_TERMINATION_UNCONFIRMED',
++      { terminationUnconfirmed: true },
++      'Claude CLI check process did not confirm that it stopped.',
++    ],
++    ['HARNESS_TIMEOUT', { timedOut: true }, 'Claude CLI did not answer before the check deadline.'],
++    [
++      'HARNESS_OUTPUT_LIMIT',
++      { overflow: true },
++      'Claude CLI printed more output than the check accepts.',
++    ],
++  ] as const;
++  it.each(
++    (['help', 'auth'] as const).flatMap((check) =>
++      stronger.map(([code, fault, detail]) => [check, code, fault, detail] as const),
++    ),
++  )('keeps the %s check %s ahead of its lost output', async (check, code, fault, detail) => {
++    const lost = outcome(check === 'help' ? HELP_BODY : AUTH_BODY, {
++      exitCode: null,
++      outputFailed: true,
++      failureState: check === 'help' ? 'cli-incompatible' : 'auth',
++      ...fault,
++    });
++    const { harness, calls } = checks(check === 'help' ? { help: lost } : { auth: lost });
++    const facts = await harness.preflight();
++    expect(facts).toMatchObject({ state: 'unknown', ok: false, problems: [`${detail} ${CHECK}`] });
++    if (check === 'help') expect(facts).toMatchObject({ authenticated: true });
++    else expect(facts).not.toHaveProperty('authenticated');
++    const session = harness.start(request, new AbortController().signal);
++    await expect(session.result).rejects.toMatchObject({ code, message: detail });
++    expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
++  });
++  it.each(['help', 'auth'] as const)(
++    'keeps cancellation ahead of a lost %s check output',
++    async (check) => {
++      const affected = check === 'help' ? '--help' : 'auth';
++      const calls: ClaudeProcessRequest[] = [];
++      const runner: ClaudeCliRunner = async (command) => {
++        calls.push(command);
++        if (command.args.includes('--version')) return outcome('2.1.285');
++        if (!command.args.includes(affected))
++          return outcome(command.args.includes('--help') ? help : '{"authMethod":"claude.ai"}');
++        return await new Promise((resolve) =>
++          command.signal.addEventListener(
++            'abort',
++            () =>
++              resolve(
++                outcome(check === 'help' ? HELP_BODY : AUTH_BODY, {
++                  exitCode: null,
++                  aborted: true,
++                  outputFailed: true,
++                  failureState: check === 'help' ? 'cli-incompatible' : 'auth',
++                }),
++              ),
++            { once: true },
++          ),
++        );
++      };
++      const session = new ClaudeHarness({ runner, platform: 'win32' }).start(
++        request,
++        new AbortController().signal,
++      );
++      await vi.waitFor(() => expect(calls.some((call) => call.args.includes(affected))).toBe(true));
++      await session.cancel();
++      await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
++      expect(await drain(session.events)).toEqual([]);
++      expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
++    },
++  );
++  it.each([
++    [
++      'a missing check folder',
++      refusal({ startRefusal: 'working-directory-missing' }),
++      'Claude CLI could not be started because its temporary check folder does not exist.',
++    ],
++    [
++      'a check folder that is not a folder',
++      refusal({ startRefusal: 'working-directory-not-directory' }),
++      'Claude CLI could not be started because its temporary check folder is not a folder.',
++    ],
++    ['an unexplained ENOENT refusal', refusal(), 'Claude CLI could not be started (ENOENT).'],
++    [
++      'an unexplained EACCES refusal',
++      refusal({ spawnCode: 'EACCES' }),
++      'Claude CLI could not be started (EACCES).',
++    ],
++    ['lost output at exit 0', outcome(HELP_BODY, { outputFailed: true }), UNREADABLE],
++    [
++      'lost output with an unknown-option diagnosis at exit 1',
++      outcome(HELP_BODY, { exitCode: 1, outputFailed: true, failureState: 'cli-incompatible' }),
++      UNREADABLE,
++    ],
++    [
++      'lost output without an exit code',
++      outcome(HELP_BODY, { exitCode: null, outputFailed: true }),
++      UNREADABLE,
++    ],
++  ] as const)(
++    'keeps %s when only the help check fails after the version check passed',
++    async (_case, helpResult, detail) => {
++      const { harness, calls } = checks({ help: helpResult });
++      const facts = await harness.preflight();
++      expect(facts).toMatchObject({
++        state: 'unknown',
++        ok: false,
++        version: '2.1.285',
++        authenticated: true,
++        authMethod: 'claude.ai',
++        problems: [`${detail} ${CHECK}`],
++      });
++      expect(calls.filter((call) => call.args.includes('auth'))).toHaveLength(1);
++      const events = await refusedTurn(harness, calls, {
++        code: 'HARNESS_TURN_FAILED',
++        message: detail,
++        retriable: false,
++      });
++      expectPrivate([facts, events], calls);
++    },
++  );
++  it.each([
++    [
++      'exits with code 1',
++      outcome(HELP_BODY, { exitCode: 1 }),
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      VERSIONED,
++      CHECK,
++    ],
++    [
++      'stops without an exit code',
++      outcome('', { exitCode: null }),
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      VERSIONED,
++      CHECK,
++    ],
++    [
++      'cannot receive its input',
++      outcome(help, { stdinFailed: true }),
++      'unknown',
++      'HARNESS_TURN_FAILED',
++      VERSIONED,
++      CHECK,
++    ],
++    [
++      'reports an unknown option',
++      outcome('', { exitCode: 1, failureState: 'cli-incompatible' }),
++      'cli-incompatible',
++      'HARNESS_CLI_INCOMPATIBLE',
++      VERSIONED,
++      UPDATE,
++    ],
++    [
++      'lacks a required option',
++      outcome(help.replace('--restricted ', '')),
++      'cli-incompatible',
++      'HARNESS_UNSUPPORTED_POLICY',
++      'Claude CLI 2.1.285 does not list required options: --restricted.',
++      UPDATE,
++    ],
++  ] as const)(
++    'keeps the version-named guidance when the option check %s',
++    async (_case, helpResult, state, code, detail, action) => {
++      const { harness, calls } = checks({ help: helpResult });
++      expect(await harness.preflight()).toMatchObject({
++        state,
++        ok: false,
++        version: '2.1.285',
++        authenticated: true,
++        problems: [`${detail} ${action}`],
++      });
++      await refusedTurn(harness, calls, { code, message: detail, retriable: false });
++    },
++  );
++});
+diff --git a/packages/infrastructure/src/claude/harness.ts b/packages/infrastructure/src/claude/harness.ts
+index 91b00200..b8cb0237 100644
+--- a/packages/infrastructure/src/claude/harness.ts
++++ b/packages/infrastructure/src/claude/harness.ts
+@@ -102,6 +102,16 @@ async function probeDirectory(): Promise<string> {
+ }
+ /** Windows starts no process in a working directory longer than this (#102, #364). */
+ const WINDOWS_WORKING_DIRECTORY_LIMIT = 258;
++/**
++ * A check whose process the runner established as refused at start or whose output was lost
++ * (#364). It is not an option failure, so the help check keeps its fixed detail. Module-private:
++ * callers see an ordinary `HARNESS_TURN_FAILED` with the same message and retriability.
++ */
++class CheckProcessFailure extends ClaudeHarnessError {
++  constructor(message: string) {
++    super('HARNESS_TURN_FAILED', message);
++  }
++}
+ /**
+  * A refused start, worded from what the runner established (#364). A spawn `ENOENT` alone does not
+  * say whether the executable or the working directory failed, so only an established absence is
+@@ -125,8 +135,7 @@ function startFailure(
+   if (refusal) {
+     const state = refusal === 'working-directory-missing' ? 'does not exist' : 'is not a folder';
+     return probe
+-      ? new ClaudeHarnessError(
+-          'HARNESS_TURN_FAILED',
++      ? new CheckProcessFailure(
+           `Claude CLI could not be started because its temporary check folder ${state}.`,
+         )
+       : new ClaudeHarnessError(
+@@ -137,8 +146,7 @@ function startFailure(
+   const limit = WINDOWS_WORKING_DIRECTORY_LIMIT;
+   const long = resolve(cwd).length > limit;
+   if (probe)
+-    return new ClaudeHarnessError(
+-      'HARNESS_TURN_FAILED',
++    return new CheckProcessFailure(
+       long
+         ? `Claude CLI could not be started (${code}) from its temporary check folder, whose path (from TEMP or TMP) is longer than the ${limit} characters Windows allows for a working directory.`
+         : `Claude CLI could not be started (${code}).`,
+@@ -183,6 +191,9 @@ function checkOutcome(
+         : 'Claude process output exceeded the configured limit',
+     );
+   if (result.callbackError) throw result.callbackError;
++  // Lost check output is incomplete evidence: no state is inferred from its stdout or stderr.
++  if (probe && result.outputFailed)
++    throw new CheckProcessFailure('Claude CLI check output could not be read.');
+   if (probe && result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
+     const codes: Partial<
+       Record<HarnessReadinessState, ConstructorParameters<typeof ClaudeHarnessError>[0]>
+@@ -198,11 +209,6 @@ function checkOutcome(
+       result.failureState === 'transport',
+     );
+   }
+-  if (probe && result.outputFailed)
+-    throw new ClaudeHarnessError(
+-      'HARNESS_TURN_FAILED',
+-      'Claude CLI check output could not be read.',
+-    );
+   if (probe && (result.stdinFailed || result.exitCode !== 0))
+     throw new ClaudeHarnessError(
+       'HARNESS_TURN_FAILED',
+@@ -334,9 +340,11 @@ export class ClaudeHarness implements HarnessPort {
+       try {
+         help = await run([...SUPPRESSION_ARGS, '--max-turns', '1', '--help']);
+       } catch (error) {
+-        // A rejected or failing option check names the version; timeouts and causes keep their detail.
++        // A rejected or failing option check names the version; timeouts and causes keep their
++        // detail, as do a refused start and lost output, which say nothing about the options.
+         if (
+           error instanceof ClaudeHarnessError &&
++          !(error instanceof CheckProcessFailure) &&
+           (error.code === 'HARNESS_CLI_INCOMPATIBLE' || error.code === 'HARNESS_TURN_FAILED')
+         )
+           throw new ClaudeHarnessError(
+diff --git a/packages/infrastructure/src/claude/process-failure.test.ts b/packages/infrastructure/src/claude/process-failure.test.ts
+index 4ef9cd2d..67664165 100644
+--- a/packages/infrastructure/src/claude/process-failure.test.ts
++++ b/packages/infrastructure/src/claude/process-failure.test.ts
+@@ -10,6 +10,7 @@ import { PassThrough } from 'node:stream';
+ import { fileURLToPath } from 'node:url';
+ import { killTree } from '../process/index.js';
+ import { ClaudeHarnessError } from './errors.js';
++import { ClaudeHarness } from './harness.js';
+ import { runClaudeProcess } from './process.js';
+ 
+ vi.mock('node:child_process', async (importOriginal) => {
+@@ -338,3 +339,88 @@ it('completes cancellation when tree acknowledgement precedes child close', asyn
+   expect(await pending).not.toHaveProperty('terminationUnconfirmed');
+   expect(vi.getTimerCount()).toBe(0);
+ });
++
++// Controlled child seam: the real runner and harness with scripted child processes. The pipe
++// fault is an emitted stream error, not a native observation (#364).
++describe('lost check output through the runner and harness (#364)', () => {
++  const flags =
++    '--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume';
++  const diagnosis = 'API Error: 401 PRIVATE_STDERR_BODY';
++  /** Version and help pass; the sign-in check child follows the given script. */
++  function scriptChecks(auth: (scripted: ChildProcess) => void): void {
++    vi.mocked(spawn).mockImplementation((_binary: string, args: readonly string[]) => {
++      const scripted = new ChildProcess();
++      Object.assign(scripted, { pid: 4243 });
++      scripted.stdin = new PassThrough();
++      scripted.stdout = new PassThrough();
++      scripted.stderr = new PassThrough();
++      // The runner attaches its listeners right after spawn returns; script the child after that.
++      void Promise.resolve().then(() => {
++        if (args.includes('auth')) {
++          auth(scripted);
++          return;
++        }
++        scripted.stdout?.emit('data', Buffer.from(args.includes('--version') ? '2.1.285' : flags));
++        scripted.emit('close', 0);
++      });
++      return scripted;
++    });
++  }
++  it.each([
++    ['stdout', 1],
++    ['stdout', null],
++    ['stderr', 1],
++    ['stderr', null],
++  ] as const)(
++    'keeps recognised auth stderr from signing out a check whose %s failed (close %s)',
++    async (stream, code) => {
++      scriptChecks((scripted) => {
++        scripted.stderr?.emit('data', Buffer.from(diagnosis));
++        scripted.stdout?.emit(
++          'data',
++          Buffer.from('{"authMethod":"claude.ai","email":"PRIVATE_STDOUT_BODY'),
++        );
++        scripted[stream]?.emit(
++          'error',
++          Object.assign(new Error('PRIVATE_PIPE_BODY'), { code: 'EPIPE' }),
++        );
++        scripted.emit('close', code);
++      });
++      const facts = await new ClaudeHarness({
++        platform: 'win32',
++        binary: 'synthetic-cli',
++      }).preflight();
++      expect(facts).toMatchObject({
++        state: 'unknown',
++        ok: false,
++        version: '2.1.285',
++        problems: [
++          'Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.',
++        ],
++      });
++      expect(facts).not.toHaveProperty('authenticated');
++      expect(killTree).toHaveBeenCalledTimes(1);
++      expect(JSON.stringify(facts)).not.toContain('PRIVATE');
++    },
++  );
++  it('still signs out on the same recognised auth stderr when the check output was complete', async () => {
++    scriptChecks((scripted) => {
++      scripted.stderr?.emit('data', Buffer.from(diagnosis));
++      scripted.emit('close', 1);
++    });
++    const facts = await new ClaudeHarness({
++      platform: 'win32',
++      binary: 'synthetic-cli',
++    }).preflight();
++    expect(facts).toMatchObject({
++      state: 'auth',
++      ok: false,
++      authenticated: false,
++      problems: [
++        'Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.',
++      ],
++    });
++    expect(killTree).not.toHaveBeenCalled();
++    expect(JSON.stringify(facts)).not.toContain('PRIVATE');
++  });
++});
+diff --git a/packages/infrastructure/src/claude/start-refusal.test.ts b/packages/infrastructure/src/claude/start-refusal.test.ts
+index a2fe4ce2..86ef9808 100644
+--- a/packages/infrastructure/src/claude/start-refusal.test.ts
++++ b/packages/infrastructure/src/claude/start-refusal.test.ts
+@@ -3,9 +3,9 @@
+ // Windows refuses a missing, non-folder or overlong working directory with the same spawn ENOENT
+ // as a missing executable, so these cases use real refusals of the current host.
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
++import { mkdir, mkdtemp, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+-import { join, sep } from 'node:path';
++import { basename, dirname, join, sep } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import type { HarnessEvent } from '@graphgoblin/engine';
+ import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
+@@ -298,3 +298,75 @@ describe('native Claude start refusals as run failures (#364)', () => {
+     expectPrivate(failure, root);
+   }, 60_000);
+ });
++
++describe('native Claude help-only check refusal (#364)', () => {
++  /**
++   * Version and sign-in checks start natively. For the help check only, the harness's own fresh,
++   * empty check folder is removed (or replaced by a file) before its real start and restored
++   * afterwards, so Windows refuses that one start and the runner observes the folder.
++   */
++  async function helpOnlyRefusal(file: boolean, detail: string) {
++    const checks: ClaudeProcessRequest[] = [];
++    const turns: ClaudeProcessRequest[] = [];
++    const claude = new ClaudeHarness({
++      platform: 'win32',
++      binary: process.execPath,
++      runner: async (request, onStdout) => {
++        (request.stdin === undefined ? checks : turns).push(request);
++        const refused = request.args.includes('--help');
++        if (refused) {
++          // Only the harness's own empty check folder directly under TEMP is ever changed.
++          expect(dirname(request.cwd)).toBe(tmpdir());
++          expect(basename(request.cwd)).toMatch(/^gg-claude-probe-[0-9a-f]{8}$/);
++          await rmdir(request.cwd);
++          if (file) await writeFile(request.cwd, 'not a folder');
++        }
++        try {
++          return await runClaudeProcess(
++            { ...request, args: [fixture, 'success', ...request.args] },
++            onStdout,
++          );
++        } finally {
++          if (refused) {
++            if (file) await rm(request.cwd);
++            await mkdir(request.cwd);
++          }
++        }
++      },
++    });
++    const facts = await claude.preflight();
++    expect(facts).toMatchObject({
++      state: 'unknown',
++      ok: false,
++      version: '2.1.287',
++      authenticated: true,
++      authMethod: 'claude.ai',
++      problems: [`${detail} ${CHECK}`],
++    });
++    const root = await ownedRoot();
++    const workingDirectory = join(root, 'workspace');
++    await mkdir(workingDirectory);
++    const { events, error } = await turn(claude, workingDirectory);
++    expectRefused(events, error, 'HARNESS_TURN_FAILED', detail);
++    expect(turns).toEqual([]);
++    expect(checks.filter((request) => request.args.includes('auth'))).toHaveLength(2);
++    const folders = checks.map((request) => basename(request.cwd));
++    expectPrivate([facts, events, error], root, process.execPath, ...folders);
++  }
++  it('keeps a missing check folder when only the help check is refused', async () => {
++    await helpOnlyRefusal(
++      false,
++      'Claude CLI could not be started because its temporary check folder does not exist.',
++    );
++  }, 60_000);
++  it.skipIf(!windows)(
++    'keeps a check folder that is a file when only the help check is refused',
++    async () => {
++      await helpOnlyRefusal(
++        true,
++        'Claude CLI could not be started because its temporary check folder is not a folder.',
++      );
++    },
++    60_000,
++  );
++});

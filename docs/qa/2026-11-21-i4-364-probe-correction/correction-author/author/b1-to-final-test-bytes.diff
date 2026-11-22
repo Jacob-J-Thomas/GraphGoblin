@@ -1,0 +1,70 @@
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-364-probe-author-01/author/b1-test-bytes/harness.test.ts	2026-11-21 06:36:12.946657500 -0600
++++ packages/infrastructure/src/claude/harness.test.ts	2026-11-21 06:36:13.948339900 -0600
+@@ -1344,11 +1344,7 @@
+       { terminationUnconfirmed: true },
+       'Claude CLI check process did not confirm that it stopped.',
+     ],
+-    [
+-      'HARNESS_TIMEOUT',
+-      { timedOut: true },
+-      'Claude CLI did not answer before the check deadline.',
+-    ],
++    ['HARNESS_TIMEOUT', { timedOut: true }, 'Claude CLI did not answer before the check deadline.'],
+     [
+       'HARNESS_OUTPUT_LIMIT',
+       { overflow: true },
+@@ -1405,9 +1401,7 @@
+         request,
+         new AbortController().signal,
+       );
+-      await vi.waitFor(() =>
+-        expect(calls.some((call) => call.args.includes(affected))).toBe(true),
+-      );
++      await vi.waitFor(() => expect(calls.some((call) => call.args.includes(affected))).toBe(true));
+       await session.cancel();
+       await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+       expect(await drain(session.events)).toEqual([]);
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-364-probe-author-01/author/b1-test-bytes/process-failure.test.ts	2026-11-21 06:36:12.995362800 -0600
++++ packages/infrastructure/src/claude/process-failure.test.ts	2026-11-21 06:37:44.883479000 -0600
+@@ -348,7 +348,7 @@
+   const diagnosis = 'API Error: 401 PRIVATE_STDERR_BODY';
+   /** Version and help pass; the sign-in check child follows the given script. */
+   function scriptChecks(auth: (scripted: ChildProcess) => void): void {
+-    vi.mocked(spawn).mockImplementation(((_binary: string, args: readonly string[]) => {
++    vi.mocked(spawn).mockImplementation((_binary: string, args: readonly string[]) => {
+       const scripted = new ChildProcess();
+       Object.assign(scripted, { pid: 4243 });
+       scripted.stdin = new PassThrough();
+@@ -364,7 +364,7 @@
+         scripted.emit('close', 0);
+       });
+       return scripted;
+-    }) as unknown as typeof spawn);
++    });
+   }
+   it.each([
+     ['stdout', 1],
+@@ -386,7 +386,10 @@
+         );
+         scripted.emit('close', code);
+       });
+-      const facts = await new ClaudeHarness({ platform: 'win32', binary: 'synthetic-cli' }).preflight();
++      const facts = await new ClaudeHarness({
++        platform: 'win32',
++        binary: 'synthetic-cli',
++      }).preflight();
+       expect(facts).toMatchObject({
+         state: 'unknown',
+         ok: false,
+@@ -405,7 +408,10 @@
+       scripted.stderr?.emit('data', Buffer.from(diagnosis));
+       scripted.emit('close', 1);
+     });
+-    const facts = await new ClaudeHarness({ platform: 'win32', binary: 'synthetic-cli' }).preflight();
++    const facts = await new ClaudeHarness({
++      platform: 'win32',
++      binary: 'synthetic-cli',
++    }).preflight();
+     expect(facts).toMatchObject({
+       state: 'auth',
+       ok: false,

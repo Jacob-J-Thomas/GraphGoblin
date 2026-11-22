@@ -1,0 +1,74 @@
+{
+  "status": "fulfilled",
+  "value": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "id": 5938305116,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+        "title": "A working-directory spawn ENOENT is reported as the Claude executable being missing",
+        "issue_number": 364,
+        "body": "Found by WP-F5 (#102 launch diagnosis) and confirmed by its independent GPT-6.1 Sol review on 2026-10-19. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\nA spawn `ENOENT` caused by the working directory is reported as the executable being missing: Claude preflight says \"The installed Claude executable could not be started\" (`HARNESS_NOT_INSTALLED` class) when the real cause is a working directory the process cannot start in.\n\n## Steps\n\n1. Point `TEMP`/`TMP` at a directory whose path is 234 characters or longer (the Claude CLI starts from working directories up to 258 characters and fails from 259; the probe directory adds the rest).\n2. Run `node apps/api/dist/main.js --preflight` or `GET /harness/preflight`.\n\nExpected: a message that names the working directory as the cause, or at least does not claim the executable is missing.\n\nActual: \"The installed Claude executable could not be started\", while `claude --version` works from a short directory.\n\n## Cause\n\n`packages/infrastructure/src/claude/harness.ts:67-70` maps every spawn `ENOENT` to the not-installed class. The same applies to a turn whose run workspace exceeds 258 characters.\n\n## Fix shape\n\nDistinguish a cwd-caused `ENOENT` (check the working directory exists and is startable before spawning, or inspect the error path) from a missing executable, and word the problem accordingly. Coordinate with WP-F1 (#179), which rewrites the readiness classification in the same file.\n\n## Related\n\n#102 (record `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`), #179.\n\n\n## Intent 4 delivery admission — November 21\n\nAdmitted after [intent 3 engineering delivery](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-7059784448) on signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`, under the owner's ordered batch and delegated blocker-decision authority. [D171 and its alternatives](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427#issuecomment-7059806202) distinguish coordinator selection from human plan approval. Historical parking text above remains history.\n\nActual Claude Code Opus implements the bounded spawn diagnostic correction. Distinguish evidence about invalid/ambiguous working directories from a confirmed unavailable executable; preserve cancellation, deadline and proven non-submission. Use harmless native fixtures and no raw private path disclosure.\n\nImplementation and opposite-family review use the named routing models at xhigh. **Independent QA agent (planned):** `i4_364_behavior_qa`, a separate context and checkout; actual provider/session/build/evidence will be recorded when dispatched. GPT owns architecture; Claude Code contributes implementation, design critique, QA and adversarial review. Preserve touched-system positive/negative QA, unchanged coverage, current-head/current-target CI, fresh independent Astra MAX final audit and the three-general-scan cap. No implementation, QA or acceptance is implied by admission. Owner-only closure obligations and held460/Mac501 remain separate.",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "aidlc-ready",
+            "color": "0E8A16",
+            "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+          },
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:claude-opus-5.5",
+            "color": "0052CC",
+            "description": "Implementer: Claude Opus 5.5 (harder work), reasoning xhigh"
+          },
+          {
+            "name": "review:gpt-6.1-sol",
+            "color": "0E8A8A",
+            "description": "Cross-vendor reviewer: Codex gpt-6.1-sol"
+          },
+          {
+            "name": "type:bug",
+            "color": "D73A4A",
+            "description": "Something does not work as documented"
+          },
+          {
+            "name": "area:harness",
+            "color": "BFDADC",
+            "description": "Harness and model adapters"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 1,
+        "created_at": "2026-10-20T08:13:25Z",
+        "updated_at": "2026-11-21T09:20:41Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+        "display_title": "A working-directory spawn ENOENT is reported as the Claude executable being missing"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+      "title": "A working-directory spawn ENOENT is reported as the Claude executable being missing",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364",
+      "display_title": "A working-directory spawn ENOENT is reported as the Claude executable being missing"
+    },
+    "isError": false
+  }
+}

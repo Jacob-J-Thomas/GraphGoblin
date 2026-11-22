@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as probeFs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { HarnessOptionsSchema } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
@@ -115,6 +115,8 @@ describe('Claude existing harness contract', () => {
     { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
     { timedOut: true, code: 'HARNESS_TIMEOUT' },
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+    // A failed output pipe may have lost acceptance evidence, so no refusal can be trusted (#364).
+    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
   ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
     const { harness } = fixture({
       records: [
@@ -826,6 +828,7 @@ describe('Claude preflight and transport failure matrix', () => {
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
     { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
+    { outputFailed: true as const, code: 'HARNESS_TURN_FAILED' },
   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
     const { harness } = fixture({ exit });
     const session = harness.start(request, new AbortController().signal);
@@ -855,7 +858,14 @@ describe('Claude preflight and transport failure matrix', () => {
 describe('unconfirmed native termination', () => {
   it.each([
     ['timeout', { timedOut: true }, 'unknown', 'HARNESS_TIMEOUT'],
-    ['missing executable', { spawnCode: 'ENOENT' }, 'cli-missing', 'HARNESS_NOT_INSTALLED'],
+    [
+      'missing executable',
+      { spawnCode: 'ENOENT', startRefusal: 'executable-missing' },
+      'cli-missing',
+      'HARNESS_NOT_INSTALLED',
+    ],
+    // A refusal with no established cause never claims that the CLI is missing (#364).
+    ['unexplained start refusal', { spawnCode: 'ENOENT' }, 'unknown', 'HARNESS_TURN_FAILED'],
     [
       'unconfirmed termination',
       { terminationUnconfirmed: true },
@@ -1011,3 +1021,496 @@ it.each(['auth', 'quota', 'transport'] as const)(
     await events;
   },
 );
+
+describe('Claude start refusal diagnostics (#364)', () => {
+  const refused = (extra: Partial<ClaudeProcessResult> = {}) =>
+    outcome('', { exitCode: null, spawnCode: 'ENOENT', ...extra });
+  const longDirectory = join(tmpdir(), 'x'.repeat(259));
+  it.each([
+    [
+      'a missing working directory',
+      { startRefusal: 'working-directory-missing' as const },
+      request.workingDirectory,
+      'HARNESS_INVALID_CONFIGURATION',
+      'Claude could not be started because the working directory does not exist; check the working directory setting',
+    ],
+    [
+      'a working directory that is not a folder',
+      { startRefusal: 'working-directory-not-directory' as const },
+      request.workingDirectory,
+      'HARNESS_INVALID_CONFIGURATION',
+      'Claude could not be started because the working directory is not a folder; check the working directory setting',
+    ],
+    [
+      'an absent executable',
+      { startRefusal: 'executable-missing' as const },
+      request.workingDirectory,
+      'HARNESS_NOT_INSTALLED',
+      'The Claude executable was not found at its configured path; install the Claude CLI or correct its path',
+    ],
+    [
+      'an unexplained ENOENT',
+      {},
+      request.workingDirectory,
+      'HARNESS_TURN_FAILED',
+      "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory",
+    ],
+    [
+      'an unexplained EACCES',
+      { spawnCode: 'EACCES' as const },
+      request.workingDirectory,
+      'HARNESS_TURN_FAILED',
+      "Claude could not be started (EACCES); check the Claude executable's path and permissions and the working directory",
+    ],
+    [
+      'an unexplained refusal in a long working directory',
+      {},
+      longDirectory,
+      'HARNESS_TURN_FAILED',
+      'Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows',
+    ],
+  ])(
+    'reports a turn refusal with %s as fixed text and no submission',
+    async (_case, observation, workingDirectory, code, message) => {
+      const { harness, calls } = fixture({ records: [], exit: refused(observation) });
+      const session = harness.start(
+        { ...request, workingDirectory, turn: { prompt: 'PRIVATE_PROMPT' } },
+        new AbortController().signal,
+      );
+      const events = await drain(session.events);
+      const failure = { code, message, retriable: false };
+      expect(events).toEqual([
+        { type: 'error', ...failure, submission: 'definitely-not-submitted' },
+      ]);
+      await expect(session.result).rejects.toMatchObject(failure);
+      await expect(session.sessionId).rejects.toMatchObject({ code });
+      // The authored working directory is used exactly as given; nothing substitutes another.
+      expect(calls.at(-1)?.cwd).toBe(workingDirectory);
+      expect(JSON.stringify(events)).not.toContain('PRIVATE');
+      expect(JSON.stringify(events)).not.toContain(workingDirectory);
+    },
+  );
+  it('keeps a turn uncertain when its output pipe failed, even with a recognised refusal', async () => {
+    const { harness } = fixture({
+      records: [],
+      exit: { exitCode: 1, outputFailed: true, turnRejection: 'auth' },
+    });
+    const session = harness.start(request, new AbortController().signal);
+    expect((await drain(session.events)).at(-1)).toEqual({
+      type: 'error',
+      code: 'HARNESS_TURN_FAILED',
+      message: 'Claude turn failed',
+      retriable: false,
+      submission: 'delivery-uncertain',
+    });
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TURN_FAILED' });
+  });
+  it('keeps cancellation ahead of a working-directory diagnosis', async () => {
+    const controller = new AbortController();
+    const runner: ClaudeCliRunner = (command) => {
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      if (command.args.includes('auth'))
+        return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
+      controller.abort();
+      return Promise.resolve(refused({ aborted: true, startRefusal: 'working-directory-missing' }));
+    };
+    const session = new ClaudeHarness({ runner, platform: 'win32' }).start(
+      request,
+      controller.signal,
+    );
+    await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+    expect(await drain(session.events)).toEqual([]);
+  });
+  it.each([
+    [
+      { startRefusal: 'executable-missing' as const },
+      'cli-missing',
+      'HARNESS_NOT_INSTALLED',
+      'Claude CLI was not found at the configured path.',
+      'Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.',
+    ],
+    [
+      { startRefusal: 'working-directory-missing' as const },
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started because its temporary check folder does not exist.',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+    [
+      { startRefusal: 'working-directory-not-directory' as const },
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started because its temporary check folder is not a folder.',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+    [
+      {},
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      'Claude CLI could not be started (ENOENT).',
+      'Check that the Claude CLI starts and responds, then retry preflight.',
+    ],
+  ])(
+    'reports check refusal %o as %s; the check folder is never configuration',
+    async (observation, state, code, detail, action) => {
+      const calls: ClaudeProcessRequest[] = [];
+      const runner: ClaudeCliRunner = (command) => {
+        calls.push(command);
+        return Promise.resolve(refused(observation));
+      };
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      const facts = await harness.preflight();
+      expect(facts).toMatchObject({ state, ok: false, problems: [`${detail} ${action}`] });
+      expect(facts).not.toHaveProperty('authenticated');
+      expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
+      const session = harness.start(request, new AbortController().signal);
+      await expect(session.result).rejects.toMatchObject({ code, message: detail });
+      expect((await drain(session.events)).at(-1)).toMatchObject({
+        code,
+        submission: 'definitely-not-submitted',
+      });
+    },
+  );
+  it('reports an unreadable check output without trusting partial sign-in text', async () => {
+    const runner: ClaudeCliRunner = (command) =>
+      Promise.resolve(
+        command.args.includes('auth')
+          ? outcome('{"loggedIn":false}', { outputFailed: true, notLoggedIn: true })
+          : outcome(command.args.includes('--help') ? help : '2.1.285'),
+      );
+    const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
+    expect(facts).toMatchObject({
+      state: 'unknown',
+      problems: [
+        'Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight.',
+      ],
+    });
+    expect(facts).not.toHaveProperty('authenticated');
+  });
+  it('names the Windows limit for an unexplained refusal from a long temporary check folder', async () => {
+    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-364-long-temp-'));
+    let longTemp = root;
+    while (longTemp.length < 240) longTemp = join(longTemp, 'segment-abcdefghij');
+    await probeFs.mkdir(longTemp, { recursive: true });
+    const directories: string[] = [];
+    const runner: ClaudeCliRunner = (command) => {
+      directories.push(command.cwd);
+      return Promise.resolve(refused());
+    };
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
+    try {
+      const facts = await new ClaudeHarness({ runner, platform: 'win32' }).preflight();
+      expect(directories[0]?.length).toBeGreaterThan(258);
+      expect(facts).toMatchObject({
+        state: 'unknown',
+        problems: [
+          'Claude CLI could not be started (ENOENT) from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory. Check that the Claude CLI starts and responds, then retry preflight.',
+        ],
+      });
+    } finally {
+      vi.unstubAllEnvs();
+      await probeFs.rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
+// Controlled runner seam: each case scripts the runner's documented result for one check, so no
+// native pipe fault, owner CLI, provider or model turn is involved (#364).
+describe('Claude lost check output and help-only check failures (#364)', () => {
+  const CHECK = 'Check that the Claude CLI starts and responds, then retry preflight.';
+  const UPDATE = 'Update the Claude CLI, then retry preflight.';
+  const UNREADABLE = 'Claude CLI check output could not be read.';
+  const VERSIONED = 'Claude CLI 2.1.285 failed the --max-turns/--help check.';
+  // Truncated bodies: the first matches the sign-in classifier's `authenticat` wording.
+  const AUTH_BODY =
+    '{"authMethod":"claude.ai","email":"authentication+CANARY_364_AUTH_BODY@example.invalid';
+  const NEUTRAL_BODY = '{"authMethod":"claude.ai","email":"CANARY_364_AUTH_BODY';
+  const HELP_BODY = '--safe-mode --restricted CANARY_364_HELP_BODY';
+  const refusal = (extra: Partial<ClaudeProcessResult> = {}) =>
+    outcome('', { exitCode: null, spawnCode: 'ENOENT', ...extra });
+  /** Version always passes; help and sign-in pass unless a case supplies their result. */
+  function checks(results: { help?: ClaudeProcessResult; auth?: ClaudeProcessResult }) {
+    const calls: ClaudeProcessRequest[] = [];
+    const runner: ClaudeCliRunner = async (command, onStdout) => {
+      await Promise.resolve();
+      calls.push(command);
+      if (command.args.includes('--version')) return outcome('2.1.285 (Claude Code)');
+      if (command.args.includes('--help')) return results.help ?? outcome(help);
+      if (command.args.includes('auth'))
+        return results.auth ?? outcome('{"authMethod":"claude.ai"}');
+      for (const record of [init, final]) onStdout?.(Buffer.from(JSON.stringify(record) + '\n'));
+      return outcome();
+    };
+    const harness = new ClaudeHarness({
+      runner,
+      platform: 'win32',
+      binary: 'CANARY_364_BINARY/claude.exe',
+    });
+    return { calls, harness };
+  }
+  /** The turn's own readiness check refuses it: one unsubmitted error and no turn process. */
+  async function refusedTurn(
+    harness: ClaudeHarness,
+    calls: ClaudeProcessRequest[],
+    failure: { code: string; message: string; retriable: boolean },
+  ) {
+    const session = harness.start(
+      { ...request, turn: { prompt: 'CANARY_364_PROMPT' } },
+      new AbortController().signal,
+    );
+    const events = await drain(session.events);
+    await expect(session.result).rejects.toMatchObject(failure);
+    expect(events).toEqual([{ type: 'error', ...failure, submission: 'definitely-not-submitted' }]);
+    expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
+    return events;
+  }
+  /** No canary, binary, check-folder name or path reaches a public value. */
+  function expectPrivate(value: unknown, calls: ClaudeProcessRequest[]) {
+    const text = JSON.stringify(value);
+    const folders = [...new Set(calls.map((call) => call.cwd))];
+    expect(folders.length).toBeGreaterThan(0);
+    for (const fragment of ['CANARY_364', ...folders, ...folders.map((path) => basename(path))]) {
+      expect(text).not.toContain(fragment);
+      expect(text).not.toContain(JSON.stringify(fragment).slice(1, -1));
+    }
+  }
+
+  it.each([
+    ['auth-like partial stdout', 1, AUTH_BODY, {}],
+    ['auth-like partial stdout', null, AUTH_BODY, {}],
+    ['recognised auth stderr', 1, NEUTRAL_BODY, { failureState: 'auth' }],
+    ['recognised auth stderr', null, NEUTRAL_BODY, { failureState: 'auth' }],
+    ['recognised quota stderr', 1, '', { failureState: 'quota' }],
+    ['recognised transport stderr', null, '', { failureState: 'transport' }],
+    ['explicit sign-out text', 1, '{"loggedIn":false', { notLoggedIn: true }],
+  ] as const)(
+    'keeps a lost sign-in check output unknown despite %s at exit %s',
+    async (_case, exitCode, stdout, evidence) => {
+      const { harness, calls } = checks({
+        auth: outcome(stdout, { exitCode, outputFailed: true, ...evidence }),
+      });
+      const facts = await harness.preflight();
+      expect(facts).toMatchObject({
+        state: 'unknown',
+        ok: false,
+        version: '2.1.285',
+        authMethod: null,
+        problems: [`${UNREADABLE} ${CHECK}`],
+      });
+      expect(facts).not.toHaveProperty('authenticated');
+      const events = await refusedTurn(harness, calls, {
+        code: 'HARNESS_TURN_FAILED',
+        message: UNREADABLE,
+        retriable: false,
+      });
+      expectPrivate([facts, events], calls);
+    },
+  );
+  it.each([
+    [
+      'structured sign-out',
+      outcome('{"loggedIn":false,"authMethod":"none"}', { exitCode: 1 }),
+      'Claude is not signed in.',
+    ],
+    [
+      'recognised auth stderr',
+      outcome('', { exitCode: 1, failureState: 'auth' }),
+      'Claude sign-in is missing or invalid.',
+    ],
+    [
+      'auth-like stdout',
+      outcome(AUTH_BODY, { exitCode: 1 }),
+      'Claude sign-in is missing or invalid.',
+    ],
+  ] as const)('keeps a completed sign-in check with %s signed out', async (_case, auth, detail) => {
+    const { harness, calls } = checks({ auth });
+    expect(await harness.preflight()).toMatchObject({
+      state: 'auth',
+      ok: false,
+      authenticated: false,
+      authMethod: null,
+      problems: [`${detail} Run claude auth login, then retry preflight.`],
+    });
+    await refusedTurn(harness, calls, {
+      code: 'HARNESS_NOT_AUTHENTICATED',
+      message: detail,
+      retriable: false,
+    });
+  });
+  const stronger = [
+    [
+      'HARNESS_TERMINATION_UNCONFIRMED',
+      { terminationUnconfirmed: true },
+      'Claude CLI check process did not confirm that it stopped.',
+    ],
+    ['HARNESS_TIMEOUT', { timedOut: true }, 'Claude CLI did not answer before the check deadline.'],
+    [
+      'HARNESS_OUTPUT_LIMIT',
+      { overflow: true },
+      'Claude CLI printed more output than the check accepts.',
+    ],
+  ] as const;
+  it.each(
+    (['help', 'auth'] as const).flatMap((check) =>
+      stronger.map(([code, fault, detail]) => [check, code, fault, detail] as const),
+    ),
+  )('keeps the %s check %s ahead of its lost output', async (check, code, fault, detail) => {
+    const lost = outcome(check === 'help' ? HELP_BODY : AUTH_BODY, {
+      exitCode: null,
+      outputFailed: true,
+      failureState: check === 'help' ? 'cli-incompatible' : 'auth',
+      ...fault,
+    });
+    const { harness, calls } = checks(check === 'help' ? { help: lost } : { auth: lost });
+    const facts = await harness.preflight();
+    expect(facts).toMatchObject({ state: 'unknown', ok: false, problems: [`${detail} ${CHECK}`] });
+    if (check === 'help') expect(facts).toMatchObject({ authenticated: true });
+    else expect(facts).not.toHaveProperty('authenticated');
+    const session = harness.start(request, new AbortController().signal);
+    await expect(session.result).rejects.toMatchObject({ code, message: detail });
+    expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
+  });
+  it.each(['help', 'auth'] as const)(
+    'keeps cancellation ahead of a lost %s check output',
+    async (check) => {
+      const affected = check === 'help' ? '--help' : 'auth';
+      const calls: ClaudeProcessRequest[] = [];
+      const runner: ClaudeCliRunner = async (command) => {
+        calls.push(command);
+        if (command.args.includes('--version')) return outcome('2.1.285');
+        if (!command.args.includes(affected))
+          return outcome(command.args.includes('--help') ? help : '{"authMethod":"claude.ai"}');
+        return await new Promise((resolve) =>
+          command.signal.addEventListener(
+            'abort',
+            () =>
+              resolve(
+                outcome(check === 'help' ? HELP_BODY : AUTH_BODY, {
+                  exitCode: null,
+                  aborted: true,
+                  outputFailed: true,
+                  failureState: check === 'help' ? 'cli-incompatible' : 'auth',
+                }),
+              ),
+            { once: true },
+          ),
+        );
+      };
+      const session = new ClaudeHarness({ runner, platform: 'win32' }).start(
+        request,
+        new AbortController().signal,
+      );
+      await vi.waitFor(() => expect(calls.some((call) => call.args.includes(affected))).toBe(true));
+      await session.cancel();
+      await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+      expect(await drain(session.events)).toEqual([]);
+      expect(calls.some((call) => call.args.includes('--print'))).toBe(false);
+    },
+  );
+  it.each([
+    [
+      'a missing check folder',
+      refusal({ startRefusal: 'working-directory-missing' }),
+      'Claude CLI could not be started because its temporary check folder does not exist.',
+    ],
+    [
+      'a check folder that is not a folder',
+      refusal({ startRefusal: 'working-directory-not-directory' }),
+      'Claude CLI could not be started because its temporary check folder is not a folder.',
+    ],
+    ['an unexplained ENOENT refusal', refusal(), 'Claude CLI could not be started (ENOENT).'],
+    [
+      'an unexplained EACCES refusal',
+      refusal({ spawnCode: 'EACCES' }),
+      'Claude CLI could not be started (EACCES).',
+    ],
+    ['lost output at exit 0', outcome(HELP_BODY, { outputFailed: true }), UNREADABLE],
+    [
+      'lost output with an unknown-option diagnosis at exit 1',
+      outcome(HELP_BODY, { exitCode: 1, outputFailed: true, failureState: 'cli-incompatible' }),
+      UNREADABLE,
+    ],
+    [
+      'lost output without an exit code',
+      outcome(HELP_BODY, { exitCode: null, outputFailed: true }),
+      UNREADABLE,
+    ],
+  ] as const)(
+    'keeps %s when only the help check fails after the version check passed',
+    async (_case, helpResult, detail) => {
+      const { harness, calls } = checks({ help: helpResult });
+      const facts = await harness.preflight();
+      expect(facts).toMatchObject({
+        state: 'unknown',
+        ok: false,
+        version: '2.1.285',
+        authenticated: true,
+        authMethod: 'claude.ai',
+        problems: [`${detail} ${CHECK}`],
+      });
+      expect(calls.filter((call) => call.args.includes('auth'))).toHaveLength(1);
+      const events = await refusedTurn(harness, calls, {
+        code: 'HARNESS_TURN_FAILED',
+        message: detail,
+        retriable: false,
+      });
+      expectPrivate([facts, events], calls);
+    },
+  );
+  it.each([
+    [
+      'exits with code 1',
+      outcome(HELP_BODY, { exitCode: 1 }),
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      VERSIONED,
+      CHECK,
+    ],
+    [
+      'stops without an exit code',
+      outcome('', { exitCode: null }),
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      VERSIONED,
+      CHECK,
+    ],
+    [
+      'cannot receive its input',
+      outcome(help, { stdinFailed: true }),
+      'unknown',
+      'HARNESS_TURN_FAILED',
+      VERSIONED,
+      CHECK,
+    ],
+    [
+      'reports an unknown option',
+      outcome('', { exitCode: 1, failureState: 'cli-incompatible' }),
+      'cli-incompatible',
+      'HARNESS_CLI_INCOMPATIBLE',
+      VERSIONED,
+      UPDATE,
+    ],
+    [
+      'lacks a required option',
+      outcome(help.replace('--restricted ', '')),
+      'cli-incompatible',
+      'HARNESS_UNSUPPORTED_POLICY',
+      'Claude CLI 2.1.285 does not list required options: --restricted.',
+      UPDATE,
+    ],
+  ] as const)(
+    'keeps the version-named guidance when the option check %s',
+    async (_case, helpResult, state, code, detail, action) => {
+      const { harness, calls } = checks({ help: helpResult });
+      expect(await harness.preflight()).toMatchObject({
+        state,
+        ok: false,
+        version: '2.1.285',
+        authenticated: true,
+        problems: [`${detail} ${action}`],
+      });
+      await refusedTurn(harness, calls, { code, message: detail, retriable: false });
+    },
+  );
+});
