@@ -216,8 +216,10 @@ confirmation's review, as above, a new review may open but not be confirmed), so
 the same run cannot offer a second command or confirmation meanwhile. They then report its actual
 outcome, such as **Not sent**, the
 retry's own error or, for a confirmation the API could not be reached for, that the change may or
-may not have been saved, until a new explicit choice or review replaces it. A transport failure is
-never reported as the server refusing the command. Pending state and outcomes belong to the visit
+may not have been saved, until a new explicit choice or review replaces it. For a confirmation, a
+failure classified by the API client as a network error reports uncertainty rather than a server
+refusal. Classification of failures while consuming a response body remains tracked in
+[#561](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/561). Pending state and outcomes belong to the visit
 that made the choice; another run opened in the same view, or a later visit, shows neither.
 Withholding, qualification and the gate are unchanged, and the section stays hidden while it is
 withheld. Other run controls stay available
