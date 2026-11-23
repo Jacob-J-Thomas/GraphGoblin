@@ -15,7 +15,7 @@ export interface InspectorRead {
   readonly committed: number;
   /** Start of an actual GET in flight. A paused first load has no start yet. */
   readonly pending: number;
-  /** Most recent transport outage of this resource. A read started later can establish recovery. */
+  /** Start of the latest unrecovered outage. Repeated failures keep this recovery boundary. */
   readonly loss: number;
 }
 
@@ -114,10 +114,9 @@ function monitor(cache: QueryCache): Set<() => void> {
       if (committed > entry.snapshot.loss) entry.awaitingRecovery = false;
       update(entry, { committed, pending: entry.attempt?.start ?? 0 });
     } else if (action.type === 'setState' && 'data' in action.state) {
-      // cancelQueries can revert a fetching state to the same previously qualified revision.
+      // Cancellation can revert a running, paused or retrying fetch to the same qualified revision.
       // A reset, a data edit, or a restoration with a different object/count cannot borrow it.
       const sameRevision =
-        entry.attempt &&
         action.state.fetchStatus === 'idle' &&
         action.state.dataUpdateCount === entry.dataCount &&
         entry.body?.deref() === action.state.data;

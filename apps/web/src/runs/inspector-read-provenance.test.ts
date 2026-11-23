@@ -1,13 +1,13 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { onlineManager, QueryClient, QueryObserver, type QueryKey } from '@tanstack/react-query';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, render, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { useApiKeyStore } from '../api/api-key.js';
 import { createAppClient } from '../api/context.js';
 import { keys, useRun } from '../api/queries.js';
-import { Providers } from '../app/bootstrap.js';
+import { createQueryClient, Providers } from '../app/bootstrap.js';
 import {
   getInspectorRead,
   markInspectorReadLoss,
@@ -234,6 +234,154 @@ describe('full inspector reads', () => {
       expect(getInspectorRead(source, run).committed).toBeGreaterThan(paused.loss);
     } finally {
       cache.unmount();
+    }
+  });
+
+  it('preserves the same qualified revision when cancelling a paused refetch before its GET', async () => {
+    const source = owner();
+    const cache = source.source.queryClient;
+    await read(source, run);
+    const previous = getInspectorRead(source, run).committed;
+    const revision = cache.getQueryState(run)!;
+    const request = vi.fn(() => Promise.resolve(evidence));
+
+    onlineManager.setOnline(false);
+    const paused = read(source, run, request);
+    try {
+      expect(cache.getQueryState(run)?.fetchStatus).toBe('paused');
+      const outage = getInspectorRead(source, run);
+      expect(previous).toBeGreaterThan(0);
+      expect(outage).toMatchObject({ committed: previous, pending: 0 });
+      expect(outage.loss).toBeGreaterThan(previous);
+
+      await cache.cancelQueries({ queryKey: run, exact: true });
+      expect(await paused).toBe(revision.data);
+      expect(request).not.toHaveBeenCalled();
+      expect(cache.getQueryState(run)).toMatchObject({
+        fetchStatus: 'idle',
+        dataUpdateCount: revision.dataUpdateCount,
+      });
+      expect(cache.getQueryData(run)).toBe(revision.data);
+      expect(getInspectorRead(source, run)).toEqual(outage);
+    } finally {
+      await cache.cancelQueries({ queryKey: run, exact: true });
+    }
+  });
+
+  it.each(['cancelled', 'successful'] as const)(
+    'preserves retry provenance after a transport failure with a %s app-default retry',
+    async (outcome) => {
+      vi.useFakeTimers();
+      const cache = createQueryClient();
+      const source = owner(cache);
+      try {
+        await read(source, run);
+        const previous = getInspectorRead(source, run).committed;
+        const revision = cache.getQueryState(run)!;
+        await cache.invalidateQueries({ queryKey: run, exact: true, refetchType: 'none' });
+        const request = vi
+          .fn<() => Promise<typeof evidence>>()
+          .mockRejectedValueOnce(offline())
+          .mockResolvedValueOnce(evidence);
+        const retry = read(source, run, request);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(request).toHaveBeenCalledOnce();
+        expect(cache.getQueryState(run)).toMatchObject({
+          fetchStatus: 'fetching',
+          fetchFailureCount: 1,
+        });
+        const outage = getInspectorRead(source, run);
+        expect(previous).toBeGreaterThan(0);
+        expect(outage).toMatchObject({ committed: previous, pending: 0 });
+        expect(outage.loss).toBeGreaterThan(previous);
+
+        if (outcome === 'cancelled') {
+          await cache.cancelQueries({ queryKey: run, exact: true });
+        }
+        await vi.advanceTimersByTimeAsync(1_000);
+        expect(await retry).toBe(revision.data);
+        expect(cache.getQueryState(run)?.fetchStatus).toBe('idle');
+        expect(cache.getQueryData(run)).toBe(revision.data);
+        if (outcome === 'cancelled') {
+          expect(request).toHaveBeenCalledOnce();
+          expect(cache.getQueryState(run)?.dataUpdateCount).toBe(revision.dataUpdateCount);
+          expect(getInspectorRead(source, run)).toEqual(outage);
+        } else {
+          expect(request).toHaveBeenCalledTimes(2);
+          expect(cache.getQueryState(run)?.dataUpdateCount).toBe(revision.dataUpdateCount + 1);
+          expect(getInspectorRead(source, run).committed).toBeGreaterThan(outage.loss);
+          expect(getInspectorRead(source, run).pending).toBe(0);
+        }
+      } finally {
+        await cache.cancelQueries({ queryKey: run, exact: true });
+        cache.clear();
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  it('keeps a real useRun receipt when its last observer unmounts and remounts offline', async () => {
+    const api = new FakeApi();
+    const row = api.addRun({ status: 'running' });
+    const key = keys.run(row.id);
+    const cache = queryClient();
+    const client = createAppClient('http://test', api.fetch);
+
+    function Probe() {
+      const source = useRunHeaderRegistry()!;
+      const query = useRun(row.id);
+      const read = useInspectorRead(source, key);
+      return createElement(
+        'output',
+        { 'data-committed': read.committed, 'data-loss': read.loss },
+        query.fetchStatus,
+      );
+    }
+
+    const provider = (visible: boolean) =>
+      createElement(Providers, {
+        client,
+        queryClient: cache,
+        children: visible ? createElement(Probe) : null,
+      });
+    const view = render(provider(true));
+    const receipt = () => view.getByRole('status');
+    try {
+      await waitFor(() => expect(Number(receipt().dataset['committed'])).toBeGreaterThan(0));
+      const committed = Number(receipt().dataset['committed']);
+      const revision = cache.getQueryState(key)!;
+      const unexpectedRead = vi.fn(() => problem(500, 'UNEXPECTED_GET'));
+      api.override('GET /runs/:id', unexpectedRead);
+
+      await act(async () => {
+        onlineManager.setOnline(false);
+        await cache.refetchQueries({ queryKey: key, exact: true });
+      });
+      await waitFor(() => expect(receipt()).toHaveTextContent('paused'));
+      const loss = Number(receipt().dataset['loss']);
+      expect(loss).toBeGreaterThan(committed);
+      expect(Number(receipt().dataset['committed'])).toBe(committed);
+
+      view.rerender(provider(false));
+      await waitFor(() => expect(cache.getQueryState(key)?.fetchStatus).toBe('idle'));
+      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(
+        0,
+      );
+      expect(cache.getQueryData(key)).toBe(revision.data);
+      expect(cache.getQueryState(key)?.dataUpdateCount).toBe(revision.dataUpdateCount);
+
+      view.rerender(provider(true));
+      await waitFor(() => expect(receipt()).toHaveTextContent('paused'));
+      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(
+        1,
+      );
+      expect(unexpectedRead).not.toHaveBeenCalled();
+      expect(Number(receipt().dataset['loss'])).toBe(loss);
+      expect(Number(receipt().dataset['committed'])).toBe(committed);
+    } finally {
+      view.unmount();
+      cache.clear();
     }
   });
 
