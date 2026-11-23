@@ -1,0 +1,65 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/inspector-provenance-cancellation.independent.qa.test.tsx > independent B1 cancellation retention > keeps the exact accepted revision when a not-yet-started paused GET is cancelled
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/runs/inspector-provenance-cancellation.independent.qa.test.tsx:92:32
+     90|     expect(paused.loss).toBeGreaterThan(previous);
+     91|     expect(reverted.loss).toBe(paused.loss);
+     92|     expect(reverted.committed).toBe(previous);
+       |                                ^
+     93|     expect(reverted.committed).toBeLessThan(reverted.loss);
+     94|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/runs/inspector-provenance-cancellation.independent.qa.test.tsx > independent B1 cancellation retention > keeps the accepted revision when cancellation lands in the public retry-delay window
+AssertionError: expected +0 to be 3 // Object.is equality
+
+- Expected
++ Received
+
+- 3
++ 0
+
+ ❯ src/runs/inspector-provenance-cancellation.independent.qa.test.tsx:128:32
+    126|     expect(current.cache.getQueryState(key)?.dataUpdateCount).toBe(pre…
+    127|     const reverted = getInspectorRead(current.owner, key);
+    128|     expect(reverted.committed).toBe(previous);
+       |                                ^
+    129|     expect(reverted.loss).toBe(failed.loss);
+    130|     expect(reverted.committed).toBeLessThan(reverted.loss);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/runs/inspector-provenance-cancellation.independent.qa.test.tsx > independent B1 cancellation retention > retains real useRun provenance through last-observer removal in retry delay and offline remount
+AssertionError: expected +0 to be 6 // Object.is equality
+
+- Expected
++ Received
+
+- 6
++ 0
+
+ ❯ src/runs/inspector-provenance-cancellation.independent.qa.test.tsx:207:38
+    205|       await waitFor(() => expect(returned.result.current.query.fetchSt…
+    206|       expect(returned.result.current.query.data).toBe(original);
+    207|       expect(afterUnmount.committed).toBe(previous);
+       |                                      ^
+    208|       expect(returned.result.current.receipt.committed).toBe(previous);
+    209|       expect(returned.result.current.receipt.committed).toBeLessThan(l…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-provenance-core-
+  │ qa\GraphGoblin\apps\web
+

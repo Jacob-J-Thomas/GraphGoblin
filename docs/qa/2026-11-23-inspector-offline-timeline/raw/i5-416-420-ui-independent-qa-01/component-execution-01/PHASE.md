@@ -1,0 +1,5 @@
+# Admitted component phase, pending predecessor release
+
+Root admits execution only after i5_next_helper_independent_sol explicitly releases the sole heavy slot with its whole-web coverage process terminated and unit tests passing. Numerical coverage shortfall is separate; a unit failure or source drift requires root disposition. No component command has run at creation of this note.
+
+Expected frozen UIQA head3c35b3d0f345dd420c67b90d59de94a2f73d946b/tree848ccedef110b258296c8bce67d3a2ed452cb850. Preserve the sealed32-member preparation subset and its five overlay copies. Fresh before pins, full web typecheck, ESLint/Prettier on exactly five overlays, then one49-case independent component selection with workers1/retry0 and original20s test/hook deadlines. Preserve every initial failure/copy/delta. Only genuine fixture type/lint/format corrections are permitted before behavior; any behavioral failure stops pending root disposition. No install, product edits, Git/index mutations, build, browser or provider launch.

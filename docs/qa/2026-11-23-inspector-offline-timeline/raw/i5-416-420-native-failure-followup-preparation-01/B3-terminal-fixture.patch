@@ -1,0 +1,19 @@
+--- a/apps/web/e2e/independent-416-listener.qa.spec.ts
++++ b/apps/web/e2e/independent-416-listener.qa.spec.ts
+@@ -271,6 +271,7 @@
+   const instance = await createOwnedInstance(request);
+   const origin = requireOwnedLoopback(instance.url).origin;
+   const run = await waitingRun(request, instance);
++  const controlledTerminalAt = run.startedAt ?? run.createdAt;
+   const path = `/runs/${run.id}`;
+   const match = (url: URL) => url.origin === origin && url.pathname === path;
+   await page.route(match, async (route) => {
+@@ -283,6 +284,8 @@
+     const controlled = RunSnapshotSchema.parse({
+       ...actual,
+       status: 'failed',
++      finishedAt: controlledTerminalAt,
++      finalizedAt: controlledTerminalAt,
+       currentNodeId: 'approve',
+       waiting: undefined,
+       failure: {

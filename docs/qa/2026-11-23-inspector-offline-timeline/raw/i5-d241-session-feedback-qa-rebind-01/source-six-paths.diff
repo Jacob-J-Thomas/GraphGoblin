@@ -1,0 +1,826 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 27127017..c581ba55 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -36,10 +36,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   have been saved. Start fresh session additionally needs a post-outage observation
+   of the same failure and still sends that failure's own sequence; a choice queued before a
+   failure of the observation read alone stays spent after that read recovers, including through a
+-  removed and recreated query or another accepted API key. At most one extra
+-  deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
+-  observation. The Timeline and the thread keep their behaviour. No persistent format, store,
+-  export or contract change.
++  removed and recreated query or another accepted API key. That choice belongs to the inspector
++  view rather than its run section: when the section is withheld until a run read under another
++  accepted key qualifies, after a browser loss the view recorded, the control shown again stays
++  disabled while the choice is pending and then reports **Not sent** rather than losing that
++  outcome. Another run or a later visit shows neither its pending state nor its outcome. At most
++  one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
++  it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
++  store, export or contract change.
+ 
+ - The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
+   (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,
+diff --git a/apps/web/src/runs/RunInspectorPage.offline.test.tsx b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+index f3bd6c33..168102c4 100644
+--- a/apps/web/src/runs/RunInspectorPage.offline.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+@@ -13,6 +13,7 @@ import { createAppClient } from '../api/context.js';
+ import { keys } from '../api/queries.js';
+ import { App } from '../app/App.js';
+ import { Providers } from '../app/bootstrap.js';
++import { errorMessage } from '../lib/utils.js';
+ import { NOT_SENT } from './inspector/RunControls.js';
+ 
+ const STALE = 'Last observed, may be out of date';
+@@ -521,6 +522,204 @@ describe('run inspector through an outage (#416)', () => {
+     }
+   });
+ 
++  // Unlike the replacement cases above, this view records a browser loss of its own first, so the
++  // run section is withheld when the credentials change, whatever ran earlier in this file.
++  it('keeps a fresh-session choice queued before an observation-only loss pending through a run section withheld for another accepted API key after a browser outage, then reports it Not sent', async () => {
++    // The first accepted key, stored before the app opens.
++    useApiKeyStore.getState().save('gg_first_key');
++    const api = new FakeApi();
++    const run = missingSessionRun(api);
++    const view = renderApp('/runs/' + run.id, api);
++    const user = userEvent.setup();
++    const start = () => button('Start fresh session for worker');
++    const header = () => screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
++    const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
++    const lastKey = (path: string) => api.callsTo('GET', path).at(-1)?.headers.get('authorization');
++    const evidenceError = /^Run evidence could not be read: /;
++    const unconfirmed = /^This run has not been confirmed since the connection was lost\./;
++    let release = () => {};
++    const held = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    let queued = false;
++    try {
++      await openRun(run.id);
++      await waitFor(() => expect(start()).toBeEnabled());
++
++      // The browser disconnects and reconnects. The view reads the run and its failure evidence
++      // again after that, and the choice is available once more.
++      act(() => onlineManager.setOnline(false));
++      expect(await screen.findByText(STALE)).toBeVisible();
++      expect(start()).toBeDisabled();
++      act(() => onlineManager.setOnline(true));
++      await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
++      await waitFor(() => expect(start()).toBeEnabled());
++      const evidence = view.queryClient.getQueryData(keys.observation(run.id));
++      expect(evidence).toBeDefined();
++      expect(posts(api)).toHaveLength(0);
++
++      // The mutation cache holds the choice before its API call; the gate is read at dispatch.
++      view.queryClient.getMutationCache().config.onMutate = () => {
++        queued = true;
++        return held;
++      };
++      await user.click(start());
++      await waitFor(() => expect(queued).toBe(true));
++      expect(recoveries()).toHaveLength(0);
++
++      // Only the observation read fails in transport, and the view shows it. The run read and the
++      // browser stay healthy, so the run stays current and its other controls available.
++      api.override('GET /runs/:id/observation', () => {
++        throw new TypeError('Failed to fetch');
++      });
++      await act(() =>
++        view.queryClient.refetchQueries({ queryKey: keys.observation(run.id), exact: true }),
++      );
++      expect(await screen.findByText(evidenceError)).toBeVisible();
++      expect(screen.getByText('Reading the run evidence again.')).toBeVisible();
++      expect(start()).toBeDisabled();
++      expect(screen.queryByText(STALE)).toBeNull();
++      expect(button('Replay...')).toBeEnabled();
++      expect(view.queryClient.getQueryState(keys.run(run.id))?.status).toBe('success');
++      expect(onlineManager.isOnline()).toBe(true);
++
++      // Another tab stores a second accepted key, which the mounted API key panel follows. No
++      // read under it has committed yet and this view has recorded a browser loss, so the run
++      // section, its header and its control are withheld rather than shown from an unproved row.
++      api.override('GET /runs/:id/observation', (call) => api.builtIn(call));
++      const originalHeader = header();
++      const originalStart = start();
++      localStorage.setItem(API_KEY_STORAGE, 'gg_second_key');
++      act(() => {
++        window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
++      });
++      expect(originalHeader).not.toBeInTheDocument();
++      expect(originalStart).not.toBeInTheDocument();
++      expect(screen.queryByRole('heading', { name: 'Run ' + run.id })).toBeNull();
++      expect(screen.getByText(unconfirmed)).toBeVisible();
++
++      // The run and its observation are read under the second key and return the same failure.
++      await waitFor(() => {
++        expect(lastKey(`/runs/${run.id}/observation`)).toBe('Bearer gg_second_key');
++        expect(lastKey(`/runs/${run.id}`)).toBe('Bearer gg_second_key');
++      });
++      await waitFor(() => {
++        expect(view.queryClient.getQueryState(keys.observation(run.id))).toMatchObject({
++          status: 'success',
++          fetchStatus: 'idle',
++        });
++        expect(view.queryClient.getQueryState(keys.run(run.id))).toMatchObject({
++          status: 'success',
++          fetchStatus: 'idle',
++        });
++      });
++      expect(view.queryClient.getQueryData(keys.observation(run.id))).toEqual(evidence);
++
++      // The run is shown again, with a new header and control. The queued choice is still
++      // pending, which alone keeps the new control disabled.
++      await openRun(run.id);
++      await waitFor(() => {
++        expect(screen.queryByText(unconfirmed)).toBeNull();
++        expect(screen.queryByText(evidenceError)).toBeNull();
++        expect(screen.queryByText('Reading the run evidence again.')).toBeNull();
++      });
++      expect(header()).not.toBe(originalHeader);
++      const replacement = start();
++      expect(replacement).not.toBe(originalStart);
++      expect(replacement).toBeDisabled();
++      expect(screen.queryByText(STALE)).toBeNull();
++      expect(screen.queryByText(NOT_SENT)).toBeNull();
++      expect(recoveries()).toHaveLength(0);
++
++      // Released, the choice queued before the loss is not sent, and the control shown now says so.
++      release();
++      expect(await screen.findByText(NOT_SENT)).toBeVisible();
++      expect(recoveries()).toHaveLength(0);
++      await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
++      expect(screen.getByText(NOT_SENT)).toBeVisible();
++      expect(posts(api)).toHaveLength(0);
++
++      // A new explicit choice replaces that report and sends once, with the failure's own sequence.
++      api.override('POST /runs/:id/recover-session', () =>
++        Response.json({ ...api.runs.get(run.id), status: 'running' }),
++      );
++      await waitFor(() => expect(start()).toBeEnabled());
++      await user.click(start());
++      await waitFor(() => expect(recoveries()).toHaveLength(1));
++      expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
++      expect(posts(api)).toHaveLength(1);
++      await waitFor(() => expect(screen.queryByText(NOT_SENT)).toBeNull());
++    } finally {
++      release();
++      view.unmount();
++    }
++  });
++
++  it('keeps a fresh-session choice queued for one run from holding or reporting on another run opened in the same view', async () => {
++    const api = new FakeApi();
++    const b = missingSessionRun(api);
++    const a = missingSessionRun(api);
++    api.runs.set(a.id, { ...api.runs.get(a.id)!, parentRunId: b.id });
++    api.override('POST /runs/:id/recover-session', (_call, [runId]) =>
++      Response.json({ ...api.runs.get(runId!), status: 'running' }),
++    );
++    const view = renderApp('/runs/' + a.id, api);
++    const user = userEvent.setup();
++    const start = () => button('Start fresh session for worker');
++    const recoveries = (runId: string) => api.callsTo('POST', `/runs/${runId}/recover-session`);
++    const outcomes = () =>
++      view.queryClient
++        .getMutationCache()
++        .getAll()
++        .map((mutation) =>
++          mutation.state.status === 'error'
++            ? errorMessage(mutation.state.error)
++            : mutation.state.status,
++        );
++    let release = () => {};
++    const held = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    let queued = 0;
++    try {
++      await openRun(a.id);
++      await waitFor(() => expect(start()).toBeEnabled());
++      // The mutation cache holds every choice before its API call; the gate is read at dispatch.
++      view.queryClient.getMutationCache().config.onMutate = () => {
++        queued += 1;
++        return held;
++      };
++      await user.click(start());
++      await waitFor(() => expect(queued).toBe(1));
++      expect(start()).toBeDisabled();
++
++      // A's header links its parent, B, which opens in the same view while A's choice is queued.
++      const header = screen.getByRole('heading', { name: 'Run ' + a.id }).closest('header')!;
++      await user.click(within(header).getByRole('link', { name: 'parent run' }));
++      await openRun(b.id);
++      // B shows its own failure: A's queued choice neither holds B's control nor reports there.
++      await waitFor(() => expect(start()).toBeEnabled());
++      expect(screen.queryByText(/^Not sent: /)).toBeNull();
++
++      // B's own choice is queued as well; then both are released.
++      await user.click(start());
++      await waitFor(() => expect(queued).toBe(2));
++      expect(start()).toBeDisabled();
++      release();
++      // A's choice belonged to a visit no longer shown: it is not sent, and that is not reported
++      // as B's outcome. B's choice sends once, with B's own failure sequence.
++      await waitFor(() => expect(outcomes()).toEqual([NOT_SENT, 'success']));
++      expect(screen.queryByText(/^Not sent: /)).toBeNull();
++      expect(recoveries(a.id)).toHaveLength(0);
++      expect(recoveries(b.id)).toHaveLength(1);
++      expect(recoveries(b.id)[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
++      expect(posts(api)).toHaveLength(1);
++    } finally {
++      release();
++      view.unmount();
++    }
++  });
++
+   it('expires an open replay review on loss and does not revive it after reconnecting', async () => {
+     const api = new FakeApi();
+     const run = startedRun(api);
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index d95e647e..e577a7f3 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -30,7 +30,10 @@ import {
+   useInspectorRead,
+ } from './inspector-read-provenance.js';
+ import { ScriptRecovery } from './inspector/ScriptRecovery.js';
+-import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
++import {
++  SessionRecoveryControls,
++  useSessionRecovery,
++} from './inspector/SessionRecoveryControls.js';
+ import { ThreadViewer } from './inspector/ThreadViewer.js';
+ import { Timeline } from './inspector/Timeline.js';
+ import { WaitPanel } from './inspector/WaitPanel.js';
+@@ -258,6 +261,8 @@ export function RunInspectorPage() {
+   const outage = down || !fresh;
+   // A definitive refusal keeps its ordinary error; a later transport error cannot resurrect it.
+   const refused = runQuery.isError && !isOfflineError(runQuery.error);
++  // Whether the run section presents the run: during an outage a cold or unproved row never is.
++  const presented = run !== undefined && !refused && (!outage || runRead.committed > 0);
+   const blocked = !online
+     ? 'This browser is offline.'
+     : down
+@@ -314,7 +319,7 @@ export function RunInspectorPage() {
+     return self;
+   }, [blocked, boundary, header.registry, queryClient, runId, visit]);
+   // Start fresh session also needs the observation that recorded the failure read after the
+-  // outage; the control itself matches its run, node, visit and failure sequence. The gate keeps
++  // outage; its action matches its run, node, visit and failure sequence. The gate keeps
+   // the observation boundary it was issued after: a later loss of the observation read alone
+   // spends it, even once the observation has been read again. Like the view's write gate, it is
+   // replaced when that boundary or the evidence's freshness changes, and only the latest committed
+@@ -354,6 +359,15 @@ export function RunInspectorPage() {
+       latestSessionGate.current = undefined;
+     };
+   }, [sessionGate]);
++  // The choice belongs to this visit, not to the run section that presents it: while the section
++  // is withheld, a choice queued before keeps its pending state, and the control shown again
++  // reports its own outcome. Withholding, qualification and the gate above are unchanged.
++  const sessionRecovery = useSessionRecovery({
++    owner: visit,
++    run: presented ? run : undefined,
++    events: recovery,
++    availability: sessionGate,
++  });
+ 
+   // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
+   // failed query, a read in flight is joined, and one started before the loss settles first (it
+@@ -462,7 +476,7 @@ export function RunInspectorPage() {
+       {/* One keyed position for the run section, current or last observed, so a draft or an
+           open control survives the switch; another run starts a new section. During an outage
+           a cold or unproved row is never presented as the run (#416). */}
+-      {run !== undefined && !refused && (!outage || runRead.committed > 0) ? (
++      {presented ? (
+         <Fragment key={run.id}>
+           {/* DOM order is title, meta links, then controls (the keyboard order before the
+               cutover); the grid only places the controls at the top right. */}
+@@ -535,7 +549,7 @@ export function RunInspectorPage() {
+           {observation.error ? (
+             <Alert>Run evidence could not be read: {observation.error.message}</Alert>
+           ) : null}
+-          <SessionRecoveryControls run={run} events={recovery} availability={sessionGate} />
++          <SessionRecoveryControls run={run} events={recovery} recovery={sessionRecovery} />
+           {latestExit ? (
+             <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
+               <p>{describeEvent(latestExit, sectionDefinition)}</p>
+diff --git a/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx b/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
+index 73d2c45e..35e677f8 100644
+--- a/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
++++ b/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
+@@ -1,14 +1,18 @@
++import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
+ import { screen, waitFor } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { useState } from 'react';
+ import { describe, expect, it } from 'vitest';
+ import { event, FakeApi } from '../../__fixtures__/fake-api.js';
+ import { renderWith } from '../../__fixtures__/render.js';
+-import { NOT_SENT, type WriteGate } from './RunControls.js';
+-import { SessionRecoveryControls } from './SessionRecoveryControls.js';
++import { errorMessage } from '../../lib/utils.js';
++import { NOT_SENT, OPEN_GATE, type WriteGate } from './RunControls.js';
++import { SessionRecoveryControls, useSessionRecovery } from './SessionRecoveryControls.js';
+ 
+-function fixture() {
+-  const api = new FakeApi();
++const CHANGED = 'Not sent: the failure shown has changed. Review the run again.';
++
++/** A run failed at `worker` with a missing provider session, and its recorded failure event. */
++function failedRun(api: FakeApi, seq = 7) {
+   const run = api.addRun({ status: 'failed', currentNodeId: 'worker' });
+   run.failure = {
+     code: 'HARNESS_SESSION_MISSING',
+@@ -24,14 +28,48 @@ function fixture() {
+       effort: 'low',
+     },
+   };
+-  const failed = event(run.id, 7, 'run.failed', { failure: run.failure });
+-  return { api, run, failed };
++  const failed = event(run.id, seq, 'run.failed', { failure: run.failure });
++  return { run, failed };
++}
++
++function fixture() {
++  const api = new FakeApi();
++  return { api, ...failedRun(api) };
++}
++
++/**
++ * The inspector's arrangement: the view owns the choice for the visit `owner`, and the run section
++ * presents it only while `presented`. Without an owner, one visit lasts as long as this element.
++ */
++function Inspector({
++  run,
++  events,
++  availability = OPEN_GATE,
++  owner,
++  presented = true,
++}: {
++  run: RunRecord;
++  events: readonly RunEvent[];
++  availability?: WriteGate;
++  owner?: object;
++  presented?: boolean;
++}) {
++  const [visit] = useState<object>(() => ({}));
++  const recovery = useSessionRecovery({
++    owner: owner ?? visit,
++    run: presented ? run : undefined,
++    events,
++    availability,
++  });
++  return presented ? (
++    <SessionRecoveryControls run={run} events={events} recovery={recovery} />
++  ) : null;
+ }
+ 
+ describe('missing-session recovery control', () => {
+   it('explains context loss and retained settings; leaving it alone sends no choice', () => {
+     const { api, run, failed } = fixture();
+-    renderWith(<SessionRecoveryControls run={run} events={[failed]} />, '/', api);
++    renderWith(<Inspector run={run} events={[failed]} />, '/', api);
+     expect(
+       screen.getByText(/prior provider conversation will not be carried over/),
+     ).toHaveTextContent('model gpt-6-luna and effort low stay the same');
+@@ -53,7 +91,7 @@ describe('missing-session recovery control', () => {
+         { status: 409 },
+       );
+     });
+-    renderWith(<SessionRecoveryControls run={run} events={[failed]} />, '/', api);
++    renderWith(<Inspector run={run} events={[failed]} />, '/', api);
+     const user = userEvent.setup();
+     const button = screen.getByRole('button', { name: 'Start fresh session for worker' });
+     button.focus();
+@@ -72,11 +110,7 @@ describe('missing-session recovery control', () => {
+     api.override('POST /runs/:id/recover-session', () =>
+       Response.json({ ...run, status: 'running' }),
+     );
+-    const { queryClient } = renderWith(
+-      <SessionRecoveryControls run={run} events={[failed]} />,
+-      '/',
+-      api,
+-    );
++    const { queryClient } = renderWith(<Inspector run={run} events={[failed]} />, '/', api);
+     const { keys } = await import('../../api/queries.js');
+     queryClient.setQueryData(keys.run(run.id), run);
+     queryClient.setQueryData(keys.thread(run.id), {});
+@@ -91,15 +125,15 @@ describe('missing-session recovery control', () => {
+ 
+   it('waits for the observed failure event and hides the choice for other failures or child provenance', () => {
+     const { api, run } = fixture();
+-    const view = renderWith(<SessionRecoveryControls run={run} events={[]} />, '/', api);
++    const view = renderWith(<Inspector run={run} events={[]} />, '/', api);
+     expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeDisabled();
+     view.unmount();
+     run.failure!.missingSession!.visitId = 'another-run:2';
+-    const child = renderWith(<SessionRecoveryControls run={run} events={[]} />, '/', api);
++    const child = renderWith(<Inspector run={run} events={[]} />, '/', api);
+     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+     child.unmount();
+     run.failure = { code: 'INTERNAL_ERROR', message: 'unrelated', resumable: true };
+-    renderWith(<SessionRecoveryControls run={run} events={[]} />, '/', api);
++    renderWith(<Inspector run={run} events={[]} />, '/', api);
+     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+   });
+ 
+@@ -112,14 +146,10 @@ describe('missing-session recovery control', () => {
+       },
+     });
+     const otherRun = { ...failed, runId: '01ARZ3NDEKTSV4RRFFQ69G5FAV' };
+-    const view = renderWith(
+-      <SessionRecoveryControls run={run} events={[otherVisit, otherRun]} />,
+-      '/',
+-      api,
+-    );
++    const view = renderWith(<Inspector run={run} events={[otherVisit, otherRun]} />, '/', api);
+     expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeDisabled();
+     view.unmount();
+-    renderWith(<SessionRecoveryControls run={run} events={[failed, otherVisit]} />, '/', api);
++    renderWith(<Inspector run={run} events={[failed, otherVisit]} />, '/', api);
+     expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeEnabled();
+   });
+ 
+@@ -130,11 +160,7 @@ describe('missing-session recovery control', () => {
+       open: () => false,
+       shown: () => true,
+     };
+-    renderWith(
+-      <SessionRecoveryControls run={run} events={[failed]} availability={blocked} />,
+-      '/',
+-      api,
+-    );
++    renderWith(<Inspector run={run} events={[failed]} availability={blocked} />, '/', api);
+     const button = screen.getByRole('button', { name: 'Start fresh session for worker' });
+     expect(button).toBeDisabled();
+     expect(screen.getByText('Reading the run evidence again.')).toBeInTheDocument();
+@@ -156,7 +182,7 @@ describe('missing-session recovery control', () => {
+             <button type="button" onClick={() => setEvents([later])}>
+               Newer failure
+             </button>
+-            <SessionRecoveryControls run={run} events={events} availability={gate} />
++            <Inspector run={run} events={events} availability={gate} />
+           </>
+         );
+       }
+@@ -193,6 +219,150 @@ describe('missing-session recovery control', () => {
+     },
+   );
+ 
++  it('keeps a choice queued before its section was withheld pending in the section shown again, then reports it (#416)', async () => {
++    const { api, run, failed } = fixture();
++    let open = true;
++    const gate: WriteGate = { blocked: undefined, open: () => open, shown: () => true };
++    function Harness() {
++      const [presented, setPresented] = useState(true);
++      return (
++        <>
++          <button type="button" onClick={() => setPresented((value) => !value)}>
++            Withhold or show the section
++          </button>
++          <Inspector run={run} events={[failed]} availability={gate} presented={presented} />
++        </>
++      );
++    }
++    const view = renderWith(<Harness />, '/', api);
++    const start = () => screen.getByRole('button', { name: 'Start fresh session for worker' });
++    const toggle = () => screen.getByRole('button', { name: 'Withhold or show the section' });
++    const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
++    let release!: () => void;
++    let queued = false;
++    const held = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    view.queryClient.getMutationCache().config.onMutate = () => {
++      queued = true;
++      return held;
++    };
++    try {
++      const user = userEvent.setup();
++      const original = start();
++      await user.click(original);
++      await waitFor(() => expect(queued).toBe(true));
++
++      // The section is withheld, and the gate the choice was queued under is spent meanwhile.
++      await user.click(toggle());
++      expect(original).not.toBeInTheDocument();
++      expect(
++        screen.queryByRole('button', { name: 'Start fresh session for worker' }),
++      ).not.toBeInTheDocument();
++      open = false;
++
++      // The section shown again has a new control, disabled only while the choice is pending.
++      await user.click(toggle());
++      const replacement = start();
++      expect(replacement).not.toBe(original);
++      expect(replacement).toBeDisabled();
++      expect(screen.queryByText(NOT_SENT)).not.toBeInTheDocument();
++      expect(recoveries()).toHaveLength(0);
++
++      release();
++      expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
++      expect(recoveries()).toHaveLength(0);
++
++      // A new explicit choice under an open gate replaces that report and sends once.
++      open = true;
++      api.override('POST /runs/:id/recover-session', () =>
++        Response.json({ ...run, status: 'running' }),
++      );
++      await waitFor(() => expect(start()).toBeEnabled());
++      await user.click(start());
++      await waitFor(() => expect(recoveries()).toHaveLength(1));
++      expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 7 });
++      await waitFor(() => expect(screen.queryByText(NOT_SENT)).not.toBeInTheDocument());
++    } finally {
++      release();
++    }
++  });
++
++  it('shows another run neither the pending state nor the late outcome of a choice made for an earlier one (#416)', async () => {
++    const { api, run: first, failed: firstFailed } = fixture();
++    const { run: second, failed: secondFailed } = failedRun(api, 9);
++    // One view, as the inspector stays mounted across a route change: a new visit of another run.
++    function Harness() {
++      const [visit, setVisit] = useState<{
++        owner: object;
++        run: RunRecord;
++        events: readonly RunEvent[];
++      }>({ owner: {}, run: first, events: [firstFailed] });
++      return (
++        <>
++          <button
++            type="button"
++            onClick={() => setVisit({ owner: {}, run: second, events: [secondFailed] })}
++          >
++            Open another run
++          </button>
++          <Inspector run={visit.run} events={visit.events} owner={visit.owner} />
++        </>
++      );
++    }
++    const view = renderWith(<Harness />, '/', api);
++    const start = () => screen.getByRole('button', { name: 'Start fresh session for worker' });
++    const recoveries = (runId: string) => api.callsTo('POST', `/runs/${runId}/recover-session`);
++    const outcomes = () =>
++      view.queryClient
++        .getMutationCache()
++        .getAll()
++        .map((mutation) =>
++          mutation.state.status === 'error'
++            ? errorMessage(mutation.state.error)
++            : mutation.state.status,
++        );
++    let release!: () => void;
++    let queued = false;
++    const held = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    view.queryClient.getMutationCache().config.onMutate = () => {
++      queued = true;
++      return held;
++    };
++    try {
++      const user = userEvent.setup();
++      await user.click(start());
++      await waitFor(() => expect(queued).toBe(true));
++      expect(start()).toBeDisabled();
++
++      await user.click(screen.getByRole('button', { name: 'Open another run' }));
++      // The other run's own failure: the earlier choice does not hold its control.
++      expect(start()).toBeEnabled();
++
++      // The earlier choice settles while the other run is shown. It is refused, since the
++      // failure it answered is no longer the one shown, and that refusal is not reported here.
++      release();
++      await waitFor(() => expect(outcomes()).toEqual([CHANGED]));
++      expect(screen.queryByText(CHANGED)).not.toBeInTheDocument();
++      expect(screen.queryByText(/^Not sent: /)).not.toBeInTheDocument();
++      expect(start()).toBeEnabled();
++      expect(recoveries(first.id)).toHaveLength(0);
++
++      // The other run's own choice sends once, with its own failure sequence.
++      api.override('POST /runs/:id/recover-session', () =>
++        Response.json({ ...second, status: 'running' }),
++      );
++      await user.click(start());
++      await waitFor(() => expect(recoveries(second.id)).toHaveLength(1));
++      expect(recoveries(second.id)[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 9 });
++      expect(recoveries(first.id)).toHaveLength(0);
++    } finally {
++      release();
++    }
++  });
++
+   it('shows the durable actor, node and lost-context decision after completion', () => {
+     const { api, run } = fixture();
+     const choice = event(run.id, 8, 'run.resumed', {
+@@ -204,11 +374,7 @@ describe('missing-session recovery control', () => {
+         priorContextCarried: false,
+       },
+     });
+-    renderWith(
+-      <SessionRecoveryControls run={{ ...run, status: 'succeeded' }} events={[choice]} />,
+-      '/',
+-      api,
+-    );
++    renderWith(<Inspector run={{ ...run, status: 'succeeded' }} events={[choice]} />, '/', api);
+     expect(screen.getByText(/operator-key chose a fresh session for worker/)).toHaveTextContent(
+       'prior provider context was not carried over (resume-own, old-handle)',
+     );
+diff --git a/apps/web/src/runs/inspector/SessionRecoveryControls.tsx b/apps/web/src/runs/inspector/SessionRecoveryControls.tsx
+index fe50835c..f7f4bd4f 100644
+--- a/apps/web/src/runs/inspector/SessionRecoveryControls.tsx
++++ b/apps/web/src/runs/inspector/SessionRecoveryControls.tsx
+@@ -6,12 +6,14 @@ import { useApi } from '../../api/context.js';
+ import { keys } from '../../api/queries.js';
+ import { Button, HelpText } from '../../components/ui/index.js';
+ import { errorMessage, formatDateTime } from '../../lib/utils.js';
+-import { assertOpen, OPEN_GATE, type WriteGate } from './RunControls.js';
++import { assertOpen, type WriteGate } from './RunControls.js';
+ 
+ type Failed = Extract<RunEvent, { type: 'run.failed' }>;
+ 
+ /** The failure a choice answers, frozen when it is chosen. */
+ interface Choice {
++  /** The inspector visit that made the choice; only that visit shows its state and outcome. */
++  owner: object;
+   gate: WriteGate;
+   runId: string;
+   nodeId: string;
+@@ -21,35 +23,61 @@ interface Choice {
+ 
+ const CHANGED = 'Not sent: the failure shown has changed. Review the run again.';
+ 
+-/** Recovery is deliberately separate from plain Resume and never changes the pinned definition. */
+-export function SessionRecoveryControls({
++/** The inspector view's Start fresh session choice for the run it shows (#416). */
++export interface SessionRecovery {
++  /** The recorded failure a choice would answer is in the evidence shown. */
++  readonly answerable: boolean;
++  /** A choice this visit made is queued or in flight; no other is accepted until it settles. */
++  readonly pending: boolean;
++  /** Why this visit's latest choice was refused or not sent, until a new choice replaces it. */
++  readonly refusal: string | undefined;
++  /** Why the view cannot send a choice now; undefined while it can. */
++  readonly blocked: string | undefined;
++  /** Queue a choice for the failure shown now, under the gate it is shown with. */
++  readonly choose: () => void;
++}
++
++/**
++ * The inspector's Start fresh session action (#416), owned by the view rather than by the run
++ * section that presents it. The section is withheld while an unproved row cannot be presented;
++ * a choice queued before that stays pending, and reports its actual outcome, once the section is
++ * shown again. `run` is the run the section presents, undefined while it is withheld, so a queued
++ * choice is compared right before it is sent with what is shown then. A choice belongs to the
++ * visit (`owner`) that made it: another run, or a later visit, shows neither its pending state
++ * nor its outcome.
++ */
++export function useSessionRecovery({
++  owner,
+   run,
+   events,
+-  availability = OPEN_GATE,
++  availability,
+ }: {
+-  run: RunRecord;
++  owner: object;
++  run: RunRecord | undefined;
+   events: readonly RunEvent[];
+-  /** In the inspector, also requires a fresh matching observation after an outage (#416). */
+-  availability?: WriteGate;
+-}) {
++  /** Also requires a fresh matching observation after an outage. */
++  availability: WriteGate;
++}): SessionRecovery {
+   const client = useApi();
+   const queries = useQueryClient();
+-  const missing = run.failure?.missingSession;
+-  const nodeId = run.failure?.nodeId;
++  const runId = run?.id;
++  const missing = run?.failure?.missingSession;
++  const nodeId = run?.failure?.nodeId;
+   // The recorded failure of this run's current node and missing-session visit. Its own sequence
+   // is sent, even when later audit events follow it; a failure of another visit does not count.
+   const failed = events.findLast(
+     (event): event is Failed =>
+       event.type === 'run.failed' &&
+-      event.runId === run.id &&
++      event.runId === runId &&
+       event.failure.code === 'HARNESS_SESSION_MISSING' &&
+       event.failure.nodeId === nodeId &&
+       event.failure.missingSession?.visitId === missing?.visitId,
+   );
+-  // The identity shown now, compared with a queued choice right before it is sent.
+-  const shown = useRef({ runId: run.id, nodeId, visitId: missing?.visitId, seq: failed?.seq });
++  // The identity shown now, compared with a queued choice right before it is sent. Nothing is
++  // shown while the section is withheld.
++  const shown = useRef({ runId, nodeId, visitId: missing?.visitId, seq: failed?.seq });
+   useLayoutEffect(() => {
+-    shown.current = { runId: run.id, nodeId, visitId: missing?.visitId, seq: failed?.seq };
++    shown.current = { runId, nodeId, visitId: missing?.visitId, seq: failed?.seq };
+   });
+   const action = useMutation({
+     mutationFn: async (choice: Choice) => {
+@@ -72,6 +100,41 @@ export function SessionRecoveryControls({
+       void queries.invalidateQueries({ queryKey: keys.thread(runId) });
+     },
+   });
++  // The latest choice this view made, only while the visit that made it is shown.
++  const own = action.variables?.owner === owner;
++  const pending = own && action.isPending;
++  return {
++    answerable: failed !== undefined,
++    pending,
++    refusal: own && action.isError ? errorMessage(action.error) : undefined,
++    blocked: availability.blocked,
++    choose: () => {
++      if (pending || !run || !failed || !nodeId || !missing || !availability.open()) return;
++      action.mutate({
++        owner,
++        gate: availability,
++        runId: run.id,
++        nodeId,
++        visitId: missing.visitId,
++        failureSeq: failed.seq,
++      });
++    },
++  };
++}
++
++/** Recovery is deliberately separate from plain Resume and never changes the pinned definition. */
++export function SessionRecoveryControls({
++  run,
++  events,
++  recovery,
++}: {
++  run: RunRecord;
++  events: readonly RunEvent[];
++  /** The view's choice, from `useSessionRecovery` for this run and these events. */
++  recovery: SessionRecovery;
++}) {
++  const missing = run.failure?.missingSession;
++  const nodeId = run.failure?.nodeId;
+   const eligible =
+     run.status === 'failed' &&
+     run.failure?.code === 'HARNESS_SESSION_MISSING' &&
+@@ -80,16 +143,6 @@ export function SessionRecoveryControls({
+     missing.visitId.startsWith(run.id + ':');
+   const choices = events.filter((event) => event.type === 'run.resumed' && event.freshSession);
+   if (!eligible && choices.length === 0) return null;
+-  const choose = () => {
+-    if (!failed || !nodeId || !missing || !availability.open()) return;
+-    action.mutate({
+-      gate: availability,
+-      runId: run.id,
+-      nodeId,
+-      visitId: missing.visitId,
+-      failureSeq: failed.seq,
+-    });
+-  };
+   // Node IDs may be 64 characters: wrap them rather than widening the inspector at 390 px.
+   return (
+     <div className="grid min-w-0 gap-2 wrap-anywhere">
+@@ -103,13 +156,15 @@ export function SessionRecoveryControls({
+           </p>
+           <Button
+             variant="outline"
+-            disabled={!failed || action.isPending || availability.blocked !== undefined}
+-            onClick={choose}
++            disabled={!recovery.answerable || recovery.pending || recovery.blocked !== undefined}
++            onClick={() => recovery.choose()}
+           >
+             Start fresh session for {nodeId}
+           </Button>
+-          {availability.blocked !== undefined ? <HelpText>{availability.blocked}</HelpText> : null}
+-          {action.isError ? <HelpText tone="bad">{errorMessage(action.error)}</HelpText> : null}
++          {recovery.blocked !== undefined ? <HelpText>{recovery.blocked}</HelpText> : null}
++          {recovery.refusal !== undefined ? (
++            <HelpText tone="bad">{recovery.refusal}</HelpText>
++          ) : null}
+         </>
+       ) : null}
+       {choices.map((event) =>
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 2edbbd12..37b21541 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -201,7 +201,15 @@ freshness changes; a replaced gate stays spent. Once the view has shown a failur
+ observation read alone, with the run read and the browser healthy, a choice queued before it
+ reports **Not sent** even after the observation is read again with an equal body, including from
+ a removed and recreated query or under another accepted API key that the API key panel followed.
+-A new choice after the qualifying observation read sends once. Other run controls stay available
++A new choice after the qualifying observation read sends once. The view, not the run section,
++owns a **Start fresh session** choice and its outcome. The section is withheld while its run is
++unproved, for example after the API key panel follows another accepted key once this view has
++recorded a browser loss, until a run read under that key qualifies. A choice queued before that
++stays pending: the control shown again stays disabled until the choice settles, then reports its
++actual outcome, such as **Not sent**, until a new explicit choice replaces it. A choice's pending
++state and outcome belong to the visit that made it; another run opened in the same view, or a
++later visit, shows neither. Withholding, qualification and the gate are unchanged, and the
++section stays hidden while it is withheld. Other run controls stay available
+ through an observation-only failure. Script consent keeps the run and observed sequence shown
+ when its review opened. The Runs list's delete-ready
+ controls share the hold on a sent confirmation, its exception after a browser dismissal and the

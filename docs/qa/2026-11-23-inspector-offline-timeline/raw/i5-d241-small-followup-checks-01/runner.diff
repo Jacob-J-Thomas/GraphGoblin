@@ -1,0 +1,161 @@
+--- d241/run-corrected-checks.py
++++ small-followup/run-corrected-checks.py
+@@ -1,5 +1,4 @@
+ from datetime import datetime, timezone
+-import difflib
+ from hashlib import sha256
+ import json
+ import os
+@@ -11,11 +10,11 @@
+ 
+ E = Path(__file__).resolve().parent
+ W = Path(r'G:/ggq/gg-i5-offline-inspector/GraphGoblin')
+-CORRECTION = E.parent / 'i5-d241-actual-max-review-correction-01'
+-FREEZE = E.parent / 'i5-416-420-corrected-ui-freeze-01/FREEZE.json'
+-PREVIOUS_FOCUSED = E.parent / 'i5-416-420-corrected-checks-01'
+-BASELINE_COVERAGE = E.parent / 'i5-416-420-web-coverage-01'
+-HEAD = '3c35b3d0f345dd420c67b90d59de94a2f73d946b'
++CORRECTION = E.parent / 'i5-d241-actual-max-small-followup-01'
++FREEZE = E.parent / 'i5-d241-first-correction-freeze-01/FREEZE.json'
++FIRST_CHECKS = E.parent / 'i5-d241-corrected-checks-01'
++HEAD = 'd71fbe81a3bff5ea3c9cb672fa470a16c0d4a881'
++FOLLOWUP_PATHS = ('CHANGELOG.md', 'docs/09-frontend-and-pwa.md', 'apps/web/src/runs/RunInspectorPage.offline.test.tsx')
+ PROTECTED = (
+     'apps/web/src/api/queries.ts',
+     'apps/web/src/runs/inspector-read-provenance.test.ts',
+@@ -119,34 +118,6 @@
+     return out.returncode
+ 
+ 
+-def format_if_needed(typecheck, lint, format_check, author_paths, pnpm):
+-    if typecheck != 0 or lint != 0 or format_check != 1:
+-        return None, None
+-    warnings = (E / '03-prettier-check.stderr').read_text(encoding='utf-8')
+-    if '[error]' in warnings or 'Code style issues found' not in warnings:
+-        return None, None
+-    before = {}
+-    for name in author_paths:
+-        original = (W / name).read_bytes()
+-        before[name] = original
+-        copy = E / 'pre-format-source' / name
+-        copy.parent.mkdir(parents=True, exist_ok=True)
+-        with copy.open('xb') as file:
+-            file.write(original)
+-    format_write = pnpm('04-prettier-write', 'exec', 'prettier', '--write', *author_paths)
+-    format_recheck = pnpm('05-prettier-recheck', 'exec', 'prettier', '--check', *author_paths)
+-    with (E / 'format.delta.patch').open('x', encoding='utf-8', newline='\n') as delta:
+-        for name, original in before.items():
+-            formatted = (W / name).read_bytes()
+-            if formatted != original:
+-                delta.writelines(difflib.unified_diff(
+-                    original.decode('utf-8').splitlines(keepends=True),
+-                    formatted.decode('utf-8').splitlines(keepends=True),
+-                    fromfile=f'a/{name}', tofile=f'b/{name}',
+-                ))
+-    return format_write, format_recheck
+-
+-
+ def test_cases(report):
+     files = {}
+     for entry in report['testResults']:
+@@ -176,7 +147,7 @@
+             'testFiles': sorted(files), 'selectionComplete': selection_complete, 'counts': counts,
+             'failures': failures, 'priorCaseNamesMissing': missing,
+             'focusedPassed': exit_code == 0 and report['success'] and selection_complete and
+-                             not missing and counts['passed'] == counts['total'] and counts['total'] >= len(original)}
++                             not missing and counts['passed'] == counts['total'] and counts['total'] == len(original)}
+ 
+ 
+ def main():
+@@ -185,7 +156,7 @@
+     binding = read(binding_path)
+     require(len(SELECTION) == len(set(SELECTION)) == 14, 'Unexpected literal test selection')
+     require(binding['rootAdmitted'] is True and binding['expectedHead'] == HEAD, 'Root admission is unset')
+-    freeze = pinned_json(FREEZE, 'd2bb5a28abe15c1ccc1a563dac8fb05a363fc10d3096bdbfb5866bdd3a0b24a6')
++    freeze = pinned_json(FREEZE, '209e324c6d59994679d6cc147cc272e3d5a0880599ae9056ff6cb48a4a06a0cc')
+     paths = list(freeze['files'])
+     lint_paths = [name for name in paths if name.endswith(('.ts', '.tsx'))]
+     require(len(paths) == 15 and len(lint_paths) == 13 and not set(paths) & set(PROTECTED), 'Unexpected static scope')
+@@ -208,22 +179,20 @@
+     source = closure['snapshot']
+     require(source['source'] == freeze['source'] and source['source']['head'] == HEAD, 'Unexpected correction base')
+     differences = sorted(name for name in paths if correction_pins[name] != freeze['files'][name])
+-    require(differences and differences == sorted(closure['changedPaths']) == sorted(binding['correctionPaths']),
+-            'Visible correction paths disagree with the source pins')
+-    baseline = pinned_json(BASELINE_COVERAGE / 'BEFORE.json', '5f80422862dec7ac41e66dfec1802f1436ebb45934a778c4836a3098a62a58ef')
+-    require(baseline['head'] == HEAD and baseline['tree'] == freeze['source']['tree'],
+-            'Unexpected whole-web baseline source')
+-    previous = pinned_json(PREVIOUS_FOCUSED / 'AFTER.json', 'b26d6c6dc79fc9e0dfdf990285a323aec59172cb771d78420246198556904130')
+-    added = pinned_json(E / 'ADDED-TEST-BASELINE.json', 'c7aa243cfc0f27176f5e9ee39dbdc6f48aed1d474d70c92263a1745e980d1fa4')
+-    require(added['source'] == freeze['source'], 'Unexpected added-test baseline source')
+-    baseline_test_pins = previous['selection'] | added['pins']
++    require(differences and set(differences) <= set(FOLLOWUP_PATHS)
++            and differences == sorted(closure['changedPaths']) == sorted(binding['correctionPaths']),
++            'Visible correction paths disagree with the three-path scope or root binding')
++    previous = pinned_json(FIRST_CHECKS / 'AFTER.json', '4e127e35576743c5685b1efa98b38d2f056ee2c37047fa399e7dec0cd90c90d8')
++    require(previous['authors'] == freeze['files'] and previous['controls']['core'] == freeze['protectedCore'],
++            'Prior checked bytes disagree with the d71 freeze')
++    baseline_test_pins = previous['selection']
+     require(set(baseline_test_pins) == set(SELECTION), 'Unexpected baseline test pins')
+     require(all((W / 'apps/web' / path).resolve(strict=True) == W / 'apps/web' / path for path in SELECTION),
+             'A literal test path is missing or redirected')
+-    prior_report = pinned_json(BASELINE_COVERAGE / 'vitest-results.json', 'e3b9aac664038f1ed0199a6afdb833ae8305fac59781ad5ca7977cae7780b0c6')
+-    covered_files = test_cases(prior_report)
+-    old_cases = {name: covered_files[name] for name in SELECTION}
+-    require(sum(map(len, old_cases.values())) == 213, 'Unexpected 3c35 focused baseline roster')
++    prior_report = pinned_json(FIRST_CHECKS / 'vitest-results.json', 'd094f51b13b9f8d17c8b171e04355bd502cc0206de56db53a79399e6e9117646')
++    old_cases = test_cases(prior_report)
++    require(set(old_cases) == set(SELECTION) and sum(map(len, old_cases.values())) == 227,
++            'Unexpected first D241 correction test roster')
+     git_dir_line = (W / '.git').read_text(encoding='utf-8').strip()
+     require(git_dir_line.startswith('gitdir: '), 'Expected linked checkout')
+     git_dir = (W / git_dir_line.removeprefix('gitdir: ')).resolve(strict=True)
+@@ -235,15 +204,16 @@
+     require(before['authors'] == correction_pins, 'Worktree bytes differ from root-bound correction')
+     for role in ('index', 'lock', 'modules'):
+         require(controls[role] == bare_pin(source[role]), f'{role} differs from correction closure')
+-    for name in ('index', 'lock', 'modules', 'virtualStoreLock', 'core'):
+-        require(controls[name] == baseline[name], f'{name} differs from the frozen coverage baseline')
++    require(controls['index'] == bare_pin(freeze['index']), 'Index differs from the d71 freeze')
++    for name in ('lock', 'modules', 'virtualStoreLock', 'core'):
++        require(controls[name] == previous['controls'][name], f'{name} differs from the first D241 check')
+     require(controls['core'] == {name: bare_pin(source['core'][name]) for name in PROTECTED}, 'Protected core differs from closure')
+     for name in SELECTION:
+         author_name = 'apps/web/' + name
+         expected = correction_pins.get(author_name, baseline_test_pins[name])
+         require(before['selection'][name] == expected, f'Unexpected test bytes at {name}')
+     write('BEFORE.json', before | {'expectedAuthorCorrections': differences, 'rootBinding': pin(binding_path),
+-                                   'initialFreeze': pin(FREEZE), 'baselineCoverageReport': pin(BASELINE_COVERAGE / 'vitest-results.json')})
++                                   'initialFreeze': pin(FREEZE), 'firstCorrectionTestReport': pin(FIRST_CHECKS / 'vitest-results.json')})
+ 
+     node_dir = Path(os.environ['USERPROFILE']) / '.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64'
+     env = os.environ | {'PATH': str(node_dir) + os.pathsep + os.environ['PATH']}
+@@ -263,24 +233,12 @@
+     typecheck = pnpm('01-typecheck', '--filter', '@graphgoblin/web', 'run', 'typecheck')
+     lint = pnpm('02-eslint', 'exec', 'eslint', *lint_paths)
+     check = pnpm('03-prettier-check', 'exec', 'prettier', '--check', *paths)
+-    first = check_state(paths, git_dir, common_dir, evidence)
+-    write('AFTER-FIRST-STATIC.json', first)
+-    require(first == before, 'Worktree or control state changed during read-only static checks')
+-    formatting, recheck = format_if_needed(typecheck, lint, check, paths, pnpm)
+     static = check_state(paths, git_dir, common_dir, evidence)
+     write('AFTER-STATIC.json', static)
+-    formatted_paths = [name for name in paths if static['authors'][name] != before['authors'][name]]
+-    static_boundaries = static['controls'] == controls and all(
+-        static['selection'][name] == static['authors'].get('apps/web/' + name, before['selection'][name])
+-        for name in SELECTION
+-    )
+-    static_passed = (typecheck == lint == 0 and static_boundaries and
+-                     (check == 0 or formatting == recheck == 0))
+-    summary = {'webTypecheckExit': typecheck, 'scopedEslintExit': lint, 'firstPrettierCheckExit': check,
+-               'prettierWriteExit': formatting, 'prettierRecheckExit': recheck,
+-               'expectedAuthorCorrections': differences, 'verifiedFormattingChangePaths': formatted_paths,
+-               'staticPassed': static_passed}
+-    write('STATIC-RESULT.json', summary)
++    static_passed = typecheck == lint == check == 0 and static == before
++    summary = {'webTypecheckExit': typecheck, 'scopedEslintExit': lint, 'prettierCheckExit': check,
++               'expectedAuthorCorrections': differences, 'formattingWriteInvoked': False,
++               'staticSourceAndControlsUnchanged': static == before, 'staticPassed': static_passed}
+     if not static_passed:
+         write('RESULT.json', summary | {'focusedInvoked': False})
+         return 1

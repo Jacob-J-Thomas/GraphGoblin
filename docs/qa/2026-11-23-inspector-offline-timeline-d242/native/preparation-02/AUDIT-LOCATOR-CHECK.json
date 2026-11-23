@@ -1,0 +1,18 @@
+{
+  "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i5-564-final-astra-max-03\\diagnostic\\sent-action.cjs",
+  "bytes": 11631,
+  "sha256": "3a22890faeee6e129fc777408200402422448f3fd8e7be91d3852d379f8ccc55",
+  "actualFeedbackLines": [
+    138,
+    139,
+    140,
+    141,
+    142
+  ],
+  "feedbackUsesVisibleTextLocator": true,
+  "deletionDoesNotRequireAlertRole": true,
+  "originalPatternIncludesUncertainty": true,
+  "observationBudgetMs": 2000,
+  "sourceExcerpt": "const errorPattern=/The GraphGoblin API cannot be reached|may or may not have been saved|the GraphGoblin API could not be reached/i;\n      let visibleFeedback=false;\n      try { await page.getByText(errorPattern).first().waitFor({state:'visible',timeout:2000});visibleFeedback=true; } catch(err) { if(err.name!=='TimeoutError')throw err; }\n      result.feedbackObservedWithinTwoSeconds=visibleFeedback;\n      result.visibleFeedback=visibleFeedback?await page.getByText(errorPattern).first().innerText():null;\n      ",
+  "actualSourceOrBrowserExecuted": false
+}

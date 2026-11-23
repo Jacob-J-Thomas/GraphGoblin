@@ -1,0 +1,35 @@
+--- baseline-test
++++ formatted-test
+@@ -340,7 +340,11 @@
+     }
+ 
+     const provider = (visible: boolean) =>
+-      createElement(Providers, { client, queryClient: cache, children: visible ? createElement(Probe) : null });
++      createElement(Providers, {
++        client,
++        queryClient: cache,
++        children: visible ? createElement(Probe) : null,
++      });
+     const view = render(provider(true));
+     const receipt = () => view.getByRole('status');
+     try {
+@@ -361,13 +365,17 @@
+ 
+       view.rerender(provider(false));
+       await waitFor(() => expect(cache.getQueryState(key)?.fetchStatus).toBe('idle'));
+-      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(0);
++      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(
++        0,
++      );
+       expect(cache.getQueryData(key)).toBe(revision.data);
+       expect(cache.getQueryState(key)?.dataUpdateCount).toBe(revision.dataUpdateCount);
+ 
+       view.rerender(provider(true));
+       await waitFor(() => expect(receipt()).toHaveTextContent('paused'));
+-      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(1);
++      expect(cache.getQueryCache().find({ queryKey: key, exact: true })?.getObserversCount()).toBe(
++        1,
++      );
+       expect(unexpectedRead).not.toHaveBeenCalled();
+       expect(Number(receipt().dataset['loss'])).toBe(loss);
+       expect(Number(receipt().dataset['committed'])).toBe(committed);

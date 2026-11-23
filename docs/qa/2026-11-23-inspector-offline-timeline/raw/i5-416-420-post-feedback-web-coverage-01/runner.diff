@@ -1,0 +1,28 @@
+--- unexecuted-d8/run-coverage.py
++++ unexecuted-a0/run-coverage.py
+@@ -9,11 +9,11 @@
+ import time
+ 
+ W = Path(r'G:/ggq/gg-i5-offline-inspector/GraphGoblin')
+-E = Path(r'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-416-420-final-web-coverage-01')
+-FREEZE = E.parent / 'i5-d241-residual-corrected-freeze-01/FREEZE.json'
+-FROZEN_SHA = '24b361c15b8d64d9090d8c1420ee84dd6f01c075e91cb9a0b1b46e3fc26317bf'
+-HEAD = 'd8bc84937363bbde1d24b561efdcd9e8601a48a7'
+-TREE = 'e94fb9c910696baddd7278992ed716af4ca747d0'
++E = Path(r'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-416-420-post-feedback-web-coverage-01')
++FREEZE = E.parent / 'i5-d241-session-feedback-corrected-freeze-01/FREEZE.json'
++FROZEN_SHA = '777c5e8f9f3a2f6d2d4ef170b5992f3065a2bb1471a55d40d1671dc594fc3ed7'
++HEAD = 'a0ce7b781e333b70f4711b5e9201ef63c157df1d'
++TREE = '3f47fed82c18930fc0a56bc8e2598e7190ba8f3c'
+ NODE = Path(os.environ['USERPROFILE']) / '.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64'
+ ENV = os.environ | {'PATH': str(NODE) + os.pathsep + os.environ['PATH']}
+ GIT_ENV = ENV | {'GIT_NO_LAZY_FETCH': '1', 'GIT_OPTIONAL_LOCKS': '0'}
+@@ -69,7 +69,7 @@
+ def main():
+     assert pin(FREEZE)['sha256'] == FROZEN_SHA
+     freeze = read(FREEZE)
+-    corrected = read(E.parent / 'i5-d241-final-residual-checks-01/AFTER.json')
++    corrected = read(E.parent / 'i5-d241-session-feedback-checks-01/AFTER.json')
+     pre = state(corrected['authors'])
+     assert pre['head'] == HEAD and pre['tree'] == TREE and not pre['status']
+     assert pre['sourceFiles'] == corrected['authors']

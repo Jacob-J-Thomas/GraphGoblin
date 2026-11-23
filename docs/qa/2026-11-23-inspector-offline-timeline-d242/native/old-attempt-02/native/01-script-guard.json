@@ -1,0 +1,166 @@
+{
+  "number": 1,
+  "group": "repro",
+  "action": "script",
+  "mode": "guard",
+  "checks": [
+    {
+      "name": "replacement launcher is disabled while original command pending",
+      "passed": false,
+      "facts": null
+    },
+    {
+      "name": "replacement dispatches no second confirmation",
+      "passed": false,
+      "facts": [
+        {
+          "body": {
+            "observedSeq": 6,
+            "retryUncertainScript": true
+          },
+          "phase": "before-original-settlement",
+          "ordinal": 1
+        },
+        {
+          "body": {
+            "observedSeq": 6,
+            "retryUncertainScript": true
+          },
+          "phase": "before-original-settlement",
+          "ordinal": 2
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "name": "matching-new-generation-read-held",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "same-finalized-body-requalified",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "guard-attempt",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": [
+          {
+            "text": "Recover script\n\nThe previous script attempt may already have produced its effect. Resume runs the script again and may repeat that effect.\n\nReplay runs again from the chosen node as a separate run with a new ID. Scripts, provider turns, child runs and deliveries after that node run again for the new run. It does not undo the source's recorded effects or results, or resend the source's own recorded deliveries.\n\nWork that can run again on this path, if reached:\n\nControlled script (approve): script\n\nReplay starts a new run from this node and runs the script again. Cancel leaves this run failed without running anything.\n\nResume\nReplay\nCancel",
+            "buttons": [
+              {
+                "label": "",
+                "disabled": false
+              },
+              {
+                "label": "Resume",
+                "disabled": true
+              },
+              {
+                "label": "Replay",
+                "disabled": true
+              },
+              {
+                "label": "Cancel",
+                "disabled": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "state": "failed",
+  "runA": "01M3Y7RKG08245PHCXP916EBMT",
+  "runB": "01M3Y7RKG08245PHCXP916EBMZ",
+  "posts": [
+    {
+      "body": {
+        "observedSeq": 6,
+        "retryUncertainScript": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 1
+    },
+    {
+      "body": {
+        "observedSeq": 6,
+        "retryUncertainScript": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 2
+    }
+  ],
+  "previews": [],
+  "runReads": [
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": true
+    }
+  ],
+  "unknown": [],
+  "sourceSameRoute": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "requestFailures": 2,
+  "cleanupCloseResolved": true,
+  "onlyInterceptedDispatchNoServerEffects": true
+}

@@ -1,0 +1,15 @@
+--- first/component4bf.tsx
++++ corrected/component.tsx
+@@ -1091,7 +1091,11 @@
+ 
+     sent.release();
+     await waitFor(() => expect(original.state.status).toBe('error'));
+-    expect(await screen.findByText('The GraphGoblin API cannot be reached.')).toBeVisible();
++    const runHeader = (await heading(run.id)).closest('header');
++    if (!runHeader) throw new Error('Run header must be present');
++    const scriptError = await within(runHeader).findByRole('alert');
++    expect(scriptError).toBeVisible();
++    expect(scriptError).toHaveTextContent(/^The GraphGoblin API cannot be reached\.$/);
+     expect(api.callsTo('POST', path)).toHaveLength(1);
+   });
+ });

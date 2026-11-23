@@ -393,3 +393,42 @@ Signed PR #553 completed intent 4 before this lane began. At admission, the appr
 Actual Claude owns the production correction; GPT supplies bounded supporting tests/docs. [Exact-source evidence](../qa/2026-11-22-i5-inspector-truthfulness/README.md) records 3,102 passing web tests with 98.65% line and 94.44% branch coverage, 36 distinct independent component outcomes across qualified invocations, and six fresh browser passes. Both prior CHANGES_REQUIRED reviews, budget-stopped author terminals and failed checks/fixtures retain their historical outcomes. This candidate record closes no issue by itself.
 
 Actual Claude targeted review of the final supporting correction, the fresh independent Astra MAX third/final audit, exact-head/current-target ordinary CI/native and signed merge remain required. Preserve the three-scan cap and current owner gates; no fourth general scan, fabricated provider completion or weakened coverage is implied. #416 then #420 follow this pair's engineering delivery. Final owner decision review/rework precedes owner QA; Mac #501, #448/#459 owner obligations, #460 and conditional #379 retain their separate status. Later completion records belong in the linked issue/PR discussions and subsequent register entries.
+
+## Intent 5 offline evidence and Timeline candidate — November 23, D240–D241
+
+Signed PR #557 delivered #386/#385 before this #416/#420 candidate. Product source is frozen at
+`a0ce7b781e333b70f4711b5e9201ef63c157df1d`, tree
+`3f47fed82c18930fc0a56bc8e2598e7190ba8f3c`, against signed main
+`0f6c325becf3e3e0562ae69dfae2c42bcf1d7129`. The inspector retains qualified last-known evidence
+during relevant outages while keeping write authority tied to a matching fresh read and new
+consent. Same-visit pending session actions and their refusal feedback survive temporary run
+section removal. Long Timeline numbers remain separately legible from event types.
+
+The [source and QA archive](../qa/2026-11-23-inspector-offline-timeline/README.md) retains actual
+Claude UI implementation and GPT architecture provenance, the scoped Fable core critique,
+both negative opposing reviews, original failures, bounded corrections and independent QA.
+Current evidence is 233 focused passes, independent fresh2 and full63 passes, and 3,179 whole-web
+passes with 98.68% line and 94.46% branch coverage. The fresh native browser run passed 11/12
+without retries. Strict G1 still fails the pre-existing 320px/200%-text whole-page overflow;
+all 12 current Timeline samples have zero number/type overlap or clipping. The retained-main
+comparison and current-source disposition support #420's bounded criterion, with broader
+reflow separately parked in #563. #561/#562 also remain outside this batch.
+
+This records a candidate and completed local evidence, not delivery or owner acceptance.
+Repository gates, exact-head/current-target CI and native artifact verification, the fresh
+independent Astra MAX formal pass 3, and verified signed merge remain required. Historical
+CHANGES REQUIRED verdicts remain preserved; the two consumed formal passes and one general
+scan are not reset. Engineering stays 41/48 overall, 24/26 core and 4/5 intents until merge.
+The catalogue keeps D01–D03 first and adds D240/D241 outcomes and declined alternatives.
+Consolidated owner accept/rework stays before owner QA. Mac #501, #448/#459 owner obligations,
+held #460, refinement-gated #379 and the four conditional post-Mac issues retain their gates.
+
+## Intent 5 D242 correction and publication candidate — November 23
+
+The historical D240/D241 checkpoint is superseded by this current candidate. Actual ordinary-Max Opus 5.5/xhigh implemented the eight-path B2 correction with 83 paired tools. The reviewed/tested runtime is `20a69d9b53910a5ede81088e9ff67680f348ce68`, tree `8be5890a170f2a51af49467e1f71e88839bef28b`. Root separately applied a docs09 wording qualification after coverage closed, then froze local commit `56404df70e8d28f0b2194bf57b4799bea682cb5f`, tree `728e957b61df8581a94c37261d3be845eeaca7d9`. Only that document changed; apps/web tree `c2f489343ef414c67c7b750ec7245f50364126d0` and runtime/tests/dependencies remain identical. The documentation scopes confirmation uncertainty to typed network errors and retains parked #561's source-supported body-consumption gap.
+
+The [D242 QA archive](../qa/2026-11-23-inspector-offline-timeline-d242/README.md) preserves all actual first failures and qualifications: original final Astra formal pass 3/3 **CHANGES REQUIRED**, old native four-case negative witness, loader failure/repair, root's optional-callback type-only correction and raw-index qualification. Actual Fable 5.2/xhigh then returned **ACCEPT FIX** for the known B2 correction; root read the full ordinary report and adjudicated all eight nonblocking notes. Formal reviews remain 3/3 consumed and general scans 2/3; this scoped known-fix route is not another formal audit or an Astra sign-off.
+
+Closed evidence is 244 focused passes (all 233 prior cases plus 11 new), independent fresh 2/2 and full 63/63, whole-web 3,190 passes in 236 files with 98.68% line and 94.46% branch coverage, and corrected native 10/10 across 49 criteria. The fixed browser selection remains 11/12: strict G1 is still failed and parked in #563, with all 12 geometry cells identical to the prior run and zero sequence/type overlap or clipping. #561/#562 remain outside this batch. Runtime execution and Fable source review bind 20a69; later documentation equivalence does not imply a new runtime execution.
+
+This is a publication candidate, not merged delivery or owner acceptance. Applicable final-head checks, fresh exact-head/current-target CI and native artifacts, capped root completion and verified signed merge remain required as external postcommit receipts. Engineering stays **41/48 overall, 24/26 five-intent core and 4/5 intents** until actual verified merge. The owner review draft preserves the complete 241-entry prefix, D01-D03 first and the historical through-240 introduction, then appends one D242 entry. Owner accept/rework and all 12 owner QA boxes remain unchecked. Mac #456/PR #501, owner trackers #448/#459, conditional #64/#125/#221/#323, held #460, refinement #379 and deployment retain their separate gates.

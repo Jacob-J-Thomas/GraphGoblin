@@ -1,0 +1,9 @@
+# Post-feedback build and browser preparation
+
+The root freeze binds a0ce7b781e333b70f4711b5e9201ef63c157df1d, tree 3f47fed82c18930fc0a56bc8e2598e7190ba8f3c, parent d8bc84937363bbde1d24b561efdcd9e8601a48a7. Its 15 author file pins and three protected core pins match the closed 233-case check snapshot. The component overlay is the exact 76,934-byte diagnostic 55a0c5a2. The B3 listener keeps the previously approved 6ed24b1b timestamp fixture. The other three overlay pins and both authored browser specs stay fixed.
+
+After QA closes, root fills the actual linked UIQA index SHA256 and separately authorizes build in SOURCE-BINDING.json. The existing web distribution and retained isolated 28-file first-build copy must both match the original 2231400 build manifest before the normal pnpm build can replace the working distribution. The retained copy is checked again after build. Before authorizing the rebuild, verify that the working dist directory resolves to the literal UIQA apps/web/dist path.
+
+After the new build closes, root separately fills BROWSER-ADMISSION.json with its exact build manifest SHA256. The unchanged command selects four specs and all 12 cases with one worker, zero retries and tracing under the existing deadlines. The existing development-source API test fixture serves a verified copy of the newly built web in isolated scratch on ephemeral loopback ports. G1 keeps its strict geometry assertions, full evidence collection and native failure verdict. The prior #563 disposition remains separate.
+
+The source and browser bindings are unarmed. Preparation rehashed the immutable first-build copy and diagnostic fixture, verified the final source freeze against the 233-check snapshot, and parsed both runners. The build, browser, cases and geometry functions are AST-identical. The two changed functions differ only in the scratch prefix and final freeze pin. No UIQA checkout read, build, fixture write or browser launch occurred.

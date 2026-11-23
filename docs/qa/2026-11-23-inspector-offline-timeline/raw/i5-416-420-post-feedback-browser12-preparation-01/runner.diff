@@ -1,0 +1,42 @@
+--- postfix/run-browser12.py
++++ post-feedback/run-browser12.py
+@@ -13,10 +13,10 @@
+ P = Path(__file__).resolve().parent
+ E = P.parent
+ W = Path(r'G:/ggq/gg-i5-offline-ui-qa/GraphGoblin')
+-OUT = E / 'i5-416-420-postfix-browser12-execution-01'
++OUT = E / 'i5-416-420-post-feedback-browser12-execution-01'
+ PREVIOUS_OUT = E / 'i5-416-420-browser12-execution-01'
+ PREVIOUS_BUILD = PREVIOUS_OUT / 'BUILD-MANIFEST.json'
+-POSTFIX_FREEZE = E / 'i5-d241-residual-corrected-freeze-01/FREEZE.json'
++POSTFIX_FREEZE = E / 'i5-d241-session-feedback-corrected-freeze-01/FREEZE.json'
+ DIST = W / 'apps/web/dist'
+ PNPM = Path('C:/nvm4w/nodejs/node_modules/pnpm/pnpm.exe')
+ GIT = Path('C:/Program Files/Git/cmd/git.exe')
+@@ -28,7 +28,7 @@
+     'bounded-history.spec.ts': 1,
+ }
+ BROWSER_OVERLAYS = {
+-    'apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx': '8a344821db18ec25fa7cf2219c07721acf4eddae0d109b8eb3a412ca58aa6c2b',
++    'apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx': '55a0c5a29f8f7dc6de1045d3d4858d790fdca548385237684ec3bbb5c6f31c3a',
+     'apps/web/e2e/independent-416-420-helpers.ts': 'e642e8502fde06b41047f082fb7446183dd022097bd12f57cde46351d904bd38',
+     'apps/web/e2e/independent-420-geometry.ts': '2baa8bebcc6ecab903604ba76fb0b5bad5e728434d823b008f44347392dc828e',
+     'apps/web/e2e/independent-416-listener.qa.spec.ts': '6ed24b1b26ba63b1ab245100e3a4a01c078b8baa4b069d336bb4c3716ceacca5',
+@@ -89,7 +89,7 @@
+     env.update({'TEMP': str(tmp), 'TMP': str(tmp)})
+     if browser:
+         env.update({
+-            'GG_TEST_DATA_PREFIX': 'gg-i5-postfix-browser12-', 'GG_E2E_MAIN_PORT': '0',
++            'GG_TEST_DATA_PREFIX': 'gg-i5-post-feedback-browser12-', 'GG_E2E_MAIN_PORT': '0',
+             'GG_E2E_CONTROL_PORT': '0', 'GG_OLLAMA_ENABLED': 'false',
+             'GG_E2E_WEB_DIST': str(OUT / 'owned-web-dist'),
+             'I5_QA_CASE_BINDING': str(OUT / 'I5_QA_CASE_BINDING.json'),
+@@ -345,7 +345,7 @@
+     need(args in (['build'],['browser']), 'Specify build or browser after root admission')
+     binding = read(P/'SOURCE-BINDING.json')
+     need(binding['rootAdmitted'] is True, 'Root source/build admission unset')
+-    need(pin(POSTFIX_FREEZE)['sha256'] == '24b361c15b8d64d9090d8c1420ee84dd6f01c075e91cb9a0b1b46e3fc26317bf', 'Postfix root freeze changed')
++    need(pin(POSTFIX_FREEZE)['sha256'] == '777c5e8f9f3a2f6d2d4ef170b5992f3065a2bb1471a55d40d1671dc594fc3ed7', 'Postfix root freeze changed')
+     freeze = read(POSTFIX_FREEZE)
+     need(binding['source'] == freeze['source'] and
+          all(binding['sourceFiles'].get(name) == record['sha256']

@@ -1,0 +1,824 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index eb206d2a..13d4bf81 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,20 +10,30 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   **Last observed, may be out of date**, with a notice saying whether the browser is offline,
+   the API cannot be reached or the run is being read again. Only a run read with an in-memory
+   receipt qualifies: a real, non-manual, contract-valid GET from the current client, cache, query
+-  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable,
+-  and a definitive refusal keeps its error even through a later transport failure. Nodes show
+-  their recorded IDs and summaries that no qualified read supplied are omitted. Every control
+-  that writes (pause, cancel, resume, replay, script recovery, Start fresh session, input and
+-  signal answers, the delete-ready preview and confirmation) stays unavailable until a run read
+-  that started after the outage began has committed; reconnecting, a health probe or an open
+-  stream alone does not unlock it. Open reviews close, late previews are discarded, and a command
+-  queued across a loss, reconnect or A → B → A visit reports **Not sent** instead of sending.
+-  Drafts of the same wait, reading and Cancel keep working, and a write already sent keeps its
+-  real outcome; nothing is replayed. Start fresh session additionally needs a post-outage
+-  observation of the same failure and still sends that failure's own sequence. At most one extra
++  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable.
++  A definitive HTTP refusal retires the receipt and shows its ordinary error. A successful GET
++  whose body does not match the contract retires the receipt too, without changing the ordinary
++  query result, which keeps that body. A later transport failure cannot bring the fallback back,
++  although its ordinary offline error can replace an earlier HTTP message. Nodes show their
++  recorded IDs and summaries that no qualified read supplied are omitted. The execution context
++  stays, with the pinned definition shown as unavailable and a cancellation's actor and sequence
++  numbers only from a qualified observation; a selected exit event keeps its own explanation of a
++  missing value. Every control that writes (pause, cancel, resume, replay, script recovery, Start
++  fresh session, input and signal answers, the delete-ready preview and confirmation) stays
++  unavailable until a run read that started after the outage began has committed; reconnecting, a
++  health probe or an open stream alone does not unlock it. One run's own outage does not carry
++  over to another run opened in the same view; a browser disconnect applies to every run. Open
++  reviews close, late previews are discarded, and a command queued across a loss, reconnect or
++  A → B → A visit reports **Not sent** instead of sending. Drafts of the same wait, reading and
++  Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
++  a script recovery or delete-ready confirmation already sent is unresolved, no replacement review
++  opens over it, so its late failure or success is still reported, including for a delete-ready
++  review the browser dismissed. Start fresh session additionally needs a post-outage observation
++  of the same failure and still sends that failure's own sequence; a choice queued before a
++  failure of the observation read alone stays spent after that read recovers. At most one extra
+   deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
+-  observation. The Runs list, the Timeline and the thread keep their behaviour. No persistent
+-  format, store, export or contract change.
++  observation. The Timeline and the thread keep their behaviour. No persistent format, store,
++  export or contract change.
+ 
+ - The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
+   (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,
+diff --git a/apps/web/src/runs/HistoryEligibility.test.tsx b/apps/web/src/runs/HistoryEligibility.test.tsx
+index e3d0166e..af93894e 100644
+--- a/apps/web/src/runs/HistoryEligibility.test.tsx
++++ b/apps/web/src/runs/HistoryEligibility.test.tsx
+@@ -356,6 +356,91 @@ it('reports the uncertain outcome of a confirmation already sent when its review
+   expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
+ });
+ 
++it.each(['fails in transport', 'succeeds'] as const)(
++  'opens no second review after reconnecting while a confirmation sent before the outage is unresolved, and reports it when it %s (#416)',
++  async (settle) => {
++    const api = fakeConsent(),
++      user = userEvent.setup();
++    const run = api.addRun({ status: 'succeeded' });
++    let finish!: (response: Response) => void;
++    let fail!: (error: Error) => void;
++    api.override(
++      'POST /runs/deletion-eligibility',
++      () =>
++        new Promise<Response>((resolve, reject) => {
++          finish = resolve;
++          fail = reject;
++        }),
++    );
++    renderWith(<InspectorGate runId={run.id} />, '/', api);
++    const review = () => screen.getByRole('button', { name: 'Review delete-ready history' });
++    const withdraw = () => screen.getByRole('button', { name: 'Withdraw delete-ready mark' });
++    await user.click(review());
++    await user.click(await screen.findByRole('button', { name: 'Confirm delete-ready selection' }));
++    expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
++    await user.click(screen.getByRole('button', { name: 'Lose connection' }));
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    // The view reads the run again under a new gate; the confirmation sent earlier is unresolved.
++    await user.click(screen.getByRole('button', { name: 'Read again' }));
++    expect(review()).toBeDisabled();
++    expect(withdraw()).toBeDisabled();
++    // An attempt to open a replacement review opens nothing and sends no preview.
++    await user.click(review());
++    await user.click(withdraw());
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(1);
++    await act(async () => {
++      if (settle === 'succeeds')
++        finish(Response.json({ token: 'b'.repeat(64), items: [{ runId: run.id, reasons: [] }] }));
++      else fail(new TypeError('Failed to fetch'));
++      await Promise.resolve();
++    });
++    const outcome =
++      settle === 'succeeds'
++        ? '1 run marked delete-ready.'
++        : /The change may or may not have been saved/;
++    expect(await screen.findByText(outcome)).toBeInTheDocument();
++    await waitFor(() => expect(review()).toBeEnabled());
++    expect(withdraw()).toBeEnabled();
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
++    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(1);
++  },
++);
++
++it('reports the outcome of a pending confirmation the browser dismissed (#416)', async () => {
++  const api = fakeConsent(),
++    user = userEvent.setup();
++  const run = api.addRun({ status: 'succeeded' });
++  let fail!: (error: Error) => void;
++  api.override(
++    'POST /runs/deletion-eligibility',
++    () =>
++      new Promise<Response>((_resolve, reject) => {
++        fail = reject;
++      }),
++  );
++  renderWith(<HistoryEligibility runIds={[run.id]} />, '/', api);
++  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
++  await user.click(await screen.findByRole('button', { name: 'Confirm delete-ready selection' }));
++  expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
++  const modal = screen.getByRole('dialog');
++  if (!(modal instanceof HTMLDialogElement)) throw new Error('Expected a native dialog.');
++  // The browser has already closed the native dialog (for example by repeated Escape). Once that
++  // dismissal is handled, the dismissed review no longer holds the controls.
++  act(() => modal.close());
++  await waitFor(() =>
++    expect(screen.getByRole('button', { name: 'Review delete-ready history' })).toBeEnabled(),
++  );
++  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++  await act(async () => {
++    fail(new TypeError('Failed to fetch'));
++    await Promise.resolve();
++  });
++  expect(await screen.findByText(/The change may or may not have been saved/)).toBeInTheDocument();
++  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
++});
++
+ it('clears the Runs selection after a successful withdrawal', async () => {
+   const api = fakeConsent(),
+     user = userEvent.setup();
+diff --git a/apps/web/src/runs/HistoryEligibility.tsx b/apps/web/src/runs/HistoryEligibility.tsx
+index 809477fe..a4224aad 100644
+--- a/apps/web/src/runs/HistoryEligibility.tsx
++++ b/apps/web/src/runs/HistoryEligibility.tsx
+@@ -35,6 +35,9 @@ export function HistoryEligibility({
+   // expires it, together with any preview that arrives late for it.
+   const active = review?.gate === availability ? review : undefined;
+   const unavailable = availability.blocked !== undefined;
++  // A sent confirmation keeps its review, open or expired by an outage, until it settles: no
++  // replacement review opens over it, so its outcome is still reported here (#416).
++  const holding = busy && review !== undefined;
+ 
+   const dismiss = () => {
+     generationRef.current++;
+@@ -43,7 +46,7 @@ export function HistoryEligibility({
+   };
+   const begin = async (action: 'mark' | 'withdraw') => {
+     const gate = availability;
+-    if (!gate.open()) return;
++    if (holding || !gate.open()) return;
+     const request = ++generationRef.current;
+     const ids = [...runIds];
+     setReview({ ids, action, gate });
+@@ -81,9 +84,10 @@ export function HistoryEligibility({
+       if (generationRef.current === request) dismiss();
+       await queryClient.invalidateQueries({ queryKey: ['runs'] });
+     } catch (failure) {
+-      if (generationRef.current !== request) return;
+-      // A sent confirmation whose review expired meanwhile still reports what happened to it.
+-      if (current.gate.open()) setError(errorMessage(failure));
++      // A sent confirmation always reports what happened to it: in its review while that is still
++      // open and current, otherwise beside the controls, leaving any newer review intact.
++      if (generationRef.current === request && current.gate.open())
++        setError(errorMessage(failure));
+       else
+         setOutcome(
+           isOfflineError(failure)
+@@ -102,7 +106,7 @@ export function HistoryEligibility({
+         <Button
+           size="sm"
+           variant="outline"
+-          disabled={!runIds.length || runIds.length > 500 || unavailable}
++          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
+           onClick={() => void begin('mark')}
+         >
+           Review delete-ready history
+@@ -110,7 +114,7 @@ export function HistoryEligibility({
+         <Button
+           size="sm"
+           variant="ghost"
+-          disabled={!runIds.length || runIds.length > 500 || unavailable}
++          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
+           onClick={() => void begin('withdraw')}
+         >
+           Withdraw delete-ready mark
+diff --git a/apps/web/src/runs/RunInspectorPage.offline.test.tsx b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+index c51ef30f..d7fae273 100644
+--- a/apps/web/src/runs/RunInspectorPage.offline.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+@@ -1,5 +1,6 @@
+ import { runs } from '@graphgoblin/api-client';
+ import type { RunRecord } from '@graphgoblin/contracts';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import { onlineManager, QueryClient } from '@tanstack/react-query';
+ import { act, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+@@ -74,6 +75,49 @@ function missingSessionRun(api: FakeApi) {
+   return run;
+ }
+ 
++/** Cancelled at the pinned loop's exit `done`, after API key `actor` asked for it at #3. */
++function cancelledRun(api: FakeApi, actor: string) {
++  const loop = api.addLoop(minimalLoop(), { published: true });
++  const run = startedRun(api, {
++    loopId: loop.id,
++    versionId: loop.currentVersionId!,
++    status: 'cancelled',
++    lastEventSeq: 4,
++    currentNodeId: 'done',
++  });
++  api.pushEvent(
++    run.id,
++    event(run.id, 3, 'run.cancel_requested', { actor: { kind: 'api-key', id: actor } }),
++  );
++  api.pushEvent(run.id, event(run.id, 4, 'run.cancelled', {}));
++  return run;
++}
++
++/** A finished run without a result, whose pinned exit `done` has `exit` as its configuration. */
++function valuelessExitRun(api: FakeApi, exit: Record<string, unknown>) {
++  const base = minimalLoop();
++  const loop = api.addLoop(
++    {
++      ...base,
++      nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config: exit } : node)),
++    },
++    { published: true },
++  );
++  const run = api.addRun({
++    loopId: loop.id,
++    versionId: loop.currentVersionId!,
++    status: 'succeeded',
++    lastEventSeq: 3,
++  });
++  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
++  api.pushEvent(run.id, event(run.id, 2, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }));
++  api.pushEvent(
++    run.id,
++    event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++  );
++  return run;
++}
++
+ /** Holds run reads while `state.blocking`, until released; the row is read on release. */
+ function heldRunReads(api: FakeApi) {
+   let release!: () => void;
+@@ -139,6 +183,15 @@ async function restoreApi(view: Rendered, runId: string) {
+   await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+ }
+ 
++/** Only run reads now fail, as a refused connection would; every other read keeps answering. */
++async function loseRunRead(view: Rendered, runId: string) {
++  view.api.override('GET /runs/:id', () => {
++    throw new TypeError('Failed to fetch');
++  });
++  await runRead(view, runId);
++  await screen.findByText(STALE);
++}
++
+ const posts = (api: FakeApi) => api.calls.filter((call) => call.method === 'POST');
+ 
+ describe('run inspector through an outage (#416)', () => {
+@@ -535,4 +588,318 @@ describe('run inspector through an outage (#416)', () => {
+       view.unmount();
+     }
+   });
++
++  it('spends a queued fresh-session choice on a loss of the observation read alone, even once read again', async () => {
++    const api = new FakeApi();
++    const run = missingSessionRun(api);
++    const view = renderApp('/runs/' + run.id, api);
++    const user = userEvent.setup();
++    const start = () => button('Start fresh session for worker');
++    const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
++    const observationRead = () =>
++      act(() =>
++        view.queryClient.refetchQueries({ queryKey: keys.observation(run.id), exact: true }),
++      );
++    let release = () => {};
++    const held = new Promise<void>((resolve) => {
++      release = resolve;
++    });
++    let queued = false;
++    try {
++      await openRun(run.id);
++      await waitFor(() => expect(start()).toBeEnabled());
++      // The client's mutation cache holds the choice before its API call; it is read at dispatch.
++      view.queryClient.getMutationCache().config.onMutate = () => {
++        queued = true;
++        return held;
++      };
++      await user.click(start());
++      await waitFor(() => expect(queued).toBe(true));
++
++      // Only the observation read fails; the run read and the browser stay healthy, so the run
++      // stays current and its other controls stay available.
++      const evidence = view.queryClient.getQueryData(keys.observation(run.id));
++      api.override('GET /runs/:id/observation', () => {
++        throw new TypeError('Failed to fetch');
++      });
++      await observationRead();
++      expect(await screen.findByText('Reading the run evidence again.')).toBeVisible();
++      expect(screen.queryByText(STALE)).toBeNull();
++      expect(button('Replay...')).toBeEnabled();
++      expect(button('Review delete-ready history')).toBeEnabled();
++
++      // A genuine reread whose body is equal: structural sharing keeps the cached object.
++      api.override('GET /runs/:id/observation', (call) => api.builtIn(call));
++      await observationRead();
++      await waitFor(() =>
++        expect(screen.queryByText('Reading the run evidence again.')).not.toBeInTheDocument(),
++      );
++      expect(view.queryClient.getQueryData(keys.observation(run.id))).toBe(evidence);
++
++      // The choice queued before that loss stays spent.
++      release();
++      expect(await screen.findByText(NOT_SENT)).toBeVisible();
++      expect(recoveries()).toHaveLength(0);
++
++      // A deliberate choice made now sends once, with the failure's own sequence.
++      api.override('POST /runs/:id/recover-session', () =>
++        Response.json({ ...api.runs.get(run.id), status: 'running' }),
++      );
++      await waitFor(() => expect(start()).toBeEnabled());
++      await user.click(start());
++      await waitFor(() => expect(recoveries()).toHaveLength(1));
++      expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
++    } finally {
++      release();
++      view.unmount();
++    }
++  });
++
++  it.each(['fails in transport', 'succeeds'] as const)(
++    'keeps a script retry sent before an outage the only one, and its outcome, until it %s',
++    async (settle) => {
++      const api = new FakeApi();
++      const run = startedRun(api, {
++        status: 'failed',
++        lastEventSeq: 3,
++        currentNodeId: 'script',
++        failure: {
++          code: 'SCRIPT_OUTCOME_UNCERTAIN',
++          message: 'uncertain',
++          nodeId: 'script',
++          resumable: true,
++        },
++      });
++      api.pushEvent(run.id, event(run.id, 3, 'run.failed', { failure: run.failure! }));
++      let answer!: (response: Response) => void;
++      let fail!: (error: Error) => void;
++      api.override(
++        'POST /runs/:id/resume',
++        () =>
++          new Promise<Response>((resolve, reject) => {
++            answer = resolve;
++            fail = reject;
++          }),
++      );
++      const view = renderApp('/runs/' + run.id, api);
++      const user = userEvent.setup();
++      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
++      try {
++        await openRun(run.id);
++        await user.click(button('Recover script'));
++        await user.click(
++          within(await screen.findByRole('dialog')).getByRole('button', { name: 'Resume' }),
++        );
++        await waitFor(() => expect(resumes()).toHaveLength(1));
++        await loseApi(view, run.id);
++        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++        await restoreApi(view, run.id);
++
++        // The run is current and still uncertain, and the retry already sent has not settled:
++        // no second review opens and nothing else is sent.
++        expect(screen.getByText('Failed: SCRIPT_OUTCOME_UNCERTAIN')).toBeVisible();
++        expect(button('Recover script')).toBeDisabled();
++        await user.click(button('Recover script'));
++        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++        expect(resumes()).toHaveLength(1);
++
++        if (settle === 'fails in transport') {
++          await act(async () => {
++            fail(new TypeError('Failed to fetch'));
++            await Promise.resolve();
++          });
++          const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
++          expect(
++            await within(header).findByText('The GraphGoblin API cannot be reached.'),
++          ).toBeVisible();
++          await waitFor(() => expect(button('Recover script')).toBeEnabled());
++        } else {
++          const running: RunRecord = { ...api.runs.get(run.id)!, status: 'running' };
++          delete running.failure;
++          await act(async () => {
++            api.runs.set(run.id, running);
++            answer(Response.json(running));
++            await Promise.resolve();
++          });
++          await waitFor(() =>
++            expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull(),
++          );
++        }
++        expect(resumes()).toHaveLength(1);
++        expect(posts(api)).toHaveLength(1);
++      } finally {
++        view.unmount();
++      }
++    },
++  );
++
++  it.each(['nothing', 'only the run read of A', 'the browser'] as const)(
++    'keeps run B as its own reads say after %s was lost while A was shown',
++    async (lost) => {
++      const api = new FakeApi();
++      const b = startedRun(api);
++      const a = startedRun(api, { parentRunId: b.id });
++      api.runs.set(b.id, { ...api.runs.get(b.id)!, parentRunId: a.id });
++      // The health probe keeps answering; only the reads named below change.
++      api.override('GET /healthz', () => Response.json({ status: 'ok' }));
++      const reads = { failA: false, holdB: false, heldB: 0 };
++      let releaseB = () => {};
++      const heldB = new Promise<void>((resolve) => {
++        releaseB = resolve;
++      });
++      api.override('GET /runs/:id', async (call) => {
++        if (reads.failA && call.path === `/runs/${a.id}`) throw new TypeError('Failed to fetch');
++        if (reads.holdB && call.path === `/runs/${b.id}`) {
++          reads.heldB += 1;
++          await heldB;
++        }
++        return api.builtIn(call);
++      });
++      const view = renderApp('/runs/' + b.id, api);
++      const user = userEvent.setup();
++      const parent = async (from: string, to: string) => {
++        const header = (await openRun(from)).closest('header')!;
++        await user.click(within(header).getByRole('link', { name: 'parent run' }));
++        await openRun(to);
++      };
++      try {
++        await openRun(b.id);
++        await waitFor(() => expect(button(/Pause/)).toBeEnabled());
++        await parent(b.id, a.id);
++        await waitFor(() => expect(button(/Pause/)).toBeEnabled());
++        if (lost === 'only the run read of A') {
++          reads.failA = true;
++          await runRead(view, a.id);
++          await screen.findByText(STALE);
++          reads.failA = false;
++          await runRead(view, a.id);
++        } else if (lost === 'the browser') {
++          act(() => onlineManager.setOnline(false));
++          expect(await screen.findByText(/This browser is offline\./)).toBeVisible();
++          act(() => onlineManager.setOnline(true));
++        }
++        await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
++        expect(button(/Pause/)).toBeEnabled();
++
++        // Back to B, whose own read on return is held.
++        reads.holdB = true;
++        await parent(a.id, b.id);
++        await waitFor(() => expect(reads.heldB).toBeGreaterThan(0));
++        if (lost === 'the browser') {
++          // A browser disconnect applies to every run until each is read again.
++          expect(screen.getByText(/Reconnecting: reading this run again\./)).toBeVisible();
++          expect(button(/Pause/)).toBeDisabled();
++        } else {
++          expect(screen.queryByText(STALE)).toBeNull();
++          expect(button(/Pause/)).toBeEnabled();
++        }
++        reads.holdB = false;
++        releaseB();
++        await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
++        expect(button(/Pause/)).toBeEnabled();
++        expect(posts(api)).toHaveLength(0);
++      } finally {
++        releaseB();
++        view.unmount();
++      }
++    },
++  );
++
++  it.each(['qualified', 'foreign', 'manually replaced'] as const)(
++    'keeps execution context through a run-only loss, with the actor of a %s observation only when qualified',
++    async (observation) => {
++      const api = new FakeApi();
++      const run = cancelledRun(api, 'operator-key');
++      if (observation === 'foreign') {
++        // A successful answer whose events all name another run.
++        const other = cancelledRun(api, 'foreign-key');
++        api.override('GET /runs/:id/observation', (call) =>
++          api.builtIn({ ...call, path: `/runs/${other.id}/observation` }),
++        );
++      }
++      const view = renderApp('/runs/' + run.id, api);
++      const position = () => screen.getByText(/Recorded node position:/);
++      try {
++        await openRun(run.id);
++        await waitFor(() =>
++          expect(view.queryClient.getQueryState(keys.observation(run.id))?.status).toBe('success'),
++        );
++        // While the run is current, the pinned definition names the recorded node.
++        await waitFor(() =>
++          expect(position()).toHaveTextContent(/Recorded node position: .+ \(done\)\./),
++        );
++        if (observation === 'manually replaced') {
++          await waitFor(() =>
++            expect(view.queryClient.getQueryState(keys.observation(run.id))?.fetchStatus).toBe(
++              'idle',
++            ),
++          );
++          // Later observation reads stay in flight, so the manual write is what stays cached.
++          api.override('GET /runs/:id/observation', () => new Promise<Response>(() => {}));
++          act(() => {
++            view.queryClient.setQueryData<Record<string, unknown>>(
++              keys.observation(run.id),
++              (current) => ({
++                ...current,
++                cancelRequested: event(run.id, 3, 'run.cancel_requested', {
++                  actor: { kind: 'api-key', id: 'manual-key' },
++                }),
++              }),
++            );
++          });
++        }
++        await loseRunRead(view, run.id);
++        expect(screen.getByText(/^Pinned definition unavailable\./)).toBeVisible();
++        expect(position()).toHaveTextContent(
++          observation === 'qualified'
++            ? 'Cancelled by api-key operator-key (request #3; cancellation #4). Recorded node position: done.'
++            : 'Cancelled. The cancellation record could not be read. Recorded node position: done.',
++        );
++        expect(screen.queryByText(/foreign-key|manual-key/)).toBeNull();
++        expect(posts(api)).toHaveLength(0);
++      } finally {
++        view.unmount();
++      }
++    },
++  );
++
++  it.each([
++    {
++      returns: 'Returns None',
++      exit: { returns: 'none', destinations: [] },
++      explanation:
++        'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.',
++    },
++    {
++      returns: 'an expression',
++      exit: { returns: 'null', destinations: [{ kind: 'caller' }] },
++      explanation:
++        'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
++    },
++  ])(
++    'keeps the selected exit’s own explanation for $returns through a run-only loss',
++    async ({ exit, explanation }) => {
++      const api = new FakeApi();
++      const run = valuelessExitRun(api, exit);
++      const view = renderApp('/runs/' + run.id, api);
++      const user = userEvent.setup();
++      const selected = () => screen.getByText(/Exit outcome:/);
++      try {
++        await openRun(run.id);
++        await waitFor(() =>
++          expect(screen.getByTestId('exit-returns')).toHaveTextContent(explanation),
++        );
++        await user.click(screen.getByRole('button', { name: /exit\.evaluated/ }));
++        expect(selected()).toHaveTextContent(explanation);
++        await loseRunRead(view, run.id);
++        // The retained run section omits its summary; the selected exit keeps its own.
++        expect(screen.queryByTestId('exit-returns')).toBeNull();
++        expect(selected()).toHaveTextContent(explanation);
++        expect(screen.queryByText(/See the run result/)).toBeNull();
++        expect(posts(api)).toHaveLength(0);
++      } finally {
++        view.unmount();
++      }
++    },
++  );
+ });
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index 78435f27..0da42299 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -245,11 +245,13 @@ export function RunInspectorPage() {
+   const observationRead = useInspectorRead(header.registry, keys.observation(runId));
+   const online = useSyncExternalStore(watchBrowser, browserOnline);
+   const lastBrowserLoss = useSyncExternalStore(watchBrowser, browserLossSnapshot);
+-  // A credential change empties the receipt's loss as well: remember the newest boundary seen,
+-  // so only a later qualified read can release it.
+-  const [latch, setLatch] = useState(0);
+-  const boundary = Math.max(lastBrowserLoss, runRead.loss, latch);
+-  if (boundary > latch) setLatch(boundary);
++  // A credential change empties the receipt's loss as well: remember the newest boundary seen for
++  // the run shown, so only a later qualified read of it can release it. Another run opened in this
++  // view starts from its own receipts; the browser's loss applies to every run.
++  const [latch, setLatch] = useState({ runId, loss: 0 });
++  const remembered = latch.runId === runId ? latch.loss : 0;
++  const boundary = Math.max(lastBrowserLoss, runRead.loss, remembered);
++  if (latch.runId !== runId || boundary > latch.loss) setLatch({ runId, loss: boundary });
+   const run = runQuery.data;
+   const down = !online || runQuery.fetchStatus === 'paused' || isOfflineError(runQuery.error);
+   const fresh = boundary === 0 || runRead.committed > boundary;
+@@ -312,9 +314,12 @@ export function RunInspectorPage() {
+     return self;
+   }, [blocked, boundary, header.registry, queryClient, runId, visit]);
+   // Start fresh session also needs the observation that recorded the failure read after the
+-  // outage; the control itself matches its run, node, visit and failure sequence.
++  // outage; the control itself matches its run, node, visit and failure sequence. The gate keeps
++  // the observation boundary it was issued after: a later loss of the observation read alone
++  // spends it, even once the observation has been read again.
+   const sessionGate = useMemo<WriteGate>(() => {
+     const key = keys.observation(runId);
++    const since = observationBoundary;
+     const evidenceBlocked =
+       gate.blocked ?? (observationFresh ? undefined : 'Reading the run evidence again.');
+     return {
+@@ -323,11 +328,11 @@ export function RunInspectorPage() {
+       open: () => {
+         if (evidenceBlocked !== undefined || !gate.open()) return false;
+         const read = getInspectorRead(header.registry, key);
+-        const since = Math.max(boundary, read.loss);
++        if (read.loss > since) return false;
+         return since === 0 || read.committed > since;
+       },
+     };
+-  }, [boundary, gate, header.registry, observationFresh, runId]);
++  }, [gate, header.registry, observationBoundary, observationFresh, runId]);
+   useLayoutEffect(() => {
+     latestGate.current = gate;
+     shownVisit.current = visit;
+@@ -423,10 +428,21 @@ export function RunInspectorPage() {
+   // qualified read supplied (#416). The Timeline below keeps the pinned labels.
+   const sectionDefinition = outage ? undefined : definition;
+   const gateSummary = outage ? undefined : lastGateSummary(evidence, definition);
+-  const returnSummary =
+-    !outage && threadQuery.data
+-      ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
+-      : undefined;
++  // A selected exit's explanation reads the observation, thread and version it always read; only
++  // the run section's copy of it is withheld through an outage.
++  const exitReturns = threadQuery.data
++    ? exitReturnSummary(
++        present([
++          observation.data?.lifecycle,
++          observation.data?.exit,
++          observation.data?.gate,
++          observation.data?.finished,
++        ]),
++        definition,
++        threadQuery.data.invocation.returnDefaults,
++      )
++    : undefined;
++  const returnSummary = outage ? undefined : exitReturns;
+ 
+   return (
+     <Page wide>
+@@ -542,17 +558,16 @@ export function RunInspectorPage() {
+             </p>
+             <HistoryEligibility runIds={[run.id]} availability={gate} />
+           </div>
+-          {/* Execution context reads the pinned version and live evidence: it is omitted while
+-              the run is last observed rather than shown from unproved labels. */}
+-          {outage ? null : (
+-            <ExecutionContext
+-              run={run}
+-              cancellation={cancellation}
+-              cancellationUnavailable={observation.isError}
+-              definition={definition}
+-              definitionLoading={versionQuery.isPending}
+-            />
+-          )}
++          {/* While the run is last observed, execution context names nodes by their recorded IDs,
++              says the pinned definition is unavailable rather than loading, and takes a
++              cancellation's actor and sequence numbers only from a qualified observation. */}
++          <ExecutionContext
++            run={run}
++            cancellation={cancellation}
++            cancellationUnavailable={observation.isError || (outage && observed === undefined)}
++            definition={sectionDefinition}
++            definitionLoading={!outage && versionQuery.isPending}
++          />
+           <WaitPanel run={run} definition={sectionDefinition} availability={gate} />
+           <DeliveryPanel run={run} />
+         </Fragment>
+@@ -614,7 +629,7 @@ export function RunInspectorPage() {
+             event={selectedEvent}
+             definition={definition}
+             definitionLoading={versionQuery.isPending}
+-            exitReturns={returnSummary}
++            exitReturns={exitReturns}
+           />
+           {threadError &&
+           !(threadError instanceof GraphGoblinApiError && threadError.status === 404) ? (
+diff --git a/apps/web/src/runs/inspector/ScriptRecovery.tsx b/apps/web/src/runs/inspector/ScriptRecovery.tsx
+index 1a154b60..ebedb65b 100644
+--- a/apps/web/src/runs/inspector/ScriptRecovery.tsx
++++ b/apps/web/src/runs/inspector/ScriptRecovery.tsx
+@@ -61,16 +61,19 @@ export function ScriptRecovery({
+   const canResume =
+     run.recovery.resume.allowed || run.recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED';
+   const send = (kind: 'resume' | 'replay') => {
+-    if (!review || review.gate !== availability || !availability.open()) return;
++    if (action.isPending || !review || review.gate !== availability || !availability.open())
++      return;
+     action.mutate({ kind, review });
+   };
+   return (
+     <>
++      {/* A retry already queued or sent stays the only one until it settles, even after an outage
++          expired its review: reopening would reset it and hide its outcome (#416). */}
+       <Button
+         variant="outline"
+-        disabled={unavailable}
++        disabled={unavailable || action.isPending}
+         onClick={() => {
+-          if (!availability.open()) return;
++          if (action.isPending || !availability.open()) return;
+           action.reset();
+           setReview({
+             gate: availability,
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 010c11f6..a5db4c46 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -122,11 +122,16 @@ warning titled **Last observed, may be out of date** that says whether the brows
+ the API cannot be reached, or the run is being read again. The retained section shows the
+ record's status, failure, result, wait (with its form) and delivery and finalization state as last
+ read. It does not claim anything the record did not say: a terminal run that was not finalized
+-still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs; the
+-pinned version's labels, the gate and return summaries and the execution context are omitted
+-until the run is read again. The exit evaluation, a finish event's result and fresh-session notes
+-come from the run observation and are kept only from a qualified observation read. The Timeline,
+-the selected payload, the exact thread and the preceding selection below keep their own
++still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs, and
++the pinned version's labels and the section's gate and return summaries are omitted until the run
++is read again. The execution context stays: it shows the run record, says the pinned definition is
++unavailable rather than loading, and names the recorded node by its ID. The exit evaluation, a
++finish event's result, a cancellation's actor with its request and cancellation sequence numbers,
++and fresh-session notes come from the run observation and are kept only from a qualified
++observation read. A foreign or manually written observation supplies none of them; a cancelled
++run then says its cancellation record could not be read. The Timeline, the selected payload
++(including a selected exit's explanation of a missing value, which keeps the observation, thread
++and version it already read), the exact thread and the preceding selection below keep their own
+ behaviour.
+ 
+ Only a qualified receipt lets a run stay on screen. A receipt is in-memory metadata, at most one
+@@ -138,9 +143,14 @@ field the section shows must be the expected event kind for this run. Cache seed
+ manual writes, removed or replaced query entries, another provider or cache, aborted or retired
+ attempts and answers under retired credentials never qualify. A cold or unproved row stays
+ unavailable and shows the ordinary offline state. A definitive refusal (an HTTP or authentication
+-error, a missing run, a response naming another run or an invalid body) shows its ordinary error
+-and retires the receipt; a later transport error cannot bring the run back. Removing the query
+-from the cache removes its receipt with it.
++error, a missing run or a response naming another run) retires the receipt and fails the read with
++its ordinary error. A successful GET whose body does not match the run snapshot contract, or an
++observation with a field of the wrong kind or run, also retires the receipt, but leaves the
++ordinary query result unchanged: the body stays the query's data as returned and no error is
++added. After either, a later transport error cannot bring the last observed run back. That later
++failure's ordinary offline error can replace an earlier HTTP message on screen; the fallback stays
++unavailable until a new qualified read. Removing the query from the cache removes its receipt with
++it.
+ 
+ Freshness compares positions. A loss records the start of the latest outage; repeated failures
+ within it keep that boundary, and it stays recorded after the outage ends, so a nonzero loss alone
+@@ -148,8 +158,12 @@ does not mean an outage is current. The run is current again only when its recei
+ the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
+ receipt by itself only permits the last-observed display. Being online again, a successful health
+ probe or an open event stream may start the existing rereads but never unlock the view, and a read
+-that started before the loss cannot either. The shared API probe, the stream's reread and the API
+-key panel's refresh keep doing that work. The inspector adds at most one deduplicated reread per
++that started before the loss cannot either. The boundary the view remembers for a run, kept even
++when a credential or provider change empties the receipt's own loss, belongs to that run: another
++run opened in the same view starts from its own receipts, so an outage of one run's read never
++marks another run last observed. A browser disconnect applies to every run until each is read
++again. The shared API probe, the stream's reread and the API key panel's refresh keep doing that
++work. The inspector adds at most one deduplicated reread per
+ outage boundary that nothing else serves, joining a read already in flight: of the run, and of
+ the observation only when **Start fresh session** needs it. There is no polling for receipts.
+ 
+@@ -164,12 +178,22 @@ is discarded, and a command queued or delayed across a loss, a reconnect or an A
+ reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
+ close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
+ was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
+-it was in flight reports that the change may or may not have been saved. Nothing is replayed
+-automatically. **Start fresh session** also needs an observation read after the loss whose
+-failure event names the same run, node and missing-session visit as the current record; it sends
+-that failure event's own sequence even when later delivery audits exist. Script consent keeps the
+-run and observed sequence shown when its review opened. The Runs list's delete-ready controls and
+-other pages keep their behaviour.
++it was in flight reports that the change may or may not have been saved. While a script recovery
++(queued or sent) or a sent delete-ready confirmation is unresolved, its launchers stay disabled
++and their handlers refuse, even after the outage that expired its review has ended: no
++replacement review resets it or sends a second command before it settles, and its eventual
++failure or success is still reported. A delete-ready confirmation whose review the browser
++dismissed reports its outcome beside the controls. Nothing is replayed automatically. **Start
++fresh session** also needs an observation read after the loss whose failure event names the same
++run, node and missing-session visit as the current record; it sends that failure event's own
++sequence even when later delivery audits exist. Its gate keeps the observation boundary it was
++issued under: a later failure of the observation read alone, with the run read and the browser
++healthy, spends a choice queued before it even after the observation is read again with an equal
++body, and that choice reports **Not sent**. A new choice after the qualifying observation read
++sends once. Other run controls stay available through an observation-only failure. Script consent
++keeps the run and observed sequence shown when its review opened. The Runs list's delete-ready
++controls share the hold on a pending confirmation and the report of a dismissed one; otherwise
++they and other pages keep their behaviour.
+ 
+ ### Timeline sequence column (#420)
+ 

@@ -1,0 +1,93 @@
+--- prepared/apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx
++++ executed/apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx
+@@ -179,8 +179,7 @@
+ const writes = (api: FakeApi) =>
+   api.calls.filter((call) => !['GET', 'HEAD', 'OPTIONS'].includes(call.method));
+ const heading = (id: string) => screen.findByRole('heading', { name: 'Run ' + id });
+-const button = (name: string | RegExp) =>
+-  screen.getByRole('button', { name, exact: typeof name === 'string' });
++const button = (name: string | RegExp) => screen.getByRole('button', { name });
+ async function settled(view: View, runId: string) {
+   await heading(runId);
+   await waitFor(() => {
+@@ -206,7 +205,7 @@
+ async function expired(dialog: HTMLElement, confirm: string) {
+   await waitFor(() => {
+     if (dialog.isConnected && dialog.hasAttribute('open'))
+-      expect(within(dialog).getByRole('button', { name: confirm, exact: true })).toBeDisabled();
++      expect(within(dialog).getByRole('button', { name: confirm })).toBeDisabled();
+     else
+       expect(
+         screen.queryByRole('dialog', { name: dialog.getAttribute('aria-label') ?? '' }),
+@@ -519,7 +518,6 @@
+     await user.click(
+       within(dialog).getByRole('button', {
+         name: op === 'script-resume' ? 'Resume' : 'Replay',
+-        exact: true,
+       }),
+     );
+   } else if (op === 'input') {
+@@ -548,7 +546,7 @@
+       const run = operationRun(api, op);
+       const path = endpoint(run.id, op);
+       api.override(`POST ${path}`, () =>
+-        Response.json(op.endsWith('replay') || op === 'replay' ? { run } : run, 200),
++        Response.json(op.endsWith('replay') || op === 'replay' ? { run } : run, { status: 200 }),
+       );
+       const view = mount(api, run.id);
+       await settled(view, run.id);
+@@ -885,15 +883,15 @@
+     await settled(view, run.id);
+     const timeline = screen.getByRole('list', { name: 'Timeline' });
+     await user.click(within(timeline).getByRole('button', { name: /#1.*run.queued/ }));
+-    await screen.findByRole('heading', { name: 'Thread at event 1', exact: true });
++    await screen.findByRole('heading', { name: 'Thread at event 1' });
+     await user.click(within(timeline).getByRole('button', { name: /#2.*run.started/ }));
+     await waitFor(() => expect(waitingSecond).toBe(1));
+     await lose(view, run.id);
+-    expect(screen.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
++    expect(screen.getByRole('heading', { name: 'Thread at event 1' })).toBeVisible();
+     expect(screen.getByText('Reading the thread at event 2…')).toBeVisible();
+     expect(timeline).toBeVisible();
+     hold.release();
+-    await screen.findByRole('heading', { name: 'Thread at event 2', exact: true });
++    await screen.findByRole('heading', { name: 'Thread at event 2' });
+     expect(writes(api)).toHaveLength(0);
+   });
+   it('C8 Runs-list deletion retains its ordinary healthy workflow after leaving a stale inspector', async () => {
+--- prepared/apps/web/e2e/independent-416-listener.qa.spec.ts
++++ executed/apps/web/e2e/independent-416-listener.qa.spec.ts
+@@ -2,6 +2,7 @@
+ import { performance } from 'node:perf_hooks';
+ import {
+   CURRENT_DEFINITION_FORMAT,
++  LoopDefinitionSchema,
+   RunRecordSchema,
+   RunSnapshotSchema,
+   type LoopDefinitionInput,
+@@ -25,9 +26,12 @@
+ // Prepared against frozen6924c529, never imported as an executing spec during authoring.
+ // Root must bind final corrected source/build and allocate execution separately.
+ async function waitingRun(request: Parameters<typeof publishLoop>[0], instance: OwnedInstance) {
+-  const definition: LoopDefinitionInput = approvalLoop(uniqueLoopName('Independent listener'));
++  const definition = LoopDefinitionSchema.parse(
++    approvalLoop(uniqueLoopName('Independent listener')),
++  );
+   const ask = definition.nodes.find((node) => node.kind === 'wait');
+-  if (!ask || ask.kind !== 'wait') throw new Error('Missing public wait fixture');
++  if (!ask || ask.kind !== 'wait' || ask.config.mode !== 'input')
++    throw new Error('Missing public input wait fixture');
+   ask.config = {
+     ...ask.config,
+     inputSchema: { type: 'object', properties: { note: { type: 'string' } } },
+@@ -417,7 +421,9 @@
+   const elapsed = performance.now() - begin;
+   const shownText = await page.getByTestId('run-result').innerText();
+   expect(shownText.length).toBeLessThan(12000);
+-  const longTasks: unknown = await page.evaluate(() => Reflect.get(window, '__i5LongTasks'));
++  const longTasks: unknown = await page.evaluate((): unknown =>
++    Reflect.get(window, '__i5LongTasks'),
++  );
+   await info.attach('large-result-observation', {
+     body: JSON.stringify({
+       evidence:

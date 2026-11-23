@@ -1,0 +1,521 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-offline-inspector/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.test.tsx > appended values in a selected patch (#385) > shows each recorded append to messages and a variable list, absent before it 587ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > keeps the previous resolved thread and identifiers while a selected server boundary is pending 575ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > reads seeded gate counts from the server before any decision event 125ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold 255ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows Claude requested effort and states that effective effort is not reported 170ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > streams the timeline, replays the thread at any event, and shows the patch diff 806ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed command in progress while the run is still running 193ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed tool call without its provider diagnostics 166ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and reports logs that do not replay 117ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > resumes the stream after the stored cursor on reload 302ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > renders the input form from the wait node schema and submits input 548ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > sends a signal to a run waiting for one, and describes timer waits 467ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > cancels, pauses, and resumes runs 838ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > keeps the keyboard order: loop, parent run, child runs, then the run controls 363ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > explains a deleted child while preserving the parent inspector history 314ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links an available child from a child-finished event 385ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows failures, results, parent links, and stream errors 87ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links a subloop failure to the child run that failed (#251) 59ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > confirms a finished succeeded cursor and catches up delivery audits while retaining the result 183ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > confirms a finished exhausted cursor and catches up delivery audits while retaining the result 210ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 579ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > says a quiet exit returned nothing by configuration, at the top and in its details 196ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > names the exit and start-request destinations that a None return left empty 80ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > shows a null return as the result rather than as nothing 93ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > does not claim a None configuration when an expression exit recorded no value 203ms
+ ✓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage exit evidence > keeps the last gate pass and stopping limit beside the exit outcome 81ms
+ ✓ src/runs/RunInspectorPage.test.tsx > shows cancellation instead of a stale provider failure on a cancelled run (#255) 64ms
+ ✓ src/runs/inspector/Timeline.test.tsx > preserves the ordinary accessible event name for an oversized payload marker 157ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names an oversized marker with the pinned labels, not only its recorded IDs (#255) 37ms
+ ✓ src/runs/inspector/Timeline.test.tsx > names oversized markers of many small values with the pinned labels (#186 round 2 audit round 2 B1) 135ms
+ ✓ src/runs/inspector/Timeline.test.tsx > windows rows and carries keyboard focus across row boundaries, preserving selection and names 1252ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps live rows at the end and exposes a sequence seek independently of loaded rows 513ms
+ ✓ src/runs/inspector/Timeline.test.tsx > announces pausing and browsing, not every live append (#186 QA) 821ms
+ ✓ src/runs/inspector/Timeline.test.tsx > leaves the row list in one Tab or Shift+Tab from any row (#186 QA) 501ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps keyboard focus on Follow live once it resumes following (#186 QA) 347ms
+ ✓ src/runs/inspector/Timeline.test.tsx > shows every sequence number in full in a column sized to the widest one shown (#420) 16ms
+ ✓ src/runs/inspector/Timeline.test.tsx > sizes the sequence column from the rows in the window, not the whole history (#420) 355ms
+ ✓ src/runs/inspector/Timeline.test.tsx > keeps keyboard movement, the single Tab stop and selection with long sequences (#420) 162ms
+ ✓ src/runs/inspector/Timeline.test.tsx > moves focus and the single Tab stop between rows of one window, and a key naming the focused row requests nothing (#186) 220ms
+ ✓ src/runs/inspector/Timeline.test.tsx > ignores controls that cannot act, keeping them focusable (#186 QA) 564ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a waiting run, its form and same-wait draft as last observed, and sends nothing 1255ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a failed run record as last observed without claiming anything more 209ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a succeeded run record as last observed without claiming anything more 179ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a cold run unavailable 70ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > never presents an unread seeded row as last observed 78ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > retires the fallback on a definitive refusal; only a new valid read restores the run 280ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > stays locked through a browser reconnect and a held pre-loss read; one later read unlocks 591ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > expires an open replay review on loss and does not revive it after reconnecting 452ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > expires an open script consent review on loss and sends no resume or replay 613ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > does not send a queued command whose connection was lost before dispatch 280ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > does not send a queued command whose connection was lost and read again before dispatch 331ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > needs a fresh observation of the same failure after recovery, and sends its own sequence 563ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > lets no review or queued command from an earlier visit act after A → B → A 894ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > spends a queued fresh-session choice on a loss of the observation read alone, even once read again 564ms
+ × src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a script retry sent before an outage the only one, and its outcome, until it fails in transport 5540ms
+   → Found multiple elements with the text: The GraphGoblin API cannot be reached.
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-xs leading-snug font-medium text-status-bad-fg"[39m
+  [33mrole[39m=[32m"alert"[39m
+[36m>[39m
+  [0mThe GraphGoblin API cannot be reached.[0m
+[36m</p>[39m
+
+Ignored nodes: comments, script, style
+[36m<p[39m
+  [33mclass[39m=[32m"text-xs leading-snug font-medium text-status-bad-fg"[39m
+[36m>[39m
+  [0mThe GraphGoblin API cannot be reached.[0m
+[36m</p>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<header[39m
+  [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+  [36m>[39m
+    [36m<h1[39m
+      [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+    [36m>[39m
+      [0mRun[0m
+      [0m [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+      [36m>[39m
+        [0m45CY9NC9FHHGMRKFS0JGTCCZEK[0m
+      [36m</span>[39m
+    [36m</h1>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+      [33mdata-status[39m=[32m"failed"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"size-4 shrink-0"[39m
+        [33mdata-icon[39m=[32m"failed"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+      [36m>[39m
+        [0mfailed[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"min-w-0 wrap-anywhere"[39m
+    [36m>[39m
+      [0mLast node in run record: [0m
+      [0mscript[0m
+    [36m</span>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/loops/SH0CG5ZN5CXM9JX2QPJWYSCV1K/edit"[39m
+    [36m>[39m
+      [0mloop[0m
+    [36m</a>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/runs?parent=45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+    [36m>[39m
+      [0mchild runs[0m
+    [36m</a>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-describedby[39m=[32m"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"running"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0m Resume[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0mReplay...[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted"[39m
+        [33mid[39m=[32m"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+      [36m>[39m
+        [0mResume unavailable: Choose Recover script to explicitly retry.[0m
+      [36m</p>[39m
+      [36m<dialog[39m
+        [33maria-labelledby[39m=[32m"_r_7s_"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"m-auto max-h-[calc(100dvh-4rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none p-0 overflow-hidden rounded-lg border border-default bg-surface-raised text-default shadow-3 backdrop:bg-scrim open:flex open:flex-col max-md:mb-0 max-md:max-h-[92dvh] max-md:w-full max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex shrink-0 items-start gap-3 border-b border-default bg-...
+
+Ignored nodes: comments, script, style
+[36m<header[39m
+  [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+  [36m>[39m
+    [36m<h1[39m
+      [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+    [36m>[39m
+      [0mRun[0m
+      [0m [0m
+      [36m<span[39m
+        [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+      [36m>[39m
+        [0m45CY9NC9FHHGMRKFS0JGTCCZEK[0m
+      [36m</span>[39m
+    [36m</h1>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+      [33mdata-status[39m=[32m"failed"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"size-4 shrink-0"[39m
+        [33mdata-icon[39m=[32m"failed"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+      [36m>[39m
+        [0mfailed[0m
+      [36m</span>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"min-w-0 wrap-anywhere"[39m
+    [36m>[39m
+      [0mLast node in run record: [0m
+      [0mscript[0m
+    [36m</span>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/loops/SH0CG5ZN5CXM9JX2QPJWYSCV1K/edit"[39m
+    [36m>[39m
+      [0mloop[0m
+    [36m</a>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+      [33mdata-discover[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/runs?parent=45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+    [36m>[39m
+      [0mchild runs[0m
+    [36m</a>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-describedby[39m=[32m"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mdisabled[39m=[32m""[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"running"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+              [33mfill[39m=[32m"currentColor"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0m Resume[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0mReplay...[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-muted"[39m
+        [33mid[39m=[32m"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK"[39m
+      [36m>[39m
+        [0mResume unavailable: Choose Recover script to explicitly retry.[0m
+      [36m</p>[39m
+      [36m<dialog[39m
+        [33maria-labelledby[39m=[32m"_r_7s_"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"m-auto max-h-[calc(100dvh-4rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none p-0 overflow-hidden rounded-lg border border-default bg-surface-raised text-default shadow-3 backdrop:bg-scrim open:flex open:flex-col max-md:mb-0 max-md:max-h-[92dvh] max-md:w-full max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex shrink-0 items-start gap-3 border-b border-default bg-...
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps a script retry sent before an outage the only one, and its outcome, until it succeeds 550ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps run B as its own reads say after nothing was lost while A was shown 654ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps run B as its own reads say after only the run read of A was lost while A was shown 725ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps run B as its own reads say after the browser was lost while A was shown 746ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps execution context through a run-only loss, with the actor of a qualified observation only when qualified 217ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps execution context through a run-only loss, with the actor of a foreign observation only when qualified 146ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps execution context through a run-only loss, with the actor of a manually replaced observation only when qualified 186ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps the selected exit’s own explanation for Returns None through a run-only loss 276ms
+ ✓ src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > keeps the selected exit’s own explanation for an expression through a run-only loss 291ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the terminal status when the refresh after the terminal event is… 547ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the terminal status when the refreshed record has the terminal s… 313ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the recorded failed outcome, not success 218ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the recorded cancelled outcome, not success 220ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > shows the recorded exhausted outcome, not success 221ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > does not turn a finish with a non-terminal status, or the stream completing, into success 221ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > keeps the outcome through later delivery events it has seen while the record lags 233ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > says the status is updating, never the old outcome, when a newer record has unseen history 247ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > replaces an outcome superseded by a resume that parks in a wait again until the record catches up 718ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > replaces an outcome superseded by a new attempt until the record catches up 695ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > keeps a newer streamed outcome when a later observation still reports the older start 693ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > takes the outcome from a batch the browsed history window does not keep, however large 229ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > ignores a cached terminal from an earlier visit and a selected historical outcome 292ms
+ ✓ src/runs/RunInspectorPage.lifecycle.test.tsx > run header status follows observed lifecycle events (#386) > starts over for another run, ignoring the previous run’s outcome 411ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > stays neutral, never failed, when the observation reports the resume firs… (R1) 971ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > stays neutral, never failed, when the stream delivers the failure and res… (R1) 723ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > shows a new failure over an older failed record and attributes a record node (R2) 384ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > keeps a resumed run neutral across A → B → A with held reads and a stale observation (R3) 785ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > shows nothing from an earlier credential generation until current reads settle it 396ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > shows a witnessed terminal over an agreeing unread cached row while the current GET is held (R2-1) 201ms
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx > run header corrective cases (#386) > settles a cold finished run past its delivery audits from real reads only 226ms
+ ✓ src/runs/HistoryEligibility.test.tsx > returns focus to the selection status and announces a successful mark 446ms
+ ✓ src/runs/HistoryEligibility.test.tsx > returns focus to the selection status and announces a successful withdraw 226ms
+ ✓ src/runs/HistoryEligibility.test.tsx > cancels without confirmation, freezes an explicit bulk selection while new history arrives, and shows persisted marks 559ms
+ ✓ src/runs/HistoryEligibility.test.tsx > removes vanished rows from selection before the next review 265ms
+ ✓ src/runs/HistoryEligibility.test.tsx > formats deletion confirmation time using the inspector local date convention 81ms
+ ✓ src/runs/HistoryEligibility.test.tsx > shows every protection reason and permits explicit withdrawal 247ms
+ ✓ src/runs/HistoryEligibility.test.tsx > reports a preview error or a stale save, leaves history untouched, and requires a new review 271ms
+ ✓ src/runs/HistoryEligibility.test.tsx > does not reopen a cancelled dialog when its pending preview arrives 153ms
+ ✓ src/runs/HistoryEligibility.test.tsx > keeps a newer review intact when a dismissed pending save returns HTTP 200 215ms
+ ✓ src/runs/HistoryEligibility.test.tsx > keeps a newer review intact when a dismissed pending save returns HTTP 409 203ms
+ ✓ src/runs/HistoryEligibility.test.tsx > expires an open review and its late preview when the inspector loses the run (#416) 310ms
+ ✓ src/runs/HistoryEligibility.test.tsx > sends no preview while the inspector gate is blocked (#416) 173ms
+ ✓ src/runs/HistoryEligibility.test.tsx > reports the uncertain outcome of a confirmation already sent when its review expires (#416) 237ms
+ ✓ src/runs/HistoryEligibility.test.tsx > opens no second review after reconnecting while a confirmation sent before the outage is unresolved, and reports it when it fails in transport (#416) 419ms
+ ✓ src/runs/HistoryEligibility.test.tsx > opens no second review after reconnecting while a confirmation sent before the outage is unresolved, and reports it when it succeeds (#416) 422ms
+ ✓ src/runs/HistoryEligibility.test.tsx > reports the outcome of a pending confirmation the browser dismissed (#416) 169ms
+ ✓ src/runs/HistoryEligibility.test.tsx > clears the Runs selection after a successful withdrawal 221ms
+ ✓ src/runs/HistoryEligibility.test.tsx > keeps a retained run selected when polling moves its protected status outside the filter 250ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > follows a resumed script from running through its next outcome without a reload 2510ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > offers deliberate recovery when an awaited child propagated the uncertainty code 126ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > explains uncertainty and cancelling the recovery dialog does not dispatch any work 255ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > resumes only after the owner explicitly chooses Resume 318ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > forks from the failed script only after Replay and opens the new run 282ms
+ ✓ src/runs/ScriptRecovery.test.tsx > deliberate script recovery (#321) > distinguishes a proven start failure and retains a failed recovery request for a deliberate retry 188ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers a cold offline Loops query on the online event without navigation 193ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Loops when the API returns with the browser still online 13ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers loop details when the API returns with the browser still online 7ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Runs when the API returns with the browser still online 8ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run inspector when the API returns with the browser still online 15ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run thread when the API returns with the browser still online 6ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Events when the API returns with the browser still online 8ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings defaults when the API returns with the browser still online 5ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings models when the API returns with the browser still online 6ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings secrets when the API returns with the browser still online 4ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings API keys when the API returns with the browser still online 4ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings preflight when the API returns with the browser still online 4ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Loops query 138ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline loop details query 157ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Runs query 157ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run inspector query 158ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run thread query 155ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Events query 160ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings defaults query 157ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings models query 150ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings secrets query 156ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings API keys query 156ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings preflight query 157ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 400 failures at one retry 79ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 401 failures at one retry 76ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 404 failures at one retry 78ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 500 failures at one retry 79ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > caps retries if reconnect still cannot reach the API, then recovers on the next event 241ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > does not refetch inactive failures or fresh successful queries, and removes its listener 104ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > recovers after Query observes an offline-to-online transition 156ms
+ ✓ src/api/queries.reconnect.test.tsx > query reconnect > keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 326ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > verifies only a position returned by its own successful matching run read 80ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > rejects a foreign run response before a cold query can install it 76ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > keeps a warm matching receipt and its own row when a foreign same-position body is refused (S2) 249ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > ignores a late HTTP 200 response after the run read is cancelled 94ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > ignores a late HTTP 404 response after the run read is cancelled 93ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > handles HTTP 404 without treating other read failures as definitive deletion 170ms
+ ✓ src/api/queries.reconnect.test.tsx > run query header receipts (#386) > handles HTTP 500 without treating other read failures as definitive deletion 173ms
+ ✓ src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > names repeated work and requires explicit consent for a path into the current uncertain script 705ms
+ ✓ src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > renders the server refusal and links its exact owning parent accessibly 157ms
+ ✓ src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > Resume sends the reviewed sequence and stays on the existing run 221ms
+ ✓ src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > keeps the second click in one intent even when a new eligible failure has already rendered 342ms
+ ✓ src/runs/recovery-controls.test.tsx > server-owned recovery controls (#256) > Replay explains unavailable selections, cancels without work and freezes its reviewed sequence 479ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > WaitPanel > keeps the form for the same wait, and starts a fresh one for the next wait 728ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > submits the identity associated with the displayed input form 187ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > sends empty text, null, zero and false as entered, and no JSON input as null (#235) 640ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > binds the displayed identity before an asynchronous mutation can see a newer wait 438ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > keeps the same wait draft through an outage and sends nothing from the button or keyboard (#416) 484ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > does not send a queued answer whose gate expired before dispatch, and says so (#416) 205ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx > bounds a long prompt and offers the whole text (#259) 87ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > publishes identical real run commits independently of their body, header position and timestamp 114ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after 401, preserves ordinary query behavior and requires another valid GET 155ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after 403, preserves ordinary query behavior and requires another valid GET 155ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after 404, preserves ordinary query behavior and requires another valid GET 155ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after 500, preserves ordinary query behavior and requires another valid GET 155ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after wrong id, preserves ordinary query behavior and requires another valid GET 154ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires the full run after invalid body, preserves ordinary query behavior and requires another valid GET 81ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > only qualifies a committed GET and retires even byte-identical manual or unrelated successes 2ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > keeps the last run through transport errors and compares independent read starts to the same loss 3ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > binds proof to the provider incarnation, physical query, cache and accepted generation 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retains only the qualified revision during a pause and records a start when the GET can run 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > preserves the same qualified revision when cancelling a paused refetch before its GET 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > preserves retry provenance after a transport failure with a cancelled app-default retry 4ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > preserves retry provenance after a transport failure with a successful app-default retry 2ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > keeps a real useRun receipt when its last observer unmounts and remounts offline 174ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > refuses an identical manual write made inside a synchronous network-success observer 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > keeps a newer GET started by a synchronous observer of the previous success 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > cannot qualify a matching body committed after its credential generation retired 0ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > preserves unguarded or refused GET results without issuing full-read receipts 0ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > retires a definitive refusal before a held retry and qualifies only the successful retry 72ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > cannot borrow proof when a new provider joins a GET already running under the old provider 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > discards a cancelled late success after a fresh GET (replace physical entry: false) 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > discards a cancelled late refusal after a fresh GET (replace physical entry: false) 1ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > discards a cancelled late success after a fresh GET (replace physical entry: true) 0ms
+ ✓ src/runs/inspector-read-provenance.test.ts > full inspector reads > discards a cancelled late refusal after a fresh GET (replace physical entry: true) 0ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > explains context loss and retained settings; leaving it alone sends no choice 151ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > sends the observed failure and disables submission in flight, then shows a refusal 102ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > refreshes run and thread after a successful choice 62ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > waits for the observed failure event and hides the choice for other failures or child provenance 13ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > answers only the recorded failure of the current node and visit (#416) 18ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > sends nothing while its gate is blocked and shows why (#416) 45ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > does not send a queued choice when the gate expired before dispatch (#416) 93ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > does not send a queued choice when the failure changed before dispatch (#416) 140ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > shows the durable actor, node and lost-context decision after completion 3ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > execution evidence (#255) > distinguishes loading, unavailable labels, and unrecorded cancellation actors 205ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > execution evidence (#255) > shows the recorded actor and pinned node at cancellation, with exact definition reachable 72ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > execution evidence (#255) > keeps exact probabilities and provider diagnostics reachable as the selection changes 151ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > downloads every number GraphGoblin records with its stored token (#255) 105ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > waits for the cancellation record rather than guessing an actor (#255, #186) 7ms
+ ✓ src/runs/inspector/ExecutionEvidence.test.tsx > names the missing terminal event without denying a request that was recorded (#255) 4ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows unlimited pass evidence explicitly in the inspector and timeline 71ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the Noul observation separate from the Limit reached port 23ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the Score observation separate from the Limit reached port 17ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit null independently of the observation 9ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit max-passes independently of the observation 10ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit max-run-time independently of the observation 8ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome success 11ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome failure 3ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome exhausted 4ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > distinguishes loading classifier configuration from unavailable historical configuration 19ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows an expression route with no provider, classifier evidence or invented confidence 4ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows confidence and reasoning when they were recorded on a historical expression fact 5ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 0 129ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 1 19ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 2 16ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 3 17ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > preserves a historical boolean observation without inventing a route answer or reasoning 5ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > renders nothing for a different event 1ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > labels LLM confidence as self-reported and marks missing historical settings 7ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows typed Noul and fractional Score evidence with stable ports and rubric anchors 25ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows a confidence-gate rejection as a proposed answer with no selected route 18ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows the default Noul threshold for accepted classifier evidence 7ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the rejected Score rubric and classifier identity when alternatives are absent 13ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > replaces the result pointer with the reason when the exit returned nothing 3ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails chosen route > names a Choice option and the criterion the classifier was given 5ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails chosen route > keeps the refused repeat option while Selected port is Limit reached 5ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails chosen route > names an expression route and a Score band without inventing a criterion 7ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails chosen route > says when the run version is loading, unavailable, or lacks the chosen route 5ms
+
+ Test Files  1 failed | 13 passed (14)
+      Tests  1 failed | 226 passed (227)
+   Start at  04:48:46
+   Duration  103.38s (tests 57%, environment 21%, import 13%, setup 6%, transform 2%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-corrected-checks-01/vitest-results.json

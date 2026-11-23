@@ -4,6 +4,58 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The run inspector keeps the last run it read through an API or browser outage (#416). The run
+  section used to disappear behind the offline message as soon as a refresh failed. It now keeps
+  the record's status, failure, result, wait form and delivery or finalization state under
+  **Last observed, may be out of date**, with a notice saying whether the browser is offline,
+  the API cannot be reached or the run is being read again. Only a run read with an in-memory
+  receipt qualifies: a real, non-manual, contract-valid GET from the current client, cache, query
+  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable.
+  A definitive HTTP refusal retires the receipt and shows its ordinary error. A successful GET
+  whose body does not match the contract retires the receipt too, without changing the ordinary
+  query result, which keeps that body. A later transport failure cannot bring the fallback back,
+  although its ordinary offline error can replace an earlier HTTP message. Nodes show their
+  recorded IDs and summaries that no qualified read supplied are omitted. The execution context
+  stays, with the pinned definition shown as unavailable and a cancellation's actor and sequence
+  numbers only from a qualified observation; a selected exit event keeps its own explanation of a
+  missing value. Every control that writes (pause, cancel, resume, replay, script recovery, Start
+  fresh session, input and signal answers, the delete-ready preview and confirmation) stays
+  unavailable until a run read that started after the outage began has committed; reconnecting, a
+  health probe or an open stream alone does not unlock it. One run's own outage does not carry
+  over to another run opened in the same view; a browser disconnect applies to every run. Open
+  reviews close, late previews are discarded, and a command queued across a loss, reconnect or
+  A → B → A visit reports **Not sent** instead of sending. Drafts of the same wait, reading and
+  Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
+  a script recovery already sent is unresolved, no replacement review opens over it, so its late
+  failure or success is still reported. A sent delete-ready confirmation holds its review the same
+  way while that review is open, was expired by an outage or was closed by withholding the run
+  section; an outage, reconnect or the section shown again does not release that hold. Only after
+  the browser itself has dismissed that review (as on a repeated Esc) may a new review open and
+  read a new preview, and it cannot be confirmed until the first confirmation settles. The first
+  confirmation's outcome is then reported beside the controls, not in the newer review; if the
+  API could not be reached, it says the change may or may not have been saved. A confirmation's
+  failure is shown in its own review only while that review is open and current, and otherwise
+  beside the controls. Start fresh session additionally needs a post-outage observation
+  of the same failure and still sends that failure's own sequence; a choice queued before a
+  failure of the observation read alone stays spent after that read recovers, including through a
+  removed and recreated query or another accepted API key. That choice, a script recovery retry
+  and a delete-ready confirmation belong to the inspector view rather than its run section; their
+  reviews stay with the section. When the section is withheld until a run read under another
+  accepted key qualifies, after a browser loss the view recorded, the controls shown again stay
+  disabled while the action is pending, so that fresh read cannot offer a second retry or
+  confirmation, and then report its actual outcome (**Not sent**, the retry's own error, or that a
+  confirmation may or may not have been saved) rather than losing it. Another run or a later visit
+  shows neither its pending state nor its outcome. At most
+  one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
+  it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
+  store, export or contract change.
+
+- The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
+  (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,
+  the title count, the window summary and the sequence form wrap on narrow screens and with
+  enlarged text. Selection, keyboard movement, paging, Follow live and the history budgets are
+  unchanged.
+
 - The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
   after its event is published, so a refresh could still be in flight, or return the earlier status
   at the terminal event's sequence, and the header kept saying running. The header now also follows

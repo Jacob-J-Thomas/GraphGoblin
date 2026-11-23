@@ -9,29 +9,35 @@ import { Alert, BoundedValue, Card } from '../../components/ui/index.js';
 import { KindChip } from '../../editor/KindChip.js';
 import { JsonSchemaForm } from '../../forms/JsonSchemaForm.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
+import { assertOpen, OPEN_GATE, type WriteGate } from './RunControls.js';
 
 type Answer = {
   runId: string;
   waitId: string;
   value: unknown;
   target: { kind: 'input' } | { kind: 'signal'; name: string };
+  gate: WriteGate;
 };
 
 /** The run waits on input or a signal: a form for it, generated from the wait node's schema. */
 export function WaitPanel({
   run,
   definition,
+  availability = OPEN_GATE,
 }: {
   run: RunRecord;
   definition?: LoopDefinition | undefined;
+  availability?: WriteGate;
 }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const waiting = run.waiting;
   const respond = useMutation({
     // A refetch may replace mutation callbacks while onMutate is pending. Keep the
-    // submitted snapshot in variables so answer A can never acquire wait B's identity.
-    mutationFn: async ({ runId, waitId, value, target }: Answer) => {
+    // submitted snapshot in variables so answer A can never acquire wait B's identity, and
+    // check its gate again right before sending: an outage meanwhile sends nothing (#416).
+    mutationFn: async ({ runId, waitId, value, target, gate }: Answer) => {
+      assertOpen(gate);
       if (target.kind === 'signal') {
         await runs.signal(client, runId, target.name, waitId, value as never);
       } else {
@@ -88,8 +94,11 @@ export function WaitPanel({
           ])}
           schema={waiting.kind === 'input' ? waiting.inputSchema : undefined}
           submitLabel={waiting.kind === 'input' ? 'Submit input' : 'Send signal'}
-          busy={respond.isPending}
-          onSubmit={(value) =>
+          // The draft stays editable during an outage; only sending waits for a fresh read.
+          busy={respond.isPending || availability.blocked !== undefined}
+          onSubmit={(value) => {
+            // Keyboard submission reaches here even while the button is disabled.
+            if (!availability.open()) return;
             respond.mutate({
               runId: run.id,
               waitId: waiting.waitId,
@@ -98,8 +107,9 @@ export function WaitPanel({
                 waiting.kind === 'signal'
                   ? { kind: 'signal', name: waiting.signalName ?? '' }
                   : { kind: 'input' },
-            })
-          }
+              gate: availability,
+            });
+          }}
         />
         {respond.isError ? <Alert>{errorMessage(respond.error)}</Alert> : null}
       </div>

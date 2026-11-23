@@ -1,0 +1,86 @@
+--- D241/close.py
++++ D242/close.py
+@@ -2,7 +2,7 @@
+ import json
+ from pathlib import Path
+ 
+-directory = Path(__file__).parent
++directory = Path(__file__).resolve().parent.parent / 'i5-d242-b2-independent63-execution-01'
+ evidence = directory.parent
+ root = Path('G:/ggq/gg-i5-offline-ui-qa/GraphGoblin')
+ 
+@@ -21,6 +21,31 @@
+         stream.write('\n')
+ 
+ 
++prep = Path(__file__).resolve().parent
++certificate = json.loads((prep / 'ROOT-CLOSURE.json').read_bytes())
++def verify_ref(ref):
++    path = Path(ref['source'])
++    data = path.read_bytes()
++    assert len(data) == ref['bytes'] and sha(data) == ref['sha256']
++    return path
++
++assert certificate['wrapperObservedExit'] == 0 and certificate['heavySlotReleased'] is True
++assert type(certificate['wrapperSession']) is int and certificate['wrapperSession'] > 0
++rebind_dir = evidence / 'i5-d242-b2-independent63-rebind-01'
++rebind_path = verify_ref(certificate['rebind'])
++binding_path = verify_ref(certificate['admittedBinding'])
++assert rebind_path == rebind_dir / 'REBIND.json' and binding_path == rebind_dir / 'ROOT-BINDING.admitted.json'
++rebind = json.loads(rebind_path.read_bytes())
++binding = json.loads(binding_path.read_bytes())
++assert binding['executionAdmitted'] is True and read('ROOT-BINDING.executed.json') == binding
++assert rebind['legacyDistributionPreserved'] and rebind['allFiveOverlaysUnchanged']
++legacy = json.loads((rebind_dir / 'after.json').read_bytes())['distributions']
++for inventory in legacy.values():
++    base = Path(inventory['directory'])
++    assert {p.relative_to(base).as_posix() for p in base.rglob('*') if p.is_file()} == set(inventory['files'])
++    for name, expected in inventory['files'].items():
++        verify_ref({'source':str(base / name), **expected})
++
+ fresh, full = read('FRESH2-SELECTION.json'), read('FULL63-SELECTION.json')
+ assert fresh == {'actualCases': 63, 'passed': 2, 'failed': 0, 'filteredOrPending': 61, 'todo': 0,
+                  'expectedCases': 63, 'expectedSelected': 2, 'expectedFiltered': 61, 'patternUsed': True, 'processExit': 0}
+@@ -28,6 +53,7 @@
+                 'expectedCases': 63, 'expectedSelected': 63, 'expectedFiltered': 0, 'patternUsed': False, 'processExit': 0}
+ phase = read('PHASE-RECEIPT.json')
+ assert phase['stageReached'] == 'completed' and phase['failure'] is None and phase['afterMatchesRootBinding']
++assert phase['rootBindingSha256'] == certificate['admittedBinding']['sha256']
+ assert len(phase['commands']) == 8 and all(item['exitCode'] == 0 for item in phase['commands'])
+ for item in phase['commands']:
+     assert item['shell'] is False
+@@ -35,10 +61,12 @@
+     assert sha(Path(item['stderr']).read_bytes()) == item['stderrSha256']
+     assert item['childEnvironmentControl'] == {'GG_OLLAMA_ENABLED': 'false', 'LIVE': 'absent'}
+ before, after = read('before.json'), read('after.json')
+-assert before == after and after['head'] == 'a0ce7b781e333b70f4711b5e9201ef63c157df1d'
+-assert after['tree'] == '3f47fed82c18930fc0a56bc8e2598e7190ba8f3c'
+-assert after['indexSha256'] == '9feea17cb81baceb9640b3c1fdafc63353bfef58f804c4a4d2503bd19a2cf796'
+-assert after['stagedEntriesSha256'] == '4dfd5eac7b21d5db64eec049cc471cc7014c046b0a8b71a96f40c6e086d1f976'
++assert before == after and all(after[k] == v for k, v in binding['source'].items())
++assert after['head'] == rebind['source']['head'] and after['tree'] == rebind['source']['tree']
++assert after['indexSha256'] == rebind['afterIndex']['sha256'] == rebind['rawIndexAfter']['sha256']
++assert after['stagedEntriesSha256'] == rebind['stagedEntriesSha256']
++assert verify_ref(rebind['rawIndexBefore']).is_file() and verify_ref(rebind['rawIndexAfter']).is_file()
++assert verify_ref(rebind['afterIndex']).is_file()
+ assert not after['commonIndexExists']
+ module_before, module_after = read('02-before-modules.stdout.log'), read('08-after-modules.stdout.log')
+ assert module_before['node'] == module_after['node'] and module_before['selected'] == module_after['selected']
+@@ -102,7 +130,7 @@
+                       'manifestSha256': sha((packet / 'MANIFEST.json').read_bytes())})
+ save('CLOSURE.json', {
+     'freshSelection': fresh, 'fullSelection': full,
+-    'wrapperSession': 60876, 'wrapperObservedExit': 0, 'actualBehaviorInvocations': 2,
++    'wrapperSession': certificate['wrapperSession'], 'wrapperObservedExit': 0, 'actualBehaviorInvocations': 2,
+     'freshAndFullSeparateWorkers': True, 'allEightCommandsExit0': True,
+     'sourceHead': after['head'], 'sourceTree': after['tree'], 'rawIndexSha256': after['indexSha256'],
+     'stagedEntriesSha256': after['stagedEntriesSha256'], 'commonIndexAbsent': True,
+@@ -122,7 +150,7 @@
+         'replacementButtonDisabledBeforeOldRelease': event['beforeOldChoiceRelease']['currentButtonDisabled'],
+         'immediateFeedbackVisible': True, 'settledFeedbackVisible': True,
+         'waitObservedMs': event['waitObservedMs'], 'existingDefaultWaitForMs': 5000},
+-    'preservedSeals': preserved, 'heavySlotReleased': True,
++    'preservedSeals': preserved, 'heavySlotReleased': True, 'bothPriorWebDistributionsRehashed': True,
+     'noRetryFixtureTimingProductOrGitEdits': True,
+     'scope': 'Controlled public component/FakeApi application StorageEvent and QueryClient controls; not native browser/second-tab/server-principal, full UI acceptance, #562 healthy/no-loss consent, or universal absence of network activity.',
+ })

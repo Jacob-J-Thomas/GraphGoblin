@@ -1,0 +1,294 @@
+{
+  "provenance": {
+    "trace": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-416-420-post-feedback-browser12-execution-01\\browser-artifacts\\independent-416-listener.q-812c1-ithout-any-script-API-write-chromium\\trace.zip",
+    "sha256": "08b00707e26c4940dabdf14a3a56038a5ecf23f2041198d2f15d058b485bddee",
+    "scope": "Controlled retained B3 test-app GET projections used by the final native review; no live/owner listener"
+  },
+  "runPath": "/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "responses": {
+    "/system/shutdown": {
+      "phase": "running",
+      "graceMs": 300000,
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "choices": [],
+      "controlToken": "50bb5ad9-22e2-4590-85d8-b4a7ecb57468:0:running"
+    },
+    "/system/storage": {
+      "state": "adequate",
+      "checkedAt": "2026-10-02T12:00:00.000Z",
+      "volumes": [
+        {
+          "name": "data",
+          "totalBytes": 107374182400,
+          "availableBytes": 53687091200
+        }
+      ],
+      "cleaning": false,
+      "deletedRuns": 0,
+      "removedFileBytes": 0,
+      "reusableDatabaseBytes": 0,
+      "pendingResources": 0,
+      "preservedResources": 0
+    },
+    "/runs/01M3Y7RKG08245PHCXP916EBMT/thread": {
+      "schemaVersion": 1,
+      "run": {
+        "id": "01M3Y7RKG08245PHCXP916EBMT",
+        "loopId": "01M3Y7RKG08245PHCXP916EBMR",
+        "versionId": "01M3Y7RKG08245PHCXP916EBMS",
+        "iteration": 1
+      },
+      "invocation": {
+        "id": "01M3Y7RKG08245PHCXP916EBMV",
+        "source": "manual.api",
+        "caller": {
+          "kind": "user",
+          "id": "local"
+        },
+        "trigger": {
+          "nodeId": "start",
+          "kind": "manual",
+          "payload": null,
+          "receivedAt": "2026-10-02T12:00:00.000Z"
+        }
+      },
+      "messages": [],
+      "vars": {},
+      "artifacts": [],
+      "outputs": {
+        "start": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-02T12:00:00.000Z"
+        }
+      },
+      "lastOutput": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-02T12:00:00.000Z"
+      },
+      "gates": {},
+      "counters": {
+        "nodeVisits": {
+          "start": 1,
+          "approve": 1
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "cachedInputTokens": 0,
+          "reasoningOutputTokens": 0
+        }
+      }
+    },
+    "/runs/01M3Y7RKG08245PHCXP916EBMT/observation": {
+      "lifecycle": {
+        "runId": "01M3Y7RKG08245PHCXP916EBMT",
+        "seq": 2,
+        "ts": "2026-10-02T12:00:00.000Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      "freshSessionChoices": []
+    },
+    "/runs/01M3Y7RKG08245PHCXP916EBMT": {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "ownerId": "local",
+      "loopId": "01M3Y7RKG08245PHCXP916EBMR",
+      "versionId": "01M3Y7RKG08245PHCXP916EBMS",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Independent listener [1cfedaac-1]",
+        "label": "Independent listener [1cfedaac-1] v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M3Y7RKG08245PHCXP916EBMV",
+      "status": "failed",
+      "currentNodeId": "approve",
+      "iteration": 1,
+      "failure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "Controlled browser consent input; no real script ran",
+        "nodeId": "approve",
+        "resumable": true,
+        "script": {
+          "visitId": "controlled-script-visit",
+          "state": "outcome-uncertain"
+        }
+      },
+      "createdAt": "2026-10-02T12:00:00.000Z",
+      "startedAt": "2026-10-02T12:00:00.000Z",
+      "finishedAt": "2026-10-02T12:00:00.000Z",
+      "finalizedAt": "2026-10-02T12:00:00.000Z",
+      "lastEventSeq": 6,
+      "recovery": {
+        "observedSeq": 6,
+        "resume": {
+          "allowed": false,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "message": "Controlled consent"
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "approve",
+            "label": "Controlled script",
+            "action": {
+              "allowed": false,
+              "code": "SCRIPT_CONSENT_REQUIRED",
+              "message": "Controlled consent"
+            },
+            "effects": [
+              {
+                "nodeId": "approve",
+                "label": "Controlled script",
+                "kind": "script"
+              }
+            ]
+          }
+        ],
+        "scriptConsent": {
+          "failureSeq": 6,
+          "nodeId": "approve"
+        }
+      }
+    },
+    "/loops/01M3Y7RKG08245PHCXP916EBMR/versions/01M3Y7RKG08245PHCXP916EBMS": {
+      "id": "01M3Y7RKG08245PHCXP916EBMS",
+      "loopId": "01M3Y7RKG08245PHCXP916EBMR",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Independent listener [1cfedaac-1]",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Approve",
+            "ui": {
+              "x": 260,
+              "y": 80
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Approve?",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              },
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 520,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-02T12:00:00.000Z",
+      "publishedAt": "2026-10-02T12:00:00.000Z"
+    }
+  }
+}

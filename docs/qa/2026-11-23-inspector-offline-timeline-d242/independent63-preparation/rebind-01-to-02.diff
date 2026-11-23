@@ -1,0 +1,11 @@
+--- preparation-01/rebind.py
++++ preparation-02/rebind.py
+@@ -173,7 +173,7 @@
+     before = snapshot(fixed, template)
+     for key, old in fixed['baseline'].items():
+         if key == 'selectedSources':
+-            need(all(before['source'][name] == old_sha for name, old_sha in old.items()),
++            need(all(before['source']['selectedSources'][name] == old_sha for name, old_sha in old.items()),
+                  'Original selected materialized source differs')
+         else:
+             need(before['source'][key] == old, f'Original protected UIQA identity differs: {key}')

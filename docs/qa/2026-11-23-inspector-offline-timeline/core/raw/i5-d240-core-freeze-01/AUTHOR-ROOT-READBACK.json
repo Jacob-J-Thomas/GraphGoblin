@@ -1,0 +1,61 @@
+{
+  "utc": "2026-11-23T07:32:45.935579+00:00",
+  "packets": [
+    {
+      "packet": "i5-d240-core-regression-test-author-01",
+      "membersVerified": 5,
+      "sealSha256": "a6ff08b9f2cfe49b02dc64c3d79002b505b0bf6e68b3a6cedde923682345f14f",
+      "receipts": [
+        {
+          "file": "01-old-helper.receipt.json",
+          "exitCode": 1,
+          "sourceStable": true,
+          "node": "v22.23.4"
+        }
+      ]
+    },
+    {
+      "packet": "i5-d240-core-regression-test-author-corrected-01",
+      "membersVerified": 19,
+      "sealSha256": "51298519a47fb43af35224f0bd0cae1a5516326f959ea4cbbeedb11aa5e1b158",
+      "receipts": [
+        {
+          "file": "01-format-test.receipt.json",
+          "exitCode": 0,
+          "sourceStable": false,
+          "node": "v22.23.4"
+        },
+        {
+          "file": "02-corrected-cases.receipt.json",
+          "exitCode": 0,
+          "sourceStable": true,
+          "node": "v22.23.4"
+        },
+        {
+          "file": "03-web-typecheck.receipt.json",
+          "exitCode": 0,
+          "sourceStable": true,
+          "node": "v22.23.4"
+        },
+        {
+          "file": "04-scoped-eslint.receipt.json",
+          "exitCode": 0,
+          "sourceStable": true,
+          "node": "v22.23.4"
+        },
+        {
+          "file": "05-prettier-check.receipt.json",
+          "exitCode": 0,
+          "sourceStable": true,
+          "node": "v22.23.4"
+        }
+      ]
+    }
+  ],
+  "scope": "Author negative3failed22passed and corrected25passed plus static gates; not independent QA or UI/browser acceptance.",
+  "initialRootReaderFailure": {
+    "error": "KeyError: exitCode",
+    "cause": "Reader expected corrected-packet exitCode on the old-baseline receipt, which uses testProcessExit.",
+    "correction": "Read each known receipt field explicitly; original receipts unchanged; no test rerun."
+  }
+}
