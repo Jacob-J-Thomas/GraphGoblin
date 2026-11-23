@@ -356,6 +356,91 @@ it('reports the uncertain outcome of a confirmation already sent when its review
   expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
 });
 
+it.each(['fails in transport', 'succeeds'] as const)(
+  'opens no second review after reconnecting while a confirmation sent before the outage is unresolved, and reports it when it %s (#416)',
+  async (settle) => {
+    const api = fakeConsent(),
+      user = userEvent.setup();
+    const run = api.addRun({ status: 'succeeded' });
+    let finish!: (response: Response) => void;
+    let fail!: (error: Error) => void;
+    api.override(
+      'POST /runs/deletion-eligibility',
+      () =>
+        new Promise<Response>((resolve, reject) => {
+          finish = resolve;
+          fail = reject;
+        }),
+    );
+    renderWith(<InspectorGate runId={run.id} />, '/', api);
+    const review = () => screen.getByRole('button', { name: 'Review delete-ready history' });
+    const withdraw = () => screen.getByRole('button', { name: 'Withdraw delete-ready mark' });
+    await user.click(review());
+    await user.click(await screen.findByRole('button', { name: 'Confirm delete-ready selection' }));
+    expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Lose connection' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // The view reads the run again under a new gate; the confirmation sent earlier is unresolved.
+    await user.click(screen.getByRole('button', { name: 'Read again' }));
+    expect(review()).toBeDisabled();
+    expect(withdraw()).toBeDisabled();
+    // An attempt to open a replacement review opens nothing and sends no preview.
+    await user.click(review());
+    await user.click(withdraw());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(1);
+    await act(async () => {
+      if (settle === 'succeeds')
+        finish(Response.json({ token: 'b'.repeat(64), items: [{ runId: run.id, reasons: [] }] }));
+      else fail(new TypeError('Failed to fetch'));
+      await Promise.resolve();
+    });
+    const outcome =
+      settle === 'succeeds'
+        ? '1 run marked delete-ready.'
+        : /The change may or may not have been saved/;
+    expect(await screen.findByText(outcome)).toBeInTheDocument();
+    await waitFor(() => expect(review()).toBeEnabled());
+    expect(withdraw()).toBeEnabled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
+    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(1);
+  },
+);
+
+it('reports the outcome of a pending confirmation the browser dismissed (#416)', async () => {
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({ status: 'succeeded' });
+  let fail!: (error: Error) => void;
+  api.override(
+    'POST /runs/deletion-eligibility',
+    () =>
+      new Promise<Response>((_resolve, reject) => {
+        fail = reject;
+      }),
+  );
+  renderWith(<HistoryEligibility runIds={[run.id]} />, '/', api);
+  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
+  await user.click(await screen.findByRole('button', { name: 'Confirm delete-ready selection' }));
+  expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
+  const modal = screen.getByRole('dialog');
+  if (!(modal instanceof HTMLDialogElement)) throw new Error('Expected a native dialog.');
+  // The browser has already closed the native dialog (for example by repeated Escape). Once that
+  // dismissal is handled, the dismissed review no longer holds the controls.
+  act(() => modal.close());
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Review delete-ready history' })).toBeEnabled(),
+  );
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await act(async () => {
+    fail(new TypeError('Failed to fetch'));
+    await Promise.resolve();
+  });
+  expect(await screen.findByText(/The change may or may not have been saved/)).toBeInTheDocument();
+  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
+});
+
 it('clears the Runs selection after a successful withdrawal', async () => {
   const api = fakeConsent(),
     user = userEvent.setup();

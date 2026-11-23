@@ -1,5 +1,6 @@
 import { runs } from '@graphgoblin/api-client';
 import type { RunRecord } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { onlineManager, QueryClient } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -74,6 +75,49 @@ function missingSessionRun(api: FakeApi) {
   return run;
 }
 
+/** Cancelled at the pinned loop's exit `done`, after API key `actor` asked for it at #3. */
+function cancelledRun(api: FakeApi, actor: string) {
+  const loop = api.addLoop(minimalLoop(), { published: true });
+  const run = startedRun(api, {
+    loopId: loop.id,
+    versionId: loop.currentVersionId!,
+    status: 'cancelled',
+    lastEventSeq: 4,
+    currentNodeId: 'done',
+  });
+  api.pushEvent(
+    run.id,
+    event(run.id, 3, 'run.cancel_requested', { actor: { kind: 'api-key', id: actor } }),
+  );
+  api.pushEvent(run.id, event(run.id, 4, 'run.cancelled', {}));
+  return run;
+}
+
+/** A finished run without a result, whose pinned exit `done` has `exit` as its configuration. */
+function valuelessExitRun(api: FakeApi, exit: Record<string, unknown>) {
+  const base = minimalLoop();
+  const loop = api.addLoop(
+    {
+      ...base,
+      nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config: exit } : node)),
+    },
+    { published: true },
+  );
+  const run = api.addRun({
+    loopId: loop.id,
+    versionId: loop.currentVersionId!,
+    status: 'succeeded',
+    lastEventSeq: 3,
+  });
+  api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
+  api.pushEvent(run.id, event(run.id, 2, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }));
+  api.pushEvent(
+    run.id,
+    event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+  );
+  return run;
+}
+
 /** Holds run reads while `state.blocking`, until released; the row is read on release. */
 function heldRunReads(api: FakeApi) {
   let release!: () => void;
@@ -137,6 +181,15 @@ async function restoreApi(view: Rendered, runId: string) {
   view.api.offline = false;
   await runRead(view, runId);
   await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+}
+
+/** Only run reads now fail, as a refused connection would; every other read keeps answering. */
+async function loseRunRead(view: Rendered, runId: string) {
+  view.api.override('GET /runs/:id', () => {
+    throw new TypeError('Failed to fetch');
+  });
+  await runRead(view, runId);
+  await screen.findByText(STALE);
 }
 
 const posts = (api: FakeApi) => api.calls.filter((call) => call.method === 'POST');
@@ -535,4 +588,318 @@ describe('run inspector through an outage (#416)', () => {
       view.unmount();
     }
   });
+
+  it('spends a queued fresh-session choice on a loss of the observation read alone, even once read again', async () => {
+    const api = new FakeApi();
+    const run = missingSessionRun(api);
+    const view = renderApp('/runs/' + run.id, api);
+    const user = userEvent.setup();
+    const start = () => button('Start fresh session for worker');
+    const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
+    const observationRead = () =>
+      act(() =>
+        view.queryClient.refetchQueries({ queryKey: keys.observation(run.id), exact: true }),
+      );
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let queued = false;
+    try {
+      await openRun(run.id);
+      await waitFor(() => expect(start()).toBeEnabled());
+      // The client's mutation cache holds the choice before its API call; it is read at dispatch.
+      view.queryClient.getMutationCache().config.onMutate = () => {
+        queued = true;
+        return held;
+      };
+      await user.click(start());
+      await waitFor(() => expect(queued).toBe(true));
+
+      // Only the observation read fails; the run read and the browser stay healthy, so the run
+      // stays current and its other controls stay available.
+      const evidence = view.queryClient.getQueryData(keys.observation(run.id));
+      api.override('GET /runs/:id/observation', () => {
+        throw new TypeError('Failed to fetch');
+      });
+      await observationRead();
+      expect(await screen.findByText('Reading the run evidence again.')).toBeVisible();
+      expect(screen.queryByText(STALE)).toBeNull();
+      expect(button('Replay...')).toBeEnabled();
+      expect(button('Review delete-ready history')).toBeEnabled();
+
+      // A genuine reread whose body is equal: structural sharing keeps the cached object.
+      api.override('GET /runs/:id/observation', (call) => api.builtIn(call));
+      await observationRead();
+      await waitFor(() =>
+        expect(screen.queryByText('Reading the run evidence again.')).not.toBeInTheDocument(),
+      );
+      expect(view.queryClient.getQueryData(keys.observation(run.id))).toBe(evidence);
+
+      // The choice queued before that loss stays spent.
+      release();
+      expect(await screen.findByText(NOT_SENT)).toBeVisible();
+      expect(recoveries()).toHaveLength(0);
+
+      // A deliberate choice made now sends once, with the failure's own sequence.
+      api.override('POST /runs/:id/recover-session', () =>
+        Response.json({ ...api.runs.get(run.id), status: 'running' }),
+      );
+      await waitFor(() => expect(start()).toBeEnabled());
+      await user.click(start());
+      await waitFor(() => expect(recoveries()).toHaveLength(1));
+      expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+    } finally {
+      release();
+      view.unmount();
+    }
+  });
+
+  it.each(['fails in transport', 'succeeds'] as const)(
+    'keeps a script retry sent before an outage the only one, and its outcome, until it %s',
+    async (settle) => {
+      const api = new FakeApi();
+      const run = startedRun(api, {
+        status: 'failed',
+        lastEventSeq: 3,
+        currentNodeId: 'script',
+        failure: {
+          code: 'SCRIPT_OUTCOME_UNCERTAIN',
+          message: 'uncertain',
+          nodeId: 'script',
+          resumable: true,
+        },
+      });
+      api.pushEvent(run.id, event(run.id, 3, 'run.failed', { failure: run.failure! }));
+      let answer!: (response: Response) => void;
+      let fail!: (error: Error) => void;
+      api.override(
+        'POST /runs/:id/resume',
+        () =>
+          new Promise<Response>((resolve, reject) => {
+            answer = resolve;
+            fail = reject;
+          }),
+      );
+      const view = renderApp('/runs/' + run.id, api);
+      const user = userEvent.setup();
+      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
+      try {
+        await openRun(run.id);
+        await user.click(button('Recover script'));
+        await user.click(
+          within(await screen.findByRole('dialog')).getByRole('button', { name: 'Resume' }),
+        );
+        await waitFor(() => expect(resumes()).toHaveLength(1));
+        await loseApi(view, run.id);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        await restoreApi(view, run.id);
+
+        // The run is current and still uncertain, and the retry already sent has not settled:
+        // no second review opens and nothing else is sent.
+        expect(screen.getByText('Failed: SCRIPT_OUTCOME_UNCERTAIN')).toBeVisible();
+        expect(button('Recover script')).toBeDisabled();
+        await user.click(button('Recover script'));
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(resumes()).toHaveLength(1);
+
+        if (settle === 'fails in transport') {
+          await act(async () => {
+            fail(new TypeError('Failed to fetch'));
+            await Promise.resolve();
+          });
+          const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+          expect(
+            await within(header).findByText('The GraphGoblin API cannot be reached.'),
+          ).toBeVisible();
+          await waitFor(() => expect(button('Recover script')).toBeEnabled());
+        } else {
+          const running: RunRecord = { ...api.runs.get(run.id)!, status: 'running' };
+          delete running.failure;
+          await act(async () => {
+            api.runs.set(run.id, running);
+            answer(Response.json(running));
+            await Promise.resolve();
+          });
+          await waitFor(() =>
+            expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull(),
+          );
+        }
+        expect(resumes()).toHaveLength(1);
+        expect(posts(api)).toHaveLength(1);
+      } finally {
+        view.unmount();
+      }
+    },
+  );
+
+  it.each(['nothing', 'only the run read of A', 'the browser'] as const)(
+    'keeps run B as its own reads say after %s was lost while A was shown',
+    async (lost) => {
+      const api = new FakeApi();
+      const b = startedRun(api);
+      const a = startedRun(api, { parentRunId: b.id });
+      api.runs.set(b.id, { ...api.runs.get(b.id)!, parentRunId: a.id });
+      // The health probe keeps answering; only the reads named below change.
+      api.override('GET /healthz', () => Response.json({ status: 'ok' }));
+      const reads = { failA: false, holdB: false, heldB: 0 };
+      let releaseB = () => {};
+      const heldB = new Promise<void>((resolve) => {
+        releaseB = resolve;
+      });
+      api.override('GET /runs/:id', async (call) => {
+        if (reads.failA && call.path === `/runs/${a.id}`) throw new TypeError('Failed to fetch');
+        if (reads.holdB && call.path === `/runs/${b.id}`) {
+          reads.heldB += 1;
+          await heldB;
+        }
+        return api.builtIn(call);
+      });
+      const view = renderApp('/runs/' + b.id, api);
+      const user = userEvent.setup();
+      const parent = async (from: string, to: string) => {
+        const header = (await openRun(from)).closest('header')!;
+        await user.click(within(header).getByRole('link', { name: 'parent run' }));
+        await openRun(to);
+      };
+      try {
+        await openRun(b.id);
+        await waitFor(() => expect(button(/Pause/)).toBeEnabled());
+        await parent(b.id, a.id);
+        await waitFor(() => expect(button(/Pause/)).toBeEnabled());
+        if (lost === 'only the run read of A') {
+          reads.failA = true;
+          await runRead(view, a.id);
+          await screen.findByText(STALE);
+          reads.failA = false;
+          await runRead(view, a.id);
+        } else if (lost === 'the browser') {
+          act(() => onlineManager.setOnline(false));
+          expect(await screen.findByText(/This browser is offline\./)).toBeVisible();
+          act(() => onlineManager.setOnline(true));
+        }
+        await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+        expect(button(/Pause/)).toBeEnabled();
+
+        // Back to B, whose own read on return is held.
+        reads.holdB = true;
+        await parent(a.id, b.id);
+        await waitFor(() => expect(reads.heldB).toBeGreaterThan(0));
+        if (lost === 'the browser') {
+          // A browser disconnect applies to every run until each is read again.
+          expect(screen.getByText(/Reconnecting: reading this run again\./)).toBeVisible();
+          expect(button(/Pause/)).toBeDisabled();
+        } else {
+          expect(screen.queryByText(STALE)).toBeNull();
+          expect(button(/Pause/)).toBeEnabled();
+        }
+        reads.holdB = false;
+        releaseB();
+        await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+        expect(button(/Pause/)).toBeEnabled();
+        expect(posts(api)).toHaveLength(0);
+      } finally {
+        releaseB();
+        view.unmount();
+      }
+    },
+  );
+
+  it.each(['qualified', 'foreign', 'manually replaced'] as const)(
+    'keeps execution context through a run-only loss, with the actor of a %s observation only when qualified',
+    async (observation) => {
+      const api = new FakeApi();
+      const run = cancelledRun(api, 'operator-key');
+      if (observation === 'foreign') {
+        // A successful answer whose events all name another run.
+        const other = cancelledRun(api, 'foreign-key');
+        api.override('GET /runs/:id/observation', (call) =>
+          api.builtIn({ ...call, path: `/runs/${other.id}/observation` }),
+        );
+      }
+      const view = renderApp('/runs/' + run.id, api);
+      const position = () => screen.getByText(/Recorded node position:/);
+      try {
+        await openRun(run.id);
+        await waitFor(() =>
+          expect(view.queryClient.getQueryState(keys.observation(run.id))?.status).toBe('success'),
+        );
+        // While the run is current, the pinned definition names the recorded node.
+        await waitFor(() =>
+          expect(position()).toHaveTextContent(/Recorded node position: .+ \(done\)\./),
+        );
+        if (observation === 'manually replaced') {
+          await waitFor(() =>
+            expect(view.queryClient.getQueryState(keys.observation(run.id))?.fetchStatus).toBe(
+              'idle',
+            ),
+          );
+          // Later observation reads stay in flight, so the manual write is what stays cached.
+          api.override('GET /runs/:id/observation', () => new Promise<Response>(() => {}));
+          act(() => {
+            view.queryClient.setQueryData<Record<string, unknown>>(
+              keys.observation(run.id),
+              (current) => ({
+                ...current,
+                cancelRequested: event(run.id, 3, 'run.cancel_requested', {
+                  actor: { kind: 'api-key', id: 'manual-key' },
+                }),
+              }),
+            );
+          });
+        }
+        await loseRunRead(view, run.id);
+        expect(screen.getByText(/^Pinned definition unavailable\./)).toBeVisible();
+        expect(position()).toHaveTextContent(
+          observation === 'qualified'
+            ? 'Cancelled by api-key operator-key (request #3; cancellation #4). Recorded node position: done.'
+            : 'Cancelled. The cancellation record could not be read. Recorded node position: done.',
+        );
+        expect(screen.queryByText(/foreign-key|manual-key/)).toBeNull();
+        expect(posts(api)).toHaveLength(0);
+      } finally {
+        view.unmount();
+      }
+    },
+  );
+
+  it.each([
+    {
+      returns: 'Returns None',
+      exit: { returns: 'none', destinations: [] },
+      explanation:
+        'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.',
+    },
+    {
+      returns: 'an expression',
+      exit: { returns: 'null', destinations: [{ kind: 'caller' }] },
+      explanation:
+        'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
+    },
+  ])(
+    'keeps the selected exit’s own explanation for $returns through a run-only loss',
+    async ({ exit, explanation }) => {
+      const api = new FakeApi();
+      const run = valuelessExitRun(api, exit);
+      const view = renderApp('/runs/' + run.id, api);
+      const user = userEvent.setup();
+      const selected = () => screen.getByText(/Exit outcome:/);
+      try {
+        await openRun(run.id);
+        await waitFor(() =>
+          expect(screen.getByTestId('exit-returns')).toHaveTextContent(explanation),
+        );
+        await user.click(screen.getByRole('button', { name: /exit\.evaluated/ }));
+        expect(selected()).toHaveTextContent(explanation);
+        await loseRunRead(view, run.id);
+        // The retained run section omits its summary; the selected exit keeps its own.
+        expect(screen.queryByTestId('exit-returns')).toBeNull();
+        expect(selected()).toHaveTextContent(explanation);
+        expect(screen.queryByText(/See the run result/)).toBeNull();
+        expect(posts(api)).toHaveLength(0);
+      } finally {
+        view.unmount();
+      }
+    },
+  );
 });

@@ -122,11 +122,16 @@ warning titled **Last observed, may be out of date** that says whether the brows
 the API cannot be reached, or the run is being read again. The retained section shows the
 record's status, failure, result, wait (with its form) and delivery and finalization state as last
 read. It does not claim anything the record did not say: a terminal run that was not finalized
-still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs; the
-pinned version's labels, the gate and return summaries and the execution context are omitted
-until the run is read again. The exit evaluation, a finish event's result and fresh-session notes
-come from the run observation and are kept only from a qualified observation read. The Timeline,
-the selected payload, the exact thread and the preceding selection below keep their own
+still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs, and
+the pinned version's labels and the section's gate and return summaries are omitted until the run
+is read again. The execution context stays: it shows the run record, says the pinned definition is
+unavailable rather than loading, and names the recorded node by its ID. The exit evaluation, a
+finish event's result, a cancellation's actor with its request and cancellation sequence numbers,
+and fresh-session notes come from the run observation and are kept only from a qualified
+observation read. A foreign or manually written observation supplies none of them; a cancelled
+run then says its cancellation record could not be read. The Timeline, the selected payload
+(including a selected exit's explanation of a missing value, which keeps the observation, thread
+and version it already read), the exact thread and the preceding selection below keep their own
 behaviour.
 
 Only a qualified receipt lets a run stay on screen. A receipt is in-memory metadata, at most one
@@ -138,9 +143,14 @@ field the section shows must be the expected event kind for this run. Cache seed
 manual writes, removed or replaced query entries, another provider or cache, aborted or retired
 attempts and answers under retired credentials never qualify. A cold or unproved row stays
 unavailable and shows the ordinary offline state. A definitive refusal (an HTTP or authentication
-error, a missing run, a response naming another run or an invalid body) shows its ordinary error
-and retires the receipt; a later transport error cannot bring the run back. Removing the query
-from the cache removes its receipt with it.
+error, a missing run or a response naming another run) retires the receipt and fails the read with
+its ordinary error. A successful GET whose body does not match the run snapshot contract, or an
+observation with a field of the wrong kind or run, also retires the receipt, but leaves the
+ordinary query result unchanged: the body stays the query's data as returned and no error is
+added. After either, a later transport error cannot bring the last observed run back. That later
+failure's ordinary offline error can replace an earlier HTTP message on screen; the fallback stays
+unavailable until a new qualified read. Removing the query from the cache removes its receipt with
+it.
 
 Freshness compares positions. A loss records the start of the latest outage; repeated failures
 within it keep that boundary, and it stays recorded after the outage ends, so a nonzero loss alone
@@ -148,8 +158,12 @@ does not mean an outage is current. The run is current again only when its recei
 the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
 receipt by itself only permits the last-observed display. Being online again, a successful health
 probe or an open event stream may start the existing rereads but never unlock the view, and a read
-that started before the loss cannot either. The shared API probe, the stream's reread and the API
-key panel's refresh keep doing that work. The inspector adds at most one deduplicated reread per
+that started before the loss cannot either. The boundary the view remembers for a run, kept even
+when a credential or provider change empties the receipt's own loss, belongs to that run: another
+run opened in the same view starts from its own receipts, so an outage of one run's read never
+marks another run last observed. A browser disconnect applies to every run until each is read
+again. The shared API probe, the stream's reread and the API key panel's refresh keep doing that
+work. The inspector adds at most one deduplicated reread per
 outage boundary that nothing else serves, joining a read already in flight: of the run, and of
 the observation only when **Start fresh session** needs it. There is no polling for receipts.
 
@@ -164,12 +178,22 @@ is discarded, and a command queued or delayed across a loss, a reconnect or an A
 reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
 close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
 was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
-it was in flight reports that the change may or may not have been saved. Nothing is replayed
-automatically. **Start fresh session** also needs an observation read after the loss whose
-failure event names the same run, node and missing-session visit as the current record; it sends
-that failure event's own sequence even when later delivery audits exist. Script consent keeps the
-run and observed sequence shown when its review opened. The Runs list's delete-ready controls and
-other pages keep their behaviour.
+it was in flight reports that the change may or may not have been saved. While a script recovery
+(queued or sent) or a sent delete-ready confirmation is unresolved, its launchers stay disabled
+and their handlers refuse, even after the outage that expired its review has ended: no
+replacement review resets it or sends a second command before it settles, and its eventual
+failure or success is still reported. A delete-ready confirmation whose review the browser
+dismissed reports its outcome beside the controls. Nothing is replayed automatically. **Start
+fresh session** also needs an observation read after the loss whose failure event names the same
+run, node and missing-session visit as the current record; it sends that failure event's own
+sequence even when later delivery audits exist. Its gate keeps the observation boundary it was
+issued under: a later failure of the observation read alone, with the run read and the browser
+healthy, spends a choice queued before it even after the observation is read again with an equal
+body, and that choice reports **Not sent**. A new choice after the qualifying observation read
+sends once. Other run controls stay available through an observation-only failure. Script consent
+keeps the run and observed sequence shown when its review opened. The Runs list's delete-ready
+controls share the hold on a pending confirmation and the report of a dismissed one; otherwise
+they and other pages keep their behaviour.
 
 ### Timeline sequence column (#420)
 

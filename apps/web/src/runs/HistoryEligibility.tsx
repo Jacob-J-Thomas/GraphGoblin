@@ -35,6 +35,9 @@ export function HistoryEligibility({
   // expires it, together with any preview that arrives late for it.
   const active = review?.gate === availability ? review : undefined;
   const unavailable = availability.blocked !== undefined;
+  // A sent confirmation keeps its review, open or expired by an outage, until it settles: no
+  // replacement review opens over it, so its outcome is still reported here (#416).
+  const holding = busy && review !== undefined;
 
   const dismiss = () => {
     generationRef.current++;
@@ -43,7 +46,7 @@ export function HistoryEligibility({
   };
   const begin = async (action: 'mark' | 'withdraw') => {
     const gate = availability;
-    if (!gate.open()) return;
+    if (holding || !gate.open()) return;
     const request = ++generationRef.current;
     const ids = [...runIds];
     setReview({ ids, action, gate });
@@ -81,9 +84,9 @@ export function HistoryEligibility({
       if (generationRef.current === request) dismiss();
       await queryClient.invalidateQueries({ queryKey: ['runs'] });
     } catch (failure) {
-      if (generationRef.current !== request) return;
-      // A sent confirmation whose review expired meanwhile still reports what happened to it.
-      if (current.gate.open()) setError(errorMessage(failure));
+      // A sent confirmation always reports what happened to it: in its review while that is still
+      // open and current, otherwise beside the controls, leaving any newer review intact.
+      if (generationRef.current === request && current.gate.open()) setError(errorMessage(failure));
       else
         setOutcome(
           isOfflineError(failure)
@@ -102,7 +105,7 @@ export function HistoryEligibility({
         <Button
           size="sm"
           variant="outline"
-          disabled={!runIds.length || runIds.length > 500 || unavailable}
+          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
           onClick={() => void begin('mark')}
         >
           Review delete-ready history
@@ -110,7 +113,7 @@ export function HistoryEligibility({
         <Button
           size="sm"
           variant="ghost"
-          disabled={!runIds.length || runIds.length > 500 || unavailable}
+          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
           onClick={() => void begin('withdraw')}
         >
           Withdraw delete-ready mark

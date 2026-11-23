@@ -10,20 +10,30 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   **Last observed, may be out of date**, with a notice saying whether the browser is offline,
   the API cannot be reached or the run is being read again. Only a run read with an in-memory
   receipt qualifies: a real, non-manual, contract-valid GET from the current client, cache, query
-  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable,
-  and a definitive refusal keeps its error even through a later transport failure. Nodes show
-  their recorded IDs and summaries that no qualified read supplied are omitted. Every control
-  that writes (pause, cancel, resume, replay, script recovery, Start fresh session, input and
-  signal answers, the delete-ready preview and confirmation) stays unavailable until a run read
-  that started after the outage began has committed; reconnecting, a health probe or an open
-  stream alone does not unlock it. Open reviews close, late previews are discarded, and a command
-  queued across a loss, reconnect or A → B → A visit reports **Not sent** instead of sending.
-  Drafts of the same wait, reading and Cancel keep working, and a write already sent keeps its
-  real outcome; nothing is replayed. Start fresh session additionally needs a post-outage
-  observation of the same failure and still sends that failure's own sequence. At most one extra
+  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable.
+  A definitive HTTP refusal retires the receipt and shows its ordinary error. A successful GET
+  whose body does not match the contract retires the receipt too, without changing the ordinary
+  query result, which keeps that body. A later transport failure cannot bring the fallback back,
+  although its ordinary offline error can replace an earlier HTTP message. Nodes show their
+  recorded IDs and summaries that no qualified read supplied are omitted. The execution context
+  stays, with the pinned definition shown as unavailable and a cancellation's actor and sequence
+  numbers only from a qualified observation; a selected exit event keeps its own explanation of a
+  missing value. Every control that writes (pause, cancel, resume, replay, script recovery, Start
+  fresh session, input and signal answers, the delete-ready preview and confirmation) stays
+  unavailable until a run read that started after the outage began has committed; reconnecting, a
+  health probe or an open stream alone does not unlock it. One run's own outage does not carry
+  over to another run opened in the same view; a browser disconnect applies to every run. Open
+  reviews close, late previews are discarded, and a command queued across a loss, reconnect or
+  A → B → A visit reports **Not sent** instead of sending. Drafts of the same wait, reading and
+  Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
+  a script recovery or delete-ready confirmation already sent is unresolved, no replacement review
+  opens over it, so its late failure or success is still reported, including for a delete-ready
+  review the browser dismissed. Start fresh session additionally needs a post-outage observation
+  of the same failure and still sends that failure's own sequence; a choice queued before a
+  failure of the observation read alone stays spent after that read recovers. At most one extra
   deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
-  observation. The Runs list, the Timeline and the thread keep their behaviour. No persistent
-  format, store, export or contract change.
+  observation. The Timeline and the thread keep their behaviour. No persistent format, store,
+  export or contract change.
 
 - The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
   (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,

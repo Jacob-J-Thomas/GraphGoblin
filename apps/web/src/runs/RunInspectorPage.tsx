@@ -245,11 +245,13 @@ export function RunInspectorPage() {
   const observationRead = useInspectorRead(header.registry, keys.observation(runId));
   const online = useSyncExternalStore(watchBrowser, browserOnline);
   const lastBrowserLoss = useSyncExternalStore(watchBrowser, browserLossSnapshot);
-  // A credential change empties the receipt's loss as well: remember the newest boundary seen,
-  // so only a later qualified read can release it.
-  const [latch, setLatch] = useState(0);
-  const boundary = Math.max(lastBrowserLoss, runRead.loss, latch);
-  if (boundary > latch) setLatch(boundary);
+  // A credential change empties the receipt's loss as well: remember the newest boundary seen for
+  // the run shown, so only a later qualified read of it can release it. Another run opened in this
+  // view starts from its own receipts; the browser's loss applies to every run.
+  const [latch, setLatch] = useState({ runId, loss: 0 });
+  const remembered = latch.runId === runId ? latch.loss : 0;
+  const boundary = Math.max(lastBrowserLoss, runRead.loss, remembered);
+  if (latch.runId !== runId || boundary > latch.loss) setLatch({ runId, loss: boundary });
   const run = runQuery.data;
   const down = !online || runQuery.fetchStatus === 'paused' || isOfflineError(runQuery.error);
   const fresh = boundary === 0 || runRead.committed > boundary;
@@ -312,9 +314,12 @@ export function RunInspectorPage() {
     return self;
   }, [blocked, boundary, header.registry, queryClient, runId, visit]);
   // Start fresh session also needs the observation that recorded the failure read after the
-  // outage; the control itself matches its run, node, visit and failure sequence.
+  // outage; the control itself matches its run, node, visit and failure sequence. The gate keeps
+  // the observation boundary it was issued after: a later loss of the observation read alone
+  // spends it, even once the observation has been read again.
   const sessionGate = useMemo<WriteGate>(() => {
     const key = keys.observation(runId);
+    const since = observationBoundary;
     const evidenceBlocked =
       gate.blocked ?? (observationFresh ? undefined : 'Reading the run evidence again.');
     return {
@@ -323,11 +328,11 @@ export function RunInspectorPage() {
       open: () => {
         if (evidenceBlocked !== undefined || !gate.open()) return false;
         const read = getInspectorRead(header.registry, key);
-        const since = Math.max(boundary, read.loss);
+        if (read.loss > since) return false;
         return since === 0 || read.committed > since;
       },
     };
-  }, [boundary, gate, header.registry, observationFresh, runId]);
+  }, [gate, header.registry, observationBoundary, observationFresh, runId]);
   useLayoutEffect(() => {
     latestGate.current = gate;
     shownVisit.current = visit;
@@ -423,10 +428,21 @@ export function RunInspectorPage() {
   // qualified read supplied (#416). The Timeline below keeps the pinned labels.
   const sectionDefinition = outage ? undefined : definition;
   const gateSummary = outage ? undefined : lastGateSummary(evidence, definition);
-  const returnSummary =
-    !outage && threadQuery.data
-      ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
-      : undefined;
+  // A selected exit's explanation reads the observation, thread and version it always read; only
+  // the run section's copy of it is withheld through an outage.
+  const exitReturns = threadQuery.data
+    ? exitReturnSummary(
+        present([
+          observation.data?.lifecycle,
+          observation.data?.exit,
+          observation.data?.gate,
+          observation.data?.finished,
+        ]),
+        definition,
+        threadQuery.data.invocation.returnDefaults,
+      )
+    : undefined;
+  const returnSummary = outage ? undefined : exitReturns;
 
   return (
     <Page wide>
@@ -542,17 +558,16 @@ export function RunInspectorPage() {
             </p>
             <HistoryEligibility runIds={[run.id]} availability={gate} />
           </div>
-          {/* Execution context reads the pinned version and live evidence: it is omitted while
-              the run is last observed rather than shown from unproved labels. */}
-          {outage ? null : (
-            <ExecutionContext
-              run={run}
-              cancellation={cancellation}
-              cancellationUnavailable={observation.isError}
-              definition={definition}
-              definitionLoading={versionQuery.isPending}
-            />
-          )}
+          {/* While the run is last observed, execution context names nodes by their recorded IDs,
+              says the pinned definition is unavailable rather than loading, and takes a
+              cancellation's actor and sequence numbers only from a qualified observation. */}
+          <ExecutionContext
+            run={run}
+            cancellation={cancellation}
+            cancellationUnavailable={observation.isError || (outage && observed === undefined)}
+            definition={sectionDefinition}
+            definitionLoading={!outage && versionQuery.isPending}
+          />
           <WaitPanel run={run} definition={sectionDefinition} availability={gate} />
           <DeliveryPanel run={run} />
         </Fragment>
@@ -614,7 +629,7 @@ export function RunInspectorPage() {
             event={selectedEvent}
             definition={definition}
             definitionLoading={versionQuery.isPending}
-            exitReturns={returnSummary}
+            exitReturns={exitReturns}
           />
           {threadError &&
           !(threadError instanceof GraphGoblinApiError && threadError.status === 404) ? (

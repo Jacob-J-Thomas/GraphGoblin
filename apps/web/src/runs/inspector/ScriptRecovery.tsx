@@ -61,16 +61,18 @@ export function ScriptRecovery({
   const canResume =
     run.recovery.resume.allowed || run.recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED';
   const send = (kind: 'resume' | 'replay') => {
-    if (!review || review.gate !== availability || !availability.open()) return;
+    if (action.isPending || !review || review.gate !== availability || !availability.open()) return;
     action.mutate({ kind, review });
   };
   return (
     <>
+      {/* A retry already queued or sent stays the only one until it settles, even after an outage
+          expired its review: reopening would reset it and hide its outcome (#416). */}
       <Button
         variant="outline"
-        disabled={unavailable}
+        disabled={unavailable || action.isPending}
         onClick={() => {
-          if (!availability.open()) return;
+          if (action.isPending || !availability.open()) return;
           action.reset();
           setReview({
             gate: availability,
