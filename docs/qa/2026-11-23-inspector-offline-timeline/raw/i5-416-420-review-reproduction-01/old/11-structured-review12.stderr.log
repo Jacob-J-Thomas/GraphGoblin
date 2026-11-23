@@ -1,0 +1,838 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > opposing review: inspector consent and sent outcomes > B1 rejects pre-loss session consent after the same observation is genuinely read again
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:998:27
+    996|     await waitFor(() => expect(postCalls()).toHaveLength(oldPosts + 1)…
+    997|     expect(postCalls()[oldPosts]!.body).toEqual({ nodeId: 'worker', fa…
+    998|     expect.soft(oldPosts).toBe(0);
+       |                           ^
+    999|     expect(refused).toMatchObject({ message: expect.stringMatching(/^N…
+    1000|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > opposing review: inspector consent and sent outcomes > B1 rejects pre-loss session consent after the same observation is genuinely read again
+AssertionError: expected null to match object { Object (message) }
+
+- Expected:
+{
+  "message": StringMatching /^Not sent:/,
+}
+
++ Received:
+null
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:999:21
+    997|     expect(postCalls()[oldPosts]!.body).toEqual({ nodeId: 'worker', fa…
+    998|     expect.soft(oldPosts).toBe(0);
+    999|     expect(refused).toMatchObject({ message: expect.stringMatching(/^N…
+       |                     ^
+    1000|   });
+    1001|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > opposing review: inspector consent and sent outcomes > B2 retains delete-ready delivery uncertainty after attempting to open a newer review
+TestingLibraryElementError: Unable to find an element with the text: /The change may or may not have been saved/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Independent visits"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs/0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+      [36m>[39m
+        [0mVisit A[0m
+      [36m</a>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs"[39m
+      [36m>[39m
+        [0mHistory list[0m
+      [36m</a>[39m
+    [36m</nav>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto grid w-full min-w-0 content-start gap-section p-page"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+          [36m>[39m
+            [0mRun[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+            [36m>[39m
+              [0m0JHGFQ0EMQTREM9CVYPS3CWDPT[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+            [33mdata-status-updating[39m=[32m""[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+            [36m>[39m
+              [0mUpdating status…[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops/972YBY350T9FQCN0K79YSA7N4Q/edit"[39m
+          [36m>[39m
+            [0mloop[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/runs?parent=0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+          [36m>[39m
+            [0mchild runs[0m
+          [36m</a>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"resume-reason-0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"running"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m Resume[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0mReplay...[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted"[39m
+              [33mid[39m=[32m"resume-reason-0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+            [36m>[39m
+              [0mResume unavailable: This run cannot be resumed.[0m
+            [36m</p>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_f_"[39m
+              [33maria-modal[39m=[32m"true"[39m
+              [33...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Independent visits"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs/0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+      [36m>[39m
+        [0mVisit A[0m
+      [36m</a>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs"[39m
+      [36m>[39m
+        [0mHistory list[0m
+      [36m</a>[39m
+    [36m</nav>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto grid w-full min-w-0 content-start gap-section p-page"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+          [36m>[39m
+            [0mRun[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+            [36m>[39m
+              [0m0JHGFQ0EMQTREM9CVYPS3CWDPT[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+            [33mdata-status-updating[39m=[32m""[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+            [36m>[39m
+              [0mUpdating status…[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops/972YBY350T9FQCN0K79YSA7N4Q/edit"[39m
+          [36m>[39m
+            [0mloop[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/runs?parent=0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+          [36m>[39m
+            [0mchild runs[0m
+          [36m</a>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"resume-reason-0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"running"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m Resume[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0mReplay...[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-muted"[39m
+              [33mid[39m=[32m"resume-reason-0JHGFQ0EMQTREM9CVYPS3CWDPT"[39m
+            [36m>[39m
+              [0mResume unavailable: This run cannot be resumed.[0m
+            [36m</p>[39m
+            [36m<dialog[39m
+              [33maria-labelledby[39m=[32m"_r_f_"[39m
+              [33maria-modal[39m=[32m"true"[39m
+              [33...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1047:25
+    1045|       await rejecting.promise;
+    1046|     });
+    1047|     expect(await screen.findByText(/The change may or may not have bee…
+       |                         ^
+    1048|     expect(api.callsTo('POST', path)).toHaveLength(1);
+    1049|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > opposing review: inspector consent and sent outcomes > B2 retains a sent script error and sends no second retry while the first is unresolved
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1090:29
+    1088|       expect(newer.every((entry) => entry.state.status !== 'pending'))…
+    1089|     );
+    1090|     expect.soft(dispatched).toBe(1);
+       |                             ^
+    1091|
+    1092|     sent.release();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > opposing review: inspector consent and sent outcomes > B2 retains a sent script error and sends no second retry while the first is unresolved
+TestingLibraryElementError: Unable to find an element with the text: The GraphGoblin API cannot be reached.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Independent visits"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs/9BDVNRC233JZVK9YVPYADMFPYM"[39m
+      [36m>[39m
+        [0mVisit A[0m
+      [36m</a>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs"[39m
+      [36m>[39m
+        [0mHistory list[0m
+      [36m</a>[39m
+    [36m</nav>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto grid w-full min-w-0 content-start gap-section p-page"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+          [36m>[39m
+            [0mRun[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+            [36m>[39m
+              [0m9BDVNRC233JZVK9YVPYADMFPYM[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+            [33mdata-status[39m=[32m"failed"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"failed"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+            [36m>[39m
+              [0mfailed[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 wrap-anywhere"[39m
+          [36m>[39m
+            [0mLast node in run record: [0m
+            [0mscript[0m
+          [36m</span>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops/0X2ZEYSJK5VJWXKXYZXY9HE1YS/edit"[39m
+          [36m>[39m
+            [0mloop[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/runs?parent=9BDVNRC233JZVK9YVPYADMFPYM"[39m
+          [36m>[39m
+            [0mchild runs[0m
+          [36m</a>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"resume-reason-9BDVNRC233JZVK9YVPYADMFPYM"[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"running"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m Resume[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raise...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Independent visits"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs/9BDVNRC233JZVK9YVPYADMFPYM"[39m
+      [36m>[39m
+        [0mVisit A[0m
+      [36m</a>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs"[39m
+      [36m>[39m
+        [0mHistory list[0m
+      [36m</a>[39m
+    [36m</nav>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto grid w-full min-w-0 content-start gap-section p-page"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+          [36m>[39m
+            [0mRun[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+            [36m>[39m
+              [0m9BDVNRC233JZVK9YVPYADMFPYM[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+            [33mdata-status[39m=[32m"failed"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"failed"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+            [36m>[39m
+              [0mfailed[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 wrap-anywhere"[39m
+          [36m>[39m
+            [0mLast node in run record: [0m
+            [0mscript[0m
+          [36m</span>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops/0X2ZEYSJK5VJWXKXYZXY9HE1YS/edit"[39m
+          [36m>[39m
+            [0mloop[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/runs?parent=9BDVNRC233JZVK9YVPYADMFPYM"[39m
+          [36m>[39m
+            [0mchild runs[0m
+          [36m</a>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"resume-reason-9BDVNRC233JZVK9YVPYADMFPYM"[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"running"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m Resume[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raise...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1094:25
+    1092|     sent.release();
+    1093|     await waitFor(() => expect(original.state.status).toBe('error'));
+    1094|     expect(await screen.findByText('The GraphGoblin API cannot be reac…
+       |                         ^
+    1095|     expect(api.callsTo('POST', path)).toHaveLength(1);
+    1096|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C1: a run-only outage is scoped to that run > healthy cached B stays current during its held mount GET; A-only loss=false
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C1: a run-only outage is scoped to that run > healthy cached B stays current during its held mount GET; A-only loss=true
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1145:70
+    1143|         // without committing a new receipt into B's older physical qu…
+    1144|         const healthClient = createAppClient('http://independent-ui.in…
+    1145|         expect((await healthClient.GET('/healthz')).response.status).t…
+       |                                                                      ^
+    1146|         expect(
+    1147|           (await healthClient.GET('/runs/{id}', { params: { path: { id…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C2: cancellation facts require qualified observation evidence > qualified cancellation observation during a run-only GET loss
+TestingLibraryElementError: Unable to find an element with the text: /Cancelled by api-key independent-qualified-actor/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<nav[39m
+      [33maria-label[39m=[32m"Independent visits"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs/G5HWQZA2J7H5Q49PM36TD7QBES"[39m
+      [36m>[39m
+        [0mVisit A[0m
+      [36m</a>[39m
+      [36m<a[39m
+        [33mdata-discover[39m=[32m"true"[39m
+        [33mhref[39m=[32m"/runs"[39m
+      [36m>[39m
+        [0mHistory list[0m
+      [36m</a>[39m
+    [36m</nav>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto grid w-full min-w-0 content-start gap-section p-page"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3"[39m
+        [36m>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading"[39m
+          [36m>[39m
+            [0mRun[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"font-mono text-md font-medium tracking-normal text-muted"[39m
+            [36m>[39m
+              [0mG5HWQZA2J7H5Q49PM36TD7QBES[0m
+            [36m</span>[39m
+          [36m</h1>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-neutral-bg text-status-neutral-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"[39m
+            [33mdata-status[39m=[32m"cancelled"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mdata-icon[39m=[32m"cancelled"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"8.5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m6 6 12 12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+            [36m>[39m
+              [0mcancelled[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 wrap-anywhere"[39m
+          [36m>[39m
+            [0mLast node in run record: [0m
+            [0mwork[0m
+          [36m</span>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops/JYJMBXW00PPF8P5F8J6N3BE7MH/edit"[39m
+          [36m>[39m
+            [0mloop[0m
+          [36m</a>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"touch-target font-medium text-link underline-offset-[3px] hover:underline"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/runs?parent=G5HWQZA2J7H5Q49PM36TD7QBES"[39m
+          [36m>[39m
+            [0mchild runs[0m
+          [36m</a>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid min-w-0 max-w-xl gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-describedby[39m=[32m"resume-reason-G5HWQZA2J7H5Q49PM36TD7QBES"[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"size-4 shrink-0"[39m
+                  [33mdata-icon[39m=[32m"running"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7.5 5v14l11-7Z"[39m
+                    [33mfill[39m=[32m"currentColor"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                [36m>[39m
+                  [0m Resume[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visibl...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1242:18
+    1240|         // Actor and both recorded sequence numbers survive without a …
+    1241|         expect(
+    1242|           screen.getByText(/Cancelled by api-key independent-qualified…
+       |                  ^
+    1243|         ).toHaveTextContent(trustedText);
+    1244|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C3: selected exit explanations survive an unrelated run-only read loss > keeps the loaded none no-value explanation without new auxiliary GETs
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.
+Received:
+  Exit outcome: success. This exit is terminal. See the run result for the returned value.
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1335:49
+    1333|       expect(auxiliaryGets()).toBe(beforeReads);
+    1334|       expect(screen.queryByTestId('run-result')).not.toBeInTheDocument…
+    1335|       expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(expl…
+       |                                                 ^
+    1336|       expect(
+    1337|         screen.queryByText(/See the run result for the returned value/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C3: selected exit explanations survive an unrelated run-only read loss > keeps the loaded null no-value explanation without new auxiliary GETs
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.
+Received:
+  Exit outcome: success. This exit is terminal. See the run result for the returned value.
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1335:49
+    1333|       expect(auxiliaryGets()).toBe(beforeReads);
+    1334|       expect(screen.queryByTestId('run-result')).not.toBeInTheDocument…
+    1335|       expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(expl…
+       |                                                 ^
+    1336|       expect(
+    1337|         screen.queryByText(/See the run result for the returned value/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review sent success: original command ownership after review expiry > script resume keeps the original successful run outcome and never sends a second pending retry
+AssertionError: expected [ { method: 'POST', …(5) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1472:41
+    1470|         ),
+    1471|       );
+    1472|       expect(api.callsTo('POST', path)).toHaveLength(1);
+       |                                         ^
+    1473|       expect(sent).toBe(1);
+    1474|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-offline-ui-
+  │ qa\GraphGoblin\apps\web
+

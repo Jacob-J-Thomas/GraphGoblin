@@ -1,0 +1,3 @@
+The first structured runner exited1 before invoking Vitest at its Node path string comparison. Tool chunkfa493e reported `pnpm selected unexpected Node` at line63. The actual10-node-probe command had exited0 and reported project Nodev22.23.4. Get-Command returned a mixed-separator path; process.execPath returned canonical backslashes for the same executable. No supplemental case was executed.
+
+Root explicitly admitted normalization with IO.Path.GetFullPath plus ordinal-ignore-case and equal executable SHA256, retaining exact version. Original runner bytes and CLI/probe raw receipts remain unchanged. The existing successful probe is revalidated, not rerun. No Node fallback, installation, fixture/assertion change or direct Vitest invocation occurred.

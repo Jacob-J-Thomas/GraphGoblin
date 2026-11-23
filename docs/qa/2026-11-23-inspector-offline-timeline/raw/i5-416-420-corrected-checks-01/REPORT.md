@@ -1,0 +1,7 @@
+# Corrected inspector checks
+
+The five Opus corrections passed web typecheck, scoped ESLint, and the Prettier check on Node v22.23.4 and pnpm 12.8.1. ESLint exited 0 with four existing `@eslint-react/naming-convention-ref-name` warnings. The names are `latestGate`, `shownVisit`, and `reread` in `RunInspectorPage.tsx`, and `shown` in `SessionRecoveryControls.tsx`. Prettier passed all 15 paths on the first check. No formatting or other source edits were made during validation. [Static summary](STATIC-RESULT.json) · [Lint output](02-eslint.stdout)
+
+Vitest passed all 11 focused files and 165 cases with one worker, no retries, and existing timeouts. All 164 prior cases ran, and the new Timeline regression passed. The first five failures remain in the original focused evidence. [Corrected summary](RESULT.json) · [Raw Vitest JSON](vitest-results.json) · [Original focused failure evidence](../i5-416-420-author-focused-01/REPORT.md)
+
+The check began with five expected author deltas against 6924. Before and after pins agree for the 15 author files, the selected tests, all three protected core paths, checkout index, lockfile and module metadata. The common index was absent throughout the checks. The after pins reflect the pre-commit validation state. Root subsequently froze the same corrected files at `3c35b3d0f345dd420c67b90d59de94a2f73d946b`. [Binding](BINDING.json) · [After check](AFTER.json) · [Corrected freeze](../i5-416-420-corrected-ui-freeze-01/FREEZE.json)

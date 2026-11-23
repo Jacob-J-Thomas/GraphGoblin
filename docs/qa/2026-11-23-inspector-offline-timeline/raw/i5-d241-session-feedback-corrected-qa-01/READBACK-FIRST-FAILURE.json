@@ -1,0 +1,10 @@
+{
+  "command": "python G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-session-feedback-corrected-qa-01/close.py",
+  "observedExit": 1,
+  "stderr": "Traceback (most recent call last):\n  File \"G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d241-session-feedback-corrected-qa-01\\close.py\", line 83, in <module>\n    assert sha((root / path).read_bytes()) == expected\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "firstReaderPreserved": "close.first-reader.py",
+  "cause": "The rootInstallInputs19 map records {bytes,sha256}; the first reader compared a digest string directly with that object. All actual root19 digest strings matched the recorded sha256 field.",
+  "correction": "Read the recorded hash and bytes for object-valued cohort records, retaining exact digest comparisons for string-valued maps. An already-created executed fixture copy is byte-compared rather than overwritten.",
+  "behavioralRerun": false,
+  "productOrFixtureEdit": false
+}

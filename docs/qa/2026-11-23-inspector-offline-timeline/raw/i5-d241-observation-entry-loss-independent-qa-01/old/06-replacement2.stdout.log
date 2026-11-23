@@ -1,0 +1,84 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-offline-ui-qa/GraphGoblin/apps/web
+
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx (63 tests | 2 failed | 61 skipped) 1817ms
+   ↓ C8 initial healthy event-qualified header may show an unread seed, then loss hides that unproved run
+   ↓ independent416: public inspector retention and scope (17)
+     ↓ C1/C7 keeps the same-wait editable draft through equal-body recovery, then resets a different wait
+     ↓ C2 excludes manual data from the new outage fallback
+     ↓ C2 excludes remove-recreate data from the new outage fallback
+     ↓ C2 excludes foreign-client data from the new outage fallback
+     ↓ C2 excludes foreign-cache data from the new outage fallback
+     ↓ C2 credential-generation change cannot erase the remembered outage latch
+     ↓ C3 a definitive 401 response then transport failure cannot revive retained fields
+     ↓ C3 a definitive 403 response then transport failure cannot revive retained fields
+     ↓ C3 a definitive 404 response then transport failure cannot revive retained fields
+     ↓ C3 a definitive 500 response then transport failure cannot revive retained fields
+     ↓ C3 a definitive wrong-id response then transport failure cannot revive retained fields
+     ↓ C3 a definitive invalid-body response then transport failure cannot revive retained fields
+     ↓ C4 a pre-loss held completion cannot release the latch; only the second post-loss GET can
+     ↓ C5 rejects mismatched node observation after run recovery
+     ↓ C5 rejects mismatched visit observation after run recovery
+     ↓ C5 rejects mismatched run observation after run recovery
+     ↓ C5 rejects mismatched code observation after run recovery
+   ↓ independent416: C6 public writes and queued dispatch (20)
+     ↓ pause: a current choice sends the exact endpoint once
+     ↓ pause: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ cancel: a current choice sends the exact endpoint once
+     ↓ cancel: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ resume: a current choice sends the exact endpoint once
+     ↓ resume: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ replay: a current choice sends the exact endpoint once
+     ↓ replay: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ script-resume: a current choice sends the exact endpoint once
+     ↓ script-resume: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ script-replay: a current choice sends the exact endpoint once
+     ↓ script-replay: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ fresh-session: a current choice sends the exact endpoint once
+     ↓ fresh-session: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ input: a current choice sends the exact endpoint once
+     ↓ input: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ signal: a current choice sends the exact endpoint once
+     ↓ signal: a queued choice spanning loss and recovery never reaches HTTP
+     ↓ C5 a matching fresh observation after loss enables the failure-sequence3 choice despite audit4
+     ↓ C5 a queued fresh-session choice cannot answer a different failure visit even without an outage
+   ↓ independent416: C7 expired reviews, late previews and sent outcomes (7)
+     ↓ replay review opened before loss stays expired after recovery; Escape sends nothing
+     ↓ script review opened before loss stays expired after recovery; Escape sends nothing
+     ↓ deletion mark: current preview/confirm sends once; expired review and late preview cannot confirm
+     ↓ deletion withdraw: current preview/confirm sends once; expired review and late preview cannot confirm
+     ↓ A→B→A never revives an old replay review or queued choice
+     ↓ A→B→A cannot revive a late deletion preview from an earlier visit
+     ↓ an already-dispatched deletion retains delivery uncertainty after loss; it is not sent again
+   ↓ independent416: retained outcomes and C8 local-reading boundary (4)
+     ↓ C1 retains failed result and explicitly controlled pending/uncertain delivery evidence
+     ↓ C1 retains succeeded result and explicitly controlled pending/uncertain delivery evidence
+     ↓ C8 selected exact thread keeps its preceding label while the next read is held through run loss
+     ↓ C8 Runs-list deletion retains its ordinary healthy workflow after leaving a stale inspector
+   ↓ opposing review: inspector consent and sent outcomes (3)
+     ↓ B1 rejects pre-loss session consent after the same observation is genuinely read again
+     ↓ B2 retains delete-ready delivery uncertainty after attempting to open a newer review
+     ↓ B2 retains a sent script error and sends no second retry while the first is unresolved
+   ↓ review C1: a run-only outage is scoped to that run (2)
+     ↓ healthy cached B stays current during its held mount GET; A-only loss=false
+     ↓ healthy cached B stays current during its held mount GET; A-only loss=true
+   ↓ review C2: cancellation facts require qualified observation evidence (3)
+     ↓ qualified cancellation observation during a run-only GET loss
+     ↓ foreign cancellation observation during a run-only GET loss
+     ↓ manual cancellation observation during a run-only GET loss
+   ↓ review C3: selected exit explanations survive an unrelated run-only read loss (2)
+     ↓ keeps the loaded none no-value explanation without new auxiliary GETs
+     ↓ keeps the loaded null no-value explanation without new auxiliary GETs
+   ↓ review sent success: original command ownership after review expiry (2)
+     ↓ deletion confirmation preserves its original successful outcome after an attempted new review
+     ↓ script resume keeps the original successful run outcome and never sends a second pending retry
+   ❯ B1 residual: observation replacement after surfaced loss (2)
+     × public remove/recreate control retires an older queued choice and permits one new matching choice 1062ms
+     × accepted cross-tab storage event retires an older queued choice and permits one new matching choice 753ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 61 skipped (63)
+   Start at  05:31:45
+   Duration  6.68s (tests 28%, transform 26%, environment 22%, import 17%, setup 7%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-observation-entry-loss-independent-qa-01/old/06-replacement2.json

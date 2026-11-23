@@ -1,0 +1,5 @@
+# Root-admitted supplemental old-source execution
+
+Root read augmented draft SHA777eaa3272b6e573a5e7d2a815679ef112a8121738b131335e8fc65f0f734096 and all three fragments. Admit source3c35b3d0f345dd420c67b90d59de94a2f73d946b/tree848ccedef110b258296c8bce67d3a2ed452cb850, one existing untracked component overlay only, preserving its exact original49 prefix and criteria. Other four overlays, product source, index and dependencies must remain unchanged.
+
+After fresh pins, materialize only the additive component draft. Scoped type/lint/format fixture corrections are allowed with first failures/copies/deltas retained and original49 prefix reverified. One Vitest invocation only: testNamePattern `opposing review|review C[123]|review sent success`, maxWorkers1/retry0, existing20s test/hook deadlines. Planned12 active/49 filtered. Preserve raw JSON, stdout/stderr, CLI, actual reached/unreached schedules. Stop after old-source results; no behavioral retry or product fix before root reads the failure. No build/browser/provider/install/Git mutation. Sole heavy slot assigned by root.

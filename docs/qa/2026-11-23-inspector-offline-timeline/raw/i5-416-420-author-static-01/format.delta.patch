@@ -1,0 +1,72 @@
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -561,12 +561,14 @@
+           <OfflineState what="Run" />
+         ) : (
+           <p role="status" className="text-sm text-muted">
+-            This run has not been confirmed since the connection was lost. It is shown again once
+-            it is read.
++            This run has not been confirmed since the connection was lost. It is shown again once it
++            is read.
+           </p>
+         )
+       ) : (
+-        <QueryState query={runQuery} what="Run">{() => null}</QueryState>
++        <QueryState query={runQuery} what="Run">
++          {() => null}
++        </QueryState>
+       )}
+       <div className="grid items-start gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+         <Timeline
+--- a/apps/web/src/runs/inspector/SessionRecoveryControls.tsx
++++ b/apps/web/src/runs/inspector/SessionRecoveryControls.tsx
+@@ -108,9 +108,7 @@
+           >
+             Start fresh session for {nodeId}
+           </Button>
+-          {availability.blocked !== undefined ? (
+-            <HelpText>{availability.blocked}</HelpText>
+-          ) : null}
++          {availability.blocked !== undefined ? <HelpText>{availability.blocked}</HelpText> : null}
+           {action.isError ? <HelpText tone="bad">{errorMessage(action.error)}</HelpText> : null}
+         </>
+       ) : null}
+--- a/apps/web/src/runs/inspector/Timeline.tsx
++++ b/apps/web/src/runs/inspector/Timeline.tsx
+@@ -302,7 +302,9 @@
+               <span className="min-w-[min(var(--timeline-seq),100%)] text-right font-mono text-xs wrap-anywhere text-subtle">
+                 #{event.seq}
+               </span>
+-              <code className="min-w-0 text-[0.78125rem] font-medium wrap-anywhere">{event.type}</code>
++              <code className="min-w-0 text-[0.78125rem] font-medium wrap-anywhere">
++                {event.type}
++              </code>
+               <span className="min-w-0 grow basis-40 break-words text-muted">
+                 {'uncached' in event ? (
+                   <>
+--- a/apps/web/src/runs/RunInspectorPage.offline.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+@@ -154,7 +154,9 @@
+ 
+       const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+       expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-      expect(screen.getByText(/The GraphGoblin API cannot be reached; reconnecting\./)).toBeVisible();
++      expect(
++        screen.getByText(/The GraphGoblin API cannot be reached; reconnecting\./),
++      ).toBeVisible();
+       expect(screen.getByText('Input requested')).toBeVisible();
+       expect(screen.getByLabelText('note')).toHaveValue('kept draft');
+       for (const name of [
+@@ -202,7 +204,11 @@
+         run.id,
+         status === 'failed'
+           ? event(run.id, 3, 'run.failed', { failure: run.failure! })
+-          : event(run.id, 3, 'run.finished', { status, outcome: 'success', result: { answer: 42 } }),
++          : event(run.id, 3, 'run.finished', {
++              status,
++              outcome: 'success',
++              result: { answer: 42 },
++            }),
+       );
+       const view = renderApp('/runs/' + run.id, api);
+       try {

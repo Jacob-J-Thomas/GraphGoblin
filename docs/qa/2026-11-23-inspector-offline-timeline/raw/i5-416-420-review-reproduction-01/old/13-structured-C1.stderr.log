@@ -1,0 +1,26 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.independent-416.qa.test.tsx > review C1: a run-only outage is scoped to that run > healthy cached B stays current during its held mount GET; A-only loss=true
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <p
+  class="col-start-2 font-semibold text-status-warn-fg"
+>
+  Last observed, may be out of date
+</p> instead
+ ❯ src/runs/RunInspectorPage.independent-416.qa.test.tsx:1166:47
+    1164|         expect(onlineManager.isOnline()).toBe(true);
+    1165|         // Correct behavior, not an assertion of the currently reporte…
+    1166|         expect(screen.queryByText(STALE)).not.toBeInTheDocument();
+       |                                               ^
+    1167|         expect(button(/Pause/)).toBeEnabled();
+    1168|         expect(button(/Cancel run/)).toBeEnabled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-offline-ui-
+  │ qa\GraphGoblin\apps\web
+

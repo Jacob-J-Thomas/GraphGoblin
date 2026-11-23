@@ -1,0 +1,178 @@
+--- sealed-original8a/component.tsx
++++ diagnostic/component.tsx
+@@ -1486,6 +1486,7 @@
+ // The targeted command selects only these two cases in a fresh worker: no prior browser loss.
+ import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
+ import { API_KEY_STORAGE } from '../api/api-key.js';
++import { getConfig } from '@testing-library/react';
+ 
+ function observationReplacementView(api: FakeApi, runId: string) {
+   const hold = barrier();
+@@ -1556,6 +1557,43 @@
+       const posts = () => api.callsTo('POST', postPath);
+       const runSamples: { status: string; error: unknown; online: boolean }[] = [];
+       let stopSamples = () => {};
++      let originalSessionButton: HTMLElement | undefined;
++      let originalRunHeader: Element | null = null;
++      let diagnosticPhase = 'initial';
++      let observer: MutationObserver | undefined;
++      let observedBatches = 0;
++      let removedOriginalButtonRecords = 0;
++      let removedOriginalHeaderRecords = 0;
++      const feedbackObservation: {
++        immediate?: { text: string; visible: boolean; diagnostic?: string };
++        settled?: { text: string; visible: boolean; diagnostic?: string };
++        settleOutcome?: string;
++        waitStartedMs?: number;
++        waitFinishedMs?: number;
++      } = {};
++      function domSample(stage: string) {
++        const current = screen.queryByRole('button', { name: 'Start fresh session for worker' });
++        return {
++          stage,
++          phase: diagnosticPhase,
++          atMs: performance.now(),
++          originalButtonConnected: originalSessionButton?.isConnected ?? null,
++          originalHeaderConnected: originalRunHeader?.isConnected ?? null,
++          currentButtonPresent: current !== null,
++          currentButtonIsOriginal:
++            current && originalSessionButton ? current === originalSessionButton : null,
++          currentButtonDisabled: current?.hasAttribute('disabled') ?? null,
++          runHeadingPresent: screen.queryByRole('heading', { name: 'Run ' + run.id }) !== null,
++          notSentText: screen.queryByText(/^Not sent:/)?.textContent ?? null,
++          readingEvidence:
++            screen.queryByText('Reading the run evidence again.', { exact: true }) !== null,
++          lastObserved: screen.queryByText(STALE) !== null,
++        };
++      }
++      const domSamples: ReturnType<typeof domSample>[] = [];
++      const recordDom = (stage: string) => {
++        if (domSamples.length < 64) domSamples.push(domSample(stage));
++      };
+       try {
+         await heading(run.id);
+         await waitFor(() => {
+@@ -1564,6 +1602,32 @@
+           expect(screen.getByRole('list', { name: 'Timeline' })).toHaveTextContent('run.started');
+           expect(button('Start fresh session for worker')).toBeEnabled();
+         });
++        originalSessionButton = button('Start fresh session for worker');
++        originalRunHeader = (await heading(run.id)).closest('header');
++        expect(originalRunHeader).not.toBeNull();
++        recordDom('original-session-control');
++        if (rotateKey) {
++          observer = new MutationObserver((records) => {
++            observedBatches++;
++            for (const record of records)
++              for (const node of record.removedNodes) {
++                if (
++                  node === originalSessionButton ||
++                  (node instanceof Element &&
++                    originalSessionButton &&
++                    node.contains(originalSessionButton))
++                )
++                  removedOriginalButtonRecords++;
++                if (
++                  node === originalRunHeader ||
++                  (node instanceof Element && originalRunHeader && node.contains(originalRunHeader))
++                )
++                  removedOriginalHeaderRecords++;
++              }
++            recordDom('observed-dom-mutation');
++          });
++          observer.observe(view.container, { childList: true, subtree: true });
++        }
+         const parentQuery = cache.find({ queryKey: runKey, exact: true });
+         const oldObservation = cache.find({ queryKey: observationKey, exact: true });
+         const originalBody = view.queryClient.getQueryData<Record<string, unknown>>(observationKey);
+@@ -1608,6 +1672,8 @@
+         if (rotateKey) {
+           // Actual ApiKeyPanel installs the application's storage listener and invalidation.
+           // Controlled StorageEvent is not a real second browser process/server principal.
++          diagnosticPhase = 'key-rotation';
++          recordDom('before-key-rotation');
+           api.requiredKey = keyB;
+           act(() => {
+             localStorage.setItem(API_KEY_STORAGE, keyB);
+@@ -1620,6 +1686,7 @@
+               }),
+             );
+           });
++          recordDom('after-storage-event');
+           await waitFor(() => {
+             expect(useApiKeyStore.getState().generation).toBeGreaterThan(initialGeneration);
+             expect(useApiKeyStore.getState().key === keyB).toBe(true);
+@@ -1673,6 +1740,8 @@
+         expect(posts()).toHaveLength(0);
+         expect(oldChoice.state.status).toBe('pending');
+ 
++        diagnosticPhase = 'old-choice-release';
++        recordDom('before-old-choice-release');
+         view.hold.release();
+         await waitFor(() => expect(oldChoice.state.status).not.toBe('pending'));
+         const oldPostCount = posts().length;
+@@ -1690,7 +1759,37 @@
+         } catch (error) {
+           oldFeedbackDiagnostic = error instanceof Error ? error.message : String(error);
+         }
++        feedbackObservation.immediate = {
++          text: oldFeedbackText,
++          visible: oldFeedbackVisible,
++          diagnostic: oldFeedbackDiagnostic,
++        };
++        diagnosticPhase = 'feedback-settling';
++        recordDom('original-immediate-feedback-capture');
++        feedbackObservation.waitStartedMs = performance.now();
++        try {
++          await waitFor(() => {
++            const renderedFeedback = screen.queryByText(/^Not sent:/);
++            expect(renderedFeedback).toBeVisible();
++            feedbackObservation.settled = {
++              text: renderedFeedback?.textContent ?? '',
++              visible: true,
++            };
++          });
++          feedbackObservation.settleOutcome = 'visible-within-existing-default';
++        } catch (error) {
++          feedbackObservation.settleOutcome = 'not-visible-within-existing-default';
++          feedbackObservation.settled = {
++            text: screen.queryByText(/^Not sent:/)?.textContent ?? '',
++            visible: false,
++            diagnostic: error instanceof Error ? error.message : String(error),
++          };
++        }
++        feedbackObservation.waitFinishedMs = performance.now();
++        recordDom('after-default-feedback-wait');
+         await choose('fresh-session');
++        diagnosticPhase = 'fresh-choice';
++        recordDom('after-fresh-choice');
+         await waitFor(() => expect(posts()).toHaveLength(oldPostCount + 1));
+         expect(posts()[oldPostCount]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+         expect(runSamples.length).toBeGreaterThan(0);
+@@ -1710,6 +1809,26 @@
+         expect(oldError).toMatchObject({ message: expect.stringMatching(/^Not sent:/) });
+       } finally {
+         stopSamples();
++        recordDom('before-test-cleanup');
++        observer?.disconnect();
++        console.info(
++          'B1_FEEDBACK_DIAGNOSTIC ' +
++            JSON.stringify({
++              replacement,
++              defaultWaitForMs: getConfig().asyncUtilTimeout,
++              feedbackObservation,
++              originalButtonEverObservedRemoved: removedOriginalButtonRecords > 0,
++              originalHeaderEverObservedRemoved: removedOriginalHeaderRecords > 0,
++              removedOriginalButtonRecords,
++              removedOriginalHeaderRecords,
++              observedBatches,
++              domSamples,
++              domSampleLimit: 64,
++              domSamplesTruncated: domSamples.length === 64,
++              postCountAtCleanup: posts().length,
++              postBodies: posts().map((call) => call.body),
++            }),
++        );
+         view.hold.release();
+         view.unmount();
+         if (rotateKey) act(() => useApiKeyStore.getState().forget());

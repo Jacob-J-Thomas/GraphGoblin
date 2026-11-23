@@ -1,0 +1,1 @@
+Root-admitted diagnostic console.warn successor03. Payload/oracles/waits unchanged; exact console method diff and authorized mechanical-format evidence in materialization03. Runner changes only output directory02-to03; module resolver unchanged. Prior static-only attempts remain sealed. One unchanged static plus first actual full63 program is admitted.

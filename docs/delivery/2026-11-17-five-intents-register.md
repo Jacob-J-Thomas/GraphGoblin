@@ -393,3 +393,32 @@ Signed PR #553 completed intent 4 before this lane began. At admission, the appr
 Actual Claude owns the production correction; GPT supplies bounded supporting tests/docs. [Exact-source evidence](../qa/2026-11-22-i5-inspector-truthfulness/README.md) records 3,102 passing web tests with 98.65% line and 94.44% branch coverage, 36 distinct independent component outcomes across qualified invocations, and six fresh browser passes. Both prior CHANGES_REQUIRED reviews, budget-stopped author terminals and failed checks/fixtures retain their historical outcomes. This candidate record closes no issue by itself.
 
 Actual Claude targeted review of the final supporting correction, the fresh independent Astra MAX third/final audit, exact-head/current-target ordinary CI/native and signed merge remain required. Preserve the three-scan cap and current owner gates; no fourth general scan, fabricated provider completion or weakened coverage is implied. #416 then #420 follow this pair's engineering delivery. Final owner decision review/rework precedes owner QA; Mac #501, #448/#459 owner obligations, #460 and conditional #379 retain their separate status. Later completion records belong in the linked issue/PR discussions and subsequent register entries.
+
+## Intent 5 offline evidence and Timeline candidate — November 23, D240–D241
+
+Signed PR #557 delivered #386/#385 before this #416/#420 candidate. Product source is frozen at
+`a0ce7b781e333b70f4711b5e9201ef63c157df1d`, tree
+`3f47fed82c18930fc0a56bc8e2598e7190ba8f3c`, against signed main
+`0f6c325becf3e3e0562ae69dfae2c42bcf1d7129`. The inspector retains qualified last-known evidence
+during relevant outages while keeping write authority tied to a matching fresh read and new
+consent. Same-visit pending session actions and their refusal feedback survive temporary run
+section removal. Long Timeline numbers remain separately legible from event types.
+
+The [source and QA archive](../qa/2026-11-23-inspector-offline-timeline/README.md) retains actual
+Claude UI implementation and GPT architecture provenance, the scoped Fable core critique,
+both negative opposing reviews, original failures, bounded corrections and independent QA.
+Current evidence is 233 focused passes, independent fresh2 and full63 passes, and 3,179 whole-web
+passes with 98.68% line and 94.46% branch coverage. The fresh native browser run passed 11/12
+without retries. Strict G1 still fails the pre-existing 320px/200%-text whole-page overflow;
+all 12 current Timeline samples have zero number/type overlap or clipping. The retained-main
+comparison and current-source disposition support #420's bounded criterion, with broader
+reflow separately parked in #563. #561/#562 also remain outside this batch.
+
+This records a candidate and completed local evidence, not delivery or owner acceptance.
+Repository gates, exact-head/current-target CI and native artifact verification, the fresh
+independent Astra MAX formal pass 3, and verified signed merge remain required. Historical
+CHANGES REQUIRED verdicts remain preserved; the two consumed formal passes and one general
+scan are not reset. Engineering stays 41/48 overall, 24/26 core and 4/5 intents until merge.
+The catalogue keeps D01–D03 first and adds D240/D241 outcomes and declined alternatives.
+Consolidated owner accept/rework stays before owner QA. Mac #501, #448/#459 owner obligations,
+held #460, refinement-gated #379 and the four conditional post-Mac issues retain their gates.

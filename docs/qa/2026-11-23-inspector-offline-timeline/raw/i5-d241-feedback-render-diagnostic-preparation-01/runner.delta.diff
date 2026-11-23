@@ -1,0 +1,62 @@
+--- reviewed-d2b072/run-corrected.ps1
++++ diagnostic/run-diagnostic.ps1
+@@ -3,7 +3,7 @@
+ $ErrorActionPreference = 'Stop'
+ if (-not $Execute) { throw 'UNARMED: explicit root-bound execution switch absent' }
+ $taskRoot = 'G:/ggq/gg-i5-offline-ui-qa/GraphGoblin'
+-$taskEvidence = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-observation-entry-loss-corrected-qa-01'
++$taskEvidence = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-feedback-render-diagnostic-qa-01'
+ $binding = Get-Content -LiteralPath $BindingPath -Raw | ConvertFrom-Json -AsHashtable
+ if ($binding.schemaVersion -ne 1 -or $binding.executionAdmitted -ne $true) { throw 'UNARMED: root admission absent' }
+ if ([IO.Path]::GetFullPath($binding.worktree) -ine [IO.Path]::GetFullPath($taskRoot) -or [IO.Path]::GetFullPath($binding.executionDirectory) -ine [IO.Path]::GetFullPath($taskEvidence)) { throw 'Unexpected owned paths' }
+@@ -183,28 +183,15 @@
+   $stage = 'format'
+   Assert-Command (Invoke-RecordedPnpm -Label '05-scoped-prettier' -Arguments (@('exec','prettier','--check') + @($relativeOverlays | ForEach-Object { 'apps/web/' + $_ })))
+   Assert-Pins (Get-Pins)
+-  $stage = 'fresh2'
+-  $jsonPath = Join-Path $taskEvidence '06-fresh2.json'
+-  $test = Invoke-RecordedPnpm -Label '06-fresh2' -Arguments @('--filter','@graphgoblin/web','exec','vitest','run','src/runs/RunInspectorPage.independent-416.qa.test.tsx','--testNamePattern','B1 residual: observation replacement after surfaced loss','--maxWorkers=1','--retry=0','--reporter=default','--reporter=json',"--outputFile=$jsonPath")
+-  if (Test-Path -LiteralPath $jsonPath) {
+-    $result = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json -AsHashtable
+-    $cases = @($result.testResults | ForEach-Object { $_.assertionResults } | ForEach-Object { $_ })
+-    $summary = [ordered]@{actualCases=$cases.Count; passed=@($cases | Where-Object status -eq 'passed').Count; failed=@($cases | Where-Object status -eq 'failed').Count; filteredOrPending=@($cases | Where-Object { $_.status -in @('pending','skipped') }).Count; todo=@($cases | Where-Object status -eq 'todo').Count; expectedCases=63; expectedSelected=2; expectedFiltered=61; patternUsed=$true; processExit=$test.exitCode}
+-    Save-Json 'FRESH2-SELECTION.json' $summary
+-    if ($summary.actualCases -ne 63 -or ($summary.passed + $summary.failed) -ne 2 -or $summary.filteredOrPending -ne 61 -or $summary.todo -ne 0) { throw 'Targeted2 selection mismatch; no pass or automatic retry' }
+-  } else { throw 'Vitest JSON missing; no result inferred' }
+-  Assert-Command $test
+-  Assert-Pins (Get-Pins)
+-  # A separate pnpm/Vitest invocation creates another fresh worker. Its earlier61 cases
+-  # create browser-loss history, so full63 is broader regression, not the fresh2 witness.
+-  $stage = 'full63'
+-  $fullJsonPath = Join-Path $taskEvidence '07-full63.json'
+-  $fullTest = Invoke-RecordedPnpm -Label '07-full63' -Arguments @('--filter','@graphgoblin/web','exec','vitest','run','src/runs/RunInspectorPage.independent-416.qa.test.tsx','--maxWorkers=1','--retry=0','--reporter=default','--reporter=json',"--outputFile=$fullJsonPath")
++  # One unfiltered diagnostic full63 preserves the earlier browser-loss history.
++  $stage = 'diagnostic63'
++  $fullJsonPath = Join-Path $taskEvidence '06-diagnostic63.json'
++  $fullTest = Invoke-RecordedPnpm -Label '06-diagnostic63' -Arguments @('--filter','@graphgoblin/web','exec','vitest','run','src/runs/RunInspectorPage.independent-416.qa.test.tsx','--maxWorkers=1','--retry=0','--reporter=default','--reporter=json',"--outputFile=$fullJsonPath")
+   if (Test-Path -LiteralPath $fullJsonPath) {
+     $fullResult = Get-Content -LiteralPath $fullJsonPath -Raw | ConvertFrom-Json -AsHashtable
+     $fullCases = @($fullResult.testResults | ForEach-Object { $_.assertionResults } | ForEach-Object { $_ })
+     $fullSummary = [ordered]@{actualCases=$fullCases.Count; passed=@($fullCases | Where-Object status -eq 'passed').Count; failed=@($fullCases | Where-Object status -eq 'failed').Count; filteredOrPending=@($fullCases | Where-Object { $_.status -in @('pending','skipped') }).Count; todo=@($fullCases | Where-Object status -eq 'todo').Count; expectedCases=63; expectedSelected=63; expectedFiltered=0; patternUsed=$false; processExit=$fullTest.exitCode}
+-    Save-Json 'FULL63-SELECTION.json' $fullSummary
++    Save-Json 'DIAGNOSTIC63-SELECTION.json' $fullSummary
+     if ($fullSummary.actualCases -ne 63 -or ($fullSummary.passed + $fullSummary.failed) -ne 63 -or $fullSummary.filteredOrPending -ne 0 -or $fullSummary.todo -ne 0) { throw 'Full63 selection mismatch; no pass or automatic retry' }
+   } else { throw 'Full63 Vitest JSON missing; no result inferred' }
+   Assert-Command $fullTest
+@@ -213,7 +200,7 @@
+ finally {
+   try {
+     if ($beforeModules) {
+-      $moduleAfter = Invoke-RecordedPnpm -Label '08-after-modules' -Arguments @('--filter','@graphgoblin/web','exec','node',(Join-Path $PSScriptRoot 'module-boundary.cjs'))
++      $moduleAfter = Invoke-RecordedPnpm -Label '07-after-modules' -Arguments @('--filter','@graphgoblin/web','exec','node',(Join-Path $PSScriptRoot 'module-boundary.cjs'))
+       Assert-Command $moduleAfter
+       Assert-Modules (Get-Content -LiteralPath $moduleAfter.stdout -Raw | ConvertFrom-Json -AsHashtable)
+     }
+@@ -224,6 +211,5 @@
+   Save-Json 'PHASE-RECEIPT.json' ([ordered]@{stageReached=$stage; failure=$phaseFailure; afterMatchesRootBinding=$afterEqual; rootBindingPath=$BindingPath; rootBindingSha256=(Get-Sha $BindingPath); commands=$receipts.ToArray(); testsBuildBrowserScope='Only admitted static checks and one component file; no build/browser/install/provider/native-listener launch'; sourceFixesOrReruns=$false})
+ }
+ if ($phaseFailure) { Write-Error -Message $phaseFailure -ErrorAction Continue; exit 1 }
+-Get-Content -LiteralPath (Join-Path $taskEvidence 'FRESH2-SELECTION.json') -Raw
+-Get-Content -LiteralPath (Join-Path $taskEvidence 'FULL63-SELECTION.json') -Raw
++Get-Content -LiteralPath (Join-Path $taskEvidence 'DIAGNOSTIC63-SELECTION.json') -Raw
+ exit 0

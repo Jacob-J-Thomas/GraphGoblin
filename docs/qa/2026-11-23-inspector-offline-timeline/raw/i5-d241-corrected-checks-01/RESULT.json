@@ -1,0 +1,64 @@
+{
+  "webTypecheckExit": 0,
+  "scopedEslintExit": 0,
+  "firstPrettierCheckExit": 1,
+  "prettierWriteExit": 0,
+  "prettierRecheckExit": 0,
+  "expectedAuthorCorrections": [
+    "CHANGELOG.md",
+    "apps/web/src/runs/HistoryEligibility.test.tsx",
+    "apps/web/src/runs/HistoryEligibility.tsx",
+    "apps/web/src/runs/RunInspectorPage.offline.test.tsx",
+    "apps/web/src/runs/RunInspectorPage.tsx",
+    "apps/web/src/runs/inspector/ScriptRecovery.tsx",
+    "docs/09-frontend-and-pwa.md"
+  ],
+  "verifiedFormattingChangePaths": [
+    "apps/web/src/runs/inspector/ScriptRecovery.tsx",
+    "apps/web/src/runs/HistoryEligibility.tsx"
+  ],
+  "staticPassed": true,
+  "focusedInvoked": true,
+  "focused": {
+    "exit": 1,
+    "jsonReportPresent": true,
+    "report": {
+      "bytes": 93285,
+      "sha256": "d094f51b13b9f8d17c8b171e04355bd502cc0206de56db53a79399e6e9117646"
+    },
+    "testFiles": [
+      "src/api/queries.reconnect.test.tsx",
+      "src/runs/HistoryEligibility.test.tsx",
+      "src/runs/RunInspectorPage.corrective.test.tsx",
+      "src/runs/RunInspectorPage.lifecycle.test.tsx",
+      "src/runs/RunInspectorPage.offline.test.tsx",
+      "src/runs/RunInspectorPage.test.tsx",
+      "src/runs/ScriptRecovery.test.tsx",
+      "src/runs/inspector-read-provenance.test.ts",
+      "src/runs/inspector/EvaluationDetails.test.tsx",
+      "src/runs/inspector/ExecutionEvidence.test.tsx",
+      "src/runs/inspector/SessionRecoveryControls.test.tsx",
+      "src/runs/inspector/Timeline.test.tsx",
+      "src/runs/inspector/WaitPanel.test.tsx",
+      "src/runs/recovery-controls.test.tsx"
+    ],
+    "selectionComplete": true,
+    "counts": {
+      "total": 227,
+      "passed": 226,
+      "failed": 1
+    },
+    "failures": [
+      {
+        "file": "src/runs/RunInspectorPage.offline.test.tsx",
+        "name": "run inspector through an outage (#416) keeps a script retry sent before an outage the only one, and its outcome, until it fails in transport",
+        "messages": [
+          "Error: Found multiple elements with the text: The GraphGoblin API cannot be reached.\n\nHere are the matching elements:\n\nIgnored nodes: comments, script, style\n\u001b[36m<p\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"text-xs leading-snug font-medium text-status-bad-fg\"\u001b[39m\n  \u001b[33mrole\u001b[39m=\u001b[32m\"alert\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[0mThe GraphGoblin API cannot be reached.\u001b[0m\n\u001b[36m</p>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<p\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"text-xs leading-snug font-medium text-status-bad-fg\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[0mThe GraphGoblin API cannot be reached.\u001b[0m\n\u001b[36m</p>\u001b[39m\n\n(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).\n\nIgnored nodes: comments, script, style\n\u001b[36m<header\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[36m<div\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<h1\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[0mRun\u001b[0m\n      \u001b[0m \u001b[0m\n      \u001b[36m<span\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"font-mono text-md font-medium tracking-normal text-muted\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0m45CY9NC9FHHGMRKFS0JGTCCZEK\u001b[0m\n      \u001b[36m</span>\u001b[39m\n    \u001b[36m</h1>\u001b[39m\n    \u001b[36m<span\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]\"\u001b[39m\n      \u001b[33mdata-status\u001b[39m=\u001b[32m\"failed\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<svg\u001b[39m\n        \u001b[33maria-hidden\u001b[39m=\u001b[32m\"true\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"size-4 shrink-0\"\u001b[39m\n        \u001b[33mdata-icon\u001b[39m=\u001b[32m\"failed\"\u001b[39m\n        \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n        \u001b[33mfocusable\u001b[39m=\u001b[32m\"false\"\u001b[39m\n        \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n        \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n        \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<path\u001b[39m\n          \u001b[33md\u001b[39m=\u001b[32m\"M6 6l12 12M18 6 6 18\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</svg>\u001b[39m\n      \u001b[36m<span\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 overflow-x-clip text-ellipsis\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mfailed\u001b[0m\n      \u001b[36m</span>\u001b[39m\n    \u001b[36m</span>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n  \u001b[36m<div\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<span\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 wrap-anywhere\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[0mLast node in run record: \u001b[0m\n      \u001b[0mscript\u001b[0m\n    \u001b[36m</span>\u001b[39m\n    \u001b[36m<a\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"touch-target font-medium text-link underline-offset-[3px] hover:underline\"\u001b[39m\n      \u001b[33mdata-discover\u001b[39m=\u001b[32m\"true\"\u001b[39m\n      \u001b[33mhref\u001b[39m=\u001b[32m\"/loops/SH0CG5ZN5CXM9JX2QPJWYSCV1K/edit\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[0mloop\u001b[0m\n    \u001b[36m</a>\u001b[39m\n    \u001b[36m<a\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"touch-target font-medium text-link underline-offset-[3px] hover:underline\"\u001b[39m\n      \u001b[33mdata-discover\u001b[39m=\u001b[32m\"true\"\u001b[39m\n      \u001b[33mhref\u001b[39m=\u001b[32m\"/runs?parent=45CY9NC9FHHGMRKFS0JGTCCZEK\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[0mchild runs\u001b[0m\n    \u001b[36m</a>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n  \u001b[36m<div\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"grid min-w-0 max-w-xl gap-2\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-wrap items-center gap-2\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<button\u001b[39m\n          \u001b[33maria-describedby\u001b[39m=\u001b[32m\"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK\"\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11\"\u001b[39m\n          \u001b[33mdisabled\u001b[39m=\u001b[32m\"\"\u001b[39m\n          \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<svg\u001b[39m\n            \u001b[33maria-hidden\u001b[39m=\u001b[32m\"true\"\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"size-4 shrink-0\"\u001b[39m\n            \u001b[33mdata-icon\u001b[39m=\u001b[32m\"running\"\u001b[39m\n            \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n            \u001b[33mfocusable\u001b[39m=\u001b[32m\"false\"\u001b[39m\n            \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n            \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n            \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n            \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n            \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<path\u001b[39m\n              \u001b[33md\u001b[39m=\u001b[32m\"M7.5 5v14l11-7Z\"\u001b[39m\n              \u001b[33mfill\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n            \u001b[36m/>\u001b[39m\n          \u001b[36m</svg>\u001b[39m\n          \u001b[36m<span\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 overflow-x-clip text-ellipsis\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[0m Resume\u001b[0m\n          \u001b[36m</span>\u001b[39m\n        \u001b[36m</button>\u001b[39m\n        \u001b[36m<button\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11\"\u001b[39m\n          \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<span\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 overflow-x-clip text-ellipsis\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[0mReplay...\u001b[0m\n          \u001b[36m</span>\u001b[39m\n        \u001b[36m</button>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<p\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"text-sm text-muted\"\u001b[39m\n        \u001b[33mid\u001b[39m=\u001b[32m\"resume-reason-45CY9NC9FHHGMRKFS0JGTCCZEK\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mResume unavailable: Choose Recover script to explicitly retry.\u001b[0m\n      \u001b[36m</p>\u001b[39m\n      \u001b[36m<dialog\u001b[39m\n        \u001b[33maria-labelledby\u001b[39m=\u001b[32m\"_r_7s_\"\u001b[39m\n        \u001b[33maria-modal\u001b[39m=\u001b[32m\"true\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"m-auto max-h-[calc(100dvh-4rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none p-0 overflow-hidden rounded-lg border border-default bg-surface-raised text-default shadow-3 backdrop:bg-scrim open:flex open:flex-col max-md:mb-0 max-md:max-h-[92dvh] max-md:w-full max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<header\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"flex shrink-0 items-start gap-3 border-b border-default bg-...\n    at waitForWrapper (G:\\ggq\\gg-i5-offline-inspector\\GraphGoblin\\node_modules\\.pnpm\\@testing-library+dom@10.4.2\\node_modules\\@testing-library\\dom\\dist\\wait-for.js:163:27)\n    at G:\\ggq\\gg-i5-offline-inspector\\GraphGoblin\\node_modules\\.pnpm\\@testing-library+dom@10.4.2\\node_modules\\@testing-library\\dom\\dist\\query-helpers.js:86:33\n    at G:/ggq/gg-i5-offline-inspector/GraphGoblin/apps/web/src/runs/RunInspectorPage.offline.test.tsx:713:34\n    at async file:///G:/ggq/gg-i5-offline-inspector/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+        ]
+      }
+    ],
+    "priorCaseNamesMissing": [],
+    "focusedPassed": false
+  },
+  "focusedSourceAndControlsUnchanged": true
+}

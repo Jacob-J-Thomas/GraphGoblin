@@ -1,0 +1,60 @@
+# Independent source review of GraphGoblin #416 and #420
+
+**CHANGES REQUIRED on `3c35b3d0`.** Two P1 findings affect command consent and the handling of writes already sent. Three P2 findings concern explicit #416 display or scoping criteria. I found no blocking #420 source defect. Its browser acceptance remains open.
+
+Reviewed by GPT-6.2 Astra at xhigh, first opposing-family full review, general scan **1 of 3**. The findings below are source traces. Independent reproductions of these schedules were outstanding when this report was written.
+
+## Candidate and comparison
+
+| Item | Verified value |
+| --- | --- |
+| Branch | `codex/gg-i5-offline-inspector` |
+| Base and merge base | `0f6c325becf3e3e0562ae69dfae2c42bcf1d7129`, also the local `origin/main` |
+| Head | `3c35b3d0f345dd420c67b90d59de94a2f73d946b` |
+| Tree | `848ccedef110b258296c8bce67d3a2ed452cb850` |
+| Scope | 18 changed paths, 18 physical SHA-256 matches to the corrected freeze |
+| Worktree | Clean at entry and after source inspection, including untracked files. Linked index SHA-256 `fc8e0bbffc227acc0bb9350c42bc34731441aa736e2dfe6aa405c19862638e0d`. Protected common index absent at both reads. |
+
+Git commands used `--no-optional-locks`. I inspected the base-to-head patch, including tests and docs, and followed relevant callers and the installed TanStack behavior to establish reachability. The project supplied the signed-predecessor disposition. Local Git returned signature status `E` for the base, so this review independently establishes its object identity and ancestry only.
+
+## P1 findings
+
+**B1 · A queued fresh-session choice can regain authority after its observation disconnects.** Introduced by the new session gate. Primary location `apps/web/src/runs/RunInspectorPage.tsx:326`. Dispatch consumes that gate at `apps/web/src/runs/inspector/SessionRecoveryControls.tsx:56`.
+
+1. Read a run and its matching missing-session failure. Choose **Start fresh session** and hold the mutation in the public mutation-cache callback before dispatch.
+2. Keep the run GET and browser healthy. Fail only the observation refresh with a transport error. The page now disables this action. Recover the observation with a genuine new GET carrying the same run, node, visit and failure sequence.
+3. Release the old choice. Its captured session gate checks the *current* observation loss and whether the *current* receipt is newer. Both the parent gate and the rendered failure identity still pass. It sends `POST /recover-session` under consent given before the observation outage. This also works after an earlier, fully recovered run outage.
+
+The user can therefore discard a previous provider conversation through a choice that was already suspended across loss of its required evidence. Preserve the observation outage identity captured when the choice was made. The old choice must report **Not sent** with zero POSTs even after a valid equal-body recovery. A newly chosen action should send exactly once with the recorded failure sequence. The component test using a boolean gate that permanently turns false does not exercise the production gate's reopening.
+
+**B2 · A new review can replace the outcome of a command still in flight.** Newly reachable through automatic review expiry and reopening. It affects the delete-ready and script review workflows.
+
+- **Delete-ready** at `apps/web/src/runs/HistoryEligibility.tsx:84`. Confirm an approved selection and leave its already-sent HTTP request pending. A browser disconnect expires its dialog. Reconnect and commit the fresh run GET, then open a second review. The launchers at lines 105 and 113 accept it while busy. Opening it increments the generation at line 47. If the first POST now rejects because the response was lost, line 84 discards the failure before it can publish the uncertainty message. The user loses the indication that history may have been marked for deletion. Programmatic close itself does **not** advance the generation. `components/ui/dialog.tsx:139` and `:155` account for that close and suppress the dismissal callback.
+- **Script recovery** at `apps/web/src/runs/inspector/ScriptRecovery.tsx:74`. Perform the same loss/recovery with an already-sent script Resume or Replay whose response is held and a run GET that still reports the same uncertain script. The launcher at line 71 admits a second review while the first request is pending. Opening it calls `action.reset()`. Installed TanStack Query 5.104.0 removes the observer from the previous mutation in `mutationObserver.ts:183`. The original failure then has no visible mutation error, and the new review can submit another retry before the first request settles. Backend rejection or deduplication is a separate question. The extra POST and lost feedback are enough to establish the UI error.
+
+A review can expire, but a later review must preserve the pending command's identity and eventual outcome. The bounded correction can keep these launchers unavailable while the earlier command is unresolved, or track the already-sent outcome independently. Cover both late failure and ordinary success, with no unintended second script POST. No mutation-delivery redesign is required.
+
+## P2 findings inside the agreed contract
+
+| ID | Current source and reachable effect | Required outcome |
+| --- | --- | --- |
+| C1 · One run's API read loss follows the reader to another run | `apps/web/src/runs/RunInspectorPage.tsx:251`. Introduced. Visit and read B, then visit A. With the browser continuously online, fail A's run GET and let A recover. Navigate directly from A back to B and hold B's mount GET, if one starts. React keeps the same route component. The component-wide `latch` still contains A's loss. A B receipt older than that boundary produces **Last observed** and disables B's controls although B has had no transport loss. If B is still within its stale time, the inspector also requests a B reread solely for A's old loss. | Keep browser loss applicable across runs and preserve A's loss through its credential/source transitions. A run-specific failure must qualify availability for its own run. A healthy cached B should keep its ordinary behavior. |
+| C2 · Qualified cancellation evidence disappears with execution context | `apps/web/src/runs/RunInspectorPage.tsx:547`. The new fallback admits `cancelRequested` and `cancelled` at lines 71–72 and constructs their evidence at line 283, then removes its only consumer on every outage. Read a cancelled run and its qualified observation with a named cancellation actor. Fail only the run refresh. The status stays but the actor and recorded request/cancellation sequences disappear. The prior view showed them, and the minimum contract explicitly names cancellation evidence. `inspector/ExecutionEvidence.tsx:39` derives this text independently of the pinned definition. | Retain the cancellation facts provided by qualified observation evidence, with recorded IDs where needed. The definition can remain unavailable. Verify that a foreign or unqualified observation cannot contribute an actor. |
+| C3 · An outage changes the selected exit's explanation to a nonexistent result | `apps/web/src/runs/RunInspectorPage.tsx:427` and `:617`. Introduced regression in the selected-event area outside the run section. Load a completed run whose exit has **Returns None**, select its exit after its observation, thread and version are loaded, then fail only the run refresh. The shared `returnSummary` becomes undefined. `inspector/EvaluationDetails.tsx:311` now says **See the run result for the returned value** although this run has no Result card or value. The base kept the original explanation for this independently mounted selection. | Apply the outage suppression to the new retained run section while preserving the existing selected exit explanation under the same inputs. Check both the configured no-return case and the ambiguous missing-value case without adding any GETs. |
+
+These are bounded #416 acceptance issues. C1 concerns a relevant outage, C2 qualified retained evidence, and C3 preservation of the existing selected-event behavior. Each can be tested through the existing page and public query APIs.
+
+## Issue-ready follow-ups
+
+**F1 · P2 FOLLOW-UP · Expire healthy inspector consent when the accepted API-key generation changes.** Exposed pre-existing healthy-path behavior. `apps/web/src/runs/RunInspectorPage.tsx:307` skips the receipt comparison when the boundary is zero. The gate dependencies at line 313 omit the credential generation. With no preceding outage, open a replay review under credential A and switch to another accepted credential B from a second tab on the same run. A's review can still confirm, even after B has loaded the same row. `apps/web/src/api/api-key.ts:66` implements that cross-tab transition and `:75` selects the key at HTTP dispatch. Thus a different credential can be recorded as the actor for the older consent. The current PR explicitly preserves ordinary healthy/loading behavior, and this path already permitted the change at the base. The follow-up should exercise both a previously opened review and a choice held before dispatch across an accepted-key change. Require fresh local consent, without hiding the healthy event-qualified header or changing server authorization.
+
+**F2 · P3 FOLLOW-UP · Document fallback refusal independently of the GET's ordinary result.** Introduced docs mismatch at `docs/09-frontend-and-pwa.md:140` and `CHANGELOG.md:14`. A schema-invalid 200 can remain a successful ordinary query with its unmodified response while its fallback receipt is retired. `apps/web/src/runs/inspector-read-provenance.test.ts:115` explicitly asserts that result. After an HTTP refusal followed by a transport failure, the ordinary offline state can replace the earlier HTTP message while the old run stays unavailable. Current prose suggests every invalid body produces an ordinary error and the earlier error remains visible. Align the two descriptions with those two existing behaviors. Runtime outcomes are already specified by the core and this documentation correction is non-blocking.
+
+Follow-ups are candidates for root deduplication. No external issue was created.
+
+## Verification and limits
+
+- The three provenance-core paths have no delta from Fable's accepted `458f6cb0` correction. The original changes-required decision, the three failures on the old bytes, the seven passing corrected cancellation controls, and the accepted same-object/count/idle internal-restoration limitation retain their prior disposition. Parked #561 remains a pre-existing source-only response-body classification question.
+- The frozen corrected-checks result records passing web typecheck, scoped ESLint with four ref-name warnings, Prettier, and 165 passing focused tests in 11 files. The first 159-pass/5-fail result remains part of the record. The separate coverage result records 3,159 passing tests in 236 files, 98.67% lines and 94.40% branches. The accepted S2 witness covers three native successful run bodies, including 1,130,986 bytes, through public provenance and schema checks using fakes.
+- For #420, the changed calculation scans only the 80 visible rows. The patch changes wrapping and same-window focus movement. The underlying event/byte/page limits and independent live cursor are outside the diff. The new geometry spec checks real text ranges, but disables its viewport-right assertion at 200% text in favor of a card minimum-width check (`apps/web/e2e/inspector-availability.spec.ts:218`, see `pageBound`). Separate browser evidence must establish the actual rendered bounds. Source inspection cannot establish them.
+- This pass executed no tests, builds, browsers or providers. The separately assigned 49-case QA, listener/browser checks, geometry samples, full repository gates, current-target CI, final Astra MAX audit, signed merge and owner acceptance have separate dispositions. No delivery or acceptance conclusion follows from this review.

@@ -1,0 +1,7 @@
+# Geometry diagnostic preparation only
+
+Outside-checkout draft for the existing admitted browser helper. Preserve the current helper8964fa8e3b2945814ada8bc8d6c0316338ffc68d1ee1600f063524c370a826c5. The existing G1 loop/spec remains unchanged: twelve actual1440/320 × normal/CSS200% ×5/6/15digit measurements and twelve PNGs, setup/schema/selector failures hard, every geometric criterion soft-collected and still failing G1 on any violation.
+
+Proposed helper adds a native document.fonts.ready setup witness plus diagnostic DOM culprit records. Existing number/type ranges, clipping/overlap checks, document/body width checks, qualified visible-text bounds, font-growth factors/tolerances, screenshot-before-assertion order, CSS enlargement/restoration and original budgets stay intact. Add raw text ranges, contained-clip chains, paintable and viewport-intersection ranges, exact DOM selectors/identity/styles/bounds, element scroll/client widths, font status and scrolling coordinates. This distinguishes a Timeline failure from a page/header culprit without excluding either criterion or introducing a200% exception.
+
+No test/build/browser, application import, new product/source edit or checkout helper replacement is authorized by this draft. Full61 component fixture4bf07f6fb1e26725dbc08247534eb364231a50564010f048bcc51bdb1101daa6 remains unchanged. Root must read/admit the helper delta and corrected-source/build/browser identities before execution. Prior old-source and component packets remain immutable. NEXT is not read.

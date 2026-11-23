@@ -1,0 +1,51 @@
+{
+  "scope": "F1 bounded follow-up publication and exact readback",
+  "issue": {
+    "id": 6556695063,
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/562",
+    "title": "Expire healthy inspector consent when the accepted API-key generation changes",
+    "issue_number": 562,
+    "body": "Found as F1 in the independent GPT-6.2 Astra/xhigh source review of #416/#420 at local candidate `3c35b3d0f345dd420c67b90d59de94a2f73d946b`, compared with `0f6c325becf3e3e0562ae69dfae2c42bcf1d7129`.\n\nThe proposed inspector outage gates preserve the ordinary healthy path. In that path, an already-open review or a choice waiting before HTTP dispatch can survive an accepted API-key generation change on the same run. The API key is selected at dispatch, so a choice made under credential A may execute under credential B. The reviewer traced the path in `apps/web/src/runs/RunInspectorPage.tsx:307–313` and `apps/web/src/api/api-key.ts:66–75`; the healthy consent behavior also exists at the comparison base.\n\nThis is a source-supported scenario, **not an independently executed cross-credential reproduction or a demonstrated server authorization bypass**. Server authorization remains separate.\n\nExpected outcome:\n\n- Reproduce a healthy same-run accepted-key change with no preceding browser/API outage, including a change received from a second tab.\n- An existing review must require fresh consent; a choice held before dispatch must send no request under the replacement credential.\n- A new deliberate choice under the current credential can send once.\n- Cover same-key reacceptance/new generation and preserve the healthy event-qualified header over a pending read.\n- Record the actual authenticated actor through a controlled API fixture where needed; do not change server authorization or introduce a new actor kind.\n\nParked because #416 explicitly preserves ordinary healthy/loading behavior and addresses outage-scoped consent. This issue does not waive its introduced outage/recovery defects or any review, QA, coverage, CI or merge gate.\n\nA bounded all-state duplicate search used credential+consent, API-key+review, actor+replay, credential+replay and generation+consent. #386 concerns header evidence; #415 concerns the never-produced MCP actor kind. Neither records this healthy consent-generation problem. No implementation or new delivery gate is admitted by this ticket.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:web",
+        "color": "BFDADC",
+        "description": "Web app shell and screens"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-23T09:56:44Z",
+    "updated_at": "2026-11-23T09:56:44Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/562",
+    "display_title": "Expire healthy inspector consent when the accepted API-key generation changes"
+  },
+  "bodyMatchesCreated": true,
+  "labels": [
+    "area:web",
+    "backlog",
+    "type:bug"
+  ],
+  "limits": "Source-supported healthy-path scenario; no executed cross-credential or server authorization bypass claim."
+}
