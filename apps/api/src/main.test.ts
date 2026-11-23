@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -231,7 +231,7 @@ describe('built API entry and startup failures', () => {
     try {
       await f.ready(child, token);
       const directoryRecord = await readFile(f.lockPath, 'utf8');
-      const databaseLock = `${database}.graphgoblin.lock`;
+      const databaseLock = `${await realpath(database)}.graphgoblin.lock`;
       const databaseRecord = await readFile(databaseLock, 'utf8');
       const contender = other.run([], env);
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
