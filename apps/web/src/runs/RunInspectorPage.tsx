@@ -316,22 +316,29 @@ export function RunInspectorPage() {
   // Start fresh session also needs the observation that recorded the failure read after the
   // outage; the control itself matches its run, node, visit and failure sequence. The gate keeps
   // the observation boundary it was issued after: a later loss of the observation read alone
-  // spends it, even once the observation has been read again.
+  // spends it, even once the observation has been read again. Like the view's write gate, it is
+  // replaced when that boundary or the evidence's freshness changes, and only the latest committed
+  // one can open: once a loss has been shown, a receipt replaced later (a removed query, another
+  // credential generation) that starts again without that loss cannot reopen an earlier choice.
+  // The receipt checks still cover the time before the loss is committed.
+  const latestSessionGate = useRef<WriteGate | undefined>(undefined);
   const sessionGate = useMemo<WriteGate>(() => {
     const key = keys.observation(runId);
     const since = observationBoundary;
     const evidenceBlocked =
       gate.blocked ?? (observationFresh ? undefined : 'Reading the run evidence again.');
-    return {
+    const self: WriteGate = {
       blocked: evidenceBlocked,
       shown: gate.shown,
       open: () => {
-        if (evidenceBlocked !== undefined || !gate.open()) return false;
+        if (evidenceBlocked !== undefined || latestSessionGate.current !== self || !gate.open())
+          return false;
         const read = getInspectorRead(header.registry, key);
         if (read.loss > since) return false;
         return since === 0 || read.committed > since;
       },
     };
+    return self;
   }, [gate, header.registry, observationBoundary, observationFresh, runId]);
   useLayoutEffect(() => {
     latestGate.current = gate;
@@ -341,6 +348,12 @@ export function RunInspectorPage() {
       shownVisit.current = undefined;
     };
   }, [gate, visit]);
+  useLayoutEffect(() => {
+    latestSessionGate.current = sessionGate;
+    return () => {
+      latestSessionGate.current = undefined;
+    };
+  }, [sessionGate]);
 
   // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
   // failed query, a read in flight is joined, and one started before the loss settles first (it

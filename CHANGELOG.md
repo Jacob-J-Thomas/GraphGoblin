@@ -35,7 +35,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   not in the newer review; if the API could not be reached, it says the change may or may not
   have been saved. Start fresh session additionally needs a post-outage observation
   of the same failure and still sends that failure's own sequence; a choice queued before a
-  failure of the observation read alone stays spent after that read recovers. At most one extra
+  failure of the observation read alone stays spent after that read recovers, including through a
+  removed and recreated query or another accepted API key. At most one extra
   deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
   observation. The Timeline and the thread keep their behaviour. No persistent format, store,
   export or contract change.

@@ -8,6 +8,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { event, FakeApi, problem, queuedFields } from '../__fixtures__/fake-api.js';
 import { renderApp, type Rendered } from '../__fixtures__/render.js';
+import { API_KEY_STORAGE, useApiKeyStore } from '../api/api-key.js';
 import { createAppClient } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { App } from '../app/App.js';
@@ -352,6 +353,128 @@ describe('run inspector through an outage (#416)', () => {
       view.unmount();
     }
   });
+
+  // A browser disconnect stays recorded for the rest of this file. This case comes before every
+  // test that takes the browser offline, so its choice is queued with no outage boundary at all.
+  it.each(['removed and read again', 'read again under another accepted API key'] as const)(
+    'keeps a fresh-session choice queued before a shown observation-only loss spent once its receipt is %s',
+    async (replacement) => {
+      const anotherKey = replacement === 'read again under another accepted API key';
+      // The first accepted key, stored before the app opens.
+      if (anotherKey) useApiKeyStore.getState().save('gg_first_key');
+      const api = new FakeApi();
+      const run = missingSessionRun(api);
+      const view = renderApp('/runs/' + run.id, api);
+      const user = userEvent.setup();
+      const start = () => button('Start fresh session for worker');
+      const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
+      const observationGets = () => api.callsTo('GET', `/runs/${run.id}/observation`);
+      const observationQuery = () =>
+        view.queryClient.getQueryCache().find({ queryKey: keys.observation(run.id), exact: true });
+      const evidenceError = /^Run evidence could not be read: /;
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let queued = false;
+      try {
+        await openRun(run.id);
+        await waitFor(() => expect(start()).toBeEnabled());
+        const evidence = view.queryClient.getQueryData(keys.observation(run.id));
+        expect(evidence).toBeDefined();
+        // The mutation cache holds the choice before its API call; the gate is read at dispatch.
+        view.queryClient.getMutationCache().config.onMutate = () => {
+          queued = true;
+          return held;
+        };
+        await user.click(start());
+        await waitFor(() => expect(queued).toBe(true));
+        expect(recoveries()).toHaveLength(0);
+
+        // Only the observation read fails in transport, and the view shows it. The run read and
+        // the browser stay healthy, so the run stays current and its other controls available.
+        api.override('GET /runs/:id/observation', () => {
+          throw new TypeError('Failed to fetch');
+        });
+        await act(() =>
+          view.queryClient.refetchQueries({ queryKey: keys.observation(run.id), exact: true }),
+        );
+        expect(await screen.findByText(evidenceError)).toBeVisible();
+        expect(screen.getByText('Reading the run evidence again.')).toBeVisible();
+        expect(start()).toBeDisabled();
+        expect(screen.queryByText(STALE)).toBeNull();
+        expect(button('Replay...')).toBeEnabled();
+        expect(button('Review delete-ready history')).toBeEnabled();
+        expect(view.queryClient.getQueryState(keys.run(run.id))?.status).toBe('success');
+        expect(onlineManager.isOnline()).toBe(true);
+
+        // The observation answers again, and its receipt is replaced, with no loss of its own.
+        api.override('GET /runs/:id/observation', (call) => api.builtIn(call));
+        const lostQuery = observationQuery();
+        expect(lostQuery).toBeDefined();
+        const getsBefore = observationGets().length;
+        if (anotherKey) {
+          // Another tab stores a second accepted key. The mounted API key panel follows it and
+          // reads the run and its observation again under it, from the same query entries.
+          localStorage.setItem(API_KEY_STORAGE, 'gg_second_key');
+          act(() => {
+            window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+          });
+          const lastKey = (path: string) =>
+            api.callsTo('GET', path).at(-1)?.headers.get('authorization');
+          await waitFor(() => {
+            expect(lastKey(`/runs/${run.id}/observation`)).toBe('Bearer gg_second_key');
+            expect(lastKey(`/runs/${run.id}`)).toBe('Bearer gg_second_key');
+          });
+        } else {
+          // The query, and its receipt with it, is removed; the mounted view reads a new one.
+          act(() => {
+            view.queryClient.removeQueries({ queryKey: keys.observation(run.id), exact: true });
+          });
+        }
+        await waitFor(() => {
+          expect(view.queryClient.getQueryState(keys.observation(run.id))).toMatchObject({
+            status: 'success',
+            fetchStatus: 'idle',
+          });
+          expect(view.queryClient.getQueryState(keys.run(run.id))).toMatchObject({
+            status: 'success',
+            fetchStatus: 'idle',
+          });
+        });
+        if (anotherKey) expect(observationQuery()).toBe(lostQuery);
+        else expect(observationQuery()).not.toBe(lostQuery);
+        // A genuine successful GET returned the same failure evidence. The queued choice is still
+        // pending, which alone keeps the control disabled until it settles.
+        expect(observationGets().length).toBeGreaterThan(getsBefore);
+        expect(view.queryClient.getQueryData(keys.observation(run.id))).toEqual(evidence);
+        await waitFor(() => {
+          expect(screen.queryByText(evidenceError)).toBeNull();
+          expect(screen.queryByText('Reading the run evidence again.')).toBeNull();
+        });
+        expect(screen.queryByText(STALE)).toBeNull();
+        expect(recoveries()).toHaveLength(0);
+
+        // The choice queued before the loss the view showed stays spent.
+        release();
+        expect(await screen.findByText(NOT_SENT)).toBeVisible();
+        expect(recoveries()).toHaveLength(0);
+
+        // A deliberate choice made now sends once, with the failure's own sequence.
+        api.override('POST /runs/:id/recover-session', () =>
+          Response.json({ ...api.runs.get(run.id), status: 'running' }),
+        );
+        await waitFor(() => expect(start()).toBeEnabled());
+        await user.click(start());
+        await waitFor(() => expect(recoveries()).toHaveLength(1));
+        expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+        expect(posts(api)).toHaveLength(1);
+      } finally {
+        release();
+        view.unmount();
+      }
+    },
+  );
 
   it('stays locked through a browser reconnect and a held pre-loss read; one later read unlocks', async () => {
     const api = new FakeApi();

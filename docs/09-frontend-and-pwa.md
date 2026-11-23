@@ -196,11 +196,14 @@ the reason. Nothing is replayed automatically. **Start
 fresh session** also needs an observation read after the loss whose failure event names the same
 run, node and missing-session visit as the current record; it sends that failure event's own
 sequence even when later delivery audits exist. Its gate keeps the observation boundary it was
-issued under: a later failure of the observation read alone, with the run read and the browser
-healthy, spends a choice queued before it even after the observation is read again with an equal
-body, and that choice reports **Not sent**. A new choice after the qualifying observation read
-sends once. Other run controls stay available through an observation-only failure. Script consent
-keeps the run and observed sequence shown when its review opened. The Runs list's delete-ready
+issued under and, like the view's write gate, is replaced when that boundary or the evidence's
+freshness changes; a replaced gate stays spent. Once the view has shown a failure of the
+observation read alone, with the run read and the browser healthy, a choice queued before it
+reports **Not sent** even after the observation is read again with an equal body, including from
+a removed and recreated query or under another accepted API key that the API key panel followed.
+A new choice after the qualifying observation read sends once. Other run controls stay available
+through an observation-only failure. Script consent keeps the run and observed sequence shown
+when its review opened. The Runs list's delete-ready
 controls share the hold on a sent confirmation, its exception after a browser dismissal and the
 report beside the controls; otherwise they and other pages keep their behaviour.
 
