@@ -1,0 +1,142 @@
+
+ RUN  v5.0.3 <checkout>/apps/web
+
+ ❯ src/forms/codex-override-value.test.tsx (1 test | 1 failed) 1116ms
+   ❯ Codex config override values in the node editor (#429) (1)
+     × holds a Value with a member "__proto__" without saving it narrowed, then saves the whole corrected value 1113ms
+ ❯ src/forms/json-sections.test.tsx (57 tests | 4 failed | 51 skipped) 4025ms
+   ❯ Codex config overrides in the structured editor (#429) (17)
+     × holds a Value with a member "__proto__" among its other members as typed, reports nothing, and takes it whole once corrected 416ms
+     × holds a Value with a member "__proto__" two objects down as typed, reports nothing, and takes it whole once corrected 346ms
+     × holds a Value with a member "__proto__" in an object inside an array as typed, reports nothing, and takes it whole once corrected 265ms
+     × holds a Value with a member "__proto__" under a refused Key, and names the member once the Key is corrected 268ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forms/codex-override-value.test.tsx > Codex config override values in the node editor (#429) > holds a Value with a member "__proto__" without saving it narrowed, then saves the whole corrected value
+AssertionError: expected '{\n  "marker": "held",\n  "outer": {\…' to be '{"marker":"held","outer":{"inner":{"_…' // Object.is equality
+
+- Expected
++ Received
+
+- {"marker":"held","outer":{"inner":{"__proto__":false}},"rows":[{"enabled":true}]}
++ {
++   "marker": "held",
++   "outer": {
++     "inner": {}
++   },
++   "rows": [
++     {
++       "enabled": true
++     }
++   ]
++ }
+
+ ❯ src/forms/codex-override-value.test.tsx:69:49
+     67|     setCode('Config overrides value 1', text);
+     68|     const value = screen.getByLabelText('Config overrides value 1');
+     69|     expect(getCode('Config overrides value 1')).toBe(text);
+       |                                                 ^
+     70|     expect(value).toHaveAttribute('aria-invalid', 'true');
+     71|     expect(value).toHaveAccessibleDescription(expect.stringContaining(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/forms/json-sections.test.tsx > Codex config overrides in the structured editor (#429) > holds a Value with a member "__proto__" among its other members as typed, reports nothing, and takes it whole once corrected
+AssertionError: expected '{\n  "marker": "held",\n  "survivor":…' to be '{"marker":"held","__proto__":false,"s…' // Object.is equality
+
+- Expected
++ Received
+
+- {"marker":"held","__proto__":false,"survivor":true}
++ {
++   "marker": "held",
++   "survivor": true
++ }
+
+ ❯ src/forms/json-sections.test.tsx:1328:51
+    1326|       setCode('Config overrides value 1', text);
+    1327|       // Held exactly as typed: invalid, and described by the refused …
+    1328|       expect(getCode('Config overrides value 1')).toBe(text);
+       |                                                   ^
+    1329|       expect(value).toHaveAttribute('aria-invalid', 'true');
+    1330|       expect(value).toHaveAccessibleDescription(expect.stringContainin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/forms/json-sections.test.tsx > Codex config overrides in the structured editor (#429) > holds a Value with a member "__proto__" two objects down as typed, reports nothing, and takes it whole once corrected
+AssertionError: expected '{\n  "outer": {\n    "inner": {\n    …' to be '{"outer":{"inner":{"__proto__":false,…' // Object.is equality
+
+- Expected
++ Received
+
+- {"outer":{"inner":{"__proto__":false,"kept":1}}}
++ {
++   "outer": {
++     "inner": {
++       "kept": 1
++     }
++   }
++ }
+
+ ❯ src/forms/json-sections.test.tsx:1328:51
+    1326|       setCode('Config overrides value 1', text);
+    1327|       // Held exactly as typed: invalid, and described by the refused …
+    1328|       expect(getCode('Config overrides value 1')).toBe(text);
+       |                                                   ^
+    1329|       expect(value).toHaveAttribute('aria-invalid', 'true');
+    1330|       expect(value).toHaveAccessibleDescription(expect.stringContainin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/forms/json-sections.test.tsx > Codex config overrides in the structured editor (#429) > holds a Value with a member "__proto__" in an object inside an array as typed, reports nothing, and takes it whole once corrected
+AssertionError: expected '{\n  "rows": [\n    {\n      "enabled…' to be '{"rows":[{"__proto__":false,"enabled"…' // Object.is equality
+
+- Expected
++ Received
+
+- {"rows":[{"__proto__":false,"enabled":true}]}
++ {
++   "rows": [
++     {
++       "enabled": true
++     }
++   ]
++ }
+
+ ❯ src/forms/json-sections.test.tsx:1328:51
+    1326|       setCode('Config overrides value 1', text);
+    1327|       // Held exactly as typed: invalid, and described by the refused …
+    1328|       expect(getCode('Config overrides value 1')).toBe(text);
+       |                                                   ^
+    1329|       expect(value).toHaveAttribute('aria-invalid', 'true');
+    1330|       expect(value).toHaveAccessibleDescription(expect.stringContainin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/forms/json-sections.test.tsx > Codex config overrides in the structured editor (#429) > holds a Value with a member "__proto__" under a refused Key, and names the member once the Key is corrected
+AssertionError: expected '{\n  "marker": "held"\n}' to be '{"marker":"held","__proto__":false}' // Object.is equality
+
+- Expected
++ Received
+
+- {"marker":"held","__proto__":false}
++ {
++   "marker": "held"
++ }
+
+ ❯ src/forms/json-sections.test.tsx:1388:49
+    1386|     setCode('Config overrides value 1', text);
+    1387|     // The contract refuses the entry for its Key first; the value is …
+    1388|     expect(getCode('Config overrides value 1')).toBe(text);
+       |                                                 ^
+    1389|     expect(value).toHaveAttribute('aria-invalid', 'true');
+    1390|     expect(value).toHaveAccessibleDescription(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 2 passed | 51 skipped (58)
+   Start at  23:20:57
+   Duration  8.40s (tests 34%, environment 22%, transform 21%, import 16%, setup 7%)

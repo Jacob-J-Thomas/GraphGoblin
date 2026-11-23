@@ -1,0 +1,296 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T021033Z-3c576e",
+  "label": "baseline",
+  "case": "ext-stdout-cap-plus-one",
+  "title": "Stdout one byte over the cap: the same valid identity padded to 262145 bytes, natural exit 0",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Stdout retention bound: 256 KiB + 1 refuses as invalid",
+  "startedAtMs": 1795227126937,
+  "durationMs": 18173,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 45476,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 15149,
+      "osElapsedMs": 15142,
+      "osCreatedAtMs": 1795227126943,
+      "osExitedAtMs": 1795227142085,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-timeout",
+      "diagnostic": "helper-timeout",
+      "diagnosticFinal": "helper-timeout",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:12:22.0656637Z",
+          "pid": 45476,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-timeout",
+          "message": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.",
+          "config": "<RUN>\\cases\\ext-stdout-cap-plus-one\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 292,
+      "stdoutBytes": 0,
+      "stderrBytes": 292,
+      "stdoutText": "",
+      "stderrText": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.\r\n\r\nConfiguration: <RUN>\\cases\\ext-stdout-cap-plus-one\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-stdout-cap-plus-one/launcher-click/45476",
+      "case": "ext-stdout-cap-plus-one",
+      "role": "launcher-click",
+      "pid": 45476,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795227126950,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 38516,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227126943,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227126943,
+          "exitedAtMs": 1795227142085
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227126943,
+          "exitedAtMs": 1795227142085
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227126943,
+          "exitedAtMs": 1795227142085
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795227126943,
+          "exitedAtMs": 1795227142085
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-stdout-cap-plus-one/identity-1/16144",
+      "case": "ext-stdout-cap-plus-one",
+      "role": "identity-1",
+      "pid": 16144,
+      "source": "handshake",
+      "self": {
+        "case": "ext-stdout-cap-plus-one",
+        "role": "identity-1",
+        "pid": 16144,
+        "ppid": 45476,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795227127137,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 45476,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795227127042,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227127042,
+          "exitedAtMs": 1795227142058
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227127042,
+          "exitedAtMs": 1795227142058
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795227127042,
+          "exitedAtMs": 1795227142058
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-dotnet-process-kill"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795227127134,
+      "pid": 16144,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795227127139,
+      "pid": 16144,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 216,
+      "fileId": "810877956:281474978827508",
+      "sha256": "9063ed97cd7fbec681192f9ca9f57692b7efe241e88bba60f9c80e2a62f67cd1"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 464,
+      "fileId": "810877956:281474978827507",
+      "sha256": "d5d03160df5838173751405673afe65c8060e5faf55ead4c9d19cf0fc603e79d"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 418,
+      "fileId": "810877956:281474978827509",
+      "sha256": "4c2902b1d242713d2c0080a23741c32635d490434b15a03666dbc4b8c4f3452c"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 355,
+      "fileId": "810877956:281474978827506",
+      "sha256": "76c9964a9fa0a92c8fcf838559d0fe5f3203fbcfc2dfce42838e532bf3bf0070"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795227126940,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795227126950,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795227142090,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-invalid",
+      "kind": "requirement",
+      "text": "one byte over the cap refuses with helper-invalid",
+      "expected": "helper-invalid",
+      "actual": "helper-timeout",
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "prompt",
+      "kind": "requirement",
+      "text": "refusal comes from the bound, not the deadline (< 10000 ms)",
+      "expected": "< 10000",
+      "actual": 15142,
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "root-ended-before-launcher-exit",
+      "kind": "requirement",
+      "text": "the root ended (naturally or by the launcher's job) before the launcher exited",
+      "expected": {
+        "exitedBeforeLauncherExit": true
+      },
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 4294967295,
+        "exitedRelativeToLauncherExitMs": -27,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-dotnet-process-kill"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

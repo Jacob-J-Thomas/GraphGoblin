@@ -1,0 +1,4704 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: pwa.spec.ts >> another tab’s unresolved voice upload vetoes update activation until that tab closes
+- Location: e2e/pwa.spec.ts:536:1
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+```
+Error: apiRequestContext.post: Target page, context or browser has been closed
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=f1e3]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e5]: GraphGoblin
+    - navigation "Main" [ref=f1e22]:
+      - link "Chat" [ref=f1e23] [cursor=pointer]:
+        - /url: /app/chat
+      - link "Loops" [ref=f1e25] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=f1e27] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=f1e29] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=f1e31] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=f1e33]:
+    - heading "Loops" [level=1] [ref=f1e35]
+    - generic [ref=f1e37]:
+      - generic [ref=f1e38]:
+        - form "Create loop" [ref=f1e39]:
+          - paragraph [aria-hidden] [ref=f1e40]: Required fields are marked *
+          - generic [ref=f1e41]:
+            - generic [ref=f1e42]:
+              - generic [ref=f1e43]: New loop name
+              - generic [aria-hidden] [ref=f1e44]: "*"
+            - textbox "New loop name" [ref=f1e45]:
+              - /placeholder: nightly-triage
+          - button "Create" [disabled]
+        - generic [ref=f1e46]:
+          - generic [ref=f1e47]: Import an exported loop (JSON)
+          - generic [ref=f1e48]:
+            - generic [ref=f1e49]:
+              - button "Import an exported loop (JSON)" [ref=f1e50] [cursor=pointer]
+              - generic [aria-hidden]: Choose file
+            - generic [ref=f1e51]: No file chosen
+      - button "New from template" [ref=f1e54] [cursor=pointer]
+    - generic [ref=f1e56]:
+      - region [ref=f1e57]:
+        - heading "Your loops" [level=2] [ref=f1e59]
+        - table [ref=f1e61]:
+          - rowgroup [ref=f1e62]:
+            - row [ref=f1e63]:
+              - columnheader "Name" [ref=f1e64]
+              - columnheader "State" [ref=f1e65]
+              - columnheader "Last run" [ref=f1e66]
+              - columnheader "Actions" [ref=f1e67]
+          - rowgroup [ref=f1e68]:
+            - row [ref=f1e69]:
+              - cell [ref=f1e70]:
+                - link "escape-mouse-409-1-0" [ref=f1e71] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105V/edit
+                - paragraph [ref=f1e72]:
+                  - text: Updated
+                  - time [ref=f1e73]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e74]
+              - cell "never run" [ref=f1e77]
+              - cell [ref=f1e79]:
+                - generic [ref=f1e81]:
+                  - link "Edit escape-mouse-409-1-0" [ref=f1e82] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105V/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-1-0" [ref=f1e85] [cursor=pointer]:
+                    - generic [ref=f1e88]: Export
+                  - status [ref=f1e89]
+                  - button "Delete escape-mouse-409-1-0" [ref=f1e90] [cursor=pointer]:
+                    - generic [ref=f1e93]: Delete
+            - row [ref=f1e94]:
+              - cell [ref=f1e95]:
+                - link "escape-mouse-409-2-0" [ref=f1e96] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105X/edit
+                - paragraph [ref=f1e97]:
+                  - text: Updated
+                  - time [ref=f1e98]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e99]
+              - cell "never run" [ref=f1e102]
+              - cell [ref=f1e104]:
+                - generic [ref=f1e106]:
+                  - link "Edit escape-mouse-409-2-0" [ref=f1e107] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105X/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-2-0" [ref=f1e110] [cursor=pointer]:
+                    - generic [ref=f1e113]: Export
+                  - status [ref=f1e114]
+                  - button "Delete escape-mouse-409-2-0" [ref=f1e115] [cursor=pointer]:
+                    - generic [ref=f1e118]: Delete
+            - row [ref=f1e119]:
+              - cell [ref=f1e120]:
+                - link "escape-mouse-409-3-0" [ref=f1e121] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105Z/edit
+                - paragraph [ref=f1e122]:
+                  - text: Updated
+                  - time [ref=f1e123]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e124]
+              - cell "never run" [ref=f1e127]
+              - cell [ref=f1e129]:
+                - generic [ref=f1e131]:
+                  - link "Edit escape-mouse-409-3-0" [ref=f1e132] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105Z/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-3-0" [ref=f1e135] [cursor=pointer]:
+                    - generic [ref=f1e138]: Export
+                  - status [ref=f1e139]
+                  - button "Delete escape-mouse-409-3-0" [ref=f1e140] [cursor=pointer]:
+                    - generic [ref=f1e143]: Delete
+            - row [ref=f1e144]:
+              - cell [ref=f1e145]:
+                - link "escape-mouse-409-4-0" [ref=f1e146] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51061/edit
+                - paragraph [ref=f1e147]:
+                  - text: Updated
+                  - time [ref=f1e148]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e149]
+              - cell "never run" [ref=f1e152]
+              - cell [ref=f1e154]:
+                - generic [ref=f1e156]:
+                  - link "Edit escape-mouse-409-4-0" [ref=f1e157] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51061/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-4-0" [ref=f1e160] [cursor=pointer]:
+                    - generic [ref=f1e163]: Export
+                  - status [ref=f1e164]
+                  - button "Delete escape-mouse-409-4-0" [ref=f1e165] [cursor=pointer]:
+                    - generic [ref=f1e168]: Delete
+            - row [ref=f1e169]:
+              - cell [ref=f1e170]:
+                - link "escape-mouse-409-5-0" [ref=f1e171] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51063/edit
+                - paragraph [ref=f1e172]:
+                  - text: Updated
+                  - time [ref=f1e173]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e174]
+              - cell "never run" [ref=f1e177]
+              - cell [ref=f1e179]:
+                - generic [ref=f1e181]:
+                  - link "Edit escape-mouse-409-5-0" [ref=f1e182] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51063/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-5-0" [ref=f1e185] [cursor=pointer]:
+                    - generic [ref=f1e188]: Export
+                  - status [ref=f1e189]
+                  - button "Delete escape-mouse-409-5-0" [ref=f1e190] [cursor=pointer]:
+                    - generic [ref=f1e193]: Delete
+            - row [ref=f1e194]:
+              - cell [ref=f1e195]:
+                - link "escape-mouse-409-6-0" [ref=f1e196] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51065/edit
+                - paragraph [ref=f1e197]:
+                  - text: Updated
+                  - time [ref=f1e198]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e199]
+              - cell "never run" [ref=f1e202]
+              - cell [ref=f1e204]:
+                - generic [ref=f1e206]:
+                  - link "Edit escape-mouse-409-6-0" [ref=f1e207] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51065/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-6-0" [ref=f1e210] [cursor=pointer]:
+                    - generic [ref=f1e213]: Export
+                  - status [ref=f1e214]
+                  - button "Delete escape-mouse-409-6-0" [ref=f1e215] [cursor=pointer]:
+                    - generic [ref=f1e218]: Delete
+            - row [ref=f1e219]:
+              - cell [ref=f1e220]:
+                - link "escape-mouse-409-7-0" [ref=f1e221] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51067/edit
+                - paragraph [ref=f1e222]:
+                  - text: Updated
+                  - time [ref=f1e223]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e224]
+              - cell "never run" [ref=f1e227]
+              - cell [ref=f1e229]:
+                - generic [ref=f1e231]:
+                  - link "Edit escape-mouse-409-7-0" [ref=f1e232] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51067/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-7-0" [ref=f1e235] [cursor=pointer]:
+                    - generic [ref=f1e238]: Export
+                  - status [ref=f1e239]
+                  - button "Delete escape-mouse-409-7-0" [ref=f1e240] [cursor=pointer]:
+                    - generic [ref=f1e243]: Delete
+            - row [ref=f1e244]:
+              - cell [ref=f1e245]:
+                - link "escape-mouse-409-8-0" [ref=f1e246] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51069/edit
+                - paragraph [ref=f1e247]:
+                  - text: Updated
+                  - time [ref=f1e248]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e249]
+              - cell "never run" [ref=f1e252]
+              - cell [ref=f1e254]:
+                - generic [ref=f1e256]:
+                  - link "Edit escape-mouse-409-8-0" [ref=f1e257] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51069/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-8-0" [ref=f1e260] [cursor=pointer]:
+                    - generic [ref=f1e263]: Export
+                  - status [ref=f1e264]
+                  - button "Delete escape-mouse-409-8-0" [ref=f1e265] [cursor=pointer]:
+                    - generic [ref=f1e268]: Delete
+            - row [ref=f1e269]:
+              - cell [ref=f1e270]:
+                - link "escape-mouse-409-9-0" [ref=f1e271] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106B/edit
+                - paragraph [ref=f1e272]:
+                  - text: Updated
+                  - time [ref=f1e273]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e274]
+              - cell "never run" [ref=f1e277]
+              - cell [ref=f1e279]:
+                - generic [ref=f1e281]:
+                  - link "Edit escape-mouse-409-9-0" [ref=f1e282] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106B/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-9-0" [ref=f1e285] [cursor=pointer]:
+                    - generic [ref=f1e288]: Export
+                  - status [ref=f1e289]
+                  - button "Delete escape-mouse-409-9-0" [ref=f1e290] [cursor=pointer]:
+                    - generic [ref=f1e293]: Delete
+            - row [ref=f1e294]:
+              - cell [ref=f1e295]:
+                - link "escape-mouse-409-10-0" [ref=f1e296] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106D/edit
+                - paragraph [ref=f1e297]:
+                  - text: Updated
+                  - time [ref=f1e298]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e299]
+              - cell "never run" [ref=f1e302]
+              - cell [ref=f1e304]:
+                - generic [ref=f1e306]:
+                  - link "Edit escape-mouse-409-10-0" [ref=f1e307] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106D/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-10-0" [ref=f1e310] [cursor=pointer]:
+                    - generic [ref=f1e313]: Export
+                  - status [ref=f1e314]
+                  - button "Delete escape-mouse-409-10-0" [ref=f1e315] [cursor=pointer]:
+                    - generic [ref=f1e318]: Delete
+            - row [ref=f1e319]:
+              - cell [ref=f1e320]:
+                - link "escape-mouse-409-12-0" [ref=f1e321] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106F/edit
+                - paragraph [ref=f1e322]:
+                  - text: Updated
+                  - time [ref=f1e323]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e324]
+              - cell "never run" [ref=f1e327]
+              - cell [ref=f1e329]:
+                - generic [ref=f1e331]:
+                  - link "Edit escape-mouse-409-12-0" [ref=f1e332] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106F/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-12-0" [ref=f1e335] [cursor=pointer]:
+                    - generic [ref=f1e338]: Export
+                  - status [ref=f1e339]
+                  - button "Delete escape-mouse-409-12-0" [ref=f1e340] [cursor=pointer]:
+                    - generic [ref=f1e343]: Delete
+            - row [ref=f1e344]:
+              - cell [ref=f1e345]:
+                - link "escape-mouse-409-20-0" [ref=f1e346] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106H/edit
+                - paragraph [ref=f1e347]:
+                  - text: Updated
+                  - time [ref=f1e348]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e349]
+              - cell "never run" [ref=f1e352]
+              - cell [ref=f1e354]:
+                - generic [ref=f1e356]:
+                  - link "Edit escape-mouse-409-20-0" [ref=f1e357] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5106H/edit
+                    - text: Edit
+                  - button "Export escape-mouse-409-20-0" [ref=f1e360] [cursor=pointer]:
+                    - generic [ref=f1e363]: Export
+                  - status [ref=f1e364]
+                  - button "Delete escape-mouse-409-20-0" [ref=f1e365] [cursor=pointer]:
+                    - generic [ref=f1e368]: Delete
+            - row [ref=f1e369]:
+              - cell [ref=f1e370]:
+                - link "escape-keyboard-409-1-0" [ref=f1e371] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107B/edit
+                - paragraph [ref=f1e372]:
+                  - text: Updated
+                  - time [ref=f1e373]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e374]
+              - cell "never run" [ref=f1e377]
+              - cell [ref=f1e379]:
+                - generic [ref=f1e381]:
+                  - link "Edit escape-keyboard-409-1-0" [ref=f1e382] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107B/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-1-0" [ref=f1e385] [cursor=pointer]:
+                    - generic [ref=f1e388]: Export
+                  - status [ref=f1e389]
+                  - button "Delete escape-keyboard-409-1-0" [ref=f1e390] [cursor=pointer]:
+                    - generic [ref=f1e393]: Delete
+            - row [ref=f1e394]:
+              - cell [ref=f1e395]:
+                - link "escape-keyboard-409-2-0" [ref=f1e396] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107D/edit
+                - paragraph [ref=f1e397]:
+                  - text: Updated
+                  - time [ref=f1e398]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e399]
+              - cell "never run" [ref=f1e402]
+              - cell [ref=f1e404]:
+                - generic [ref=f1e406]:
+                  - link "Edit escape-keyboard-409-2-0" [ref=f1e407] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107D/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-2-0" [ref=f1e410] [cursor=pointer]:
+                    - generic [ref=f1e413]: Export
+                  - status [ref=f1e414]
+                  - button "Delete escape-keyboard-409-2-0" [ref=f1e415] [cursor=pointer]:
+                    - generic [ref=f1e418]: Delete
+            - row [ref=f1e419]:
+              - cell [ref=f1e420]:
+                - link "escape-keyboard-409-3-0" [ref=f1e421] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107F/edit
+                - paragraph [ref=f1e422]:
+                  - text: Updated
+                  - time [ref=f1e423]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e424]
+              - cell "never run" [ref=f1e427]
+              - cell [ref=f1e429]:
+                - generic [ref=f1e431]:
+                  - link "Edit escape-keyboard-409-3-0" [ref=f1e432] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107F/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-3-0" [ref=f1e435] [cursor=pointer]:
+                    - generic [ref=f1e438]: Export
+                  - status [ref=f1e439]
+                  - button "Delete escape-keyboard-409-3-0" [ref=f1e440] [cursor=pointer]:
+                    - generic [ref=f1e443]: Delete
+            - row [ref=f1e444]:
+              - cell [ref=f1e445]:
+                - link "escape-keyboard-409-4-0" [ref=f1e446] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107H/edit
+                - paragraph [ref=f1e447]:
+                  - text: Updated
+                  - time [ref=f1e448]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e449]
+              - cell "never run" [ref=f1e452]
+              - cell [ref=f1e454]:
+                - generic [ref=f1e456]:
+                  - link "Edit escape-keyboard-409-4-0" [ref=f1e457] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107H/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-4-0" [ref=f1e460] [cursor=pointer]:
+                    - generic [ref=f1e463]: Export
+                  - status [ref=f1e464]
+                  - button "Delete escape-keyboard-409-4-0" [ref=f1e465] [cursor=pointer]:
+                    - generic [ref=f1e468]: Delete
+            - row [ref=f1e469]:
+              - cell [ref=f1e470]:
+                - link "escape-keyboard-409-5-0" [ref=f1e471] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107K/edit
+                - paragraph [ref=f1e472]:
+                  - text: Updated
+                  - time [ref=f1e473]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e474]
+              - cell "never run" [ref=f1e477]
+              - cell [ref=f1e479]:
+                - generic [ref=f1e481]:
+                  - link "Edit escape-keyboard-409-5-0" [ref=f1e482] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107K/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-5-0" [ref=f1e485] [cursor=pointer]:
+                    - generic [ref=f1e488]: Export
+                  - status [ref=f1e489]
+                  - button "Delete escape-keyboard-409-5-0" [ref=f1e490] [cursor=pointer]:
+                    - generic [ref=f1e493]: Delete
+            - row [ref=f1e494]:
+              - cell [ref=f1e495]:
+                - link "escape-keyboard-409-6-0" [ref=f1e496] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107N/edit
+                - paragraph [ref=f1e497]:
+                  - text: Updated
+                  - time [ref=f1e498]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e499]
+              - cell "never run" [ref=f1e502]
+              - cell [ref=f1e504]:
+                - generic [ref=f1e506]:
+                  - link "Edit escape-keyboard-409-6-0" [ref=f1e507] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107N/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-6-0" [ref=f1e510] [cursor=pointer]:
+                    - generic [ref=f1e513]: Export
+                  - status [ref=f1e514]
+                  - button "Delete escape-keyboard-409-6-0" [ref=f1e515] [cursor=pointer]:
+                    - generic [ref=f1e518]: Delete
+            - row [ref=f1e519]:
+              - cell [ref=f1e520]:
+                - link "escape-keyboard-409-7-0" [ref=f1e521] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107Q/edit
+                - paragraph [ref=f1e522]:
+                  - text: Updated
+                  - time [ref=f1e523]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e524]
+              - cell "never run" [ref=f1e527]
+              - cell [ref=f1e529]:
+                - generic [ref=f1e531]:
+                  - link "Edit escape-keyboard-409-7-0" [ref=f1e532] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107Q/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-7-0" [ref=f1e535] [cursor=pointer]:
+                    - generic [ref=f1e538]: Export
+                  - status [ref=f1e539]
+                  - button "Delete escape-keyboard-409-7-0" [ref=f1e540] [cursor=pointer]:
+                    - generic [ref=f1e543]: Delete
+            - row [ref=f1e544]:
+              - cell [ref=f1e545]:
+                - link "escape-keyboard-409-8-0" [ref=f1e546] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107S/edit
+                - paragraph [ref=f1e547]:
+                  - text: Updated
+                  - time [ref=f1e548]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e549]
+              - cell "never run" [ref=f1e552]
+              - cell [ref=f1e554]:
+                - generic [ref=f1e556]:
+                  - link "Edit escape-keyboard-409-8-0" [ref=f1e557] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107S/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-8-0" [ref=f1e560] [cursor=pointer]:
+                    - generic [ref=f1e563]: Export
+                  - status [ref=f1e564]
+                  - button "Delete escape-keyboard-409-8-0" [ref=f1e565] [cursor=pointer]:
+                    - generic [ref=f1e568]: Delete
+            - row [ref=f1e569]:
+              - cell [ref=f1e570]:
+                - link "escape-keyboard-409-9-0" [ref=f1e571] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107V/edit
+                - paragraph [ref=f1e572]:
+                  - text: Updated
+                  - time [ref=f1e573]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e574]
+              - cell "never run" [ref=f1e577]
+              - cell [ref=f1e579]:
+                - generic [ref=f1e581]:
+                  - link "Edit escape-keyboard-409-9-0" [ref=f1e582] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107V/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-9-0" [ref=f1e585] [cursor=pointer]:
+                    - generic [ref=f1e588]: Export
+                  - status [ref=f1e589]
+                  - button "Delete escape-keyboard-409-9-0" [ref=f1e590] [cursor=pointer]:
+                    - generic [ref=f1e593]: Delete
+            - row [ref=f1e594]:
+              - cell [ref=f1e595]:
+                - link "escape-keyboard-409-10-0" [ref=f1e596] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107X/edit
+                - paragraph [ref=f1e597]:
+                  - text: Updated
+                  - time [ref=f1e598]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e599]
+              - cell "never run" [ref=f1e602]
+              - cell [ref=f1e604]:
+                - generic [ref=f1e606]:
+                  - link "Edit escape-keyboard-409-10-0" [ref=f1e607] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107X/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-10-0" [ref=f1e610] [cursor=pointer]:
+                    - generic [ref=f1e613]: Export
+                  - status [ref=f1e614]
+                  - button "Delete escape-keyboard-409-10-0" [ref=f1e615] [cursor=pointer]:
+                    - generic [ref=f1e618]: Delete
+            - row [ref=f1e619]:
+              - cell [ref=f1e620]:
+                - link "escape-keyboard-409-12-0" [ref=f1e621] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107Z/edit
+                - paragraph [ref=f1e622]:
+                  - text: Updated
+                  - time [ref=f1e623]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e624]
+              - cell "never run" [ref=f1e627]
+              - cell [ref=f1e629]:
+                - generic [ref=f1e631]:
+                  - link "Edit escape-keyboard-409-12-0" [ref=f1e632] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5107Z/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-12-0" [ref=f1e635] [cursor=pointer]:
+                    - generic [ref=f1e638]: Export
+                  - status [ref=f1e639]
+                  - button "Delete escape-keyboard-409-12-0" [ref=f1e640] [cursor=pointer]:
+                    - generic [ref=f1e643]: Delete
+            - row [ref=f1e644]:
+              - cell [ref=f1e645]:
+                - link "escape-keyboard-409-20-0" [ref=f1e646] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51081/edit
+                - paragraph [ref=f1e647]:
+                  - text: Updated
+                  - time [ref=f1e648]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e649]
+              - cell "never run" [ref=f1e652]
+              - cell [ref=f1e654]:
+                - generic [ref=f1e656]:
+                  - link "Edit escape-keyboard-409-20-0" [ref=f1e657] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51081/edit
+                    - text: Edit
+                  - button "Export escape-keyboard-409-20-0" [ref=f1e660] [cursor=pointer]:
+                    - generic [ref=f1e663]: Export
+                  - status [ref=f1e664]
+                  - button "Delete escape-keyboard-409-20-0" [ref=f1e665] [cursor=pointer]:
+                    - generic [ref=f1e668]: Delete
+            - row [ref=f1e669]:
+              - cell [ref=f1e670]:
+                - link "focus-export-0" [ref=f1e671] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5108W/edit
+                - paragraph [ref=f1e672]:
+                  - text: Updated
+                  - time [ref=f1e673]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e674]
+              - cell "never run" [ref=f1e677]
+              - cell [ref=f1e679]:
+                - generic [ref=f1e681]:
+                  - link "Edit focus-export-0" [ref=f1e682] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5108W/edit
+                    - text: Edit
+                  - button "Export focus-export-0" [ref=f1e685] [cursor=pointer]:
+                    - generic [ref=f1e688]: Export
+                  - status [ref=f1e689]
+                  - button "Delete focus-export-0" [ref=f1e690] [cursor=pointer]:
+                    - generic [ref=f1e693]: Delete
+            - row [ref=f1e694]:
+              - cell [ref=f1e695]:
+                - link "selection-guard-0" [ref=f1e696] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5108Y/edit
+                - paragraph [ref=f1e697]:
+                  - text: Updated
+                  - time [ref=f1e698]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e699]
+              - cell "never run" [ref=f1e702]
+              - cell [ref=f1e704]:
+                - generic [ref=f1e706]:
+                  - link "Edit selection-guard-0" [ref=f1e707] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5108Y/edit
+                    - text: Edit
+                  - button "Export selection-guard-0" [ref=f1e710] [cursor=pointer]:
+                    - generic [ref=f1e713]: Export
+                  - status [ref=f1e714]
+                  - button "Delete selection-guard-0" [ref=f1e715] [cursor=pointer]:
+                    - generic [ref=f1e718]: Delete
+            - row [ref=f1e719]:
+              - cell [ref=f1e720]:
+                - link "Bounded browser history" [ref=f1e721] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51090/edit
+                - paragraph [ref=f1e722]:
+                  - text: Updated
+                  - time [ref=f1e723]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e724]
+              - cell [ref=f1e727]:
+                - link "succeeded" [ref=f1e728] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX51092
+              - cell [ref=f1e733]:
+                - generic [ref=f1e735]:
+                  - link "Edit Bounded browser history" [ref=f1e736] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51090/edit
+                    - text: Edit
+                  - button "Export Bounded browser history" [ref=f1e739] [cursor=pointer]:
+                    - generic [ref=f1e742]: Export
+                  - status [ref=f1e743]
+                  - button "Delete Bounded browser history" [ref=f1e744] [cursor=pointer]:
+                    - generic [ref=f1e747]: Delete
+            - row [ref=f1e748]:
+              - cell [ref=f1e749]:
+                - link "zone Etc/UTC" [ref=f1e750] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DV/edit
+                - paragraph [ref=f1e751]:
+                  - text: Updated
+                  - time [ref=f1e752]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e753]
+              - cell "never run" [ref=f1e756]
+              - cell [ref=f1e758]:
+                - generic [ref=f1e760]:
+                  - link "Edit zone Etc/UTC" [ref=f1e761] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DV/edit
+                    - text: Edit
+                  - button "Export zone Etc/UTC" [ref=f1e764] [cursor=pointer]:
+                    - generic [ref=f1e767]: Export
+                  - status [ref=f1e768]
+                  - button "Delete zone Etc/UTC" [ref=f1e769] [cursor=pointer]:
+                    - generic [ref=f1e772]: Delete
+            - row [ref=f1e773]:
+              - cell [ref=f1e774]:
+                - link "zone Asia/Kolkata" [ref=f1e775] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DX/edit
+                - paragraph [ref=f1e776]:
+                  - text: Updated
+                  - time [ref=f1e777]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e778]
+              - cell "never run" [ref=f1e781]
+              - cell [ref=f1e783]:
+                - generic [ref=f1e785]:
+                  - link "Edit zone Asia/Kolkata" [ref=f1e786] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DX/edit
+                    - text: Edit
+                  - button "Export zone Asia/Kolkata" [ref=f1e789] [cursor=pointer]:
+                    - generic [ref=f1e792]: Export
+                  - status [ref=f1e793]
+                  - button "Delete zone Asia/Kolkata" [ref=f1e794] [cursor=pointer]:
+                    - generic [ref=f1e797]: Delete
+            - row [ref=f1e798]:
+              - cell [ref=f1e799]:
+                - link "clear time" [ref=f1e800] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DZ/edit
+                - paragraph [ref=f1e801]:
+                  - text: Updated
+                  - time [ref=f1e802]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e803]
+              - cell "never run" [ref=f1e806]
+              - cell [ref=f1e808]:
+                - generic [ref=f1e810]:
+                  - link "Edit clear time" [ref=f1e811] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510DZ/edit
+                    - text: Edit
+                  - button "Export clear time" [ref=f1e814] [cursor=pointer]:
+                    - generic [ref=f1e817]: Export
+                  - status [ref=f1e818]
+                  - button "Delete clear time" [ref=f1e819] [cursor=pointer]:
+                    - generic [ref=f1e822]: Delete
+            - row [ref=f1e823]:
+              - cell [ref=f1e824]:
+                - link "clear every" [ref=f1e825] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E1/edit
+                - paragraph [ref=f1e826]:
+                  - text: Updated
+                  - time [ref=f1e827]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e828]
+              - cell "never run" [ref=f1e831]
+              - cell [ref=f1e833]:
+                - generic [ref=f1e835]:
+                  - link "Edit clear every" [ref=f1e836] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E1/edit
+                    - text: Edit
+                  - button "Export clear every" [ref=f1e839] [cursor=pointer]:
+                    - generic [ref=f1e842]: Export
+                  - status [ref=f1e843]
+                  - button "Delete clear every" [ref=f1e844] [cursor=pointer]:
+                    - generic [ref=f1e847]: Delete
+            - row [ref=f1e848]:
+              - cell [ref=f1e849]:
+                - link "clear monthly day" [ref=f1e850] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E3/edit
+                - paragraph [ref=f1e851]:
+                  - text: Updated
+                  - time [ref=f1e852]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e853]
+              - cell "never run" [ref=f1e856]
+              - cell [ref=f1e858]:
+                - generic [ref=f1e860]:
+                  - link "Edit clear monthly day" [ref=f1e861] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E3/edit
+                    - text: Edit
+                  - button "Export clear monthly day" [ref=f1e864] [cursor=pointer]:
+                    - generic [ref=f1e867]: Export
+                  - status [ref=f1e868]
+                  - button "Delete clear monthly day" [ref=f1e869] [cursor=pointer]:
+                    - generic [ref=f1e872]: Delete
+            - row [ref=f1e873]:
+              - cell [ref=f1e874]:
+                - link "clear weekly days" [ref=f1e875] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E5/edit
+                - paragraph [ref=f1e876]:
+                  - text: Updated
+                  - time [ref=f1e877]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e878]
+              - cell "never run" [ref=f1e881]
+              - cell [ref=f1e883]:
+                - generic [ref=f1e885]:
+                  - link "Edit clear weekly days" [ref=f1e886] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E5/edit
+                    - text: Edit
+                  - button "Export clear weekly days" [ref=f1e889] [cursor=pointer]:
+                    - generic [ref=f1e892]: Export
+                  - status [ref=f1e893]
+                  - button "Delete clear weekly days" [ref=f1e894] [cursor=pointer]:
+                    - generic [ref=f1e897]: Delete
+            - row [ref=f1e898]:
+              - cell [ref=f1e899]:
+                - link "choose a cron schedule" [ref=f1e900] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E7/edit
+                - paragraph [ref=f1e901]:
+                  - text: Updated
+                  - time [ref=f1e902]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e903]
+              - cell "never run" [ref=f1e906]
+              - cell [ref=f1e908]:
+                - generic [ref=f1e910]:
+                  - link "Edit choose a cron schedule" [ref=f1e911] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E7/edit
+                    - text: Edit
+                  - button "Export choose a cron schedule" [ref=f1e914] [cursor=pointer]:
+                    - generic [ref=f1e917]: Export
+                  - status [ref=f1e918]
+                  - button "Delete choose a cron schedule" [ref=f1e919] [cursor=pointer]:
+                    - generic [ref=f1e922]: Delete
+            - row [ref=f1e923]:
+              - cell [ref=f1e924]:
+                - link "raw expression focus" [ref=f1e925] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E9/edit
+                - paragraph [ref=f1e926]:
+                  - text: Updated
+                  - time [ref=f1e927]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e928]
+              - cell "never run" [ref=f1e931]
+              - cell [ref=f1e933]:
+                - generic [ref=f1e935]:
+                  - link "Edit raw expression focus" [ref=f1e936] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510E9/edit
+                    - text: Edit
+                  - button "Export raw expression focus" [ref=f1e939] [cursor=pointer]:
+                    - generic [ref=f1e942]: Export
+                  - status [ref=f1e943]
+                  - button "Delete raw expression focus" [ref=f1e944] [cursor=pointer]:
+                    - generic [ref=f1e947]: Delete
+            - row [ref=f1e948]:
+              - cell [ref=f1e949]:
+                - link "cron builder" [ref=f1e950] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EB/edit
+                - paragraph [ref=f1e951]:
+                  - text: Updated
+                  - time [ref=f1e952]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e953]
+              - cell "never run" [ref=f1e956]
+              - cell [ref=f1e958]:
+                - generic [ref=f1e960]:
+                  - link "Edit cron builder" [ref=f1e961] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EB/edit
+                    - text: Edit
+                  - button "Export cron builder" [ref=f1e964] [cursor=pointer]:
+                    - generic [ref=f1e967]: Export
+                  - status [ref=f1e968]
+                  - button "Delete cron builder" [ref=f1e969] [cursor=pointer]:
+                    - generic [ref=f1e972]: Delete
+            - row [ref=f1e973]:
+              - cell [ref=f1e974]:
+                - link "cron DST" [ref=f1e975] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510ED/edit
+                - paragraph [ref=f1e976]:
+                  - text: Updated
+                  - time [ref=f1e977]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e978]
+              - cell "never run" [ref=f1e981]
+              - cell [ref=f1e983]:
+                - generic [ref=f1e985]:
+                  - link "Edit cron DST" [ref=f1e986] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510ED/edit
+                    - text: Edit
+                  - button "Export cron DST" [ref=f1e989] [cursor=pointer]:
+                    - generic [ref=f1e992]: Export
+                  - status [ref=f1e993]
+                  - button "Delete cron DST" [ref=f1e994] [cursor=pointer]:
+                    - generic [ref=f1e997]: Delete
+            - row [ref=f1e998]:
+              - cell [ref=f1e999]:
+                - link "Decision with 2 options [5facb99a-1]" [ref=f1e1000] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EF/edit
+                - paragraph [ref=f1e1001]:
+                  - text: Updated
+                  - time [ref=f1e1002]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1003]
+              - cell "never run" [ref=f1e1006]
+              - cell [ref=f1e1008]:
+                - generic [ref=f1e1010]:
+                  - link "Edit Decision with 2 options [5facb99a-1]" [ref=f1e1011] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EF/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [5facb99a-1]" [ref=f1e1014] [cursor=pointer]:
+                    - generic [ref=f1e1017]: Export
+                  - status [ref=f1e1018]
+                  - button "Delete Decision with 2 options [5facb99a-1]" [ref=f1e1019] [cursor=pointer]:
+                    - generic [ref=f1e1022]: Delete
+            - row [ref=f1e1023]:
+              - cell [ref=f1e1024]:
+                - link "Decision with 2 options [ddec980e-1]" [ref=f1e1025] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EH/edit
+                - paragraph [ref=f1e1026]:
+                  - text: Updated
+                  - time [ref=f1e1027]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1028]
+              - cell "never run" [ref=f1e1031]
+              - cell [ref=f1e1033]:
+                - generic [ref=f1e1035]:
+                  - link "Edit Decision with 2 options [ddec980e-1]" [ref=f1e1036] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EH/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [ddec980e-1]" [ref=f1e1039] [cursor=pointer]:
+                    - generic [ref=f1e1042]: Export
+                  - status [ref=f1e1043]
+                  - button "Delete Decision with 2 options [ddec980e-1]" [ref=f1e1044] [cursor=pointer]:
+                    - generic [ref=f1e1047]: Delete
+            - row [ref=f1e1048]:
+              - cell [ref=f1e1049]:
+                - link "Decision with 2 options [5a181c31-1]" [ref=f1e1050] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EK/edit
+                - paragraph [ref=f1e1051]:
+                  - text: Updated
+                  - time [ref=f1e1052]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1053]
+              - cell "never run" [ref=f1e1056]
+              - cell [ref=f1e1058]:
+                - generic [ref=f1e1060]:
+                  - link "Edit Decision with 2 options [5a181c31-1]" [ref=f1e1061] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EK/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [5a181c31-1]" [ref=f1e1064] [cursor=pointer]:
+                    - generic [ref=f1e1067]: Export
+                  - status [ref=f1e1068]
+                  - button "Delete Decision with 2 options [5a181c31-1]" [ref=f1e1069] [cursor=pointer]:
+                    - generic [ref=f1e1072]: Delete
+            - row [ref=f1e1073]:
+              - cell [ref=f1e1074]:
+                - link "Decision with 2 options [fc2985ad-1]" [ref=f1e1075] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EN/edit
+                - paragraph [ref=f1e1076]:
+                  - text: Updated
+                  - time [ref=f1e1077]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1078]
+              - cell "never run" [ref=f1e1081]
+              - cell [ref=f1e1083]:
+                - generic [ref=f1e1085]:
+                  - link "Edit Decision with 2 options [fc2985ad-1]" [ref=f1e1086] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EN/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [fc2985ad-1]" [ref=f1e1089] [cursor=pointer]:
+                    - generic [ref=f1e1092]: Export
+                  - status [ref=f1e1093]
+                  - button "Delete Decision with 2 options [fc2985ad-1]" [ref=f1e1094] [cursor=pointer]:
+                    - generic [ref=f1e1097]: Delete
+            - row [ref=f1e1098]:
+              - cell [ref=f1e1099]:
+                - link "Decision with 3 options [99e5ba48-1]" [ref=f1e1100] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EQ/edit
+                - paragraph [ref=f1e1101]:
+                  - text: Updated
+                  - time [ref=f1e1102]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1103]
+              - cell "never run" [ref=f1e1106]
+              - cell [ref=f1e1108]:
+                - generic [ref=f1e1110]:
+                  - link "Edit Decision with 3 options [99e5ba48-1]" [ref=f1e1111] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EQ/edit
+                    - text: Edit
+                  - button "Export Decision with 3 options [99e5ba48-1]" [ref=f1e1114] [cursor=pointer]:
+                    - generic [ref=f1e1117]: Export
+                  - status [ref=f1e1118]
+                  - button "Delete Decision with 3 options [99e5ba48-1]" [ref=f1e1119] [cursor=pointer]:
+                    - generic [ref=f1e1122]: Delete
+            - row [ref=f1e1123]:
+              - cell [ref=f1e1124]:
+                - link "Decision with 2 options [1c08540a-1]" [ref=f1e1125] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510ES/edit
+                - paragraph [ref=f1e1126]:
+                  - text: Updated
+                  - time [ref=f1e1127]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e1128]
+              - cell [ref=f1e1131]:
+                - link "succeeded" [ref=f1e1132] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510EV
+              - cell [ref=f1e1137]:
+                - generic [ref=f1e1139]:
+                  - link "Edit Decision with 2 options [1c08540a-1]" [ref=f1e1140] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510ES/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [1c08540a-1]" [ref=f1e1143] [cursor=pointer]:
+                    - generic [ref=f1e1146]: Export
+                  - status [ref=f1e1147]
+                  - button "Delete Decision with 2 options [1c08540a-1]" [ref=f1e1148] [cursor=pointer]:
+                    - generic [ref=f1e1151]: Delete
+            - row [ref=f1e1152]:
+              - cell [ref=f1e1153]:
+                - link "Decision with 2 options [bd214d1c-1]" [ref=f1e1154] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EX/edit
+                - paragraph [ref=f1e1155]:
+                  - text: Updated
+                  - time [ref=f1e1156]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1157]
+              - cell "never run" [ref=f1e1160]
+              - cell [ref=f1e1162]:
+                - generic [ref=f1e1164]:
+                  - link "Edit Decision with 2 options [bd214d1c-1]" [ref=f1e1165] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EX/edit
+                    - text: Edit
+                  - button "Export Decision with 2 options [bd214d1c-1]" [ref=f1e1168] [cursor=pointer]:
+                    - generic [ref=f1e1171]: Export
+                  - status [ref=f1e1172]
+                  - button "Delete Decision with 2 options [bd214d1c-1]" [ref=f1e1173] [cursor=pointer]:
+                    - generic [ref=f1e1176]: Delete
+            - row [ref=f1e1177]:
+              - cell [ref=f1e1178]:
+                - link "Decision with 8 options [d80fe32a-1]" [ref=f1e1179] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EZ/edit
+                - paragraph [ref=f1e1180]:
+                  - text: Updated
+                  - time [ref=f1e1181]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1182]
+              - cell "never run" [ref=f1e1185]
+              - cell [ref=f1e1187]:
+                - generic [ref=f1e1189]:
+                  - link "Edit Decision with 8 options [d80fe32a-1]" [ref=f1e1190] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510EZ/edit
+                    - text: Edit
+                  - button "Export Decision with 8 options [d80fe32a-1]" [ref=f1e1193] [cursor=pointer]:
+                    - generic [ref=f1e1196]: Export
+                  - status [ref=f1e1197]
+                  - button "Delete Decision with 8 options [d80fe32a-1]" [ref=f1e1198] [cursor=pointer]:
+                    - generic [ref=f1e1201]: Delete
+            - row [ref=f1e1202]:
+              - cell [ref=f1e1203]:
+                - link "Noul routes" [ref=f1e1204] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F1/edit
+                - paragraph [ref=f1e1205]:
+                  - text: Updated
+                  - time [ref=f1e1206]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e1207]
+              - cell [ref=f1e1210]:
+                - link "succeeded" [ref=f1e1211] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510F3
+              - cell [ref=f1e1216]:
+                - generic [ref=f1e1218]:
+                  - link "Edit Noul routes" [ref=f1e1219] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F1/edit
+                    - text: Edit
+                  - button "Export Noul routes" [ref=f1e1222] [cursor=pointer]:
+                    - generic [ref=f1e1225]: Export
+                  - status [ref=f1e1226]
+                  - button "Delete Noul routes" [ref=f1e1227] [cursor=pointer]:
+                    - generic [ref=f1e1230]: Delete
+            - row [ref=f1e1231]:
+              - cell [ref=f1e1232]:
+                - link "Score bands" [ref=f1e1233] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F6/edit
+                - paragraph [ref=f1e1234]:
+                  - text: Updated
+                  - time [ref=f1e1235]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1236]
+              - cell "never run" [ref=f1e1239]
+              - cell [ref=f1e1241]:
+                - generic [ref=f1e1243]:
+                  - link "Edit Score bands" [ref=f1e1244] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F6/edit
+                    - text: Edit
+                  - button "Export Score bands" [ref=f1e1247] [cursor=pointer]:
+                    - generic [ref=f1e1250]: Export
+                  - status [ref=f1e1251]
+                  - button "Delete Score bands" [ref=f1e1252] [cursor=pointer]:
+                    - generic [ref=f1e1255]: Delete
+            - row [ref=f1e1256]:
+              - cell [ref=f1e1257]:
+                - link "Decision with 3 options [7b3fadcc-1]" [ref=f1e1258] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F8/edit
+                - paragraph [ref=f1e1259]:
+                  - text: Updated
+                  - time [ref=f1e1260]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1261]
+              - cell "never run" [ref=f1e1264]
+              - cell [ref=f1e1266]:
+                - generic [ref=f1e1268]:
+                  - link "Edit Decision with 3 options [7b3fadcc-1]" [ref=f1e1269] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510F8/edit
+                    - text: Edit
+                  - button "Export Decision with 3 options [7b3fadcc-1]" [ref=f1e1272] [cursor=pointer]:
+                    - generic [ref=f1e1275]: Export
+                  - status [ref=f1e1276]
+                  - button "Delete Decision with 3 options [7b3fadcc-1]" [ref=f1e1277] [cursor=pointer]:
+                    - generic [ref=f1e1280]: Delete
+            - row [ref=f1e1281]:
+              - cell [ref=f1e1282]:
+                - link "E2E pinned draft" [ref=f1e1283] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FA/edit
+                - paragraph [ref=f1e1284]:
+                  - text: Updated
+                  - time [ref=f1e1285]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1286]
+              - cell [ref=f1e1289]:
+                - link "succeeded" [ref=f1e1290] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510FG
+              - cell [ref=f1e1295]:
+                - generic [ref=f1e1297]:
+                  - link "Edit E2E pinned draft" [ref=f1e1298] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FA/edit
+                    - text: Edit
+                  - button "Export E2E pinned draft" [ref=f1e1301] [cursor=pointer]:
+                    - generic [ref=f1e1304]: Export
+                  - status [ref=f1e1305]
+                  - button "Delete E2E pinned draft" [ref=f1e1306] [cursor=pointer]:
+                    - generic [ref=f1e1309]: Delete
+            - row [ref=f1e1310]:
+              - cell [ref=f1e1311]:
+                - link "server work" [ref=f1e1312] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FM/edit
+                - paragraph [ref=f1e1313]:
+                  - text: Updated
+                  - time [ref=f1e1314]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1315]
+              - cell "never run" [ref=f1e1318]
+              - cell [ref=f1e1320]:
+                - generic [ref=f1e1322]:
+                  - link "Edit server work" [ref=f1e1323] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FM/edit
+                    - text: Edit
+                  - button "Export server work" [ref=f1e1326] [cursor=pointer]:
+                    - generic [ref=f1e1329]: Export
+                  - status [ref=f1e1330]
+                  - button "Delete server work" [ref=f1e1331] [cursor=pointer]:
+                    - generic [ref=f1e1334]: Delete
+            - row [ref=f1e1335]:
+              - cell [ref=f1e1336]:
+                - link "server work with no definition" [ref=f1e1337] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FP/edit
+                - paragraph [ref=f1e1338]:
+                  - text: Updated
+                  - time [ref=f1e1339]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1340]
+              - cell "never run" [ref=f1e1343]
+              - cell [ref=f1e1345]:
+                - generic [ref=f1e1347]:
+                  - link "Edit server work with no definition" [ref=f1e1348] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FP/edit
+                    - text: Edit
+                  - button "Export server work with no definition" [ref=f1e1351] [cursor=pointer]:
+                    - generic [ref=f1e1354]: Export
+                  - status [ref=f1e1355]
+                  - button "Delete server work with no definition" [ref=f1e1356] [cursor=pointer]:
+                    - generic [ref=f1e1359]: Delete
+            - row [ref=f1e1360]:
+              - cell [ref=f1e1361]:
+                - link "server work with a null definition" [ref=f1e1362] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FR/edit
+                - paragraph [ref=f1e1363]:
+                  - text: Updated
+                  - time [ref=f1e1364]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1365]
+              - cell "never run" [ref=f1e1368]
+              - cell [ref=f1e1370]:
+                - generic [ref=f1e1372]:
+                  - link "Edit server work with a null definition" [ref=f1e1373] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FR/edit
+                    - text: Edit
+                  - button "Export server work with a null definition" [ref=f1e1376] [cursor=pointer]:
+                    - generic [ref=f1e1379]: Export
+                  - status [ref=f1e1380]
+                  - button "Delete server work with a null definition" [ref=f1e1381] [cursor=pointer]:
+                    - generic [ref=f1e1384]: Delete
+            - row [ref=f1e1385]:
+              - cell [ref=f1e1386]:
+                - link "immediate device" [ref=f1e1387] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FT/edit
+                - paragraph [ref=f1e1388]:
+                  - text: Updated
+                  - time [ref=f1e1389]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1390]
+              - cell "never run" [ref=f1e1393]
+              - cell [ref=f1e1395]:
+                - generic [ref=f1e1397]:
+                  - link "Edit immediate device" [ref=f1e1398] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FT/edit
+                    - text: Edit
+                  - button "Export immediate device" [ref=f1e1401] [cursor=pointer]:
+                    - generic [ref=f1e1404]: Export
+                  - status [ref=f1e1405]
+                  - button "Delete immediate device" [ref=f1e1406] [cursor=pointer]:
+                    - generic [ref=f1e1409]: Delete
+            - row [ref=f1e1410]:
+              - cell [ref=f1e1411]:
+                - link "slow server" [ref=f1e1412] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FW/edit
+                - paragraph [ref=f1e1413]:
+                  - text: Updated
+                  - time [ref=f1e1414]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1415]
+              - cell "never run" [ref=f1e1418]
+              - cell [ref=f1e1420]:
+                - generic [ref=f1e1422]:
+                  - link "Edit slow server" [ref=f1e1423] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FW/edit
+                    - text: Edit
+                  - button "Export slow server" [ref=f1e1426] [cursor=pointer]:
+                    - generic [ref=f1e1429]: Export
+                  - status [ref=f1e1430]
+                  - button "Delete slow server" [ref=f1e1431] [cursor=pointer]:
+                    - generic [ref=f1e1434]: Delete
+            - row [ref=f1e1435]:
+              - cell [ref=f1e1436]:
+                - link "warm A" [ref=f1e1437] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FY/edit
+                - paragraph [ref=f1e1438]:
+                  - text: Updated
+                  - time [ref=f1e1439]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1440]
+              - cell "never run" [ref=f1e1443]
+              - cell [ref=f1e1445]:
+                - generic [ref=f1e1447]:
+                  - link "Edit warm A" [ref=f1e1448] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510FY/edit
+                    - text: Edit
+                  - button "Export warm A" [ref=f1e1451] [cursor=pointer]:
+                    - generic [ref=f1e1454]: Export
+                  - status [ref=f1e1455]
+                  - button "Delete warm A" [ref=f1e1456] [cursor=pointer]:
+                    - generic [ref=f1e1459]: Delete
+            - row [ref=f1e1460]:
+              - cell [ref=f1e1461]:
+                - link "warm B" [ref=f1e1462] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G0/edit
+                - paragraph [ref=f1e1463]:
+                  - text: Updated
+                  - time [ref=f1e1464]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1465]
+              - cell "never run" [ref=f1e1468]
+              - cell [ref=f1e1470]:
+                - generic [ref=f1e1472]:
+                  - link "Edit warm B" [ref=f1e1473] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G0/edit
+                    - text: Edit
+                  - button "Export warm B" [ref=f1e1476] [cursor=pointer]:
+                    - generic [ref=f1e1479]: Export
+                  - status [ref=f1e1480]
+                  - button "Delete warm B" [ref=f1e1481] [cursor=pointer]:
+                    - generic [ref=f1e1484]: Delete
+            - row [ref=f1e1485]:
+              - cell [ref=f1e1486]:
+                - link "device edit" [ref=f1e1487] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G2/edit
+                - paragraph [ref=f1e1488]: typed before server answered
+                - paragraph [ref=f1e1489]:
+                  - text: Updated
+                  - time [ref=f1e1490]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1491]
+              - cell "never run" [ref=f1e1494]
+              - cell [ref=f1e1496]:
+                - generic [ref=f1e1498]:
+                  - link "Edit device edit" [ref=f1e1499] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G2/edit
+                    - text: Edit
+                  - button "Export device edit" [ref=f1e1502] [cursor=pointer]:
+                    - generic [ref=f1e1505]: Export
+                  - status [ref=f1e1506]
+                  - button "Delete device edit" [ref=f1e1507] [cursor=pointer]:
+                    - generic [ref=f1e1510]: Delete
+            - row [ref=f1e1511]:
+              - cell [ref=f1e1512]:
+                - link "offline device" [ref=f1e1513] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G4/edit
+                - paragraph [ref=f1e1514]: offline edit
+                - paragraph [ref=f1e1515]:
+                  - text: Updated
+                  - time [ref=f1e1516]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1517]
+              - cell "never run" [ref=f1e1520]
+              - cell [ref=f1e1522]:
+                - generic [ref=f1e1524]:
+                  - link "Edit offline device" [ref=f1e1525] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G4/edit
+                    - text: Edit
+                  - button "Export offline device" [ref=f1e1528] [cursor=pointer]:
+                    - generic [ref=f1e1531]: Export
+                  - status [ref=f1e1532]
+                  - button "Delete offline device" [ref=f1e1533] [cursor=pointer]:
+                    - generic [ref=f1e1536]: Delete
+            - row [ref=f1e1537]:
+              - cell [ref=f1e1538]:
+                - link "read failure server" [ref=f1e1539] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G6/edit
+                - paragraph [ref=f1e1540]: work entered before retry
+                - paragraph [ref=f1e1541]:
+                  - text: Updated
+                  - time [ref=f1e1542]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1543]
+              - cell "never run" [ref=f1e1546]
+              - cell [ref=f1e1548]:
+                - generic [ref=f1e1550]:
+                  - link "Edit read failure server" [ref=f1e1551] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G6/edit
+                    - text: Edit
+                  - button "Export read failure server" [ref=f1e1554] [cursor=pointer]:
+                    - generic [ref=f1e1557]: Export
+                  - status [ref=f1e1558]
+                  - button "Delete read failure server" [ref=f1e1559] [cursor=pointer]:
+                    - generic [ref=f1e1562]: Delete
+            - row [ref=f1e1563]:
+              - cell [ref=f1e1564]:
+                - link "qa conflict" [ref=f1e1565] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G8/edit
+                - paragraph [ref=f1e1566]: tab B wins
+                - paragraph [ref=f1e1567]:
+                  - text: Updated
+                  - time [ref=f1e1568]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1569]
+              - cell "never run" [ref=f1e1572]
+              - cell [ref=f1e1574]:
+                - generic [ref=f1e1576]:
+                  - link "Edit qa conflict" [ref=f1e1577] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510G8/edit
+                    - text: Edit
+                  - button "Export qa conflict" [ref=f1e1580] [cursor=pointer]:
+                    - generic [ref=f1e1583]: Export
+                  - status [ref=f1e1584]
+                  - button "Delete qa conflict" [ref=f1e1585] [cursor=pointer]:
+                    - generic [ref=f1e1588]: Delete
+            - row [ref=f1e1589]:
+              - cell [ref=f1e1590]:
+                - link "server copy" [ref=f1e1591] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GA/edit
+                - paragraph [ref=f1e1592]:
+                  - text: Updated
+                  - time [ref=f1e1593]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1594]
+              - cell "never run" [ref=f1e1597]
+              - cell [ref=f1e1599]:
+                - generic [ref=f1e1601]:
+                  - link "Edit server copy" [ref=f1e1602] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GA/edit
+                    - text: Edit
+                  - button "Export server copy" [ref=f1e1605] [cursor=pointer]:
+                    - generic [ref=f1e1608]: Export
+                  - status [ref=f1e1609]
+                  - button "Delete server copy" [ref=f1e1610] [cursor=pointer]:
+                    - generic [ref=f1e1613]: Delete
+            - row [ref=f1e1614]:
+              - cell [ref=f1e1615]:
+                - link "qa blocked storage" [ref=f1e1616] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GC/edit
+                - paragraph [ref=f1e1617]:
+                  - text: Updated
+                  - time [ref=f1e1618]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1619]
+              - cell "never run" [ref=f1e1622]
+              - cell [ref=f1e1624]:
+                - generic [ref=f1e1626]:
+                  - link "Edit qa blocked storage" [ref=f1e1627] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GC/edit
+                    - text: Edit
+                  - button "Export qa blocked storage" [ref=f1e1630] [cursor=pointer]:
+                    - generic [ref=f1e1633]: Export
+                  - status [ref=f1e1634]
+                  - button "Delete qa blocked storage" [ref=f1e1635] [cursor=pointer]:
+                    - generic [ref=f1e1638]: Delete
+            - row [ref=f1e1639]:
+              - cell [ref=f1e1640]:
+                - link "Output references 1440" [ref=f1e1641] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GE/edit
+                - paragraph [ref=f1e1642]:
+                  - text: Updated
+                  - time [ref=f1e1643]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e1644]
+              - cell [ref=f1e1647]:
+                - link "succeeded" [ref=f1e1648] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510GG
+              - cell [ref=f1e1653]:
+                - generic [ref=f1e1655]:
+                  - link "Edit Output references 1440" [ref=f1e1656] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GE/edit
+                    - text: Edit
+                  - button "Export Output references 1440" [ref=f1e1659] [cursor=pointer]:
+                    - generic [ref=f1e1662]: Export
+                  - status [ref=f1e1663]
+                  - button "Delete Output references 1440" [ref=f1e1664] [cursor=pointer]:
+                    - generic [ref=f1e1667]: Delete
+            - row [ref=f1e1668]:
+              - cell [ref=f1e1669]:
+                - link "Output references 390" [ref=f1e1670] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GM/edit
+                - paragraph [ref=f1e1671]:
+                  - text: Updated
+                  - time [ref=f1e1672]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e1673]
+              - cell [ref=f1e1676]:
+                - link "succeeded" [ref=f1e1677] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510GP
+              - cell [ref=f1e1682]:
+                - generic [ref=f1e1684]:
+                  - link "Edit Output references 390" [ref=f1e1685] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GM/edit
+                    - text: Edit
+                  - button "Export Output references 390" [ref=f1e1688] [cursor=pointer]:
+                    - generic [ref=f1e1691]: Export
+                  - status [ref=f1e1692]
+                  - button "Delete Output references 390" [ref=f1e1693] [cursor=pointer]:
+                    - generic [ref=f1e1696]: Delete
+            - row [ref=f1e1697]:
+              - cell [ref=f1e1698]:
+                - link "S5 local label callout" [ref=f1e1699] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GT/edit
+                - paragraph [ref=f1e1700]:
+                  - text: Updated
+                  - time [ref=f1e1701]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1702]
+              - cell "never run" [ref=f1e1705]
+              - cell [ref=f1e1707]:
+                - generic [ref=f1e1709]:
+                  - link "Edit S5 local label callout" [ref=f1e1710] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GT/edit
+                    - text: Edit
+                  - button "Export S5 local label callout" [ref=f1e1713] [cursor=pointer]:
+                    - generic [ref=f1e1716]: Export
+                  - status [ref=f1e1717]
+                  - button "Delete S5 local label callout" [ref=f1e1718] [cursor=pointer]:
+                    - generic [ref=f1e1721]: Delete
+            - row [ref=f1e1722]:
+              - cell [ref=f1e1723]:
+                - link "qa modal pointer" [ref=f1e1724] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GW/edit
+                - paragraph [ref=f1e1725]:
+                  - text: Updated
+                  - time [ref=f1e1726]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1727]
+              - cell "never run" [ref=f1e1730]
+              - cell [ref=f1e1732]:
+                - generic [ref=f1e1734]:
+                  - link "Edit qa modal pointer" [ref=f1e1735] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GW/edit
+                    - text: Edit
+                  - button "Export qa modal pointer" [ref=f1e1738] [cursor=pointer]:
+                    - generic [ref=f1e1741]: Export
+                  - status [ref=f1e1742]
+                  - button "Delete qa modal pointer" [ref=f1e1743] [cursor=pointer]:
+                    - generic [ref=f1e1746]: Delete
+            - row [ref=f1e1747]:
+              - cell [ref=f1e1748]:
+                - link "qa modal double click" [ref=f1e1749] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GY/edit
+                - paragraph [ref=f1e1750]:
+                  - text: Updated
+                  - time [ref=f1e1751]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1752]
+              - cell "never run" [ref=f1e1755]
+              - cell [ref=f1e1757]:
+                - generic [ref=f1e1759]:
+                  - link "Edit qa modal double click" [ref=f1e1760] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510GY/edit
+                    - text: Edit
+                  - button "Export qa modal double click" [ref=f1e1763] [cursor=pointer]:
+                    - generic [ref=f1e1766]: Export
+                  - status [ref=f1e1767]
+                  - button "Delete qa modal double click" [ref=f1e1768] [cursor=pointer]:
+                    - generic [ref=f1e1771]: Delete
+            - row [ref=f1e1772]:
+              - cell [ref=f1e1773]:
+                - link "qa modal keys" [ref=f1e1774] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H0/edit
+                - paragraph [ref=f1e1775]:
+                  - text: Updated
+                  - time [ref=f1e1776]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1777]
+              - cell "never run" [ref=f1e1780]
+              - cell [ref=f1e1782]:
+                - generic [ref=f1e1784]:
+                  - link "Edit qa modal keys" [ref=f1e1785] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H0/edit
+                    - text: Edit
+                  - button "Export qa modal keys" [ref=f1e1788] [cursor=pointer]:
+                    - generic [ref=f1e1791]: Export
+                  - status [ref=f1e1792]
+                  - button "Delete qa modal keys" [ref=f1e1793] [cursor=pointer]:
+                    - generic [ref=f1e1796]: Delete
+            - row [ref=f1e1797]:
+              - cell [ref=f1e1798]:
+                - link "qa modal sheet" [ref=f1e1799] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H2/edit
+                - paragraph [ref=f1e1800]:
+                  - text: Updated
+                  - time [ref=f1e1801]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1802]
+              - cell "never run" [ref=f1e1805]
+              - cell [ref=f1e1807]:
+                - generic [ref=f1e1809]:
+                  - link "Edit qa modal sheet" [ref=f1e1810] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H2/edit
+                    - text: Edit
+                  - button "Export qa modal sheet" [ref=f1e1813] [cursor=pointer]:
+                    - generic [ref=f1e1816]: Export
+                  - status [ref=f1e1817]
+                  - button "Delete qa modal sheet" [ref=f1e1818] [cursor=pointer]:
+                    - generic [ref=f1e1821]: Delete
+            - row [ref=f1e1822]:
+              - cell [ref=f1e1823]:
+                - link "qa loop panel" [ref=f1e1824] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H4/edit
+                - paragraph [ref=f1e1825]:
+                  - text: Updated
+                  - time [ref=f1e1826]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1827]
+              - cell "never run" [ref=f1e1830]
+              - cell [ref=f1e1832]:
+                - generic [ref=f1e1834]:
+                  - link "Edit qa loop panel" [ref=f1e1835] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H4/edit
+                    - text: Edit
+                  - button "Export qa loop panel" [ref=f1e1838] [cursor=pointer]:
+                    - generic [ref=f1e1841]: Export
+                  - status [ref=f1e1842]
+                  - button "Delete qa loop panel" [ref=f1e1843] [cursor=pointer]:
+                    - generic [ref=f1e1846]: Delete
+            - row [ref=f1e1847]:
+              - cell [ref=f1e1848]:
+                - link "qa runs draft" [ref=f1e1849] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H6/edit
+                - paragraph [ref=f1e1850]:
+                  - text: Updated
+                  - time [ref=f1e1851]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1852]
+              - cell "never run" [ref=f1e1855]
+              - cell [ref=f1e1857]:
+                - generic [ref=f1e1859]:
+                  - link "Edit qa runs draft" [ref=f1e1860] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H6/edit
+                    - text: Edit
+                  - button "Export qa runs draft" [ref=f1e1863] [cursor=pointer]:
+                    - generic [ref=f1e1866]: Export
+                  - status [ref=f1e1867]
+                  - button "Delete qa runs draft" [ref=f1e1868] [cursor=pointer]:
+                    - generic [ref=f1e1871]: Delete
+            - row [ref=f1e1872]:
+              - cell [ref=f1e1873]:
+                - link "qa runs published" [ref=f1e1874] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H8/edit
+                - paragraph [ref=f1e1875]:
+                  - text: Updated
+                  - time [ref=f1e1876]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e1877]
+              - cell [ref=f1e1880]:
+                - link "waiting" [ref=f1e1881] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510HC
+              - cell [ref=f1e1886]:
+                - generic [ref=f1e1888]:
+                  - link "Edit qa runs published" [ref=f1e1889] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510H8/edit
+                    - text: Edit
+                  - button "Export qa runs published" [ref=f1e1892] [cursor=pointer]:
+                    - generic [ref=f1e1895]: Export
+                  - status [ref=f1e1896]
+                  - button "Delete qa runs published" [ref=f1e1897] [cursor=pointer]:
+                    - generic [ref=f1e1900]: Delete
+            - row [ref=f1e1901]:
+              - cell [ref=f1e1902]:
+                - link "qa modal conflict" [ref=f1e1903] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HE/edit
+                - paragraph [ref=f1e1904]: from tab A
+                - paragraph [ref=f1e1905]:
+                  - text: Updated
+                  - time [ref=f1e1906]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1907]
+              - cell "never run" [ref=f1e1910]
+              - cell [ref=f1e1912]:
+                - generic [ref=f1e1914]:
+                  - link "Edit qa modal conflict" [ref=f1e1915] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HE/edit
+                    - text: Edit
+                  - button "Export qa modal conflict" [ref=f1e1918] [cursor=pointer]:
+                    - generic [ref=f1e1921]: Export
+                  - status [ref=f1e1922]
+                  - button "Delete qa modal conflict" [ref=f1e1923] [cursor=pointer]:
+                    - generic [ref=f1e1926]: Delete
+            - row [ref=f1e1927]:
+              - cell [ref=f1e1928]:
+                - link "controls script [9c97ec8f-1]" [ref=f1e1929] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HG/edit
+                - paragraph [ref=f1e1930]:
+                  - text: Updated
+                  - time [ref=f1e1931]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1932]
+              - cell "never run" [ref=f1e1935]
+              - cell [ref=f1e1937]:
+                - generic [ref=f1e1939]:
+                  - link "Edit controls script [9c97ec8f-1]" [ref=f1e1940] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HG/edit
+                    - text: Edit
+                  - button "Export controls script [9c97ec8f-1]" [ref=f1e1943] [cursor=pointer]:
+                    - generic [ref=f1e1946]: Export
+                  - status [ref=f1e1947]
+                  - button "Delete controls script [9c97ec8f-1]" [ref=f1e1948] [cursor=pointer]:
+                    - generic [ref=f1e1951]: Delete
+            - row [ref=f1e1952]:
+              - cell [ref=f1e1953]:
+                - link "controls inference [0df7cda7-1]" [ref=f1e1954] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HJ/edit
+                - paragraph [ref=f1e1955]:
+                  - text: Updated
+                  - time [ref=f1e1956]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1957]
+              - cell "never run" [ref=f1e1960]
+              - cell [ref=f1e1962]:
+                - generic [ref=f1e1964]:
+                  - link "Edit controls inference [0df7cda7-1]" [ref=f1e1965] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HJ/edit
+                    - text: Edit
+                  - button "Export controls inference [0df7cda7-1]" [ref=f1e1968] [cursor=pointer]:
+                    - generic [ref=f1e1971]: Export
+                  - status [ref=f1e1972]
+                  - button "Delete controls inference [0df7cda7-1]" [ref=f1e1973] [cursor=pointer]:
+                    - generic [ref=f1e1976]: Delete
+            - row [ref=f1e1977]:
+              - cell [ref=f1e1978]:
+                - link "controls decision [0df7cda7-2]" [ref=f1e1979] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HM/edit
+                - paragraph [ref=f1e1980]:
+                  - text: Updated
+                  - time [ref=f1e1981]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e1982]
+              - cell "never run" [ref=f1e1985]
+              - cell [ref=f1e1987]:
+                - generic [ref=f1e1989]:
+                  - link "Edit controls decision [0df7cda7-2]" [ref=f1e1990] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HM/edit
+                    - text: Edit
+                  - button "Export controls decision [0df7cda7-2]" [ref=f1e1993] [cursor=pointer]:
+                    - generic [ref=f1e1996]: Export
+                  - status [ref=f1e1997]
+                  - button "Delete controls decision [0df7cda7-2]" [ref=f1e1998] [cursor=pointer]:
+                    - generic [ref=f1e2001]: Delete
+            - row [ref=f1e2002]:
+              - cell [ref=f1e2003]:
+                - link "controls script [b5fb8c45-1]" [ref=f1e2004] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HP/edit
+                - paragraph [ref=f1e2005]:
+                  - text: Updated
+                  - time [ref=f1e2006]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2007]
+              - cell "never run" [ref=f1e2010]
+              - cell [ref=f1e2012]:
+                - generic [ref=f1e2014]:
+                  - link "Edit controls script [b5fb8c45-1]" [ref=f1e2015] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HP/edit
+                    - text: Edit
+                  - button "Export controls script [b5fb8c45-1]" [ref=f1e2018] [cursor=pointer]:
+                    - generic [ref=f1e2021]: Export
+                  - status [ref=f1e2022]
+                  - button "Delete controls script [b5fb8c45-1]" [ref=f1e2023] [cursor=pointer]:
+                    - generic [ref=f1e2026]: Delete
+            - row [ref=f1e2027]:
+              - cell [ref=f1e2028]:
+                - link "controls script [b19f9dd1-1]" [ref=f1e2029] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HR/edit
+                - paragraph [ref=f1e2030]:
+                  - text: Updated
+                  - time [ref=f1e2031]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2032]
+              - cell "never run" [ref=f1e2035]
+              - cell [ref=f1e2037]:
+                - generic [ref=f1e2039]:
+                  - link "Edit controls script [b19f9dd1-1]" [ref=f1e2040] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HR/edit
+                    - text: Edit
+                  - button "Export controls script [b19f9dd1-1]" [ref=f1e2043] [cursor=pointer]:
+                    - generic [ref=f1e2046]: Export
+                  - status [ref=f1e2047]
+                  - button "Delete controls script [b19f9dd1-1]" [ref=f1e2048] [cursor=pointer]:
+                    - generic [ref=f1e2051]: Delete
+            - row [ref=f1e2052]:
+              - cell [ref=f1e2053]:
+                - link "controls run form" [ref=f1e2054] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HT/edit
+                - paragraph [ref=f1e2055]:
+                  - text: Updated
+                  - time [ref=f1e2056]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2057]
+              - cell "never run" [ref=f1e2060]
+              - cell [ref=f1e2062]:
+                - generic [ref=f1e2064]:
+                  - link "Edit controls run form" [ref=f1e2065] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HT/edit
+                    - text: Edit
+                  - button "Export controls run form" [ref=f1e2068] [cursor=pointer]:
+                    - generic [ref=f1e2071]: Export
+                  - status [ref=f1e2072]
+                  - button "Delete controls run form" [ref=f1e2073] [cursor=pointer]:
+                    - generic [ref=f1e2076]: Delete
+            - row [ref=f1e2077]:
+              - cell [ref=f1e2078]:
+                - link "explicit input presence" [ref=f1e2079] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HW/edit
+                - paragraph [ref=f1e2080]:
+                  - text: Updated
+                  - time [ref=f1e2081]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2082]
+              - cell [ref=f1e2085]:
+                - link "succeeded" [ref=f1e2086] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510HY
+              - cell [ref=f1e2091]:
+                - generic [ref=f1e2093]:
+                  - link "Edit explicit input presence" [ref=f1e2094] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510HW/edit
+                    - text: Edit
+                  - button "Export explicit input presence" [ref=f1e2097] [cursor=pointer]:
+                    - generic [ref=f1e2100]: Export
+                  - status [ref=f1e2101]
+                  - button "Delete explicit input presence" [ref=f1e2102] [cursor=pointer]:
+                    - generic [ref=f1e2105]: Delete
+            - row [ref=f1e2106]:
+              - cell [ref=f1e2107]:
+                - link "omit incomplete number" [ref=f1e2108] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510J1/edit
+                - paragraph [ref=f1e2109]:
+                  - text: Updated
+                  - time [ref=f1e2110]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2111]
+              - cell [ref=f1e2114]:
+                - link "succeeded" [ref=f1e2115] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510J3
+              - cell [ref=f1e2120]:
+                - generic [ref=f1e2122]:
+                  - link "Edit omit incomplete number" [ref=f1e2123] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510J1/edit
+                    - text: Edit
+                  - button "Export omit incomplete number" [ref=f1e2126] [cursor=pointer]:
+                    - generic [ref=f1e2129]: Export
+                  - status [ref=f1e2130]
+                  - button "Delete omit incomplete number" [ref=f1e2131] [cursor=pointer]:
+                    - generic [ref=f1e2134]: Delete
+            - row [ref=f1e2135]:
+              - cell [ref=f1e2136]:
+                - link "coarse omit" [ref=f1e2137] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510J6/edit
+                - paragraph [ref=f1e2138]:
+                  - text: Updated
+                  - time [ref=f1e2139]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2140]
+              - cell [ref=f1e2143]:
+                - link "waiting" [ref=f1e2144] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510J8
+              - cell [ref=f1e2149]:
+                - generic [ref=f1e2151]:
+                  - link "Edit coarse omit" [ref=f1e2152] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510J6/edit
+                    - text: Edit
+                  - button "Export coarse omit" [ref=f1e2155] [cursor=pointer]:
+                    - generic [ref=f1e2158]: Export
+                  - status [ref=f1e2159]
+                  - button "Delete coarse omit" [ref=f1e2160] [cursor=pointer]:
+                    - generic [ref=f1e2163]: Delete
+            - row [ref=f1e2164]:
+              - cell [ref=f1e2165]:
+                - link "forms script [4825ccd2-1]" [ref=f1e2166] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JA/edit
+                - paragraph [ref=f1e2167]:
+                  - text: Updated
+                  - time [ref=f1e2168]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2169]
+              - cell "never run" [ref=f1e2172]
+              - cell [ref=f1e2174]:
+                - generic [ref=f1e2176]:
+                  - link "Edit forms script [4825ccd2-1]" [ref=f1e2177] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JA/edit
+                    - text: Edit
+                  - button "Export forms script [4825ccd2-1]" [ref=f1e2180] [cursor=pointer]:
+                    - generic [ref=f1e2183]: Export
+                  - status [ref=f1e2184]
+                  - button "Delete forms script [4825ccd2-1]" [ref=f1e2185] [cursor=pointer]:
+                    - generic [ref=f1e2188]: Delete
+            - row [ref=f1e2189]:
+              - cell [ref=f1e2190]:
+                - link "forms script [454f1bc2-1]" [ref=f1e2191] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JC/edit
+                - paragraph [ref=f1e2192]:
+                  - text: Updated
+                  - time [ref=f1e2193]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2194]
+              - cell "never run" [ref=f1e2197]
+              - cell [ref=f1e2199]:
+                - generic [ref=f1e2201]:
+                  - link "Edit forms script [454f1bc2-1]" [ref=f1e2202] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JC/edit
+                    - text: Edit
+                  - button "Export forms script [454f1bc2-1]" [ref=f1e2205] [cursor=pointer]:
+                    - generic [ref=f1e2208]: Export
+                  - status [ref=f1e2209]
+                  - button "Delete forms script [454f1bc2-1]" [ref=f1e2210] [cursor=pointer]:
+                    - generic [ref=f1e2213]: Delete
+            - row [ref=f1e2214]:
+              - cell [ref=f1e2215]:
+                - link "structural JSON" [ref=f1e2216] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JE/edit
+                - paragraph [ref=f1e2217]:
+                  - text: Updated
+                  - time [ref=f1e2218]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2219]
+              - cell "never run" [ref=f1e2222]
+              - cell [ref=f1e2224]:
+                - generic [ref=f1e2226]:
+                  - link "Edit structural JSON" [ref=f1e2227] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JE/edit
+                    - text: Edit
+                  - button "Export structural JSON" [ref=f1e2230] [cursor=pointer]:
+                    - generic [ref=f1e2233]: Export
+                  - status [ref=f1e2234]
+                  - button "Delete structural JSON" [ref=f1e2235] [cursor=pointer]:
+                    - generic [ref=f1e2238]: Delete
+            - row [ref=f1e2239]:
+              - cell [ref=f1e2240]:
+                - link "forms heartbeat [99b4db07-1]" [ref=f1e2241] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JG/edit
+                - paragraph [ref=f1e2242]:
+                  - text: Updated
+                  - time [ref=f1e2243]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2244]
+              - cell "never run" [ref=f1e2247]
+              - cell [ref=f1e2249]:
+                - generic [ref=f1e2251]:
+                  - link "Edit forms heartbeat [99b4db07-1]" [ref=f1e2252] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JG/edit
+                    - text: Edit
+                  - button "Export forms heartbeat [99b4db07-1]" [ref=f1e2255] [cursor=pointer]:
+                    - generic [ref=f1e2258]: Export
+                  - status [ref=f1e2259]
+                  - button "Delete forms heartbeat [99b4db07-1]" [ref=f1e2260] [cursor=pointer]:
+                    - generic [ref=f1e2263]: Delete
+            - row [ref=f1e2264]:
+              - cell [ref=f1e2265]:
+                - link "forms heartbeat [99b4db07-2]" [ref=f1e2266] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JJ/edit
+                - paragraph [ref=f1e2267]:
+                  - text: Updated
+                  - time [ref=f1e2268]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2269]
+              - cell "never run" [ref=f1e2272]
+              - cell [ref=f1e2274]:
+                - generic [ref=f1e2276]:
+                  - link "Edit forms heartbeat [99b4db07-2]" [ref=f1e2277] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JJ/edit
+                    - text: Edit
+                  - button "Export forms heartbeat [99b4db07-2]" [ref=f1e2280] [cursor=pointer]:
+                    - generic [ref=f1e2283]: Export
+                  - status [ref=f1e2284]
+                  - button "Delete forms heartbeat [99b4db07-2]" [ref=f1e2285] [cursor=pointer]:
+                    - generic [ref=f1e2288]: Delete
+            - row [ref=f1e2289]:
+              - cell [ref=f1e2290]:
+                - link "forms heartbeat [99b4db07-3]" [ref=f1e2291] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JM/edit
+                - paragraph [ref=f1e2292]:
+                  - text: Updated
+                  - time [ref=f1e2293]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2294]
+              - cell "never run" [ref=f1e2297]
+              - cell [ref=f1e2299]:
+                - generic [ref=f1e2301]:
+                  - link "Edit forms heartbeat [99b4db07-3]" [ref=f1e2302] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JM/edit
+                    - text: Edit
+                  - button "Export forms heartbeat [99b4db07-3]" [ref=f1e2305] [cursor=pointer]:
+                    - generic [ref=f1e2308]: Export
+                  - status [ref=f1e2309]
+                  - button "Delete forms heartbeat [99b4db07-3]" [ref=f1e2310] [cursor=pointer]:
+                    - generic [ref=f1e2313]: Delete
+            - row [ref=f1e2314]:
+              - cell [ref=f1e2315]:
+                - link "forms script [18e4d8ad-1]" [ref=f1e2316] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JP/edit
+                - paragraph [ref=f1e2317]:
+                  - text: Updated
+                  - time [ref=f1e2318]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2319]
+              - cell "never run" [ref=f1e2322]
+              - cell [ref=f1e2324]:
+                - generic [ref=f1e2326]:
+                  - link "Edit forms script [18e4d8ad-1]" [ref=f1e2327] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JP/edit
+                    - text: Edit
+                  - button "Export forms script [18e4d8ad-1]" [ref=f1e2330] [cursor=pointer]:
+                    - generic [ref=f1e2333]: Export
+                  - status [ref=f1e2334]
+                  - button "Delete forms script [18e4d8ad-1]" [ref=f1e2335] [cursor=pointer]:
+                    - generic [ref=f1e2338]: Delete
+            - row [ref=f1e2339]:
+              - cell [ref=f1e2340]:
+                - link "forms whitespace import [18e4d8ad-2]" [ref=f1e2341] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JR/edit
+                - paragraph [ref=f1e2342]:
+                  - text: Updated
+                  - time [ref=f1e2343]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2344]
+              - cell "never run" [ref=f1e2347]
+              - cell [ref=f1e2349]:
+                - generic [ref=f1e2351]:
+                  - link "Edit forms whitespace import [18e4d8ad-2]" [ref=f1e2352] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JR/edit
+                    - text: Edit
+                  - button "Export forms whitespace import [18e4d8ad-2]" [ref=f1e2355] [cursor=pointer]:
+                    - generic [ref=f1e2358]: Export
+                  - status [ref=f1e2359]
+                  - button "Delete forms whitespace import [18e4d8ad-2]" [ref=f1e2360] [cursor=pointer]:
+                    - generic [ref=f1e2363]: Delete
+            - row [ref=f1e2364]:
+              - cell [ref=f1e2365]:
+                - link "forms mutate [dd820a09-1]" [ref=f1e2366] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JT/edit
+                - paragraph [ref=f1e2367]:
+                  - text: Updated
+                  - time [ref=f1e2368]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2369]
+              - cell "never run" [ref=f1e2372]
+              - cell [ref=f1e2374]:
+                - generic [ref=f1e2376]:
+                  - link "Edit forms mutate [dd820a09-1]" [ref=f1e2377] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JT/edit
+                    - text: Edit
+                  - button "Export forms mutate [dd820a09-1]" [ref=f1e2380] [cursor=pointer]:
+                    - generic [ref=f1e2383]: Export
+                  - status [ref=f1e2384]
+                  - button "Delete forms mutate [dd820a09-1]" [ref=f1e2385] [cursor=pointer]:
+                    - generic [ref=f1e2388]: Delete
+            - row [ref=f1e2389]:
+              - cell [ref=f1e2390]:
+                - link "raw blank expression" [ref=f1e2391] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JW/edit
+                - paragraph [ref=f1e2392]:
+                  - text: Updated
+                  - time [ref=f1e2393]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2394]
+              - cell "never run" [ref=f1e2397]
+              - cell [ref=f1e2399]:
+                - generic [ref=f1e2401]:
+                  - link "Edit raw blank expression" [ref=f1e2402] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JW/edit
+                    - text: Edit
+                  - button "Export raw blank expression" [ref=f1e2405] [cursor=pointer]:
+                    - generic [ref=f1e2408]: Export
+                  - status [ref=f1e2409]
+                  - button "Delete raw blank expression" [ref=f1e2410] [cursor=pointer]:
+                    - generic [ref=f1e2413]: Delete
+            - row [ref=f1e2414]:
+              - cell [ref=f1e2415]:
+                - link "forms script [1ee6d1bd-1]" [ref=f1e2416] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JY/edit
+                - paragraph [ref=f1e2417]:
+                  - text: Updated
+                  - time [ref=f1e2418]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2419]
+              - cell "never run" [ref=f1e2422]
+              - cell [ref=f1e2424]:
+                - generic [ref=f1e2426]:
+                  - link "Edit forms script [1ee6d1bd-1]" [ref=f1e2427] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510JY/edit
+                    - text: Edit
+                  - button "Export forms script [1ee6d1bd-1]" [ref=f1e2430] [cursor=pointer]:
+                    - generic [ref=f1e2433]: Export
+                  - status [ref=f1e2434]
+                  - button "Delete forms script [1ee6d1bd-1]" [ref=f1e2435] [cursor=pointer]:
+                    - generic [ref=f1e2438]: Delete
+            - row [ref=f1e2439]:
+              - cell [ref=f1e2440]:
+                - link "forms heartbeat [f9382fb4-1]" [ref=f1e2441] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K0/edit
+                - paragraph [ref=f1e2442]:
+                  - text: Updated
+                  - time [ref=f1e2443]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2444]
+              - cell "never run" [ref=f1e2447]
+              - cell [ref=f1e2449]:
+                - generic [ref=f1e2451]:
+                  - link "Edit forms heartbeat [f9382fb4-1]" [ref=f1e2452] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K0/edit
+                    - text: Edit
+                  - button "Export forms heartbeat [f9382fb4-1]" [ref=f1e2455] [cursor=pointer]:
+                    - generic [ref=f1e2458]: Export
+                  - status [ref=f1e2459]
+                  - button "Delete forms heartbeat [f9382fb4-1]" [ref=f1e2460] [cursor=pointer]:
+                    - generic [ref=f1e2463]: Delete
+            - row [ref=f1e2464]:
+              - cell [ref=f1e2465]:
+                - link "forms script [7596eb25-1]" [ref=f1e2466] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K2/edit
+                - paragraph [ref=f1e2467]:
+                  - text: Updated
+                  - time [ref=f1e2468]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2469]
+              - cell "never run" [ref=f1e2472]
+              - cell [ref=f1e2474]:
+                - generic [ref=f1e2476]:
+                  - link "Edit forms script [7596eb25-1]" [ref=f1e2477] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K2/edit
+                    - text: Edit
+                  - button "Export forms script [7596eb25-1]" [ref=f1e2480] [cursor=pointer]:
+                    - generic [ref=f1e2483]: Export
+                  - status [ref=f1e2484]
+                  - button "Delete forms script [7596eb25-1]" [ref=f1e2485] [cursor=pointer]:
+                    - generic [ref=f1e2488]: Delete
+            - row [ref=f1e2489]:
+              - cell [ref=f1e2490]:
+                - link "forms heartbeat [e212236e-1]" [ref=f1e2491] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K4/edit
+                - paragraph [ref=f1e2492]:
+                  - text: Updated
+                  - time [ref=f1e2493]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2494]
+              - cell "never run" [ref=f1e2497]
+              - cell [ref=f1e2499]:
+                - generic [ref=f1e2501]:
+                  - link "Edit forms heartbeat [e212236e-1]" [ref=f1e2502] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K4/edit
+                    - text: Edit
+                  - button "Export forms heartbeat [e212236e-1]" [ref=f1e2505] [cursor=pointer]:
+                    - generic [ref=f1e2508]: Export
+                  - status [ref=f1e2509]
+                  - button "Delete forms heartbeat [e212236e-1]" [ref=f1e2510] [cursor=pointer]:
+                    - generic [ref=f1e2513]: Delete
+            - row [ref=f1e2514]:
+              - cell [ref=f1e2515]:
+                - link "forms inference [2449166d-1]" [ref=f1e2516] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K6/edit
+                - paragraph [ref=f1e2517]:
+                  - text: Updated
+                  - time [ref=f1e2518]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2519]
+              - cell "never run" [ref=f1e2522]
+              - cell [ref=f1e2524]:
+                - generic [ref=f1e2526]:
+                  - link "Edit forms inference [2449166d-1]" [ref=f1e2527] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K6/edit
+                    - text: Edit
+                  - button "Export forms inference [2449166d-1]" [ref=f1e2530] [cursor=pointer]:
+                    - generic [ref=f1e2533]: Export
+                  - status [ref=f1e2534]
+                  - button "Delete forms inference [2449166d-1]" [ref=f1e2535] [cursor=pointer]:
+                    - generic [ref=f1e2538]: Delete
+            - row [ref=f1e2539]:
+              - cell [ref=f1e2540]:
+                - link "forms inference [9a320531-1]" [ref=f1e2541] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K8/edit
+                - paragraph [ref=f1e2542]:
+                  - text: Updated
+                  - time [ref=f1e2543]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2544]
+              - cell "never run" [ref=f1e2547]
+              - cell [ref=f1e2549]:
+                - generic [ref=f1e2551]:
+                  - link "Edit forms inference [9a320531-1]" [ref=f1e2552] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510K8/edit
+                    - text: Edit
+                  - button "Export forms inference [9a320531-1]" [ref=f1e2555] [cursor=pointer]:
+                    - generic [ref=f1e2558]: Export
+                  - status [ref=f1e2559]
+                  - button "Delete forms inference [9a320531-1]" [ref=f1e2560] [cursor=pointer]:
+                    - generic [ref=f1e2563]: Delete
+            - row [ref=f1e2564]:
+              - cell [ref=f1e2565]:
+                - link "GitHub checks light" [ref=f1e2566] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KA/edit
+                - paragraph [ref=f1e2567]:
+                  - text: Updated
+                  - time [ref=f1e2568]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2569]
+              - cell "never run" [ref=f1e2572]
+              - cell [ref=f1e2574]:
+                - generic [ref=f1e2576]:
+                  - link "Edit GitHub checks light" [ref=f1e2577] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KA/edit
+                    - text: Edit
+                  - button "Export GitHub checks light" [ref=f1e2580] [cursor=pointer]:
+                    - generic [ref=f1e2583]: Export
+                  - status [ref=f1e2584]
+                  - button "Delete GitHub checks light" [ref=f1e2585] [cursor=pointer]:
+                    - generic [ref=f1e2588]: Delete
+            - row [ref=f1e2589]:
+              - cell [ref=f1e2590]:
+                - link "GitHub checks dark" [ref=f1e2591] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KC/edit
+                - paragraph [ref=f1e2592]:
+                  - text: Updated
+                  - time [ref=f1e2593]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2594]
+              - cell "never run" [ref=f1e2597]
+              - cell [ref=f1e2599]:
+                - generic [ref=f1e2601]:
+                  - link "Edit GitHub checks dark" [ref=f1e2602] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KC/edit
+                    - text: Edit
+                  - button "Export GitHub checks dark" [ref=f1e2605] [cursor=pointer]:
+                    - generic [ref=f1e2608]: Export
+                  - status [ref=f1e2609]
+                  - button "Delete GitHub checks dark" [ref=f1e2610] [cursor=pointer]:
+                    - generic [ref=f1e2613]: Delete
+            - row [ref=f1e2614]:
+              - cell [ref=f1e2615]:
+                - link "GitHub preset preset-0-0" [ref=f1e2616] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KE/edit
+                - paragraph [ref=f1e2617]:
+                  - text: Updated
+                  - time [ref=f1e2618]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2619]
+              - cell [ref=f1e2622]:
+                - link "succeeded" [ref=f1e2623] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510KK
+              - cell [ref=f1e2628]:
+                - generic [ref=f1e2630]:
+                  - link "Edit GitHub preset preset-0-0" [ref=f1e2631] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KE/edit
+                    - text: Edit
+                  - button "Export GitHub preset preset-0-0" [ref=f1e2634] [cursor=pointer]:
+                    - generic [ref=f1e2637]: Export
+                  - status [ref=f1e2638]
+                  - button "Delete GitHub preset preset-0-0" [ref=f1e2639] [cursor=pointer]:
+                    - generic [ref=f1e2642]: Delete
+            - row [ref=f1e2643]:
+              - cell [ref=f1e2644]:
+                - link "GitHub poll poll-0-0" [ref=f1e2645] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KS/edit
+                - paragraph [ref=f1e2646]:
+                  - text: Updated
+                  - time [ref=f1e2647]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2648]
+              - cell "never run" [ref=f1e2651]
+              - cell [ref=f1e2653]:
+                - generic [ref=f1e2655]:
+                  - link "Edit GitHub poll poll-0-0" [ref=f1e2656] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KS/edit
+                    - text: Edit
+                  - button "Export GitHub poll poll-0-0" [ref=f1e2659] [cursor=pointer]:
+                    - generic [ref=f1e2662]: Export
+                  - status [ref=f1e2663]
+                  - button "Delete GitHub poll poll-0-0" [ref=f1e2664] [cursor=pointer]:
+                    - generic [ref=f1e2667]: Delete
+            - row [ref=f1e2668]:
+              - cell [ref=f1e2669]:
+                - link "paging runs" [ref=f1e2670] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KV/edit
+                - paragraph [ref=f1e2671]:
+                  - text: Updated
+                  - time [ref=f1e2672]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2673]
+              - cell [ref=f1e2676]:
+                - link "succeeded" [ref=f1e2677] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510T5
+              - cell [ref=f1e2682]:
+                - generic [ref=f1e2684]:
+                  - link "Edit paging runs" [ref=f1e2685] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510KV/edit
+                    - text: Edit
+                  - button "Export paging runs" [ref=f1e2688] [cursor=pointer]:
+                    - generic [ref=f1e2691]: Export
+                  - status [ref=f1e2692]
+                  - button "Delete paging runs" [ref=f1e2693] [cursor=pointer]:
+                    - generic [ref=f1e2696]: Delete
+            - row [ref=f1e2697]:
+              - cell [ref=f1e2698]:
+                - link "older history" [ref=f1e2699] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510T7/edit
+                - paragraph [ref=f1e2700]:
+                  - text: Updated
+                  - time [ref=f1e2701]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2702]
+              - cell [ref=f1e2705]:
+                - link "succeeded" [ref=f1e2706] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX510T9
+              - cell [ref=f1e2711]:
+                - generic [ref=f1e2713]:
+                  - link "Edit older history" [ref=f1e2714] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510T7/edit
+                    - text: Edit
+                  - button "Export older history" [ref=f1e2717] [cursor=pointer]:
+                    - generic [ref=f1e2720]: Export
+                  - status [ref=f1e2721]
+                  - button "Delete older history" [ref=f1e2722] [cursor=pointer]:
+                    - generic [ref=f1e2725]: Delete
+            - row [ref=f1e2726]:
+              - cell [ref=f1e2727]:
+                - link "no history" [ref=f1e2728] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510TB/edit
+                - paragraph [ref=f1e2729]:
+                  - text: Updated
+                  - time [ref=f1e2730]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2731]
+              - cell "never run" [ref=f1e2734]
+              - cell [ref=f1e2736]:
+                - generic [ref=f1e2738]:
+                  - link "Edit no history" [ref=f1e2739] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510TB/edit
+                    - text: Edit
+                  - button "Export no history" [ref=f1e2742] [cursor=pointer]:
+                    - generic [ref=f1e2745]: Export
+                  - status [ref=f1e2746]
+                  - button "Delete no history" [ref=f1e2747] [cursor=pointer]:
+                    - generic [ref=f1e2750]: Delete
+            - row [ref=f1e2751]:
+              - cell [ref=f1e2752]:
+                - link "busy history" [ref=f1e2753] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510TD/edit
+                - paragraph [ref=f1e2754]:
+                  - text: Updated
+                  - time [ref=f1e2755]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e2756]
+              - cell [ref=f1e2759]:
+                - link "succeeded" [ref=f1e2760] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511SQ
+              - cell [ref=f1e2765]:
+                - generic [ref=f1e2767]:
+                  - link "Edit busy history" [ref=f1e2768] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX510TD/edit
+                    - text: Edit
+                  - button "Export busy history" [ref=f1e2771] [cursor=pointer]:
+                    - generic [ref=f1e2774]: Export
+                  - status [ref=f1e2775]
+                  - button "Delete busy history" [ref=f1e2776] [cursor=pointer]:
+                    - generic [ref=f1e2779]: Delete
+            - row [ref=f1e2780]:
+              - cell [ref=f1e2781]:
+                - link "QA170 inference [c60d3661-1]" [ref=f1e2782] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SS/edit
+                - paragraph [ref=f1e2783]:
+                  - text: Updated
+                  - time [ref=f1e2784]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2785]
+              - cell "never run" [ref=f1e2788]
+              - cell [ref=f1e2790]:
+                - generic [ref=f1e2792]:
+                  - link "Edit QA170 inference [c60d3661-1]" [ref=f1e2793] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SS/edit
+                    - text: Edit
+                  - button "Export QA170 inference [c60d3661-1]" [ref=f1e2796] [cursor=pointer]:
+                    - generic [ref=f1e2799]: Export
+                  - status [ref=f1e2800]
+                  - button "Delete QA170 inference [c60d3661-1]" [ref=f1e2801] [cursor=pointer]:
+                    - generic [ref=f1e2804]: Delete
+            - row [ref=f1e2805]:
+              - cell [ref=f1e2806]:
+                - link "QA170 decision [61b85281-1]" [ref=f1e2807] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SV/edit
+                - paragraph [ref=f1e2808]:
+                  - text: Updated
+                  - time [ref=f1e2809]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2810]
+              - cell "never run" [ref=f1e2813]
+              - cell [ref=f1e2815]:
+                - generic [ref=f1e2817]:
+                  - link "Edit QA170 decision [61b85281-1]" [ref=f1e2818] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SV/edit
+                    - text: Edit
+                  - button "Export QA170 decision [61b85281-1]" [ref=f1e2821] [cursor=pointer]:
+                    - generic [ref=f1e2824]: Export
+                  - status [ref=f1e2825]
+                  - button "Delete QA170 decision [61b85281-1]" [ref=f1e2826] [cursor=pointer]:
+                    - generic [ref=f1e2829]: Delete
+            - row [ref=f1e2830]:
+              - cell [ref=f1e2831]:
+                - link "QA170 decision [292fd004-1]" [ref=f1e2832] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SX/edit
+                - paragraph [ref=f1e2833]:
+                  - text: Updated
+                  - time [ref=f1e2834]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2835]
+              - cell "never run" [ref=f1e2838]
+              - cell [ref=f1e2840]:
+                - generic [ref=f1e2842]:
+                  - link "Edit QA170 decision [292fd004-1]" [ref=f1e2843] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SX/edit
+                    - text: Edit
+                  - button "Export QA170 decision [292fd004-1]" [ref=f1e2846] [cursor=pointer]:
+                    - generic [ref=f1e2849]: Export
+                  - status [ref=f1e2850]
+                  - button "Delete QA170 decision [292fd004-1]" [ref=f1e2851] [cursor=pointer]:
+                    - generic [ref=f1e2854]: Delete
+            - row [ref=f1e2855]:
+              - cell [ref=f1e2856]:
+                - link "QA170 decision [bf0c4cd6-1]" [ref=f1e2857] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SZ/edit
+                - paragraph [ref=f1e2858]:
+                  - text: Updated
+                  - time [ref=f1e2859]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2860]
+              - cell "never run" [ref=f1e2863]
+              - cell [ref=f1e2865]:
+                - generic [ref=f1e2867]:
+                  - link "Edit QA170 decision [bf0c4cd6-1]" [ref=f1e2868] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511SZ/edit
+                    - text: Edit
+                  - button "Export QA170 decision [bf0c4cd6-1]" [ref=f1e2871] [cursor=pointer]:
+                    - generic [ref=f1e2874]: Export
+                  - status [ref=f1e2875]
+                  - button "Delete QA170 decision [bf0c4cd6-1]" [ref=f1e2876] [cursor=pointer]:
+                    - generic [ref=f1e2879]: Delete
+            - row [ref=f1e2880]:
+              - cell [ref=f1e2881]:
+                - link "QA170 decision [b6236913-1]" [ref=f1e2882] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T1/edit
+                - paragraph [ref=f1e2883]:
+                  - text: Updated
+                  - time [ref=f1e2884]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2885]
+              - cell "never run" [ref=f1e2888]
+              - cell [ref=f1e2890]:
+                - generic [ref=f1e2892]:
+                  - link "Edit QA170 decision [b6236913-1]" [ref=f1e2893] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T1/edit
+                    - text: Edit
+                  - button "Export QA170 decision [b6236913-1]" [ref=f1e2896] [cursor=pointer]:
+                    - generic [ref=f1e2899]: Export
+                  - status [ref=f1e2900]
+                  - button "Delete QA170 decision [b6236913-1]" [ref=f1e2901] [cursor=pointer]:
+                    - generic [ref=f1e2904]: Delete
+            - row [ref=f1e2905]:
+              - cell [ref=f1e2906]:
+                - link "QA170 decision [24473f1b-1]" [ref=f1e2907] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T3/edit
+                - paragraph [ref=f1e2908]:
+                  - text: Updated
+                  - time [ref=f1e2909]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2910]
+              - cell "never run" [ref=f1e2913]
+              - cell [ref=f1e2915]:
+                - generic [ref=f1e2917]:
+                  - link "Edit QA170 decision [24473f1b-1]" [ref=f1e2918] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T3/edit
+                    - text: Edit
+                  - button "Export QA170 decision [24473f1b-1]" [ref=f1e2921] [cursor=pointer]:
+                    - generic [ref=f1e2924]: Export
+                  - status [ref=f1e2925]
+                  - button "Delete QA170 decision [24473f1b-1]" [ref=f1e2926] [cursor=pointer]:
+                    - generic [ref=f1e2929]: Delete
+            - row [ref=f1e2930]:
+              - cell [ref=f1e2931]:
+                - link "QA170 decision [a05f0263-1]" [ref=f1e2932] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T5/edit
+                - paragraph [ref=f1e2933]:
+                  - text: Updated
+                  - time [ref=f1e2934]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2935]
+              - cell "never run" [ref=f1e2938]
+              - cell [ref=f1e2940]:
+                - generic [ref=f1e2942]:
+                  - link "Edit QA170 decision [a05f0263-1]" [ref=f1e2943] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T5/edit
+                    - text: Edit
+                  - button "Export QA170 decision [a05f0263-1]" [ref=f1e2946] [cursor=pointer]:
+                    - generic [ref=f1e2949]: Export
+                  - status [ref=f1e2950]
+                  - button "Delete QA170 decision [a05f0263-1]" [ref=f1e2951] [cursor=pointer]:
+                    - generic [ref=f1e2954]: Delete
+            - row [ref=f1e2955]:
+              - cell [ref=f1e2956]:
+                - link "QA170 decision [9c24c21f-1]" [ref=f1e2957] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T7/edit
+                - paragraph [ref=f1e2958]:
+                  - text: Updated
+                  - time [ref=f1e2959]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2960]
+              - cell "never run" [ref=f1e2963]
+              - cell [ref=f1e2965]:
+                - generic [ref=f1e2967]:
+                  - link "Edit QA170 decision [9c24c21f-1]" [ref=f1e2968] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T7/edit
+                    - text: Edit
+                  - button "Export QA170 decision [9c24c21f-1]" [ref=f1e2971] [cursor=pointer]:
+                    - generic [ref=f1e2974]: Export
+                  - status [ref=f1e2975]
+                  - button "Delete QA170 decision [9c24c21f-1]" [ref=f1e2976] [cursor=pointer]:
+                    - generic [ref=f1e2979]: Delete
+            - row [ref=f1e2980]:
+              - cell [ref=f1e2981]:
+                - link "QA170 inference [eaeae9d5-1]" [ref=f1e2982] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T9/edit
+                - paragraph [ref=f1e2983]:
+                  - text: Updated
+                  - time [ref=f1e2984]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e2985]
+              - cell "never run" [ref=f1e2988]
+              - cell [ref=f1e2990]:
+                - generic [ref=f1e2992]:
+                  - link "Edit QA170 inference [eaeae9d5-1]" [ref=f1e2993] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511T9/edit
+                    - text: Edit
+                  - button "Export QA170 inference [eaeae9d5-1]" [ref=f1e2996] [cursor=pointer]:
+                    - generic [ref=f1e2999]: Export
+                  - status [ref=f1e3000]
+                  - button "Delete QA170 inference [eaeae9d5-1]" [ref=f1e3001] [cursor=pointer]:
+                    - generic [ref=f1e3004]: Delete
+            - row [ref=f1e3005]:
+              - cell [ref=f1e3006]:
+                - link "QA170 inference [2559632e-1]" [ref=f1e3007] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TB/edit
+                - paragraph [ref=f1e3008]:
+                  - text: Updated
+                  - time [ref=f1e3009]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3010]
+              - cell "never run" [ref=f1e3013]
+              - cell [ref=f1e3015]:
+                - generic [ref=f1e3017]:
+                  - link "Edit QA170 inference [2559632e-1]" [ref=f1e3018] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TB/edit
+                    - text: Edit
+                  - button "Export QA170 inference [2559632e-1]" [ref=f1e3021] [cursor=pointer]:
+                    - generic [ref=f1e3024]: Export
+                  - status [ref=f1e3025]
+                  - button "Delete QA170 inference [2559632e-1]" [ref=f1e3026] [cursor=pointer]:
+                    - generic [ref=f1e3029]: Delete
+            - row [ref=f1e3030]:
+              - cell [ref=f1e3031]:
+                - link "QA170 inference [0188ea5a-1]" [ref=f1e3032] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TD/edit
+                - paragraph [ref=f1e3033]:
+                  - text: Updated
+                  - time [ref=f1e3034]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3035]
+              - cell "never run" [ref=f1e3038]
+              - cell [ref=f1e3040]:
+                - generic [ref=f1e3042]:
+                  - link "Edit QA170 inference [0188ea5a-1]" [ref=f1e3043] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TD/edit
+                    - text: Edit
+                  - button "Export QA170 inference [0188ea5a-1]" [ref=f1e3046] [cursor=pointer]:
+                    - generic [ref=f1e3049]: Export
+                  - status [ref=f1e3050]
+                  - button "Delete QA170 inference [0188ea5a-1]" [ref=f1e3051] [cursor=pointer]:
+                    - generic [ref=f1e3054]: Delete
+            - row [ref=f1e3055]:
+              - cell [ref=f1e3056]:
+                - link "QA170 inference [3c3468c4-1]" [ref=f1e3057] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TF/edit
+                - paragraph [ref=f1e3058]:
+                  - text: Updated
+                  - time [ref=f1e3059]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3060]
+              - cell "never run" [ref=f1e3063]
+              - cell [ref=f1e3065]:
+                - generic [ref=f1e3067]:
+                  - link "Edit QA170 inference [3c3468c4-1]" [ref=f1e3068] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TF/edit
+                    - text: Edit
+                  - button "Export QA170 inference [3c3468c4-1]" [ref=f1e3071] [cursor=pointer]:
+                    - generic [ref=f1e3074]: Export
+                  - status [ref=f1e3075]
+                  - button "Delete QA170 inference [3c3468c4-1]" [ref=f1e3076] [cursor=pointer]:
+                    - generic [ref=f1e3079]: Delete
+            - row [ref=f1e3080]:
+              - cell [ref=f1e3081]:
+                - link "QA170 inference [7155e135-1]" [ref=f1e3082] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TH/edit
+                - paragraph [ref=f1e3083]:
+                  - text: Updated
+                  - time [ref=f1e3084]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3085]
+              - cell "never run" [ref=f1e3088]
+              - cell [ref=f1e3090]:
+                - generic [ref=f1e3092]:
+                  - link "Edit QA170 inference [7155e135-1]" [ref=f1e3093] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TH/edit
+                    - text: Edit
+                  - button "Export QA170 inference [7155e135-1]" [ref=f1e3096] [cursor=pointer]:
+                    - generic [ref=f1e3099]: Export
+                  - status [ref=f1e3100]
+                  - button "Delete QA170 inference [7155e135-1]" [ref=f1e3101] [cursor=pointer]:
+                    - generic [ref=f1e3104]: Delete
+            - row [ref=f1e3105]:
+              - cell [ref=f1e3106]:
+                - link "QA170 decision [d1c93b85-1]" [ref=f1e3107] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TK/edit
+                - paragraph [ref=f1e3108]:
+                  - text: Updated
+                  - time [ref=f1e3109]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3110]
+              - cell "never run" [ref=f1e3113]
+              - cell [ref=f1e3115]:
+                - generic [ref=f1e3117]:
+                  - link "Edit QA170 decision [d1c93b85-1]" [ref=f1e3118] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TK/edit
+                    - text: Edit
+                  - button "Export QA170 decision [d1c93b85-1]" [ref=f1e3121] [cursor=pointer]:
+                    - generic [ref=f1e3124]: Export
+                  - status [ref=f1e3125]
+                  - button "Delete QA170 decision [d1c93b85-1]" [ref=f1e3126] [cursor=pointer]:
+                    - generic [ref=f1e3129]: Delete
+            - row [ref=f1e3130]:
+              - cell [ref=f1e3131]:
+                - link "QA170 inference [7d8edc8e-1]" [ref=f1e3132] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TN/edit
+                - paragraph [ref=f1e3133]:
+                  - text: Updated
+                  - time [ref=f1e3134]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3135]
+              - cell "never run" [ref=f1e3138]
+              - cell [ref=f1e3140]:
+                - generic [ref=f1e3142]:
+                  - link "Edit QA170 inference [7d8edc8e-1]" [ref=f1e3143] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TN/edit
+                    - text: Edit
+                  - button "Export QA170 inference [7d8edc8e-1]" [ref=f1e3146] [cursor=pointer]:
+                    - generic [ref=f1e3149]: Export
+                  - status [ref=f1e3150]
+                  - button "Delete QA170 inference [7d8edc8e-1]" [ref=f1e3151] [cursor=pointer]:
+                    - generic [ref=f1e3154]: Delete
+            - row [ref=f1e3155]:
+              - cell [ref=f1e3156]:
+                - link "QA170 inference [7d8edc8e-2]" [ref=f1e3157] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TQ/edit
+                - paragraph [ref=f1e3158]:
+                  - text: Updated
+                  - time [ref=f1e3159]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3160]
+              - cell "never run" [ref=f1e3163]
+              - cell [ref=f1e3165]:
+                - generic [ref=f1e3167]:
+                  - link "Edit QA170 inference [7d8edc8e-2]" [ref=f1e3168] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TQ/edit
+                    - text: Edit
+                  - button "Export QA170 inference [7d8edc8e-2]" [ref=f1e3171] [cursor=pointer]:
+                    - generic [ref=f1e3174]: Export
+                  - status [ref=f1e3175]
+                  - button "Delete QA170 inference [7d8edc8e-2]" [ref=f1e3176] [cursor=pointer]:
+                    - generic [ref=f1e3179]: Delete
+            - row [ref=f1e3180]:
+              - cell [ref=f1e3181]:
+                - link "QA170 inference [7d8edc8e-3]" [ref=f1e3182] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TS/edit
+                - paragraph [ref=f1e3183]:
+                  - text: Updated
+                  - time [ref=f1e3184]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3185]
+              - cell "never run" [ref=f1e3188]
+              - cell [ref=f1e3190]:
+                - generic [ref=f1e3192]:
+                  - link "Edit QA170 inference [7d8edc8e-3]" [ref=f1e3193] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TS/edit
+                    - text: Edit
+                  - button "Export QA170 inference [7d8edc8e-3]" [ref=f1e3196] [cursor=pointer]:
+                    - generic [ref=f1e3199]: Export
+                  - status [ref=f1e3200]
+                  - button "Delete QA170 inference [7d8edc8e-3]" [ref=f1e3201] [cursor=pointer]:
+                    - generic [ref=f1e3204]: Delete
+            - row [ref=f1e3205]:
+              - cell [ref=f1e3206]:
+                - link "QA170 decision [7d8edc8e-4]" [ref=f1e3207] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TV/edit
+                - paragraph [ref=f1e3208]:
+                  - text: Updated
+                  - time [ref=f1e3209]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3210]
+              - cell "never run" [ref=f1e3213]
+              - cell [ref=f1e3215]:
+                - generic [ref=f1e3217]:
+                  - link "Edit QA170 decision [7d8edc8e-4]" [ref=f1e3218] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TV/edit
+                    - text: Edit
+                  - button "Export QA170 decision [7d8edc8e-4]" [ref=f1e3221] [cursor=pointer]:
+                    - generic [ref=f1e3224]: Export
+                  - status [ref=f1e3225]
+                  - button "Delete QA170 decision [7d8edc8e-4]" [ref=f1e3226] [cursor=pointer]:
+                    - generic [ref=f1e3229]: Delete
+            - row [ref=f1e3230]:
+              - cell [ref=f1e3231]:
+                - link "QA170 inference [2b813a6a-1]" [ref=f1e3232] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TX/edit
+                - paragraph [ref=f1e3233]:
+                  - text: Updated
+                  - time [ref=f1e3234]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e3235]
+              - cell "never run" [ref=f1e3238]
+              - cell [ref=f1e3240]:
+                - generic [ref=f1e3242]:
+                  - link "Edit QA170 inference [2b813a6a-1]" [ref=f1e3243] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TX/edit
+                    - text: Edit
+                  - button "Export QA170 inference [2b813a6a-1]" [ref=f1e3246] [cursor=pointer]:
+                    - generic [ref=f1e3249]: Export
+                  - status [ref=f1e3250]
+                  - button "Delete QA170 inference [2b813a6a-1]" [ref=f1e3251] [cursor=pointer]:
+                    - generic [ref=f1e3254]: Delete
+            - row [ref=f1e3255]:
+              - cell [ref=f1e3256]:
+                - link "QA170 inference [bc4df785-1]" [ref=f1e3257] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TZ/edit
+                - paragraph [ref=f1e3258]:
+                  - text: Updated
+                  - time [ref=f1e3259]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3260]
+              - cell "never run" [ref=f1e3263]
+              - cell [ref=f1e3265]:
+                - generic [ref=f1e3267]:
+                  - link "Edit QA170 inference [bc4df785-1]" [ref=f1e3268] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511TZ/edit
+                    - text: Edit
+                  - button "Export QA170 inference [bc4df785-1]" [ref=f1e3271] [cursor=pointer]:
+                    - generic [ref=f1e3274]: Export
+                  - status [ref=f1e3275]
+                  - button "Delete QA170 inference [bc4df785-1]" [ref=f1e3276] [cursor=pointer]:
+                    - generic [ref=f1e3279]: Delete
+            - row [ref=f1e3280]:
+              - cell [ref=f1e3281]:
+                - link "QA170 inference [2f64dcc3-1]" [ref=f1e3282] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V1/edit
+                - paragraph [ref=f1e3283]:
+                  - text: Updated
+                  - time [ref=f1e3284]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3285]
+              - cell "never run" [ref=f1e3288]
+              - cell [ref=f1e3290]:
+                - generic [ref=f1e3292]:
+                  - link "Edit QA170 inference [2f64dcc3-1]" [ref=f1e3293] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V1/edit
+                    - text: Edit
+                  - button "Export QA170 inference [2f64dcc3-1]" [ref=f1e3296] [cursor=pointer]:
+                    - generic [ref=f1e3299]: Export
+                  - status [ref=f1e3300]
+                  - button "Delete QA170 inference [2f64dcc3-1]" [ref=f1e3301] [cursor=pointer]:
+                    - generic [ref=f1e3304]: Delete
+            - row [ref=f1e3305]:
+              - cell [ref=f1e3306]:
+                - link "QA170 inference [0113e50b-1]" [ref=f1e3307] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V3/edit
+                - paragraph [ref=f1e3308]:
+                  - text: Updated
+                  - time [ref=f1e3309]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3310]
+              - cell "never run" [ref=f1e3313]
+              - cell [ref=f1e3315]:
+                - generic [ref=f1e3317]:
+                  - link "Edit QA170 inference [0113e50b-1]" [ref=f1e3318] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V3/edit
+                    - text: Edit
+                  - button "Export QA170 inference [0113e50b-1]" [ref=f1e3321] [cursor=pointer]:
+                    - generic [ref=f1e3324]: Export
+                  - status [ref=f1e3325]
+                  - button "Delete QA170 inference [0113e50b-1]" [ref=f1e3326] [cursor=pointer]:
+                    - generic [ref=f1e3329]: Delete
+            - row [ref=f1e3330]:
+              - cell [ref=f1e3331]:
+                - link "QA170 decision [6381aa1d-1]" [ref=f1e3332] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V5/edit
+                - paragraph [ref=f1e3333]:
+                  - text: Updated
+                  - time [ref=f1e3334]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3335]
+              - cell "never run" [ref=f1e3338]
+              - cell [ref=f1e3340]:
+                - generic [ref=f1e3342]:
+                  - link "Edit QA170 decision [6381aa1d-1]" [ref=f1e3343] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V5/edit
+                    - text: Edit
+                  - button "Export QA170 decision [6381aa1d-1]" [ref=f1e3346] [cursor=pointer]:
+                    - generic [ref=f1e3349]: Export
+                  - status [ref=f1e3350]
+                  - button "Delete QA170 decision [6381aa1d-1]" [ref=f1e3351] [cursor=pointer]:
+                    - generic [ref=f1e3354]: Delete
+            - row [ref=f1e3355]:
+              - cell [ref=f1e3356]:
+                - link "QA170 decision [9a39d1e4-1]" [ref=f1e3357] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V7/edit
+                - paragraph [ref=f1e3358]:
+                  - text: Updated
+                  - time [ref=f1e3359]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3360]
+              - cell "never run" [ref=f1e3363]
+              - cell [ref=f1e3365]:
+                - generic [ref=f1e3367]:
+                  - link "Edit QA170 decision [9a39d1e4-1]" [ref=f1e3368] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V7/edit
+                    - text: Edit
+                  - button "Export QA170 decision [9a39d1e4-1]" [ref=f1e3371] [cursor=pointer]:
+                    - generic [ref=f1e3374]: Export
+                  - status [ref=f1e3375]
+                  - button "Delete QA170 decision [9a39d1e4-1]" [ref=f1e3376] [cursor=pointer]:
+                    - generic [ref=f1e3379]: Delete
+            - row [ref=f1e3380]:
+              - cell [ref=f1e3381]:
+                - link "QA170 inference [9a39d1e4-2]" [ref=f1e3382] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V9/edit
+                - paragraph [ref=f1e3383]:
+                  - text: Updated
+                  - time [ref=f1e3384]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3385]
+              - cell "never run" [ref=f1e3388]
+              - cell [ref=f1e3390]:
+                - generic [ref=f1e3392]:
+                  - link "Edit QA170 inference [9a39d1e4-2]" [ref=f1e3393] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511V9/edit
+                    - text: Edit
+                  - button "Export QA170 inference [9a39d1e4-2]" [ref=f1e3396] [cursor=pointer]:
+                    - generic [ref=f1e3399]: Export
+                  - status [ref=f1e3400]
+                  - button "Delete QA170 inference [9a39d1e4-2]" [ref=f1e3401] [cursor=pointer]:
+                    - generic [ref=f1e3404]: Delete
+            - row [ref=f1e3405]:
+              - cell [ref=f1e3406]:
+                - link "QA170 inference [7ff149b2-1]" [ref=f1e3407] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VB/edit
+                - paragraph [ref=f1e3408]:
+                  - text: Updated
+                  - time [ref=f1e3409]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3410]
+              - cell "never run" [ref=f1e3413]
+              - cell [ref=f1e3415]:
+                - generic [ref=f1e3417]:
+                  - link "Edit QA170 inference [7ff149b2-1]" [ref=f1e3418] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VB/edit
+                    - text: Edit
+                  - button "Export QA170 inference [7ff149b2-1]" [ref=f1e3421] [cursor=pointer]:
+                    - generic [ref=f1e3424]: Export
+                  - status [ref=f1e3425]
+                  - button "Delete QA170 inference [7ff149b2-1]" [ref=f1e3426] [cursor=pointer]:
+                    - generic [ref=f1e3429]: Delete
+            - row [ref=f1e3430]:
+              - cell [ref=f1e3431]:
+                - link "QA170 inference [e6543abd-1]" [ref=f1e3432] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VD/edit
+                - paragraph [ref=f1e3433]:
+                  - text: Updated
+                  - time [ref=f1e3434]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3435]
+              - cell "never run" [ref=f1e3438]
+              - cell [ref=f1e3440]:
+                - generic [ref=f1e3442]:
+                  - link "Edit QA170 inference [e6543abd-1]" [ref=f1e3443] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VD/edit
+                    - text: Edit
+                  - button "Export QA170 inference [e6543abd-1]" [ref=f1e3446] [cursor=pointer]:
+                    - generic [ref=f1e3449]: Export
+                  - status [ref=f1e3450]
+                  - button "Delete QA170 inference [e6543abd-1]" [ref=f1e3451] [cursor=pointer]:
+                    - generic [ref=f1e3454]: Delete
+            - row [ref=f1e3455]:
+              - cell [ref=f1e3456]:
+                - link "QA170 decision [e6543abd-2]" [ref=f1e3457] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VF/edit
+                - paragraph [ref=f1e3458]:
+                  - text: Updated
+                  - time [ref=f1e3459]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3460]
+              - cell "never run" [ref=f1e3463]
+              - cell [ref=f1e3465]:
+                - generic [ref=f1e3467]:
+                  - link "Edit QA170 decision [e6543abd-2]" [ref=f1e3468] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VF/edit
+                    - text: Edit
+                  - button "Export QA170 decision [e6543abd-2]" [ref=f1e3471] [cursor=pointer]:
+                    - generic [ref=f1e3474]: Export
+                  - status [ref=f1e3475]
+                  - button "Delete QA170 decision [e6543abd-2]" [ref=f1e3476] [cursor=pointer]:
+                    - generic [ref=f1e3479]: Delete
+            - row [ref=f1e3480]:
+              - cell [ref=f1e3481]:
+                - link "QA170 inference [033c4b1e-1]" [ref=f1e3482] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VH/edit
+                - paragraph [ref=f1e3483]:
+                  - text: Updated
+                  - time [ref=f1e3484]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3485]
+              - cell "never run" [ref=f1e3488]
+              - cell [ref=f1e3490]:
+                - generic [ref=f1e3492]:
+                  - link "Edit QA170 inference [033c4b1e-1]" [ref=f1e3493] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VH/edit
+                    - text: Edit
+                  - button "Export QA170 inference [033c4b1e-1]" [ref=f1e3496] [cursor=pointer]:
+                    - generic [ref=f1e3499]: Export
+                  - status [ref=f1e3500]
+                  - button "Delete QA170 inference [033c4b1e-1]" [ref=f1e3501] [cursor=pointer]:
+                    - generic [ref=f1e3504]: Delete
+            - row [ref=f1e3505]:
+              - cell [ref=f1e3506]:
+                - link "QA170 decision [033c4b1e-2]" [ref=f1e3507] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VK/edit
+                - paragraph [ref=f1e3508]:
+                  - text: Updated
+                  - time [ref=f1e3509]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3510]
+              - cell "never run" [ref=f1e3513]
+              - cell [ref=f1e3515]:
+                - generic [ref=f1e3517]:
+                  - link "Edit QA170 decision [033c4b1e-2]" [ref=f1e3518] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VK/edit
+                    - text: Edit
+                  - button "Export QA170 decision [033c4b1e-2]" [ref=f1e3521] [cursor=pointer]:
+                    - generic [ref=f1e3524]: Export
+                  - status [ref=f1e3525]
+                  - button "Delete QA170 decision [033c4b1e-2]" [ref=f1e3526] [cursor=pointer]:
+                    - generic [ref=f1e3529]: Delete
+            - row [ref=f1e3530]:
+              - cell [ref=f1e3531]:
+                - link "QA170 decision [045301d8-1]" [ref=f1e3532] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VN/edit
+                - paragraph [ref=f1e3533]:
+                  - text: Updated
+                  - time [ref=f1e3534]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3535]
+              - cell "never run" [ref=f1e3538]
+              - cell [ref=f1e3540]:
+                - generic [ref=f1e3542]:
+                  - link "Edit QA170 decision [045301d8-1]" [ref=f1e3543] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VN/edit
+                    - text: Edit
+                  - button "Export QA170 decision [045301d8-1]" [ref=f1e3546] [cursor=pointer]:
+                    - generic [ref=f1e3549]: Export
+                  - status [ref=f1e3550]
+                  - button "Delete QA170 decision [045301d8-1]" [ref=f1e3551] [cursor=pointer]:
+                    - generic [ref=f1e3554]: Delete
+            - row [ref=f1e3555]:
+              - cell [ref=f1e3556]:
+                - link "QA170 mutate [045301d8-2]" [ref=f1e3557] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VQ/edit
+                - paragraph [ref=f1e3558]:
+                  - text: Updated
+                  - time [ref=f1e3559]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3560]
+              - cell "never run" [ref=f1e3563]
+              - cell [ref=f1e3565]:
+                - generic [ref=f1e3567]:
+                  - link "Edit QA170 mutate [045301d8-2]" [ref=f1e3568] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VQ/edit
+                    - text: Edit
+                  - button "Export QA170 mutate [045301d8-2]" [ref=f1e3571] [cursor=pointer]:
+                    - generic [ref=f1e3574]: Export
+                  - status [ref=f1e3575]
+                  - button "Delete QA170 mutate [045301d8-2]" [ref=f1e3576] [cursor=pointer]:
+                    - generic [ref=f1e3579]: Delete
+            - row [ref=f1e3580]:
+              - cell [ref=f1e3581]:
+                - link "QA170 inference [f06e9bd8-1]" [ref=f1e3582] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VS/edit
+                - paragraph [ref=f1e3583]:
+                  - text: Updated
+                  - time [ref=f1e3584]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3585]
+              - cell "never run" [ref=f1e3588]
+              - cell [ref=f1e3590]:
+                - generic [ref=f1e3592]:
+                  - link "Edit QA170 inference [f06e9bd8-1]" [ref=f1e3593] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VS/edit
+                    - text: Edit
+                  - button "Export QA170 inference [f06e9bd8-1]" [ref=f1e3596] [cursor=pointer]:
+                    - generic [ref=f1e3599]: Export
+                  - status [ref=f1e3600]
+                  - button "Delete QA170 inference [f06e9bd8-1]" [ref=f1e3601] [cursor=pointer]:
+                    - generic [ref=f1e3604]: Delete
+            - row [ref=f1e3605]:
+              - cell [ref=f1e3606]:
+                - link "QA170 inference [1052be14-1]" [ref=f1e3607] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VV/edit
+                - paragraph [ref=f1e3608]:
+                  - text: Updated
+                  - time [ref=f1e3609]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3610]
+              - cell "never run" [ref=f1e3613]
+              - cell [ref=f1e3615]:
+                - generic [ref=f1e3617]:
+                  - link "Edit QA170 inference [1052be14-1]" [ref=f1e3618] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VV/edit
+                    - text: Edit
+                  - button "Export QA170 inference [1052be14-1]" [ref=f1e3621] [cursor=pointer]:
+                    - generic [ref=f1e3624]: Export
+                  - status [ref=f1e3625]
+                  - button "Delete QA170 inference [1052be14-1]" [ref=f1e3626] [cursor=pointer]:
+                    - generic [ref=f1e3629]: Delete
+            - row [ref=f1e3630]:
+              - cell [ref=f1e3631]:
+                - link "QA170 decision [1052be14-2]" [ref=f1e3632] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VX/edit
+                - paragraph [ref=f1e3633]:
+                  - text: Updated
+                  - time [ref=f1e3634]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3635]
+              - cell "never run" [ref=f1e3638]
+              - cell [ref=f1e3640]:
+                - generic [ref=f1e3642]:
+                  - link "Edit QA170 decision [1052be14-2]" [ref=f1e3643] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VX/edit
+                    - text: Edit
+                  - button "Export QA170 decision [1052be14-2]" [ref=f1e3646] [cursor=pointer]:
+                    - generic [ref=f1e3649]: Export
+                  - status [ref=f1e3650]
+                  - button "Delete QA170 decision [1052be14-2]" [ref=f1e3651] [cursor=pointer]:
+                    - generic [ref=f1e3654]: Delete
+            - row [ref=f1e3655]:
+              - cell [ref=f1e3656]:
+                - link "QA170 inference [f3a7eb99-1]" [ref=f1e3657] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VZ/edit
+                - paragraph [ref=f1e3658]:
+                  - text: Updated
+                  - time [ref=f1e3659]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3660]
+              - cell "never run" [ref=f1e3663]
+              - cell [ref=f1e3665]:
+                - generic [ref=f1e3667]:
+                  - link "Edit QA170 inference [f3a7eb99-1]" [ref=f1e3668] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511VZ/edit
+                    - text: Edit
+                  - button "Export QA170 inference [f3a7eb99-1]" [ref=f1e3671] [cursor=pointer]:
+                    - generic [ref=f1e3674]: Export
+                  - status [ref=f1e3675]
+                  - button "Delete QA170 inference [f3a7eb99-1]" [ref=f1e3676] [cursor=pointer]:
+                    - generic [ref=f1e3679]: Delete
+            - row [ref=f1e3680]:
+              - cell [ref=f1e3681]:
+                - link "QA170 decision [f3a7eb99-2]" [ref=f1e3682] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W1/edit
+                - paragraph [ref=f1e3683]:
+                  - text: Updated
+                  - time [ref=f1e3684]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3685]
+              - cell "never run" [ref=f1e3688]
+              - cell [ref=f1e3690]:
+                - generic [ref=f1e3692]:
+                  - link "Edit QA170 decision [f3a7eb99-2]" [ref=f1e3693] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W1/edit
+                    - text: Edit
+                  - button "Export QA170 decision [f3a7eb99-2]" [ref=f1e3696] [cursor=pointer]:
+                    - generic [ref=f1e3699]: Export
+                  - status [ref=f1e3700]
+                  - button "Delete QA170 decision [f3a7eb99-2]" [ref=f1e3701] [cursor=pointer]:
+                    - generic [ref=f1e3704]: Delete
+            - row [ref=f1e3705]:
+              - cell [ref=f1e3706]:
+                - link "QA170 inference [875a63c0-1]" [ref=f1e3707] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W3/edit
+                - paragraph [ref=f1e3708]:
+                  - text: Updated
+                  - time [ref=f1e3709]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3710]
+              - cell "never run" [ref=f1e3713]
+              - cell [ref=f1e3715]:
+                - generic [ref=f1e3717]:
+                  - link "Edit QA170 inference [875a63c0-1]" [ref=f1e3718] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W3/edit
+                    - text: Edit
+                  - button "Export QA170 inference [875a63c0-1]" [ref=f1e3721] [cursor=pointer]:
+                    - generic [ref=f1e3724]: Export
+                  - status [ref=f1e3725]
+                  - button "Delete QA170 inference [875a63c0-1]" [ref=f1e3726] [cursor=pointer]:
+                    - generic [ref=f1e3729]: Delete
+            - row [ref=f1e3730]:
+              - cell [ref=f1e3731]:
+                - link "QA170 inference [8674b420-1]" [ref=f1e3732] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W5/edit
+                - paragraph [ref=f1e3733]:
+                  - text: Updated
+                  - time [ref=f1e3734]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3735]
+              - cell "never run" [ref=f1e3738]
+              - cell [ref=f1e3740]:
+                - generic [ref=f1e3742]:
+                  - link "Edit QA170 inference [8674b420-1]" [ref=f1e3743] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W5/edit
+                    - text: Edit
+                  - button "Export QA170 inference [8674b420-1]" [ref=f1e3746] [cursor=pointer]:
+                    - generic [ref=f1e3749]: Export
+                  - status [ref=f1e3750]
+                  - button "Delete QA170 inference [8674b420-1]" [ref=f1e3751] [cursor=pointer]:
+                    - generic [ref=f1e3754]: Delete
+            - row [ref=f1e3755]:
+              - cell [ref=f1e3756]:
+                - link "QA170 inference [18096535-1]" [ref=f1e3757] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W7/edit
+                - paragraph [ref=f1e3758]:
+                  - text: Updated
+                  - time [ref=f1e3759]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3760]
+              - cell "never run" [ref=f1e3763]
+              - cell [ref=f1e3765]:
+                - generic [ref=f1e3767]:
+                  - link "Edit QA170 inference [18096535-1]" [ref=f1e3768] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W7/edit
+                    - text: Edit
+                  - button "Export QA170 inference [18096535-1]" [ref=f1e3771] [cursor=pointer]:
+                    - generic [ref=f1e3774]: Export
+                  - status [ref=f1e3775]
+                  - button "Delete QA170 inference [18096535-1]" [ref=f1e3776] [cursor=pointer]:
+                    - generic [ref=f1e3779]: Delete
+            - row [ref=f1e3780]:
+              - cell [ref=f1e3781]:
+                - link "QA170 decision [cfc033cf-1]" [ref=f1e3782] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W9/edit
+                - paragraph [ref=f1e3783]:
+                  - text: Updated
+                  - time [ref=f1e3784]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3785]
+              - cell "never run" [ref=f1e3788]
+              - cell [ref=f1e3790]:
+                - generic [ref=f1e3792]:
+                  - link "Edit QA170 decision [cfc033cf-1]" [ref=f1e3793] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511W9/edit
+                    - text: Edit
+                  - button "Export QA170 decision [cfc033cf-1]" [ref=f1e3796] [cursor=pointer]:
+                    - generic [ref=f1e3799]: Export
+                  - status [ref=f1e3800]
+                  - button "Delete QA170 decision [cfc033cf-1]" [ref=f1e3801] [cursor=pointer]:
+                    - generic [ref=f1e3804]: Delete
+            - row [ref=f1e3805]:
+              - cell [ref=f1e3806]:
+                - link "QA170 decision [039ba868-1]" [ref=f1e3807] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WB/edit
+                - paragraph [ref=f1e3808]:
+                  - text: Updated
+                  - time [ref=f1e3809]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3810]
+              - cell "never run" [ref=f1e3813]
+              - cell [ref=f1e3815]:
+                - generic [ref=f1e3817]:
+                  - link "Edit QA170 decision [039ba868-1]" [ref=f1e3818] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WB/edit
+                    - text: Edit
+                  - button "Export QA170 decision [039ba868-1]" [ref=f1e3821] [cursor=pointer]:
+                    - generic [ref=f1e3824]: Export
+                  - status [ref=f1e3825]
+                  - button "Delete QA170 decision [039ba868-1]" [ref=f1e3826] [cursor=pointer]:
+                    - generic [ref=f1e3829]: Delete
+            - row [ref=f1e3830]:
+              - cell [ref=f1e3831]:
+                - link "QA170 decision [fe1e4c52-1]" [ref=f1e3832] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WD/edit
+                - paragraph [ref=f1e3833]:
+                  - text: Updated
+                  - time [ref=f1e3834]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3835]
+              - cell "never run" [ref=f1e3838]
+              - cell [ref=f1e3840]:
+                - generic [ref=f1e3842]:
+                  - link "Edit QA170 decision [fe1e4c52-1]" [ref=f1e3843] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WD/edit
+                    - text: Edit
+                  - button "Export QA170 decision [fe1e4c52-1]" [ref=f1e3846] [cursor=pointer]:
+                    - generic [ref=f1e3849]: Export
+                  - status [ref=f1e3850]
+                  - button "Delete QA170 decision [fe1e4c52-1]" [ref=f1e3851] [cursor=pointer]:
+                    - generic [ref=f1e3854]: Delete
+            - row [ref=f1e3855]:
+              - cell [ref=f1e3856]:
+                - link "QA170 inference [fa8d2ffc-1]" [ref=f1e3857] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WF/edit
+                - paragraph [ref=f1e3858]:
+                  - text: Updated
+                  - time [ref=f1e3859]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e3860]
+              - cell "never run" [ref=f1e3863]
+              - cell [ref=f1e3865]:
+                - generic [ref=f1e3867]:
+                  - link "Edit QA170 inference [fa8d2ffc-1]" [ref=f1e3868] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WF/edit
+                    - text: Edit
+                  - button "Export QA170 inference [fa8d2ffc-1]" [ref=f1e3871] [cursor=pointer]:
+                    - generic [ref=f1e3874]: Export
+                  - status [ref=f1e3875]
+                  - button "Delete QA170 inference [fa8d2ffc-1]" [ref=f1e3876] [cursor=pointer]:
+                    - generic [ref=f1e3879]: Delete
+            - row [ref=f1e3880]:
+              - cell [ref=f1e3881]:
+                - link "QA170 decision [a6dfad9c-1]" [ref=f1e3882] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WH/edit
+                - paragraph [ref=f1e3883]:
+                  - text: Updated
+                  - time [ref=f1e3884]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3885]
+              - cell "never run" [ref=f1e3888]
+              - cell [ref=f1e3890]:
+                - generic [ref=f1e3892]:
+                  - link "Edit QA170 decision [a6dfad9c-1]" [ref=f1e3893] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WH/edit
+                    - text: Edit
+                  - button "Export QA170 decision [a6dfad9c-1]" [ref=f1e3896] [cursor=pointer]:
+                    - generic [ref=f1e3899]: Export
+                  - status [ref=f1e3900]
+                  - button "Delete QA170 decision [a6dfad9c-1]" [ref=f1e3901] [cursor=pointer]:
+                    - generic [ref=f1e3904]: Delete
+            - row [ref=f1e3905]:
+              - cell [ref=f1e3906]:
+                - link "QA170 inference [116556c3-1]" [ref=f1e3907] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WK/edit
+                - paragraph [ref=f1e3908]:
+                  - text: Updated
+                  - time [ref=f1e3909]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e3910]
+              - cell "never run" [ref=f1e3913]
+              - cell [ref=f1e3915]:
+                - generic [ref=f1e3917]:
+                  - link "Edit QA170 inference [116556c3-1]" [ref=f1e3918] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WK/edit
+                    - text: Edit
+                  - button "Export QA170 inference [116556c3-1]" [ref=f1e3921] [cursor=pointer]:
+                    - generic [ref=f1e3924]: Export
+                  - status [ref=f1e3925]
+                  - button "Delete QA170 inference [116556c3-1]" [ref=f1e3926] [cursor=pointer]:
+                    - generic [ref=f1e3929]: Delete
+            - row [ref=f1e3930]:
+              - cell [ref=f1e3931]:
+                - link "qa reduced motion" [ref=f1e3932] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WN/edit
+                - paragraph [ref=f1e3933]:
+                  - text: Updated
+                  - time [ref=f1e3934]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e3935]
+              - cell [ref=f1e3938]:
+                - link "cancelled" [ref=f1e3939] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511WQ
+              - cell [ref=f1e3945]:
+                - generic [ref=f1e3947]:
+                  - link "Edit qa reduced motion" [ref=f1e3948] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WN/edit
+                    - text: Edit
+                  - button "Export qa reduced motion" [ref=f1e3951] [cursor=pointer]:
+                    - generic [ref=f1e3954]: Export
+                  - status [ref=f1e3955]
+                  - button "Delete qa reduced motion" [ref=f1e3956] [cursor=pointer]:
+                    - generic [ref=f1e3959]: Delete
+            - row [ref=f1e3960]:
+              - cell [ref=f1e3961]:
+                - link "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW" [ref=f1e3962] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WT/edit
+                - paragraph [ref=f1e3963]:
+                  - text: Updated
+                  - time [ref=f1e3964]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e3965]
+              - cell [ref=f1e3968]:
+                - link "waiting" [ref=f1e3969] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511WW
+              - cell [ref=f1e3974]:
+                - generic [ref=f1e3976]:
+                  - link "Edit WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW" [ref=f1e3977] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WT/edit
+                    - text: Edit
+                  - button "Export WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW" [ref=f1e3980] [cursor=pointer]:
+                    - generic [ref=f1e3983]: Export
+                  - status [ref=f1e3984]
+                  - button "Delete WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW" [ref=f1e3985] [cursor=pointer]:
+                    - generic [ref=f1e3988]: Delete
+            - row [ref=f1e3989]:
+              - cell [ref=f1e3990]:
+                - link "qa long text" [ref=f1e3991] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WY/edit
+                - paragraph [ref=f1e3992]:
+                  - text: Updated
+                  - time [ref=f1e3993]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e3994]
+              - cell [ref=f1e3997]:
+                - link "failed" [ref=f1e3998] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511X0
+              - cell [ref=f1e4003]:
+                - generic [ref=f1e4005]:
+                  - link "Edit qa long text" [ref=f1e4006] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511WY/edit
+                    - text: Edit
+                  - button "Export qa long text" [ref=f1e4009] [cursor=pointer]:
+                    - generic [ref=f1e4012]: Export
+                  - status [ref=f1e4013]
+                  - button "Delete qa long text" [ref=f1e4014] [cursor=pointer]:
+                    - generic [ref=f1e4017]: Delete
+            - row [ref=f1e4018]:
+              - cell [ref=f1e4019]:
+                - link "Live follow" [ref=f1e4020] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511X3/edit
+                - paragraph [ref=f1e4021]:
+                  - text: Updated
+                  - time [ref=f1e4022]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4023]
+              - cell [ref=f1e4026]:
+                - link "cancelled" [ref=f1e4027] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511X5
+              - cell [ref=f1e4033]:
+                - generic [ref=f1e4035]:
+                  - link "Edit Live follow" [ref=f1e4036] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511X3/edit
+                    - text: Edit
+                  - button "Export Live follow" [ref=f1e4039] [cursor=pointer]:
+                    - generic [ref=f1e4042]: Export
+                  - status [ref=f1e4043]
+                  - button "Delete Live follow" [ref=f1e4044] [cursor=pointer]:
+                    - generic [ref=f1e4047]: Delete
+            - row [ref=f1e4048]:
+              - cell [ref=f1e4049]:
+                - link "Live follow accessibility" [ref=f1e4050] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511X7/edit
+                - paragraph [ref=f1e4051]:
+                  - text: Updated
+                  - time [ref=f1e4052]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4053]
+              - cell [ref=f1e4056]:
+                - link "cancelled" [ref=f1e4057] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511X9
+              - cell [ref=f1e4063]:
+                - generic [ref=f1e4065]:
+                  - link "Edit Live follow accessibility" [ref=f1e4066] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511X7/edit
+                    - text: Edit
+                  - button "Export Live follow accessibility" [ref=f1e4069] [cursor=pointer]:
+                    - generic [ref=f1e4072]: Export
+                  - status [ref=f1e4073]
+                  - button "Delete Live follow accessibility" [ref=f1e4074] [cursor=pointer]:
+                    - generic [ref=f1e4077]: Delete
+            - row [ref=f1e4078]:
+              - cell [ref=f1e4079]:
+                - link "Unmarked returns [deca44df-1]" [ref=f1e4080] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XB/edit
+                - paragraph [ref=f1e4081]:
+                  - text: Updated
+                  - time [ref=f1e4082]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4083]
+              - cell "never run" [ref=f1e4086]
+              - cell [ref=f1e4088]:
+                - generic [ref=f1e4090]:
+                  - link "Edit Unmarked returns [deca44df-1]" [ref=f1e4091] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XB/edit
+                    - text: Edit
+                  - button "Export Unmarked returns [deca44df-1]" [ref=f1e4094] [cursor=pointer]:
+                    - generic [ref=f1e4097]: Export
+                  - status [ref=f1e4098]
+                  - button "Delete Unmarked returns [deca44df-1]" [ref=f1e4099] [cursor=pointer]:
+                    - generic [ref=f1e4102]: Delete
+            - row [ref=f1e4103]:
+              - cell [ref=f1e4104]:
+                - link "Forward loop-back detour [7d2060f8-1]" [ref=f1e4105] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XD/edit
+                - paragraph [ref=f1e4106]:
+                  - text: Updated
+                  - time [ref=f1e4107]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4108]
+              - cell "never run" [ref=f1e4111]
+              - cell [ref=f1e4113]:
+                - generic [ref=f1e4115]:
+                  - link "Edit Forward loop-back detour [7d2060f8-1]" [ref=f1e4116] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XD/edit
+                    - text: Edit
+                  - button "Export Forward loop-back detour [7d2060f8-1]" [ref=f1e4119] [cursor=pointer]:
+                    - generic [ref=f1e4122]: Export
+                  - status [ref=f1e4123]
+                  - button "Delete Forward loop-back detour [7d2060f8-1]" [ref=f1e4124] [cursor=pointer]:
+                    - generic [ref=f1e4127]: Delete
+            - row [ref=f1e4128]:
+              - cell [ref=f1e4129]:
+                - link "Unmarked returns [b2bb9572-1]" [ref=f1e4130] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XF/edit
+                - paragraph [ref=f1e4131]:
+                  - text: Updated
+                  - time [ref=f1e4132]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4133]
+              - cell "never run" [ref=f1e4136]
+              - cell [ref=f1e4138]:
+                - generic [ref=f1e4140]:
+                  - link "Edit Unmarked returns [b2bb9572-1]" [ref=f1e4141] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XF/edit
+                    - text: Edit
+                  - button "Export Unmarked returns [b2bb9572-1]" [ref=f1e4144] [cursor=pointer]:
+                    - generic [ref=f1e4147]: Export
+                  - status [ref=f1e4148]
+                  - button "Delete Unmarked returns [b2bb9572-1]" [ref=f1e4149] [cursor=pointer]:
+                    - generic [ref=f1e4152]: Delete
+            - row [ref=f1e4153]:
+              - cell [ref=f1e4154]:
+                - link "Forward loop-back detour [46c96d8d-1]" [ref=f1e4155] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XH/edit
+                - paragraph [ref=f1e4156]:
+                  - text: Updated
+                  - time [ref=f1e4157]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4158]
+              - cell "never run" [ref=f1e4161]
+              - cell [ref=f1e4163]:
+                - generic [ref=f1e4165]:
+                  - link "Edit Forward loop-back detour [46c96d8d-1]" [ref=f1e4166] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XH/edit
+                    - text: Edit
+                  - button "Export Forward loop-back detour [46c96d8d-1]" [ref=f1e4169] [cursor=pointer]:
+                    - generic [ref=f1e4172]: Export
+                  - status [ref=f1e4173]
+                  - button "Delete Forward loop-back detour [46c96d8d-1]" [ref=f1e4174] [cursor=pointer]:
+                    - generic [ref=f1e4177]: Delete
+            - row [ref=f1e4178]:
+              - cell [ref=f1e4179]:
+                - link "e2e approval" [ref=f1e4180] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XK/edit
+                - paragraph [ref=f1e4181]:
+                  - text: Updated
+                  - time [ref=f1e4182]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4183]
+              - cell [ref=f1e4186]:
+                - link "succeeded" [ref=f1e4187] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511XN
+              - cell [ref=f1e4192]:
+                - generic [ref=f1e4194]:
+                  - link "Edit e2e approval" [ref=f1e4195] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XK/edit
+                    - text: Edit
+                  - button "Export e2e approval" [ref=f1e4198] [cursor=pointer]:
+                    - generic [ref=f1e4201]: Export
+                  - status [ref=f1e4202]
+                  - button "Delete e2e approval" [ref=f1e4203] [cursor=pointer]:
+                    - generic [ref=f1e4206]: Delete
+            - row [ref=f1e4207]:
+              - cell [ref=f1e4208]:
+                - link "e2e cancel" [ref=f1e4209] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XR/edit
+                - paragraph [ref=f1e4210]:
+                  - text: Updated
+                  - time [ref=f1e4211]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4212]
+              - cell [ref=f1e4215]:
+                - link "cancelled" [ref=f1e4216] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511XT
+              - cell [ref=f1e4222]:
+                - generic [ref=f1e4224]:
+                  - link "Edit e2e cancel" [ref=f1e4225] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XR/edit
+                    - text: Edit
+                  - button "Export e2e cancel" [ref=f1e4228] [cursor=pointer]:
+                    - generic [ref=f1e4231]: Export
+                  - status [ref=f1e4232]
+                  - button "Delete e2e cancel" [ref=f1e4233] [cursor=pointer]:
+                    - generic [ref=f1e4236]: Delete
+            - row [ref=f1e4237]:
+              - cell [ref=f1e4238]:
+                - link "Nightly triage [a67119ce-1]" [ref=f1e4239] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XW/edit
+                - paragraph [ref=f1e4240]:
+                  - text: Updated
+                  - time [ref=f1e4241]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4242]
+              - cell "never run" [ref=f1e4245]
+              - cell [ref=f1e4247]:
+                - generic [ref=f1e4249]:
+                  - link "Edit Nightly triage [a67119ce-1]" [ref=f1e4250] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511XW/edit
+                    - text: Edit
+                  - button "Export Nightly triage [a67119ce-1]" [ref=f1e4253] [cursor=pointer]:
+                    - generic [ref=f1e4256]: Export
+                  - status [ref=f1e4257]
+                  - button "Delete Nightly triage [a67119ce-1]" [ref=f1e4258] [cursor=pointer]:
+                    - generic [ref=f1e4261]: Delete
+            - row [ref=f1e4262]:
+              - cell [ref=f1e4263]:
+                - link "NIGHTLY TRIAGE [A67119CE-1] copy" [ref=f1e4264] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y0/edit
+                - paragraph [ref=f1e4265]:
+                  - text: Updated
+                  - time [ref=f1e4266]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4267]
+              - cell "never run" [ref=f1e4270]
+              - cell [ref=f1e4272]:
+                - generic [ref=f1e4274]:
+                  - link "Edit NIGHTLY TRIAGE [A67119CE-1] copy" [ref=f1e4275] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y0/edit
+                    - text: Edit
+                  - button "Export NIGHTLY TRIAGE [A67119CE-1] copy" [ref=f1e4278] [cursor=pointer]:
+                    - generic [ref=f1e4281]: Export
+                  - status [ref=f1e4282]
+                  - button "Delete NIGHTLY TRIAGE [A67119CE-1] copy" [ref=f1e4283] [cursor=pointer]:
+                    - generic [ref=f1e4286]: Delete
+            - row [ref=f1e4287]:
+              - cell [ref=f1e4288]:
+                - link "Daily report [59b5a67b-1]" [ref=f1e4289] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y2/edit
+                - paragraph [ref=f1e4290]:
+                  - text: Updated
+                  - time [ref=f1e4291]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4292]
+              - cell "never run" [ref=f1e4295]
+              - cell [ref=f1e4297]:
+                - generic [ref=f1e4299]:
+                  - link "Edit Daily report [59b5a67b-1]" [ref=f1e4300] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y2/edit
+                    - text: Edit
+                  - button "Export Daily report [59b5a67b-1]" [ref=f1e4303] [cursor=pointer]:
+                    - generic [ref=f1e4306]: Export
+                  - status [ref=f1e4307]
+                  - button "Delete Daily report [59b5a67b-1]" [ref=f1e4308] [cursor=pointer]:
+                    - generic [ref=f1e4311]: Delete
+            - row [ref=f1e4312]:
+              - cell [ref=f1e4313]:
+                - link "Weekly report renamed [59b5a67b-3]" [ref=f1e4314] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y4/edit
+                - paragraph [ref=f1e4315]:
+                  - text: Updated
+                  - time [ref=f1e4316]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4317]
+              - cell "never run" [ref=f1e4320]
+              - cell [ref=f1e4322]:
+                - generic [ref=f1e4324]:
+                  - link "Edit Weekly report renamed [59b5a67b-3]" [ref=f1e4325] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y4/edit
+                    - text: Edit
+                  - button "Export Weekly report renamed [59b5a67b-3]" [ref=f1e4328] [cursor=pointer]:
+                    - generic [ref=f1e4331]: Export
+                  - status [ref=f1e4332]
+                  - button "Delete Weekly report renamed [59b5a67b-3]" [ref=f1e4333] [cursor=pointer]:
+                    - generic [ref=f1e4336]: Delete
+            - row [ref=f1e4337]:
+              - cell [ref=f1e4338]:
+                - link "Imported report [4f411a09-1]" [ref=f1e4339] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y6/edit
+                - paragraph [ref=f1e4340]:
+                  - text: Updated
+                  - time [ref=f1e4341]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4342]
+              - cell "never run" [ref=f1e4345]
+              - cell [ref=f1e4347]:
+                - generic [ref=f1e4349]:
+                  - link "Edit Imported report [4f411a09-1]" [ref=f1e4350] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Y6/edit
+                    - text: Edit
+                  - button "Export Imported report [4f411a09-1]" [ref=f1e4353] [cursor=pointer]:
+                    - generic [ref=f1e4356]: Export
+                  - status [ref=f1e4357]
+                  - button "Delete Imported report [4f411a09-1]" [ref=f1e4358] [cursor=pointer]:
+                    - generic [ref=f1e4361]: Delete
+            - row [ref=f1e4362]:
+              - cell [ref=f1e4363]:
+                - link "Imported report [4f411a09-1] copy" [ref=f1e4364] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YA/edit
+                - paragraph [ref=f1e4365]:
+                  - text: Updated
+                  - time [ref=f1e4366]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4367]
+              - cell "never run" [ref=f1e4370]
+              - cell [ref=f1e4372]:
+                - generic [ref=f1e4374]:
+                  - link "Edit Imported report [4f411a09-1] copy" [ref=f1e4375] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YA/edit
+                    - text: Edit
+                  - button "Export Imported report [4f411a09-1] copy" [ref=f1e4378] [cursor=pointer]:
+                    - generic [ref=f1e4381]: Export
+                  - status [ref=f1e4382]
+                  - button "Delete Imported report [4f411a09-1] copy" [ref=f1e4383] [cursor=pointer]:
+                    - generic [ref=f1e4386]: Delete
+            - row [ref=f1e4387]:
+              - cell [ref=f1e4388]:
+                - link "Stale target [f76086f2-1]" [ref=f1e4389] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YC/edit
+                - paragraph [ref=f1e4390]:
+                  - text: Updated
+                  - time [ref=f1e4391]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4392]
+              - cell "never run" [ref=f1e4395]
+              - cell [ref=f1e4397]:
+                - generic [ref=f1e4399]:
+                  - link "Edit Stale target [f76086f2-1]" [ref=f1e4400] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YC/edit
+                    - text: Edit
+                  - button "Export Stale target [f76086f2-1]" [ref=f1e4403] [cursor=pointer]:
+                    - generic [ref=f1e4406]: Export
+                  - status [ref=f1e4407]
+                  - button "Delete Stale target [f76086f2-1]" [ref=f1e4408] [cursor=pointer]:
+                    - generic [ref=f1e4411]: Delete
+            - row [ref=f1e4412]:
+              - cell [ref=f1e4413]:
+                - link "Stale source [f76086f2-2]" [ref=f1e4414] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YE/edit
+                - paragraph [ref=f1e4415]: from tab A
+                - paragraph [ref=f1e4416]:
+                  - text: Updated
+                  - time [ref=f1e4417]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4418]
+              - cell "never run" [ref=f1e4421]
+              - cell [ref=f1e4423]:
+                - generic [ref=f1e4425]:
+                  - link "Edit Stale source [f76086f2-2]" [ref=f1e4426] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YE/edit
+                    - text: Edit
+                  - button "Export Stale source [f76086f2-2]" [ref=f1e4429] [cursor=pointer]:
+                    - generic [ref=f1e4432]: Export
+                  - status [ref=f1e4433]
+                  - button "Delete Stale source [f76086f2-2]" [ref=f1e4434] [cursor=pointer]:
+                    - generic [ref=f1e4437]: Delete
+            - row [ref=f1e4438]:
+              - cell [ref=f1e4439]:
+                - link "Narrow report [a05e1412-1]" [ref=f1e4440] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YG/edit
+                - paragraph [ref=f1e4441]:
+                  - text: Updated
+                  - time [ref=f1e4442]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4443]
+              - cell "never run" [ref=f1e4446]
+              - cell [ref=f1e4448]:
+                - generic [ref=f1e4450]:
+                  - link "Edit Narrow report [a05e1412-1]" [ref=f1e4451] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YG/edit
+                    - text: Edit
+                  - button "Export Narrow report [a05e1412-1]" [ref=f1e4454] [cursor=pointer]:
+                    - generic [ref=f1e4457]: Export
+                  - status [ref=f1e4458]
+                  - button "Delete Narrow report [a05e1412-1]" [ref=f1e4459] [cursor=pointer]:
+                    - generic [ref=f1e4462]: Delete
+            - row [ref=f1e4463]:
+              - cell [ref=f1e4464]:
+                - link "Missing session recovery" [ref=f1e4465] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YP/edit
+                - paragraph [ref=f1e4466]:
+                  - text: Updated
+                  - time [ref=f1e4467]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4468]
+              - cell [ref=f1e4471]:
+                - link "succeeded" [ref=f1e4472] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511YR
+              - cell [ref=f1e4477]:
+                - generic [ref=f1e4479]:
+                  - link "Edit Missing session recovery" [ref=f1e4480] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511YP/edit
+                    - text: Edit
+                  - button "Export Missing session recovery" [ref=f1e4483] [cursor=pointer]:
+                    - generic [ref=f1e4486]: Export
+                  - status [ref=f1e4487]
+                  - button "Delete Missing session recovery" [ref=f1e4488] [cursor=pointer]:
+                    - generic [ref=f1e4491]: Delete
+            - row [ref=f1e4492]:
+              - cell [ref=f1e4493]:
+                - link "205 classifier order" [ref=f1e4494] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Z1/edit
+                - paragraph [ref=f1e4495]:
+                  - text: Updated
+                  - time [ref=f1e4496]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4497]
+              - cell "never run" [ref=f1e4500]
+              - cell [ref=f1e4502]:
+                - generic [ref=f1e4504]:
+                  - link "Edit 205 classifier order" [ref=f1e4505] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Z1/edit
+                    - text: Edit
+                  - button "Export 205 classifier order" [ref=f1e4508] [cursor=pointer]:
+                    - generic [ref=f1e4511]: Export
+                  - status [ref=f1e4512]
+                  - button "Delete 205 classifier order" [ref=f1e4513] [cursor=pointer]:
+                    - generic [ref=f1e4516]: Delete
+            - row [ref=f1e4517]:
+              - cell [ref=f1e4518]:
+                - link "Terra none" [ref=f1e4519] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Z3/edit
+                - paragraph [ref=f1e4520]:
+                  - text: Updated
+                  - time [ref=f1e4521]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4522]
+              - cell [ref=f1e4525]:
+                - link "succeeded" [ref=f1e4526] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511Z5
+              - cell [ref=f1e4531]:
+                - generic [ref=f1e4533]:
+                  - link "Edit Terra none" [ref=f1e4534] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511Z3/edit
+                    - text: Edit
+                  - button "Export Terra none" [ref=f1e4537] [cursor=pointer]:
+                    - generic [ref=f1e4540]: Export
+                  - status [ref=f1e4541]
+                  - button "Delete Terra none" [ref=f1e4542] [cursor=pointer]:
+                    - generic [ref=f1e4545]: Delete
+            - row [ref=f1e4546]:
+              - cell [ref=f1e4547]:
+                - link "Terra medium" [ref=f1e4548] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZA/edit
+                - paragraph [ref=f1e4549]:
+                  - text: Updated
+                  - time [ref=f1e4550]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4551]
+              - cell [ref=f1e4554]:
+                - link "succeeded" [ref=f1e4555] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511ZC
+              - cell [ref=f1e4560]:
+                - generic [ref=f1e4562]:
+                  - link "Edit Terra medium" [ref=f1e4563] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZA/edit
+                    - text: Edit
+                  - button "Export Terra medium" [ref=f1e4566] [cursor=pointer]:
+                    - generic [ref=f1e4569]: Export
+                  - status [ref=f1e4570]
+                  - button "Delete Terra medium" [ref=f1e4571] [cursor=pointer]:
+                    - generic [ref=f1e4574]: Delete
+            - row [ref=f1e4575]:
+              - cell [ref=f1e4576]:
+                - link "picker dark" [ref=f1e4577] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZH/edit
+                - paragraph [ref=f1e4578]:
+                  - text: Updated
+                  - time [ref=f1e4579]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4580]
+              - cell [ref=f1e4583]:
+                - link "succeeded" [ref=f1e4584] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511ZK
+              - cell [ref=f1e4589]:
+                - generic [ref=f1e4591]:
+                  - link "Edit picker dark" [ref=f1e4592] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZH/edit
+                    - text: Edit
+                  - button "Export picker dark" [ref=f1e4595] [cursor=pointer]:
+                    - generic [ref=f1e4598]: Export
+                  - status [ref=f1e4599]
+                  - button "Delete picker dark" [ref=f1e4600] [cursor=pointer]:
+                    - generic [ref=f1e4603]: Delete
+            - row [ref=f1e4604]:
+              - cell [ref=f1e4605]:
+                - link "picker light" [ref=f1e4606] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZR/edit
+                - paragraph [ref=f1e4607]:
+                  - text: Updated
+                  - time [ref=f1e4608]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4609]
+              - cell [ref=f1e4612]:
+                - link "succeeded" [ref=f1e4613] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX511ZT
+              - cell [ref=f1e4618]:
+                - generic [ref=f1e4620]:
+                  - link "Edit picker light" [ref=f1e4621] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZR/edit
+                    - text: Edit
+                  - button "Export picker light" [ref=f1e4624] [cursor=pointer]:
+                    - generic [ref=f1e4627]: Export
+                  - status [ref=f1e4628]
+                  - button "Delete picker light" [ref=f1e4629] [cursor=pointer]:
+                    - generic [ref=f1e4632]: Delete
+            - row [ref=f1e4633]:
+              - cell [ref=f1e4634]:
+                - link "imported unknown picker" [ref=f1e4635] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZZ/edit
+                - paragraph [ref=f1e4636]:
+                  - text: Updated
+                  - time [ref=f1e4637]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4638]
+              - cell "never run" [ref=f1e4641]
+              - cell [ref=f1e4643]:
+                - generic [ref=f1e4645]:
+                  - link "Edit imported unknown picker" [ref=f1e4646] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX511ZZ/edit
+                    - text: Edit
+                  - button "Export imported unknown picker" [ref=f1e4649] [cursor=pointer]:
+                    - generic [ref=f1e4652]: Export
+                  - status [ref=f1e4653]
+                  - button "Delete imported unknown picker" [ref=f1e4654] [cursor=pointer]:
+                    - generic [ref=f1e4657]: Delete
+            - row [ref=f1e4658]:
+              - cell [ref=f1e4659]:
+                - link "failed catalog picker" [ref=f1e4660] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51201/edit
+                - paragraph [ref=f1e4661]:
+                  - text: Updated
+                  - time [ref=f1e4662]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4663]
+              - cell "never run" [ref=f1e4666]
+              - cell [ref=f1e4668]:
+                - generic [ref=f1e4670]:
+                  - link "Edit failed catalog picker" [ref=f1e4671] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51201/edit
+                    - text: Edit
+                  - button "Export failed catalog picker" [ref=f1e4674] [cursor=pointer]:
+                    - generic [ref=f1e4677]: Export
+                  - status [ref=f1e4678]
+                  - button "Delete failed catalog picker" [ref=f1e4679] [cursor=pointer]:
+                    - generic [ref=f1e4682]: Delete
+            - row [ref=f1e4683]:
+              - cell [ref=f1e4684]:
+                - link "decision picker" [ref=f1e4685] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51203/edit
+                - paragraph [ref=f1e4686]:
+                  - text: Updated
+                  - time [ref=f1e4687]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4688]
+              - cell "never run" [ref=f1e4691]
+              - cell [ref=f1e4693]:
+                - generic [ref=f1e4695]:
+                  - link "Edit decision picker" [ref=f1e4696] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51203/edit
+                    - text: Edit
+                  - button "Export decision picker" [ref=f1e4699] [cursor=pointer]:
+                    - generic [ref=f1e4702]: Export
+                  - status [ref=f1e4703]
+                  - button "Delete decision picker" [ref=f1e4704] [cursor=pointer]:
+                    - generic [ref=f1e4707]: Delete
+            - row [ref=f1e4708]:
+              - cell [ref=f1e4709]:
+                - link "delayed catalog focus" [ref=f1e4710] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51205/edit
+                - paragraph [ref=f1e4711]:
+                  - text: Updated
+                  - time [ref=f1e4712]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4713]
+              - cell "never run" [ref=f1e4716]
+              - cell [ref=f1e4718]:
+                - generic [ref=f1e4720]:
+                  - link "Edit delayed catalog focus" [ref=f1e4721] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51205/edit
+                    - text: Edit
+                  - button "Export delayed catalog focus" [ref=f1e4724] [cursor=pointer]:
+                    - generic [ref=f1e4727]: Export
+                  - status [ref=f1e4728]
+                  - button "Delete delayed catalog focus" [ref=f1e4729] [cursor=pointer]:
+                    - generic [ref=f1e4732]: Delete
+            - row [ref=f1e4733]:
+              - cell [ref=f1e4734]:
+                - link "node-harness" [ref=f1e4735] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51207/edit
+                - paragraph [ref=f1e4736]:
+                  - text: Updated
+                  - time [ref=f1e4737]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4738]
+              - cell "never run" [ref=f1e4741]
+              - cell [ref=f1e4743]:
+                - generic [ref=f1e4745]:
+                  - link "Edit node-harness" [ref=f1e4746] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51207/edit
+                    - text: Edit
+                  - button "Export node-harness" [ref=f1e4749] [cursor=pointer]:
+                    - generic [ref=f1e4752]: Export
+                  - status [ref=f1e4753]
+                  - button "Delete node-harness" [ref=f1e4754] [cursor=pointer]:
+                    - generic [ref=f1e4757]: Delete
+            - row [ref=f1e4758]:
+              - cell [ref=f1e4759]:
+                - link "JSON decision [20558570-1]" [ref=f1e4760] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51209/edit
+                - paragraph [ref=f1e4761]:
+                  - text: Updated
+                  - time [ref=f1e4762]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4763]
+              - cell "never run" [ref=f1e4766]
+              - cell [ref=f1e4768]:
+                - generic [ref=f1e4770]:
+                  - link "Edit JSON decision [20558570-1]" [ref=f1e4771] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51209/edit
+                    - text: Edit
+                  - button "Export JSON decision [20558570-1]" [ref=f1e4774] [cursor=pointer]:
+                    - generic [ref=f1e4777]: Export
+                  - status [ref=f1e4778]
+                  - button "Delete JSON decision [20558570-1]" [ref=f1e4779] [cursor=pointer]:
+                    - generic [ref=f1e4782]: Delete
+            - row [ref=f1e4783]:
+              - cell [ref=f1e4784]:
+                - link "JSON decision [a5e79ae6-1]" [ref=f1e4785] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120B/edit
+                - paragraph [ref=f1e4786]:
+                  - text: Updated
+                  - time [ref=f1e4787]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4788]
+              - cell "never run" [ref=f1e4791]
+              - cell [ref=f1e4793]:
+                - generic [ref=f1e4795]:
+                  - link "Edit JSON decision [a5e79ae6-1]" [ref=f1e4796] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120B/edit
+                    - text: Edit
+                  - button "Export JSON decision [a5e79ae6-1]" [ref=f1e4799] [cursor=pointer]:
+                    - generic [ref=f1e4802]: Export
+                  - status [ref=f1e4803]
+                  - button "Delete JSON decision [a5e79ae6-1]" [ref=f1e4804] [cursor=pointer]:
+                    - generic [ref=f1e4807]: Delete
+            - row [ref=f1e4808]:
+              - cell [ref=f1e4809]:
+                - link "JSON decision [8e8746f6-1]" [ref=f1e4810] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120D/edit
+                - paragraph [ref=f1e4811]:
+                  - text: Updated
+                  - time [ref=f1e4812]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4813]
+              - cell "never run" [ref=f1e4816]
+              - cell [ref=f1e4818]:
+                - generic [ref=f1e4820]:
+                  - link "Edit JSON decision [8e8746f6-1]" [ref=f1e4821] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120D/edit
+                    - text: Edit
+                  - button "Export JSON decision [8e8746f6-1]" [ref=f1e4824] [cursor=pointer]:
+                    - generic [ref=f1e4827]: Export
+                  - status [ref=f1e4828]
+                  - button "Delete JSON decision [8e8746f6-1]" [ref=f1e4829] [cursor=pointer]:
+                    - generic [ref=f1e4832]: Delete
+            - row [ref=f1e4833]:
+              - cell [ref=f1e4834]:
+                - link "JSON decision [79c715a6-1]" [ref=f1e4835] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120F/edit
+                - paragraph [ref=f1e4836]:
+                  - text: Updated
+                  - time [ref=f1e4837]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4838]
+              - cell "never run" [ref=f1e4841]
+              - cell [ref=f1e4843]:
+                - generic [ref=f1e4845]:
+                  - link "Edit JSON decision [79c715a6-1]" [ref=f1e4846] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120F/edit
+                    - text: Edit
+                  - button "Export JSON decision [79c715a6-1]" [ref=f1e4849] [cursor=pointer]:
+                    - generic [ref=f1e4852]: Export
+                  - status [ref=f1e4853]
+                  - button "Delete JSON decision [79c715a6-1]" [ref=f1e4854] [cursor=pointer]:
+                    - generic [ref=f1e4857]: Delete
+            - row [ref=f1e4858]:
+              - cell [ref=f1e4859]:
+                - link "JSON decision [664c4f80-1]" [ref=f1e4860] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120H/edit
+                - paragraph [ref=f1e4861]:
+                  - text: Updated
+                  - time [ref=f1e4862]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4863]
+              - cell "never run" [ref=f1e4866]
+              - cell [ref=f1e4868]:
+                - generic [ref=f1e4870]:
+                  - link "Edit JSON decision [664c4f80-1]" [ref=f1e4871] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120H/edit
+                    - text: Edit
+                  - button "Export JSON decision [664c4f80-1]" [ref=f1e4874] [cursor=pointer]:
+                    - generic [ref=f1e4877]: Export
+                  - status [ref=f1e4878]
+                  - button "Delete JSON decision [664c4f80-1]" [ref=f1e4879] [cursor=pointer]:
+                    - generic [ref=f1e4882]: Delete
+            - row [ref=f1e4883]:
+              - cell [ref=f1e4884]:
+                - link "JSON inference [0b6c2063-1]" [ref=f1e4885] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120K/edit
+                - paragraph [ref=f1e4886]:
+                  - text: Updated
+                  - time [ref=f1e4887]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4888]
+              - cell "never run" [ref=f1e4891]
+              - cell [ref=f1e4893]:
+                - generic [ref=f1e4895]:
+                  - link "Edit JSON inference [0b6c2063-1]" [ref=f1e4896] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120K/edit
+                    - text: Edit
+                  - button "Export JSON inference [0b6c2063-1]" [ref=f1e4899] [cursor=pointer]:
+                    - generic [ref=f1e4902]: Export
+                  - status [ref=f1e4903]
+                  - button "Delete JSON inference [0b6c2063-1]" [ref=f1e4904] [cursor=pointer]:
+                    - generic [ref=f1e4907]: Delete
+            - row [ref=f1e4908]:
+              - cell [ref=f1e4909]:
+                - link "JSON inference [5424d30d-1]" [ref=f1e4910] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120N/edit
+                - paragraph [ref=f1e4911]:
+                  - text: Updated
+                  - time [ref=f1e4912]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4913]
+              - cell "never run" [ref=f1e4916]
+              - cell [ref=f1e4918]:
+                - generic [ref=f1e4920]:
+                  - link "Edit JSON inference [5424d30d-1]" [ref=f1e4921] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120N/edit
+                    - text: Edit
+                  - button "Export JSON inference [5424d30d-1]" [ref=f1e4924] [cursor=pointer]:
+                    - generic [ref=f1e4927]: Export
+                  - status [ref=f1e4928]
+                  - button "Delete JSON inference [5424d30d-1]" [ref=f1e4929] [cursor=pointer]:
+                    - generic [ref=f1e4932]: Delete
+            - row [ref=f1e4933]:
+              - cell [ref=f1e4934]:
+                - link "JSON decision [7e0916b8-1]" [ref=f1e4935] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120Q/edit
+                - paragraph [ref=f1e4936]:
+                  - text: Updated
+                  - time [ref=f1e4937]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4938]
+              - cell "never run" [ref=f1e4941]
+              - cell [ref=f1e4943]:
+                - generic [ref=f1e4945]:
+                  - link "Edit JSON decision [7e0916b8-1]" [ref=f1e4946] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120Q/edit
+                    - text: Edit
+                  - button "Export JSON decision [7e0916b8-1]" [ref=f1e4949] [cursor=pointer]:
+                    - generic [ref=f1e4952]: Export
+                  - status [ref=f1e4953]
+                  - button "Delete JSON decision [7e0916b8-1]" [ref=f1e4954] [cursor=pointer]:
+                    - generic [ref=f1e4957]: Delete
+            - row [ref=f1e4958]:
+              - cell [ref=f1e4959]:
+                - link "JSON decision [f24d5f61-1]" [ref=f1e4960] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120S/edit
+                - paragraph [ref=f1e4961]:
+                  - text: Updated
+                  - time [ref=f1e4962]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e4963]
+              - cell "never run" [ref=f1e4966]
+              - cell [ref=f1e4968]:
+                - generic [ref=f1e4970]:
+                  - link "Edit JSON decision [f24d5f61-1]" [ref=f1e4971] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120S/edit
+                    - text: Edit
+                  - button "Export JSON decision [f24d5f61-1]" [ref=f1e4974] [cursor=pointer]:
+                    - generic [ref=f1e4977]: Export
+                  - status [ref=f1e4978]
+                  - button "Delete JSON decision [f24d5f61-1]" [ref=f1e4979] [cursor=pointer]:
+                    - generic [ref=f1e4982]: Delete
+            - row [ref=f1e4983]:
+              - cell [ref=f1e4984]:
+                - link "JSON inference [32a2b550-1]" [ref=f1e4985] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120V/edit
+                - paragraph [ref=f1e4986]:
+                  - text: Updated
+                  - time [ref=f1e4987]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e4988]
+              - cell "never run" [ref=f1e4991]
+              - cell [ref=f1e4993]:
+                - generic [ref=f1e4995]:
+                  - link "Edit JSON inference [32a2b550-1]" [ref=f1e4996] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120V/edit
+                    - text: Edit
+                  - button "Export JSON inference [32a2b550-1]" [ref=f1e4999] [cursor=pointer]:
+                    - generic [ref=f1e5002]: Export
+                  - status [ref=f1e5003]
+                  - button "Delete JSON inference [32a2b550-1]" [ref=f1e5004] [cursor=pointer]:
+                    - generic [ref=f1e5007]: Delete
+            - row [ref=f1e5008]:
+              - cell [ref=f1e5009]:
+                - link "JSON inference [9732f5a6-1]" [ref=f1e5010] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120X/edit
+                - paragraph [ref=f1e5011]:
+                  - text: Updated
+                  - time [ref=f1e5012]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5013]
+              - cell "never run" [ref=f1e5016]
+              - cell [ref=f1e5018]:
+                - generic [ref=f1e5020]:
+                  - link "Edit JSON inference [9732f5a6-1]" [ref=f1e5021] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120X/edit
+                    - text: Edit
+                  - button "Export JSON inference [9732f5a6-1]" [ref=f1e5024] [cursor=pointer]:
+                    - generic [ref=f1e5027]: Export
+                  - status [ref=f1e5028]
+                  - button "Delete JSON inference [9732f5a6-1]" [ref=f1e5029] [cursor=pointer]:
+                    - generic [ref=f1e5032]: Delete
+            - row [ref=f1e5033]:
+              - cell [ref=f1e5034]:
+                - link "JSON inference [768adaec-1]" [ref=f1e5035] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120Z/edit
+                - paragraph [ref=f1e5036]:
+                  - text: Updated
+                  - time [ref=f1e5037]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5038]
+              - cell "never run" [ref=f1e5041]
+              - cell [ref=f1e5043]:
+                - generic [ref=f1e5045]:
+                  - link "Edit JSON inference [768adaec-1]" [ref=f1e5046] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5120Z/edit
+                    - text: Edit
+                  - button "Export JSON inference [768adaec-1]" [ref=f1e5049] [cursor=pointer]:
+                    - generic [ref=f1e5052]: Export
+                  - status [ref=f1e5053]
+                  - button "Delete JSON inference [768adaec-1]" [ref=f1e5054] [cursor=pointer]:
+                    - generic [ref=f1e5057]: Delete
+            - row [ref=f1e5058]:
+              - cell [ref=f1e5059]:
+                - link "Placement inference [392dd4a0-1]" [ref=f1e5060] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51211/edit
+                - paragraph [ref=f1e5061]:
+                  - text: Updated
+                  - time [ref=f1e5062]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5063]
+              - cell "never run" [ref=f1e5066]
+              - cell [ref=f1e5068]:
+                - generic [ref=f1e5070]:
+                  - link "Edit Placement inference [392dd4a0-1]" [ref=f1e5071] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51211/edit
+                    - text: Edit
+                  - button "Export Placement inference [392dd4a0-1]" [ref=f1e5074] [cursor=pointer]:
+                    - generic [ref=f1e5077]: Export
+                  - status [ref=f1e5078]
+                  - button "Delete Placement inference [392dd4a0-1]" [ref=f1e5079] [cursor=pointer]:
+                    - generic [ref=f1e5082]: Delete
+            - row [ref=f1e5083]:
+              - cell [ref=f1e5084]:
+                - link "Placement decision [18434086-1]" [ref=f1e5085] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51213/edit
+                - paragraph [ref=f1e5086]:
+                  - text: Updated
+                  - time [ref=f1e5087]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5088]
+              - cell "never run" [ref=f1e5091]
+              - cell [ref=f1e5093]:
+                - generic [ref=f1e5095]:
+                  - link "Edit Placement decision [18434086-1]" [ref=f1e5096] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51213/edit
+                    - text: Edit
+                  - button "Export Placement decision [18434086-1]" [ref=f1e5099] [cursor=pointer]:
+                    - generic [ref=f1e5102]: Export
+                  - status [ref=f1e5103]
+                  - button "Delete Placement decision [18434086-1]" [ref=f1e5104] [cursor=pointer]:
+                    - generic [ref=f1e5107]: Delete
+            - row [ref=f1e5108]:
+              - cell [ref=f1e5109]:
+                - link "Placement decision [5e5126ca-1]" [ref=f1e5110] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51215/edit
+                - paragraph [ref=f1e5111]:
+                  - text: Updated
+                  - time [ref=f1e5112]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5113]
+              - cell "never run" [ref=f1e5116]
+              - cell [ref=f1e5118]:
+                - generic [ref=f1e5120]:
+                  - link "Edit Placement decision [5e5126ca-1]" [ref=f1e5121] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51215/edit
+                    - text: Edit
+                  - button "Export Placement decision [5e5126ca-1]" [ref=f1e5124] [cursor=pointer]:
+                    - generic [ref=f1e5127]: Export
+                  - status [ref=f1e5128]
+                  - button "Delete Placement decision [5e5126ca-1]" [ref=f1e5129] [cursor=pointer]:
+                    - generic [ref=f1e5132]: Delete
+            - row [ref=f1e5133]:
+              - cell [ref=f1e5134]:
+                - link "Placement decision [0b4582b5-1]" [ref=f1e5135] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51217/edit
+                - paragraph [ref=f1e5136]:
+                  - text: Updated
+                  - time [ref=f1e5137]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5138]
+              - cell "never run" [ref=f1e5141]
+              - cell [ref=f1e5143]:
+                - generic [ref=f1e5145]:
+                  - link "Edit Placement decision [0b4582b5-1]" [ref=f1e5146] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51217/edit
+                    - text: Edit
+                  - button "Export Placement decision [0b4582b5-1]" [ref=f1e5149] [cursor=pointer]:
+                    - generic [ref=f1e5152]: Export
+                  - status [ref=f1e5153]
+                  - button "Delete Placement decision [0b4582b5-1]" [ref=f1e5154] [cursor=pointer]:
+                    - generic [ref=f1e5157]: Delete
+            - row [ref=f1e5158]:
+              - cell [ref=f1e5159]:
+                - link "Placement decision [d87e26e9-1]" [ref=f1e5160] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51219/edit
+                - paragraph [ref=f1e5161]:
+                  - text: Updated
+                  - time [ref=f1e5162]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5163]
+              - cell "never run" [ref=f1e5166]
+              - cell [ref=f1e5168]:
+                - generic [ref=f1e5170]:
+                  - link "Edit Placement decision [d87e26e9-1]" [ref=f1e5171] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51219/edit
+                    - text: Edit
+                  - button "Export Placement decision [d87e26e9-1]" [ref=f1e5174] [cursor=pointer]:
+                    - generic [ref=f1e5177]: Export
+                  - status [ref=f1e5178]
+                  - button "Delete Placement decision [d87e26e9-1]" [ref=f1e5179] [cursor=pointer]:
+                    - generic [ref=f1e5182]: Delete
+            - row [ref=f1e5183]:
+              - cell [ref=f1e5184]:
+                - link "Placement decision [3dd13174-1]" [ref=f1e5185] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121B/edit
+                - paragraph [ref=f1e5186]:
+                  - text: Updated
+                  - time [ref=f1e5187]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5188]
+              - cell "never run" [ref=f1e5191]
+              - cell [ref=f1e5193]:
+                - generic [ref=f1e5195]:
+                  - link "Edit Placement decision [3dd13174-1]" [ref=f1e5196] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121B/edit
+                    - text: Edit
+                  - button "Export Placement decision [3dd13174-1]" [ref=f1e5199] [cursor=pointer]:
+                    - generic [ref=f1e5202]: Export
+                  - status [ref=f1e5203]
+                  - button "Delete Placement decision [3dd13174-1]" [ref=f1e5204] [cursor=pointer]:
+                    - generic [ref=f1e5207]: Delete
+            - row [ref=f1e5208]:
+              - cell [ref=f1e5209]:
+                - link "Placement decision [a27a37db-1]" [ref=f1e5210] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121D/edit
+                - paragraph [ref=f1e5211]:
+                  - text: Updated
+                  - time [ref=f1e5212]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5213]
+              - cell "never run" [ref=f1e5216]
+              - cell [ref=f1e5218]:
+                - generic [ref=f1e5220]:
+                  - link "Edit Placement decision [a27a37db-1]" [ref=f1e5221] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121D/edit
+                    - text: Edit
+                  - button "Export Placement decision [a27a37db-1]" [ref=f1e5224] [cursor=pointer]:
+                    - generic [ref=f1e5227]: Export
+                  - status [ref=f1e5228]
+                  - button "Delete Placement decision [a27a37db-1]" [ref=f1e5229] [cursor=pointer]:
+                    - generic [ref=f1e5232]: Delete
+            - row [ref=f1e5233]:
+              - cell [ref=f1e5234]:
+                - link "Placement decision [df53c66c-1]" [ref=f1e5235] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121F/edit
+                - paragraph [ref=f1e5236]:
+                  - text: Updated
+                  - time [ref=f1e5237]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5238]
+              - cell "never run" [ref=f1e5241]
+              - cell [ref=f1e5243]:
+                - generic [ref=f1e5245]:
+                  - link "Edit Placement decision [df53c66c-1]" [ref=f1e5246] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121F/edit
+                    - text: Edit
+                  - button "Export Placement decision [df53c66c-1]" [ref=f1e5249] [cursor=pointer]:
+                    - generic [ref=f1e5252]: Export
+                  - status [ref=f1e5253]
+                  - button "Delete Placement decision [df53c66c-1]" [ref=f1e5254] [cursor=pointer]:
+                    - generic [ref=f1e5257]: Delete
+            - row [ref=f1e5258]:
+              - cell [ref=f1e5259]:
+                - link "Placement decision [2ae02f60-1]" [ref=f1e5260] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121H/edit
+                - paragraph [ref=f1e5261]:
+                  - text: Updated
+                  - time [ref=f1e5262]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5263]
+              - cell "never run" [ref=f1e5266]
+              - cell [ref=f1e5268]:
+                - generic [ref=f1e5270]:
+                  - link "Edit Placement decision [2ae02f60-1]" [ref=f1e5271] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121H/edit
+                    - text: Edit
+                  - button "Export Placement decision [2ae02f60-1]" [ref=f1e5274] [cursor=pointer]:
+                    - generic [ref=f1e5277]: Export
+                  - status [ref=f1e5278]
+                  - button "Delete Placement decision [2ae02f60-1]" [ref=f1e5279] [cursor=pointer]:
+                    - generic [ref=f1e5282]: Delete
+            - row [ref=f1e5283]:
+              - cell [ref=f1e5284]:
+                - link "Placement inference [2ae02f60-2]" [ref=f1e5285] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121K/edit
+                - paragraph [ref=f1e5286]:
+                  - text: Updated
+                  - time [ref=f1e5287]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5288]
+              - cell "never run" [ref=f1e5291]
+              - cell [ref=f1e5293]:
+                - generic [ref=f1e5295]:
+                  - link "Edit Placement inference [2ae02f60-2]" [ref=f1e5296] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121K/edit
+                    - text: Edit
+                  - button "Export Placement inference [2ae02f60-2]" [ref=f1e5299] [cursor=pointer]:
+                    - generic [ref=f1e5302]: Export
+                  - status [ref=f1e5303]
+                  - button "Delete Placement inference [2ae02f60-2]" [ref=f1e5304] [cursor=pointer]:
+                    - generic [ref=f1e5307]: Delete
+            - row [ref=f1e5308]:
+              - cell [ref=f1e5309]:
+                - link "Placement inference [bec66163-1]" [ref=f1e5310] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121N/edit
+                - paragraph [ref=f1e5311]:
+                  - text: Updated
+                  - time [ref=f1e5312]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5313]
+              - cell "never run" [ref=f1e5316]
+              - cell [ref=f1e5318]:
+                - generic [ref=f1e5320]:
+                  - link "Edit Placement inference [bec66163-1]" [ref=f1e5321] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121N/edit
+                    - text: Edit
+                  - button "Export Placement inference [bec66163-1]" [ref=f1e5324] [cursor=pointer]:
+                    - generic [ref=f1e5327]: Export
+                  - status [ref=f1e5328]
+                  - button "Delete Placement inference [bec66163-1]" [ref=f1e5329] [cursor=pointer]:
+                    - generic [ref=f1e5332]: Delete
+            - row [ref=f1e5333]:
+              - cell [ref=f1e5334]:
+                - link "Placement decision [bec66163-2]" [ref=f1e5335] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121Q/edit
+                - paragraph [ref=f1e5336]:
+                  - text: Updated
+                  - time [ref=f1e5337]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5338]
+              - cell "never run" [ref=f1e5341]
+              - cell [ref=f1e5343]:
+                - generic [ref=f1e5345]:
+                  - link "Edit Placement decision [bec66163-2]" [ref=f1e5346] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121Q/edit
+                    - text: Edit
+                  - button "Export Placement decision [bec66163-2]" [ref=f1e5349] [cursor=pointer]:
+                    - generic [ref=f1e5352]: Export
+                  - status [ref=f1e5353]
+                  - button "Delete Placement decision [bec66163-2]" [ref=f1e5354] [cursor=pointer]:
+                    - generic [ref=f1e5357]: Delete
+            - row [ref=f1e5358]:
+              - cell [ref=f1e5359]:
+                - link "Placement inference [344fb7eb-1]" [ref=f1e5360] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121S/edit
+                - paragraph [ref=f1e5361]:
+                  - text: Updated
+                  - time [ref=f1e5362]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5363]
+              - cell "never run" [ref=f1e5366]
+              - cell [ref=f1e5368]:
+                - generic [ref=f1e5370]:
+                  - link "Edit Placement inference [344fb7eb-1]" [ref=f1e5371] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121S/edit
+                    - text: Edit
+                  - button "Export Placement inference [344fb7eb-1]" [ref=f1e5374] [cursor=pointer]:
+                    - generic [ref=f1e5377]: Export
+                  - status [ref=f1e5378]
+                  - button "Delete Placement inference [344fb7eb-1]" [ref=f1e5379] [cursor=pointer]:
+                    - generic [ref=f1e5382]: Delete
+            - row [ref=f1e5383]:
+              - cell [ref=f1e5384]:
+                - link "Placement decision [344fb7eb-2]" [ref=f1e5385] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121V/edit
+                - paragraph [ref=f1e5386]:
+                  - text: Updated
+                  - time [ref=f1e5387]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5388]
+              - cell "never run" [ref=f1e5391]
+              - cell [ref=f1e5393]:
+                - generic [ref=f1e5395]:
+                  - link "Edit Placement decision [344fb7eb-2]" [ref=f1e5396] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121V/edit
+                    - text: Edit
+                  - button "Export Placement decision [344fb7eb-2]" [ref=f1e5399] [cursor=pointer]:
+                    - generic [ref=f1e5402]: Export
+                  - status [ref=f1e5403]
+                  - button "Delete Placement decision [344fb7eb-2]" [ref=f1e5404] [cursor=pointer]:
+                    - generic [ref=f1e5407]: Delete
+            - row [ref=f1e5408]:
+              - cell [ref=f1e5409]:
+                - link "qa own continuity" [ref=f1e5410] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121X/edit
+                - paragraph [ref=f1e5411]:
+                  - text: Updated
+                  - time [ref=f1e5412]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5413]
+              - cell "never run" [ref=f1e5416]
+              - cell [ref=f1e5418]:
+                - generic [ref=f1e5420]:
+                  - link "Edit qa own continuity" [ref=f1e5421] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121X/edit
+                    - text: Edit
+                  - button "Export qa own continuity" [ref=f1e5424] [cursor=pointer]:
+                    - generic [ref=f1e5427]: Export
+                  - status [ref=f1e5428]
+                  - button "Delete qa own continuity" [ref=f1e5429] [cursor=pointer]:
+                    - generic [ref=f1e5432]: Delete
+            - row [ref=f1e5433]:
+              - cell [ref=f1e5434]:
+                - link "F2 palette placement" [ref=f1e5435] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121Z/edit
+                - paragraph [ref=f1e5436]:
+                  - text: Updated
+                  - time [ref=f1e5437]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5438]
+              - cell "never run" [ref=f1e5441]
+              - cell [ref=f1e5443]:
+                - generic [ref=f1e5445]:
+                  - link "Edit F2 palette placement" [ref=f1e5446] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5121Z/edit
+                    - text: Edit
+                  - button "Export F2 palette placement" [ref=f1e5449] [cursor=pointer]:
+                    - generic [ref=f1e5452]: Export
+                  - status [ref=f1e5453]
+                  - button "Delete F2 palette placement" [ref=f1e5454] [cursor=pointer]:
+                    - generic [ref=f1e5457]: Delete
+            - row [ref=f1e5458]:
+              - cell [ref=f1e5459]:
+                - link "qa palette rail" [ref=f1e5460] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51221/edit
+                - paragraph [ref=f1e5461]:
+                  - text: Updated
+                  - time [ref=f1e5462]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5463]
+              - cell "never run" [ref=f1e5466]
+              - cell [ref=f1e5468]:
+                - generic [ref=f1e5470]:
+                  - link "Edit qa palette rail" [ref=f1e5471] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51221/edit
+                    - text: Edit
+                  - button "Export qa palette rail" [ref=f1e5474] [cursor=pointer]:
+                    - generic [ref=f1e5477]: Export
+                  - status [ref=f1e5478]
+                  - button "Delete qa palette rail" [ref=f1e5479] [cursor=pointer]:
+                    - generic [ref=f1e5482]: Delete
+            - row [ref=f1e5483]:
+              - cell [ref=f1e5484]:
+                - link "qa rail focus rings" [ref=f1e5485] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51223/edit
+                - paragraph [ref=f1e5486]:
+                  - text: Updated
+                  - time [ref=f1e5487]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5488]
+              - cell "never run" [ref=f1e5491]
+              - cell [ref=f1e5493]:
+                - generic [ref=f1e5495]:
+                  - link "Edit qa rail focus rings" [ref=f1e5496] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51223/edit
+                    - text: Edit
+                  - button "Export qa rail focus rings" [ref=f1e5499] [cursor=pointer]:
+                    - generic [ref=f1e5502]: Export
+                  - status [ref=f1e5503]
+                  - button "Delete qa rail focus rings" [ref=f1e5504] [cursor=pointer]:
+                    - generic [ref=f1e5507]: Delete
+            - row [ref=f1e5508]:
+              - cell [ref=f1e5509]:
+                - link "qa short palette rail" [ref=f1e5510] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51225/edit
+                - paragraph [ref=f1e5511]:
+                  - text: Updated
+                  - time [ref=f1e5512]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5513]
+              - cell "never run" [ref=f1e5516]
+              - cell [ref=f1e5518]:
+                - generic [ref=f1e5520]:
+                  - link "Edit qa short palette rail" [ref=f1e5521] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51225/edit
+                    - text: Edit
+                  - button "Export qa short palette rail" [ref=f1e5524] [cursor=pointer]:
+                    - generic [ref=f1e5527]: Export
+                  - status [ref=f1e5528]
+                  - button "Delete qa short palette rail" [ref=f1e5529] [cursor=pointer]:
+                    - generic [ref=f1e5532]: Delete
+            - row [ref=f1e5533]:
+              - cell [ref=f1e5534]:
+                - link "qa coarse palette rail" [ref=f1e5535] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51227/edit
+                - paragraph [ref=f1e5536]:
+                  - text: Updated
+                  - time [ref=f1e5537]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5538]
+              - cell "never run" [ref=f1e5541]
+              - cell [ref=f1e5543]:
+                - generic [ref=f1e5545]:
+                  - link "Edit qa coarse palette rail" [ref=f1e5546] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51227/edit
+                    - text: Edit
+                  - button "Export qa coarse palette rail" [ref=f1e5549] [cursor=pointer]:
+                    - generic [ref=f1e5552]: Export
+                  - status [ref=f1e5553]
+                  - button "Delete qa coarse palette rail" [ref=f1e5554] [cursor=pointer]:
+                    - generic [ref=f1e5557]: Delete
+            - row [ref=f1e5558]:
+              - cell [ref=f1e5559]:
+                - link "Synthetic cron setup from manual" [ref=f1e5560] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51229/edit
+                - paragraph [ref=f1e5561]:
+                  - text: Updated
+                  - time [ref=f1e5562]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5563]
+              - cell "never run" [ref=f1e5566]
+              - cell [ref=f1e5568]:
+                - generic [ref=f1e5570]:
+                  - link "Edit Synthetic cron setup from manual" [ref=f1e5571] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51229/edit
+                    - text: Edit
+                  - button "Export Synthetic cron setup from manual" [ref=f1e5574] [cursor=pointer]:
+                    - generic [ref=f1e5577]: Export
+                  - status [ref=f1e5578]
+                  - button "Delete Synthetic cron setup from manual" [ref=f1e5579] [cursor=pointer]:
+                    - generic [ref=f1e5582]: Delete
+            - row [ref=f1e5583]:
+              - cell [ref=f1e5584]:
+                - link "Synthetic cron setup from event" [ref=f1e5585] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122B/edit
+                - paragraph [ref=f1e5586]:
+                  - text: Updated
+                  - time [ref=f1e5587]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5588]
+              - cell "never run" [ref=f1e5591]
+              - cell [ref=f1e5593]:
+                - generic [ref=f1e5595]:
+                  - link "Edit Synthetic cron setup from event" [ref=f1e5596] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122B/edit
+                    - text: Edit
+                  - button "Export Synthetic cron setup from event" [ref=f1e5599] [cursor=pointer]:
+                    - generic [ref=f1e5602]: Export
+                  - status [ref=f1e5603]
+                  - button "Delete Synthetic cron setup from event" [ref=f1e5604] [cursor=pointer]:
+                    - generic [ref=f1e5607]: Delete
+            - row [ref=f1e5608]:
+              - cell [ref=f1e5609]:
+                - link "Synthetic long graph" [ref=f1e5610] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122D/edit
+                - paragraph [ref=f1e5611]:
+                  - text: Updated
+                  - time [ref=f1e5612]: 10/2/2026, 12:00:00 PM
+              - cell "draft only" [ref=f1e5613]
+              - cell "never run" [ref=f1e5616]
+              - cell [ref=f1e5618]:
+                - generic [ref=f1e5620]:
+                  - link "Edit Synthetic long graph" [ref=f1e5621] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122D/edit
+                    - text: Edit
+                  - button "Export Synthetic long graph" [ref=f1e5624] [cursor=pointer]:
+                    - generic [ref=f1e5627]: Export
+                  - status [ref=f1e5628]
+                  - button "Delete Synthetic long graph" [ref=f1e5629] [cursor=pointer]:
+                    - generic [ref=f1e5632]: Delete
+            - row [ref=f1e5633]:
+              - cell [ref=f1e5634]:
+                - link "API recovery 0" [ref=f1e5635] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122F/edit
+                - paragraph [ref=f1e5636]:
+                  - text: Updated
+                  - time [ref=f1e5637]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5638]
+              - cell [ref=f1e5641]:
+                - link "waiting" [ref=f1e5642] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX5122H
+              - cell [ref=f1e5647]:
+                - generic [ref=f1e5649]:
+                  - link "Edit API recovery 0" [ref=f1e5650] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122F/edit
+                    - text: Edit
+                  - button "Export API recovery 0" [ref=f1e5653] [cursor=pointer]:
+                    - generic [ref=f1e5656]: Export
+                  - status [ref=f1e5657]
+                  - button "Delete API recovery 0" [ref=f1e5658] [cursor=pointer]:
+                    - generic [ref=f1e5661]: Delete
+            - row [ref=f1e5662]:
+              - cell [ref=f1e5663]:
+                - link "API recovery 1" [ref=f1e5664] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122K/edit
+                - paragraph [ref=f1e5665]:
+                  - text: Updated
+                  - time [ref=f1e5666]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5667]
+              - cell [ref=f1e5670]:
+                - link "waiting" [ref=f1e5671] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX5122N
+              - cell [ref=f1e5676]:
+                - generic [ref=f1e5678]:
+                  - link "Edit API recovery 1" [ref=f1e5679] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122K/edit
+                    - text: Edit
+                  - button "Export API recovery 1" [ref=f1e5682] [cursor=pointer]:
+                    - generic [ref=f1e5685]: Export
+                  - status [ref=f1e5686]
+                  - button "Delete API recovery 1" [ref=f1e5687] [cursor=pointer]:
+                    - generic [ref=f1e5690]: Delete
+            - row [ref=f1e5691]:
+              - cell [ref=f1e5692]:
+                - link "API recovery 2" [ref=f1e5693] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122Q/edit
+                - paragraph [ref=f1e5694]:
+                  - text: Updated
+                  - time [ref=f1e5695]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5696]
+              - cell [ref=f1e5699]:
+                - link "waiting" [ref=f1e5700] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX5122S
+              - cell [ref=f1e5705]:
+                - generic [ref=f1e5707]:
+                  - link "Edit API recovery 2" [ref=f1e5708] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122Q/edit
+                    - text: Edit
+                  - button "Export API recovery 2" [ref=f1e5711] [cursor=pointer]:
+                    - generic [ref=f1e5714]: Export
+                  - status [ref=f1e5715]
+                  - button "Delete API recovery 2" [ref=f1e5716] [cursor=pointer]:
+                    - generic [ref=f1e5719]: Delete
+            - row [ref=f1e5720]:
+              - cell [ref=f1e5721]:
+                - link "API recovery 3" [ref=f1e5722] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122V/edit
+                - paragraph [ref=f1e5723]:
+                  - text: Updated
+                  - time [ref=f1e5724]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5725]
+              - cell [ref=f1e5728]:
+                - link "waiting" [ref=f1e5729] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX5122X
+              - cell [ref=f1e5734]:
+                - generic [ref=f1e5736]:
+                  - link "Edit API recovery 3" [ref=f1e5737] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122V/edit
+                    - text: Edit
+                  - button "Export API recovery 3" [ref=f1e5740] [cursor=pointer]:
+                    - generic [ref=f1e5743]: Export
+                  - status [ref=f1e5744]
+                  - button "Delete API recovery 3" [ref=f1e5745] [cursor=pointer]:
+                    - generic [ref=f1e5748]: Delete
+            - row [ref=f1e5749]:
+              - cell [ref=f1e5750]:
+                - link "API recovery 4" [ref=f1e5751] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122Z/edit
+                - paragraph [ref=f1e5752]:
+                  - text: Updated
+                  - time [ref=f1e5753]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5754]
+              - cell [ref=f1e5757]:
+                - link "waiting" [ref=f1e5758] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX51231
+              - cell [ref=f1e5763]:
+                - generic [ref=f1e5765]:
+                  - link "Edit API recovery 4" [ref=f1e5766] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5122Z/edit
+                    - text: Edit
+                  - button "Export API recovery 4" [ref=f1e5769] [cursor=pointer]:
+                    - generic [ref=f1e5772]: Export
+                  - status [ref=f1e5773]
+                  - button "Delete API recovery 4" [ref=f1e5774] [cursor=pointer]:
+                    - generic [ref=f1e5777]: Delete
+            - row [ref=f1e5778]:
+              - cell [ref=f1e5779]:
+                - link "Loaded stream recovery" [ref=f1e5780] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51233/edit
+                - paragraph [ref=f1e5781]:
+                  - text: Updated
+                  - time [ref=f1e5782]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5783]
+              - cell [ref=f1e5786]:
+                - link "waiting" [ref=f1e5787] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX51235
+              - cell [ref=f1e5792]:
+                - generic [ref=f1e5794]:
+                  - link "Edit Loaded stream recovery" [ref=f1e5795] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51233/edit
+                    - text: Edit
+                  - button "Export Loaded stream recovery" [ref=f1e5798] [cursor=pointer]:
+                    - generic [ref=f1e5801]: Export
+                  - status [ref=f1e5802]
+                  - button "Delete Loaded stream recovery" [ref=f1e5803] [cursor=pointer]:
+                    - generic [ref=f1e5806]: Delete
+            - row [ref=f1e5807]:
+              - cell [ref=f1e5808]:
+                - link "API draft recovery" [ref=f1e5809] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51237/edit
+                - paragraph [ref=f1e5810]: draft kept through an API outage
+                - paragraph [ref=f1e5811]:
+                  - text: Updated
+                  - time [ref=f1e5812]: 10/2/2026, 12:00:00 PM
+              - cell "published, unpublished changes" [ref=f1e5813]
+              - cell "never run" [ref=f1e5816]
+              - cell [ref=f1e5818]:
+                - generic [ref=f1e5820]:
+                  - link "Edit API draft recovery" [ref=f1e5821] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX51237/edit
+                    - text: Edit
+                  - button "Export API draft recovery" [ref=f1e5824] [cursor=pointer]:
+                    - generic [ref=f1e5827]: Export
+                  - status [ref=f1e5828]
+                  - button "Delete API draft recovery" [ref=f1e5829] [cursor=pointer]:
+                    - generic [ref=f1e5832]: Delete
+            - row [ref=f1e5833]:
+              - cell [ref=f1e5834]:
+                - link "Clean stream backoff" [ref=f1e5835] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5123A/edit
+                - paragraph [ref=f1e5836]:
+                  - text: Updated
+                  - time [ref=f1e5837]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5838]
+              - cell [ref=f1e5841]:
+                - link "waiting" [ref=f1e5842] [cursor=pointer]:
+                  - /url: /app/runs/01M3Y7RKG08F3NZ0572RX5123C
+              - cell [ref=f1e5847]:
+                - generic [ref=f1e5849]:
+                  - link "Edit Clean stream backoff" [ref=f1e5850] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5123A/edit
+                    - text: Edit
+                  - button "Export Clean stream backoff" [ref=f1e5853] [cursor=pointer]:
+                    - generic [ref=f1e5856]: Export
+                  - status [ref=f1e5857]
+                  - button "Delete Clean stream backoff" [ref=f1e5858] [cursor=pointer]:
+                    - generic [ref=f1e5861]: Delete
+            - row [ref=f1e5862]:
+              - cell [ref=f1e5863]:
+                - link "cold offline reconnect 0-0" [ref=f1e5864] [cursor=pointer]:
+                  - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5123E/edit
+                - paragraph [ref=f1e5865]:
+                  - text: Updated
+                  - time [ref=f1e5866]: 10/2/2026, 12:00:00 PM
+              - cell "published" [ref=f1e5867]
+              - cell "never run" [ref=f1e5870]
+              - cell [ref=f1e5872]:
+                - generic [ref=f1e5874]:
+                  - link "Edit cold offline reconnect 0-0" [ref=f1e5875] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5123E/edit
+                    - text: Edit
+                  - button "Export cold offline reconnect 0-0" [ref=f1e5878] [cursor=pointer]:
+                    - generic [ref=f1e5881]: Export
+                  - status [ref=f1e5882]
+                  - button "Delete cold offline reconnect 0-0" [ref=f1e5883] [cursor=pointer]:
+                    - generic [ref=f1e5886]: Delete
+      - region [ref=f1e5887]:
+        - heading "System loops" [level=2] [ref=f1e5889]
+        - generic [ref=f1e5890]:
+          - paragraph [ref=f1e5891]: GraphGoblin keeps one chat loop for this gateway and one for each paired device, including revoked ones. Change the steps between the chat trigger and its exits.
+          - table [ref=f1e5892]:
+            - rowgroup [ref=f1e5893]:
+              - row [ref=f1e5894]:
+                - columnheader "Name" [ref=f1e5895]
+                - columnheader "State" [ref=f1e5896]
+                - columnheader "Last run" [ref=f1e5897]
+                - columnheader "Actions" [ref=f1e5898]
+            - rowgroup [ref=f1e5899]:
+              - row [ref=f1e5900]:
+                - cell [ref=f1e5901]:
+                  - link "Gateway chat" [ref=f1e5902] [cursor=pointer]:
+                    - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105K/edit
+                  - paragraph [ref=f1e5903]: System chat workflow. Its protocol boundary is protected; its workflow is editable.
+                  - paragraph [ref=f1e5904]:
+                    - text: Answers
+                    - link "Chat on this gateway" [ref=f1e5905] [cursor=pointer]:
+                      - /url: /app/chat
+                  - paragraph [ref=f1e5906]:
+                    - text: Updated
+                    - time [ref=f1e5907]: 10/2/2026, 12:00:00 PM
+                - cell "published" [ref=f1e5908]
+                - cell "never run" [ref=f1e5911]
+                - cell [ref=f1e5913]:
+                  - generic [ref=f1e5915]:
+                    - link "Edit Gateway chat" [ref=f1e5916] [cursor=pointer]:
+                      - /url: /app/loops/01M3Y7RKG08F3NZ0572RX5105K/edit
+                      - text: Edit
+                    - button "Export Gateway chat" [ref=f1e5919] [cursor=pointer]:
+                      - generic [ref=f1e5922]: Export
+                    - status [ref=f1e5923]
+  - status [ref=f1e5924]:
+    - generic [ref=f1e5926]:
+      - text: A new version is available
+      - generic [ref=f1e5927]: The update could not be verified. Return to the other tabs, or close and reopen all app windows.
+    - button "Update" [ref=f1e5928] [cursor=pointer]
+    - button "Later" [ref=f1e5930] [cursor=pointer]
+```
+
+# Test source
+
+```ts
+  12  | 
+  13  | /** Tests run against the server global-setup started; its URL arrives through the environment. */
+  14  | export const test = base.extend({
+  15  |   // Playwright fixtures must destructure their dependencies, even when there are none.
+  16  |   // eslint-disable-next-line no-empty-pattern
+  17  |   baseURL: async ({}, use) => {
+  18  |     const url = process.env['GG_E2E_BASE_URL'];
+  19  |     if (!url) throw new Error('GG_E2E_BASE_URL is not set; the global setup did not run');
+  20  |     await use(url);
+  21  |   },
+  22  | });
+  23  | 
+  24  | export { expect };
+  25  | 
+  26  | const fixtureNameCounts = new Map<string, number>();
+  27  | 
+  28  | /**
+  29  |  * A loop name that no other fixture in the shared E2E gateway holds. One owner cannot keep two loop
+  30  |  * names that differ only in letter case or spacing (#209, ADR-0073), and every spec shares this
+  31  |  * gateway's store for the whole run, so a helper or a parameterized test that would repeat a literal
+  32  |  * name adds the running test's identity and a count within that test. The base stays readable at
+  33  |  * the start, so a `getByText(base)` substring match still finds it; a test that asserts the exact
+  34  |  * name uses the returned value.
+  35  |  */
+  36  | export function uniqueLoopName(base: string): string {
+  37  |   const info = test.info();
+  38  |   const key = `${info.testId}:${info.repeatEachIndex}:${info.retry}`;
+  39  |   const count = (fixtureNameCounts.get(key) ?? 0) + 1;
+  40  |   fixtureNameCounts.set(key, count);
+  41  |   const repeat = info.repeatEachIndex > 0 ? `x${info.repeatEachIndex}` : '';
+  42  |   const retry = info.retry > 0 ? `r${info.retry}` : '';
+  43  |   return `${base} [${info.testId.slice(-8)}${repeat}${retry}-${count}]`;
+  44  | }
+  45  | 
+  46  | /**
+  47  |  * Choose a native select's displayed option with actual keyboard typeahead. On the headless macOS
+  48  |  * Chromium test host, ArrowDown/Home/End leave a closed select unchanged. Tab away and back clears the
+  49  |  * native search buffer, so consecutive choices cannot accidentally share a prefix. Enter is not
+  50  |  * used: on that browser it can submit the select's form instead of choosing an option.
+  51  |  */
+  52  | export async function chooseOptionByKeyboard(page: Page, select: Locator, label: string) {
+  53  |   await expect(select).toBeFocused();
+  54  |   await expect(select.getByRole('option', { name: label, exact: true })).toHaveCount(1);
+  55  |   await page.keyboard.press('Tab');
+  56  |   await page.keyboard.press('Shift+Tab');
+  57  |   await expect(select).toBeFocused();
+  58  |   await page.keyboard.type(label);
+  59  |   await expect(select.getByRole('option', { selected: true })).toHaveText(label);
+  60  | }
+  61  | 
+  62  | /** Initialize an explicitly active editor tab before another tab can edit its draft. */
+  63  | export async function openDraftTab(page: Page, loopId: string, name: string): Promise<void> {
+  64  |   // Multi-page traces show renderer work stalled until explicit activation, even while the
+  65  |   // headless page reports visible/focused. A heading alone can also precede reconciliation.
+  66  |   // These are state synchronization waits; their timeouts are failure budgets, not delays
+  67  |   // or assertions about how fast the editor must render.
+  68  |   await page.bringToFront();
+  69  |   await page.goto(`/app/loops/${loopId}/edit`);
+  70  |   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  71  |   await expect(
+  72  |     page.getByText(
+  73  |       'The editor is available. Checking the server and this device before saving changes.',
+  74  |       { exact: true },
+  75  |     ),
+  76  |   ).toBeHidden();
+  77  | }
+  78  | 
+  79  | /** A manual trigger, a wait-for-input node, and an exit. */
+  80  | export function approvalLoop(name: string) {
+  81  |   return {
+  82  |     schemaVersion: CURRENT_DEFINITION_FORMAT,
+  83  |     name,
+  84  |     nodes: [
+  85  |       {
+  86  |         id: 'start',
+  87  |         kind: 'trigger',
+  88  |         label: 'Start',
+  89  |         config: manualTriggerConfig(),
+  90  |         ui: { x: 0, y: 80 },
+  91  |       },
+  92  |       {
+  93  |         id: 'approve',
+  94  |         kind: 'wait',
+  95  |         label: 'Approve',
+  96  |         config: { mode: 'input', prompt: 'Approve?' },
+  97  |         ui: { x: 260, y: 80 },
+  98  |       },
+  99  |       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 520, y: 80 } },
+  100 |     ],
+  101 |     edges: [
+  102 |       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'approve' } },
+  103 |       { id: 'e2', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
+  104 |     ],
+  105 |   };
+  106 | }
+  107 | 
+  108 | /** Drive the E2E server's control port, for example to script the fake harness. */
+  109 | export async function control(request: APIRequestContext, path: string, body: unknown = {}) {
+  110 |   const base = process.env['GG_E2E_CONTROL_URL'];
+  111 |   if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+> 112 |   const res = await request.post(`${base}${path}`, { data: body });
+      |                             ^ Error: apiRequestContext.post: Target page, context or browser has been closed
+  113 |   expect(res.ok()).toBe(true);
+  114 |   return (await res.json()) as Record<string, unknown>;
+  115 | }
+  116 | 
+  117 | /**
+  118 |  * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it
+  119 |  * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+  120 |  */
+  121 | export async function showLoopPanel(page: Page): Promise<void> {
+  122 |   await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  123 |   const show = page.getByRole('button', { name: 'Show loop settings' });
+  124 |   if (await show.isVisible()) await show.click();
+  125 |   await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+  126 |     'aria-expanded',
+  127 |     'true',
+  128 |   );
+  129 | }
+  130 | 
+  131 | /** Open a node's editor by clicking its card (on the header band, away from port handles). */
+  132 | export async function openNode(page: Page, nodeId: string) {
+  133 |   // Target the rendered header box: a fixed pixel offset can leave the card after zooming.
+  134 |   await page.getByTestId(`node-${nodeId}`).locator(':scope > div:has([data-kind])').click();
+  135 |   const dialog = page.getByRole('dialog');
+  136 |   await expect(dialog).toBeVisible();
+  137 |   return dialog;
+  138 | }
+  139 | 
+  140 | /**
+  141 |  * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+  142 |  * toggle. Advanced fields stay collapsed under it until then.
+  143 |  */
+  144 | export async function openAdvanced(scope: Page | Locator) {
+  145 |   const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  146 |   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  147 |   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  148 |   return toggle;
+  149 | }
+  150 | 
+  151 | /** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+  152 | export async function openItem(scope: Page | Locator, name: string) {
+  153 |   const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  154 |   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  155 |   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  156 |   return toggle;
+  157 | }
+  158 | 
+  159 | /** Close the open node editor with its Done button. */
+  160 | export async function closeNode(page: Page): Promise<void> {
+  161 |   await page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
+  162 |   await expect(page.getByRole('dialog')).toHaveCount(0);
+  163 | }
+  164 | 
+  165 | /** A node's port handle on the canvas; the input handle's id is `in`. */
+  166 | export function portHandle(page: Page, nodeId: string, handleId: string): Locator {
+  167 |   return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
+  168 | }
+  169 | 
+  170 | /**
+  171 |  * Draw a connection as a pointer user does, by dragging from an output handle to the target's input
+  172 |  * handle after fitting the graph into view (#207). The node editor offers no connection controls
+  173 |  * and the keyboard cannot create a connection (ADR-0076), so close the node editor first.
+  174 |  */
+  175 | export async function connectOnCanvas(
+  176 |   page: Page,
+  177 |   source: string,
+  178 |   port: string,
+  179 |   target: string,
+  180 | ): Promise<void> {
+  181 |   await page.locator('.react-flow__controls-fitview').click();
+  182 |   await portHandle(page, source, port).dragTo(portHandle(page, target, 'in'));
+  183 | }
+  184 | 
+  185 | /**
+  186 |  * Remove a connection from the keyboard: focus it, Enter selects it, Delete removes it. This is
+  187 |  * the keyboard path that remains after #207; the selected connection's toolbar also has a visible
+  188 |  * Remove connection button.
+  189 |  */
+  190 | export async function removeEdgeOnCanvas(page: Page, edgeId: string): Promise<void> {
+  191 |   const edge = page.locator(`.react-flow__edge[data-id="${edgeId}"]`);
+  192 |   await edge.focus();
+  193 |   await page.keyboard.press('Enter');
+  194 |   await page.keyboard.press('Delete');
+  195 |   await expect(edge).toHaveCount(0);
+  196 | }
+  197 | 
+  198 | /** Create and publish a loop through the API; returns its id. */
+  199 | export async function publishLoop(
+  200 |   request: APIRequestContext,
+  201 |   definition: unknown,
+  202 |   baseURL = '',
+  203 | ): Promise<string> {
+  204 |   const created = await request.post(`${baseURL}/loops`, { data: { definition } });
+  205 |   expect(created.status()).toBe(201);
+  206 |   const { loop } = (await created.json()) as { loop: { id: string } };
+  207 |   const published = await request.post(`${baseURL}/loops/${loop.id}/publish`);
+  208 |   expect(published.status()).toBe(200);
+  209 |   return loop.id;
+  210 | }
+  211 | 
+  212 | /** Publish one Event entry per type and return a sender targeting that loop. */
+```

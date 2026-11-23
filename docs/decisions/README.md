@@ -102,4 +102,12 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 
 [ADR-0082 - Per-user macOS Finder and Dock launcher](ADR-0082-macos-finder-dock-launcher.md) records saved native runtime inputs, detached lifetime, conservative admission, AppKit presentation, receipt-bound atomic installation and the shared managed-log writer (#456).
 
-[ADR-0083 - Native Swift coverage for the macOS launcher](ADR-0083-swift-native-coverage.md) sets the 90% line and region policy with explicit branch-outcome tests, preserves the V8 gates, and records that the collector/check is wired while its first hosted verification is pending (#456).
+[ADR-0083 - Native Swift coverage for the macOS launcher](ADR-0083-swift-native-coverage.md) sets the 90% line and region policy with explicit branch-outcome tests, preserves the V8 gates, and records the complete historical hosted verification on CI13 (#456).
+
+[ADR-0084 - Independent CI lanes behind a fail-closed Gates check](ADR-0084-independent-ci-lanes-behind-gates.md) runs repository checks and serial coverage as independent jobs behind the always-evaluated `Gates` aggregate, which passes only when both succeed (#488).
+
+[ADR-0085 - Refuse secret-bearing Windows launcher overrides](ADR-0085-refuse-launcher-secret-overrides.md) rejects explicit master-key and Jev seed-key overrides before configuration persistence or launcher actions, without printing their values (#437).
+
+[ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
+
+[ADR-0089 - Bound optional Claude start-refusal diagnosis](ADR-0089-bounded-claude-refusal-diagnosis.md) gives post-refusal metadata a private monotonic deadline, retaining timely facts and returning the known refusal with unknown cause when optional diagnosis expires (#364).

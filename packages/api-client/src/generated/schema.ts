@@ -5130,9 +5130,9 @@ export interface components {
                         approval?: ("never" | "on-request") | undefined;
                         networkAccess?: boolean | undefined;
                         webSearch?: boolean | undefined;
-                        configOverrides?: {
+                        configOverrides?: ({
                             [key: string]: unknown;
-                        } | undefined;
+                        } & unknown) | undefined;
                     } | undefined;
                     capabilities?: {
                         mcpServers?: string[] | undefined;
@@ -7681,9 +7681,9 @@ export interface components {
                         approval: "never" | "on-request";
                         networkAccess?: boolean | undefined;
                         webSearch?: boolean | undefined;
-                        configOverrides?: {
+                        configOverrides?: ({
                             [key: string]: unknown;
-                        } | undefined;
+                        } & unknown) | undefined;
                     };
                     capabilities?: {
                         mcpServers?: string[] | undefined;

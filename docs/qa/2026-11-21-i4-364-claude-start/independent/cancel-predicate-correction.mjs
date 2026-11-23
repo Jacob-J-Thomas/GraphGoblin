@@ -1,0 +1,14 @@
+import {writeFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+const E=import.meta.dirname;
+const {ClaudeHarness}=await import(pathToFileURL('G:/ggq/gg-i4-364-qa/GraphGoblin/packages/infrastructure/dist/claude/index.js'));
+const empty={exitCode:0,stdout:'',aborted:false,timedOut:false,overflow:false};
+const help='--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume';
+const controller=new AbortController();let turnCalls=0;
+const runner=async(request)=>{if(request.args.includes('--version'))return{...empty,stdout:'2.1.308'};if(request.args.includes('--help'))return{...empty,stdout:help};if(request.args.includes('auth'))return{...empty,stdout:'{"authMethod":"claude.ai","loggedIn":true}'};turnCalls++;controller.abort();return{...empty,exitCode:null,aborted:true,spawnCode:'ENOENT',startRefusal:'working-directory-missing'};};
+const session=new ClaudeHarness({binary:'synthetic-transport-only',env:{HOME:join(E,'empty-home'),USERPROFILE:join(E,'empty-home')},runner}).start({workingDirectory:'CANARY364_PRIVATE_WORKSPACE',options:{sandbox:'read-only',approval:'never'},model:'claude-opus-5-5',effort:'low',turn:{prompt:'CANARY364_PRIVATE_PROMPT'}},controller.signal);
+const collect=(async()=>{const events=[];for await(const e of session.events)events.push(e);return events;})();
+const result=await session.result.then(value=>({value}),error=>({name:error.name,code:error.code,message:error.message}));const events=await collect;
+const checks=[{name:'cancellation identified by DOMException name',pass:result.name==='AbortError'},{name:'refusal diagnosis did not displace cancellation',pass:events.length===0&&result.message==='Claude turn cancelled'},{name:'exactly one injected turn and private text absent',pass:turnCalls===1&&!JSON.stringify({result,events}).includes('CANARY364')}];
+await writeFile(join(E,'cancel-predicate-correction.json'),JSON.stringify({result,events,turnCalls,checks,scope:'Fresh rerun of one controlled harness-port case; not native process cancellation.'},null,2));console.log(JSON.stringify({result,checks}));if(checks.some(c=>!c.pass))process.exitCode=1;

@@ -1,0 +1,195 @@
+# #488/#496 correction 02: run identity and the closer's rejected count
+
+This is the implementation lane (Claude Code, `claude-opus-5-5`). It is not a formal review and not
+independent QA. Nothing was staged, committed, pushed, published, commented or run on GitHub, and
+no hosted control was modified or recreated. Work stayed in
+`C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin`, branch
+`codex/gg-20261117-ci-gates`, base `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. The correction-01
+packet and the independent QA packet were read only and verified byte-identical
+(`logs/07-prior-evidence-integrity.log`).
+
+## Source identity
+
+| | Correction-01 frozen source (original here) | Correction-02 frozen source |
+| --- | --- | --- |
+| `tooling/scripts/windows-launcher-evidence.mjs` | `3d2d6521…8caf` | `5368ec79…ad0cf` (+22 −6 lines) |
+| `tooling/scripts/windows-launcher-evidence.test.mjs` | `271591c8…0fbe` | `85dce79d…84d5` (+304 −1) |
+| `docs/10-testing-and-quality.md` | `ede61c10…0cac4` | `96c87851…d15f` (one paragraph) |
+| `.github/workflows/ci.yml`, `CHANGELOG.md`, ADR-0084, `docs/decisions/README.md`, `tooling/scripts/windows-launcher.acceptance.mjs` | as in correction 01 | unchanged |
+| Tracked diff of the five tracked files | `3d40818a…7876` | `fa332e20…af91` |
+
+The full hashes and Git blobs are in `SOURCE-BINDINGS.txt`. The per-file comparison is in
+`SOURCE-COMPARISON.txt`. Before any change, the original bindings matched
+`i1-ci-correction-01/SOURCE-BINDINGS.txt` for all eight files and the diff hash
+(`original-source/SOURCE-BINDINGS.original.txt`). The byte copies are in `original-source/` and
+`corrected-source/`, and `corrected-source/correction-vs-original.diff` holds the change. The
+workflow, native suite, deadlines, thresholds, audit and ADR are unchanged. The concurrent
+`.gitattributes` and `docs/qa/` work in the worktree was not touched and is outside the diff hash.
+
+## Root 1: run identity
+
+**Finding.** With a verified push checkout and a complete stream, `GITHUB_RUN_ID=''` finalized
+`complete`, exit 0, with the manifest listing `unavailable: ["runId"]`.
+
+**Change.** `bindingRequirements` now also requires the run identity. Exact contract (docs/10,
+Status): `repository`, `workflowRef`, `job`, `runId`, `runAttempt`, `event` and `ref` must each be
+non-null in the validated manifest.
+- **Missing or malformed values.** Validation against the existing patterns already turns a
+  missing or malformed value into null. Any null adds one `binding-identity` marker, however many
+  values are null.
+- **Status.** A passing native step becomes `incomplete`, exit 1. The valid manifest, observations
+  and result are still written and uploaded. A failed or cancelled step stays `native-failed`, and a
+  skipped one stays `not-run`, each with the marker listed.
+- **Not required.** The runner OS, architecture and image and the Node version are diagnostics and
+  may stay unavailable. A push needs no event base. The event head and base count only through the
+  checkout comparisons, which are unchanged.
+- **Contradictions.** A known contradiction keeps `binding-contradiction` beside the new marker.
+
+## Root 2: the closer's rejected count
+
+**Finding.** A closer with `rejected: 1`, no `rejected` record and `omittedRecords: 0` was
+accepted `complete`, with the summary showing `rejected: 0`.
+
+**Accounting, inspected before the check changed.**
+- `#rejected` is incremented only in `#rejection()`, and that record always reaches `#append()`.
+  There it is either written or counted in `omittedRecords`.
+- A file that contains a closer had no write failure: after `#stop()` nothing more reaches the file.
+- So for every closed stream, *visible rejected ≤ closer.rejected ≤ visible rejected +
+  closer.omittedRecords*. With nothing omitted, the closer's count equals the visible count.
+- One gap: `#rejection()` incremented the count before stamping its timestamp, so a throwing
+  clock counted a rejection that was never written. Production's `new Date()` cannot throw; only an
+  injected clock can. The increment now happens after the record exists.
+
+**Change.** `streamContradiction` now also rejects (`lifecycle`) a closer whose rejected count
+exceeds the visible rejected records plus its omitted records. This adds an upper bound to the
+existing lower bound.
+- **Rejected streams.** Their bytes are not uploaded and the job fails, as before. A failed native
+  step stays `native-failed`, and the manifest and result are still uploaded.
+- **Overflow streams.** With omissions, the stream remains valid partial evidence. Its summary keeps
+  the visible `rejected` count and the closer's `omittedRecords`, and it stays incomplete through
+  `records-omitted`.
+- **Not added.** A tighter sequence-number bound (`closer.seq ≥ written + omitted + rejected + 1`)
+  holds for the genuine stream (1285 = 1018 + 265 + 1 + 1). It is not enforced because it would
+  invalidate the existing synthetic overflow fixture, which is a previous regression.
+
+## Existing test lines changed, and why
+
+Only two existing lines changed. Both changes are forced by the corrected contract, and neither
+weakens an assertion.
+
+1. In "finalize and the recorder accept only the exact manifest…", a sparse manifest with no run
+   identity expected `['observations-absent', 'binding-unverified']`. That list is the defect
+   itself. It now expects `['observations-absent', 'binding-identity', 'binding-unverified']`.
+2. In "complete evidence needs a verified revision binding…", the real-CLI init inherited
+   `process.env`. It therefore had a run identity on hosted CI but none locally. It now passes an
+   explicit identified push run (`...github, ...push`) before its unchanged values. The assertion
+   `"missing":["binding-contradiction"]` is unchanged and now deterministic everywhere.
+
+## New maintained regressions (28 → 33 tests)
+
+- **Run identity, in process.** Each of the seven values, missing (`''`) and malformed, gives
+  `incomplete`/1, `['binding-identity']`, three files and `unavailable: [name]`. Push and pull
+  request with OS, architecture and image unavailable stay `complete`/0. Several missing values
+  give one marker, and a contradiction keeps its own. Failed native gives `native-failed`/0 with
+  three files; skipped gives `not-run`/0 with two files.
+- **Run identity, real CLI on the real checkout.** One child init/finalize pair runs with a run ID
+  and gives `complete`, exit 0. The other runs without one and gives `incomplete`, exit 1,
+  `["binding-identity"]`. Both publish the same three paths.
+- **Closer count.** Equal counts, and a rejection that was itself the omitted record, stay valid.
+  Three over-claims are `lifecycle`: the QA shape, more than visible, and more than visible plus
+  omitted. A real passing recording whose closer was rewritten to `rejected: 1` gives `incomplete`/1
+  for success and `native-failed`/1 for failure. In both cases the observations are not uploaded.
+- **Genuine overflow compatibility.** A real recorder overflow has one visible rejection and three
+  omitted ones (closer `rejected: 4`). It stays `valid`, three files, summary `rejected: 1`,
+  `missing: ['records-omitted', 'records-rejected']`. It is `incomplete`/1 for success and
+  `native-failed`/0 for failure, and every case result is still reported.
+- **Recorder accounting.** A rejection whose timestamp fails is neither written nor counted, and
+  the stream finalizes `complete`.
+
+## Controls
+
+| Control | Frozen correction-01 source | Corrected source |
+| --- | --- | --- |
+| QA `supplemental-cli/cli-controls.mjs`, exact copy (`f0faf138…02b3`), run once each from its own folder | exit 1, **3/5**, the same two failures as QA: `complete`/0 with `unavailable:["runId"]`, and `complete`/0 with summarized `rejected: 0` (`controls/red-original-source/`) | exit 0, **5/5**: `incomplete`/1 `["binding-identity"]`, and observations `rejected`/`lifecycle` (`controls/green-corrected-source/`) |
+
+**Reverts** (`controls/regression-mutations.mjs`). Each revert is applied once, runs the focused
+suite once, and the bytes are restored with SHA-256 checked. All were killed:
+- **Root 1, identity line removed.** Fails both identity tests and the updated line-1503
+  expectation. 30 passed.
+- **Root 2, upper bound removed.** Fails only the closer-count test. 32 passed.
+- **Root 2, original increment order restored.** Fails only the recorder-accounting test. 32 passed.
+- **Over-tightening control (not a revert).** Demanding equality even with omissions fails the
+  genuine-overflow test, the closer-count test and the pre-existing lifecycle test. So the
+  compatibility regression guards the bound.
+
+The helper was restored to `5368ec79…ad0cf` and the tests were unchanged.
+
+## Retained native evidence, reparsed once (`controls/reparse-retained-native/`)
+
+The full native acceptance suite was not rerun. The two retained genuine bundles were reparsed
+read-only with the corrected helper, and their bytes were unchanged afterwards.
+
+| | Author negative run (correction 01) | Baseline native run (QA) |
+| --- | --- | --- |
+| Manifest and observations | valid, valid | valid, valid |
+| Records | 1,019 | 203 |
+| Closer: written, rejected, omitted; visible rejected | 1018, 1, 265; 1 → `1 ≤ 1 ≤ 266` | 202, 0, 0; 0 → `0 ≤ 0 ≤ 0` |
+| `missing` versus stored result | adds `binding-identity` only (a local run without GitHub variables) | adds `binding-identity`, plus correction-01's `binding-unverified` (stored result predates correction 01) |
+| Per-case results | equal to the stored result | equal on stored fields; the new `subtestsUnpaired` is 0 for every case |
+
+The first attempt failed on my own harness assertion. It compared whole case objects, and the
+baseline result predates `subtestsUnpaired`. The attempt is retained as `attempt1-*`. The
+corrected harness compares the stored fields and reports the new field.
+
+## Verification (Node v22.23.4 first on PATH, `pnpm.cmd` 12.8.1)
+
+| Check | Command | Exit | Result |
+| --- | --- | --- | --- |
+| Focused helper tests and coverage | `pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/windows-launcher-evidence.test.mjs --coverage.enabled --coverage.include=scripts/windows-launcher-evidence.mjs …` | 0 | 33/33; helper 98.93 statements, 97.2 branches, 100 functions, 99.45 lines (correction 01: 98.77 / 97.19 / 100 / 99.26) |
+| Tooling lint | `pnpm.cmd --filter @graphgoblin/tooling lint` | 0 | clean |
+| Format | `prettier --check` on the eight files; `pnpm.cmd format:check` | 0 / 0 | clean |
+| Full tooling coverage, **first and only run**, against the frozen source | `pnpm.cmd --filter @graphgoblin/tooling test:coverage` | 0 | 18 files, 211/211; 96.62 statements, 93.46 branches, 94.2 functions, 97.54 lines; 218 s; sources identical before and after |
+
+The browser performance workload passed in this run. Per file, against correction 01's run, the
+helper rose (statements 643/651 → 648/655, functions 128 → 129 of 129). The unchanged
+`perf/worker.mjs` fell from 353 to 350 of 373 statements and from 51 to 49 of 62 functions. That
+accounts for the aggregate function figure (94.58 → 94.2), and no cause is claimed. 38 Node
+processes were present on the shared host beforehand (`logs/06-node-processes-before.csv`); no
+load causality is claimed. No build was run: apps are unchanged and the existing build was used.
+
+## Qualifications and remaining gates
+
+- **Hosted controls.** They were not modified, recreated or rerun. Hosted Actions sets all seven
+  identity values, and they match the existing patterns for `push` to `main` and for
+  `refs/pull/N/merge`. So no change is expected in hosted outcomes, and the hosted verifier only
+  reports `missing`. Independent QA should confirm this on the exact-head hosted run.
+- **#496.** It is not done until root verifies the hosted archives: the exact-head `complete`
+  artifact and the QA controls.
+- **Other gates.** No candidate PR is published, and root publishes only after independent QA.
+  Formal scans remain 0/3. The #503 audit advisory remains pending an owner decision, with no
+  waiver.
+- **For root.** `CHANGELOG.md` was left unchanged as outside this brief. Its #496 sentence lists
+  missing observations, contradictions and checkout mismatches but not run identity. Root may want
+  one clause.
+- **Validation limits.** Identity validity still rests on the existing value patterns and is not
+  authentication. Cross-field consistency is not checked, for example `workflowRef`'s repository or
+  ref against `repository` and `ref`. Sequence-number accounting is not enforced, for the reason
+  given above.
+- **Residual risks, unchanged.** `lstat` cannot flag non-link Windows reparse points. Files could
+  change between finalize's checks and the upload. Validation is not authentication.
+
+## Evidence index
+
+`SOURCE-BINDINGS.txt`, `SOURCE-COMPARISON.txt`, `original-source/`, `corrected-source/`,
+`controls/` (red and green harness copies and outputs, revert proof, native reparse and its first
+attempt), and `logs/`:
+- 00 toolchain;
+- 01 QA harness hashes;
+- 02 focused coverage (its `tmp/` holds an empty folder Vitest left);
+- 03 lint;
+- 04–05 format;
+- 06 full coverage, source hashes before and after, and the process snapshot;
+- 07 prior-packet integrity and the empty index.
+
+`SHA256SUMS.txt` lists every file in this folder except itself. No private provider stream is
+included.

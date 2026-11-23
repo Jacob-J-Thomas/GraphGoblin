@@ -1,0 +1,65 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/harness.test.ts (72 tests | 2 failed) 629ms
+   ❯ Claude start refusal diagnostics (#364) (13)
+     × reports check refusal { …(1) } as unknown without treating the check folder as configuration 21ms
+     × reports check refusal { …(1) } as unknown without treating the check folder as configuration 8ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown without treating the check folder as configuration
+AssertionError: expected ClaudeHarnessError: Claude CLI could not … { …(2) } to match object { code: 'HARNESS_TURN_FAILED', …(1) }
+(2 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Claude CLI could not be started because its temporary check folder does not exist.",
++ ClaudeHarnessError {
++   "code": "HARNESS_INVALID_CONFIGURATION",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1143:35
+    1141|       expect(calls.some((call) => call.args.includes('--print'))).toBe…
+    1142|       const session = harness.start(request, new AbortController().sig…
+    1143|       await expect(session.result).rejects.toMatchObject({ code, messa…
+       |                                   ^
+    1144|       expect((await drain(session.events)).at(-1)).toMatchObject({
+    1145|         code,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/harness.test.ts > Claude start refusal diagnostics (#364) > reports check refusal { …(1) } as unknown without treating the check folder as configuration
+AssertionError: expected ClaudeHarnessError: Claude CLI could not … { …(2) } to match object { code: 'HARNESS_TURN_FAILED', …(1) }
+(2 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- {
+-   "code": "HARNESS_TURN_FAILED",
+-   "message": "Claude CLI could not be started because its temporary check folder is not a folder.",
++ ClaudeHarnessError {
++   "code": "HARNESS_INVALID_CONFIGURATION",
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/harness.test.ts:1143:35
+    1141|       expect(calls.some((call) => call.args.includes('--print'))).toBe…
+    1142|       const session = harness.start(request, new AbortController().sig…
+    1143|       await expect(session.result).rejects.toMatchObject({ code, messa…
+       |                                   ^
+    1144|       expect((await drain(session.events)).at(-1)).toMatchObject({
+    1145|         code,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 70 passed (72)
+   Start at  02:49:36
+   Duration  3.40s (import 45%, transform 35%, tests 20%)
+
+vitest-exit=1

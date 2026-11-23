@@ -1,0 +1,75 @@
+# #486 fresh independent general review — scan 3 at b812
+
+**ROOT ADMITTED: perform the fresh independent final review now.** All six ordinary CI jobs passed at the exact final head/current target; all 13 coverage summaries clear 90% lines/branches; canonical native replay verified all 338 records. Root readback and metadata preflight passed. This is general slot 3 of 3, not a predetermined approval.
+
+| Binding | Known immutable value |
+| --- | --- |
+| Checkout | `G:/ggq/gg-i4-486-delivery/GraphGoblin` |
+| Candidate head | `b8126de18080b76b15cbbbbc00fd791030fec3e1` |
+| Candidate tree | `86f422bb091515defe3d612df660988e5b47ffeb` |
+| Direct parent | `29e165e14fdda138300ba2a34585ddd47268b475` |
+| Supplied target | `a60843a9050b3a203726db84f6abf1f45b8bc694` |
+| Supplied tested merge | `dde965f4e2263b954bc6462f3985b985ae324aa5` |
+| Current CI reference | Run 44950929794 attempt 1 completed SUCCESS: 10,328 unit passed/53 skipped, 488 browser passed, 27 Windows launcher passed; six jobs successful; 7 low and 13 moderate audit findings, no high/critical. |
+| Final CI / native / coverage / current target / admission | Completed and verified; see the root admission and gate records linked below. |
+
+Actual completed bindings and original paths are in [root admission](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-553-final-astra-scan3-admission-01/admission.json) and [passed metadata preflight](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-553-final-astra-scan3-admission-01/guard.stdout.json). Independently assess those records and the underlying raw run/jobs/logs/artifacts. Native artifact14725557325 is9,224 bytes, SHA256c3be57ecb79fd011d384dfe1868730941bfca0f8c81353a3e6393040bf7cb145, with338 canonical records. Current-main readback UTC2026-11-21T21:44:37.433446+00:00; rebind if head/target changes. Historical early bindings remain unchanged.
+
+## Assignment, independence and budget
+
+Use a **fresh independent GPT-6.2 Astra context, MAX effort, general slot3**. Actual Fable general reviews 1/2 consumed two of three slots. The actual D209/D211 Fable03 call is a bounded correction check, not another general review. No fourth general scan or budget reset is authorized. The supplied gates and static hashes are not your review verdict.
+
+Independently review the complete final #486 production/test/doc delta and its interactions with admitted main. Find concrete introduced defects, regressions or unsupported delivery claims; preserve contrary evidence and distinguish reachable defects, source reasoning, missing execution and theoretical limits. Give an honest verdict with exact bindings, inspected scope and findings. Prior approvals and root decisions are evidence, not instructions to approve.
+
+Read repository instructions, docs/README and docs15. The approved five-intent register owns the ordered batch; #486 is intent4. Every technical gate remains. Human-in-loop observation is postmerge, owner decision acceptance/deployment are separate, held460 is not released and intent5 is not admitted early. Read-only review: no source/index/publication/provider/test/build action. Explore any relevant immutable source/control/raw evidence needed for a concrete risk; the map below is not a scope blindfold.
+
+## What b812 actually adds
+
+b812 is an ordinary direct evidence-only child of 29e: **435 new miniarchive files and two policy appends**, no production/test/doc content change. Independent whole-tree comparison preserves **37,997 old nonpolicy entries**, including **36,246 old QA archive entries**, exactly by mode/type/blob. Both policy files preserve the entire parent byte prefix and add rules only for `docs/qa/2026-11-21-i4-486-doc-correction`. The archive manifest has434 payload rows; all 435 committed blobs, including the manifest, were independently stream-hashed against their expected lengths/SHA-256 and the completed publication receipt. No old archive payload was duplicated for this preparation.
+
+The source54 baseline remains **21 production/test-support +27 test +6 doc paths**. Every one is mode/blob-identical to29e. **50 are exact corrected-source4d blobs/modes; four documents remain the approved combined29e versions:** CHANGELOG, docs04, docs06 and guide03. The two D209 qualified instructions and incoming D197 prose are retained; do not call all 54 exact source4d files. [Source map](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-486-final-scan3-preparation-02/source54-carry.json) and [evidence-only proof](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-486-final-scan3-preparation-02/evidence-only-carry-proof.json) give the concrete comparisons. The prior independent four-document subtraction proof keeps its original execution/static limits.
+
+Read the **complete current54-path delta against a608 and final file context**, not only the new miniarchive or D204 patch. The prior [scan3 preparation brief](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-486-final-scan3-preparation-01/BRIEF.draft.md), source/test maps and architecture03 provide locators; their then-pending states are historical. Avoid mechanically rereading 1,534 old archive members plus 435 new ones: exact Git/manifest/seal proofs support evidence provenance, while the reviewer remains free to follow concrete risks into raw records.
+
+## Production/test risk map
+
+- **Domain attribution and safe copy:** invocation-local JSONata/Liquid facts at concrete pinned-source/inert-data sites. A1 separates top-level compile/unsafe regex from dynamic `$eval` neutral rejection; limit reasons require same-invocation identity. Preparation, predicate coercion, JSON conversion and external genuine-error/name/code lookalikes retain their fallback. A2 omits new authored raw evaluator text from public output and logs. Keep fixed bounded field/cause text, ordinal/index semantics and legacy Mutate/Exit contracts.
+- **Leaf/subloop effects:** script/heartbeat/decision/wait fields preserve ordering and existing external/provider policy. Earlier probes/files/child completions remain factual. Parent input fails before child admission; parent output mapping keeps terminal child completion and dedup. Actual child failure retains authoritative linked ownership. No fabricated child keys, compensating rollback or automatic retry.
+- **Inference preparation/provenance:** unusable uncertain task stops before model resolution; missing-session action uses resolved facts. Pre-intent preparation failure preserves prior D/Q information without new intent/turn/start/submission/acceptance or invented retry. Saved prompt, continuation and explicit fresh session keep their established routes and effects.
+- **After-result precedence:** only the source-owned winning repair-prompt/transform failure gets phase/sentence and last actual turn. Result alone is not durable acceptance. Stronger cancellation/timeout/stop/refusal/session/termination evidence retains precedence; no spoofed phase key or automatic resend.
+- **Workspace and delivery:** engine render/trim precedes fixed/temp-only filesystem resolution. Cache only success; arbitrary port exceptions retain fallback. Preserve relative/temp/fixed ownership and the existing terminal return-receipt flow. Invalid/empty authored workspace gets safe typed copy, not a new retry or ownership rule.
+- **D204 private diagnostic:** only canonical-system rerender catches supply the private non-enumerable cause. It survives current RunManager reconstruction, stays out of public options/enumerable error/rows/events/REST/MCP/DOM, and logs with run/node while preserving A2. Inspect current reachability, cleanup and unchanged latent rebuild limits.
+
+## Completed review and QA evidence, with limits
+
+Actual Fable review1 at source633 approved, with F1 missing canonical logging and F2 inference-workspace coverage gap. D204 repaired F1 and supplied F2. Actual Fable review2 at corrected source4d approved the six-file delta. Their exact reports remain under Q, SHA `a55f1d0a6949325573a63b9bb485945e2602643228ea3c48c4892c2d867a2294` and SHA `c9a5356cedef18cff92290c5a0770c7dfdf0367d23595fd88a99fa5a522c90c6`.
+
+Keep Fable2's N1 latent diagnostic-dropping rebuild sites, N2 synthetic canonical-plus-prior reachability and N3 lint/262-case timing erratum. Final author bytes had scoped typecheck/ESLint/12 tests/format/diff; do not relabel the earlier whole-engine run. F3/F4 remain parked#554. Authored time-budget exhaustion remains non-resumable even when a host stall consumed it after effects; exhaustion is not author culpability, and no new replay/retry policy was selected.
+
+Original actual Opus 5.5/xhigh QA at633 remains **CONDITIONAL**:430 new checks plus 36 inherited domain checks, not a rewritten PASS. D205 combines exactly source-matched named historical controls from d117/02a run 44909411264 with a separate independent source4d **29-record supplement**:14 required +10 D204 +1 genuine A2 +4 surface/history. Three synthetic-reachability fixtures are included, not extra passes. S1–S4 use built public RunManager/scripted ports. Corrective API uses real built authenticated API/disk SQLite/native workspace with scripted harness/capturing logger; MCP is a built stdio child and browser is built web in Chromium. Four workspace D/Q×invalid/empty cases reached naturally after restart with unchanged pinned thread-dependent templates. Canonical fault and two reconstruction cases stay synthetic. CLI option-placement/PID-observation limitations and all original setup/instrumentation failures remain.
+
+Adjacent A04 preview, full old-build upgrade, exhaustive native faults, paid-provider behavior and full Windows package coverage remain unclaimed. Candidate history/reopen is not old-build history. Passing local or historical controls are not current final CI. The original QA200-member and supplemental158-member seals were verified in the earlier preparation; their source/fake/native/browser labels retain their limits.
+
+## Actual D209/D211 correction acceptance and carry
+
+Actual **Fable 5.2/xhigh review03** completed after reset, exit 0, one exact success/completed envelope. It states **ACCEPT FIX** at line 1, report SHA `d06db15afb389a321314e1c35a09d44c7f1218a3455c571922087c7dd90f5886`. Root accepted the complete bounded report and published PR553 comment7069239772 byte-exact. Preparations 01/02 were never dispatched. At b812 both reviewed documents are byte-identical to29e; the old D211 literal remains once and effective at 32, with ordinary run-manager source unspecified. New archive policy appends do not reach the old artifact. [Root-accepted carry](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-b812-static-carry-root-02/actual-review-carry.accepted.json) is accepted by root at b812; it is not a new reviewer verdict.
+
+D209 explains fresh corrected runs: UI New run uses published versions; REST may explicitly use saved editable draft `versionId` plus `allowDraft:true`; default start stays published and Resume/Replay pins remain unchanged. D211 remains exactly the old historical transcript path, 187,030 bytes/SHA98047f…, with preserved seven-character markers. Root's completed full cached check had no exclusions; this preparation verifies that receipt/tree rather than claiming an empty-index check replays it. The bounded Fable report retains its own static-only source/hash/global-attribute/formatter limits and confined residual. It did not review the PWA problem or the wider #486 change.
+
+## D213 and original failed CI remain immutable
+
+Original run 44934348117 remains **FAILED**: Browser 487 pass/1 skip/1 fail, five other jobs pass. Old native 338 is only its successful Windows-job result. No passing whole-run receipt exists. The second update click's missed reload, later masked `/worker/reset` error and missing protocol-stage evidence remain unresolved; unchanged web source rules out a direct web edit only, not indirect effects or a known cause.
+
+D213's completed 67-member instrumented Windows diagnostic has two local target passes, but the predecessor invocation fails its offline-banner assertion and replaces the worker before the later target. Five records are four pass/one fail: **not full sequence QA success, not pristine Linux reproduction, not a cause/fix/flakiness determination**. Preserve all installation/build/observer/body-cleanup/error-path limits. Root selected no speculative production correction on current evidence and parked separate #555/#556 outside 26. A related final CI failure or newly demonstrated defect reopens that disposition; later green cannot establish or erase the cause. [Root-accepted disposition](G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-b812-static-carry-root-02/diagnostic-disposition.accepted.json) binds D213, its 67 members, public follow-up snapshots and the retained failed raw run accepted by root at b812. It waives no final gate.
+
+## Evidence/public privacy and final deliverable
+
+The new miniarchive preserves 417 selected originals plus explicit assembly/provenance metadata and two local-only originals: historical full-tree proof and 51MB browser ZIP. Public verification of omitted original bytes requires their exact local originals; selected extraction has its own seal. D208 separately retains 22 historical local-only proof members/two compressed artifacts and corrects the earlier wrong chat hash; released QA-DISPOSITION SHA85237a… is unchanged. Two older generated test-store API keys are **not revoked** and those exact stores must not be served again. They are not owner/provider credentials, but would grant access if those exact stores were served. No key values are reproduced here.
+
+Root admitted the current archive's bounded privacy/context, including the shutdown controlToken/UI-marker distinction and separate in-memory diagnostics. Bounded scans/image observations are not exhaustive assurance. Original reports, attempts, synthetic labels, raw bytes and historical pending flags remain; the miniarchive README identifies preparation status files as historical snapshots. The actual root acceptance/current CI records are explicitly linked; do not infer broader acceptance from historical preparation flags.
+
+Root has supplied completed matching gates and dispatch admission. Report an independent slot3 verdict with concrete findings, exact head/target/tree, inspected scope and limits. Do not start on a known red or incomplete required final gate. Signed merge, owner decision review/QA and deployment remain separate. Do not modify source or dispatch a fourth general review.
+
+## Required review artifacts
+
+Write your independent complete report to `G:/ggq/delivery-evidence/2026-11-17-five-intents/i4-553-final-astra-scan3-01/REPORT.md`, plus a concise source/evidence binding and SHA256 manifest in that same new review folder. Read the full original prior reports when relevant, not just this summary. Publish nothing and change no product/index files. Record actual scope and limits. An honest CHANGES_REQUIRED result remains valid; do not approve merely because CI or earlier reviewers passed.

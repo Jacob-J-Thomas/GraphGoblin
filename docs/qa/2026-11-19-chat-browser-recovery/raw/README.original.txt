@@ -1,0 +1,18 @@
+# Bounded Chat browser observation
+
+**Observed: actual “Record again” focus and keyboard recovery after a real recorder finalization timeout. The specific “Try again” browser criterion remains unverified: that control is absent on this supported failure path.** This adds a separate client observation; it does not prove the failed hosted test's callback ordering or replace its sealed diagnosis.
+
+Candidate `babba15fd5aa0444636607c6acbf3ead7ec98c47`, tree `98d3da3d511ee93c579421fde746aea52153088f`, clean before/after. Supported Node22.23.4/pnpm12.8.1 build passes12/12. A fresh headed Chromium context used the built app and maintained `e2e/server.ts` no-key main API: an in-memory database, disposable test directory and fake harness/decider/classifier/structured ports. No owner state, authentication, live service, real provider or product/source/PR modification was used.
+
+The maintained voice harness's public-domain JFK WAV supplied Chromium's fake microphone. Native AudioContext, AudioWorklet, PCM chunks, sample counts and acknowledgements remained real. The sole induced fault suppressed one outgoing capture-worklet **stop** message. The product's unchanged3,000ms finalization deadline then produced the actual alert; no product promise/rejection or clock was replaced.
+
+1. Actual Mic and Escape retained one native synthetic recording, without upload.
+2. Actual Add more and Send encountered the induced finalization timeout. The alert says the final words were not confirmed and the last recording was not saved.
+3. The real control is **Record again**. Actual `document.activeElement` equals that same button. **Try again count is zero.** The real recorder sets `recording.error` with retry recovery; the unit test's direct mocked freeze rejection omits that recorder state and reaches a different action label.
+4. Without forcing focus, actual Enter activated the focused **Record again** control and started another native capture. Actual Escape finalized it. Two recordings remained, the alert cleared and the textarea owned focus. No browser POST, upload or turn occurred; the disposable backend separately reported zero conversations and zero harness starts.
+
+`observations.json` preserves complete relevant capture/focus/alert records and original log hashes. `identity-and-boundaries.json` binds source and built JavaScript hashes, browser executable, synthetic audio identity and fake boundaries. Two screenshots show the actual failure and recovered UI. Run `node verify-records.mjs` under Node22.23.4 to recompute the12 selected facts without modifying this packet.
+
+This was one visible foreground Windows Chromium journey, with `hidden=false`, `visibilityState=visible` and document focus observed. Background-tab transitions, OS focus switching, other browsers and screen-reader announcements were not exercised. The alert mutation observer and native focus events share browser task delivery; their callback timestamps do not establish a universal alert-before-effect ordering. This is not proof of the old hosted timing, real microphone quality, transcription or submission recovery.
+
+The first setup read preceded the harness ready receipt and failed; after observing readiness, the single browser journey completed. An optional final user-agent metadata read had a CLI syntax error and was not retried; that metadata remains unobserved. Both qualifications are preserved in `setup-errors.json`, with complete raw evidence external to this packet. The browser closed, the maintained harness exited0, its API/control listeners closed, and the checkout stayed clean. Earlier sealed packets remain unchanged.

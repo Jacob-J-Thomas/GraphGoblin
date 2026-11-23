@@ -1,8 +1,46 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+import type { NodeContext } from '../handler.js';
 import type { ChoiceResult } from '../ports.js';
-import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
+import { createTestEngine, singleNodeLoop, type TestEngine } from '../testing/scenario.js';
+import { scriptHandler } from './script.js';
+import { waitHandler } from './wait.js';
+
+const malformedLeafTemplate = 'first\n{% PRIVATE_SOURCE %}';
+const leafParseCause =
+  'The template could not be parsed at line 2, column 1. Check its Liquid syntax.';
+const leafExpressionCause =
+  'The expression could not evaluate this input. Check its input type and mapping.';
+
+async function assertLeafFailure(
+  e: TestEngine,
+  run: RunRecord,
+  nodeId: string,
+  boundary: string,
+  label: string,
+  cause: string,
+  indices: Record<string, number> = {},
+) {
+  const code = boundary.endsWith('.where') ? 'EXPRESSION_ERROR' : 'TEMPLATE_ERROR';
+  expect(run.failure).toEqual({
+    code,
+    nodeId,
+    resumable: false,
+    message: `${label} failed. ${cause}`,
+    details: { boundary, ...indices, cause: { code, message: cause } },
+  });
+  expect(e.events(run.id).findLast((event) => event.type === 'run.failed')).toMatchObject({
+    failure: run.failure,
+  });
+  const before = e.events(run.id);
+  await expect(e.manager.resume(run.id)).rejects.toThrow();
+  await e.manager.waitForIdle();
+  expect(e.events(run.id)).toEqual(before);
+  for (const data of [run.failure, e.ports.logger.lines])
+    expect(JSON.stringify(data)).not.toContain('PRIVATE');
+}
 
 type DecisionInput = Extract<LoopDefinitionInput['nodes'][number], { kind: 'decision' }>['config'];
 type DecisionSettings =
@@ -803,6 +841,482 @@ describe('script node', () => {
     expect((await withSecret.runToIdle(v2.loopId)).failure?.code).toBe('SCRIPT_TIMEOUT');
     expect(withSecret.ports.scripts.calls.at(-1)?.timeoutMs).toBe(5000);
   });
+});
+
+describe('authored leaf preparation failures (#486)', () => {
+  it.each([
+    [malformedLeafTemplate, leafParseCause],
+    [
+      'first\n{% include "PRIVATE_FILE" %}',
+      'The template could not be rendered at line 2, column 1. Check its filters and input values.',
+    ],
+  ])('rejects the second script argument before dispatch (%s)', async (source, cause) => {
+    const e = await createTestEngine();
+    let secretReads = 0;
+    e.ports.secrets.resolve = () => {
+      secretReads += 1;
+      return Promise.resolve('value');
+    };
+    const v = e.publish(
+      singleNodeLoop('bad-script-argument', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'effect', args: ['ok', source], env: { TOKEN: 'secret:key' } },
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    await assertLeafFailure(e, run, 'script', 'script.args', 'Script argument 2', cause, {
+      argumentIndex: 1,
+    });
+    expect(secretReads).toBe(1);
+    expect(e.ports.workspace.resolved).toHaveLength(1);
+    expect(e.ports.scripts.calls).toHaveLength(0);
+    expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    expect(run.failure).not.toHaveProperty('script');
+  });
+
+  it('checks an unresolved previous dispatch before workspace, secrets or arguments', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const v = e.publish(
+      singleNodeLoop('previous-script-effect', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: {
+          command: 'effect',
+          args: [malformedLeafTemplate],
+          env: { TOKEN: 'secret:missing' },
+        },
+      }),
+    );
+    const run = await e.start(v.loopId);
+    const dispatchId = e.ports.ids.next();
+    await e.ports.events.append(run.id, [
+      { type: 'node.started', nodeId: 'script', kind: 'script', attempt: 1, configHash: 'test' },
+      { type: 'script.dispatched', nodeId: 'script', visitId: 'prior', dispatchId },
+      { type: 'node.started', nodeId: 'script', kind: 'script', attempt: 2, configHash: 'test' },
+    ]);
+    const node = v.definition.nodes.find((n) => n.kind === 'script');
+    const thread = await e.manager.getThread(run.id);
+    if (node?.kind !== 'script' || !thread) throw new Error('fixture');
+    let preparation = 0;
+    const unused = () => {
+      preparation += 1;
+      return Promise.reject(new Error('preparation must not run'));
+    };
+    const ctx: NodeContext<'script'> = {
+      node,
+      config: node.config,
+      definition: v.definition,
+      thread,
+      run,
+      attempt: 2,
+      signal: new AbortController().signal,
+      ports: e.ports,
+      settings: e.settings,
+      services: {
+        render: unused,
+        record: unused,
+        resolveModel: unused,
+        startChild: unused,
+        childOutcome: unused,
+        resumeChild: unused,
+        workingDirectory: unused,
+        events: () => e.ports.events.read(run.id),
+        depth: unused,
+        newId: () => {
+          throw new Error('no new dispatch');
+        },
+        now: () => e.ports.clock.now().toISOString(),
+      },
+    };
+    await expect(scriptHandler.execute(ctx)).rejects.toMatchObject({
+      code: 'SCRIPT_OUTCOME_UNCERTAIN',
+      options: { script: { visitId: 'prior', dispatchId, state: 'outcome-uncertain' } },
+    });
+    expect(preparation).toBe(0);
+    expect(e.ports.scripts.calls).toHaveLength(0);
+    expect(e.ports.workspace.resolved).toHaveLength(0);
+    expect(e.events(run.id).filter((event) => event.type === 'script.dispatched')).toHaveLength(1);
+  });
+
+  it.each(['llm', 'classifier'] as const)(
+    'reports the %s question field before context evaluation or a provider call',
+    async (kind) => {
+      const e = await createTestEngine();
+      const config =
+        kind === 'llm'
+          ? { ...llm, instructions: malformedLeafTemplate }
+          : { ...classifier, question: malformedLeafTemplate };
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('bad-question', {
+            ...config,
+            context: { messages: { where: '$error("PRIVATE_CONTEXT")' } },
+          }),
+        ).loopId,
+      );
+      const field = kind === 'llm' ? 'instructions' : 'question';
+      await assertLeafFailure(
+        e,
+        run,
+        'decide',
+        `decision.${field}`,
+        kind === 'llm' ? 'Decision instructions' : 'Decision question',
+        leafParseCause,
+      );
+      expect(e.ports.jev.choices).toHaveLength(0);
+      expect(e.ports.codexDecider.routes).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('decision.made');
+    },
+  );
+
+  it.each(['llm', 'classifier'] as const)(
+    'attributes the exact failing context item before the %s provider',
+    async (kind) => {
+      const e = await createTestEngine();
+      const messages = ['first', 'PRIVATE_INPUT'].map((content) => ({
+        id: e.ports.ids.next(),
+        role: 'note' as const,
+        content,
+        nodeId: 'seed',
+        ts: e.ports.clock.now().toISOString(),
+      }));
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('bad-context', {
+            ...(kind === 'llm' ? llm : classifier),
+            context: { messages: { where: '$index = 0 ? true : $error(content)' } },
+          }),
+        ).loopId,
+        null,
+        { seed: { messages } },
+      );
+      await assertLeafFailure(
+        e,
+        run,
+        'decide',
+        'decision.context.messages.where',
+        'Decision context message selector, item 2',
+        leafExpressionCause,
+        { itemIndex: 1 },
+      );
+      expect(e.ports.jev.choices).toHaveLength(0);
+      expect(e.ports.codexDecider.routes).toHaveLength(0);
+    },
+  );
+
+  it.each(['llm', 'classifier'] as const)(
+    'keeps successful %s context predicates and full-thread rendered questions',
+    async (kind) => {
+      const e = await createTestEngine();
+      const messages = ['first', 'second'].map((content) => ({
+        id: e.ports.ids.next(),
+        role: 'note' as const,
+        content,
+        nodeId: 'seed',
+        ts: e.ports.clock.now().toISOString(),
+      }));
+      const run = await e.runToIdle(
+        e.publish(
+          decisionLoop('selected-context', {
+            ...(kind === 'llm'
+              ? { ...llm, instructions: 'Ask {{ trigger.payload }}' }
+              : { ...classifier, question: 'Ask {{ trigger.payload }}' }),
+            context: { messages: { where: '$index = 1 and $thread.trigger.payload = "value"' } },
+          }),
+        ).loopId,
+        'value',
+        { seed: { messages } },
+      );
+      expect(run.status).toBe('succeeded');
+      const request = kind === 'llm' ? e.ports.codexDecider.routes[0] : e.ports.jev.choices[0];
+      expect(request).toMatchObject({
+        ...(kind === 'llm' ? { instructions: 'Ask value' } : { question: 'Ask value' }),
+        context: { messages: [{ role: 'note', content: 'second' }] },
+      });
+    },
+  );
+
+  it.each([
+    [
+      'input',
+      { mode: 'input', prompt: malformedLeafTemplate },
+      'wait.prompt',
+      'Wait input prompt',
+      leafParseCause,
+    ],
+    [
+      'until-template',
+      { mode: 'until', timestamp: malformedLeafTemplate },
+      'wait.timestamp',
+      'Wait timestamp',
+      leafParseCause,
+    ],
+    [
+      'until-value',
+      { mode: 'until', timestamp: '{{ trigger.payload }}' },
+      'wait.timestamp',
+      'Wait timestamp',
+      'The value must render to a timestamp. Check the template and date format.',
+    ],
+  ] as const)(
+    'fails %s before the first park or timer',
+    async (_name, config, boundary, label, cause) => {
+      const e = await createTestEngine();
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('bad-wait', {
+            id: 'wait',
+            kind: 'wait',
+            label: 'Wait',
+            config: { ...config, timeoutSeconds: 2 },
+          }),
+        ).loopId,
+        'PRIVATE_TIMESTAMP',
+      );
+      await assertLeafFailure(e, run, 'wait', boundary, label, cause);
+      expect(run.waiting).toBeUndefined();
+      expect(e.ports.timers.scheduled).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toEqual(expect.arrayContaining(['run.waiting']));
+      for (const type of ['run.woken', 'input.received', 'signal.received'])
+        expect(e.eventTypes(run.id)).not.toContain(type);
+    },
+  );
+
+  it.each(['input', 'until'] as const)(
+    'does not render the %s field again on wake',
+    async (mode) => {
+      const e = await createTestEngine();
+      const v = e.publish(
+        singleNodeLoop('wake-bypass', {
+          id: 'wait',
+          kind: 'wait',
+          label: 'Wait',
+          config:
+            mode === 'input'
+              ? { mode, prompt: 'Approve {{ trigger.payload }}?' }
+              : { mode, timestamp: '{{ trigger.payload }}' },
+        }),
+      );
+      const run = await e.runToIdle(v.loopId, mode === 'input' ? 'work' : '2026-10-02T13:00:00Z');
+      expect(run.status).toBe('waiting');
+      expect(run.waiting).toMatchObject(
+        mode === 'input'
+          ? { kind: 'input', prompt: 'Approve work?' }
+          : { kind: 'timer', until: '2026-10-02T13:00:00.000Z' },
+      );
+      const node = v.definition.nodes.find((n) => n.kind === 'wait');
+      const thread = await e.manager.getThread(run.id);
+      if (
+        node?.kind !== 'wait' ||
+        !thread ||
+        (node.config.mode !== 'input' && node.config.mode !== 'until')
+      )
+        throw new Error('fixture');
+      const unused = () => Promise.reject(new Error('unused'));
+      const ctx: NodeContext<'wait'> = {
+        node,
+        config:
+          node.config.mode === 'input'
+            ? { ...node.config, prompt: malformedLeafTemplate }
+            : { ...node.config, timestamp: malformedLeafTemplate },
+        definition: v.definition,
+        thread,
+        run,
+        attempt: 2,
+        wake: { reason: mode === 'input' ? 'input' : 'timer', payload: 'approved' },
+        signal: new AbortController().signal,
+        ports: e.ports,
+        settings: e.settings,
+        services: {
+          render: unused,
+          record: unused,
+          resolveModel: unused,
+          startChild: unused,
+          childOutcome: unused,
+          resumeChild: unused,
+          workingDirectory: unused,
+          events: unused,
+          depth: unused,
+          newId: () => e.ports.ids.next(),
+          now: () => e.ports.clock.now().toISOString(),
+        },
+      };
+      expect((await waitHandler.execute(ctx)).kind).toBe('done');
+      expect(e.ports.timers.scheduled).toHaveLength(0);
+      e.manager.stop();
+    },
+  );
+
+  const externalLeafErrors = [
+    new TemplateError('PRIVATE_EXTERNAL'),
+    new ExpressionError('PRIVATE_EXTERNAL'),
+    Object.assign(new Error('PRIVATE_EXTERNAL'), { name: 'TemplateError' }),
+    { code: 'TEMPLATE_ERROR', message: 'PRIVATE_EXTERNAL' },
+  ];
+  it.each([malformedLeafTemplate, '   '])(
+    'maps only local workspace preparation failures before dispatch (%s)',
+    async (template) => {
+      const e = await createTestEngine();
+      const def = singleNodeLoop('script-workspace', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'effect' },
+      });
+      def.settings = { workingDirectory: { kind: 'template', template } };
+      const run = await e.runToIdle(e.publish(def).loopId);
+      await assertLeafFailure(
+        e,
+        run,
+        'script',
+        'settings.workingDirectory.template',
+        'Working directory template',
+        template === malformedLeafTemplate
+          ? leafParseCause
+          : 'The template rendered to an empty path. Supply a nonempty directory.',
+      );
+      expect(e.ports.workspace.resolved).toHaveLength(0);
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it('does not resolve an unused workspace for an explicit script cwd', async () => {
+    const e = await createTestEngine();
+    const def = singleNodeLoop('script-explicit-cwd', {
+      id: 'script',
+      kind: 'script',
+      label: 'Script',
+      config: { command: 'effect', cwd: '/explicit', args: ['{{ trigger.payload }}'] },
+    });
+    def.settings = { workingDirectory: { kind: 'template', template: malformedLeafTemplate } };
+    const run = await e.runToIdle(e.publish(def).loopId, 'argument');
+    expect(run.status).toBe('succeeded');
+    expect(e.ports.scripts.calls).toEqual([
+      expect.objectContaining({ cwd: '/explicit', args: ['argument'] }),
+    ]);
+    expect(e.ports.workspace.resolved).toHaveLength(0);
+  });
+  it.each(externalLeafErrors)(
+    'preserves the script workspace external exception path (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let resolves = 0;
+      e.ports.workspace.resolve = () => {
+        resolves += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-script-workspace', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: { command: 'effect' },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        resumable: true,
+        nodeId: 'script',
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(resolves).toBe(1);
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps post-dispatch runner rejection uncertain and requires explicit retry consent (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let runs = 0;
+      e.ports.scripts.run = () => {
+        runs += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-runner', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: { command: 'effect' },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'SCRIPT_OUTCOME_UNCERTAIN',
+        resumable: true,
+        nodeId: 'script',
+        script: { state: 'outcome-uncertain' },
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(e.events(run.id).filter((event) => event.type === 'script.dispatched')).toHaveLength(
+        1,
+      );
+      await expect(e.manager.resume(run.id)).rejects.toThrow();
+      await e.manager.waitForIdle();
+      expect(runs).toBe(1);
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps external secret errors outside authored attribution (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+      e.ports.secrets.resolve = () => Promise.reject(error);
+      const run = await e.runToIdle(
+        e.publish(
+          singleNodeLoop('external-secret', {
+            id: 'script',
+            kind: 'script',
+            label: 'Script',
+            config: {
+              command: 'effect',
+              args: [malformedLeafTemplate],
+              env: { TOKEN: 'secret:key' },
+            },
+          }),
+        ).loopId,
+      );
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        resumable: true,
+        nodeId: 'script',
+      });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(e.ports.scripts.calls).toHaveLength(0);
+      expect(e.eventTypes(run.id)).not.toContain('script.dispatched');
+    },
+  );
+  it.each(externalLeafErrors)(
+    'keeps external decision failures in provider policy (%s)',
+    async (error) => {
+      const e = await createTestEngine();
+      let calls = 0;
+      e.ports.jev.choose = () => {
+        calls += 1;
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Plain lookalikes are intentional external boundary inputs.
+        return Promise.reject(error);
+      };
+      const run = await e.runToIdle(
+        e.publish(decisionLoop('external-decision', classifier)).loopId,
+      );
+      expect(run.failure).toMatchObject({ code: 'EVALUATION_PROVIDER_FAILED', resumable: false });
+      expect(run.failure).not.toHaveProperty('details.boundary');
+      expect(run.failure).not.toHaveProperty('details.cause');
+      expect(calls).toBe(1);
+    },
+  );
 });
 
 describe('exit node and return channels', () => {

@@ -1,0 +1,66 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (31 tests | 4 failed) 65ms
+   ❯ read-only observation after an actual spawn refusal (#364) (15)
+     × establishes a missing executable only when every name process start tries is absent or a folder 11ms
+     × leaves the cause open when the executable path is a file 3ms
+     × leaves the cause open when the executable path is an unreadable path 2ms
+     × leaves the cause open when the executable path is an unclassified read fault 2ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > establishes a missing executable only when every name process start tries is absent or a folder
+AssertionError: expected [ Array(1) ] to deeply equal [ …(3) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe",
+-   "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe.com",
+-   "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe.exe",
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:182:24
+    180|     observe({ ...absent, [executable]: fault('ENOTDIR') });
+    181|     expect(await refuse()).toMatchObject({ spawnCode: 'ENOENT', startR…
+    182|     expect(observed()).toEqual(names);
+       |                        ^
+    183|     observe({ ...absent, [executable]: 'directory' });
+    184|     expect(await refuse()).toMatchObject({ startRefusal: 'executable-m…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is a file
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unreadable path
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unclassified read fault
+AssertionError: expected [ …(2) ] to deeply equal [ …(4) ]
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  [
+    "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe",
+-   "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe.com",
+-   "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\claude.exe.exe",
+    "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-364-controlled\\workspace",
+  ]
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:199:24
+    197|     expect(result).toMatchObject({ spawnCode: 'ENOENT', exitCode: null…
+    198|     expect(result).not.toHaveProperty('startRefusal');
+    199|     expect(observed()).toEqual([...names, workspace]);
+       |                        ^
+    200|     expect(JSON.stringify(result)).not.toContain('PRIVATE');
+    201|   });
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 27 passed (31)
+   Start at  02:49:11
+   Duration  1.91s (import 59%, transform 37%, tests 4%)
+
+vitest-exit=1

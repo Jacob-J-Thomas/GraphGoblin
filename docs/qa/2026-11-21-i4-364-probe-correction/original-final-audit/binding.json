@@ -1,0 +1,1145 @@
+{
+  "schemaVersion": 1,
+  "audit": {
+    "pr": 549,
+    "issue": 364,
+    "verdict": "CHANGES_REQUIRED",
+    "formalGeneralScanNumber": 2,
+    "maximumFormalGeneralScans": 3,
+    "role": "fresh independent final reviewer",
+    "configuredModel": "gpt-6.2-astra",
+    "configuredReasoningEffort": "max",
+    "identityProvenance": "coordinator dispatch",
+    "isOwnerAcceptance": false
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "priority": 2,
+      "title": "Incomplete auth-check output can report a signed-out account",
+      "classification": "introduced, merge-blocking",
+      "primaryPath": "packages/infrastructure/src/claude/harness.ts",
+      "primaryLines": [
+        186,
+        205
+      ],
+      "affectedPublicEntry": "GET /harness/preflight",
+      "supportingPaths": [
+        "packages/infrastructure/src/claude/process.ts:220",
+        "packages/domain/src/readiness.ts:30",
+        "packages/infrastructure/src/claude/harness.ts:314",
+        "packages/infrastructure/src/claude/harness.ts:361",
+        "packages/infrastructure/src/claude/harness.test.ts:1175"
+      ],
+      "sourceCase": {
+        "version": "success",
+        "help": "success",
+        "auth": "started, output pipe fails, confirmed termination and close 1 or null",
+        "stdoutPrefix": "{\"authMethod\":\"claude.ai\",\"email\":\"authentication@example.invalid",
+        "failureStateFromRunner": null,
+        "signalAborted": false,
+        "observedBySource": {
+          "state": "auth",
+          "authenticated": false
+        },
+        "required": {
+          "state": "unknown",
+          "authenticated": "absent",
+          "detail": "Claude CLI check output could not be read."
+        }
+      },
+      "executionEvidence": "source trace; prior controlled runner demonstrated exit 1 plus outputFailed; combined synthetic public case unexecuted"
+    },
+    {
+      "id": "F2",
+      "priority": 3,
+      "title": "Help probe wrapper replaces established start and read failures",
+      "classification": "introduced loss of documented diagnostic",
+      "primaryPath": "packages/infrastructure/src/claude/harness.ts",
+      "primaryLines": [
+        335,
+        347
+      ],
+      "affectedPublicEntry": "GET /harness/preflight and turn readiness check",
+      "supportingPaths": [
+        "packages/infrastructure/src/claude/harness.ts:125",
+        "packages/infrastructure/src/claude/harness.ts:201",
+        "packages/infrastructure/src/claude/harness.ts:376",
+        "packages/infrastructure/src/claude/harness.ts:443",
+        "packages/infrastructure/src/claude/harness.test.ts:1155",
+        "docs/06-harness-integration.md:942"
+      ],
+      "sourceCase": {
+        "version": "success",
+        "help": "known missing temporary check folder or unreadable output",
+        "auth": "success",
+        "actualPublicDetail": "Claude CLI <version> failed the --max-turns/--help check.",
+        "expected": "fixed known cause retained; ordinary capability failures retain their guidance"
+      },
+      "executionEvidence": "source trace; existing folder test fails version first and existing unreadable-output control faults only auth; mixed cases unexecuted"
+    }
+  ],
+  "freshFinalLiveReadback": {
+    "atUtc": "2026-11-21T12:17:00.6183632Z",
+    "head": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+    "base": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "main": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "draft": true,
+    "state": "open",
+    "syntheticMerge": "3844221463f7ce2efd592c7ef1515914a29be847"
+  },
+  "gitAndReviewSource": {
+    "revisions": {
+      "02351e2fb932b3be44e7cc3fb3943a61d568226c": {
+        "tree": "d289bb12b943557584c5659bc33447d1baebc2f6",
+        "parents": [
+          "47ca4640793a81efa5bec661dba25627de314774",
+          "2854c5f0df468199083142ee10dda9fc2e2d6a8b"
+        ]
+      },
+      "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20": {
+        "tree": "911b2400b7622b5b04b58b3b03092d9ea90f55a3",
+        "parents": [
+          "02351e2fb932b3be44e7cc3fb3943a61d568226c"
+        ]
+      },
+      "9304b9f3756dbce0da9a00a968fad13dc41c1383": {
+        "tree": "5dccfb31b0e33e4186d69de852b47cb4b2bb2238",
+        "parents": [
+          "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20"
+        ]
+      },
+      "a84f988b89e456b0e2270e3c4750afb250b6c68f": {
+        "tree": "b0de2af3f1aab4bdd0552076091a6082db6e94fb",
+        "parents": [
+          "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+          "598b8f4b02e39e9389cef45acf936dffc17256cb"
+        ]
+      },
+      "a04f6661a74a727e6c963d8648ea2998bb6dbe7b": {
+        "tree": "4442e996f0a5c5d047b3978eedcde2d3fc0e6d69",
+        "parents": [
+          "9304b9f3756dbce0da9a00a968fad13dc41c1383",
+          "a84f988b89e456b0e2270e3c4750afb250b6c68f"
+        ]
+      }
+    },
+    "worktreeIndexClean": true,
+    "integration": {
+      "automaticDocMerges": {
+        "docs/06-harness-integration.md": {
+          "independentNonoverlappingEdits": 4,
+          "sha256": "8d0ca4e00c9a3c81469e4ca8552990badfa1fa2c64353a7163cfa64e8f06d586"
+        },
+        "docs/guide/07-troubleshooting.md": {
+          "independentNonoverlappingEdits": 4,
+          "sha256": "6fd28854849456d41804666a0f7dfad990c92725e6fb3daced100b5def96e406"
+        }
+      },
+      "allPathsInFourTreeUnion": 34264,
+      "exactModeAndBlob": {
+        "both": 33846,
+        "main": 248,
+        "own": 165
+      },
+      "additiveResolutions": {
+        ".gitattributes": {
+          "ancestorInsertionLineAfter": 107,
+          "ownAddedLines": 14,
+          "mainAddedLines": 12,
+          "integratedBlob": "1c2d9a0037b12f190f001f7aa6306f07532314a7",
+          "sha256": "6faac1df3fb8444d260cf373ee81cc8c0cfe5ec8347d17fa3ad702d096a5bc21"
+        },
+        ".prettierignore": {
+          "ancestorInsertionLineAfter": 29,
+          "ownAddedLines": 7,
+          "mainAddedLines": 7,
+          "integratedBlob": "8e07cbe96ba1ffc742aac3b60bf5591879072efc",
+          "sha256": "072f537e2988f39c1fc7ef68ed24cf4502ea3aab9f39cf87373a3fac9e92a8f4"
+        },
+        "CHANGELOG.md": {
+          "ancestorInsertionLineAfter": 5,
+          "ownAddedLines": 16,
+          "mainAddedLines": 9,
+          "integratedBlob": "284e3196d0f8e075f5769ec976ea4ec197147389",
+          "sha256": "295fd1748a3e0868636f3e928920d214642d589b621b9b160304c32b81401aec"
+        }
+      },
+      "originalProtectedProofVerified": 1571
+    },
+    "changedNonArchive": {
+      ".gitattributes": {
+        "baseGitBlob": "e06652e2bb7cdb773f3c755398dd312d3defc83f",
+        "headGitBlob": "1c2d9a0037b12f190f001f7aa6306f07532314a7",
+        "sha256": "6faac1df3fb8444d260cf373ee81cc8c0cfe5ec8347d17fa3ad702d096a5bc21"
+      },
+      ".prettierignore": {
+        "baseGitBlob": "9f8bc95e4ad22e100fa0e655d2c22c6baaab396c",
+        "headGitBlob": "8e07cbe96ba1ffc742aac3b60bf5591879072efc",
+        "sha256": "072f537e2988f39c1fc7ef68ed24cf4502ea3aab9f39cf87373a3fac9e92a8f4"
+      },
+      "CHANGELOG.md": {
+        "baseGitBlob": "5a7afa9da5d0446209423046a2e8e45d72add7ac",
+        "headGitBlob": "284e3196d0f8e075f5769ec976ea4ec197147389",
+        "sha256": "295fd1748a3e0868636f3e928920d214642d589b621b9b160304c32b81401aec"
+      },
+      "docs/06-harness-integration.md": {
+        "baseGitBlob": "7830ec4cc165183980cbcc22f8577be7798c33a6",
+        "headGitBlob": "286425434cb384c517903a7457329db73f34fabb",
+        "sha256": "8d0ca4e00c9a3c81469e4ca8552990badfa1fa2c64353a7163cfa64e8f06d586"
+      },
+      "docs/guide/07-troubleshooting.md": {
+        "baseGitBlob": "58351f89f16930fb7509354e0a001e4f7660f791",
+        "headGitBlob": "1968d2fb4975b5f9821c36e1a7b5fa12bb53f245",
+        "sha256": "6fd28854849456d41804666a0f7dfad990c92725e6fb3daced100b5def96e406"
+      },
+      "packages/infrastructure/src/claude/fixtures/turn-cli.mjs": {
+        "baseGitBlob": "67a7c0a8bfaf2c8c4c023d12789b24fd008dcfea",
+        "headGitBlob": "4ee72d292c5ef46cc39573f3474555a11901b59f",
+        "sha256": "09239d2c2b2e96484c50562b01ff6fa955fe8ccd46e487b691c5d9dbb9aedf47"
+      },
+      "packages/infrastructure/src/claude/harness.test.ts": {
+        "baseGitBlob": "6959fbca73186bbf38c68f36ed3a968b55cd00d4",
+        "headGitBlob": "f182f25ea49a5bc2aafd041629a3186e1ba5e867",
+        "sha256": "5723686537a9caae3ff7d31c788255644a93b86c7f8118ad61460e0e2052b9d1"
+      },
+      "packages/infrastructure/src/claude/harness.ts": {
+        "baseGitBlob": "f97f4104054ea06e2d387a263c66ef0aa2930cca",
+        "headGitBlob": "91b00200cd8b451134d336d84ea8172a4757d34f",
+        "sha256": "bc45a1849e0b8ac7e4c89ecc423faa8511da5bee374200b90328469863e6bf1b"
+      },
+      "packages/infrastructure/src/claude/process-failure.test.ts": {
+        "baseGitBlob": "55b5e8d755a5e715a238cc202c1faee2f8b0535f",
+        "headGitBlob": "4ef9cd2d5a4387219c44e0d1d3c581f27adc7b0e",
+        "sha256": "e47208e37d43e7793f310af6f0b73bf9b0b95eb724309e5cb92704bbdada25ca"
+      },
+      "packages/infrastructure/src/claude/process.test.ts": {
+        "baseGitBlob": "d053fcf6d4bea0151de9fe6db3dd23cad2990ce9",
+        "headGitBlob": "fa70d9b9fdc06f320f7e3b9f73ec3fa5d8925bd8",
+        "sha256": "12384a0617ec8f73a9f8046bfe2f741f1303a13d12795c4af37709c5eade5254"
+      },
+      "packages/infrastructure/src/claude/process.ts": {
+        "baseGitBlob": "400c903edfb30c81bbd26ada9b50f5f6f6cffca3",
+        "headGitBlob": "740f92c312ffa467d1ab48c203782a3c88876234",
+        "sha256": "c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322"
+      },
+      "packages/infrastructure/src/claude/start-refusal.test.ts": {
+        "baseGitBlob": null,
+        "headGitBlob": "a2fe4ce232557c56b56e29f84e0bb64e1213a326",
+        "sha256": "4088b01370ecc1937f5eb7aa810425edb0975aa8a92daf780b7188ed750e97fc"
+      }
+    },
+    "authoredDiff": {
+      "files": [
+        "CHANGELOG.md",
+        "docs/06-harness-integration.md",
+        "docs/guide/07-troubleshooting.md",
+        "packages/infrastructure/src/claude/fixtures/turn-cli.mjs",
+        "packages/infrastructure/src/claude/harness.test.ts",
+        "packages/infrastructure/src/claude/harness.ts",
+        "packages/infrastructure/src/claude/process-failure.test.ts",
+        "packages/infrastructure/src/claude/process.test.ts",
+        "packages/infrastructure/src/claude/process.ts",
+        "packages/infrastructure/src/claude/start-refusal.test.ts"
+      ],
+      "sourceRawPatchSha256": "14cd403c9198379021087c4fc65d9880baf81467ae3aadfd6495edd93ddc2407",
+      "effectiveHeadAllPaths": 170,
+      "effectiveWithoutArchive": 12,
+      "authoredFilesWhoseBlobChangedAtIntegration": [
+        "CHANGELOG.md",
+        "docs/06-harness-integration.md",
+        "docs/guide/07-troubleshooting.md"
+      ]
+    },
+    "review1Binding": {
+      "reviewedDiffIndependentSha256": "14cd403c9198379021087c4fc65d9880baf81467ae3aadfd6495edd93ddc2407",
+      "candidateSources": 20,
+      "baseSources": 3,
+      "externalInputs": 22
+    }
+  },
+  "incomingCommentTokenCheck": {
+    "node": "v22.23.4",
+    "typescript": "6.0.3",
+    "files": {
+      "packages/adapter-codex/src/isolation.ts": {
+        "nonTriviaTokens": 310,
+        "tokenSha256": "d3dc996e8df7b0de265af1e7b19bbaf4418510931f04d2dc6619d5489cb7413e"
+      },
+      "packages/adapter-codex/src/options.ts": {
+        "nonTriviaTokens": 444,
+        "tokenSha256": "4586032f092006a70df743e7d30e6a37920b22fd6a496a759feadf1f09d37b68"
+      }
+    }
+  },
+  "evidenceArchivesAndAuthor": {
+    "archives": {
+      "docs/qa/2026-11-21-i4-364-claude-start": {
+        "source": "9304b9f3756dbce0da9a00a968fad13dc41c1383",
+        "gitBlobsAndWorkingBytes": 158,
+        "sealedWithoutSelf": 157,
+        "sealSha256": "f3d54d5b1aa2fc14f128581c6dc4c64b0770085d999d561583d8c4d4281cdfa6",
+        "integrationProofSha256": "d64bf217d74f008d74075154443c330dc7ea6b8e43f5555b81c5acc8a42ad1c3"
+      },
+      "docs/qa/2026-11-21-i4-427-365": {
+        "source": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+        "gitBlobsAndWorkingBytes": 243,
+        "sealedWithoutSelf": 242,
+        "sealSha256": "063ca3ffbcd4b81b531b73da9a4d32e3bb5dd532857cfcd88ef66027d5678e74",
+        "integrationProofSha256": "b6af78ae7326f75e739271e6eef8fc3cccfec2b5b284d9709350fac361fb679a"
+      }
+    },
+    "publishedRaw": 150,
+    "originalSelection": 174,
+    "localOnly": [
+      "bin/FakeClaude.exe",
+      "bin/PublicFakeClaude.exe",
+      "probe-data-258/graphgoblin.db",
+      "probe-data-258/graphgoblin.db-shm",
+      "probe-data-258/graphgoblin.db-wal",
+      "probe-data-258/master.key",
+      "probe-data-259/graphgoblin.db",
+      "probe-data-259/graphgoblin.db-shm",
+      "probe-data-259/graphgoblin.db-wal",
+      "probe-data-259/master.key",
+      "probe-data-260/graphgoblin.db",
+      "probe-data-260/graphgoblin.db-shm",
+      "probe-data-260/graphgoblin.db-wal",
+      "probe-data-260/master.key",
+      "public-attempt1/CANARY364_PRIVATE_EXECUTABLE.exe",
+      "public-attempt1/data/graphgoblin.db",
+      "public-attempt1/data/graphgoblin.db-shm",
+      "public-attempt1/data/graphgoblin.db-wal",
+      "public-attempt1/data/master.key",
+      "public-attempt2/CANARY364_PRIVATE_EXECUTABLE.exe",
+      "public-attempt2/data/graphgoblin.db",
+      "public-attempt2/data/graphgoblin.db-shm",
+      "public-attempt2/data/graphgoblin.db-wal",
+      "public-attempt2/data/master.key"
+    ],
+    "archiveMetadata": [
+      "README.md",
+      "archive-seal.json",
+      "archive-selection.json",
+      "credential-context-review.json",
+      "dispatch-metadata.json",
+      "ignored-log-paths.json",
+      "integration-metadata.json",
+      "original-manifest-verification.json"
+    ],
+    "privacyPatternNames": [
+      "GitHub-token",
+      "provider-token",
+      "AWS-access-key",
+      "private-key",
+      "literal-bearer"
+    ],
+    "privacyMatchCount": 0,
+    "originalManifests": {
+      "i4-364-independent-01": {
+        "entries": 75,
+        "manifestSha256": "89cd9ef742867eb4be4e64ef2c82e22de971fbe21c91fdc33c783a9c067c1ff0"
+      },
+      "i4-364-author-01": {
+        "entries": 32,
+        "manifestSha256": "7ff283ecd3502eb8a95217872a960d2bb56b140544efbc824d8ad3dae2f15a87"
+      },
+      "i4-364-gpt-review-01": {
+        "entries": 52,
+        "manifestSha256": "cc7fb687167df2042975fe6a7c7fe506513b756e999a0098406f1c99a065bdc8"
+      }
+    },
+    "author": {
+      "provider": "claude-opus-5-5",
+      "configuredEffort": "xhigh",
+      "sessionId": "946b7b48-706e-4456-8fa0-b656a04672a7",
+      "exit": 0,
+      "terminalReason": "completed",
+      "stopReason": "end_turn",
+      "turns": 169,
+      "eventLines": 1908,
+      "resultSha256": "a53561d34a4c2c4db20a1923d1b749db304dec472d63308ace0aa0b64f81a2e7"
+    },
+    "review1": {
+      "verdict": "APPROVE",
+      "head": "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20",
+      "sha256": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46"
+    }
+  },
+  "livePublicRecordsAndJobs": {
+    "checkedAtUtc": "2026-11-21T12:08:58.678878+00:00",
+    "openDraft": true,
+    "mergeable": true,
+    "mergeabilityState": "clean",
+    "main": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+    "head": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+    "syntheticMergeParents": [
+      "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "a04f6661a74a727e6c963d8648ea2998bb6dbe7b"
+    ],
+    "tree": "4442e996f0a5c5d047b3978eedcde2d3fc0e6d69",
+    "issueLabels": [
+      "aidlc-ready",
+      "qa:touched-systems",
+      "impl:claude-opus-5.5",
+      "review:gpt-6.1-sol",
+      "type:bug",
+      "area:harness"
+    ],
+    "issueState": "open",
+    "pullRequestBodySha256": "f4754e6cf04954903100833f630fffbd341f62af06645c2fc59f7d98a6530b5c",
+    "routing": {
+      "isDraft": true,
+      "headRefOid": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+      "baseRefOid": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "closingIssuesReferences": {
+        "totalCount": 1,
+        "nodes": [
+          {
+            "number": 364
+          }
+        ]
+      },
+      "reviewThreads": {
+        "totalCount": 0,
+        "nodes": [],
+        "pageInfo": {
+          "hasNextPage": false
+        }
+      },
+      "reviews": {
+        "totalCount": 0
+      },
+      "reviewDecision": null
+    },
+    "verbatimComments": {
+      "7060507495": {
+        "kind": "D176",
+        "sha256": "73925f800e6164f50e4e5454c606fde9afcd64771789be24835d7c058b6f7b77",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364#issuecomment-7060507495"
+      },
+      "7060998599": {
+        "kind": "independent-qa-summary-issue",
+        "sha256": "b6871f07831e087d76c2eb9b0892fb2c0e124c814f0146a1af357971a7c9a739",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/364#issuecomment-7060998599"
+      },
+      "7060993847": {
+        "kind": "verbatim-original-formal-review-1",
+        "sha256": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7060993847"
+      },
+      "7060996178": {
+        "kind": "independent-qa-summary-pr",
+        "sha256": "b6871f07831e087d76c2eb9b0892fb2c0e124c814f0146a1af357971a7c9a739",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7060996178"
+      },
+      "7061002045": {
+        "kind": "verbatim-original-D182",
+        "sha256": "8af829d99f313b2fd64262eac82b0abccba0456784e1f6081f76f78584254d92",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7061002045"
+      },
+      "7061662284": {
+        "kind": "current CI",
+        "sha256": "95529d4501a8cce2e23ee5af8e224efcd4a16a1ce8d6bd8babae44ae47836609",
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/549#issuecomment-7061662284"
+      }
+    },
+    "run": {
+      "id": 44895005482,
+      "attempt": 1,
+      "event": "pull_request",
+      "conclusion": "success",
+      "head": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+      "base": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    "jobs": {
+      "Template image": {
+        "id": 136818661992,
+        "successSteps": 6,
+        "skipped": [],
+        "directLogSha256": "e4881b11628d8752613a8d61da87bc77609ca7808269f851a24b492314f3701a"
+      },
+      "Repository checks": {
+        "id": 136818662130,
+        "successSteps": 29,
+        "skipped": [],
+        "directLogSha256": "6dc2400a0b7f509106fc2f605423845e107f3e63612204ac5f3976d0ff7d7a8f"
+      },
+      "Coverage": {
+        "id": 136818662188,
+        "successSteps": 14,
+        "skipped": [],
+        "directLogSha256": "41a5b90e65ce023a3a6fa476da59394f4979e44c53c00f110f5db1559d229be9"
+      },
+      "Browser": {
+        "id": 136818662213,
+        "successSteps": 13,
+        "skipped": [
+          "Upload browser failure evidence"
+        ],
+        "directLogSha256": "8898c511edd5ff7f3664d735ad45930b5c1086c553f6306ba3f6892386ce837f"
+      },
+      "Windows launcher": {
+        "id": 136818662348,
+        "successSteps": 14,
+        "skipped": [],
+        "directLogSha256": "ea5d7c71d3209ac4c248eba63f5221c7e2d32c8db228c2ef0a117bb9b040cd72"
+      },
+      "Gates": {
+        "id": 136822182816,
+        "successSteps": 3,
+        "skipped": [],
+        "directLogSha256": "79d5ce832ee89e1bcc9e339e604420f063b96a9d1f3a5e62b965850a844ff5b8"
+      }
+    },
+    "remoteArtifactsByteEqualLocal": {
+      "windows-launcher-1": {
+        "id": 14704175435,
+        "bytes": 9234,
+        "sha256": "acd212825c0b7586d704d92ca24ba134ea73c650d96176587ee609af9b6daee7",
+        "expired": false
+      },
+      "coverage": {
+        "id": 14703757205,
+        "bytes": 22477,
+        "sha256": "171327f2e8cf2f00f16f738ca0dc9eb16f45856b6f0512325074f2b014f091ac",
+        "expired": false
+      }
+    }
+  },
+  "hostedCoverageAndNativeCorpus": {
+    "boundLocalCIFiles": 15,
+    "unitPassed": 10073,
+    "unitSkipped": 61,
+    "coverageTasks": [
+      22,
+      22
+    ],
+    "summaryFiles": 13,
+    "thresholds": {
+      "lines": 90,
+      "branches": 90
+    },
+    "coverageSummaries": {
+      "packages/adapter-codex/coverage/coverage-summary.json": {
+        "lines": 99.21,
+        "branches": 95.25,
+        "statements": 98.07,
+        "functions": 99.31
+      },
+      "packages/adapter-jev/coverage/coverage-summary.json": {
+        "lines": 98.8,
+        "branches": 96.77,
+        "statements": 97.75,
+        "functions": 100
+      },
+      "packages/api-client/coverage/coverage-summary.json": {
+        "lines": 100,
+        "branches": 97.3,
+        "statements": 99.43,
+        "functions": 100
+      },
+      "packages/contracts/coverage/coverage-summary.json": {
+        "lines": 99.42,
+        "branches": 95.1,
+        "statements": 99.26,
+        "functions": 97.05
+      },
+      "packages/domain/coverage/coverage-summary.json": {
+        "lines": 98.75,
+        "branches": 96,
+        "statements": 97.88,
+        "functions": 98.3
+      },
+      "packages/engine/coverage/coverage-summary.json": {
+        "lines": 96.94,
+        "branches": 91.22,
+        "statements": 95.62,
+        "functions": 97.7
+      },
+      "packages/infrastructure/coverage/coverage-summary.json": {
+        "lines": 97.83,
+        "branches": 93.29,
+        "statements": 96.4,
+        "functions": 98.12
+      },
+      "apps/api/coverage/coverage-summary.json": {
+        "lines": 95.28,
+        "branches": 90.96,
+        "statements": 93.92,
+        "functions": 91.44
+      },
+      "apps/mcp/coverage/coverage-summary.json": {
+        "lines": 96.95,
+        "branches": 94.65,
+        "statements": 95.87,
+        "functions": 94.68
+      },
+      "apps/plugin-claude/coverage/coverage-summary.json": {
+        "lines": 95,
+        "branches": 95.23,
+        "statements": 95.23,
+        "functions": 100
+      },
+      "apps/plugin-codex/coverage/coverage-summary.json": {
+        "lines": 95.58,
+        "branches": 91.66,
+        "statements": 95.89,
+        "functions": 100
+      },
+      "apps/web/coverage/coverage-summary.json": {
+        "lines": 98.63,
+        "branches": 94.38,
+        "statements": 97.71,
+        "functions": 97.23
+      },
+      "tooling/coverage/coverage-summary.json": {
+        "lines": 97.48,
+        "branches": 93.57,
+        "statements": 96.55,
+        "functions": 94.17
+      }
+    },
+    "browserPassed": 488,
+    "nativeWindowsPassed": 27,
+    "audit": {
+      "low": 7,
+      "moderate": 13,
+      "high": 0,
+      "critical": 0
+    },
+    "windowsCorpus": {
+      "artifactId": 14704175435,
+      "sha256": "acd212825c0b7586d704d92ca24ba134ea73c650d96176587ee609af9b6daee7",
+      "memberHashes": {
+        "manifest.json": "6ab8aeba06e6473f3a4b0d2d7f5196e67ef4cff3d073cdf3f508d493dec9841e",
+        "observations.ndjson": "442840bba5b7403de8cb9d68eaa73e9dcad1b24d70b789d022172926a1c8a2fb",
+        "result.json": "2743a12e6cae15f280861935335c307d2a2c52d437673a2f5a4815dc6e0cb4d1"
+      },
+      "binding": {
+        "unavailable": [],
+        "repository": "Jacob-J-Thomas/GraphGoblin",
+        "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/pull/549/merge",
+        "job": "windows-launcher",
+        "runId": "44895005482",
+        "runAttempt": "1",
+        "event": "pull_request",
+        "ref": "refs/pull/549/merge",
+        "sha": "3844221463f7ce2efd592c7ef1515914a29be847",
+        "eventHead": "a04f6661a74a727e6c963d8648ea2998bb6dbe7b",
+        "eventBase": "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+        "runnerOs": "Windows",
+        "runnerArch": "X64",
+        "imageVersion": "20261116.315.1",
+        "checkout": {
+          "state": "observed",
+          "head": "3844221463f7ce2efd592c7ef1515914a29be847",
+          "tree": "4442e996f0a5c5d047b3978eedcde2d3fc0e6d69",
+          "parents": [
+            "a84f988b89e456b0e2270e3c4750afb250b6c68f",
+            "a04f6661a74a727e6c963d8648ea2998bb6dbe7b"
+          ],
+          "matchesSha": true,
+          "headMatchesEventHead": null,
+          "baseParentMatchesEventBase": true,
+          "headParentMatchesEventHead": true
+        },
+        "node": "v22.23.5"
+      },
+      "recordCounts": {
+        "state": "valid",
+        "reason": null,
+        "bytes": 91648,
+        "records": 338,
+        "closed": true,
+        "rejected": 0,
+        "omittedRecords": 0,
+        "omittedBytes": 0,
+        "byType": {
+          "recorder-open": 1,
+          "case-start": 27,
+          "fixture": 9,
+          "child": 219,
+          "cleanup": 15,
+          "case-end": 27,
+          "alias-round": 4,
+          "alias": 2,
+          "ownership-result": 15,
+          "contention": 3,
+          "ownership-check": 3,
+          "ownership-cleanup": 3,
+          "fixture-state": 9,
+          "recorder-closed": 1
+        }
+      },
+      "passedGroups": {
+        "installer": "pass",
+        "launcher": "pass",
+        "checkout-alias": "pass",
+        "lock-contention": "pass",
+        "bounded-logs": "pass"
+      },
+      "replayHelperSha256": "a6699139e0ac185967416889578f2a3501a2272da81f3839ffe20be713edf449",
+      "replayExit": 0,
+      "canonicalReplayPriorExecution": true,
+      "retainedReplayResultDifferingFields": [],
+      "newReplayRun": false
+    }
+  },
+  "independentBehaviorAndAuthorCoverage": {
+    "predictionsSha256": "8ee184c98b2467856048ad078a7277ba0646a03cf8a3427ee6805043cde06f55",
+    "runtime": "v22.23.4",
+    "qaCheckoutHead": "99f1de7863dfc6a05b63a9140f7fc7a6833fcb20",
+    "sourceFilesMatched": 24,
+    "boundInputs": 4,
+    "fixturesBound": 4,
+    "builtFilesRehashed": 1271,
+    "buildManifestSha256": "5590ed4a6763c178bce19aa5f8c912e1bee1169404ab6f1ddd3d041e0832d261",
+    "build": {
+      "exitCode": 0,
+      "successfulTasks": 12,
+      "totalTasks": 12,
+      "cachedTasks": 5,
+      "buildSlotReleased": true
+    },
+    "originalTiers": {
+      "native-observations": {
+        "passed": 42,
+        "predicates": 42,
+        "sha256": "68fb2801622069fc59a2db55c352f60fac3d3c7517ff0c02b624e9aea3145b47"
+      },
+      "public-attempt2-observations": {
+        "passed": 55,
+        "predicates": 55,
+        "sha256": "f74d3b8fa3cf99beddb32a443cc65918f2d6aa7926f8a6f00bcd4e7d6c28a975"
+      },
+      "probe-path-observations": {
+        "passed": 23,
+        "predicates": 23,
+        "sha256": "c95518df90e719d71e2d2df52610139f13381d6eed75b4c6e7be03db0989e492"
+      },
+      "public-attempt1-observations": {
+        "passed": 6,
+        "predicates": 6,
+        "sha256": "b7685f02da43a546b9890be841516bc9787ee6ee86e3d3f25a5de592394bf152"
+      },
+      "controlled-seam-observations": {
+        "passed": 19,
+        "predicates": 20,
+        "sha256": "2825deec9dc9d0e882908ad45ed0da2db9065444e00259b73ddec57281a02fc5"
+      },
+      "cancel-predicate-correction": {
+        "passed": 3,
+        "predicates": 3,
+        "sha256": "da6301e42b04aefcd6bedfc2bb337afbbacd4a49ab34029e3427c99c258b4b9b"
+      },
+      "baseline-negative-control": {
+        "passed": 3,
+        "predicates": 3,
+        "sha256": "747ce3e7a84846081dccd8afa82429df6e6bfe6b3dcd4702d1b6e5a421a083a3"
+      }
+    },
+    "nativeMatrix": {
+      "ordinary": {
+        "rawAssignedPid": true,
+        "rawStartError": [],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": null,
+        "runnerRefusal": null,
+        "turnCode": null,
+        "turnOK": true,
+        "harmlessTurnMarkers": 1
+      },
+      "missing-cwd": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": "working-directory-missing",
+        "turnCode": "HARNESS_INVALID_CONFIGURATION",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "file-cwd": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": "working-directory-not-directory",
+        "turnCode": "HARNESS_INVALID_CONFIGURATION",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "length-258": {
+        "rawAssignedPid": true,
+        "rawStartError": [],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": null,
+        "runnerRefusal": null,
+        "turnCode": null,
+        "turnOK": true,
+        "harmlessTurnMarkers": 1
+      },
+      "length-259": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": null,
+        "turnCode": "HARNESS_TURN_FAILED",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "length-260": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [
+          "ENOTCONN",
+          "ENOTCONN"
+        ],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": null,
+        "turnCode": "HARNESS_TURN_FAILED",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "absent-exe": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": "executable-missing",
+        "turnCode": "HARNESS_NOT_INSTALLED",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "bare-name": {
+        "rawAssignedPid": false,
+        "rawStartError": [
+          "ENOENT"
+        ],
+        "rawPipeCodes": [],
+        "runnerSpawnCode": "ENOENT",
+        "runnerRefusal": null,
+        "turnCode": "HARNESS_TURN_FAILED",
+        "turnOK": false,
+        "harmlessTurnMarkers": 0,
+        "submission": "definitely-not-submitted"
+      }
+    },
+    "publicMatrix": {
+      "good": {
+        "status": "succeeded"
+      },
+      "public-missing-cwd": {
+        "publicCode": "HARNESS_TURN_FAILED",
+        "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+        "resume": 409,
+        "turns": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "public-file-cwd": {
+        "publicCode": "HARNESS_TURN_FAILED",
+        "adapterCode": "HARNESS_INVALID_CONFIGURATION",
+        "resume": 409,
+        "turns": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "public-length258": {
+        "status": "succeeded"
+      },
+      "public-length259": {
+        "publicCode": "HARNESS_TURN_FAILED",
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "resume": 409,
+        "turns": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "public-length260": {
+        "publicCode": "HARNESS_TURN_FAILED",
+        "adapterCode": "HARNESS_TURN_FAILED",
+        "resume": 409,
+        "turns": 0,
+        "submission": "definitely-not-submitted"
+      },
+      "public-absent-restored": {
+        "adapterPublicCode": "HARNESS_NOT_INSTALLED",
+        "initiallyResumable": true,
+        "resume": 200,
+        "afterRestore": "succeeded",
+        "turns": 1
+      }
+    },
+    "publicHttpRecords": 109,
+    "historicalSqliteHeaderVerified": true,
+    "publicEvidenceRestart": false,
+    "probeBoundary": [
+      {
+        "tempLength": 233,
+        "probeLength": 258,
+        "state": "ready",
+        "serverExit": 0
+      },
+      {
+        "tempLength": 234,
+        "probeLength": 259,
+        "state": "unknown",
+        "serverExit": 0
+      },
+      {
+        "tempLength": 235,
+        "probeLength": 260,
+        "state": "unknown",
+        "serverExit": 0
+      }
+    ],
+    "controlFailure": [
+      "cancel-before-diagnosis precedence"
+    ],
+    "controlScope": "injected subprocess and filesystem seam, synthetic PID",
+    "parentSourceContrast": {
+      "base": "02351e2fb932b3be44e7cc3fb3943a61d568226c",
+      "parent": "HARNESS_NOT_INSTALLED",
+      "candidate": "HARNESS_TURN_FAILED"
+    },
+    "ownedCleanupAtQATime": {
+      "absentPids": 107,
+      "releasedPorts": 5
+    },
+    "author": {
+      "focusedPassed": 259,
+      "focusedSkipped": 2,
+      "focusedLines": 99.82,
+      "focusedBranches": 98.15,
+      "aggregateFailed": 51,
+      "aggregatePassed": 1153,
+      "aggregateSkipped": 2,
+      "verifiedLogSha256": {
+        "focused": "0b05544b8b7d0b647fba025ba80402c405ade334f086f2170cb852ca85f1f6a0",
+        "aggregate": "4ed0372d1ee8db04aed50db8fa3a357ef18fa65cbd748b8a59af93ab0fd2e189"
+      }
+    }
+  },
+  "findingSourceAndInputHashes": {
+    "files": {
+      "packages/infrastructure/src/claude/harness.ts": {
+        "sha256": "bc45a1849e0b8ac7e4c89ecc423faa8511da5bee374200b90328469863e6bf1b",
+        "gitBlob": "91b00200cd8b451134d336d84ea8172a4757d34f",
+        "ranges": [
+          {
+            "first": 112,
+            "last": 145,
+            "sha256": "975042e2dee0d919e53e1b777ab18538bb12a7a3bca5ce0e32b8a27e0d7a0ca3"
+          },
+          {
+            "first": 157,
+            "last": 212,
+            "sha256": "16e7309d8f2e686157206904145d071b637bcb86130f2eb473f96ec3f18229cb"
+          },
+          {
+            "first": 263,
+            "last": 275,
+            "sha256": "d2c0c7d83d871ec1155163321fc8a0185f8cca9fb6bef5da702d72b586e5d95a"
+          },
+          {
+            "first": 297,
+            "last": 325,
+            "sha256": "284329be219be81fa050414735ebd8bc0dcc11120675c50e8c4a23a5014ea8f0"
+          },
+          {
+            "first": 328,
+            "last": 351,
+            "sha256": "c79bf92c92dfb53bb45bd6774a740682787f45cc4ac850f8f22c476e41b3acd5"
+          },
+          {
+            "first": 353,
+            "last": 362,
+            "sha256": "5e8145d7f2ad8ce2efd02cd6bdacbd68aefbe6062b9eeb9aedb94f8d014fb51e"
+          },
+          {
+            "first": 376,
+            "last": 389,
+            "sha256": "ba197265a25ab6e7db3c7f052bafdddd0f50c3c9336c0f934a26e8d11b846985"
+          },
+          {
+            "first": 442,
+            "last": 444,
+            "sha256": "959f36b8d54381fdc15cec4a538da9c8af7cdaa26387c38d55fc1b6532e20eea"
+          },
+          {
+            "first": 517,
+            "last": 544,
+            "sha256": "4149db8df3bd1d5ae6407fbec9cbbfbb0a8a4fa12365f4b37a6d4776fbc24a07"
+          }
+        ]
+      },
+      "packages/infrastructure/src/claude/process.ts": {
+        "sha256": "c44ed660f69b7e4999f0d89704818164ca027356b9f4c6b8c4ec99fb827ad322",
+        "gitBlob": "740f92c312ffa467d1ab48c203782a3c88876234",
+        "ranges": [
+          {
+            "first": 53,
+            "last": 85,
+            "sha256": "42879e4f184f7d1d7b06d5cbf001eda3a948c3cc30c81326ccb812a1e250fb73"
+          },
+          {
+            "first": 129,
+            "last": 149,
+            "sha256": "9e87d23a396f44b8c39fa64750891904d6857e6d33262df0e57b22b064a78db0"
+          },
+          {
+            "first": 151,
+            "last": 177,
+            "sha256": "06f5cf1c46323671edc7adfafac5a22623bf87bf924b5dbbc7e4c1b8876e81dc"
+          },
+          {
+            "first": 216,
+            "last": 250,
+            "sha256": "f933cafd36e99e93fd4006189f57e641774af348ef1645073d0c75433e37bbc4"
+          }
+        ]
+      },
+      "packages/infrastructure/src/claude/harness.test.ts": {
+        "sha256": "5723686537a9caae3ff7d31c788255644a93b86c7f8118ad61460e0e2052b9d1",
+        "gitBlob": "f182f25ea49a5bc2aafd041629a3186e1ba5e867",
+        "ranges": [
+          {
+            "first": 53,
+            "last": 60,
+            "sha256": "ed3026964e771aade48bea09e62f3a7cfd0f08a7ed12541225d5a713836d59bc"
+          },
+          {
+            "first": 83,
+            "last": 88,
+            "sha256": "922158d70270477cb9d48dddc08ac5146bc53dd7c6754791440532ba5159790e"
+          },
+          {
+            "first": 1133,
+            "last": 1168,
+            "sha256": "4f0a91c7fdc62ddc6f4ce7423b965faa0435aa6186551b5bc70e8140ab414030"
+          },
+          {
+            "first": 1175,
+            "last": 1190,
+            "sha256": "1730a733e0c671170ec6ab6ba7acb9a9c24e6a391ff65d3509491706c5ed74fe"
+          }
+        ]
+      },
+      "packages/domain/src/readiness.ts": {
+        "sha256": "53c5e8248056bb6af5439e204004948200e0051cc15ebff660d89b377c42da5c",
+        "gitBlob": "fac1298a6e46d784a66f643f4081d207c1a1ef64",
+        "ranges": [
+          {
+            "first": 4,
+            "last": 34,
+            "sha256": "bf178e7d58ed99a2a50a55ca92c6d68f2c937b7975f678cb442ca696839508c8"
+          },
+          {
+            "first": 59,
+            "last": 72,
+            "sha256": "ca7fca01e6a3f0816b4690038df6138fd626fd3a4b6841e0a1e72069be250fe3"
+          }
+        ]
+      },
+      "packages/engine/src/handlers/inference-failure.ts": {
+        "sha256": "d3d3366bef87143ec967b0af0909622d3570497e9196339108228017bbdbdeb2",
+        "gitBlob": "ad25bfe1ccc5cff38aa1967bcda72834fcfc4321",
+        "ranges": [
+          {
+            "first": 85,
+            "last": 99,
+            "sha256": "fe42fe1d3b7fc3e8d48ad63b5292f965152910c291c0869ea970324b144fde95"
+          },
+          {
+            "first": 145,
+            "last": 163,
+            "sha256": "4f192d7a8f93434da0e3753b5a56859cc1c6a9bde972731efc8fecb9630812e3"
+          }
+        ]
+      },
+      "apps/api/src/routes/system.ts": {
+        "sha256": "f3a589e31b49368de4cc4bb7227e01330326305fcadb922c33aeb707fd6404dd",
+        "gitBlob": "387c6eb71748f5525830e14b4c1f348ea78aa0f8",
+        "ranges": [
+          {
+            "first": 136,
+            "last": 152,
+            "sha256": "748bb6dfb9a9b8885a0cd13e21bc71bf73da286c7f91dbd6ee964c62df338253"
+          }
+        ]
+      },
+      "apps/api/src/readiness-operation.ts": {
+        "sha256": "5e929a8232b2f950a1802013e982417aa248345a4e132acc040aece3afa31801",
+        "gitBlob": "1d8d0f0356315bd016c13e70112316850e36fdb9",
+        "ranges": [
+          {
+            "first": 9,
+            "last": 16,
+            "sha256": "99963c208c99eaeacfc6b0175630e56c72d164b793fbd290db775f621ba8d75e"
+          }
+        ]
+      },
+      "docs/06-harness-integration.md": {
+        "sha256": "8d0ca4e00c9a3c81469e4ca8552990badfa1fa2c64353a7163cfa64e8f06d586",
+        "gitBlob": "286425434cb384c517903a7457329db73f34fabb",
+        "ranges": [
+          {
+            "first": 925,
+            "last": 954,
+            "sha256": "f9621294853b5efa1d114c807b9f2ecee44ed704ec4d72c95552c6b98b22de1e"
+          }
+        ]
+      }
+    },
+    "externalKeyInputs": {
+      "i4-549-final-astra-BRIEF-01.md": "0f96a52b990008ac47b40ec1a11772b10e22ed0ea6286bdb1f3a5cef6c4dc9cf",
+      "decision-176.md": "73925f800e6164f50e4e5454c606fde9afcd64771789be24835d7c058b6f7b77",
+      "decision-182.md": "8af829d99f313b2fd64262eac82b0abccba0456784e1f6081f76f78584254d92",
+      "i4-364-publication-01/QA-summary.md": "b6871f07831e087d76c2eb9b0892fb2c0e124c814f0146a1af357971a7c9a739",
+      "i4-364-publication-01/publication-receipts.json": "e980f63a46716852b94021271bc0c8a52be88e844e3c25747dee64a0ae7f8ed3",
+      "i4-364-independent-01/REPORT.md": "a349b81c533ffa1c5a98a9076b4ec9f22e048a3d3fc22392e66ef3301fb15b53",
+      "i4-364-author-01/REPORT.md": "c946dfafed9bd25f74d8b9d19cce5e587d9a07815ae979e8ac15552d5dc987fb",
+      "i4-364-gpt-review-01/REVIEW.md": "6d7925a3e9535b5f01fbb41196a197a789bbca91c31bcf3499975aece8b5fa46",
+      "i4-364-independent-01/cleanup-observations.json": "e33e789fa002339fd94e0a64f9003d157179a15c17f340a287c6d711ef5e879a",
+      "i4-364-independent-01/FIXTURE-REPAIRS.md": "1316a5d173c53f0a1bcb909747cf885c2c3dfc165fce1800947cae86225ec9bf",
+      "i4-364-independent-01/PUBLIC-FIXTURE-DESIGN.md": "64a235797bae6590b2d4c8ee44c0e3e7c50c6106ffc2be64046fbeb937dbec88",
+      "i4-549-current-ci-publication.json": "0ede3a54faf03802389b61c781675cb44520a94f1c4f11d2cc79a6cd7061eda3",
+      "i4-549-body-updated.json": "1ad20f70aec5c0f069ab76f0b233d9415eeb5849bd5659377ba08ad4c665cf27",
+      "i4-549-heada04-targeta84-ci/files.json": "d8fbe840d691552fd1caa55fe801ad6b659d76e2d34721581ed218fc3dfb3079",
+      "i4-549-heada04-targeta84-ci-windows/verified.json": "ea879495514913bdf3905ee4c614a6db9b2bb8630bcde813fcabb541ae95ca12",
+      "i4-549-heada04-targeta84-ci-windows/replay/replay-results.json": "6343e9592cf31bbc58aa408d427e1b422146bca288c168d440feeb63dc418fda",
+      "i4-main-a84-integration-01/pr549/unchanged-production-proof.json": "017b6223e9d18127394ca558b0a8870c30c8854c6e7554cfda8a26ba95d12f83"
+    }
+  },
+  "verificationLimits": {
+    "auditTestsRun": 0,
+    "auditBuildsRun": 0,
+    "auditProviderCalls": 0,
+    "auditBrowserSessions": 0,
+    "auditNativeAcceptanceOrReplayExecutions": 0,
+    "ownerStoreUsed": false,
+    "finalReviewPublishedByThisAuditor": false,
+    "sourceOrIndexOrPRMutationsByThisAuditor": false,
+    "threeTiersOverlap": true,
+    "issueSpecificRestartExercise": false,
+    "ownerAcceptanceObserved": false,
+    "olderCiRun44892327060": "historical",
+    "partialAuthAndHelpOnlyCases": "source-established; require bounded corrective controls"
+  }
+}

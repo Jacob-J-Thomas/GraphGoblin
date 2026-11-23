@@ -1,0 +1,21 @@
+src/expression.ts(168,5): error TS2322: Type '{ ok: false; error: unknown; reason: "compile" | "unsafe-regex" | undefined; }' is not assignable to type 'ExpressionObservation<unknown>'.
+  Type '{ ok: false; error: unknown; reason: "compile" | "unsafe-regex" | undefined; }' is not assignable to type '{ ok: false; error: unknown; reason?: ExpressionReason; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'reason' are incompatible.
+      Type '"compile" | "unsafe-regex" | undefined' is not assignable to type 'ExpressionReason'.
+        Type 'undefined' is not assignable to type 'ExpressionReason'.
+src/mutations.ts(89,29): error TS2345: Argument of type '{ kind: "template"; fact: TemplateFact; itemIndex: number | undefined; }' is not assignable to parameter of type 'MutationFact | undefined'.
+  Type '{ kind: "template"; fact: TemplateFact; itemIndex: number | undefined; }' is not assignable to type '{ kind: "template"; fact: TemplateFact; itemIndex?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'itemIndex' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/mutations.ts(96,5): error TS2345: Argument of type '{ kind: "expression"; reason: ExpressionReason; itemIndex: number | undefined; } | undefined' is not assignable to parameter of type 'MutationFact | undefined'.
+  Type '{ kind: "expression"; reason: ExpressionReason; itemIndex: number | undefined; }' is not assignable to type 'MutationFact | undefined'.
+    Type '{ kind: "expression"; reason: ExpressionReason; itemIndex: number | undefined; }' is not assignable to type '{ kind: "expression"; reason: ExpressionReason; itemIndex?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'itemIndex' are incompatible.
+        Type 'number | undefined' is not assignable to type 'number'.
+          Type 'undefined' is not assignable to type 'number'.
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\domain
+

@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 486974,
+  "stop_reason": "end_turn",
+  "session_id": "e85ed1e0-0cb0-41dc-8e5e-1fd1cc857b03",
+  "total_cost_usd": 4.888794799999999,
+  "usage": {
+    "input_tokens": 26,
+    "cache_creation_input_tokens": 165360,
+    "cache_read_input_tokens": 1103534,
+    "output_tokens": 50553,
+    "output_tokens_details": {
+      "thinking_tokens": 39645
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 165360,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5202,
+        "cache_read_input_tokens": 166872,
+        "cache_creation_input_tokens": 1200,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1200
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 26,
+      "outputTokens": 50553,
+      "cacheReadInputTokens": 1103534,
+      "cacheCreationInputTokens": 165360,
+      "webSearchRequests": 0,
+      "costUSD": 4.888794799999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 39645,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 165360,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 72,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# #448 D194 corrective review: **ACCEPT FIX**\n\nBoth scan3 findings are corrected in `apps/api/src/preflight-catalog.test.ts`, and I found no introduced defect that requires a change. This is a read-only review: I ran nothing and recomputed no hashes. Scan3's CHANGES_REQUIRED stands as issued; #448 stays open for owner-only closure.\n\n## F1 — Ollama isolation: corrected\n\n- **Fix:** `GG_OLLAMA_ENABLED: 'false'` at line 45 reaches `createOllamaServices` as `defaults.enabled = false` (`config.ts:36`, `container.ts:284`).\n- **Why it holds:** on these fixtures `SqliteOllamaRepository.read` inserts the gateway row from those defaults (`sqlite/ollama.ts:20-33`). Migration 0027 only creates the table, so no saved row overrides the flag. `start()` then returns before `schedule()` or `refresh()` (`services.ts:152`), so `discoverOllama` is never reached.\n- **Starts retained:** both `container.start()` call sites (lines 160 and 292, four parameterised starts) and their catalog assertions are unchanged.\n- **Evidence:** the command 08 observer log has no `blocked-fetch` or `blocked-socket` event. The hooks were live in the fork worker: pid 41992 logged installation and all 125 storage events from the same preload.\n\n## F2 — storage predicate: corrected, matches D186\n\n`expectStoreUnchanged` (lines 88-103) differs from the old strict equality only in allowing an absent WAL to become empty. I traced every transition:\n\n| Before | After | Result |\n| --- | --- | --- |\n| DB present | identical bytes | pass |\n| DB present | changed or missing | reject |\n| DB missing | anything | reject (assertion or `TypeError`) |\n| WAL present, including empty | identical bytes | pass |\n| WAL present | changed, truncated or removed | reject |\n| WAL absent | absent or zero bytes | pass |\n| WAL absent | non-empty | reject |\n\n- **New fixtures (306-341):** the DB is copied to a path no SQLite client has opened, and only read-only clients touch it afterwards. The initial absent or empty WAL is asserted before the first reader (319-324).\n- **Copy is complete:** the copied DB's recorded hash equals that of a directly built fixture with the same rows (`c749672c…`), so the copy is a full checkpointed image.\n- **Author's log matches:** case `2U5A69` starts with no WAL, then has a zero-byte one. Case `1QdQjx` stays zero-byte throughout. The frozen control keeps its 8,272-byte WAL at the same hash.\n- **Negative controls (377-433):** I traced each `.toThrow()` to the intended WAL or DB assertion. DB equality is pinned beforehand by line 395 or 408, so no control is satisfied by an unrelated throw.\n- **Counterfactual:** command 03 fails only on `{…(2)}` versus `{…(1)}`, with the DB hash unchanged and a zero-byte WAL.\n- **Nothing dropped:** the patch deletes five lines, the import and the four strict equalities. Every other original assertion and both parameter tables are present.\n- **Retained observations agree:** P01 (absent to empty), P03 (16,512-byte WAL unchanged) and P18 (existing empty WAL unchanged).\n\n## Non-blocking notes\n\n1. **Line 408 deep comparison (introduced, low).** `expect(frames['gateway.db']).toEqual(absent['gateway.db'])` still deep-compares two 479,232-byte buffers. That is about 2.1 s of the 2.384 s negative case, inferred from the log gap. The original file ran one or two such comparisons in every test, so the risk is lower than before; `.equals` would remove it.\n2. **Writer-finalizer race in the ten retained cases (not introduced).** They still snapshot `before` straight after `fixture(dbFile)` (lines 143, 260), and the log shows a zero-byte WAL held by the unclosed native writer each time. A garbage-collection-driven close before the `after` snapshot could delete it, or raise `ENOENT` inside `storeBytes` (74-86). That fails closed, exactly as under the old equality, and cannot produce a false pass.\n3. **No file-level F1 counterfactual.** Zero attempts rests on the source path, the live worker hooks and the separate selfcheck. Neither counterfactual removed the flag, and the worker wrote no exit summary. The Opus QA could run the pre-fix file under the observer.\n4. **Receipt label.** `runtimeDiffEmpty: false` reflects the test file being listed under `allowedRuntimeFiles`. Freeze command 14 lists only that file across `apps`, `packages`, `tooling` and the lockfile.\n\n## Scope and limits\n\n- **Not opened:** the typecheck, lint, format and diff-check receipts (05-07, 09-12), `evidence-summary.json`, the 98-artifact seal and the blobs. Those passes are the author's claims.\n- **Hashes and tree:** I read the branch ref file, which holds `446da9ce…`. Verification of the hashes and tree is root's.\n- **Counterfactual file:** checked by search (helper body and flag present), not by full diff.\n- **Evidence script 13 → 14:** I saw the changed line 50, not a full diff of the two versions.\n- **SQLite close behaviour:** that a read-only last close leaves the WAL while a writer's close removes it is my knowledge of SQLite, consistent with P18 and the log; I did not verify it in this libsql build.\n- **Still open:** non-Windows behaviour, hosted CI and canonical native verification for this head, and the separate Opus behaviour QA.",
+  "ttft_ms": 4122,
+  "type": "result",
+  "duration_ms": 493656,
+  "uuid": "cf2a4d8f-8d75-43fd-b669-20a53e0c0451",
+  "ttft_stream_ms": 3234,
+  "time_to_request_ms": 2754,
+  "first_content_frame_ms": 3234,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 26,
+      "outputTokens": 50553,
+      "cacheReadInputTokens": 1103534,
+      "cacheCreationInputTokens": 165360,
+      "webSearchRequests": 0,
+      "costUSD": 4.888794799999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 39645,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 165360,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:06.232Z"
+}

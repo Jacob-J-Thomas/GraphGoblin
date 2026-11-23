@@ -1,0 +1,161 @@
+{
+  "node": "v22.23.4",
+  "source": {
+    "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+    "helper": {
+      "bytes": 54885,
+      "sha256": "3d2d6521410752e947103747c867d235b946d5c18769af1721357fbbf49f8caf"
+    }
+  },
+  "fixtureRoot": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-i1-cli-qa-6Lr32u",
+  "passed": 3,
+  "total": 5,
+  "claims": [
+    {
+      "name": "actual checkout merge parents accepted and a wrong pull-request base is incomplete",
+      "pass": true,
+      "evidence": {
+        "actual": {
+          "state": "observed",
+          "head": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "tree": "430d34fda9d7e91752a7dbc93794242b4c17a5aa",
+          "parents": [
+            "e21c24be9cef109ef438fd2df4c1583bc570b1cb",
+            "3e8b98b80d478f0788ac50dd5817006fcf96c280"
+          ],
+          "matchesSha": true,
+          "headMatchesEventHead": null,
+          "baseParentMatchesEventBase": true,
+          "headParentMatchesEventHead": true
+        },
+        "wrong": {
+          "status": "incomplete",
+          "missing": [
+            "binding-contradiction"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown checkout comparison keeps passing native incomplete and failed native useful",
+      "pass": true,
+      "evidence": [
+        {
+          "code": 1,
+          "status": "incomplete",
+          "files": 3
+        },
+        {
+          "code": 0,
+          "status": "native-failed",
+          "files": 3
+        },
+        {
+          "code": 0,
+          "status": "not-run",
+          "files": 2
+        }
+      ]
+    },
+    {
+      "name": "single unpaired real subtest observation is incomplete",
+      "pass": true,
+      "evidence": {
+        "status": "incomplete",
+        "missing": [
+          "installer-subtests"
+        ],
+        "installer": {
+          "started": true,
+          "result": "pass",
+          "subtestsStarted": 1,
+          "subtestsPassed": 0,
+          "subtestsFailed": 0,
+          "subtestsUnpaired": 1,
+          "children": 1,
+          "childFailures": 0
+        }
+      }
+    },
+    {
+      "name": "missing run identity cannot produce complete evidence",
+      "pass": false,
+      "error": "Null required run ID marked complete",
+      "evidence": {
+        "code": 0,
+        "status": "complete",
+        "missing": [],
+        "binding": {
+          "unavailable": [
+            "runId"
+          ],
+          "repository": "Jacob-J-Thomas/GraphGoblin",
+          "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/heads/main",
+          "job": "windows-launcher",
+          "runId": null,
+          "runAttempt": "2",
+          "event": "push",
+          "ref": "refs/heads/main",
+          "sha": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventHead": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventBase": null,
+          "runnerOs": "Windows",
+          "runnerArch": "X64",
+          "imageVersion": "20261117.196.1",
+          "checkout": {
+            "state": "observed",
+            "head": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+            "tree": "430d34fda9d7e91752a7dbc93794242b4c17a5aa",
+            "parents": [
+              "e21c24be9cef109ef438fd2df4c1583bc570b1cb",
+              "3e8b98b80d478f0788ac50dd5817006fcf96c280"
+            ],
+            "matchesSha": true,
+            "headMatchesEventHead": true,
+            "baseParentMatchesEventBase": null,
+            "headParentMatchesEventHead": null
+          },
+          "node": "v22.23.4"
+        }
+      }
+    },
+    {
+      "name": "a closer cannot claim additional rejected rows with zero omissions",
+      "pass": false,
+      "error": "One claimed rejected row, zero actual rejections and zero omissions marked complete",
+      "evidence": {
+        "code": 0,
+        "status": "complete",
+        "observation": {
+          "state": "valid",
+          "reason": null,
+          "bytes": 4958,
+          "records": 25,
+          "closed": true,
+          "rejected": 0,
+          "omittedRecords": 0,
+          "omittedBytes": 0,
+          "byType": {
+            "recorder-open": 1,
+            "case-start": 5,
+            "child": 4,
+            "case-end": 5,
+            "alias": 2,
+            "alias-round": 4,
+            "contention": 3,
+            "recorder-closed": 1
+          }
+        },
+        "closer": {
+          "seq": 25,
+          "at": "2026-11-18T06:58:11.430Z",
+          "type": "recorder-closed",
+          "written": 24,
+          "rejected": 1,
+          "omittedRecords": 0,
+          "omittedBytes": 0
+        }
+      }
+    }
+  ]
+}

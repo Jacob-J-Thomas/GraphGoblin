@@ -1,0 +1,939 @@
+{
+  "kind": "derived compact author-only results; no new witness or independent QA",
+  "author": "actual Claude Code; successful runtime confirmed separately by root",
+  "sourceManifestSha256": "9e3c7214a5053fc7f0e6a46df1a84b741c08ff9773fa2373672fd521cf1ef088",
+  "sourceManifestPayloadCount": 172,
+  "baseRevision": "c99a93d228646431083c9ca63625674115f5c40a",
+  "baselineTestSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+  "supersededDraftSha256": "9fc8ff8d63a6dd74acffa616ced1dc3b1256568765828704b8f74c805cdc18c9",
+  "finalTestSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+  "runtime": {
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "vitest": "5.0.3",
+    "platform": "Windows, retained author evidence"
+  },
+  "controlLimit": "The builtin import resolved normally; an already-resolved result was synthetically withheld across the real outer signal. No naturally slow import is established.",
+  "cases": [
+    {
+      "mode": "c99-held-timeout",
+      "variant": "held-timeout",
+      "sourceLabel": "c99",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "7d858d0dd9c9564b2804d4b6f75df6aeed11623b3ffabf83d3ee4f086bcdce2d",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+          "status": "failed",
+          "failureCount": 2,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Test timed out in 5000ms."
+          ],
+          "fullFailureStringSha256": [
+            "0f3bdc00eb93786952d2895c6a7411462cacc1f5308da101eb160dc96f3ae019",
+            "0f3bdc00eb93786952d2895c6a7411462cacc1f5308da101eb160dc96f3ae019"
+          ],
+          "allFullFailureStringsIdentical": true
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 10,
+          "actualImportDurationMs": 1.403700000000299,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5023,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5684,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "local-rm-mock-restored",
+          "elapsedMs": 5685
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5685
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5687,
+          "outerFinished": true,
+          "localMockRestored": true,
+          "rootsCreated": 0,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/c99-held-timeout/vitest.json",
+      "rawEvents": "raw/runs/c99-held-timeout/events.jsonl"
+    },
+    {
+      "mode": "c99-held-timeout-copy",
+      "variant": "held-timeout-copy",
+      "sourceLabel": "c99",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "744dbbecc0cc35851b2f8acddc13c490ad008bf3c5a49372fec847a0ce64b67b",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "a lifecycle test that ends with a copy of its real timeout reason",
+          "status": "failed",
+          "failureCount": 2,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Test timed out in 5000ms."
+          ],
+          "fullFailureStringSha256": [
+            "8547cad3e50fc7930389bb4ba8bcd9aa8d07878d5e43da28810fb9975c378165",
+            "8547cad3e50fc7930389bb4ba8bcd9aa8d07878d5e43da28810fb9975c378165"
+          ],
+          "allFullFailureStringsIdentical": true
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 8,
+          "actualImportDurationMs": 1.0055999999999585,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5011,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5677,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "throwing-copy",
+          "elapsedMs": 5677,
+          "sameObject": false,
+          "sameName": true,
+          "sameMessage": true,
+          "sameStack": true
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5678
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5680,
+          "outerFinished": true,
+          "localMockRestored": false,
+          "rootsCreated": 0,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/c99-held-timeout-copy/vitest.json",
+      "rawEvents": "raw/runs/c99-held-timeout-copy/events.jsonl"
+    },
+    {
+      "mode": "c99-held-timeout-late",
+      "variant": "held-timeout-late",
+      "sourceLabel": "c99",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "ed4f2e95b7e6061a8e8a767595d60c715166e57f11fe72f151ec673cd467e7b8",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "a lifecycle test whose probe case fails late, then enters another probe case after its real timeout",
+          "status": "failed",
+          "failureCount": 3,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Test timed out in 5000ms.",
+            "Error: Independent late probe body failure"
+          ],
+          "fullFailureStringSha256": [
+            "90d9316fa80b7d8d7419b208d0a69fbc1ffbdca2fb390dc10300fec786910121",
+            "90d9316fa80b7d8d7419b208d0a69fbc1ffbdca2fb390dc10300fec786910121",
+            "b0389191e45083f9baf46d0d8b7bd57e53a36b4fdc8f4e2858762c8f234037df"
+          ],
+          "allFullFailureStringsIdentical": false
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "case-root-created",
+          "elapsedMs": 11,
+          "signalAborted": false
+        },
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 14,
+          "actualImportDurationMs": 1.091399999999794,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5015,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5681,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5682
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5685,
+          "outerFinished": true,
+          "localMockRestored": false,
+          "rootsCreated": 1,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/c99-held-timeout-late/vitest.json",
+      "rawEvents": "raw/runs/c99-held-timeout-late/events.jsonl"
+    },
+    {
+      "mode": "c99-held-cancel",
+      "variant": "held-cancel",
+      "sourceLabel": "c99",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedSha256": "a9c152489d9ab7a4f74fc37f611a6fbbd27a7815e50ffec5d07b611395a3f1a2",
+      "reporterCounts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 2
+      },
+      "tasks": [
+        {
+          "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+          "status": "skipped",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "skipped",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 1,
+        "endReason": "interrupted",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 10,
+          "actualImportDurationMs": 1.4170999999996639,
+          "outerAborted": false
+        },
+        {
+          "event": "cancel-requested",
+          "elapsedMs": 11
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 15,
+          "name": "TestRunAbortError",
+          "message": "The test run was aborted by the user."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 680,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "local-rm-mock-restored",
+          "elapsedMs": 681
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 682
+        }
+      ],
+      "rawResult": "raw/runs/c99-held-cancel/vitest.json",
+      "rawEvents": "raw/runs/c99-held-cancel/events.jsonl"
+    },
+    {
+      "mode": "final-held-timeout",
+      "variant": "held-timeout",
+      "sourceLabel": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "generatedSha256": "3a7c35b45d048903c89400d1517d7ba6f90dc818bac2239d36381a4491521922",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+          "status": "failed",
+          "failureCount": 1,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms."
+          ],
+          "fullFailureStringSha256": [
+            "7e5d39d91269514532601305f160f809d3f20a69c2d23f262ec3a70a9d8d7f8c"
+          ],
+          "allFullFailureStringsIdentical": false
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 9,
+          "actualImportDurationMs": 1.0644000000002052,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5022,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5673,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "local-rm-mock-restored",
+          "elapsedMs": 5675
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5675
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5677,
+          "outerFinished": true,
+          "localMockRestored": true,
+          "rootsCreated": 0,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/final-held-timeout/vitest.json",
+      "rawEvents": "raw/runs/final-held-timeout/events.jsonl"
+    },
+    {
+      "mode": "final-held-timeout-copy",
+      "variant": "held-timeout-copy",
+      "sourceLabel": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "generatedSha256": "9767165823a863096bfcdde54c0c94527f565a6292d1e74af8628054db567769",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "a lifecycle test that ends with a copy of its real timeout reason",
+          "status": "failed",
+          "failureCount": 2,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Test timed out in 5000ms."
+          ],
+          "fullFailureStringSha256": [
+            "e3e236cc2bd4539bc452f746c8eca71e6dc386b91209e49d937043b2a26af464",
+            "e3e236cc2bd4539bc452f746c8eca71e6dc386b91209e49d937043b2a26af464"
+          ],
+          "allFullFailureStringsIdentical": true
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 10,
+          "actualImportDurationMs": 0.9135999999998603,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5013,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5678,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "throwing-copy",
+          "elapsedMs": 5679,
+          "sameObject": false,
+          "sameName": true,
+          "sameMessage": true,
+          "sameStack": true
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5679
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5681,
+          "outerFinished": true,
+          "localMockRestored": false,
+          "rootsCreated": 0,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/final-held-timeout-copy/vitest.json",
+      "rawEvents": "raw/runs/final-held-timeout-copy/events.jsonl"
+    },
+    {
+      "mode": "final-held-timeout-late",
+      "variant": "held-timeout-late",
+      "sourceLabel": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "generatedSha256": "ffe6349ec138cf391688fcb9ef1ce5bea2db04abdc1aed5d6c421f0a4e783fe6",
+      "reporterCounts": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0
+      },
+      "tasks": [
+        {
+          "title": "a lifecycle test whose probe case fails late, then enters another probe case after its real timeout",
+          "status": "failed",
+          "failureCount": 2,
+          "failureFirstLines": [
+            "Error: Test timed out in 5000ms.",
+            "Error: Independent late probe body failure"
+          ],
+          "fullFailureStringSha256": [
+            "217574ce1dea8b026f6701a7a37f71407a9f59ddeacac829232095ce76032b48",
+            "bc2a92b6c6024f0e464bdf0d95e01cbfb057e38c513e13bc4157ae9f0eea63d2"
+          ],
+          "allFullFailureStringsIdentical": false
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "passed",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "case-root-created",
+          "elapsedMs": 8,
+          "signalAborted": false
+        },
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 10,
+          "actualImportDurationMs": 1.2476999999998952,
+          "outerAborted": false
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 5013,
+          "name": "Error",
+          "message": "Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\"."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 5678,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 5679
+        },
+        {
+          "event": "successor-first-observation",
+          "elapsedMs": 5682,
+          "outerFinished": true,
+          "localMockRestored": false,
+          "rootsCreated": 1,
+          "rootsStillPresent": [],
+          "childrenCreated": 0,
+          "livingOwnedChildren": 0,
+          "envRestored": true,
+          "rmImplementationRestored": true,
+          "runnerEntriesUnchanged": true
+        }
+      ],
+      "rawResult": "raw/runs/final-held-timeout-late/vitest.json",
+      "rawEvents": "raw/runs/final-held-timeout-late/events.jsonl"
+    },
+    {
+      "mode": "final-held-cancel",
+      "variant": "held-cancel",
+      "sourceLabel": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "generatedSha256": "28ccc07d4c99adeb97ba074f5e230dd972c62f5bd10aec76a2fdf5973b5bd5ad",
+      "reporterCounts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 2
+      },
+      "tasks": [
+        {
+          "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+          "status": "skipped",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        },
+        {
+          "title": "successor observes settled state without repairing it",
+          "status": "skipped",
+          "failureCount": 0,
+          "failureFirstLines": [],
+          "fullFailureStringSha256": [],
+          "allFullFailureStringsIdentical": false
+        }
+      ],
+      "controller": {
+        "cancelRequests": 1,
+        "endReason": "interrupted",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "exitStatus": 1,
+        "ownedTempEntriesBeforeCleanup": [],
+        "laneFakeCliProcessesAfterRun": [],
+        "ownedTempExistsAfterCleanup": false
+      },
+      "workerEventsWithoutStacksOrPaths": [
+        {
+          "event": "real-importActual-resolved",
+          "elapsedMs": 9,
+          "actualImportDurationMs": 0.9929000000001906,
+          "outerAborted": false
+        },
+        {
+          "event": "cancel-requested",
+          "elapsedMs": 11
+        },
+        {
+          "event": "actual-outer-abort",
+          "elapsedMs": 15,
+          "name": "TestRunAbortError",
+          "message": "The test run was aborted by the user."
+        },
+        {
+          "event": "released-import-result",
+          "elapsedMs": 669,
+          "outerAborted": true,
+          "innerAborted": true,
+          "sameReasonObject": true
+        },
+        {
+          "event": "local-rm-mock-restored",
+          "elapsedMs": 670
+        },
+        {
+          "event": "outer-owned-body-finished",
+          "elapsedMs": 671
+        }
+      ],
+      "rawResult": "raw/runs/final-held-cancel/vitest.json",
+      "rawEvents": "raw/runs/final-held-cancel/events.jsonl"
+    }
+  ],
+  "gates": [
+    {
+      "name": "01-baseline-c99-focused",
+      "disposition": "baseline",
+      "sourceSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "exec",
+        "vitest",
+        "run",
+        "src/probe-directory.test.ts"
+      ],
+      "rawReceipt": "raw/gates/01-baseline-c99-focused.receipt.json"
+    },
+    {
+      "name": "73-adapter-lint",
+      "disposition": "superseded failed draft",
+      "sourceSha256": "9fc8ff8d63a6dd74acffa616ced1dc3b1256568765828704b8f74c805cdc18c9",
+      "exitStatus": 1,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "lint"
+      ],
+      "rawReceipt": "raw/gates/73-adapter-lint.receipt.json"
+    },
+    {
+      "name": "74-adapter-typecheck",
+      "disposition": "superseded failed draft",
+      "sourceSha256": "9fc8ff8d63a6dd74acffa616ced1dc3b1256568765828704b8f74c805cdc18c9",
+      "exitStatus": 1,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "typecheck"
+      ],
+      "rawReceipt": "raw/gates/74-adapter-typecheck.receipt.json"
+    },
+    {
+      "name": "80-focused-final",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "exec",
+        "vitest",
+        "run",
+        "src/probe-directory.test.ts",
+        "--reporter",
+        "verbose"
+      ],
+      "rawReceipt": "raw/gates/80-focused-final.receipt.json"
+    },
+    {
+      "name": "81-adapter-suite",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "test"
+      ],
+      "rawReceipt": "raw/gates/81-adapter-suite.receipt.json"
+    },
+    {
+      "name": "82-adapter-coverage",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "test:coverage"
+      ],
+      "rawReceipt": "raw/gates/82-adapter-coverage.receipt.json"
+    },
+    {
+      "name": "83-adapter-lint",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "lint"
+      ],
+      "rawReceipt": "raw/gates/83-adapter-lint.receipt.json"
+    },
+    {
+      "name": "84-adapter-typecheck",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "--filter",
+        "@graphgoblin/adapter-codex",
+        "typecheck"
+      ],
+      "rawReceipt": "raw/gates/84-adapter-typecheck.receipt.json"
+    },
+    {
+      "name": "85-prettier-check",
+      "disposition": "final",
+      "sourceSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "exitStatus": 0,
+      "command": [
+        "pnpm.cmd",
+        "exec",
+        "prettier",
+        "--check",
+        "packages/adapter-codex/src/probe-directory.test.ts",
+        "docs/10-testing-and-quality.md"
+      ],
+      "rawReceipt": "raw/gates/85-prettier-check.receipt.json"
+    }
+  ],
+  "mutants": [
+    {
+      "name": "9x-mutant-c99-hook",
+      "exitStatus": 1,
+      "failed": 1,
+      "passed": 13,
+      "appliedSha256": "88fd713e66888e4d051e8087eacec9c8fdc23f86a2ecabecef58a6a1144f695d",
+      "restoredSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "rawReceipt": "raw/gates/9x-mutant-c99-hook.receipt.json"
+    },
+    {
+      "name": "9x-mutant-message-dedupe",
+      "exitStatus": 1,
+      "failed": 1,
+      "passed": 13,
+      "appliedSha256": "1747be0e30d94917db9fd541371f90fcc3cf6275c9c9796f3b9dd0ae5b345dcd",
+      "restoredSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "rawReceipt": "raw/gates/9x-mutant-message-dedupe.receipt.json"
+    },
+    {
+      "name": "9x-mutant-drop-all-late",
+      "exitStatus": 1,
+      "failed": 2,
+      "passed": 12,
+      "appliedSha256": "a4e9b10dbe7b1f26147edd6ed4d174e4addd09de1f34065bcb626741c6dc0fe2",
+      "restoredSha256": "70f06fa3abb5a13b5d525799b2c675c6564f2483aa082708f0bcbc3e321edcfb",
+      "rawReceipt": "raw/gates/9x-mutant-drop-all-late.receipt.json"
+    }
+  ],
+  "coverage": {
+    "statements": {
+      "percent": 98.3,
+      "covered": 579,
+      "total": 589
+    },
+    "branches": {
+      "percent": 95.61,
+      "covered": 480,
+      "total": 502
+    },
+    "functions": {
+      "percent": 99.32,
+      "covered": 148,
+      "total": 149
+    },
+    "lines": {
+      "percent": 99.42,
+      "covered": 521,
+      "total": 524
+    }
+  },
+  "ordinaryTotals": {
+    "baselineFocusedPassed": 12,
+    "finalFocusedPassed": 14,
+    "adapterPassed": 652,
+    "existingLiveSkipped": 4,
+    "adapterFilesPassed": 16,
+    "existingLiveFileSkipped": 1
+  }
+}

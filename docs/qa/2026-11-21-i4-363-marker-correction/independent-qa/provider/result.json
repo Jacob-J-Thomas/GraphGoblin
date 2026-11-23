@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1232796,
+  "stop_reason": "end_turn",
+  "session_id": "19ed3135-db25-4538-b864-536f0a0bdc81",
+  "total_cost_usd": 5.868442599999999,
+  "usage": {
+    "input_tokens": 98,
+    "cache_creation_input_tokens": 230174,
+    "cache_read_input_tokens": 6093693,
+    "output_tokens": 140396,
+    "output_tokens_details": {
+      "thinking_tokens": 75758
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 230174,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1966,
+        "cache_read_input_tokens": 233759,
+        "cache_creation_input_tokens": 1189,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1189
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 98,
+      "outputTokens": 140396,
+      "cacheReadInputTokens": 6093693,
+      "cacheCreationInputTokens": 230174,
+      "webSearchRequests": 0,
+      "costUSD": 5.868442599999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 75758,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 230174,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 74,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The corrected fixture at `b1cdd204` met every criterion I checked, and every outcome matched the prediction I wrote down before running anything. This is behaviour-QA evidence only; it is not a review, sign-off, merge approval or acceptance.\n\n**What ran (each case once, no retries):**\n- **My own driver:** 11 cases against the unchanged host and producer at `b1cdd204`, using my own folders, settings, schema bytes and test marker files. 422 of 422 checks passed, all 5 predictions held, and both instrument checks passed. Exit code 0.\n- **The maintained `sdk-schema.test.ts`:** 9 of 9 passed on Node v22.23.4, exit 0.\n- **Expected-fault cases:** three cases (M8, M9, X3) exited with code 1. That was the declared expected result for each, not a generic pass.\n\n**By criterion:**\n- **Pause before the final rename (X1):** my driver, not the test host, held the pause for 1849 ms. In two samples 1847 ms apart:\n  - The final marker did not exist.\n  - The pending file was complete JSON (838 bytes) and unchanged, and no process still had it open.\n  - The SDK's schema file was still present, so the SDK work had not finished.\n  - The child and host were both alive, and the host had produced no output yet.\n  - Windows process data showed the child was the SDK's harmless `node.exe` call under my host, with no network connections.\n\n  After I released it, the final marker was byte-identical to the held pending file. The run then aborted and settled, the child and schema folder were gone, and the pending file was gone. M7, the maintained self-releasing version, agreed.\n- **Read error and bad JSON (M8, M9):** each exited 1 with the original error in stderr: `ENOENT` for M8, and `SyntaxError` with the marker being exactly `{` for M9. No AbortError text replaced either one. The SDK work was aborted and settled, the child was gone and the schema folder was removed.\n- **Empty final marker (X3):** this is the one new failure case I added, because the maintained fault tests inject the fault themselves. During a hold I created a 0-byte final marker, which is exactly what the old bug could expose. The corrected host failed with the original `SyntaxError: Unexpected end of JSON input`, aborted and settled.\n- **Short and 226-character runs, success/error/abort (M1–M6):** the schema bytes were exactly mine. The 226-character runs produced the 243 and 255 path lengths. Marker files and the TEMP folder were unchanged, and my driver's environment was unchanged. The SDK arguments contained no model, base URL, API key or other config.\n- **Proof of process exit:** in every run that read a record, the host's own check reported the child gone. My driver separately confirmed all 11 children absent, and in X1 and X3 I matched each child's identity while it was alive.\n\n**Non-blocking findings for the reviewers:**\n- In X3, where no record could be read, the host skips its own child-exit and schema-cleanup checks and reports those fields as empty. Those facts came only from my driver. The maintained fault tests avoid this by reading the record before injecting the fault. D190's requirement to abort and wait for settlement was still met.\n- The host's `observerWaiting: true` is a hard-coded value, so only X1 independently shows the observer was waiting.\n- If the child is killed while paused, its pending file and pause file stay behind in the test folder, not in TEMP.\n- Each node process had a `conhost.exe` child; all were gone afterwards.\n\n**Not covered:** no natural OS race or orphan is claimed, and I did not re-run the old-source counterfactual. Typecheck, lint, coverage, build, CI and native Codex/provider runs were not done here. Network checks only exist for the two held cases.\n\n**Slips, all recorded in the report:**\n- One temporary diff was briefly written to the system TEMP during setup; I deleted it in the same command and confirmed it was gone.\n- One log header (`finalize-scratch.log`) describes that command's environment wrongly; I left the log as written.\n- I ran plain `git status` a few times in the QA checkout before the driver; this can refresh git's cached file info but changes no content.\n- The driver stayed alive an extra 15 s after finishing because of a leftover timer; this didn't affect any evidence.\n\n**Cleanup:**\n- **Processes:** no host or child needed killing. The only kill was my own test process in instrument check C2, by its own handle.\n- **Scratch:** only `G:\\ggq\\qa-scratch\\i4-363-marker-qa` was removed, after I listed its contents and checked it contained no links.\n- **Checkout:** the QA checkout is still clean at `b1cdd204`.\n- **Earlier packet:** `i4-363-sdk-independent-02` is byte-for-byte unchanged.\n- **Untouched:** ports 4747/4748, owner stores, the author checkout, GitHub, product and test source.\n\nThe original Astra CHANGES_REQUIRED and all three general-review outcomes stand. The Fable review, fresh CI, native artifact check and coordinator completion are still open.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-marker-independent-01`:\n- `REPORT.md`\n- `PLAN.md`\n- `run-01/` (per-case raw results)\n- `SHA256SUMS.json` (145 files, SHA-256 `0f8d2295…32c0`)",
+  "ttft_ms": 4485,
+  "type": "result",
+  "duration_ms": 1302935,
+  "uuid": "28f03d53-c07f-4291-b73f-514f32dc22a4",
+  "ttft_stream_ms": 1040,
+  "time_to_request_ms": 225,
+  "first_content_frame_ms": 1041,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 98,
+      "outputTokens": 140396,
+      "cacheReadInputTokens": 6093693,
+      "cacheCreationInputTokens": 230174,
+      "webSearchRequests": 0,
+      "costUSD": 5.868442599999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 75758,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 230174,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

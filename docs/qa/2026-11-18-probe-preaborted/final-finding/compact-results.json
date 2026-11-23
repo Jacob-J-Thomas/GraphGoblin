@@ -1,0 +1,424 @@
+{
+  "kind": "derived compact selection; not raw evidence and not a new test run",
+  "sourceSealSha256": "579d606f90519fa175c87ce8268ab4ce09eda4e3f889710346668726c4ff90ae",
+  "identity": {
+    "stamp": "2026-11-18T23:15:23.017063+00:00",
+    "pr": 505,
+    "head": "0ff00d6717bfb397e42bf85db8fe62ed1fc0d9b7",
+    "base": "4cea34be3150a0d7af8a7d4a368eb864291ce47e",
+    "merge": "9c48171810382ad5114418b5ebef45a24b9049f6",
+    "tree": "600ec0e14660761d288485a0dead1aac8c187820",
+    "draft": true,
+    "cleanSource": true,
+    "run": 44412420887,
+    "attempt": 1,
+    "workflow": ".github/workflows/ci.yml"
+  },
+  "sourceMaintainedTestSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+  "cases": [
+    {
+      "case": "cancel-before-case",
+      "role": "Initial observer limitation; candidate launches are visible, but the afterAll temporary-directory assertion fails first.",
+      "rawEvidence": [
+        "raw/cancel-before-case/events.jsonl",
+        "raw/cancel-before-case/controller.jsonl",
+        "raw/cancel-before-case/receipt.json",
+        "raw/cancel-before-case/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:11:14.048091+00:00",
+      "finishedAt": "2026-11-18T23:11:25.117772+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 1,
+        "numFailedTests": 0,
+        "numPendingTests": 9,
+        "numFailedTestSuites": 1,
+        "success": false
+      },
+      "reportedNonSkippedTasks": [
+        {
+          "title": "reports an ordinary case failure once, after the same settlement",
+          "status": "passed",
+          "failureMessageCount": 0,
+          "failureFirstLines": [],
+          "completeFailureMessageSha256": [],
+          "completeMessagesIdentical": false
+        }
+      ],
+      "suiteMessageFirstLines": [
+        "expected [ 'KPMb-XHgp6pOJWBJRl3PX' ] to deeply equal []"
+      ],
+      "cancelEventAtMs": 5198.2723,
+      "launchesAfterCancellation": [
+        {
+          "pid": 58540,
+          "afterCancellationMs": 824.3967,
+          "enclosingAborted": true,
+          "argvTail": [
+            "readiness-cli.mjs",
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "pid": 17728,
+          "afterCancellationMs": 3870.8483,
+          "enclosingAborted": true,
+          "argvTail": [
+            "ready",
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "pid": 59672,
+          "afterCancellationMs": 4058.5621,
+          "enclosingAborted": true,
+          "argvTail": [
+            "exec",
+            "resume",
+            "--help"
+          ]
+        },
+        {
+          "pid": 40112,
+          "afterCancellationMs": 4163.5973,
+          "enclosingAborted": true,
+          "argvTail": [
+            "ready",
+            "login",
+            "status"
+          ]
+        }
+      ],
+      "nativeExitEvents": [
+        {
+          "pid": 58540,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 17728,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 59672,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 40112,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    },
+    {
+      "case": "cancel-before-case-v2",
+      "role": "Submitted candidate, nested lifecycle callback: four native starts after cancellation and a passed maintained test; the child-count observer fails.",
+      "rawEvidence": [
+        "raw/cancel-before-case-v2/events.jsonl",
+        "raw/cancel-before-case-v2/controller.jsonl",
+        "raw/cancel-before-case-v2/receipt.json",
+        "raw/cancel-before-case-v2/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:12:28.348101+00:00",
+      "finishedAt": "2026-11-18T23:12:39.328622+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 1,
+        "numFailedTests": 0,
+        "numPendingTests": 9,
+        "numFailedTestSuites": 1,
+        "success": false
+      },
+      "reportedNonSkippedTasks": [
+        {
+          "title": "reports an ordinary case failure once, after the same settlement",
+          "status": "passed",
+          "failureMessageCount": 0,
+          "failureFirstLines": [],
+          "completeFailureMessageSha256": [],
+          "completeMessagesIdentical": false
+        }
+      ],
+      "suiteMessageFirstLines": [
+        "new owned fake CLI children launched after actual run cancellation: expected [ 29820, 24896, 46084, 32760 ] to deeply equal []"
+      ],
+      "cancelEventAtMs": 6738.6655,
+      "launchesAfterCancellation": [
+        {
+          "pid": 29820,
+          "afterCancellationMs": 17.1955,
+          "enclosingAborted": true,
+          "argvTail": [
+            "readiness-cli.mjs",
+            "ready",
+            "--version"
+          ]
+        },
+        {
+          "pid": 24896,
+          "afterCancellationMs": 113.7684,
+          "enclosingAborted": true,
+          "argvTail": [
+            "ready",
+            "exec",
+            "--help"
+          ]
+        },
+        {
+          "pid": 46084,
+          "afterCancellationMs": 201.8115,
+          "enclosingAborted": true,
+          "argvTail": [
+            "exec",
+            "resume",
+            "--help"
+          ]
+        },
+        {
+          "pid": 32760,
+          "afterCancellationMs": 301.936,
+          "enclosingAborted": true,
+          "argvTail": [
+            "ready",
+            "login",
+            "status"
+          ]
+        }
+      ],
+      "nativeExitEvents": [
+        {
+          "pid": 29820,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 24896,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 46084,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "pid": 32760,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    },
+    {
+      "case": "cancel-before-case-public",
+      "role": "Submitted candidate, direct public probe callback: zero starts but the same readiness assertion is reported twice.",
+      "rawEvidence": [
+        "raw/cancel-before-case-public/events.jsonl",
+        "raw/cancel-before-case-public/controller.jsonl",
+        "raw/cancel-before-case-public/receipt.json",
+        "raw/cancel-before-case-public/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:13:50.780519+00:00",
+      "finishedAt": "2026-11-18T23:13:55.159035+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 0,
+        "numFailedTests": 1,
+        "numPendingTests": 8,
+        "numFailedTestSuites": 1,
+        "success": false
+      },
+      "reportedNonSkippedTasks": [
+        {
+          "title": "runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe",
+          "status": "failed",
+          "failureMessageCount": 2,
+          "failureFirstLines": [
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }",
+            "AssertionError: expected { state: 'unknown', ok: false, …(1) } to match object { state: 'ready', ok: true, …(1) }"
+          ],
+          "completeFailureMessageSha256": [
+            "bccb4b8c385c4715aba1924ecbe5df6310b5aad6d842493cafbe6964bd77dc2d",
+            "bccb4b8c385c4715aba1924ecbe5df6310b5aad6d842493cafbe6964bd77dc2d"
+          ],
+          "completeMessagesIdentical": true
+        }
+      ],
+      "suiteMessageFirstLines": [],
+      "cancelEventAtMs": 3355.5645,
+      "launchesAfterCancellation": [],
+      "nativeExitEvents": [],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    },
+    {
+      "case": "cancel-before-case-control",
+      "role": "Counterfactual propagation-only repair: zero starts but the retained outer child-count assertion is reported twice.",
+      "rawEvidence": [
+        "raw/cancel-before-case-control/events.jsonl",
+        "raw/cancel-before-case-control/controller.jsonl",
+        "raw/cancel-before-case-control/receipt.json",
+        "raw/cancel-before-case-control/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:12:39.580956+00:00",
+      "finishedAt": "2026-11-18T23:12:43.763976+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 0,
+        "numFailedTests": 1,
+        "numPendingTests": 8,
+        "numFailedTestSuites": 1,
+        "success": false
+      },
+      "reportedNonSkippedTasks": [
+        {
+          "title": "reports an ordinary case failure once, after the same settlement",
+          "status": "failed",
+          "failureMessageCount": 2,
+          "failureFirstLines": [
+            "AssertionError: expected [] to have a length of 4 but got +0",
+            "AssertionError: expected [] to have a length of 4 but got +0"
+          ],
+          "completeFailureMessageSha256": [
+            "b4900ffd37253fa18b2d19f007ce3169895c3210a45bd01a24c8f9cca7afa7ef",
+            "b4900ffd37253fa18b2d19f007ce3169895c3210a45bd01a24c8f9cca7afa7ef"
+          ],
+          "completeMessagesIdentical": true
+        }
+      ],
+      "suiteMessageFirstLines": [],
+      "cancelEventAtMs": 3286.4293,
+      "launchesAfterCancellation": [],
+      "nativeExitEvents": [],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    },
+    {
+      "case": "cancel-before-case-entry",
+      "role": "Counterfactual entry checks, lifecycle callback: cancelled skip, no failed assertions, no starts.",
+      "rawEvidence": [
+        "raw/cancel-before-case-entry/events.jsonl",
+        "raw/cancel-before-case-entry/controller.jsonl",
+        "raw/cancel-before-case-entry/receipt.json",
+        "raw/cancel-before-case-entry/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:13:55.450930+00:00",
+      "finishedAt": "2026-11-18T23:13:59.480928+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 0,
+        "numFailedTests": 0,
+        "numPendingTests": 9,
+        "numFailedTestSuites": 0,
+        "success": true
+      },
+      "reportedNonSkippedTasks": [],
+      "suiteMessageFirstLines": [],
+      "cancelEventAtMs": 3249.7487,
+      "launchesAfterCancellation": [],
+      "nativeExitEvents": [],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    },
+    {
+      "case": "cancel-before-case-public-entry",
+      "role": "Counterfactual entry checks, direct callback: cancelled skip, no failed assertions, no starts.",
+      "rawEvidence": [
+        "raw/cancel-before-case-public-entry/events.jsonl",
+        "raw/cancel-before-case-public-entry/controller.jsonl",
+        "raw/cancel-before-case-public-entry/receipt.json",
+        "raw/cancel-before-case-public-entry/vitest.json"
+      ],
+      "startedAt": "2026-11-18T23:13:59.761990+00:00",
+      "finishedAt": "2026-11-18T23:14:03.582702+00:00",
+      "processExit": 1,
+      "runtime": {
+        "node": "v22.23.4",
+        "pnpm": "12.8.1"
+      },
+      "vitestCounts": {
+        "numTotalTests": 9,
+        "numPassedTests": 0,
+        "numFailedTests": 0,
+        "numPendingTests": 9,
+        "numFailedTestSuites": 0,
+        "success": true
+      },
+      "reportedNonSkippedTasks": [],
+      "suiteMessageFirstLines": [],
+      "cancelEventAtMs": 3023.5078,
+      "launchesAfterCancellation": [],
+      "nativeExitEvents": [],
+      "afterAll": {
+        "enclosingAborted": true,
+        "envRestored": true,
+        "managedProbeRoots": [],
+        "allTemporaryEntryCount": 1,
+        "survivingObservedPids": []
+      },
+      "ownedScratchEntriesAtCommandEnd": []
+    }
+  ]
+}

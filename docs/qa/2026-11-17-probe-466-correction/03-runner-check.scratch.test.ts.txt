@@ -1,0 +1,18 @@
+import { it } from 'vitest';
+
+// Runner-semantics check for #466 correction 01, not part of the candidate: how Vitest reports an
+// AggregateError thrown by an onTestFinished hook after the default 5 s test timeout.
+it('times out, then its finish hook throws two errors', async ({ signal, onTestFinished }) => {
+  onTestFinished(() => {
+    throw new AggregateError(
+      [
+        new Error('SCRATCH_LATE_BODY_FAILURE'),
+        Object.assign(new Error('SCRATCH_ROOT_REMOVE_FAILURE'), { code: 'EBUSY' }),
+      ],
+      'SCRATCH_AGGREGATE_MESSAGE',
+    );
+  });
+  await new Promise((resolve) => signal.addEventListener('abort', resolve));
+});
+
+it('the next case runs', () => {});

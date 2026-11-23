@@ -1,0 +1,9 @@
+# #364 documentation path copy correction
+
+Root found one ASCII BACKSPACE byte in the Claude executable default path in docs/guide/07-troubleshooting.md line 168 while preparing integration. It made the displayed/copied path differ from the actual ClaudeHarness default. The correction replaces that byte with the literal backslash and b. Prettier adjusts the same table row's trailing cell padding; every other line and every other cell value remains exact. The code span now reads %USERPROFILE%\.local\bin\claude.exe, matching harness.ts constructor components.
+
+Scoped Prettier and git diff checks passed. The only committed path is this guide. No runtime, test, dependency, schema, stored data, old archive, prior report or D203 five-file source changed. No unit/browser/provider suite was rerun for this documentation repair. Original before/after bytes, patch, constructor source, format output and commit receipt are retained.
+
+An initial root verification expected byte equality after only replacing the control byte and failed because Prettier removed one table-padding space on the same row. Before staging or commit, a subsequent diagnostic byte-level SequenceMatcher was stopped via its own session after it was unnecessarily slow on padded tables (exit1, no output); no product process was affected. The final check compares every line exactly, allowing only edge padding in the one repaired table row while requiring every cell's content to match the precise replacement. No product acceptance assertion was changed.
+
+This is author evidence, not independent review or QA. All three general scans remain consumed. D206 requires bounded opposite-family corrective review and a separate independent path/byte check, followed by ordinary final current-target gates and D035/D042 coordinator completion.

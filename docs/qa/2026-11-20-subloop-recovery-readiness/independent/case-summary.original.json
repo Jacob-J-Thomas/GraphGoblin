@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 1,
+  "role": "Independent behavior QA; no formal PR scan",
+  "candidate": "e5e665fd83753af4e684a969083711883466ce55",
+  "candidateTree": "6d164ac27cfc4d526c232be1f24b03fcdffaa912",
+  "baseline": "be78e222daaef8d2f03bed428d995873b5bc846c",
+  "target": "8181f350028e284529c76b51927f32890afcb68a",
+  "sourceFile": "apps/api/src/subloop-restart.test.ts",
+  "candidateSourceSha256": "4c88d6c9f53248bc21ce68188d09243c279800f73970eb84e278585cc6191004",
+  "baselineSourceSha256": "40b4128df3e33955ae39405d93852ffae21b8796e6a6be0b0415059f575d3633",
+  "runtime": {
+    "os": "Windows",
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "cleanCheckoutAfter": true
+  },
+  "checks": {
+    "frozenInstall": "pass",
+    "forcedApiBuild": "7 successful tasks; 0 cached",
+    "apiTypecheck": "pass",
+    "changedFileEslint": "pass"
+  },
+  "baselineOrdinary": {
+    "executed": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "baselineDelayed": {
+    "result": {
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 2
+    },
+    "delayMs": 1600,
+    "primaryFailure": "queued != waiting",
+    "secondaryFailure": "afterEach timed out at 60000ms",
+    "eventualActualStatuses": [
+      "waiting",
+      "waiting",
+      "waiting"
+    ],
+    "disposableFixtureRetained": true,
+    "retentionReason": "automatic approval review rejected recursive scratch removal"
+  },
+  "candidateOrdinary": {
+    "executed": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "finalControlledCases": [
+    {
+      "variant": "candidate-durable.test",
+      "case": "the built API recovers a child finished while down with one continuation per parent",
+      "status": "passed",
+      "durationMs": 10599.539999999999,
+      "primaryFailure": null,
+      "failureCount": 0
+    },
+    {
+      "variant": "candidate-durable.test",
+      "case": "the built API recovers a parent interrupted mid-wake with one continuation per parent",
+      "status": "passed",
+      "durationMs": 9661.239699999998,
+      "primaryFailure": null,
+      "failureCount": 0
+    },
+    {
+      "variant": "candidate-early-failure.test",
+      "case": "the built API recovers a child finished while down with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2366.4727999999996,
+      "primaryFailure": "Error: QA_CONTROL deliberate assertion-site failure after crash cut",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-early-failure.test",
+      "case": "the built API recovers a parent interrupted mid-wake with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2032.931,
+      "primaryFailure": "Error: QA_CONTROL deliberate assertion-site failure after crash cut",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-missed-cut.test",
+      "case": "the built API recovers a child finished while down with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2400.1443,
+      "primaryFailure": "AssertionError: expected false to be true // Object.is equality",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-missed-cut.test",
+      "case": "the built API recovers a parent interrupted mid-wake with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2182.5788000000002,
+      "primaryFailure": "AssertionError: expected false to be true // Object.is equality",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-wrong-status.test",
+      "case": "the built API recovers a child finished while down with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2389.3767000000003,
+      "primaryFailure": "AssertionError: expected 'running' to be 'waiting' // Object.is equality",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-wrong-status.test",
+      "case": "the built API recovers a parent interrupted mid-wake with one continuation per parent",
+      "status": "failed",
+      "durationMs": 2151.1942,
+      "primaryFailure": "AssertionError: expected 'running' to be 'waiting' // Object.is equality",
+      "failureCount": 1
+    },
+    {
+      "variant": "candidate-delay.test",
+      "case": "the built API recovers a child finished while down with one continuation per parent",
+      "status": "passed",
+      "durationMs": 9540.283,
+      "primaryFailure": null,
+      "failureCount": 0
+    },
+    {
+      "variant": "candidate-delay.test",
+      "case": "the built API recovers a parent interrupted mid-wake with one continuation per parent",
+      "status": "passed",
+      "durationMs": 8876.835600000002,
+      "primaryFailure": null,
+      "failureCount": 0
+    }
+  ],
+  "finalControlledCounts": {
+    "executed": 10,
+    "positivePasses": 4,
+    "expectedNegativeFailures": 6,
+    "unexpectedFailures": 0
+  },
+  "cleanup": {
+    "finalCases": 10,
+    "allClosedStoppedDisposedRemoved": true,
+    "allObservedExecutionsIncludingSupersededDelay": 12,
+    "allObservedClean": true,
+    "remainingCandidatePrefixedFixtureDirectories": 0
+  },
+  "durability": [
+    {
+      "case": "child finished while down",
+      "records": [
+        {
+          "position": "top",
+          "events": 18,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 5,
+            "node.finished": 4,
+            "child_run.started": 1,
+            "run.waiting": 1,
+            "run.woken": 1,
+            "child_run.finished": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        },
+        {
+          "position": "middle",
+          "events": 18,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 5,
+            "node.finished": 4,
+            "child_run.started": 1,
+            "run.waiting": 1,
+            "run.woken": 1,
+            "child_run.finished": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        },
+        {
+          "position": "leaf",
+          "events": 15,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 4,
+            "node.finished": 3,
+            "run.waiting": 1,
+            "input.received": 1,
+            "run.woken": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        }
+      ],
+      "snapshotsCompared": 3,
+      "equal": true,
+      "canonicalSnapshotSha256": "360d71a8751e8a46a31f31281c7d4d9844d6538c9c6310c9a267191f0001dece",
+      "rawArtifact": "candidate-durable-child-finished-while-down.snapshots.json",
+      "rawSha256": "5f977d5d2e5905dc5831d470b5ab2af1e93112eff1b651bb404c40c0005da24c"
+    },
+    {
+      "case": "parent interrupted mid-wake",
+      "records": [
+        {
+          "position": "top",
+          "events": 18,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 5,
+            "node.finished": 4,
+            "child_run.started": 1,
+            "run.waiting": 1,
+            "run.woken": 1,
+            "child_run.finished": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        },
+        {
+          "position": "middle",
+          "events": 18,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 5,
+            "node.finished": 4,
+            "child_run.started": 1,
+            "run.waiting": 1,
+            "run.woken": 1,
+            "child_run.finished": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        },
+        {
+          "position": "leaf",
+          "events": 15,
+          "eventCounts": {
+            "run.queued": 1,
+            "run.started": 1,
+            "node.started": 4,
+            "node.finished": 3,
+            "run.waiting": 1,
+            "input.received": 1,
+            "run.woken": 1,
+            "exit.evaluated": 1,
+            "run.finished": 1,
+            "return.delivered": 1
+          }
+        }
+      ],
+      "snapshotsCompared": 3,
+      "equal": true,
+      "canonicalSnapshotSha256": "d29cd12f1f5f8f7353a36a5491b8e8efb6cf7863eb57d707694f06cfebeb89ff",
+      "rawArtifact": "candidate-durable-parent-interrupted-mid-wake.snapshots.json",
+      "rawSha256": "6e4143724e84a6013aa0e189683df0efe85073a446c7f1b14973c1f1718d9f3f"
+    }
+  ],
+  "cuts": [
+    {
+      "case": "child finished while down",
+      "statuses": [
+        "waiting",
+        "waiting",
+        "succeeded"
+      ],
+      "leafFinalized": false,
+      "middleDurableWakes": 0,
+      "middleChildFinished": 0,
+      "rawArtifact": "candidate-durable-child-finished-while-down.cut.json",
+      "rawSha256": "47149d40b37f32d66064820335d6782e33d1fc772d266ea3c060ab67c2353c7c"
+    },
+    {
+      "case": "parent interrupted mid-wake",
+      "statuses": [
+        "waiting",
+        "waiting",
+        "succeeded"
+      ],
+      "leafFinalized": false,
+      "middleDurableWakes": 1,
+      "middleChildFinished": 0,
+      "rawArtifact": "candidate-durable-parent-interrupted-mid-wake.cut.json",
+      "rawSha256": "db4978c792e304fa95500596fe0246e6be4fb86ade3a5de2d0a156428243634e"
+    }
+  ],
+  "attemptLedger": [
+    {
+      "run": "baseline-ordinary",
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "run": "baseline-private-config-first-attempt",
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "note": "0 tests; missing contracts/testing alias; corrected"
+    },
+    {
+      "run": "baseline-delayed",
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 2
+    },
+    {
+      "run": "candidate-ordinary",
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "run": "candidate-controls-first-attempt",
+      "executed": 10,
+      "passed": 3,
+      "failed": 7,
+      "skipped": 5,
+      "note": "six expected negative failures plus one diagnostic nested-spy recursion; preserved"
+    },
+    {
+      "run": "candidate-delay-corrected",
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 1,
+      "note": "restored independent transition wrapper after readiness; candidate untouched"
+    }
+  ],
+  "genuineFindings": [],
+  "limits": [
+    "Local Windows behavior evidence; Ubuntu and hosted CI remain separate gates.",
+    "Constructed cuts use real SQLite plus fake engine ports; recovery uses the built API.",
+    "Delayed readiness, wrong statuses, missed callbacks and assertion failures are controlled diagnostic changes outside the checkout.",
+    "This report does not establish whole-repository coverage, formal review, provider behavior, permission behavior, or owner acceptance."
+  ],
+  "rawArtifacts": [
+    {
+      "artifact": "baseline-build.log",
+      "bytes": 1257,
+      "sha256": "04b9478d918715ef75e207d4adbcf3c663bc050efa77ff3674e1e55790ad13e6"
+    },
+    {
+      "artifact": "baseline-delayed-control.cleanup.json",
+      "bytes": 603,
+      "sha256": "f3c3aec0d5e4e646be955dae005101d077d1d3e8a545119cbe451a26fe13f16f"
+    },
+    {
+      "artifact": "baseline-delayed-control.log",
+      "bytes": 271,
+      "sha256": "c1dfc476afa3dad900eb7a883bfa4a3f7e511f535d29948d860f2899dfa3b0e1"
+    },
+    {
+      "artifact": "baseline-delayed-control.vitest.json",
+      "bytes": 3908,
+      "sha256": "95ff1c57ed8519529a86a1e606e0ddb52df9aa57daa93eef53be0b5f4618e136"
+    },
+    {
+      "artifact": "baseline-delayed.log",
+      "bytes": 199,
+      "sha256": "02dd3d80052a62f04cc7510fd2c8b6bad0a046b1aef0d2de80a061b72a4af89a"
+    },
+    {
+      "artifact": "baseline-delayed.test.ts",
+      "bytes": 12919,
+      "sha256": "b3e7e560c6b10cbf2b13a69c773297311267be31c2ee32935d302186f9f81eb1"
+    },
+    {
+      "artifact": "baseline-delayed.vitest.json",
+      "bytes": 779,
+      "sha256": "3808c4b8388dc2b3b8a7b218d31d4e4225535c11c412709dc705332752a070c1"
+    },
+    {
+      "artifact": "baseline-ordinary.log",
+      "bytes": 749,
+      "sha256": "f0e57e6697ffcb94b3598f5186dd0afc238947eb0d9d8393af18baf28d85fabd"
+    },
+    {
+      "artifact": "baseline-ordinary.vitest.json",
+      "bytes": 1899,
+      "sha256": "0004a96b9b49cf347ff8cd00f1d8ed1d363e647bddad4af1490748aee157245a"
+    },
+    {
+      "artifact": "candidate-build.log",
+      "bytes": 1256,
+      "sha256": "ce9c8a5fd512f6c3ad9cf82d0fc281d65ff80e6a4a73d7b34c82f9a9fee453bc"
+    },
+    {
+      "artifact": "candidate-controls.log",
+      "bytes": 2494,
+      "sha256": "8543c105c1c244248942cb769cebaadb1a83f8ed2efbc320fa676d7a17accc7d"
+    },
+    {
+      "artifact": "candidate-controls.vitest.json",
+      "bytes": 10794,
+      "sha256": "a24208beb20c02a53dfb5f54218c14341ad4842614b95bc4ccc0622f68bb874f"
+    },
+    {
+      "artifact": "candidate-delay-child-finished-while-down.cut.json",
+      "bytes": 21095,
+      "sha256": "33088c8f548a3223a222f89af1883ec0ee88416aed9af0e284b82a71ee5bcf17"
+    },
+    {
+      "artifact": "candidate-delay-corrected.log",
+      "bytes": 648,
+      "sha256": "ef1651daaf98a16122fad13ba4ad82859b4ea281331797c414aed50a1860cec7"
+    },
+    {
+      "artifact": "candidate-delay-corrected.vitest.json",
+      "bytes": 1844,
+      "sha256": "f10b435f2fefb7895b50f4d138c51c144dce038caf303a402af65ffdd1b35b24"
+    },
+    {
+      "artifact": "candidate-delay-parent-interrupted-mid-wake.cut.json",
+      "bytes": 21798,
+      "sha256": "db4978c792e304fa95500596fe0246e6be4fb86ade3a5de2d0a156428243634e"
+    },
+    {
+      "artifact": "candidate-delay.attempt1.ts",
+      "bytes": 16600,
+      "sha256": "0a0efe0b661975a20a1c0f36c99451ada2964cc4ff4a90196fa53988f341836d"
+    },
+    {
+      "artifact": "candidate-delay.test.ts",
+      "bytes": 16616,
+      "sha256": "dd830b19c0d2c1d77bb0ba3b797938156aa5c8ad3e269eff9c77b5a848191b69"
+    },
+    {
+      "artifact": "candidate-durable-child-finished-while-down.cut.json",
+      "bytes": 21095,
+      "sha256": "47149d40b37f32d66064820335d6782e33d1fc772d266ea3c060ab67c2353c7c"
+    },
+    {
+      "artifact": "candidate-durable-child-finished-while-down.snapshots.json",
+      "bytes": 110370,
+      "sha256": "5f977d5d2e5905dc5831d470b5ab2af1e93112eff1b651bb404c40c0005da24c"
+    },
+    {
+      "artifact": "candidate-durable-parent-interrupted-mid-wake.cut.json",
+      "bytes": 21798,
+      "sha256": "db4978c792e304fa95500596fe0246e6be4fb86ade3a5de2d0a156428243634e"
+    },
+    {
+      "artifact": "candidate-durable-parent-interrupted-mid-wake.snapshots.json",
+      "bytes": 110468,
+      "sha256": "6e4143724e84a6013aa0e189683df0efe85073a446c7f1b14973c1f1718d9f3f"
+    },
+    {
+      "artifact": "candidate-durable.test.ts",
+      "bytes": 17061,
+      "sha256": "d9d4830cffb6cab9872326f4b46209d10ed9d2c132de6241c8b778f5ddbdad5b"
+    },
+    {
+      "artifact": "candidate-early-failure.test.ts",
+      "bytes": 15964,
+      "sha256": "f54fbd732d3e359b7bbed2ea1f36d18ea9509f917d9005204ff8a4be0fc202b2"
+    },
+    {
+      "artifact": "candidate-eslint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "candidate-missed-cut.test.ts",
+      "bytes": 15890,
+      "sha256": "6e6d66364a67dd0978ad18aae1056533c1a68b8716f87f20f2965e7db678af7c"
+    },
+    {
+      "artifact": "candidate-ordinary.log",
+      "bytes": 750,
+      "sha256": "4241ccde81dcbabbb282b470096edb7aa942ee4b17fc1b47d814fc43c824792f"
+    },
+    {
+      "artifact": "candidate-ordinary.vitest.json",
+      "bytes": 1891,
+      "sha256": "9919f6e8271483d60b3d66c31aac48acd1c32a9acb53511dff8b3d1f45140c1d"
+    },
+    {
+      "artifact": "candidate-typecheck.log",
+      "bytes": 54,
+      "sha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+    },
+    {
+      "artifact": "candidate-wrong-status.test.ts",
+      "bytes": 16164,
+      "sha256": "1ccf533f7c1ae78d66293fa75d7f0fc7b330394cdf478db0900ab093879f0baf"
+    },
+    {
+      "artifact": "correct-delay-control.py",
+      "bytes": 834,
+      "sha256": "ce17dd42868e0192813034b18e0c3824245ed749df40939642e8e425d475993f"
+    },
+    {
+      "artifact": "finish-report.py",
+      "bytes": 12813,
+      "sha256": "95d762d697c9fbf12f85a809b6fd2a19940a34f3abd0e8c7c735bc19a1d4ec2a"
+    },
+    {
+      "artifact": "prepare-candidate-controls.py",
+      "bytes": 7010,
+      "sha256": "1a403f67e19076ea7846f946d8d74d7908298411122d63b6979d46b2113d0584"
+    },
+    {
+      "artifact": "prepare-controls.py",
+      "bytes": 4960,
+      "sha256": "adf29a3e11dac4cb9b3c96fe6d9d931ecfd4c14a339473381c426722b7f8dd1b"
+    },
+    {
+      "artifact": "vitest.private.config.mjs",
+      "bytes": 1515,
+      "sha256": "e2896745b63c7c15296eb8bee5b1fc81c218fe8b760b673f19cffab8cdf129fc"
+    }
+  ]
+}

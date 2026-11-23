@@ -1,0 +1,124 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d9aa2eeb..22190a2a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,10 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
+-- Codex structured calls create short scratch names with exclusive `mkdir`, retrying at most
+-  four `EEXIST` collisions and preserving every colliding directory (#363). This avoids the
+-  Windows `mkdtemp` failure under the tested 226-character temp root; OS/CLI path limits remain.
+-  Request/configured working directories and cancellation/error cleanup precedence are unchanged.
++- Codex structured calls create short scratch names with exclusive `mkdir` in at most four
++  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
++  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
++  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI
++  verification at the measured 226-character Windows temp root observes a 249-character adapter
++  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI
++  limits remain. Request/configured working directories and cleanup precedence are unchanged.
++  **Upgrade:** reinstall dependencies from the updated frozen lockfile, then rebuild the API.
++  No SDK version, dependency, stored schema/format or reset change.
+ 
+ - Windows launcher identity and ownership checks own their descendants in private Windows jobs
+   (#459), drain both output streams within a bounded work window and collect failed checks
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index 11a6e6cd..711a91dd 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -595,11 +595,17 @@ parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+ The request's working directory takes precedence over the adapter's configured directory;
+ neither configured directory is removed. Without either, the adapter exclusively creates a
+ short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+-limit. It tries at most four names on `EEXIST`; other creation errors propagate before the
++limit. It makes at most four attempts (three retries) on `EEXIST`; other creation errors propagate before the
+ harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+ to a directory this call created. Cancellation and primary failures keep their existing
+-cleanup precedence. This supports the tested 226-character temporary root; ordinary OS/CLI
+-path limits still apply, including paths the harness later creates inside that directory.
++cleanup precedence. The pinned SDK separately writes the required output schema under the
++host temporary root. Its managed patch shortens that directory's native `mkdtemp` prefix
++from `codex-output-schema-` to `gg-schema-`, keeping its allocation and cleanup semantics
++([ADR-0087](decisions/ADR-0087-short-codex-schema-temp-prefix.md)). Real-SDK/harmless-CLI
++tests at the measured 226-character Windows temporary root observe a 249-character adapter
++scratch, 243-character SDK schema directory and 255-character schema file, with normal,
++error and abort cleanup. These controlled fixtures are not a provider turn or a promise of
++arbitrary long-path support; ordinary OS/CLI limits still apply.
+ 
+ Configured plugins are inherited through the common harness, including their tools; the
+ read-only sandbox controls local commands rather than the authority of plugin services.
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 380ed790..4f945136 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -103,3 +103,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0084 - Independent CI lanes behind a fail-closed Gates check](ADR-0084-independent-ci-lanes-behind-gates.md) runs repository checks and serial coverage as independent jobs behind the always-evaluated `Gates` aggregate, which passes only when both succeed (#488).
+ 
+ [ADR-0085 - Refuse secret-bearing Windows launcher overrides](ADR-0085-refuse-launcher-secret-overrides.md) rejects explicit master-key and Jev seed-key overrides before configuration persistence or launcher actions, without printing their values (#437).
++
++[ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
+diff --git a/docs/research/codex-sdk.md b/docs/research/codex-sdk.md
+index af7bcc40..f08d1b5c 100644
+--- a/docs/research/codex-sdk.md
++++ b/docs/research/codex-sdk.md
+@@ -7,6 +7,7 @@ Captured 2026-10-02. Sources: the `openai/codex` repository, OpenAI Codex config
+ - Package `@openai/codex-sdk`, licence Apache-2.0, engines `node >= 18`, pinned exactly (`"0.160.0"`) in `packages/adapter-codex`.
+ - **Correction:** the SDK now depends on `@openai/codex` at the same version (Apache-2.0), whose optional per-platform package (`@openai/codex-win32-x64` and so on) carries the native CLI, about 430 MB on Windows. With no `codexPathOverride`, the SDK runs that bundled binary, not the `codex` on `PATH`. Both read the same `~/.codex` login. The adapter's `codexBinary` option overrides the binary.
+ - The SDK spawns `codex exec --experimental-json [flags] [resume <id>]` with `child_process.spawn(binary, args, { env, signal })`, writes the prompt to stdin, and reads JSONL from stdout. It does not set `windowsHide` or `detached`, and it does not expose the child process or its pid. Without `windowsHide` the CLI shares the gateway's Windows console and receives a terminal Ctrl+C; GraphGoblin therefore patches that one spawn to add `windowsHide: true` (2026-10-26, ADR-0049; no release up to 0.164.0 sets it).
++- The same managed 0.160.0 patch shortens the output-schema directory prefix from `codex-output-schema-` to `gg-schema-` (2026-11-21, [ADR-0087](../decisions/ADR-0087-short-codex-schema-temp-prefix.md), #363). The SDK still uses native `fs.mkdtemp` under its Node host's `os.tmpdir()`, writes the supplied schema unchanged and removes only that allocated directory. Client `env` affects the CLI child, not this host allocation; no public schema-file/temp-root override exists in the pinned turn options. Real installed-SDK tests with a harmless CLI check short and 226-character temp roots, actual schema reads, normal/error/abort cleanup and unrelated sentinels. At the measured Windows root the schema directory/file are 243/255 characters; this is a bounded path observation, not arbitrary Windows long-path or provider-turn proof.
+ - The SDK's `.d.ts` imports `@modelcontextprotocol/sdk/types.js`, which it lists only as a dev dependency; with `skipLibCheck: true` (the repository default) the unresolved type is harmless.
+ 
+ ## Client and thread API (verified)
+diff --git a/patches/@openai__codex-sdk@0.160.0.patch b/patches/@openai__codex-sdk@0.160.0.patch
+index 20895b35..fa2e8a57 100644
+--- a/patches/@openai__codex-sdk@0.160.0.patch
++++ b/patches/@openai__codex-sdk@0.160.0.patch
+@@ -1,7 +1,16 @@
+ diff --git a/dist/index.js b/dist/index.js
+-index 062039c2610107095bd7a254bdebd6fcf7e15fc6..a10fda46b19d1ddb8fe0a5e2fda3ef9b0d8b685a 100644
++index 062039c2610107095bd7a254bdebd6fcf7e15fc6..fc6416eaf3c73265a1dfc2f121cd8f3820976269 100644
+ --- a/dist/index.js
+ +++ b/dist/index.js
++@@ -10,7 +10,7 @@ async function createOutputSchemaFile(schema) {
++   if (!isJsonObject(schema)) {
++     throw new Error("outputSchema must be a plain JSON object");
++   }
++-  const schemaDir = await fs.mkdtemp(path.join(os.tmpdir(), "codex-output-schema-"));
+++  const schemaDir = await fs.mkdtemp(path.join(os.tmpdir(), "gg-schema-"));
++   const schemaPath = path.join(schemaDir, "schema.json");
++   const cleanup = async () => {
++     try {
+ @@ -262,7 +262,8 @@ var CodexExec = class {
+      }
+      const child = spawn(this.executablePath, commandArgs, {
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 92a751db..6bdbb2df 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -166,7 +166,7 @@ overrides:
+   '@esbuild-kit/esm-loader': '-'
+ 
+ patchedDependencies:
+-  '@openai/codex-sdk@0.160.0': 3d897be4ca6f078ed158b30bb1a58bc02e1e689560dc658e8bd2d93d27b7338d
++  '@openai/codex-sdk@0.160.0': 119554c3f7cb39db6b24dbb75e9d51fede75171d04aec0114d31356b79693760
+   jsonata@2.2.2: c946341f2ec643121e3296159f896f45cd24fcc3bb6ad26abe6760d3306670e0
+ 
+ importers:
+@@ -534,7 +534,7 @@ importers:
+         version: link:../engine
+       '@openai/codex-sdk':
+         specifier: 0.160.0
+-        version: 0.160.0(patch_hash=3d897be4ca6f078ed158b30bb1a58bc02e1e689560dc658e8bd2d93d27b7338d)
++        version: 0.160.0(patch_hash=119554c3f7cb39db6b24dbb75e9d51fede75171d04aec0114d31356b79693760)
+     devDependencies:
+       '@graphgoblin/tooling':
+         specifier: workspace:*
+@@ -6651,7 +6651,7 @@ snapshots:
+ 
+   '@neon-rs/load@0.0.4': {}
+ 
+-  '@openai/codex-sdk@0.160.0(patch_hash=3d897be4ca6f078ed158b30bb1a58bc02e1e689560dc658e8bd2d93d27b7338d)':
++  '@openai/codex-sdk@0.160.0(patch_hash=119554c3f7cb39db6b24dbb75e9d51fede75171d04aec0114d31356b79693760)':
+     dependencies:
+       '@openai/codex': 0.160.0
+ 

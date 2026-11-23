@@ -1,0 +1,253 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "baseline-20261121T013403Z-b281ea",
+  "label": "baseline",
+  "case": "stderr-flood-success",
+  "title": "Flood: 1 MiB stderr then a valid identity and natural exit 0",
+  "lane": "fixture",
+  "category": "regression",
+  "planRow": "Blocking/full pipes: a large stderr flood that completes in time succeeds",
+  "startedAtMs": 1795224855690,
+  "durationMs": 18154,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 45240,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 15132,
+      "osElapsedMs": 15126,
+      "osCreatedAtMs": 1795224855695,
+      "osExitedAtMs": 1795224870821,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-timeout",
+      "diagnostic": "helper-timeout",
+      "diagnosticFinal": "helper-timeout",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:34:30.8038672Z",
+          "pid": 45240,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-timeout",
+          "message": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.",
+          "config": "<RUN>\\cases\\stderr-flood-success\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 284,
+      "stdoutBytes": 0,
+      "stderrBytes": 284,
+      "stdoutText": "",
+      "stderrText": "The configured Node runtime did not answer the read-only identity/ownership check. Check PowerShell and Windows Management Instrumentation availability.\r\n\r\nConfiguration: <RUN>\\cases\\stderr-flood-success\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "stderr-flood-success/launcher-click/45240",
+      "case": "stderr-flood-success",
+      "role": "launcher-click",
+      "pid": 45240,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795224855701,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 37412,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224855695,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224855695,
+          "exitedAtMs": 1795224870821
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224855695,
+          "exitedAtMs": 1795224870821
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224855695,
+          "exitedAtMs": 1795224870821
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795224855695,
+          "exitedAtMs": 1795224870821
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "stderr-flood-success/identity-1/27920",
+      "case": "stderr-flood-success",
+      "role": "identity-1",
+      "pid": 27920,
+      "source": "handshake",
+      "self": {
+        "case": "stderr-flood-success",
+        "role": "identity-1",
+        "pid": 27920,
+        "ppid": 45240,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795224855867,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 45240,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795224855784,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795224855784,
+          "exitedAtMs": 1795224870796
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795224855784,
+          "exitedAtMs": 1795224870796
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 4294967295,
+          "createdAtMs": 1795224855784,
+          "exitedAtMs": 1795224870796
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "terminated-dotnet-process-kill"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795224855864,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795224855869,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795224855694,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795224855700,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795224870826,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "requirement",
+      "text": "valid result after a large stderr flood is accepted",
+      "expected": "foreign-listener",
+      "actual": "helper-timeout",
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "root-natural-zero",
+      "kind": "requirement",
+      "text": "flooding helper root completes and exits naturally with 0",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 4294967295,
+        "exitedRelativeToLauncherExitMs": -25,
+        "exitedBeforeLauncherExit": true,
+        "classification": "terminated-dotnet-process-kill"
+      },
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "within-work-budget",
+      "kind": "requirement",
+      "text": "flooding helper completes well inside the 15 s work budget",
+      "expected": "< 15000 ms",
+      "actual": 15126,
+      "pass": false,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "stderr-sentinel-private",
+      "kind": "control",
+      "text": "synthetic stderr sentinel never reaches launcher stdout/stderr, launcher.log(.1) or gateway.log",
+      "expected": [],
+      "actual": [],
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "expected-baseline-failure-observed"
+}

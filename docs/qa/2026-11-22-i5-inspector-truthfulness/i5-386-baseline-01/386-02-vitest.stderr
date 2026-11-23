@@ -1,0 +1,44 @@
+$ vitest run src/runs/RunInspector386Baseline.test.tsx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspector386Baseline.test.tsx > shows the terminal header when refresh held after the terminal event (#386)
+Error: expect(element).toHaveAttribute("data-status", "succeeded") // element.getAttribute("data-status") === "succeeded"
+
+Expected the element to have attribute:
+  data-status="succeeded"
+Received:
+  data-status="running"
+ ❯ src/runs/RunInspector386Baseline.test.tsx:82:19
+     80|       }),
+     81|     );
+     82|     expect(badge).toHaveAttribute('data-status', 'succeeded');
+       |                   ^
+     83|   } finally {
+     84|     releaseRefresh();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/runs/RunInspector386Baseline.test.tsx > shows the terminal header when refreshed row has the terminal sequence… (#386)
+Error: expect(element).toHaveAttribute("data-status", "succeeded") // element.getAttribute("data-status") === "succeeded"
+
+Expected the element to have attribute:
+  data-status="succeeded"
+Received:
+  data-status="running"
+ ❯ src/runs/RunInspector386Baseline.test.tsx:82:19
+     80|       }),
+     81|     );
+     82|     expect(badge).toHaveAttribute('data-status', 'succeeded');
+       |                   ^
+     83|   } finally {
+     84|     releaseRefresh();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i5-386-
+  │ baseline\GraphGoblin\apps\web
+

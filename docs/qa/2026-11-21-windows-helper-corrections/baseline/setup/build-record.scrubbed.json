@@ -1,0 +1,76 @@
+{
+  "schema": "qa459i-build-record/1",
+  "startUtc": "2026-11-21T04:29:22.157Z",
+  "node": "v22.23.4",
+  "checkout": {
+    "head": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "tree": "0b1a84d1c881518b4744e2565a2874ec481921fc",
+    "trackedChanges": 0
+  },
+  "compiler": {
+    "path": "C:\\WINDOWS\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
+    "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+  },
+  "steps": [
+    {
+      "label": "production-launcher",
+      "args": [
+        "/nologo",
+        "/target:winexe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\bin\\GraphGoblin.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 909,
+      "stdout": "apps\\windows-launcher\\Launcher.cs(1187,48): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.state' is never assigned to, and will always have its default value null\r\napps\\windows-launcher\\Launcher.cs(1187,55): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.path' is never assigned to, and will always have its default value null\r\napps\\windows-launcher\\Launcher.cs(1187,61): warning CS0649: Field 'GraphGoblin.Desktop.Gateway.Ownership.detail' is never assigned to, and will always have its default value null\r\n",
+      "stderr": ""
+    },
+    {
+      "label": "independent-harness",
+      "args": [
+        "/nologo",
+        "/target:exe",
+        "/optimize+",
+        "/platform:x64",
+        "/reference:<scratch>\\bin\\GraphGoblin.exe",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\bin\\Qa459iHarness.exe",
+        "<out>\\driver\\v1\\harness\\Qa459iHarness.cs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "ms": 1067,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "inputs": {
+    "launcherSource": {
+      "path": "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+      "sha256": "bf66facfd104accb6da0f0a9200a994252d88efa560bd7be04be3f7139c24078",
+      "gitBlob": "76d695fd3db94dbbfc2ab2022cd302941b09b105"
+    },
+    "harnessSource": {
+      "path": "<out>\\driver\\v1\\harness\\Qa459iHarness.cs",
+      "sha256": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+    }
+  },
+  "outputs": {
+    "launcherAssembly": {
+      "path": "<scratch>\\bin\\GraphGoblin.exe",
+      "sha256": "febd02c1ad43814b2bed19d74ac6eb1ae8d409b607449117731f3501428c8a20",
+      "bytes": 63488
+    },
+    "harnessAssembly": {
+      "path": "<scratch>\\bin\\Qa459iHarness.exe",
+      "sha256": "346a225c0cebc996abe1edf4439c91a17c7aabf0be724d4d4944cfd3456a8fc1",
+      "bytes": 7168
+    }
+  },
+  "endUtc": "2026-11-21T04:29:24.540Z"
+}

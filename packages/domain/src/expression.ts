@@ -49,19 +49,25 @@ function unsafeRegexIn(
 }
 
 /** Compile and check an expression. `cached: false` gives a private instance (for `$eval`). */
-function compile(expression: string, cached = true): Compiled {
+function compile(
+  expression: string,
+  cached = true,
+  failed?: (reason: 'compile' | 'unsafe-regex') => void,
+): Compiled {
   const hit = cached ? cache.get(expression) : undefined;
   if (hit) return hit;
   let compiled: Compiled;
   try {
     compiled = jsonata(expression);
   } catch (error) {
+    failed?.('compile');
     throw new ExpressionError(`expression failed to compile: ${describeError(error)}`, {
       expression,
     });
   }
   const unsafe = unsafeRegexIn(compiled.ast());
   if (unsafe) {
+    failed?.('unsafe-regex');
     throw new ExpressionError(
       `expression uses the regular expression /${unsafe.source}/, which can run without bound: ${unsafe.reason}`,
       { expression },
@@ -134,24 +140,55 @@ function normaliseEvalError(error: unknown): ExpressionError {
   return new ExpressionError(`$eval failed: ${bounded(describeError(cause))}`);
 }
 
-async function run(
-  expr: Compiled,
+export type ExpressionReason =
+  'compile' | 'unsafe-regex' | 'depth' | 'time' | 'evaluation-rejected';
+
+export type ExpressionObservation<T> =
+  { ok: true; value: T } | { ok: false; error: unknown; reason?: ExpressionReason };
+
+function legacyError(error: unknown, expression: string): ExpressionError {
+  return error instanceof ExpressionError
+    ? error
+    : new ExpressionError(`expression failed: ${bounded(describeError(error))}`, { expression });
+}
+
+/** Only a concrete invocation can produce a reason. Preparing bindings has no such evidence. */
+export async function observeExpression(
   expression: string,
   input: unknown,
-  options: ExpressionOptions,
-): Promise<unknown> {
+  options: ExpressionOptions = {},
+): Promise<ExpressionObservation<unknown>> {
+  let compileReason: 'compile' | 'unsafe-regex' | undefined;
+  let expr: Compiled;
   try {
-    const result: unknown = await expr.evaluate(input, {
+    expr = compile(expression, true, (reason) => {
+      compileReason = reason;
+    });
+  } catch (error) {
+    return { ok: false, error, ...(compileReason ? { reason: compileReason } : {}) };
+  }
+  let limit: { error: ExpressionError; reason: 'time' | 'depth' } | undefined;
+  let bindings: Record<string, unknown>;
+  try {
+    bindings = {
       ...options.bindings,
       eval: CHECKED_EVAL,
-      ...evaluationHooks(options.timeoutMs ?? 2000, options.maxDepth ?? 200),
-    });
-    return result;
+      ...evaluationHooks(options.timeoutMs ?? 2000, options.maxDepth ?? 200, (error, reason) => {
+        limit = { error, reason };
+      }),
+    };
   } catch (error) {
-    if (error instanceof ExpressionError) throw error;
-    throw new ExpressionError(`expression failed: ${bounded(describeError(error))}`, {
-      expression,
-    });
+    return { ok: false, error: legacyError(error, expression) };
+  }
+  try {
+    const value: unknown = await expr.evaluate(input, bindings);
+    return { ok: true, value };
+  } catch (error) {
+    return {
+      ok: false,
+      error: legacyError(error, expression),
+      reason: limit && limit.error === error ? limit.reason : 'evaluation-rejected',
+    };
   }
 }
 
@@ -163,15 +200,23 @@ async function run(
 const ENTRY_HOOK = Symbol.for('jsonata.__evaluate_entry');
 const EXIT_HOOK = Symbol.for('jsonata.__evaluate_exit');
 
-function evaluationHooks(timeoutMs: number, maxDepth: number): Record<symbol, () => void> {
+function evaluationHooks(
+  timeoutMs: number,
+  maxDepth: number,
+  onLimit: (error: ExpressionError, reason: 'depth' | 'time') => void,
+): Record<symbol, () => void> {
   let depth = 0;
   const start = Date.now();
   const check = (): void => {
     if (depth > maxDepth) {
-      throw new ExpressionError(`expression exceeded max depth ${maxDepth}`);
+      const error = new ExpressionError(`expression exceeded max depth ${maxDepth}`);
+      onLimit(error, 'depth');
+      throw error;
     }
     if (Date.now() - start > timeoutMs) {
-      throw new ExpressionError(`expression exceeded ${timeoutMs}ms`);
+      const error = new ExpressionError(`expression exceeded ${timeoutMs}ms`);
+      onLimit(error, 'time');
+      throw error;
     }
   };
   return {
@@ -192,7 +237,9 @@ export async function evaluateExpression(
   input: unknown,
   options: ExpressionOptions = {},
 ): Promise<unknown> {
-  return run(compile(expression), expression, input, options);
+  const result = await observeExpression(expression, input, options);
+  if (!result.ok) throw result.error;
+  return result.value;
 }
 
 /** Predicate coercion: missing/null are false, nonempty collections pass, scalars use Boolean. */
@@ -201,7 +248,23 @@ export async function evaluatePredicate(
   input: unknown,
   options: ExpressionOptions = {},
 ): Promise<boolean> {
-  const value = await evaluateExpression(expression, input, options);
+  const result = await observePredicate(expression, input, options);
+  if (!result.ok) throw result.error;
+  return result.value;
+}
+
+export async function observePredicate(
+  expression: string,
+  input: unknown,
+  options: ExpressionOptions = {},
+): Promise<ExpressionObservation<boolean>> {
+  const result = await observeExpression(expression, input, options);
+  if (!result.ok) return result;
+  // Coercion can run user code on a general JS value. Its exception stays outside attribution.
+  return { ok: true, value: predicateValue(result.value) };
+}
+
+function predicateValue(value: unknown): boolean {
   if (value === undefined || value === null) return false;
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === 'object') return Object.keys(value).length > 0;

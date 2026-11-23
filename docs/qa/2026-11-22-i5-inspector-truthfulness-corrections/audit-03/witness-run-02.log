@@ -1,0 +1,54 @@
+v22.23.4
+12.8.1
+
+ RUN  v5.0.3 G:/ggq/gg-i5-astra-final-03-probe/source/apps/web
+
+stdout | src/runs/owner-chat-recovery-witness.test.tsx > keeps a quiet inspector recovered when a former owner Devices page returns a retired 401
+retired owner Devices response {"oldGeneration":1,"rejected":2,"recovered":3,"oldSentSameKey":true,"oldHadSignal":false,"chatCalls":1,"runReadsBefore":1,"runReadsAfter":2,"route":"/runs/RW4P4H47R2T1DPFW86GVBS2AM6","cursor":3,"unexpectedGlobalCalls":[],"actual":{"generation":4,"rejected":true,"keyForm":true,"badge":null,"updating":true,"recordedWait":false}}
+
+ × src/runs/owner-chat-recovery-witness.test.tsx > keeps a quiet inspector recovered when a former owner Devices page returns a retired 401 1383ms
+   → expected { generation: 4, rejected: true, …(4) } to deeply equal { Object (generation, rejected, ...) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/owner-chat-recovery-witness.test.tsx > keeps a quiet inspector recovered when a former owner Devices page returns a retired 401
+AssertionError: expected { generation: 4, rejected: true, …(4) } to deeply equal { Object (generation, rejected, ...) }
+
+- Expected
++ Received
+
+  {
+-   "badge": "waiting",
+-   "generation": 3,
+-   "keyForm": false,
+-   "recordedWait": true,
+-   "rejected": false,
+-   "updating": false,
++   "badge": null,
++   "generation": 4,
++   "keyForm": true,
++   "recordedWait": false,
++   "rejected": true,
++   "updating": true,
+  }
+
+ ❯ src/runs/owner-chat-recovery-witness.test.tsx:94:20
+     92|     }));
+     93|     expect(unexpectedGlobalCalls).toEqual([]);
+     94|     expect(actual).toEqual({
+       |                    ^
+     95|       generation: recovered, rejected: false, keyForm: false, badge: '…
+     96|       updating: false, recordedWait: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:11:22
+   Duration  10.91s (transform 43%, import 20%, environment 19%, tests 13%, setup 5%)
+
+  Transform  transforming modules took 4.57s · 43% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

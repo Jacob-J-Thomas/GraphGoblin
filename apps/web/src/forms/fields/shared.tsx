@@ -137,12 +137,23 @@ export function joinPath(base: string, key: string | number): string {
  */
 export const FieldIssuesContext = createContext<ReadonlyMap<string, string>>(new Map());
 
-/** The message for the field at `name`: react-hook-form's, else the schema issue at that path. */
+/**
+ * The path of the record entry whose value is drawn here, when the schema issue at that path is
+ * about the entry's key (RecordField decides, and the key shows it). The value's field has the
+ * same path, so it takes no message from that issue and is not marked invalid by it.
+ */
+export const RecordKeyIssueContext = createContext<string | undefined>(undefined);
+
+/**
+ * The message for the field at `name`: react-hook-form's, else the schema issue at that path;
+ * none for a record entry's value when the issue at its path is its key's.
+ */
 export function useFieldErrorMessage(name: string) {
   const {
     formState: { errors },
   } = useFormContext();
   const issues = use(FieldIssuesContext);
+  if (use(RecordKeyIssueContext) === name) return undefined;
   const error = get(errors, name) as { message?: string; root?: { message?: string } } | undefined;
   return issues.get(name) ?? error?.message ?? error?.root?.message;
 }

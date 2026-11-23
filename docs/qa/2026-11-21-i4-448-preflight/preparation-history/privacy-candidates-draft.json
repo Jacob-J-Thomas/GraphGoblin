@@ -1,0 +1,28 @@
+{
+  "scope": "Selected source-evidence bytes only; no owner files read and no original bytes redacted.",
+  "patterns": [
+    {
+      "name": "GitHub-token",
+      "pattern": "/\\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\\b/g"
+    },
+    {
+      "name": "provider-token",
+      "pattern": "/\\bsk-(?:ant-|proj-)[A-Za-z0-9_-]{20,}\\b/g"
+    },
+    {
+      "name": "AWS-access-key",
+      "pattern": "/\\b(?:AKIA|ASIA)[A-Z0-9]{16}\\b/g"
+    },
+    {
+      "name": "private-key",
+      "pattern": "/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g"
+    },
+    {
+      "name": "literal-bearer",
+      "pattern": "/\\bBearer\\s+[A-Za-z0-9_.-]{24,}/g"
+    }
+  ],
+  "candidateCount": 0,
+  "candidates": [],
+  "knownSyntheticContext": "Driver explicitly declares SYNTH_KEY as Buffer.alloc(32,0x48), a non-owner synthetic key. Fake CLI readiness/auth/model records and scratch paths are test metadata, not owner/provider acceptance."
+}

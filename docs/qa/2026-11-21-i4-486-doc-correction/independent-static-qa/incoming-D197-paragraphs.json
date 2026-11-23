@@ -1,0 +1,89 @@
+{
+  "scope": "Six bounded D197 changed recovery paragraphs independently located in actual a608 Git blobs; preserve at final head",
+  "paragraphs": [
+    {
+      "id": "D197-1",
+      "path": "docs/04-node-catalog.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 154,
+      "lastLine": 164,
+      "text": "Commands use `shell: false`. Windows `.cmd` and `.bat` files therefore require an explicitly\nauthored command processor; direct invocation is a proven `SCRIPT_START_FAILED`, not an\nautomatic shell fallback. Resume and Replay keep the pinned command, arguments and\nworking-directory configuration. To change them, start a fresh run from the corrected definition;\nneither Resume nor Replay applies the correction. The UI's **New run** uses a published version.\nTo test an unpublished saved draft, use `POST /loops/{id}/runs` with the editable draft's\n`versionId` and `allowDraft: true`; the run freezes a new snapshot without publication.\nPublishing can arm the new version's cron and webhook triggers and disable the earlier version's\nregistrations ([trigger arming](08-triggers-and-integrations.md#arming-decided-shipped-in-m6)). After an external prerequisite\nrepair, such as restoring a missing executable, ordinary Resume can retry the pinned definition. See\n[Windows batch commands](guide/07-troubleshooting.md#windows-batch-commands) for an example.",
+      "normalizedSha256": "e882ef28a1380c3a42a1f98c5ae43dbc90f4c2db6457f1342efdd3d3746d5b99",
+      "fileSha256": "fffee01d1e68409ec140bfc2f71ff132eec5e6a1baf58e24d88652547f39c830",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 156
+    },
+    {
+      "id": "D197-2",
+      "path": "docs/guide/03-run-and-observe.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 175,
+      "lastLine": 175,
+      "text": "Editing the loop does not change a failed run's pinned config. For a config or graph fix, start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there. To test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run freezes a new snapshot without publication. Publishing can arm the new version's cron and webhook triggers and disable the earlier version's registrations; see [trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6). Resume and Replay retain the original pin. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. An open inspector follows a resumed run live, whichever client resumed it; API snapshots, event pages and MCP show the same attempt.",
+      "normalizedSha256": "8a1f8bbdfa7cf55f795c9cdbcc8dc082a778fbb550c0140511a2e94880dd7c49",
+      "fileSha256": "9b7329496f4e28b427d6389bcbf9b5affd2abccddcf7a9472edc19bea707075b",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 175
+    },
+    {
+      "id": "D197-3",
+      "path": "docs/guide/03-run-and-observe.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 273,
+      "lastLine": 273,
+      "text": "`SCRIPT_START_FAILED` means the runner proved the command did not start. After restoring an external prerequisite, such as a missing executable, Resume can retry the pinned definition. If the command, arguments or working-directory configuration must change, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies that definition change: both retain the failed run's pinned version. See [Windows batch commands](07-troubleshooting.md#windows-batch-commands). `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.",
+      "normalizedSha256": "ca0e644126e02069a320324d15ba74b10bce3e891808fb98fb3739f080b2f24b",
+      "fileSha256": "9b7329496f4e28b427d6389bcbf9b5affd2abccddcf7a9472edc19bea707075b",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 275
+    },
+    {
+      "id": "D197-4",
+      "path": "docs/guide/03-run-and-observe.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 289,
+      "lastLine": 289,
+      "text": "Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Start a fresh run from the corrected definition when the correction changes the pinned definition, using a published version in the UI or an explicit [API draft start](#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.",
+      "normalizedSha256": "19d90c255e89bc78e406be2f0451c89181a19cd7c9e093edd7bef840afa3eb69",
+      "fileSha256": "9b7329496f4e28b427d6389bcbf9b5affd2abccddcf7a9472edc19bea707075b",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 291
+    },
+    {
+      "id": "D197-5",
+      "path": "docs/guide/07-troubleshooting.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 150,
+      "lastLine": 150,
+      "text": "For `SCRIPT_OUTCOME_UNCERTAIN`, the previous script attempt may already have produced its effect before its result was recorded. Recovery leaves it failed. Inspect the external system, then choose **Recover script**: **Resume** runs it again in the same run; **Replay** runs it in a new run from the failed node; **Cancel** leaves the run failed. Either retry may repeat the effect. `SCRIPT_START_FAILED` instead means the runner proved the command did not start. Restore an external prerequisite, such as a missing executable, then explicitly Resume. To change the command, arguments or working-directory configuration, start a fresh run from the corrected definition: use a published version for the UI's **New run**, or test the saved draft [through the API](03-run-and-observe.md#start-through-the-api) with the editable draft's `versionId` and `allowDraft: true`. Neither Resume nor Replay applies the change because both keep the pinned version. See [Windows batch commands](#windows-batch-commands). Nonzero completed exits retain `SCRIPT_EXIT_CODE`. The failure's `script` fields identify the visit, dispatch, state and known exit code.",
+      "normalizedSha256": "8e74d33e4b07211ccc5cc36ea640d4f5fb0505b8dea6d449eefeabba192fa4f2",
+      "fileSha256": "5b17ee9f847ebee12e6687740e69e1f0d6cde5f9565470a1df3953a5ee1bf0cc",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 150
+    },
+    {
+      "id": "D197-6",
+      "path": "docs/guide/07-troubleshooting.md",
+      "commit": "a60843a9050b3a203726db84f6abf1f45b8bc694",
+      "firstLine": 210,
+      "lastLine": 224,
+      "text": "To run a batch file, explicitly choose `C:\\Windows\\System32\\cmd.exe` (use your Windows\ninstallation's actual path), set its arguments to `/d`, `/c` and the intended batch command,\nand choose the working directory deliberately. `/d` disables the command processor's AutoRun\ncommands. The command string after `/c` is interpreted by that shell; keep it authored and\nquote paths and arguments for `cmd.exe`, rather than inserting untrusted text. For example,\nwith a working directory containing `build.cmd`, the arguments are `[\"/d\", \"/c\", \"build.cmd\"]`.\nStart a fresh run from the corrected definition. The UI's **New run** uses a published version,\nso publish the correction before starting it there. To test an unpublished saved draft, use\n`POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`; the run\nfreezes a new snapshot without publication. Publishing can arm the new version's cron and\nwebhook triggers and disable the earlier version's registrations; see\n[trigger arming](../08-triggers-and-integrations.md#arming-decided-shipped-in-m6).\nNeither Resume nor Replay applies a definition change; both retain the old batch-file command.\nIf only an external prerequisite changed, such as\nrestoring a missing executable, Resume can use the existing pinned definition.",
+      "normalizedSha256": "a980392567b4cea40add8be16242b3230770ef78496990bf80b34fa14e8aef18",
+      "fileSha256": "5b17ee9f847ebee12e6687740e69e1f0d6cde5f9565470a1df3953a5ee1bf0cc",
+      "verifiedAgainstPriorD197Candidate": true,
+      "finalHeadPreservation": "PASS_STATIC",
+      "finalHead": "29e165e14fdda138300ba2a34585ddd47268b475",
+      "finalFirstLine": 210
+    }
+  ]
+}

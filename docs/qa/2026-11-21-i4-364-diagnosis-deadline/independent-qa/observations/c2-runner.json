@@ -1,0 +1,3108 @@
+{
+  "driver": "c2-runner",
+  "utc": "2026-11-21T16:43:13.613Z",
+  "node": "v22.23.4",
+  "execPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "TEMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "TMP": "G:\\ggq\\qa-scratch\\i4-364-deadline-independent-01",
+  "passed": 126,
+  "failed": 0,
+  "predicates": [
+    {
+      "caseId": "setup",
+      "name": "seams bound for candidate process.js (fs, child, kill)",
+      "pass": true,
+      "observed": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ],
+      "expected": [
+        "../process/index.js",
+        "node:child_process",
+        "node:fs/promises"
+      ]
+    },
+    {
+      "caseId": "setup",
+      "name": "virtual monotonic clock seam moves performance.now()",
+      "pass": true,
+      "observed": 0.9928000000000452,
+      "expected": 1
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "result: refusal with unknown cause",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "settled promptly at acceptance, before the real 1,000 ms timer",
+      "pass": true,
+      "observed": {
+        "afterRelease": 0.9265000000000327,
+        "afterRefusal": 76.77500000000003
+      },
+      "expected": "< 30 ms after release, < 900 ms after refusal"
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "diagnostic timer cleared, never fired",
+      "pass": true,
+      "observed": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ],
+      "expected": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ]
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "no follow-on working-directory lookup",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R1-virtual-delayed-callback",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "result: late metadata rejected at acceptance (unknown cause)",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "settled right after the block ended (1,150 ms)",
+      "pass": true,
+      "observed": {
+        "afterBlock": 0.20949999999993452,
+        "afterRefusal": 1150.2847
+      },
+      "expected": "< 30 ms after block, >= 1,150 ms after refusal"
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "diagnostic timer cleared before it could fire",
+      "pass": true,
+      "observed": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ],
+      "expected": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ]
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "no follow-on working-directory lookup",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R2-real-event-loop-block",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "settled near 1,000/0.7 ms real, not at the first timer",
+      "pass": true,
+      "observed": 1436.8673999999999,
+      "expected": [
+        1380,
+        1700
+      ]
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "first diagnostic timer fired early and was re-armed",
+      "pass": true,
+      "observed": [
+        {
+          "delay": 1000,
+          "fired": 2676.3404
+        },
+        {
+          "delay": 299.6520300000002,
+          "fired": 2986.7767
+        },
+        {
+          "delay": 82.39897999999994,
+          "fired": 3080.5345
+        },
+        {
+          "delay": 16.77419000000009,
+          "fired": 3096.5446
+        },
+        {
+          "delay": 5.566770000000361,
+          "fired": 3112.6045
+        }
+      ],
+      "expected": ">= 2 timers, first fired > 300 ms before settle"
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "result: unknown cause",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "late delivery leaves result unchanged",
+      "pass": true,
+      "observed": "{\"exitCode\":null,\"stdout\":\"\",\"timedOut\":false,\"aborted\":false,\"overflow\":false,\"spawnCode\":\"ENOENT\"}",
+      "expected": "{\"exitCode\":null,\"stdout\":\"\",\"timedOut\":false,\"aborted\":false,\"overflow\":false,\"spawnCode\":\"ENOENT\"}"
+    },
+    {
+      "caseId": "R3-early-timer-slow-clock",
+      "name": "no follow-on working-directory lookup",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "timely executable-missing retained",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "settled ~500 ms after refusal, >1,000 ms after the call",
+      "pass": true,
+      "observed": {
+        "fromRefusal": 502.5481999999997,
+        "fromStart": 1203.9085999999998
+      },
+      "expected": "495-800 / > 1,100"
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R4-budget-from-refusal",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "settled 395-700 ms after refusal",
+      "pass": true,
+      "observed": 405.0059999999994,
+      "expected": [
+        395,
+        700
+      ]
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5a-executable-missing-400ms",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-missing"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-missing"
+      }
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "settled 845-999 ms after refusal",
+      "pass": true,
+      "observed": 853.7353000000003,
+      "expected": [
+        845,
+        999
+      ]
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5b-wd-missing-850ms",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-not-directory"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-not-directory"
+      }
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "settled 0-100 ms after refusal",
+      "pass": true,
+      "observed": 0.44239999999990687,
+      "expected": [
+        0,
+        100
+      ]
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5c-wd-not-directory",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "settled 0-100 ms after refusal",
+      "pass": true,
+      "observed": 0.6979000000001179,
+      "expected": [
+        0,
+        100
+      ]
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5d-wd-directory-no-cause",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "EACCES",
+        "startRefusal": "working-directory-missing"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "EACCES",
+        "startRefusal": "working-directory-missing"
+      }
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "cwd"
+      ],
+      "expected": [
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "settled 0-100 ms after refusal",
+      "pass": true,
+      "observed": 0.3977999999997337,
+      "expected": [
+        0,
+        100
+      ]
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5e-eacces-wd-missing",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "result",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "UNKNOWN"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "UNKNOWN"
+      }
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "cwd"
+      ],
+      "expected": [
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "settled 0-100 ms after refusal",
+      "pass": true,
+      "observed": 0.24390000000039436,
+      "expected": [
+        0,
+        100
+      ]
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R5f-unknown-code-stat-fault",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R6a-wall-clock-forward-timely",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R6a-wall-clock-forward-timely",
+      "name": "timely cause retained despite +2 h wall clock",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "bounded at ~1,000 ms despite -4 h wall clock",
+      "pass": true,
+      "observed": 1013.0523999999996,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "unknown cause",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R6b-wall-clock-backward-bounded",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "not settled by close/pipe faults/second error (at +500 ms)",
+      "pass": true,
+      "observed": null,
+      "expected": null
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "settled at the budget",
+      "pass": true,
+      "observed": 1010.6193000000003,
+      "expected": [
+        999,
+        1300
+      ]
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "exact refusal result: no outputFailed/stdinFailed/cause",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "secondary events were delivered to the child",
+      "pass": true,
+      "observed": {
+        "close": [
+          -4058
+        ],
+        "later": [
+          "EACCES"
+        ]
+      },
+      "expected": {
+        "close": [
+          -4058
+        ],
+        "later": [
+          "EACCES"
+        ]
+      }
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "late success+rejection: same resolved object, deep-equal",
+      "pass": true,
+      "observed": {
+        "same": true,
+        "value": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        }
+      },
+      "expected": {
+        "same": true,
+        "value": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": false,
+          "overflow": false,
+          "spawnCode": "ENOENT"
+        }
+      }
+    },
+    {
+      "caseId": "R7a-secondary-events-late-success",
+      "name": "no follow-on working-directory lookup after late success",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe"
+      ]
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "unknown cause at the budget",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "late wd rejection leaves result unchanged",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "lookups",
+      "pass": true,
+      "observed": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ],
+      "expected": [
+        "binary",
+        "binary.com",
+        "binary.exe",
+        "cwd"
+      ]
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R7b-late-wd-rejection",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "refusal without cause; a refused start is not a timeout",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "settled at the 15 ms request deadline",
+      "pass": true,
+      "observed": 15.386700000000928,
+      "expected": [
+        14,
+        100
+      ]
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "request timer fired; diagnostic timer cleared",
+      "pass": true,
+      "observed": [
+        {
+          "delay": 15,
+          "fired": true,
+          "cleared": false
+        },
+        {
+          "delay": 1000,
+          "fired": false,
+          "cleared": true
+        }
+      ],
+      "expected": [
+        {
+          "delay": 15,
+          "fired": true,
+          "cleared": false
+        },
+        {
+          "delay": 1000,
+          "fired": false,
+          "cleared": true
+        }
+      ]
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R8a-request-deadline-15ms",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "aborted refusal without cause",
+      "pass": true,
+      "observed": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "expected": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "settled within 50 ms of abort",
+      "pass": true,
+      "observed": 0.35720000000037544,
+      "expected": [
+        0,
+        50
+      ]
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "diagnostic timer cleared",
+      "pass": true,
+      "observed": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ],
+      "expected": [
+        {
+          "fired": false,
+          "cleared": true
+        }
+      ]
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "no runner timer pending after settlement",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "runner abort listener removed",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R8b-abort-200ms",
+      "name": "no kill requested for a refused start",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R8c-pre-aborted",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R8c-pre-aborted",
+      "name": "aborted without spawning",
+      "pass": true,
+      "observed": {
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": true,
+          "overflow": false
+        },
+        "spawns": 0
+      },
+      "expected": {
+        "result": {
+          "exitCode": null,
+          "stdout": "",
+          "timedOut": false,
+          "aborted": true,
+          "overflow": false
+        },
+        "spawns": 0
+      }
+    },
+    {
+      "caseId": "R9a-started-unbounded",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R9a-started-unbounded",
+      "name": "completed normally",
+      "pass": true,
+      "observed": {
+        "exitCode": 0,
+        "stdout": "chunk",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      },
+      "expected": {
+        "exitCode": 0,
+        "stdout": "chunk",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "caseId": "R9a-started-unbounded",
+      "name": "not cut at 1,000 ms; settled at close (~1,500 ms)",
+      "pass": true,
+      "observed": 1510.1602999999996,
+      "expected": [
+        1490,
+        1800
+      ]
+    },
+    {
+      "caseId": "R9a-started-unbounded",
+      "name": "no metadata lookup and no runner timer",
+      "pass": true,
+      "observed": {
+        "stats": [],
+        "timers": 0
+      },
+      "expected": {
+        "stats": [],
+        "timers": 0
+      }
+    },
+    {
+      "caseId": "R9a-started-unbounded",
+      "name": "no kill",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "R9b-started-later-error",
+      "name": "runner settled",
+      "pass": true,
+      "observed": true,
+      "expected": true
+    },
+    {
+      "caseId": "R9b-started-later-error",
+      "name": "later error of a started child is not a refusal",
+      "pass": true,
+      "observed": {
+        "exitCode": 0,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      },
+      "expected": {
+        "exitCode": 0,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "caseId": "R9b-started-later-error",
+      "name": "no metadata lookup",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no controlled stat left held",
+      "pass": true,
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "caseId": "cleanup",
+      "name": "no unhandled rejection",
+      "pass": true,
+      "observed": [],
+      "expected": []
+    }
+  ],
+  "selfCheck": {
+    "performanceNowReplaced": true,
+    "setTimeoutWrapped": true,
+    "dateNowWrapped": true
+  },
+  "results": {
+    "R1-virtual-delayed-callback": {
+      "startMs": 418.3703,
+      "settledMs": 498.1322,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R2-real-event-loop-block": {
+      "startMs": 513.084,
+      "settledMs": 1663.8428,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R3-early-timer-slow-clock": {
+      "startMs": 1664.1003,
+      "settledMs": 3112.6978,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      },
+      "elapsedFromRefusalMs": 1436.8673999999999
+    },
+    "R4-budget-from-refusal": {
+      "startMs": 3237.1444,
+      "settledMs": 4441.053,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    "R5a-executable-missing-400ms": {
+      "startMs": 4456.5816,
+      "settledMs": 4877.3519,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    "R5b-wd-missing-850ms": {
+      "startMs": 4893.9867,
+      "settledMs": 5748.1655,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-missing"
+      }
+    },
+    "R5c-wd-not-directory": {
+      "startMs": 5764.0772,
+      "settledMs": 5764.8793,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "working-directory-not-directory"
+      }
+    },
+    "R5d-wd-directory-no-cause": {
+      "startMs": 5779.3015,
+      "settledMs": 5795.7073,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R5e-eacces-wd-missing": {
+      "startMs": 5795.7667,
+      "settledMs": 5796.9139,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "EACCES",
+        "startRefusal": "working-directory-missing"
+      }
+    },
+    "R5f-unknown-code-stat-fault": {
+      "startMs": 5810.1315,
+      "settledMs": 5810.8585,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "UNKNOWN"
+      }
+    },
+    "R6a-wall-clock-forward-timely": {
+      "startMs": 5825.8313,
+      "settledMs": 6153.0595,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT",
+        "startRefusal": "executable-missing"
+      }
+    },
+    "R6b-wall-clock-backward-bounded": {
+      "startMs": 6168.789,
+      "settledMs": 7198.1001,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R7a-secondary-events-late-success": {
+      "startMs": 7213.5968,
+      "settledMs": 8240.2512,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R7b-late-wd-rejection": {
+      "startMs": 8950.1125,
+      "settledMs": 9958.0357,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R8a-request-deadline-15ms": {
+      "startMs": 10178.2897,
+      "settledMs": 10193.6764,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R8b-abort-200ms": {
+      "startMs": 10209.2973,
+      "settledMs": 10430.4819,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false,
+        "spawnCode": "ENOENT"
+      }
+    },
+    "R8c-pre-aborted": {
+      "startMs": 10445.6534,
+      "settledMs": 10445.6965,
+      "result": {
+        "exitCode": null,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": true,
+        "overflow": false
+      }
+    },
+    "R9a-started-unbounded": {
+      "startMs": 10461.84,
+      "settledMs": 11972.0003,
+      "result": {
+        "exitCode": 0,
+        "stdout": "chunk",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    "R9b-started-later-error": {
+      "startMs": 11987.6546,
+      "settledMs": 12192.2428,
+      "result": {
+        "exitCode": 0,
+        "stdout": "",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    }
+  },
+  "leftoverReleasedAtCleanup": 9,
+  "refusedKeys": [
+    "exitCode",
+    "stdout",
+    "timedOut",
+    "aborted",
+    "overflow",
+    "spawnCode"
+  ],
+  "instrumentation": {
+    "redirects": [
+      {
+        "from": "candidate",
+        "specifier": "node:child_process"
+      },
+      {
+        "from": "candidate",
+        "specifier": "node:fs/promises"
+      },
+      {
+        "from": "candidate",
+        "specifier": "../process/index.js"
+      }
+    ],
+    "statCalls": [
+      {
+        "id": 1,
+        "caseId": "R1-virtual-delayed-callback",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 421.9257,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 497.5299,
+        "delivered": "error:ENOENT",
+        "releasedMs": 497.4492
+      },
+      {
+        "id": 2,
+        "caseId": "R1-virtual-delayed-callback",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 422.0447,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 497.5694,
+        "delivered": "error:ENOENT",
+        "releasedMs": 497.5684
+      },
+      {
+        "id": 3,
+        "caseId": "R1-virtual-delayed-callback",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 422.0762,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 497.5709,
+        "delivered": "error:ENOENT",
+        "releasedMs": 497.5703
+      },
+      {
+        "id": 4,
+        "caseId": "R2-real-event-loop-block",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 513.7476,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 1663.7284,
+        "delivered": "error:ENOENT",
+        "releasedMs": 1663.7263
+      },
+      {
+        "id": 5,
+        "caseId": "R2-real-event-loop-block",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 513.7974,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 1663.7333,
+        "delivered": "error:ENOENT",
+        "releasedMs": 1663.7324
+      },
+      {
+        "id": 6,
+        "caseId": "R2-real-event-loop-block",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 513.8222,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 1663.7353,
+        "delivered": "error:ENOENT",
+        "releasedMs": 1663.7342
+      },
+      {
+        "id": 7,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 1676.0693,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 3128.6531,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3128.6483
+      },
+      {
+        "id": 8,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 1676.1433,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 3128.6573,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3128.6558
+      },
+      {
+        "id": 9,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 1676.1623,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 3128.6589,
+        "delivered": "error:ENOENT",
+        "releasedMs": 3128.6582
+      },
+      {
+        "id": 10,
+        "caseId": "R4-budget-from-refusal",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 3938.7843,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4440.8872,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 11,
+        "caseId": "R4-budget-from-refusal",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 3938.9072,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4440.9177,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 12,
+        "caseId": "R4-budget-from-refusal",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 3938.9229,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4440.9245,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 13,
+        "caseId": "R5a-executable-missing-400ms",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 4472.5615,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4877.1079,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 14,
+        "caseId": "R5a-executable-missing-400ms",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 4472.6749,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4877.1347,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 15,
+        "caseId": "R5a-executable-missing-400ms",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 4472.6886,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4877.1395,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 16,
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 4895.3762,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4896.0878,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 17,
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 4896.1024,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4896.1235,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 18,
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 4896.1727,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 4896.1888,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 19,
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 4896.2347,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5748.0252,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 20,
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 5764.5076,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5764.7271,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 21,
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 5764.7342,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5764.7498,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 22,
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 5764.7644,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5764.7718,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 23,
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 5764.7962,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5764.8491,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 24,
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 5795.16,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5795.3906,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 25,
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 5795.3984,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5795.4155,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 26,
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 5795.4982,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5795.5075,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 27,
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 5795.5386,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5795.6585,
+        "delivered": "stats:directory"
+      },
+      {
+        "id": 28,
+        "caseId": "R5e-eacces-wd-missing",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 5796.6044,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5796.6354,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 29,
+        "caseId": "R5f-unknown-code-stat-fault",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 5810.6808,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 5810.7731,
+        "delivered": "error:EPERM"
+      },
+      {
+        "id": 30,
+        "caseId": "R6a-wall-clock-forward-timely",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 5842.3478,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 6152.9019,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 31,
+        "caseId": "R6a-wall-clock-forward-timely",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 5842.397,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 6152.9258,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 32,
+        "caseId": "R6a-wall-clock-forward-timely",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 5842.4074,
+        "mode": "delay:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 6152.9307,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 33,
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 6185.3559,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4871,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4798
+      },
+      {
+        "id": 34,
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 6185.4348,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4909,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4895
+      },
+      {
+        "id": 35,
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 6185.4508,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4919,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4916
+      },
+      {
+        "id": 36,
+        "caseId": "R7a-secondary-events-late-success",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 7229.7606,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8736.122,
+        "delivered": "stats:non-directory",
+        "releasedMs": 8736.1199
+      },
+      {
+        "id": 37,
+        "caseId": "R7a-secondary-events-late-success",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 7230.0227,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8736.1406,
+        "delivered": "error:ENOENT",
+        "releasedMs": 8736.1392
+      },
+      {
+        "id": 38,
+        "caseId": "R7a-secondary-events-late-success",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 7230.0417,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8736.1432,
+        "delivered": "error:ENOENT",
+        "releasedMs": 8736.1426
+      },
+      {
+        "id": 39,
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 8950.4655,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8950.6845,
+        "delivered": "stats:non-directory"
+      },
+      {
+        "id": 40,
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 8950.6906,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8950.7147,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 41,
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 8950.7324,
+        "mode": "pass:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 8950.7442,
+        "delivered": "error:ENOENT"
+      },
+      {
+        "id": 42,
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "target": "cwd",
+        "issuedMs": 8950.7747,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 9974.238,
+        "delivered": "error:ENOENT",
+        "releasedMs": 9974.2342
+      },
+      {
+        "id": 43,
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 10193.322,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4931,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4925
+      },
+      {
+        "id": 44,
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 10193.4631,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4941,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4937
+      },
+      {
+        "id": 45,
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 10193.4775,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.495,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4946
+      },
+      {
+        "id": 46,
+        "caseId": "R8b-abort-200ms",
+        "phase": "turn",
+        "target": "binary",
+        "issuedMs": 10224.8985,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4959,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4956
+      },
+      {
+        "id": 47,
+        "caseId": "R8b-abort-200ms",
+        "phase": "turn",
+        "target": "binary.com",
+        "issuedMs": 10224.963,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4967,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4963
+      },
+      {
+        "id": 48,
+        "caseId": "R8b-abort-200ms",
+        "phase": "turn",
+        "target": "binary.exe",
+        "issuedMs": 10224.9728,
+        "mode": "hold:override",
+        "native": false,
+        "nativeCompletedMs": null,
+        "nativeOutcome": null,
+        "deliveredMs": 12207.4976,
+        "delivered": "error:ENOENT",
+        "releasedMs": 12207.4973
+      }
+    ],
+    "spawnCalls": [
+      {
+        "id": 1,
+        "caseId": "R1-virtual-delayed-callback",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 419.0328,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 421.3572,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 2,
+        "caseId": "R2-real-event-loop-block",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 513.1181,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 513.5581,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 3,
+        "caseId": "R3-early-timer-slow-clock",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 1664.1383,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 1675.8304,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 4,
+        "caseId": "R4-budget-from-refusal",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 3237.2151,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 3938.5048,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 5,
+        "caseId": "R5a-executable-missing-400ms",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 4456.6367,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 4472.3459,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 6,
+        "caseId": "R5b-wd-missing-850ms",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 4894.0563,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 4894.4302,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 7,
+        "caseId": "R5c-wd-not-directory",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 5764.1338,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 5764.4369,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 8,
+        "caseId": "R5d-wd-directory-no-cause",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 5779.3769,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 5795.0094,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 9,
+        "caseId": "R5e-eacces-wd-missing",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 5795.8129,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "EACCES",
+          "syscallIsSpawn": false,
+          "atMs": 5796.5161,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 10,
+        "caseId": "R5f-unknown-code-stat-fault",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 5810.2177,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "EPERM",
+          "syscallIsSpawn": false,
+          "atMs": 5810.6146,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 11,
+        "caseId": "R6a-wall-clock-forward-timely",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 5825.8614,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 5842.2268,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 12,
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 6168.8301,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 6185.0477,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 13,
+        "caseId": "R7a-secondary-events-late-success",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 7213.6276,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 7229.6319,
+          "pidAtError": false
+        },
+        "laterErrors": [
+          {
+            "code": "EACCES",
+            "syscallIsSpawn": false,
+            "atMs": 7245.3003,
+            "pidAtError": false
+          }
+        ],
+        "exits": [],
+        "closes": [
+          {
+            "code": -4058,
+            "atMs": 7245.1811
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "caseId": "R7b-late-wd-rejection",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 8950.1473,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 8950.4036,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 15,
+        "caseId": "R8a-request-deadline-15ms",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 10178.3287,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 10193.1781,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 16,
+        "caseId": "R8b-abort-200ms",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 10209.3149,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": false,
+        "pid": null,
+        "error": {
+          "code": "ENOENT",
+          "syscallIsSpawn": false,
+          "atMs": 10224.6726,
+          "pidAtError": false
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": []
+      },
+      {
+        "id": 17,
+        "caseId": "R9a-started-unbounded",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 10461.8756,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": true,
+        "pid": 90001,
+        "error": null,
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 11971.9408
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "caseId": "R9b-started-later-error",
+        "kind": "turn",
+        "command": "binary",
+        "cwd": "cwd",
+        "shell": false,
+        "issuedMs": 11987.6842,
+        "mode": "scripted",
+        "fixtureMode": null,
+        "pidAtReturn": true,
+        "pid": 90002,
+        "error": {
+          "code": "EPERM",
+          "syscallIsSpawn": false,
+          "atMs": 12097.4355,
+          "pidAtError": true
+        },
+        "laterErrors": [],
+        "exits": [],
+        "closes": [
+          {
+            "code": 0,
+            "atMs": 12192.1799
+          }
+        ]
+      }
+    ],
+    "killCalls": [],
+    "timers": [
+      {
+        "id": 1,
+        "caseId": "R1-virtual-delayed-callback",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 421.6455,
+        "firedMs": null,
+        "clearedMs": 497.8249
+      },
+      {
+        "id": 2,
+        "caseId": "R2-real-event-loop-block",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 513.6538,
+        "firedMs": null,
+        "clearedMs": 1663.7938
+      },
+      {
+        "id": 3,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 1676.0203,
+        "firedMs": 2676.3404,
+        "clearedMs": null
+      },
+      {
+        "id": 4,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "delay": 299.6520300000002,
+        "createdMs": 2676.5569,
+        "firedMs": 2986.7767,
+        "clearedMs": null
+      },
+      {
+        "id": 5,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "delay": 82.39897999999994,
+        "createdMs": 2986.9087,
+        "firedMs": 3080.5345,
+        "clearedMs": null
+      },
+      {
+        "id": 6,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "delay": 16.77419000000009,
+        "createdMs": 3080.634,
+        "firedMs": 3096.5446,
+        "clearedMs": null
+      },
+      {
+        "id": 7,
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "delay": 5.566770000000361,
+        "createdMs": 3096.747,
+        "firedMs": 3112.6045,
+        "clearedMs": null
+      },
+      {
+        "id": 8,
+        "caseId": "R4-budget-from-refusal",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 3938.7263,
+        "firedMs": null,
+        "clearedMs": 4440.9985
+      },
+      {
+        "id": 9,
+        "caseId": "R5a-executable-missing-400ms",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 4472.418,
+        "firedMs": null,
+        "clearedMs": 4877.2255
+      },
+      {
+        "id": 10,
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 4894.5043,
+        "firedMs": null,
+        "clearedMs": 5748.0859
+      },
+      {
+        "id": 11,
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 5764.4808,
+        "firedMs": null,
+        "clearedMs": 5764.8553
+      },
+      {
+        "id": 12,
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 5795.1006,
+        "firedMs": null,
+        "clearedMs": 5795.6745
+      },
+      {
+        "id": 13,
+        "caseId": "R5e-eacces-wd-missing",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 5796.5946,
+        "firedMs": null,
+        "clearedMs": 5796.6573
+      },
+      {
+        "id": 14,
+        "caseId": "R5f-unknown-code-stat-fault",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 5810.6674,
+        "firedMs": null,
+        "clearedMs": 5810.807
+      },
+      {
+        "id": 15,
+        "caseId": "R6a-wall-clock-forward-timely",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 5842.3231,
+        "firedMs": null,
+        "clearedMs": 6152.9851
+      },
+      {
+        "id": 16,
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 6185.2846,
+        "firedMs": 7197.995,
+        "clearedMs": null
+      },
+      {
+        "id": 17,
+        "caseId": "R7a-secondary-events-late-success",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 7229.7056,
+        "firedMs": 8240.185,
+        "clearedMs": null
+      },
+      {
+        "id": 18,
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 8950.4407,
+        "firedMs": 9957.9639,
+        "clearedMs": null
+      },
+      {
+        "id": 19,
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "delay": 15,
+        "createdMs": 10178.4631,
+        "firedMs": 10193.5392,
+        "clearedMs": null
+      },
+      {
+        "id": 20,
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 10193.2572,
+        "firedMs": null,
+        "clearedMs": 10193.6417
+      },
+      {
+        "id": 21,
+        "caseId": "R8b-abort-200ms",
+        "phase": "turn",
+        "delay": 1000,
+        "createdMs": 10224.8638,
+        "firedMs": null,
+        "clearedMs": 10430.4492
+      }
+    ],
+    "listeners": [
+      {
+        "caseId": "R1-virtual-delayed-callback",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 419.7065,
+        "removedMs": 498.0071,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R2-real-event-loop-block",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 513.2674,
+        "removedMs": 1663.8108,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R3-early-timer-slow-clock",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 1664.4397,
+        "removedMs": 3112.6438,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R4-budget-from-refusal",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 3237.4018,
+        "removedMs": 4441.011,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5a-executable-missing-400ms",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 4456.7797,
+        "removedMs": 4877.2571,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5b-wd-missing-850ms",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 4894.2321,
+        "removedMs": 5748.129,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5c-wd-not-directory",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 5764.2735,
+        "removedMs": 5764.8635,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5d-wd-directory-no-cause",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 5779.5189,
+        "removedMs": 5795.686,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5e-eacces-wd-missing",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 5796.0563,
+        "removedMs": 5796.6636,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R5f-unknown-code-stat-fault",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 5810.3667,
+        "removedMs": 5810.8276,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R6a-wall-clock-forward-timely",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 5825.9672,
+        "removedMs": 6152.999,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R6b-wall-clock-backward-bounded",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 6168.9532,
+        "removedMs": 7198.0665,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R7a-secondary-events-late-success",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 7213.7435,
+        "removedMs": 8240.2166,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R7b-late-wd-rejection",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 8950.2874,
+        "removedMs": 9958.0022,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R8a-request-deadline-15ms",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 10178.5094,
+        "removedMs": 10193.6502,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R8b-abort-200ms",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 10209.4176,
+        "removedMs": 10430.4622,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R9a-started-unbounded",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 10462.1386,
+        "removedMs": 11971.9574,
+        "stillAttached": false
+      },
+      {
+        "caseId": "R9b-started-later-error",
+        "phase": "turn",
+        "owner": "process",
+        "addedMs": 11987.8468,
+        "removedMs": 12192.201,
+        "stillAttached": false
+      }
+    ],
+    "unhandled": [],
+    "heldStillUndelivered": [],
+    "nativeFixturePids": []
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "psVersion": "5.1.26100.9818",
+  "psEdition": "Desktop",
+  "processPolicy": "Restricted",
+  "effectivePolicy": "Restricted",
+  "npmBareResolution": ".ps1",
+  "npmBareCommandType": "ExternalScript",
+  "nativeBareResolution": ".exe",
+  "nativeBareCommandType": "Application",
+  "cases": [
+    {
+      "case": "npm bare login",
+      "success": false,
+      "exception": "System.Management.Automation.PSSecurityException",
+      "errorId": "UnauthorizedAccess",
+      "message": "File $QA_PRIVATE\\npm-shims\\codex.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170."
+    },
+    {
+      "case": "npm explicit cmd login",
+      "success": true,
+      "exit": 0,
+      "output": "INERT CMD login"
+    },
+    {
+      "case": "npm explicit cmd login status",
+      "success": true,
+      "exit": 0,
+      "output": "INERT CMD login status"
+    },
+    {
+      "case": "native bare login",
+      "success": true,
+      "exit": 0,
+      "output": "INERT EXE login"
+    },
+    {
+      "case": "native bare login status",
+      "success": true,
+      "exit": 0,
+      "output": "INERT EXE login status"
+    }
+  ],
+  "inertInvocations": [
+    {
+      "kind": "npm-cmd",
+      "args": [
+        "login"
+      ]
+    },
+    {
+      "kind": "npm-cmd",
+      "args": [
+        "login",
+        "status"
+      ]
+    },
+    {
+      "kind": "native-exe",
+      "command": "login"
+    },
+    {
+      "kind": "native-exe",
+      "command": "login status"
+    }
+  ]
+}

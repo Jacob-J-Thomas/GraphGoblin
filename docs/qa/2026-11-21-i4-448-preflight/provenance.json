@@ -1,0 +1,97 @@
+{
+  "author": "Assigned GPT6.1 Sol/xhigh per original author README; no fabricated provider terminal.",
+  "provenance": [
+    {
+      "packet": "independent/qa-01",
+      "configured": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "actualProviderTerminal": {
+        "isError": true,
+        "terminalReason": "api_error",
+        "stopReason": "stop_sequence",
+        "exit": {
+          "code": 1,
+          "finishedAt": "2026-11-21T09:17:59.897Z"
+        },
+        "modelUsageKeys": [
+          "claude-opus-5-5"
+        ]
+      },
+      "verdict": "NO FINAL VERDICT: original quota/error terminal"
+    },
+    {
+      "packet": "independent/continuation-02",
+      "configured": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "actualProviderTerminal": {
+        "isError": false,
+        "terminalReason": "completed",
+        "stopReason": "end_turn",
+        "exit": {
+          "code": 0,
+          "finishedAt": "2026-11-21T11:08:35.871Z"
+        },
+        "modelUsageKeys": [
+          "claude-opus-5-5"
+        ]
+      },
+      "verdict": "CONDITIONAL PASS: original actual final, docs-only condition then selected/applied by D186"
+    },
+    {
+      "packet": "reviews/review-1",
+      "configured": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "actualProviderTerminal": {
+        "isError": false,
+        "terminalReason": "completed",
+        "stopReason": "end_turn",
+        "exit": {
+          "code": 0,
+          "finishedAt": "2026-11-21T08:44:29.027Z"
+        },
+        "modelUsageKeys": [
+          "claude-opus-5-5"
+        ]
+      },
+      "verdict": "APPROVE at runtime candidate, static evidence only"
+    },
+    {
+      "packet": "reviews/shared-correction-review-2",
+      "configured": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "actualProviderTerminal": {
+        "isError": false,
+        "terminalReason": "completed",
+        "stopReason": "end_turn",
+        "exit": {
+          "code": 0,
+          "finishedAt": "2026-11-21T09:04:07.542Z"
+        },
+        "modelUsageKeys": [
+          "claude-opus-5-5"
+        ]
+      },
+      "verdict": "ACCEPT CORRECTION at 083d7264, shared original A/B report, static only"
+    }
+  ],
+  "qaFinal": {
+    "sha256": "42d6e3e807c0e5dd6a4b65fd844050141c4ec222351b12bb79b5a1acdc7ede56",
+    "verdict": "CONDITIONAL PASS",
+    "noNewExecutions": true
+  },
+  "coordinatorDisposition": {
+    "decision": "decisions/D186.md",
+    "selectedProseAppliedAt": "8ca66df21490e72fd65c63b10471ccc225925f12",
+    "allFourSnippetsByteExactAfterFormatter": true,
+    "notANewQaPass": true
+  },
+  "reviewBudget": "Two original formal reviews consumed; designated fresh independent Astra final audit remains scan3. No reset or extra general review implied."
+}

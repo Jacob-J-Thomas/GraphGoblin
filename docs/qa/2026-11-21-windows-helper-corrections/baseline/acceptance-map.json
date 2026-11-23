@@ -1,0 +1,215 @@
+{
+  "schema": "qa459i-acceptance-map/1",
+  "phase": "BASELINE (held 2164cd11); candidate QA PENDING; not a PASS, review sign-off, owner acceptance or merge permission",
+  "verdict": "BASELINE CHARACTERIZED",
+  "F3": [
+    {
+      "id": "F3-1",
+      "requirement": "A valid in-budget free response authorizes the ordinary fresh gateway start path",
+      "cases": [
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q01: gateway start path reached, unknown-exit",
+        "Q02: gateway start path reached, unknown-exit",
+        "Q03: gateway start path reached, unknown-exit",
+        "Q04: gateway start path reached, unknown-exit"
+      ],
+      "note": "Controls; must remain on the candidate."
+    },
+    {
+      "id": "F3-2",
+      "requirement": "A valid held response refuses with closed held guidance and the lock, without a fresh start",
+      "cases": [
+        "Q05",
+        "Q06"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q05: refused before start, store-held",
+        "Q06: refused before start, store-unverified"
+      ],
+      "note": "Controls; Q06 is the actual producer."
+    },
+    {
+      "id": "F3-3",
+      "requirement": "Legal JSON whitespace, field order, \\u and path escaping and producer output stay valid",
+      "cases": [
+        "Q02",
+        "Q04",
+        "Q05",
+        "Q06"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q02: gateway start path reached, unknown-exit",
+        "Q04: gateway start path reached, unknown-exit",
+        "Q05: refused before start, store-held",
+        "Q06: refused before start, store-unverified"
+      ],
+      "note": "Controls."
+    },
+    {
+      "id": "F3-4",
+      "requirement": "The identity helper's existing padding behavior is preserved",
+      "cases": [
+        "Q03"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q03: gateway start path reached, unknown-exit"
+      ],
+      "note": "Control."
+    },
+    {
+      "id": "F3-5",
+      "requirement": "JavaScript-only syntax cannot authorize a start; initial invalid output is helper-invalid",
+      "cases": [
+        "Q08"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q08: gateway start path reached, unknown-exit"
+      ],
+      "note": "F3 audit example reproduced at the compiled public path."
+    },
+    {
+      "id": "F3-6",
+      "requirement": "Non-JSON whitespace between tokens cannot authorize a start",
+      "cases": [
+        "Q13"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q13: gateway start path reached, unknown-exit"
+      ],
+      "note": "Malformed syntax."
+    },
+    {
+      "id": "F3-7",
+      "requirement": "Duplicate decoded member names are rejected",
+      "cases": [
+        "Q09"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q09: gateway start path reached, unknown-exit"
+      ],
+      "note": "Conflicting state fields reproduce the audit example."
+    },
+    {
+      "id": "F3-8",
+      "requirement": "Outer non-JSON whitespace is rejected (raw decoded response validated before trimming)",
+      "cases": [
+        "Q11",
+        "Q12"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q11: gateway start path reached, unknown-exit",
+        "Q12: gateway start path reached, unknown-exit"
+      ],
+      "note": "Leading U+00A0 and trailing U+000C."
+    },
+    {
+      "id": "F3-9",
+      "requirement": "Unknown fields are rejected",
+      "cases": [
+        "Q14"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q14: refused before start, helper-invalid"
+      ],
+      "note": "Held baseline already refuses through its field count."
+    },
+    {
+      "id": "F3-10",
+      "requirement": "Invalid string escapes are rejected; initial invalid output is helper-invalid",
+      "cases": [
+        "Q15"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q15: refused before start, store-held"
+      ],
+      "note": "Held baseline refuses as store-held (no start); the diagnostic differs from the corrected contract."
+    },
+    {
+      "id": "F3-11",
+      "requirement": "Trailing non-whitespace material is rejected",
+      "cases": [
+        "Q16"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q16: refused before start, helper-invalid"
+      ],
+      "note": "Held baseline already refuses."
+    },
+    {
+      "id": "F3-12",
+      "requirement": "An inconclusive retry after held keeps the held reason, lock and full guidance",
+      "cases": [
+        "Q07"
+      ],
+      "baseline": "BASELINE-CONFORMS",
+      "observed": [
+        "Q07: refused before start, store-held"
+      ],
+      "note": "Control."
+    },
+    {
+      "id": "F3-13",
+      "requirement": "A malformed retry after held cannot authorize a start; held guidance is retained",
+      "cases": [
+        "Q10"
+      ],
+      "baseline": "BASELINE-VIOLATES",
+      "observed": [
+        "Q10: gateway start path reached, unknown-exit"
+      ],
+      "note": "Duplicate-name retry reaches the start path on the held baseline."
+    }
+  ],
+  "crossCutting": [
+    {
+      "id": "X-1",
+      "requirement": "No raw helper output, stderr canary or response canary in LauncherFailure.Message, Program.Present text or LauncherLog.Build record",
+      "executions": 17,
+      "leaks": 0,
+      "baseline": "BASELINE-CONFORMS"
+    },
+    {
+      "id": "X-2",
+      "requirement": "Driver-owned owner record and unrelated store sentinel stay byte-identical; no gateway.log/launcher.log written",
+      "executions": 17,
+      "notPreserved": 0,
+      "baseline": "BASELINE-CONFORMS"
+    },
+    {
+      "id": "X-3",
+      "requirement": "Unrelated same-executable sentinel survives; owned port free after each case; helper roots exit naturally with 0",
+      "executions": 17,
+      "baseline": "BASELINE-CONFORMS"
+    },
+    {
+      "id": "X-4",
+      "requirement": "API lock as an independent boundary",
+      "baseline": "LIMIT",
+      "note": "Not exercised: the fixture gateway main script never opens a store. A reached start path is not store mutation, and none is claimed."
+    }
+  ],
+  "F4": {
+    "status": "SOURCE-ONLY",
+    "note": "No timing seam exists at the held head; no fake API, simulated race or OS reproduction. See REPORT.md F4 section."
+  },
+  "candidate": {
+    "status": "PENDING",
+    "note": "Separately dispatched after an immutable corrected commit; uses driver v2 for F3 plus the product shared deterministic observation/clock seam at 1,999/2,000/2,001 ms and a deadline-crossing poll for F4."
+  }
+}

@@ -372,7 +372,7 @@ export function summarize(records) {
   );
 }
 
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+if (import.meta.main) {
   const output = process.argv.find((a) => a.startsWith('--out='))?.slice(6);
   if (!output)
     throw new Error(

@@ -1,0 +1,35 @@
+import { spawnSync } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+const lane = process.argv[2];
+const runtime = process.argv[3];
+await mkdir(runtime, { recursive: true });
+for (const key of Object.keys(process.env)) if (key.startsWith('GG_') || key === 'JEV_API_KEY') delete process.env[key];
+Object.assign(process.env, { GG_DATA_DIR: path.join(runtime, 'store'), GG_PORT: '0', GG_HOST: '127.0.0.1', GG_REQUIRE_API_KEY: 'true', GG_OLLAMA_ENABLED: 'false', GG_LOG_LEVEL: 'silent', GG_WEB_DIST: path.join(lane, 'apps/web/dist'), GG_GOBLIN_DIST: '' });
+process.env.GG_CODEX_BINARY = path.join(runtime, 'unavailable-qa-codex.exe');
+process.env.GG_CLAUDE_BINARY = path.join(runtime, 'unavailable-qa-claude.exe');
+const main = path.join(lane, 'apps/api/dist/main.js');
+const keyRun = spawnSync(process.execPath, [main, '--create-api-key', 'Independent 481 QA'], { env: process.env, encoding: 'utf8', windowsHide: true });
+if (keyRun.status !== 0) throw new Error(`Disposable API-key bootstrap failed (${keyRun.status}): ${keyRun.stderr}`);
+const token = keyRun.stdout.split(/\r?\n/).map(x => x.trim()).find(x => /^gg_\S+$/.test(x));
+if (!token) throw new Error('Disposable API-key bootstrap returned no token');
+const { serve } = await import(pathToFileURL(path.join(lane, 'apps/api/dist/serve.js')));
+const { app } = await serve();
+const address = app.server.address();
+if (!address || typeof address === 'string') throw new Error('No isolated TCP listener');
+const url = `http://127.0.0.1:${address.port}`;
+await writeFile(path.join(runtime, 'private-session.json'), JSON.stringify({ url, token, pid: process.pid, lane, runtime }, null, 2));
+console.log(JSON.stringify({ event: 'isolated-api-ready', url, pid: process.pid, authenticated: true, node: process.version }));
+process.stdin.resume();
+let closing = false;
+const stop = () => {
+  if (closing) return;
+  closing = true;
+  clearInterval(stopPoll);
+  void app.close().then(() => process.exit(0));
+};
+const stopPoll = setInterval(() => { if (existsSync(path.join(runtime,'stop-request.json'))) stop(); }, 200);
+process.stdin.on('data', stop);

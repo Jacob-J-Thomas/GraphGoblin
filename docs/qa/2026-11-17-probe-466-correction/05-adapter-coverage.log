@@ -1,0 +1,107 @@
+utc=2026-11-18T05:15:14Z test_file_sha256=9d952d1cd6d731e223cc47ac53ec5e40b89db3ddf90f8f4ca983ac1f30b8ec5a
+command=pnpm test:coverage --filter=@graphgoblin/adapter-codex  (TEMP/TMP/TMPDIR=C:\Users\98jak\AppData\Local\Temp\gg466corr-dVoVcU)
+$ turbo run test:coverage --filter=@graphgoblin/adapter-codex
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex
+   • Running test:coverage in 1 package
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/adapter-codex:test:coverage: cache miss, executing 9406444c70ed5052
+@graphgoblin/adapter-codex:test:coverage: $ vitest run --coverage
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+@graphgoblin/adapter-codex:test:coverage:       Coverage enabled with v8
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/harness.test.ts (33 tests) 209ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/failure-evidence.test.ts (384 tests) 307ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/turn-recovery.test.ts (1 test) 602ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ continues the recorded session after a CLI dies following durable turn.started acceptance 599ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/termination.test.ts (2 tests) 1003ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ reports unconfirmed termination within the acknowledgement when a CLI descendant keeps its output open after abort 763ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/submission.test.ts (6 tests) 1475ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex submission markers through the public SDK client seam and fake CLI (6)
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing distinguishes initialization from input acceptance 497ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/decider.test.ts (27 tests) 24ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/events.test.ts (54 tests) 58ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/structured.test.ts (10 tests) 576ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ removes scratch only after harness cancellation settles, rejects=false 352ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/retention.test.ts (1 test) 31ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/effort-names.test.ts (14 tests) 10ms
+@graphgoblin/adapter-codex:test:coverage:  ↓ src/live.test.ts (4 tests | 4 skipped)
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/isolation.test.ts (30 tests) 4715ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex plugin inheritance with standalone extension isolation (19)
+@graphgoblin/adapter-codex:test:coverage:      ✓ inherits plugin configuration while switching off standalone MCP servers and other extensions 459ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ applies a node override after the defaults, before the thread options 461ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ lets a node explicitly disable inherited plugins 376ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ switches off sub-agents and goals unless the node turns one back on 1833ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/probe-directory.test.ts (9 tests) 5031ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex readiness probe directory (4)
+@graphgoblin/adapter-codex:test:coverage:      ✓ runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 884ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ preserves 1 existing collision directories and bounds retries 2309ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex readiness probe case lifecycle (#466) (5)
+@graphgoblin/adapter-codex:test:coverage:      ✓ settles a case abandoned while a fake CLI runs before the case finishes 500ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ reports an ordinary case failure once, after the same settlement 510ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ reports a body failure after its abort once, and a failed case-root removal, after the same settlement 344ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ reports a body failure without an abort once, and a failed case-root removal, after the same settlement 411ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/refusal.test.ts (14 tests) 5570ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ a failure the Codex event stream reports before the CLI exits non-zero (#243) (14)
+@graphgoblin/adapter-codex:test:coverage:      ✓ records the provider refusal of the request, not the exit error that follows it 472ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps an unclassified stream failure instead of the generic exit error 347ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ records the SDK parse failure that follows an earlier stream diagnostic 649ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the invalid-value provider refusal as a refusal with its own text 1367ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ keeps the missing-thread provider refusal as a refusal with its own text 481ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ fails the run with the provider refusal as its non-resumable cause and offers no Resume 393ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/effort.test.ts (17 tests) 6048ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort none through the pinned SDK unchanged 445ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort low through the pinned SDK unchanged 427ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort medium through the pinned SDK unchanged 714ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort high through the pinned SDK unchanged 1302ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ sends GPT-6.1 Terra and its requested effort xhigh through the pinned SDK unchanged 535ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/stderr-evidence.test.ts (17 tests) 6040ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ stderr evidence beside the stream failure (PR #426 audit scan 3) (17)
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds a different refusal alone (control) 492ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a different one 382ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds a missing session alone (control) 736ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a missing session as JSON 1195ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds the repeated refusal, then a missing session as text 484ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ folds an authentication failure after quota (control) 316ms
+@graphgoblin/adapter-codex:test:coverage:  ✓ src/cli.test.ts (28 tests) 9761ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ Codex no-turn executable boundaries (12)
+@graphgoblin/adapter-codex:test:coverage:      ✓ ready reports ready 428ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-model reports cli-incompatible 385ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-effort reports cli-incompatible 398ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ missing-resume-json reports cli-incompatible 1894ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ prerelease reports ready 799ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth reports auth 531ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ quota reports quota 432ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ transport reports transport 437ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ unknown reports unknown 409ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ hang reports unknown 1311ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ probes the actual installed SDK CLI without a model turn 531ms
+@graphgoblin/adapter-codex:test:coverage:    ✓ audited Codex auth evidence (5)
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-network preserves auth evidence through the executable boundary 337ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ quota-network preserves quota evidence through the executable boundary 343ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ stdout-quota-warning preserves quota evidence through the executable boundary 330ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-empty preserves unknown evidence through the executable boundary 315ms
+@graphgoblin/adapter-codex:test:coverage:      ✓ auth-unrecognised preserves unknown evidence through the executable boundary 335ms
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  Test Files  16 passed | 1 skipped (17)
+@graphgoblin/adapter-codex:test:coverage:       Tests  647 passed | 4 skipped (651)
+@graphgoblin/adapter-codex:test:coverage:    Start at  23:15:16
+@graphgoblin/adapter-codex:test:coverage:    Duration  12.64s (tests 53%, import 32%, transform 14%, worker 1%)
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage:  % Coverage report from v8
+@graphgoblin/adapter-codex:test:coverage: 
+@graphgoblin/adapter-codex:test:coverage: =============================== Coverage summary ===============================
+@graphgoblin/adapter-codex:test:coverage: Statements   : 98.3% ( 579/589 )
+@graphgoblin/adapter-codex:test:coverage: Branches     : 95.61% ( 480/502 )
+@graphgoblin/adapter-codex:test:coverage: Functions    : 99.32% ( 148/149 )
+@graphgoblin/adapter-codex:test:coverage: Lines        : 99.42% ( 521/524 )
+@graphgoblin/adapter-codex:test:coverage: ================================================================================
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    14.35s 
+
+exit=0

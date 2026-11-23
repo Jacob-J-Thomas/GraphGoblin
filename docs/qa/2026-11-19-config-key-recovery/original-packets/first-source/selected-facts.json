@@ -1,0 +1,2308 @@
+{
+  "publicInputSha256": {
+    "cases/candidate-matrix.json": "04de034305b87522f8924eb0242e445cc99d9052b20caf35b9b31a917411848c",
+    "cases/compare-matrix-baseline-vs-candidate.json": "f3e6cf1f77082a8139c11de041be61406db3a2c9f81c68ef75451a5202d2b733",
+    "cases/candidate-expectation-check.json": "0982f6d463f1cd989c7cebe81cbde2b1527f336c04a1faaf1744e5f9731e8261",
+    "cases/run01-contract-results.json": "bcb222cbe48d7aab22321c04212de2c8830622219e09a86b0588aa66e8491f70",
+    "cases/run01-adapter-results.json": "be5e716725ef8783d433719e7fb2075bb6bfa8b9c06283c1c13333befce4f1af",
+    "cases/run01-http-results.json": "8bb8a778907f04e2cef034ab6818e2fb9f602d2e350b249e526bd95fb283dd9f",
+    "cases/run02-supplementary-results.json": "e5fb9575593bbdcad26af388f6cd2311d551cf62af840dc84b61288cc197db17",
+    "cases/run01-prior-state-pristine.json": "1dfed2be8b2914104f25cf36b38d5f176727025e95c86a1dd6874450db00fa81",
+    "cases/run01-prior-state-after-use.json": "ea16c756d62179fc1c09f298cddea67d54cb4a767b096af35ec6cf85d9398420",
+    "cases/run00d-old-build-results.json": "ac6ea56e596404a594454f3ff4fdbdb45899e13d6a7a0b63a10c5b8cc70c6604",
+    "cases/run02-recovery-results.json": "5e6b170d450650d6641adfa33800c1ec4c826982bd92d11f254ccecd0f34838a",
+    "cases/run04-recovery-extra-results.json": "fc2e025d90ee8b4668d16b669b0c3ab97fa9b985f0b63ff755fd037e5c56d9aa",
+    "cases/run03-browser-results-FIRST-FAILURE.json": "f5b9140833e75c155ca7eb9ebd3aa90095e9ea867049e716fdd1c29a90d53f2b",
+    "cases/run03b-browser-results.json": "b70795315c52e59d081cb00d11cc6b0bb652419c8eec57ab44d6b056610e67a5",
+    "cases/run01-tier-results.json": "fa8595308e2891bb0a7d59a52954b82cabb01531c551ac426438424ac062325a"
+  },
+  "selection": "Read-only field and representative case projection. All selected original outcomes keep their types and values.",
+  "matrix": {
+    "contractAdapterHttpCounts": [
+      53,
+      49,
+      52
+    ],
+    "unchangedRows": 25,
+    "changedRowIds": [
+      "H03",
+      "I01",
+      "I02",
+      "I03",
+      "I04",
+      "I05",
+      "I06",
+      "I07",
+      "I08",
+      "I09",
+      "I10",
+      "I11",
+      "I12",
+      "I13",
+      "I14",
+      "I15",
+      "R01",
+      "R02",
+      "R03",
+      "R04",
+      "R05",
+      "R06",
+      "R07",
+      "R08",
+      "R09",
+      "R10",
+      "R11",
+      "R12"
+    ],
+    "priorStateIsSeparate": true
+  },
+  "samples": {
+    "contract": [
+      {
+        "id": "V01",
+        "group": "valid",
+        "title": "simple key, boolean",
+        "harness": "codex",
+        "json": "{\"hide_agent_reasoning\": true}",
+        "expected": "accepted",
+        "observed": "accepted",
+        "matchesExpectation": true,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "accepted",
+            "authoredOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "parsedOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          },
+          "inferenceConfig": {
+            "outcome": "accepted",
+            "authoredOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "parsedOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          },
+          "loopDefinition": {
+            "outcome": "accepted",
+            "authoredOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "parsedOwnKeys": [
+              "hide_agent_reasoning"
+            ],
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          }
+        }
+      },
+      {
+        "id": "I08",
+        "group": "invalid",
+        "title": "slash, colon and equals sign",
+        "harness": "codex",
+        "json": "{\"gg_qa/slash\": 1, \"gg_qa:colon\": 2, \"gg_qa=eq\": 3}",
+        "expected": "accepted",
+        "observed": "rejected",
+        "matchesExpectation": false,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "configOverrides",
+                  "gg_qa/slash"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "inferenceConfig": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa/slash"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "loopDefinition": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa/slash"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "R01",
+        "group": "reserved",
+        "title": "top-level own __proto__ key beside a valid key",
+        "harness": "codex",
+        "json": "{\"__proto__\": {\"gg_qa_inert\": true}, \"features.plugins\": false}",
+        "expected": "omitted",
+        "observed": "rejected",
+        "matchesExpectation": false,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "configOverrides",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "inferenceConfig": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "loopDefinition": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "R08",
+        "group": "reserved",
+        "title": "own __proto__ key inside a nested table",
+        "harness": "codex",
+        "json": "{\"gg_qa\": {\"__proto__\": {\"inert\": true}}}",
+        "expected": "accepted",
+        "observed": "rejected",
+        "matchesExpectation": false,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "configOverrides",
+                  "gg_qa",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "inferenceConfig": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "loopDefinition": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa",
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "R12",
+        "group": "reserved",
+        "title": "own __proto__ key in a table inside an array",
+        "harness": "codex",
+        "json": "{\"gg_qa.items\": [{\"__proto__\": {\"inert\": true}}]}",
+        "expected": "accepted",
+        "observed": "rejected",
+        "matchesExpectation": false,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "configOverrides",
+                  "gg_qa.items",
+                  0,
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "inferenceConfig": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa.items",
+                  0,
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "loopDefinition": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa.items",
+                  0,
+                  "__proto__"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "H03",
+        "group": "harness",
+        "title": "Claude node with an invalid key (which refusal wins)",
+        "harness": "claude",
+        "json": "{\"gg_qa.space segment\": \"inert\"}",
+        "expected": "rejected",
+        "observed": "rejected",
+        "matchesExpectation": true,
+        "layersAgree": true,
+        "layers": {
+          "harnessOptions": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "configOverrides",
+                  "gg_qa.space segment"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              }
+            ]
+          },
+          "inferenceConfig": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa.space segment"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              },
+              {
+                "path": [
+                  "harnessOptions",
+                  "configOverrides"
+                ],
+                "code": "custom",
+                "message": "Claude raw configuration overrides are unsupported"
+              }
+            ]
+          },
+          "loopDefinition": {
+            "outcome": "rejected",
+            "issues": [
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides",
+                  "gg_qa.space segment"
+                ],
+                "code": "custom",
+                "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+              },
+              {
+                "path": [
+                  "nodes",
+                  1,
+                  "config",
+                  "harnessOptions",
+                  "configOverrides"
+                ],
+                "code": "custom",
+                "message": "Claude raw configuration overrides are unsupported"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "adapter": [
+      {
+        "id": "V01",
+        "group": "valid",
+        "title": "simple key, boolean",
+        "json": "{\"hide_agent_reasoning\": true}",
+        "expected": {
+          "parsed": "accepted",
+          "raw": "accepted"
+        },
+        "observed": {
+          "parsed": "accepted",
+          "raw": "accepted"
+        },
+        "matchesExpectation": true,
+        "parsed": {
+          "outcome": "accepted",
+          "finalText": "QA429 synthetic",
+          "clientFactoryCalls": 1,
+          "sdkConfig": {
+            "features": {
+              "apps": false,
+              "memories": false,
+              "hooks": false,
+              "multi_agent": false,
+              "goals": false
+            },
+            "notify": [],
+            "hide_agent_reasoning": true
+          },
+          "configArgs": [
+            "features.apps=false",
+            "features.memories=false",
+            "features.hooks=false",
+            "features.multi_agent=false",
+            "features.goals=false",
+            "notify=[]",
+            "hide_agent_reasoning=true",
+            "model_reasoning_effort=\"low\"",
+            "sandbox_workspace_write.network_access=false",
+            "web_search=\"disabled\"",
+            "approval_policy=\"never\""
+          ],
+          "overrideArgs": [
+            "hide_agent_reasoning=true"
+          ]
+        },
+        "raw": {
+          "outcome": "accepted",
+          "finalText": "QA429 synthetic",
+          "clientFactoryCalls": 1,
+          "sdkConfig": {
+            "features": {
+              "apps": false,
+              "memories": false,
+              "hooks": false,
+              "multi_agent": false,
+              "goals": false
+            },
+            "notify": [],
+            "hide_agent_reasoning": true
+          },
+          "configArgs": [
+            "features.apps=false",
+            "features.memories=false",
+            "features.hooks=false",
+            "features.multi_agent=false",
+            "features.goals=false",
+            "notify=[]",
+            "hide_agent_reasoning=true",
+            "model_reasoning_effort=\"low\"",
+            "sandbox_workspace_write.network_access=false",
+            "web_search=\"disabled\"",
+            "approval_policy=\"never\""
+          ],
+          "overrideArgs": [
+            "hide_agent_reasoning=true"
+          ]
+        }
+      },
+      {
+        "id": "I08",
+        "group": "invalid",
+        "title": "slash, colon and equals sign",
+        "json": "{\"gg_qa/slash\": 1, \"gg_qa:colon\": 2, \"gg_qa=eq\": 3}",
+        "expected": {
+          "parsed": "refused",
+          "raw": "refused"
+        },
+        "observed": {
+          "parsed": "n/a",
+          "raw": "refused"
+        },
+        "matchesExpectation": false,
+        "parsed": {
+          "outcome": "n/a",
+          "reason": "the contract rejects this definition"
+        },
+        "raw": {
+          "outcome": "refused",
+          "when": "synchronous",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "submission": "definitely-not-submitted",
+          "retriable": false,
+          "message": "The Codex config override key \"gg_qa/slash\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "clientFactoryCalls": 0
+        }
+      },
+      {
+        "id": "R01",
+        "group": "reserved",
+        "title": "top-level own __proto__ key beside a valid key",
+        "json": "{\"__proto__\": {\"gg_qa_inert\": true}, \"features.plugins\": false}",
+        "expected": {
+          "parsed": "accepted",
+          "raw": "refused"
+        },
+        "observed": {
+          "parsed": "n/a",
+          "raw": "refused"
+        },
+        "matchesExpectation": false,
+        "parsed": {
+          "outcome": "n/a",
+          "reason": "the contract rejects this definition"
+        },
+        "raw": {
+          "outcome": "refused",
+          "when": "synchronous",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "submission": "definitely-not-submitted",
+          "retriable": false,
+          "message": "The Codex config override key \"__proto__\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "clientFactoryCalls": 0
+        }
+      },
+      {
+        "id": "R08",
+        "group": "reserved",
+        "title": "own __proto__ key inside a nested table",
+        "json": "{\"gg_qa\": {\"__proto__\": {\"inert\": true}}}",
+        "expected": {
+          "parsed": "refused",
+          "raw": "refused"
+        },
+        "observed": {
+          "parsed": "n/a",
+          "raw": "refused"
+        },
+        "matchesExpectation": false,
+        "parsed": {
+          "outcome": "n/a",
+          "reason": "the contract rejects this definition"
+        },
+        "raw": {
+          "outcome": "refused",
+          "when": "synchronous",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "submission": "definitely-not-submitted",
+          "retriable": false,
+          "message": "The Codex config override key \"gg_qa.__proto__\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "clientFactoryCalls": 0
+        }
+      },
+      {
+        "id": "R12",
+        "group": "reserved",
+        "title": "own __proto__ key in a table inside an array",
+        "json": "{\"gg_qa.items\": [{\"__proto__\": {\"inert\": true}}]}",
+        "expected": {
+          "parsed": "refused",
+          "raw": "refused"
+        },
+        "observed": {
+          "parsed": "n/a",
+          "raw": "refused"
+        },
+        "matchesExpectation": false,
+        "parsed": {
+          "outcome": "n/a",
+          "reason": "the contract rejects this definition"
+        },
+        "raw": {
+          "outcome": "refused",
+          "when": "synchronous",
+          "code": "HARNESS_INVALID_CONFIGURATION",
+          "submission": "definitely-not-submitted",
+          "retriable": false,
+          "message": "The Codex config override key \"gg_qa.items.0.__proto__\" cannot be passed through --config, so the turn did not start: every key segment must be letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "clientFactoryCalls": 0
+        }
+      }
+    ],
+    "http": [
+      {
+        "id": "V01",
+        "group": "valid",
+        "title": "simple key, boolean",
+        "harness": "codex",
+        "json": "{\"hide_agent_reasoning\": true}",
+        "create": {
+          "status": 201,
+          "loopId": "01M7RTJ1KZDCDHKWA7J0BS7Y9H",
+          "issues": []
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTJ1MSGQP4GYF0STKW8AQE"
+        },
+        "draftSave": {
+          "status": 200,
+          "issues": [],
+          "draftVersion": 1,
+          "draftStatus": "draft"
+        },
+        "validate": {
+          "status": 200,
+          "publishable": true,
+          "issues": []
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "case draft"
+        },
+        "publishedCase": true,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": {
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          },
+          "exportVsAuthored": {
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          },
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 201,
+          "loopId": "01M7RTJ3157NFVP40M35WWSKNJ",
+          "issues": [],
+          "draftVsAuthored": {
+            "identical": true,
+            "dropped": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        "observed": {
+          "transport": "parsed",
+          "http": "publishable"
+        },
+        "expected": {
+          "transport": "parsed",
+          "http": "publishable"
+        },
+        "matchesExpectation": true
+      },
+      {
+        "id": "I08",
+        "group": "invalid",
+        "title": "slash, colon and equals sign",
+        "harness": "codex",
+        "json": "{\"gg_qa/slash\": 1, \"gg_qa:colon\": 2, \"gg_qa=eq\": 3}",
+        "create": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTJVDNBPDW6FF07696YW1A"
+        },
+        "draftSave": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "validate": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "control draft (the case was not saved)"
+        },
+        "publishedCase": false,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": "case not saved",
+          "exportVsAuthored": "case not saved",
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "observed": {
+          "transport": "parsed",
+          "http": "schema-rejected"
+        },
+        "expected": {
+          "transport": "parsed",
+          "http": "publishable"
+        },
+        "matchesExpectation": false
+      },
+      {
+        "id": "R01",
+        "group": "reserved",
+        "title": "top-level own __proto__ key beside a valid key",
+        "harness": "codex",
+        "json": "{\"__proto__\": {\"gg_qa_inert\": true}, \"features.plugins\": false}",
+        "create": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTK052HXN7NHFC2Y8BF26C"
+        },
+        "draftSave": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "validate": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "control draft (the case was not saved)"
+        },
+        "publishedCase": false,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": "case not saved",
+          "exportVsAuthored": "case not saved",
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "observed": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "expected": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "matchesExpectation": true
+      },
+      {
+        "id": "R08",
+        "group": "reserved",
+        "title": "own __proto__ key inside a nested table",
+        "harness": "codex",
+        "json": "{\"gg_qa\": {\"__proto__\": {\"inert\": true}}}",
+        "create": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTK4A0MHQJHZR955WJYBCG"
+        },
+        "draftSave": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "validate": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "control draft (the case was not saved)"
+        },
+        "publishedCase": false,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": "case not saved",
+          "exportVsAuthored": "case not saved",
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "observed": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "expected": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "matchesExpectation": true
+      },
+      {
+        "id": "R12",
+        "group": "reserved",
+        "title": "own __proto__ key in a table inside an array",
+        "harness": "codex",
+        "json": "{\"gg_qa.items\": [{\"__proto__\": {\"inert\": true}}]}",
+        "create": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTK6YHXCFNXX7SWVZX7Q9A"
+        },
+        "draftSave": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "validate": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "control draft (the case was not saved)"
+        },
+        "publishedCase": false,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": "case not saved",
+          "exportVsAuthored": "case not saved",
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 400,
+          "code": "MALFORMED_BODY",
+          "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+        },
+        "observed": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "expected": {
+          "transport": "refused",
+          "http": "transport-refused"
+        },
+        "matchesExpectation": true
+      },
+      {
+        "id": "H03",
+        "group": "harness",
+        "title": "Claude node with an invalid key (which refusal wins)",
+        "harness": "claude",
+        "json": "{\"gg_qa.space segment\": \"inert\"}",
+        "create": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.space segment",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            },
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides",
+              "message": "Claude raw configuration overrides are unsupported"
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "control": {
+          "status": 201,
+          "loopId": "01M7RTKBKVYNN77882H7VFKXS7"
+        },
+        "draftSave": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.space segment",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            },
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides",
+              "message": "Claude raw configuration overrides are unsupported"
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "validate": {
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.space segment",
+              "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            },
+            {
+              "path": "/definition/nodes/1/config/harnessOptions/configOverrides",
+              "message": "Claude raw configuration overrides are unsupported"
+            }
+          ],
+          "detail": "the request did not match the schema"
+        },
+        "publish": {
+          "status": 200,
+          "version": 1,
+          "versionStatus": "published",
+          "issues": [],
+          "subject": "control draft (the case was not saved)"
+        },
+        "publishedCase": false,
+        "readback": {
+          "detailStatus": 200,
+          "hasDraft": false,
+          "currentVersion": 1,
+          "versions": [
+            {
+              "version": 1,
+              "status": "published"
+            }
+          ],
+          "currentVsAuthored": "case not saved",
+          "exportVsAuthored": "case not saved",
+          "exportStatus": 200,
+          "neighbours": {
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "import": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "observed": {
+          "transport": "parsed",
+          "http": "schema-rejected"
+        },
+        "expected": {
+          "transport": "parsed",
+          "http": "schema-rejected"
+        },
+        "matchesExpectation": true
+      }
+    ]
+  },
+  "supplementaryVerdicts": {
+    "X01": true,
+    "X02": true,
+    "X03": true,
+    "X04": true,
+    "X05": true,
+    "X06": true,
+    "X07": true,
+    "X20": true,
+    "X21": true,
+    "X22": true,
+    "X23": true
+  },
+  "supplementaryFacts": {
+    "X02": {
+      "create": "201",
+      "storedHarness": "codex",
+      "publish": "200"
+    },
+    "X03": {
+      "create": "400 VALIDATION_FAILED",
+      "paths": [
+        "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~tilde"
+      ]
+    },
+    "X04": {
+      "nested": [
+        "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/a b"
+      ],
+      "dotted": [
+        "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.a b"
+      ],
+      "distinguishable": true
+    },
+    "X05": {
+      "save": "400 VALIDATION_FAILED",
+      "savePaths": [
+        "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.space segment"
+      ],
+      "draftTokenUnchanged": true,
+      "draftBytesUnchanged": true
+    },
+    "X07": {
+      "import": "400 LOOP_IMPORT_ERROR",
+      "detail": "document is neither a loop export nor a loop definition",
+      "errors": {
+        "errors": [
+          "nodes.1.config.harnessOptions.configOverrides.gg_qa.space segment: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+        ]
+      }
+    },
+    "X22": {
+      "nested": [
+        {
+          "code": "CODEX_CONFIG_KEY_INVALID",
+          "nodeId": "work",
+          "path": "config.harnessOptions.configOverrides.gg_qa.a b",
+          "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+        }
+      ],
+      "dotted": [
+        {
+          "code": "CODEX_CONFIG_KEY_INVALID",
+          "nodeId": "work",
+          "path": "config.harnessOptions.configOverrides.gg_qa.a b",
+          "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+        }
+      ],
+      "distinguishable": false
+    }
+  },
+  "refusalTiers": {
+    "S01": {
+      "create": {
+        "summary": "201",
+        "issues": [
+          {
+            "code": "PORT_UNCONNECTED",
+            "severity": "error",
+            "nodeId": "work",
+            "message": "port \"out\" of node \"work\" is not connected"
+          },
+          {
+            "code": "TRIGGER_NO_EXIT_PATH",
+            "severity": "error",
+            "nodeId": "start",
+            "message": "trigger \"start\" cannot reach any exit node"
+          },
+          {
+            "code": "NODE_UNREACHABLE",
+            "severity": "error",
+            "nodeId": "done",
+            "message": "node \"done\" is not reachable from any trigger"
+          }
+        ]
+      },
+      "draftSave": {
+        "summary": "200",
+        "issues": [
+          {
+            "code": "PORT_UNCONNECTED",
+            "severity": "error",
+            "nodeId": "work",
+            "message": "port \"out\" of node \"work\" is not connected"
+          },
+          {
+            "code": "TRIGGER_NO_EXIT_PATH",
+            "severity": "error",
+            "nodeId": "start",
+            "message": "trigger \"start\" cannot reach any exit node"
+          },
+          {
+            "code": "NODE_UNREACHABLE",
+            "severity": "error",
+            "nodeId": "done",
+            "message": "node \"done\" is not reachable from any trigger"
+          }
+        ]
+      },
+      "validate": {
+        "summary": "200",
+        "publishable": false,
+        "issues": [
+          {
+            "code": "PORT_UNCONNECTED",
+            "severity": "error",
+            "nodeId": "work",
+            "message": "port \"out\" of node \"work\" is not connected"
+          },
+          {
+            "code": "TRIGGER_NO_EXIT_PATH",
+            "severity": "error",
+            "nodeId": "start",
+            "message": "trigger \"start\" cannot reach any exit node"
+          },
+          {
+            "code": "NODE_UNREACHABLE",
+            "severity": "error",
+            "nodeId": "done",
+            "message": "node \"done\" is not reachable from any trigger"
+          }
+        ]
+      },
+      "publish": {
+        "summary": "422 LOOP_INVALID",
+        "errors": [
+          {
+            "code": "PORT_UNCONNECTED",
+            "severity": "error",
+            "nodeId": "work",
+            "message": "port \"out\" of node \"work\" is not connected"
+          },
+          {
+            "code": "TRIGGER_NO_EXIT_PATH",
+            "severity": "error",
+            "nodeId": "start",
+            "message": "trigger \"start\" cannot reach any exit node"
+          },
+          {
+            "code": "NODE_UNREACHABLE",
+            "severity": "error",
+            "nodeId": "done",
+            "message": "node \"done\" is not reachable from any trigger"
+          }
+        ]
+      },
+      "expected": {
+        "create": 201,
+        "draftSave": 200,
+        "publishable": false,
+        "publish": "422 LOOP_INVALID"
+      },
+      "matchesExpectation": true
+    },
+    "S02": {
+      "create": {
+        "summary": "400 EVALUATION_INVALID_CONFIGURATION",
+        "issues": [
+          {
+            "code": "MODEL_NOT_IN_CATALOG",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.model",
+            "message": "The selected model is not in the catalog"
+          }
+        ]
+      },
+      "draftSave": {
+        "summary": "400 EVALUATION_INVALID_CONFIGURATION",
+        "issues": [
+          {
+            "code": "MODEL_NOT_IN_CATALOG",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.model",
+            "message": "The selected model is not in the catalog"
+          }
+        ]
+      },
+      "validate": {
+        "summary": "200",
+        "publishable": false,
+        "issues": [
+          {
+            "code": "MODEL_NOT_IN_CATALOG",
+            "severity": "error",
+            "nodeId": "work",
+            "path": "config.model",
+            "message": "The selected model is not in the catalog"
+          }
+        ]
+      },
+      "publish": "not reached (draft not saved)",
+      "expected": {
+        "create": "400 EVALUATION_INVALID_CONFIGURATION",
+        "draftSave": "400 EVALUATION_INVALID_CONFIGURATION",
+        "publishable": false
+      },
+      "matchesExpectation": true
+    }
+  },
+  "priorStoreRefusal": {
+    "pristine": {
+      "rowReadbacks": [
+        {
+          "id": "01M7RRFWNBFZANDYTWQEJ8W6YD",
+          "loopName": "Gateway chat",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRFXG6ARTZNM8QGKCTWK4F",
+          "loopName": "qa429-prior-published-space",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRFZ4DAVP29B5WTVH4S6D6",
+          "loopName": "qa429-prior-draft-space",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG070YHN6W74TGD7EWM5Q",
+          "loopName": "qa429-prior-draft-space",
+          "version": 2,
+          "statusBefore": "draft",
+          "statusAfter": "draft",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG07K090SJS5JB39SM7TS",
+          "loopName": "qa429-prior-published-empty",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG17HA9SAB9K10V1DV0YB",
+          "loopName": "qa429-prior-control",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG2C1RZQTDNBMXD8V5R4F",
+          "loopName": "qa429-prior-control",
+          "version": 2,
+          "statusBefore": "draft",
+          "statusAfter": "draft",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        }
+      ],
+      "counts": {
+        "loops": 5,
+        "loop_versions": 7,
+        "runs": 0,
+        "secrets": 0,
+        "api_keys": 1
+      },
+      "newRows": [],
+      "mintAccepted": false,
+      "startup": {
+        "ok": false,
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+      },
+      "targetedGuards": {
+        "draft-row": {
+          "targetRowId": "01M7RRG070YHN6W74TGD7EWM5Q",
+          "targetVersion": 2,
+          "status": "draft",
+          "directUpdateChanges": 1,
+          "startup": {
+            "ok": false,
+            "exit": {
+              "code": 1,
+              "signal": null
+            },
+            "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+          },
+          "outputNamesRow": false
+        },
+        "published-row": {
+          "targetRowId": "01M7RRFXG6ARTZNM8QGKCTWK4F",
+          "targetVersion": 1,
+          "status": "published",
+          "directUpdateChanges": 1,
+          "startup": {
+            "ok": false,
+            "exit": {
+              "code": 1,
+              "signal": null
+            },
+            "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+          },
+          "outputNamesRow": true
+        },
+        "snapshot-row": {
+          "status": "snapshot",
+          "skipped": "no row with this status in the source store"
+        }
+      }
+    },
+    "after-use": {
+      "rowReadbacks": [
+        {
+          "id": "01M7RRFWNBFZANDYTWQEJ8W6YD",
+          "loopName": "Gateway chat",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRFXG6ARTZNM8QGKCTWK4F",
+          "loopName": "qa429-prior-published-space",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRFZ4DAVP29B5WTVH4S6D6",
+          "loopName": "qa429-prior-draft-space",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG070YHN6W74TGD7EWM5Q",
+          "loopName": "qa429-prior-draft-space",
+          "version": 2,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRHYNQ7JVJMWPG46CECZ30",
+          "loopName": "qa429-prior-draft-space",
+          "version": 2,
+          "statusBefore": "snapshot",
+          "statusAfter": "snapshot",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG07K090SJS5JB39SM7TS",
+          "loopName": "qa429-prior-published-empty",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG17HA9SAB9K10V1DV0YB",
+          "loopName": "qa429-prior-control",
+          "version": 1,
+          "statusBefore": "published",
+          "statusAfter": "published",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        },
+        {
+          "id": "01M7RRG2C1RZQTDNBMXD8V5R4F",
+          "loopName": "qa429-prior-control",
+          "version": 2,
+          "statusBefore": "draft",
+          "statusAfter": "draft",
+          "definitionUnchanged": true,
+          "configOverridesUnchanged": true
+        }
+      ],
+      "counts": {
+        "loops": 5,
+        "loop_versions": 8,
+        "runs": 3,
+        "secrets": 0,
+        "api_keys": 2
+      },
+      "newRows": [],
+      "mintAccepted": false,
+      "startup": {
+        "ok": false,
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+      },
+      "targetedGuards": {
+        "draft-row": {
+          "status": "draft",
+          "skipped": "no row with this status in the source store"
+        },
+        "published-row": {
+          "targetRowId": "01M7RRFXG6ARTZNM8QGKCTWK4F",
+          "targetVersion": 1,
+          "status": "published",
+          "directUpdateChanges": 1,
+          "startup": {
+            "ok": false,
+            "exit": {
+              "code": 1,
+              "signal": null
+            },
+            "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+          },
+          "outputNamesRow": true
+        },
+        "snapshot-row": {
+          "targetRowId": "01M7RRHYNQ7JVJMWPG46CECZ30",
+          "targetVersion": 2,
+          "status": "snapshot",
+          "directUpdateRefused": "LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes",
+          "bypassUpdateChanges": 1,
+          "triggerRestoredVerbatim": true,
+          "startup": {
+            "ok": false,
+            "exit": {
+              "code": 1,
+              "signal": null
+            },
+            "output": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+          },
+          "outputNamesRow": false
+        }
+      }
+    }
+  },
+  "recovery": {
+    "oldBuildPublicOperationsBeforeHandEdit": {
+      "name": "qa429-prior-omitted-harness",
+      "loopId": "01M7RTAGS1ABMWS9PB5MT7WQXB",
+      "create": 201,
+      "publish": 200,
+      "draftSave": 200,
+      "draftIssues": 0
+    },
+    "handEdit": {
+      "rowId": "01M7RTAH9XE9RBV0BZE8G8RD2S",
+      "changes": 1,
+      "harnessAfter": "(omitted)",
+      "equalsJsRemovalByteForByte": true
+    },
+    "allSourceFixturesUnchanged": true,
+    "startupRefusals": {
+      "pristine": {
+        "startup": {
+          "ok": false,
+          "exitCode": 1,
+          "signal": null,
+          "classification": "refused (exit 1)",
+          "refusal": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+        },
+        "unchangedByAttempt": true,
+        "mintAccepted": false
+      },
+      "afterUse": {
+        "startup": {
+          "ok": false,
+          "exitCode": 1,
+          "signal": null,
+          "classification": "refused (exit 1)",
+          "refusal": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+        },
+        "unchangedByAttempt": true,
+        "mintAccepted": false
+      },
+      "D1": {
+        "startup": {
+          "ok": false,
+          "exitCode": 1,
+          "signal": null,
+          "classification": "refused (exit 1)",
+          "refusal": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+        },
+        "unchangedByAttempt": true,
+        "mintAccepted": false
+      },
+      "D2": {
+        "startup": {
+          "ok": false,
+          "exitCode": 1,
+          "signal": null,
+          "classification": "refused (exit 1)",
+          "refusal": "The format-4 store is damaged: stored loop version 01M7RRFXG6ARTZNM8QGKCTWK4F is not a valid definition"
+        },
+        "unchangedByAttempt": true,
+        "mintAccepted": false
+      }
+    },
+    "ordinaryCorrectedDraftPublishesOnSameVersion": {
+      "status": 200,
+      "version": {
+        "id": "01M7RRG070YHN6W74TGD7EWM5Q",
+        "version": 2,
+        "status": "published"
+      }
+    },
+    "lockedSnapshotUpdate": {
+      "id": "01M7RRHYNQ7JVJMWPG46CECZ30",
+      "touched": [
+        [
+          "nodes",
+          "work",
+          "configOverrides",
+          "gg_qa.space segment"
+        ]
+      ],
+      "error": "LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes",
+      "storedEqualsReplacement": false,
+      "beforeSha256": "358ec71127f98a85823e09ab8908ac3d9b7e5be9f7f36a9d698d1d17d5258703",
+      "afterSha256": "358ec71127f98a85823e09ab8908ac3d9b7e5be9f7f36a9d698d1d17d5258703"
+    },
+    "snapshotStartupRefused": {
+      "ok": false,
+      "exitCode": 1,
+      "signal": null,
+      "classification": "refused (exit 1)",
+      "refusal": "The format-4 store is damaged: stored loop version 01M7RRHYNQ7JVJMWPG46CECZ30 is not a valid definition"
+    },
+    "oldBuildDeleteControl": {
+      "result": {
+        "status": 204
+      },
+      "survivingRowsByteIdentical": true
+    },
+    "omittedHarnessAfterKeyCorrection": {
+      "startup": {
+        "ok": true
+      },
+      "get": {
+        "status": 500,
+        "code": "RESPONSE_INVALID",
+        "current": null,
+        "draft": null
+      },
+      "publish": {
+        "status": 500,
+        "code": "INTERNAL_ERROR",
+        "detail": "something went wrong on the server"
+      },
+      "readback": {
+        "id": "01M7RTAH9XE9RBV0BZE8G8RD2S",
+        "loop": "qa429-prior-omitted-harness",
+        "version": 2,
+        "status": "draft->draft",
+        "byteIdentical": true
+      },
+      "storedHarness": "(omitted)"
+    },
+    "quotedKey": {
+      "nodeSqlite": {
+        "version": "3.53.4",
+        "rows": [
+          {
+            "id": "01M7RTAG5R8MB7GNM3K2B74S1C",
+            "status": "published",
+            "key_path": "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\"",
+            "changes": 1,
+            "memberRemoved": true,
+            "equalsJsRemovalByteForByte": true,
+            "jsTouched": [
+              [
+                "nodes",
+                "work",
+                "configOverrides",
+                "gg_qa.\"quoted\""
+              ]
+            ],
+            "beforeSha256": "b9a7e353e4bb0fa3ad5332507d3979ae914da43ff84c2c6177fb5c7f840a6256",
+            "afterSha256": "eb772854f39222f57797384880397e03a64a8ae2a180e4613bc14d43edb1f4a3"
+          },
+          {
+            "id": "01M7RTAGQX1DTR495QBQE11TYE",
+            "status": "draft",
+            "key_path": "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\"",
+            "changes": 1,
+            "memberRemoved": true,
+            "equalsJsRemovalByteForByte": true,
+            "jsTouched": [
+              [
+                "nodes",
+                "work",
+                "configOverrides",
+                "gg_qa.\"quoted\""
+              ]
+            ],
+            "beforeSha256": "2e49eb1f29ca52ecab16887ecdd5e84fe4d2a7cc098401bb47450f9f2c9ab8b6",
+            "afterSha256": "ca87bab69a691ed12e66e6cae8d5c1155cdeb4d8931229de39e59dd6821fb44c"
+          }
+        ]
+      },
+      "productLibsql": {
+        "sqliteVersion": "3.45.1",
+        "driverVersion": "0.18.0",
+        "rows": [
+          {
+            "id": "01M7RTAG5R8MB7GNM3K2B74S1C",
+            "status": "published",
+            "key_path": "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\"",
+            "changes": 1,
+            "memberRemoved": false
+          },
+          {
+            "id": "01M7RTAGQX1DTR495QBQE11TYE",
+            "status": "draft",
+            "key_path": "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\"",
+            "changes": 1,
+            "memberRemoved": false
+          }
+        ],
+        "remainingAfterRemove": 2
+      },
+      "structuredCorrection": {
+        "rename": {
+          "gg_qa.space segment": "gg_qa.space_segment",
+          "gg_qa..empty": "gg_qa.empty",
+          "gg_qa.\"quoted\"": "gg_qa.quoted"
+        },
+        "rows": [
+          {
+            "id": "01M7RRFXG6ARTZNM8QGKCTWK4F",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.space_segment": "inert"
+            }
+          },
+          {
+            "id": "01M7RRG070YHN6W74TGD7EWM5Q",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.space_segment": "inert"
+            }
+          },
+          {
+            "id": "01M7RRG07K090SJS5JB39SM7TS",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.empty": "inert"
+            }
+          },
+          {
+            "id": "01M7RTAG5R8MB7GNM3K2B74S1C",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.quoted": "inert"
+            }
+          },
+          {
+            "id": "01M7RTAGQX1DTR495QBQE11TYE",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.quoted": "inert",
+              "features.multi_agent": false
+            }
+          },
+          {
+            "id": "01M7RTAH9XE9RBV0BZE8G8RD2S",
+            "changes": 1,
+            "storedEqualsReplacement": true,
+            "onlyKeyTextChanged": true,
+            "overridesAfter": {
+              "features.plugins": false,
+              "gg_qa.space_segment": "inert"
+            }
+          }
+        ],
+        "remainingAfterReplace": 0,
+        "session": {
+          "startup": true,
+          "q1Draft": {
+            "features.plugins": false,
+            "gg_qa.quoted": "inert",
+            "features.multi_agent": false
+          },
+          "publishQ1": {
+            "status": 200,
+            "version": 2,
+            "id": "01M7RTAGQX1DTR495QBQE11TYE"
+          },
+          "stop": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      }
+    },
+    "importErrorBodies": {
+      "exportDocument": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-import-error",
+          "title": "loop import error",
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition",
+          "errors": {
+            "errors": [
+              "loop.nodes.1.config.harnessOptions.configOverrides.gg_qa.space segment: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            ]
+          }
+        }
+      },
+      "bareDefinition": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-import-error",
+          "title": "loop import error",
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition",
+          "errors": {
+            "errors": [
+              "nodes.1.config.harnessOptions.configOverrides.gg_qa.space segment: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+            ]
+          }
+        }
+      },
+      "stop": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "exportReplay": {
+      "afteruse-C1-draft.json": {
+        "exportSha256": "fc038beea74d6d82160f052e568c025e0360b0a047fb292f2272cb2d096ee20b",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "afteruse-C1-published.json": {
+        "exportSha256": "1ba573f2dea95add874d1094aad0dfb53c460447e32ace3ac62a174a2f9641ff",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "afteruse-P1-published.json": {
+        "exportSha256": "13c9871e799a7099cd8c1301403e954932e1105999fae3cf6706a5b09259c0af",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "afteruse-P2-published.json": {
+        "exportSha256": "6ff191ddbcf21221032b8649b2cf2f85efad8a0e5fd1e3e9e193fd1b4ff3c921",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "afteruse-P3-published.json": {
+        "exportSha256": "e9b62de18d89f944932323cc048563ecb0617ae03861d02a0897c565e22c34b7",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-C1-draft.json": {
+        "exportSha256": "00b16c963becda957c8f901fce4e09a897c0e79efcc58dfda85aa4eaeaebf3cd",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-C1-published.json": {
+        "exportSha256": "7e35df46654b61d5a57576d988f9f92f2586d9beb032bf3a7d27139c7bb0e935",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-H1-draft.json": {
+        "exportSha256": "2aa0fee7b2f430c9f92277f8cfa5e929ccc6b2f8a33bc23137923b0e3ffea6c3",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-H1-published.json": {
+        "exportSha256": "f46262733416b1b08019dbe2182529d4313a99a96f0821c0bb94e58a2909fb18",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-P1-published.json": {
+        "exportSha256": "d832522e37e7d50efce972d6f64741dcb0a54c2066bc401794cbf61cee0a705d",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-P2-draft.json": {
+        "exportSha256": "c83a3b6817d7bde2979038c727032aacaa3c5039f703a1d07d7232166b0db859",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-P2-published.json": {
+        "exportSha256": "2c6eeb9eff76ee34d8bc5c586e4c04c9cef3290fd99cf14c824f7685c37e5ac1",
+        "uncorrected": {
+          "status": 201
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-P3-published.json": {
+        "exportSha256": "092ed8ba2c2122ec2014cfb19f8658cdcb72e7dfa539db5ad2449fa42ca4b9d1",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-Q1-draft.json": {
+        "exportSha256": "157a2ee0b634031bd325415447b0d6b60cab3455e4311e1071b63c2e03e9320f",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      },
+      "pristine-Q1-published.json": {
+        "exportSha256": "0910a6e2d549f6fd029a99a11d1f74caf217ee03482d6418032a14d525b6be95",
+        "uncorrected": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "detail": "document is neither a loop export nor a loop definition"
+        },
+        "corrected": {
+          "status": 201
+        },
+        "importedEqualsCorrectedExport": true,
+        "publish": {
+          "status": 200
+        }
+      }
+    }
+  },
+  "browser": {
+    "firstFixtureRun": {
+      "passed": 1,
+      "failed": 8,
+      "firstOpenError": "locator.click: Timeout 30000ms exceeded."
+    },
+    "correctedFixtureRun": {
+      "passed": 9,
+      "editorSteps": [
+        {
+          "step": "open the disposable loop editor and the inference node",
+          "key1": "features.plugins",
+          "advanced": "Advanced\n2 set",
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "server": {
+            "draftId": "01M7RTXA64DEKDCJBGDPNHFGG7",
+            "overrides": {
+              "features.plugins": false
+            },
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "screenshot": "01-initial.png",
+          "ok": true
+        },
+        {
+          "step": "valid change: add entry features.multi_agent = false",
+          "ok": true,
+          "server": {
+            "draftId": "01M7RTXA64DEKDCJBGDPNHFGG7",
+            "overrides": {
+              "features.plugins": false,
+              "features.multi_agent": false
+            },
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "alerts": [],
+          "advanced": "Advanced\n2 set",
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "screenshot": "02-valid-entry.png"
+        },
+        {
+          "step": "invalid authored key \"gg_qa.space segment\": feedback, server draft unchanged",
+          "ok": true,
+          "alerts": [
+            "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+          ],
+          "keyKeptAsTyped": true,
+          "valueAriaInvalid": "true",
+          "advanced": "Advanced\n2 set\n1 error",
+          "serverBefore": {
+            "features.plugins": false,
+            "features.multi_agent": false
+          },
+          "serverAfter": {
+            "features.plugins": false,
+            "features.multi_agent": false
+          },
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "screenshot": "03-invalid-key.png"
+        },
+        {
+          "step": "invalid authored key \"gg_qa..empty\": feedback, server draft unchanged",
+          "ok": true,
+          "alerts": [
+            "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+          ],
+          "keyKeptAsTyped": true,
+          "valueAriaInvalid": "true",
+          "advanced": "Advanced\n2 set\n1 error",
+          "serverBefore": {
+            "features.plugins": false,
+            "features.multi_agent": false
+          },
+          "serverAfter": {
+            "features.plugins": false,
+            "features.multi_agent": false
+          },
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "screenshot": "04-invalid-key.png"
+        },
+        {
+          "step": "correction: gg_qa.space_segment clears the error and saves",
+          "ok": true,
+          "alerts": [],
+          "advanced": "Advanced\n2 set",
+          "server": {
+            "draftId": "01M7RTXA64DEKDCJBGDPNHFGG7",
+            "overrides": {
+              "features.plugins": false,
+              "gg_qa.space_segment": false
+            },
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "screenshot": "05-corrected.png"
+        },
+        {
+          "step": "JSON mode: pasted invalid key is held with its path; Apply disabled; cancelled",
+          "ok": true,
+          "messageVisible": true,
+          "applyDisabled": true,
+          "serverAfter": {
+            "features.plugins": false,
+            "gg_qa.space_segment": false
+          },
+          "key2After": "gg_qa.space_segment",
+          "screenshot": "06-json-refusal.png"
+        },
+        {
+          "step": "close the node and publish the complete graph",
+          "ok": true,
+          "publishedMessage": true,
+          "current": {
+            "version": 1,
+            "status": "published",
+            "overrides": {
+              "features.plugins": false,
+              "gg_qa.space_segment": false
+            },
+            "timeoutSeconds": 120,
+            "sandbox": "read-only",
+            "approval": "never"
+          },
+          "draftBeforePublish": {
+            "features.plugins": false,
+            "gg_qa.space_segment": false
+          },
+          "screenshot": "07-published.png"
+        },
+        {
+          "step": "reload: the published entries and the neighbour persist",
+          "key1": "features.plugins",
+          "key2": "gg_qa.space_segment",
+          "alerts": [],
+          "neighbour": {
+            "timeoutValue": "120",
+            "timeoutEnabled": true,
+            "timeoutEditable": true,
+            "timeoutInvalid": null,
+            "sandboxChecked": "read-only"
+          },
+          "screenshot": "08-reloaded.png",
+          "ok": true
+        }
+      ]
+    }
+  },
+  "webWindowsAuthor": {
+    "10a-web-full-suite-coverage-under-concurrent-load.txt": {
+      "sourceSha256": "90247eb78b217904dc68bf18a65cc62cf0b2ac9636b4dab60ab6c13f7b9e1a35",
+      "lines": [
+        "AssertionError: expected [ { method: 'PUT', …(5) }, …(1) ] to have a length of 1 but got 2",
+        "Test Files  1 failed | 221 passed (222)",
+        "Tests  1 failed | 2915 passed (2916)"
+      ]
+    },
+    "10b-web-full-suite-coverage-final.txt": {
+      "sourceSha256": "2c4d84d8c4ef286ed58fab0bdf025b589eb869b2c5cbf3fb5e9ed146ddc1f708",
+      "lines": [
+        "AssertionError: expected [ { method: 'PUT', …(5) }, …(1) ] to have a length of 1 but got 2",
+        "Error: Test timed out in 20000ms.",
+        "Test Files  2 failed | 222 passed (224)",
+        "Tests  2 failed | 2919 passed (2921)"
+      ]
+    },
+    "14-rename-activation-isolated-reruns.txt": {
+      "sourceSha256": "c7d497fd033c614a5e7b088df23ea70bac42424a1391b0e072146aee336f66f2",
+      "lines": [
+        "run 1 exit=0:       Tests  8 passed (8)",
+        "run 2 exit=0:       Tests  8 passed (8)",
+        "run 3 exit=0:       Tests  8 passed (8)"
+      ]
+    },
+    "15-final-file-hashes.txt": {
+      "sourceSha256": "90dee60cfb36d066645c8559626990ac5be039743d91512658138ac91321a798",
+      "lines": [
+        "6c4e81b1156e4985514cf98f23a3bde13facd456bea9226fd7f92736be32fdd2 *src/forms/introspect.ts",
+        "277ae9641d7c1e3e10cdbc79365f881d9a39bf74cf0f7514c556b54e02b7b080 *src/forms/introspect.test.ts",
+        "63a8d3e8c92e5ebc9d56cdc40e66b58c09371163747ca9f75942155ff80198aa *src/forms/json-sections.test.tsx"
+      ]
+    }
+  }
+}

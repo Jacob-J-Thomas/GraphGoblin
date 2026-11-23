@@ -383,6 +383,18 @@ a timeout returns finished:false with pending delivery snapshots even if status 
 
 `apps/mcp` (`@graphgoblin/mcp`) is a thin client over the REST API through `@graphgoblin/api-client`, built on `@modelcontextprotocol/sdk` 1.31. It identifies itself with `client: 'mcp'`, so runs it starts record the `manual.mcp` invocation source.
 
+`describe_loop` and `start_run` resolve an exact loop ID first. Only `LOOP_NOT_FOUND`
+falls back to name lookup among the authenticated owner's visible loops. Both the
+requested name and stored display name use the shared `@graphgoblin/domain` comparison
+from ADR-0073: ECMAScript trim, collapse each whitespace run to one space, then
+locale-independent lowercase, with no Unicode normalization or full case folding.
+SQLite name admission, current-store verification and web refusal guidance use the
+same pure rule; display names remain verbatim. Multiple equivalent matches from an
+inconsistent upstream return `AMBIGUOUS_LOOP_NAME` and require an ID. No match returns
+`LOOP_NOT_FOUND` with `list_loops` guidance; authentication, scope and other API failures
+remain their original errors. Both Codex and Claude plugins use this resolver.
+The optional `list_loops.query` remains a case-insensitive substring filter.
+
 - **Configuration**: `GG_API_URL` or `--api-url` (default `http://127.0.0.1:4747`); `GG_API_KEY` or `--api-key`, sent as a bearer key and optional in local trusted mode.
 - **Transports**: stdio by default (the `graphgoblin-mcp` binary, `node apps/mcp/dist/main.js`); Streamable HTTP with `--http [--port <n>] [--host <addr>]` (or `GG_MCP_PORT`, `GG_MCP_HOST`; default `127.0.0.1:4748`) at `POST /mcp`. HTTP is stateless: each POST gets its own server and transport, `GET` and `DELETE` answer 405, and when bound to a loopback address a request whose `Host` is not a loopback name is refused with 403.
 
@@ -391,7 +403,7 @@ Tools (each with a Zod input schema; descriptions tell the agent when to call it
 | Tool                                    | Input                                                                                             | Behaviour                                                                                                                                                                                                                                  |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `list_loops`                            | `query?`                                                                                          | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                                                    |
-| `describe_loop`                         | `loopId` (id or exact name)                                                                       | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds                                     |
+| `describe_loop`                         | `loopId` (id or equivalent name)                                                                  | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds                                     |
 | `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`                                               | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                                                          |
 | `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)                                                 | Returns `{ finished: true, run }` after terminal execution and durable finalization, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
 | `get_run`                               | `runId`                                                                                           | Run snapshot                                                                                                                                                                                                                               |
@@ -482,6 +494,14 @@ Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at
 ## Error responses (Decided)
 
 Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path. Request errors Fastify raises itself use stable codes too: `MALFORMED_BODY` (invalid or empty JSON, 400), `BODY_TOO_LARGE` (over the 8 MB limit, 413), `UNSUPPORTED_MEDIA_TYPE` (415); other framework errors are `BAD_REQUEST`, so no `FST_ERR_*` code reaches a client.
+
+Request schema `VALIDATION_FAILED` errors encode each original issue-path segment as RFC 6901:
+`~` becomes `~0` and `/` becomes `~1`. A literal member `review/~key` is therefore one segment,
+`review~1~0key`; an array index remains its own segment. Paths come from the structured schema
+issue, never by splitting or decoding a provider's unescaped path string. Unknown fields use the
+same encoding for both their containing path and each reported member. Existing ordinary field
+paths, messages, error codes and the root-path convention `/` are unchanged. This request-body
+convention does not change the separate dotted import, editor or publication issue formats.
 
 ### Model catalog (Decided, ADR-0018)
 

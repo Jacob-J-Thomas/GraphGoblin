@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 295086,
+  "stop_reason": "end_turn",
+  "session_id": "54c01e72-e274-4327-93c6-cfad0cf11de2",
+  "total_cost_usd": 2.3449629999999995,
+  "usage": {
+    "input_tokens": 70,
+    "cache_creation_input_tokens": 142258,
+    "cache_read_input_tokens": 2805795,
+    "output_tokens": 32273,
+    "output_tokens_details": {
+      "thinking_tokens": 17954
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 142258,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2816,
+        "cache_read_input_tokens": 140648,
+        "cache_creation_input_tokens": 4322,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 4322
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 70,
+      "outputTokens": 32273,
+      "cacheReadInputTokens": 2805795,
+      "cacheCreationInputTokens": 142258,
+      "webSearchRequests": 0,
+      "costUSD": 2.3449629999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 17954,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 142258,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 73,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# #442 backend review, formal scan 1: APPROVE\n\n**Verdict: APPROVE** for backend `5b0d806c` against parent `02351e2f`, covering the seven frozen files only. I found no blocking introduced defects. This is not approval of the unfinished UI, the integrated PR, merge, CI, the final audit, #439 or owner acceptance.\n\n## Limits of this review\n- **Read-only.** I used Read, Glob and Grep only. I ran no commands, builds, tests, typecheck, lint or coverage, made no edits, and touched no GitHub, index or provider.\n- **No hash or Git check.** I did not compute any SHA-256 or confirm HEAD, tree or parent. I read the seven files in the checkout and they match `backend.diff` line for line. I took the freeze and binding hashes, the author logs and the independent QA report (stated SHA `c0d91dd…`) as given.\n- **`apps/web` not reviewed.** Its uncommitted edits are outside scope.\n- **Reviewer identity.** I am running as model `claude-opus-5-5` in the Claude Agent SDK. I cannot independently confirm the \"xhigh\" effort tier.\n\n## What I checked and why it holds\n- **Notice text.** The constant in `packages/domain/src/readiness.ts:4-5` matches the D175 wording character for character. It is exported through `packages/domain/src/index.ts:31` and contains no paths or executable output.\n- **Shown only when Codex is Ready.** The row is added only when the Codex check succeeds (`apps/api/src/preflight.ts:238-241`). The Codex adapter only reports success together with `state:'ready'` (`adapter-codex/src/cli.ts:235`).\n- **Placement.** The row is pushed straight after `harness.codex`, inside the same try block, with nothing awaited in between, so it always sits next to the Codex row. A thrown check goes to the catch branch and gets no row.\n- **Separate from readiness.** The row has no `state` field (test at `preflight.test.ts:207-212` checks the exact four fields), so it can't be mistaken for harness readiness.\n- **No extra work.** It adds no subprocess, inventory, config, app-server or provider call. The tests confirm one Codex check, each data source read once, and no session started or resumed (`preflight.test.ts:190-218`). Over HTTP the probe count stays at 2 then 4 (`:698-742`). Independent QA saw only the existing four no-turn CLI commands.\n- **Exit status and counts.** `report.ok` (`preflight.ts:451`) and the exit code (`:703`) are unchanged. The warning count goes up by exactly one; tests pin \"0 failed, 1 warning(s)\" (`:501`) and \"2 warning(s)\" (`:440`).\n- **Failures get no notice.** Each of the six failure states has a test showing no row and an unchanged failure (`:220-239`). The same holds for the CLI sign-in failure with exit 1 (`:512-515`), the HTTP auth failure (`:718-738`), and a Claude-only or empty harness setup (`:241-249`).\n- **`/harness/preflight` unchanged.** Its responses are checked for exact equality (`:705-707`, `:725-727`).\n- **No contract change.** The check `id` is a plain string in both the schema and `openapi.json`. The route summary is unchanged, so no regenerated docs are needed. No stored format, migration or reset change.\n- **Nothing else breaks on the new row.**\n  - The install scripts only look at the exit code (`install.sh:68,96`, `install.ps1:89-90,119`).\n  - The perf readiness script uses absent executables and doesn't parse the output (`measure.mjs:354-387`).\n  - The web, MCP and plugin apps don't call `/system/preflight`.\n  - Other API tests look checks up by id or use partial matching (`preflight-ollama.test.ts:121-127,155-159`, `model-readiness.test.ts:333-337`, `readiness-evidence.test.ts:116-121`). The only exact list is updated (`preflight.test.ts:177-186`).\n- **The commands in the notice are real.** Discovery shows both list commands exist in CLI 0.160.0. In the missing-asset case `plugin list` shows the plugin installed and enabled while `mcp list` is `[]`, and an unknown plugin ID is simply left out (discovery `REPORT.md:38-43,69-74,191-204`). So \"neither proves every enabled plugin loaded\" is accurate. The docs make no claim that the CLI as a whole can't diagnose plugins.\n- **The pre-change control is meaningful.** `original-no-warning-control.log` shows the positive test failing with `undefined` on the old code. The negative tests pass before and after by design; they guard against the row being shown too widely.\n- **Scope.** No plugin repair, policy change or #448 catalog change is in the diff.\n\n## Introduced findings (non-blocking, optional)\n1. **Install guide is slightly out of date** (`docs/guide/01-install-and-first-run.md:261,267`). It lists the checks and defines WARN as \"works, or is set up on first start\". The new `Codex plugins` warning never clears and fits neither description. `docs/11:157` and `preflight.ts:41` were updated; this guide wasn't. It isn't blocking because the guide already left out other warnings (e.g. Jev with no key), and the row explains itself. Suggested fix: mention the row and link to guide 07.\n2. **Guide 02 points at #442** (`docs/guide/02-build-a-loop.md:86`). \"Diagnostics are tracked in #442\" is still true while the issue is open. Once it closes, linking `07-troubleshooting.md#codex-plugin-tools-are-missing` would be clearer.\n3. **\"Effective configuration\" overstates what the CLI shows** (`docs/guide/07-troubleshooting.md:284-286`). Running `codex mcp list --json` directly shows the CLI's own settings for that folder. A GraphGoblin turn disables standalone MCP servers by name unless a node turns them back on (`docs/06:508`, guide 02:88), and applies node overrides. \"Neither proves\" and \"verify in the worker\" keep the text from being false. An optional clause would make it precise. The guide also doesn't say how to find the SDK's bundled CLI.\n4. **Small test gaps, correct by reading the code.** There is no test for:\n   - a Codex check that throws (catch branch at `preflight.ts:242-246`);\n   - an Ollama-only setup where Codex is Ready (the row appears, matching the docs);\n   - row order with several harnesses.\n\n## Conditions to carry forward (not backend defects)\n- **Docs already describe UI that doesn't exist yet at `5b0d806`.** `CHANGELOG.md:7-9`, `docs/06:510`, `docs/11:175-176` and guide 07 lines 277-282 say the Settings Codex card shows the notice and that **Retry preflight** exists. These are only true once the integrated UI lands. The UI reviewer should check it renders this exact constant, on Ready Codex only, without changing Ready, Authenticated, icon or severity. If the UI is dropped or its wording changes, those lines must be amended.\n- **A healthy install now always shows one warning.** \"0 failed, 1 warning(s)\" is now the healthy result. D175 chose this and the CHANGELOG states it; it's worth flagging at owner QA.\n\n## Pre-existing (separate, optional)\n- `preflight.test.ts:505-511` uses `state:'unknown'` together with `authenticated:false`. That contradicts the contract comment at `contracts/src/harness.ts:36`, which says `authenticated` is absent when login couldn't be checked. It's test-only and not introduced here.\n\n## Still open\nIntegrated UI review and browser QA, full coverage (nobody has claimed it), current-head and current-target CI, the final Astra audit, and #439 and owner acceptance.",
+  "ttft_ms": 1425,
+  "type": "result",
+  "duration_ms": 365768,
+  "uuid": "3ef7af35-8c86-4c95-90dd-54b45bfd8218",
+  "ttft_stream_ms": 1045,
+  "time_to_request_ms": 468,
+  "first_content_frame_ms": 1045,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 70,
+      "outputTokens": 32273,
+      "cacheReadInputTokens": 2805795,
+      "cacheCreationInputTokens": 142258,
+      "webSearchRequests": 0,
+      "costUSD": 2.3449629999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 17954,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 142258,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

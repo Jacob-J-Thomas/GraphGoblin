@@ -1,0 +1,31 @@
+# #486 public/API/child implementation-test handoff
+
+The nine T-owned files are stable in G:/ggq/gg-i4-486-authored-errors/GraphGoblin at source base 02351e2fb932b3be44e7cc3fb3943a61d568226c. Exact final file hashes are in source-after.json; tests.patch contains only those files. A core-final-source-v2 manifest SHA-256 is c73614749b0be72320b7dcd52d899b66df282f45e9713b358aae81a2e5d2b975. core-binding-check.json verifies all 28 A files unchanged. Original snapshots and every test/check attempt are retained.
+
+## Results and source scope
+
+- Final owned engine group: 4 files, 122/122 PASS (engine-03.log).
+- All five API files have passing evidence: 550 distinct cases across the full api-01 provider/storage matrix passes, api-02 subloop 7/7 and prompt boundaries 22/22 passes, and api-provenance-03 13/13 PASS. The two untouched-after-format provider/storage suites contribute 508 cases. This is a union of passing cases, not a claim of a final all-five-files one-shot run.
+- Targeted nine-file ESLint, final provenance ESLint, nine-file Prettier check and owned diff check PASS.
+- API noEmit TypeScript PASS. Engine noEmit TypeScript fails only at other-owned handlers/flow.test.ts:1117 (TS2322 spread union lacks input exposeTo); no T-owned diagnostics. Coordinator received the exact error for L. No shared build/coverage was run; root owns combined gates.
+- No production/shared helper/doc/schema/dependency/Git index/commit/provider/owner-state changes. No subagents. Author task, not independent QA. Root supplied the successful build gate before API runs.
+
+## Boundary evidence
+
+| Scope | Public behavior and controls |
+| --- | --- |
+| B07-B10 | Real RunManager input message/artifact predicate failure at item 2; input vars in own-key order with map ordinal 2; injected message 2; trigger payload failure. Exact boundary/cause/correction/node/false; zero child admissions/completions and no harness/script calls. One successful project evaluates selectors, ordered vars, injected content and payload into a real child. All/none/last/count built-ins retain ordinary results. |
+| B11-B13 | Real successful child followed by custom evaluator, patch-shape, patch-region, output-var and per-item message/artifact selector failures. Exact parent-authored failure without child wrapper keys; one succeeded child, one completion immediately before run.failed, one wake; refused Resume leaves event bytes stable. Existing successful custom patch and result/no-result semantics remain. |
+| A1/A2 | Runtime malformed/unsafe-regex $eval strings get neutral evaluation-rejected copy; newly typed JSONata public failure and logger records contain no private expression/argument markers. Safe node-failed logs remain. External admission/message-ID TemplateError/ExpressionError callbacks stay INTERNAL_ERROR/true, without authored boundary. Input/output JSON conversion callback fixtures are explicitly synthetic non-JSON seam tests. |
+| Child completion/retry | Both child-creation and awaited-children now refuse deterministic authored mapping Resume. Separate unexpected mapping clock callback failures remain resumable and recover successfully. Same real succeeded child and terminal-seq identity, one wake/completion, adjacent first completion/failure, no child Resume, no second admission. Existing legitimately failing-child retry/recovery and legacy history controls remain. |
+| B18/B19 | New inline/child parity for repair-prompt and output-transform failure after real scripted results; REST/row/event parity for both Codex/Claude with successful siblings, exact source-owned after-result copy, false, no repair intent and prior real turn identity. No-session/no-accepted-marker output case retains actual turn without invented session/retry. Higher provider/cleanup/recording winners in existing API evidence and SDK matrices receive no authored phase/sentence. |
+| Actual child links | API depth 1 and 2 traverse actual failed children to leaf inference evidence; parent owns its subloop node and child wrapper only, with no copied inference/phase. Existing cancellation/provider/legacy publication tests remain unchanged. |
+| B17 | Synthetic canonical rerender fault through a published system-chat loop and real HTTP request remains fixed INTERNAL_ERROR/true on respond, row/event/REST parity, zero turn/start, no raw diagnostic marker. Renderer fault injection is labeled synthetic. |
+| B25 | Published real signal filter request returns HTTP 400 with existing EXPRESSION_ERROR author marker. Same parked wait/status, byte-identical events, zero signal.received/run.woken/run.failed and zero harness calls. |
+| B26 file receipts | Local bad/empty workspace templates yield safe return.failed.error on succeeded run, no resolve/write/node/run failure. External write marker remains raw and bounded to 4000. Success-receipt before/after-commit exceptions preserve failed/delivered receipts. Restart over the same fake stores never writes again and retains event bytes. |
+
+## Attempts and limits
+
+engine-01 corrected fixture-only expectations (Liquid column 6, safe logger records allowed, nonempty mutation list). engine-02 encountered one unchanged stale-wake waitFor timeout while overlapping the API group; normal final group passed without changing timing or assertions. api-01 and api-focused-01 recorded new setup failures; parse-invalid Liquid was correctly rejected at publication, so API cases use a parse-valid missing-argument append filter that fails at runtime. Explicit Claude read-only/never policy and signal name were corrected. api-02 added one canonical request setup correction from payload to input; provenance rerun passed. No production discrepancy was hidden or weakened.
+
+The engine uses in-memory fake ports; API uses the real SQLite implementation in memory and Fastify injection with scripted harnesses. Fake-store restart is not disk SQLite reopen. File-return tests use the fake workspace. This evidence does not establish native subprocess/loopback HTTP effects, authenticated built-server/MCP/browser acceptance, paid-provider behavior, package coverage, combined gates, independent review/QA, owner acceptance, merge or deployment. Those remain coordinator gates. Root retains index/publication authority. T releases its implementation slot after this handoff.

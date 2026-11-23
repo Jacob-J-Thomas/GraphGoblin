@@ -1,0 +1,628 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/adversarial.test.ts (47 tests | 1 failed) 2864ms
+   × #486 file return bad-template remains a failed receipt on a successful run 92ms
+ ❯ src/awaited-children.test.ts (49 tests | 17 failed) 5049ms
+   ❯ #486 authored subloop boundaries through RunManager (20)
+     × subloop.input.messages.where reports the winning local cause and preserves admission/completion 65ms
+     × subloop.input.artifacts.where reports the winning local cause and preserves admission/completion 20ms
+     × subloop.input.vars reports the winning local cause and preserves admission/completion 36ms
+     × subloop.input.inject.content reports the winning local cause and preserves admission/completion 29ms
+     × subloop.input.trigger.payload reports the winning local cause and preserves admission/completion 31ms
+     × subloop.output.custom.patch reports the winning local cause and preserves admission/completion 62ms
+     × subloop.output.custom.patch reports the winning local cause and preserves admission/completion 92ms
+     × subloop.output.custom.patch reports the winning local cause and preserves admission/completion 79ms
+     × subloop.output.vars reports the winning local cause and preserves admission/completion 64ms
+     × subloop.output.messages.where reports the winning local cause and preserves admission/completion 94ms
+     × subloop.output.artifacts.where reports the winning local cause and preserves admission/completion 76ms
+     × subloop.input.vars reports the winning local cause and preserves admission/completion 32ms
+     × subloop.input.vars reports the winning local cause and preserves admission/completion 15ms
+     × built-in message selection all and artifact selection preserve their ordinary values 3ms
+     × built-in message selection none and artifact selection preserve their ordinary values 1ms
+     × built-in message selection last and artifact selection preserve their ordinary values 1ms
+     × built-in message selection 1 and artifact selection preserve their ordinary values 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > #486 file return bad-template remains a failed receipt on a successful run
+AssertionError: expected [ { …(6) } ] to match object [ { channel: { kind: 'file' }, …(1) } ]
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  [
+    {
+      "channel": {
+        "kind": "file",
+      },
+-     "error": "Working directory template failed. The template could not be parsed at line 1, column 1. Check its Liquid syntax.",
++     "error": "Working directory template failed. The template could not be parsed at line 1, column 6. Check its Liquid syntax.",
+    },
+  ]
+
+ ❯ src/adversarial.test.ts:46:80
+     44|     expect(resolve).not.toHaveBeenCalled();
+     45|     expect(write).not.toHaveBeenCalled();
+     46|     expect(e.events(run.id).filter((event) => event.type === 'return.f…
+       |                                                                                ^
+     47|       { channel: { kind: 'file' }, error: kind === 'empty'
+     48|         ? 'Working directory template failed. The template rendered to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.messages.where reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.messages.where",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "itemIndex": 1,
++         },
++         "message": "Subloop input message selector, item 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.artifacts.where reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.artifacts.where",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "itemIndex": 1,
++         },
++         "message": "Subloop input artifact selector, item 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.vars reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.vars",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "mapIndex": 1,
++         },
++         "message": "Subloop input variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.inject.content reports the winning local cause and preserves admission/completion
+AssertionError: expected { code: 'TEMPLATE_ERROR', …(4) } to deeply equal { code: 'TEMPLATE_ERROR', …(4) }
+
+- Expected
++ Received
+
+@@ -2,13 +2,13 @@
+    "code": "TEMPLATE_ERROR",
+    "details": {
+      "boundary": "subloop.input.inject.content",
+      "cause": {
+        "code": "TEMPLATE_ERROR",
+-       "message": "The template could not be parsed at line 1, column 1. Check its Liquid syntax.",
++       "message": "The template could not be parsed at line 1, column 6. Check its Liquid syntax.",
+      },
+      "messageIndex": 1,
+    },
+-   "message": "Subloop injected message 2 failed. The template could not be parsed at line 1, column 1. Check its Liquid syntax.",
++   "message": "Subloop injected message 2 failed. The template could not be parsed at line 1, column 6. Check its Liquid syntax.",
+    "nodeId": "sub",
+    "resumable": false,
+  }
+
+ ❯ src/awaited-children.test.ts:48:30
+     46|       const code = scenario.template ? 'TEMPLATE_ERROR' : 'EXPRESSION_…
+     47|       const cause = scenario.template ? 'The template could not be par…
+     48|       expect(parent.failure).toEqual({ code, nodeId: 'sub', resumable:…
+       |                              ^
+     49|         message: `${scenario.label} failed. ${cause}`,
+     50|         details: { boundary: scenario.boundary, ...scenario.details, c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.trigger.payload reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.trigger.payload",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++         },
++         "message": "Subloop trigger payload expression failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.custom.patch reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.custom.patch",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++         },
++         "message": "Subloop output patch expression failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.custom.patch reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.custom.patch",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The result is not a JSON patch. Return an array of valid patch operations.",
++           },
++         },
++         "message": "Subloop output patch expression failed. The result is not a JSON patch. Return an array of valid patch operations.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.custom.patch reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.custom.patch",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The patch writes outside the mutable regions. Change the patch target.",
++           },
++         },
++         "message": "Subloop output patch expression failed. The patch writes outside the mutable regions. Change the patch target.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.vars reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.vars",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "mapIndex": 1,
++         },
++         "message": "Subloop output variable mapping 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.messages.where reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.messages.where",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "itemIndex": 1,
++         },
++         "message": "Subloop output message selector, item 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.output.artifacts.where reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.output.artifacts.where",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "itemIndex": 1,
++         },
++         "message": "Subloop output artifact selector, item 2 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.vars reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.vars",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "mapIndex": 0,
++         },
++         "message": "Subloop input variable mapping 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > subloop.input.vars reports the winning local cause and preserves admission/completion
+AssertionError: expected [ { level: 'error', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "level": "error",
++     "msg": "node failed",
++     "obj": {
++       "failure": {
++         "code": "EXPRESSION_ERROR",
++         "details": {
++           "boundary": "subloop.input.vars",
++           "cause": {
++             "code": "EXPRESSION_ERROR",
++             "message": "The expression could not evaluate this input. Check its input type and mapping.",
++           },
++           "mapIndex": 0,
++         },
++         "message": "Subloop input variable mapping 1 failed. The expression could not evaluate this input. Check its input type and mapping.",
++         "nodeId": "sub",
++         "resumable": false,
++       },
++       "nodeId": "sub",
++       "runId": "00000000000000000000000001",
++     },
++   },
++ ]
+
+ ❯ src/awaited-children.test.ts:71:79
+     69|       expect(e.ports.harness.started).toHaveLength(0);
+     70|       expect(e.ports.scripts.calls).toHaveLength(0);
+     71|       expect(e.ports.logger.lines.filter((entry) => entry.level === 'e…
+       |                                                                               ^
+     72|     } finally { e.manager.stop(); }
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > built-in message selection all and artifact selection preserve their ordinary values
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > built-in message selection none and artifact selection preserve their ordinary values
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > built-in message selection last and artifact selection preserve their ordinary values
+ FAIL  src/awaited-children.test.ts > #486 authored subloop boundaries through RunManager > built-in message selection 1 and artifact selection preserve their ordinary values
+ZodError: [
+  {
+    "origin": "array",
+    "code": "too_small",
+    "minimum": 1,
+    "inclusive": true,
+    "path": [
+      "nodes",
+      1,
+      "config",
+      "operations"
+    ],
+    "message": "Too small: expected array to have >=1 items"
+  }
+]
+ ❯ Object.publish src/testing/scenario.ts:57:59
+     55|     loopId,
+     56|     publish(def, options = {}) {
+     57|       const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+       |                                                           ^
+     58|       const id = options.loopId ?? loopId(parsed.name);
+     59|       const version = options.version ?? 1;
+ ❯ src/awaited-children.test.ts:96:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  18 failed | 102 passed (120)
+   Start at  05:57:50
+   Duration  7.70s (tests 55%, import 29%, transform 16%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

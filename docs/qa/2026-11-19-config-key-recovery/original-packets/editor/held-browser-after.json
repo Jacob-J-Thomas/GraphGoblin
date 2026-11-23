@@ -1,0 +1,393 @@
+{
+  "label": "browser",
+  "browser": {
+    "channel": "msedge",
+    "headless": true,
+    "profile": "fresh temporary directory, deleted after the run"
+  },
+  "gateway": {
+    "port": 6442,
+    "webDist": "apps/web/dist (this checkout)",
+    "apiDist": "apps/api/dist (this checkout)",
+    "store": "temporary, deleted after the run",
+    "stop": {
+      "steps": [
+        {
+          "action": "drain",
+          "status": 202
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  "expectedHeldMessage": "Key \"__proto__\" can't be used. The entry keeps its key \"<last key>\" until you choose another.",
+  "steps": [
+    {
+      "step": "sign in through the app Settings panel (key typed, never recorded)",
+      "ok": true
+    },
+    {
+      "step": "open the disposable inference node, Advanced: two saved entries",
+      "ok": true,
+      "server": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "shown": [
+        [
+          "features.plugins",
+          "false"
+        ],
+        [
+          "gg_qa.notes",
+          "\"inert\""
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "advanced": "Advanced\n2 set",
+      "screenshot": "01-initial.png"
+    },
+    {
+      "step": "replace Key 2's text with __proto__ in one input (select all, insert text), then Tab away",
+      "focusAfterInput": "Config overrides key 2",
+      "shown": [
+        [
+          "features.plugins",
+          "false"
+        ],
+        [
+          "__proto__",
+          "\"inert\""
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+          "invalid": "true",
+          "focused": true
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "keyDescriptionIsHeldMessage": true,
+      "recordStatus": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+      "alerts": [],
+      "advanced": "Advanced\n2 set",
+      "serverBefore": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "serverAfter": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "screenshot": "02-key2-replaced.png",
+      "focusAfterTab": "Remove config overrides gg_qa.notes",
+      "shownAfterTab": [
+        [
+          "features.plugins",
+          "false"
+        ],
+        [
+          "__proto__",
+          "\"inert\""
+        ]
+      ],
+      "recordStatusAfterTab": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+      "ok": true
+    },
+    {
+      "step": "type __proto__ key by key into Key 1",
+      "ok": true,
+      "keystrokes": 9,
+      "focusAfterEachKey": [
+        "Config overrides key 1"
+      ],
+      "shown": [
+        [
+          "__proto__",
+          "false"
+        ],
+        [
+          "__proto__",
+          "\"inert\""
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "Key \"__proto__\" can't be used. The entry keeps its key \"__proto_\" until you choose another.",
+          "invalid": "true",
+          "focused": true
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+          "invalid": "true",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "recordStatus": "Key \"__proto__\" can't be used. The entry keeps its key \"__proto_\" until you choose another.",
+      "alerts": [],
+      "advanced": "Advanced\n2 set",
+      "serverBefore": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "serverAfter": [
+        [
+          "__proto_",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "screenshot": "03-key1-typed.png"
+    },
+    {
+      "step": "correct both Keys by typing ordinary names: feedback clears and the draft saves",
+      "ok": true,
+      "focus": "Config overrides key 2",
+      "shown": [
+        [
+          "features.plugins",
+          "false"
+        ],
+        [
+          "gg_qa.notes",
+          "\"inert\""
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": true
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "alerts": [],
+      "advanced": "Advanced\n2 set",
+      "server": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "screenshot": "04-corrected.png"
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "nonGetOrFailedResponses": [
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/shutdown"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/storage"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/ollama/connection"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/model-catalog"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/chat/voice/config"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/preflight"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/settings"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/model-defaults"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/classifier-models"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/secrets"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/api-keys"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7S5WF8E6FRYBESJVHCJPJXA/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7S5WF8E6FRYBESJVHCJPJXA/draft"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7S5WF8E6FRYBESJVHCJPJXA/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7S5WF8E6FRYBESJVHCJPJXA/draft"
+    }
+  ],
+  "passed": 5,
+  "failed": []
+}

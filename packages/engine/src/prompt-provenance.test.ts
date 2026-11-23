@@ -370,3 +370,197 @@ describe('prompt provenance through RunManager and the fake harness', () => {
     manager.stop();
   });
 });
+
+it.each(['exact retry', 'continuation', 'explicit fresh'] as const)(
+  'rebuilds the transient view but skips authored prompt rendering on %s',
+  async (mode) => {
+    const e = await createTestEngine();
+    let flag = false;
+    e.ports.structuredFake.respondWith(() => flag);
+    const source = '{% if vars.flag %}{{ "private" | append }}{% else %}Saved task{% endif %}';
+    const config = {
+      prompt: { template: source },
+      input: [
+        {
+          op: 'coerce',
+          source: '/vars/missing',
+          target: '/vars/flag',
+          jsonSchema: { type: 'boolean' },
+          repair: { maxAttempts: 1 },
+        },
+      ],
+      contextFiles: [{ path: 'observation', template: '{{ vars.flag }}' }],
+    };
+    const v = e.publish(
+      singleNodeLoop('saved and fresh prompts', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config,
+      }),
+    );
+    e.ports.harness.script([
+      {
+        submission:
+          mode === 'exact retry'
+            ? 'definitely-not-submitted'
+            : mode === 'continuation'
+              ? 'delivery-uncertain'
+              : 'session-missing',
+        accepted: mode === 'continuation',
+        announceSession: mode !== 'exact retry',
+        items: [],
+        error: {
+          code: mode === 'explicit fresh' ? 'HARNESS_SESSION_MISSING' : 'HARNESS_TURN_FAILED',
+          message: 'scripted failure',
+        },
+      },
+      { finalText: 'done' },
+    ]);
+    const failed = await e.runToIdle(v.loopId);
+    flag = true;
+    if (mode === 'explicit fresh') {
+      const seq = e.events(failed.id).findLast((event) => event.type === 'run.failed')!.seq;
+      await e.manager.recoverSession(failed.id, 'infer', seq, { kind: 'user', id: 'operator' });
+    } else await e.manager.resume(failed.id);
+    expect((await e.settle(failed.id)).status).toBe('succeeded');
+    expect(e.ports.structuredFake.requests).toHaveLength(2);
+    expect([...e.ports.workspace.files.values()]).toEqual(['true']);
+    const turns = e.events(failed.id).filter((event) => event.type === 'harness.turn');
+    expect(turns.map((turn) => turn.prompt)).toEqual([
+      'Saved task',
+      mode === 'continuation' ? continuation : 'Saved task',
+    ]);
+    expect(turns[0]!.turnId === turns[1]!.turnId).toBe(mode === 'exact retry');
+  },
+);
+
+it('renders the current transient view on an explicit fresh session with no prior authored prompt', async () => {
+  const e = await createTestEngine();
+  let flag = false;
+  e.ports.structuredFake.respondWith(() => flag);
+  const def = singleNodeLoop('fresh with no saved prompt', {
+    id: 'infer',
+    kind: 'inference',
+    label: 'Infer',
+    config: {
+      prompt: { template: '{% if vars.flag %}{{ "private" | append }}{% else %}Main{% endif %}' },
+      session: { policy: 'resume-own' },
+      input: [
+        {
+          op: 'coerce',
+          source: '/vars/missing',
+          target: '/vars/flag',
+          jsonSchema: { type: 'boolean' },
+          repair: { maxAttempts: 1 },
+        },
+      ],
+    },
+  });
+  def.nodes.push({
+    id: 'again',
+    label: 'Again',
+    kind: 'decision',
+    config: {
+      kind: 'expression',
+      jsonata: '"repeat"',
+      maxPasses: 2,
+      routes: [
+        { id: 'repeat', label: 'Repeat', repeat: true },
+        { id: 'finish', label: 'Finish' },
+      ],
+    },
+  });
+  def.edges = def.edges.filter((edge) => edge.from.node !== 'infer');
+  def.edges.push(
+    { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'again' } },
+    { id: 'e3', from: { node: 'again', port: 'repeat' }, to: { node: 'infer' } },
+    { id: 'e4', from: { node: 'again', port: 'finish' }, to: { node: 'done' } },
+    { id: 'e5', from: { node: 'again', port: 'limit-reached' }, to: { node: 'done' } },
+  );
+  e.ports.sessions.forNodeAttempt = () => Promise.resolve(undefined);
+  const run = await e.runToIdle(e.publish(def).loopId);
+  expect(run.failure).toMatchObject({
+    code: 'HARNESS_SESSION_MISSING',
+    missingSession: { origin: 'resume-own' },
+  });
+  const seq = e.events(run.id).findLast((event) => event.type === 'run.failed')!.seq;
+  flag = true;
+  await e.manager.recoverSession(run.id, 'infer', seq, { kind: 'user', id: 'operator' });
+  const failed = await e.settle(run.id);
+  expect(failed.failure).toMatchObject({
+    code: 'TEMPLATE_ERROR',
+    resumable: false,
+    details: { boundary: 'inference.prompt.template' },
+  });
+  expect(failed.failure?.inference).toBeUndefined();
+  expect(e.events(run.id).filter((event) => event.type === 'harness.turn')).toHaveLength(1);
+});
+
+it.each(['definitely-not-submitted', 'delivery-uncertain'] as const)(
+  'retains %s as information on an authored preparation fault before a retry or continuation',
+  async (submission) => {
+    const e = await createTestEngine();
+    let newInput = false;
+    e.ports.structuredFake.respondWith(() => newInput);
+    const v = e.publish(
+      singleNodeLoop('later failed preparation', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          input: [
+            {
+              op: 'coerce',
+              source: '/vars/missing',
+              target: '/vars/flag',
+              jsonSchema: { type: 'boolean' },
+              repair: { maxAttempts: 1 },
+            },
+            {
+              op: 'set',
+              path: '/vars/value',
+              value: { kind: 'expression', jsonata: 'vars.flag ? $error("SECRET") : 1' },
+            },
+          ],
+          prompt: { template: 'saved' },
+        },
+      }),
+    );
+    e.ports.harness.script([
+      {
+        accepted: submission === 'delivery-uncertain',
+        announceSession: true,
+        submission,
+        error: { code: 'HARNESS_TURN_FAILED', message: 'prior provider error' },
+      },
+    ]);
+    const prior = await e.runToIdle(v.loopId);
+    expect(prior.failure?.resumable).toBe(true);
+    const before = e
+      .events(prior.id)
+      .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission');
+    const rows = structuredClone(e.ports.sessions.rows);
+    const cleanup = [...e.ports.harness.cancelled];
+    newInput = true;
+    await e.manager.resume(prior.id);
+    const failed = await e.settle(prior.id);
+    expect(failed.failure).toMatchObject({
+      code: 'MUTATION_ERROR',
+      resumable: false,
+      inference: prior.failure!.inference,
+      details: { boundary: 'inference.input', operationIndex: 1, operationKind: 'set' },
+    });
+    expect(failed.failure?.inference?.retry).toBeUndefined();
+    expect(
+      e
+        .events(prior.id)
+        .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission'),
+    ).toEqual(before);
+    expect(e.ports.sessions.rows).toEqual(rows);
+    expect(e.ports.harness.cancelled).toEqual(cleanup);
+    expect(e.ports.structuredFake.requests).toHaveLength(2);
+    expect(e.ports.harness.started).toHaveLength(1);
+    expect(e.ports.harness.resumed).toHaveLength(0);
+  },
+);

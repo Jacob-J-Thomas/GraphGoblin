@@ -1,3 +1,4 @@
+import { CODEX_PLUGIN_OBSERVABILITY_NOTICE } from '@graphgoblin/domain';
 import { usePreflight } from '../../api/queries.js';
 import type { HarnessPreflightItem } from '../../api/queries.js';
 import { READINESS_LABEL, type ReadinessView } from '../../api/readiness.js';
@@ -58,6 +59,28 @@ function ClaudePreflight({ item }: { item: HarnessPreflightItem }) {
 }
 
 /**
+ * A `codex … list --json` command in the notice. Splitting on this capture group keeps each
+ * command, at an odd index.
+ */
+const NOTICE_COMMAND = /(codex [a-z]+ list --json)/;
+
+/**
+ * What the Codex check leaves out (#442): it covers the CLI and its sign-in, not whether plugin
+ * tools load in a worker. The shared notice is a fixed statement of scope in every state, muted
+ * like Claude's listing note and never a problem, so the badge and any real problems keep their
+ * meaning above it. Its commands are shown as code; the words stay exactly the shared text.
+ */
+function CodexPreflight() {
+  return (
+    <p className="text-xs text-muted">
+      {CODEX_PLUGIN_OBSERVABILITY_NOTICE.split(NOTICE_COMMAND).map((part, i) =>
+        i % 2 === 1 ? <code key={i}>{part}</code> : part,
+      )}
+    </p>
+  );
+}
+
+/**
  * Is each configured harness installed and signed in? A background check keeps the last result
  * on screen and says "Rechecking…" beside Retry; a failed request replaces the list with its error.
  */
@@ -109,6 +132,7 @@ export function PreflightSection() {
                   </ul>
                 ) : null}
                 {p.harness === 'claude' ? <ClaudePreflight item={p} /> : null}
+                {p.harness === 'codex' ? <CodexPreflight /> : null}
               </li>
             ))}
           </ul>

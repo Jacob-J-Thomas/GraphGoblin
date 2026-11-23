@@ -1,0 +1,49 @@
+The fix is in place in the isolated checkout, uncommitted. The latest full API run on the final source had one failure. It was a load-sensitive timeout that the original code also hits; details under Verification.
+
+The reset now lists the database lock, the data-directory lock and both `.reclaim` guards the way the lock module actually treats them. It also says what releasing each lock did.
+
+## What was wrong (reproduced with the built entry point on throwaway data)
+- **Confirmed reset:** it listed its own `graphgoblin.db.graphgoblin.lock` under Keeps as "not part of the store", then removed it on release.
+- **Stale database lock or database guard:** the dry run listed them as kept, but the confirmed reset removed them.
+- **Stale `graphgoblin.lock.reclaim` guard:** it appeared in neither list, yet the confirmed reset removed it.
+- **Messages:** they only ever named `graphgoblin.lock`, including when the database lock's release was the one that failed.
+- **Refusals after the reset had taken its locks:** they said "Nothing in the data directory was changed" even when stale lock files had been reclaimed.
+
+## What changed
+- **Manifest (`reset.ts`):** both lock files and any stale guards are computed where the lock module keeps them, including a database in a subdirectory, and are never listed under Keeps.
+  - Dry run: `the reset's own; removed on release`, or `stale; replaced by the reset's own…`, or `stale lock guard … reclaimed when the reset takes the … lock`.
+  - Confirmed run: uses what the preview found (`replacing a stale one`, `reclaimed when the reset took…`). A guard that appears while the reset holds the locks is kept as another process's.
+  - Kept as before: hard links of a lock, another database's lock file, and abandoned `.reclaim.<UUID>.tmp` staging directories.
+- **Messages:** one line per lock: `removed …`, `… was already gone`, `kept …: it holds another process's record`, or `could not remove … (database lock|data-directory lock): …`. The data-directory lock is still released if the database lock's release fails. A refusal after taking the locks lists the stale entries that were reclaimed instead of claiming nothing changed.
+- **New refusals:** a lock path that isn't a regular file, or a guard path that isn't a directory, is refused before anything changes. This is stricter than before: a linked stale lock used to be unlinked.
+- **The dry run now re-checks the data-directory lock after listing.**
+- **Lock module (`data-dir-lock.ts`):** `release()` now reports what it did (`'removed' | 'missing' | 'kept'`), and the lock and guard file names are exported so the reset uses the same names. When release removes a file is unchanged; existing callers ignore the new return value. QA should treat this module as a touched system.
+
+## Changed paths
+- `apps/api/src/reset/reset.ts`, `apps/api/src/data-dir-lock.ts`
+- `apps/api/src/reset/reset-ownership.test.ts` (new, 19 tests), `apps/api/src/reset/reset.test.ts`, `apps/api/src/data-dir-lock.test.ts`
+- `tooling/scripts/reset.acceptance.mjs`
+- `docs/guide/08-offline-upgrade.md`, `docs/11-security-and-distribution.md`, `docs/decisions/ADR-0042-explicit-resets-replace-conversion.md`, `CHANGELOG.md`
+
+## Verification (Node v22.23.4, pnpm, Windows 11)
+- **New tests:** cover exact dry-run and confirmed output, with byte-for-byte checks that unrelated files survive and only owned lock files are removed. 19/19 passed in three repeated runs.
+- **Negative control:** against the original code, 22 of the 23 new or changed tests fail. The one that passes is the no-stale case, which should print "Nothing … changed" either way.
+- **Focused reset and lock suites:** 158 passed, 2 platform skips that were already there.
+- **`pnpm test:reset` (built binary):** 1/1 pass.
+- **Checks:** lint, typecheck, prettier and layers pass. `check:deps` has 0 errors and 4 orphan warnings in files I didn't touch.
+- **Full API suite with coverage:** the run whose production code matches the final version passed 2125 tests (17 skipped). Coverage was 94.00% statements, 91.01% branches, 91.71% functions, 95.40% lines; the original code measured 93.92 / 90.80 / 91.67 / 95.35. That run used an earlier version of the new test file; the final version changes only the fake stale PID.
+- **Runs on the exact final source:**
+  - One run on a heavily loaded machine had 12 timeouts across 10 files, including unrelated template and voice tests. Those 10 files then passed together, 124/124.
+  - The latest run had one failure: `history-cleanup.test.ts` "1000 retained workspace users" hit its 20 s timeout. A forced run of the original code fails the same way (20.59 s), so this timeout predates the change. Coverage isn't printed when a test fails, so the coverage numbers above come from the run before.
+
+## Limitations
+- A directory at `graphgoblin.lock` (or at the database lock when the database exists) is still refused earlier with a raw `EISDIR` message. The clearer new message is only reached when the database is absent.
+- Abandoned `.reclaim.<UUID>.tmp` staging directories are kept but still labelled "not part of the store".
+- "Total removed" still counts only store data, not the lock rows, as before; the guide now says so.
+- "reclaimed when the reset took…" assumes the reset's own successful lock acquisition did the reclaiming. Refusal messages report a stale entry as reclaimed only if it is now gone and the reset tried to take that lock.
+- If another program replaces or deletes a lock file mid-reset, the output says so. The run still exits 0 with "Reset complete" when every listed item was removed; only a failed release exits 1.
+- Other files inside a database's subdirectory are kept but still not listed under Keeps, as before.
+- All evidence is from Windows/NTFS. POSIX and macOS behaviour, including the error text for a directory where a lock file should be, is left to CI and QA.
+- ADR-0042 was edited in place with two small clarifications; the reviewer may prefer a different approach.
+
+Disposable data, the reproduction script, its final output and every coverage log are in `<original-author-evidence>/`.

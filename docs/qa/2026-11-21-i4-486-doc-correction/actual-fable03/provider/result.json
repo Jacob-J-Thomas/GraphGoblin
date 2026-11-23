@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 235909,
+  "stop_reason": "end_turn",
+  "session_id": "97389a7d-fb13-4f56-913f-29f05ba79bb1",
+  "total_cost_usd": 2.4935382,
+  "usage": {
+    "input_tokens": 22,
+    "cache_creation_input_tokens": 85112,
+    "cache_read_input_tokens": 490051,
+    "output_tokens": 25839,
+    "output_tokens_details": {
+      "thinking_tokens": 15434
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 85112,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5437,
+        "cache_read_input_tokens": 87331,
+        "cache_creation_input_tokens": 493,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 493
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-fable-5-2": {
+      "inputTokens": 22,
+      "outputTokens": 25839,
+      "cacheReadInputTokens": 490051,
+      "cacheCreationInputTokens": 85112,
+      "webSearchRequests": 0,
+      "costUSD": 2.4935382,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 15434,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 85112,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 59,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# Verdict: ACCEPT FIX\n\nThe two D209 sentences and the single D211 attribute rule are accepted on static inspection at head `29e165e14fdda138300ba2a34585ddd47268b475`. I found no introduced defect in these three deltas. This is not a gate pass: CI attempt 44934348117 remains failed, with the `e2e/pwa.spec.ts:536` cause unresolved, and nothing here changes that.\n\n## D209: recovery sentences\n\n`CHANGELOG.md:7` and `docs/guide/03-run-and-observe.md:273` each contain the selected replacement exactly, and the rest of each paragraph is intact. The old \"publish a new version before starting a new run\" wording survives only in the sealed transcript (line 8), not in current docs.\n\n| Claim in the sentence | Source read |\n| --- | --- |\n| UI **New run** uses a published version | `RunLauncher.tsx:90-93` filters to `published`; `:25-29` sends `versionId` with no `allowDraft`; `:94` warns when none is published. `apps/web/src` has no `allowDraft` use, and `RunsPage.tsx:35` calls New run the only place the app starts runs. |\n| REST can start an editable draft | `runs.ts:84-85` accepts `versionId` and `allowDraft`; `:108-109` forwards them. `run-manager.ts:3413-3414` refuses a draft without `allowDraft`; `:3406-3411` refuses a snapshot ID. |\n| Default API start stays published | `runs.ts:96` falls back to `loop.currentVersionId`, which `sqlite/loops.ts:485-496` sets on publication. `run-manager.ts:3399` otherwise takes the latest published. `allowDraft` alone selects no draft. |\n| Existing runs keep their definition | A draft start freezes a new snapshot (`run-manager.ts:692`, `definition-pin.ts:86-95`). Replay forks with `source.versionId` and `source.pinned` (`:1785`, `:1809`, `:1825-1826`). Resume re-admits the same run (`:1416-1475`). |\n\n- **No automatic UI publication implied:** \"publish the correction before starting it there\" is a user action.\n- **No universal publish requirement implied:** the REST draft path is offered in the same sentence.\n- **No changed pins implied:** the guide continues \"Resume is unavailable for a deterministic fault in the pinned version\", and the changelog continues \"Previously recorded history retains its original copy and recovery eligibility\".\n- **No conflict with the MCP limit:** MCP `start_run` cannot select a newer draft of a published loop (`guide/05:66`), but the sentence names `POST /loops/{id}/runs` explicitly.\n\nTwo non-blocking observations, neither a defect:\n- Neither span repeats the trigger-arming consequence of publishing or the \"freezes a new snapshot\" detail. Both remain at `guide/03:175`.\n- Line 273 does not link `#start-through-the-api`, where lines 275 and 291 do.\n\n## D211: attribute rule\n\n- **Exact rule:** `.gitattributes:223` is the specified rule, under a comment at line 222. It is the only `conflict-marker-size` entry in the root file, and a grep of every `.gitattributes` in the tree found no other.\n- **Scope:** the pattern is a literal root-anchored path with no glob characters, so it matches one file. It sets only `conflict-marker-size`; `-text -whitespace` from line 219 still apply, so byte preservation is unaffected.\n- **No overrides:** `docs/qa/.gitattributes` has no rule reaching the #486 archive, and the archive has no nested `.gitattributes`.\n- **Markers:** the transcript has exactly three seven-character marker lines (7, 9, 28) and no 32-character runs. No other file in the #486 archive has a line-start marker. `CHANGELOG.md`, guide 03, `.gitattributes` and `.prettierignore` have none.\n- **Root proofs agree:**\n  - `d211-full-check-before.stdout` and `diff-check-attempt2.stdout` list exactly those three lines.\n  - The after-check stdout and stderr are empty, and the precommit record shows exit 0 with no unmerged entries.\n  - The before/after attribute snapshots differ only by the appended comment and rule.\n  - Effective attributes are 32 for the artifact and unspecified for `run-manager.ts`.\n- **Ordinary detection preserved:** every other path, including `CHANGELOG.md` where the conflict arose, keeps the default of seven.\n\nOne confined residual: a future real conflict in that one file would not be flagged by `--check`. Its seal hash is the control.\n\n## Limits\n\n- **Read-only:** I ran no git commands, tests, builds or formatters. That the higher marker size suppresses the `--check` finding is from my knowledge of Git plus the supplied before/after outputs, not from execution.\n- **Head binding:** I read working-tree files. The branch ref resolves to the frozen head, but I could not confirm a clean tree, tree `d50fb576…`, or blob identity.\n- **Supplied, not recomputed:** all SHA-256 values, the 187,030-byte length, the 1,534-entry match, the subtraction proofs, the D197 runtime evidence, D212/D213 and the claim that the earlier failure files are unmodified originals.\n- **Not traced:** the executor's reads of `run.versionId` (grep only), `.git/info/attributes` and global attributes, and Prettier conformance of the two edited lines.\n- **Reads beyond the listed records:** two tiny files in the shared git dir (worktree `HEAD` and the branch ref), `docs/qa/.gitattributes`, and a few small root-publication proofs. Of the transcript I read only lines 5–11 and 26–30, plus count-only pattern scans.\n- **Not reviewed:** the PWA failure, #555/#556, the wider D197 paragraphs, ADR-0088 and anything outside the three deltas.\n\nFresh all-success CI on the final head and current target, canonical native verification and general scan 3 all remain required. A later pass cannot establish or erase the cause of the failed attempt.",
+  "ttft_ms": 3402,
+  "type": "result",
+  "duration_ms": 240738,
+  "uuid": "cdaea5eb-e1ac-4111-8646-7694a95550d7",
+  "ttft_stream_ms": 3109,
+  "time_to_request_ms": 2732,
+  "first_content_frame_ms": 3110,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-fable-5-2": {
+      "inputTokens": 22,
+      "outputTokens": 25839,
+      "cacheReadInputTokens": 490051,
+      "cacheCreationInputTokens": 85112,
+      "webSearchRequests": 0,
+      "costUSD": 2.4935382,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 15434,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 85112,
+      "canonicalModel": "claude-fable-5-2",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-11-27T04:28:05.666Z"
+}

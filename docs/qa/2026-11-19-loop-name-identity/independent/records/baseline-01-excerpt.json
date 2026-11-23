@@ -1,0 +1,182 @@
+{
+  "note": "First baseline run (driver v1). Its only non-target failure was a QA predicate mistake: v1 expected owner A to start with zero loops, but the gateway seeds the local owner with a system-bound \"Gateway chat\" loop. Not a product defect. Fixed in v2 before any candidate run.",
+  "driver": "i2-names-qa/1",
+  "summary": {
+    "label": "baseline",
+    "total": 141,
+    "byKind": {
+      "setup": {
+        "pass": 13,
+        "fail": 0
+      },
+      "control": {
+        "pass": 70,
+        "fail": 1
+      },
+      "coverage": {
+        "pass": 13,
+        "fail": 0
+      },
+      "target": {
+        "pass": 0,
+        "fail": 40
+      },
+      "informational": {
+        "pass": 4,
+        "fail": 0
+      }
+    },
+    "firstFailure": {
+      "id": "setup.http-auth-isolation",
+      "kind": "control",
+      "at": "2026-11-19T01:47:27.530Z"
+    },
+    "firstControlFailure": "setup.http-auth-isolation",
+    "firstSetupFailure": null,
+    "firstCoverageFailure": null,
+    "firstTargetFailure": "473.mcp.codex.A.L04",
+    "failingTargets": [
+      "473.mcp.codex.A.L04",
+      "473.mcp.codex.A.L05",
+      "473.mcp.codex.A.L06",
+      "473.mcp.codex.A.L07",
+      "473.mcp.codex.A.L09",
+      "473.mcp.codex.A.L10",
+      "473.mcp.codex.A.L11",
+      "473.mcp.codex.A.L13",
+      "473.mcp.codex.A.L15",
+      "473.mcp.codex.A.L28",
+      "473.mcp.codex.A.L29",
+      "473.mcp.codex.A.L33",
+      "473.mcp.codex.A.roundtrip-listed-names",
+      "473.mcp.codex.A.R03",
+      "473.mcp.codex.A.R04",
+      "473.mcp.codex.B.B04",
+      "473.mcp.codex.B.B05",
+      "473.mcp.claude.A.L04",
+      "473.mcp.claude.A.L05",
+      "473.mcp.claude.A.L06",
+      "473.mcp.claude.A.L07",
+      "473.mcp.claude.A.L09",
+      "473.mcp.claude.A.L10",
+      "473.mcp.claude.A.L11",
+      "473.mcp.claude.A.L13",
+      "473.mcp.claude.A.L15",
+      "473.mcp.claude.A.L28",
+      "473.mcp.claude.A.L29",
+      "473.mcp.claude.A.L33",
+      "473.mcp.claude.A.roundtrip-listed-names",
+      "473.mcp.claude.A.R03",
+      "473.mcp.claude.A.R04",
+      "473.mcp.claude.B.B04",
+      "473.mcp.claude.B.B05",
+      "473.stub.codex.S03",
+      "473.stub.codex.S04",
+      "473.stub.codex.S05",
+      "473.stub.claude.S03",
+      "473.stub.claude.S04",
+      "473.stub.claude.S05"
+    ],
+    "failingNonTargets": [
+      "setup.http-auth-isolation"
+    ],
+    "informational": [
+      {
+        "id": "473.mcp.codex.A.L34",
+        "request": "\"01m7rqsh6vsk6zwfwq657feq7y\"",
+        "expected": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "via": "name"
+        },
+        "observed": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "name": "\"01M7RQSH6VSK6ZWFWQ657FEQ7Y\""
+        }
+      },
+      {
+        "id": "473.mcp.codex.A.L35",
+        "request": "\" 01M7RQSH6VSK6ZWFWQ657FEQ7Y \"",
+        "expected": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "via": "name"
+        },
+        "observed": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "name": "\"01M7RQSH6VSK6ZWFWQ657FEQ7Y\""
+        }
+      },
+      {
+        "id": "473.mcp.claude.A.L34",
+        "request": "\"01m7rqsh6vsk6zwfwq657feq7y\"",
+        "expected": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "via": "name"
+        },
+        "observed": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "name": "\"01M7RQSH6VSK6ZWFWQ657FEQ7Y\""
+        }
+      },
+      {
+        "id": "473.mcp.claude.A.L35",
+        "request": "\" 01M7RQSH6VSK6ZWFWQ657FEQ7Y \"",
+        "expected": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "via": "name"
+        },
+        "observed": {
+          "outcome": "resolved",
+          "id": "01M7RQSHFVW2Z03T3ETGPR8MRZ",
+          "name": "\"01M7RQSH6VSK6ZWFWQ657FEQ7Y\""
+        }
+      }
+    ],
+    "elapsedMs": 72568.2
+  },
+  "failingSetupRecord": {
+    "id": "setup.http-auth-isolation",
+    "issue": "setup",
+    "kind": "control",
+    "surface": "http",
+    "description": "Private auth is enforced: no key 401, owner A 200 empty, owner B 200 empty, unknown key 401",
+    "observed": {
+      "none": 401,
+      "a": [
+        200,
+        1
+      ],
+      "b": [
+        200,
+        0
+      ],
+      "bogus": 401
+    },
+    "checks": [
+      {
+        "name": "no key -> 401",
+        "pass": true
+      },
+      {
+        "name": "owner A -> 200 with no loops",
+        "pass": false
+      },
+      {
+        "name": "owner B -> 200 with no loops",
+        "pass": true
+      },
+      {
+        "name": "unknown key -> 401",
+        "pass": true
+      }
+    ],
+    "pass": false,
+    "ms": 25.1
+  }
+}

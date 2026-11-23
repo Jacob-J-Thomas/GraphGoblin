@@ -1,0 +1,356 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-launcher:
+    name: Windows launcher
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        id: install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        id: build
+        run: pnpm build
+      # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
+      # outside the checkout and every fixture. The suite writes typed records only. Prepared
+      # after the build, so its failure can never skip install, build or the native command; it
+      # needs only the checkout and Node, so a failed install or build is still recorded.
+      - name: Prepare native evidence
+        id: evidence
+        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+        env:
+          GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs init
+      - name: Native Windows launcher acceptance
+        id: native
+        # Runs after a successful build whatever evidence preparation did. A preparation failure
+        # still fails the job, and the suite then receives no evidence folder.
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
+        run: pnpm test:windows-launcher
+      - name: Finalize native evidence
+        id: finalize
+        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
+          GG_TEST_EVIDENCE_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          GG_TEST_EVIDENCE_BUILD_OUTCOME: ${{ steps.build.outcome }}
+          GG_TEST_EVIDENCE_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs finalize
+      - name: Upload native evidence
+        if: ${{ always() && steps.finalize.outputs.paths != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-launcher-${{ github.run_attempt }}
+          path: ${{ steps.finalize.outputs.paths }}
+          if-no-files-found: error
+          include-hidden-files: false
+  repository-checks:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Reset acceptance
+        run: pnpm test:reset
+
+      - name: Recovery process acceptance
+        run: pnpm test:recovery-process
+
+      - name: Chat restart acceptance
+        run: pnpm test:chat-restart
+
+      - name: Wait restart acceptance
+        run: pnpm test:wait-restart
+
+      - name: Prompt restart acceptance
+        run: pnpm test:prompt-restart
+      - name: Webhook retry acceptance
+        run: pnpm test:webhook-retry
+
+      - name: Current-format migration acceptance
+        run: pnpm test:upgrade
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Layer rules
+        run: pnpm check:layers
+
+      - name: Migration generation is a no-op
+        run: pnpm check:migrations
+
+      - name: Design token rules
+        run: pnpm check:tokens
+
+      - name: Dependency graph rules
+        run: pnpm check:deps
+
+      - name: Shipped templates and deliberate-invalid refusal
+        run: pnpm check:templates
+
+      - name: Licence allowlist
+        run: pnpm check:licenses
+
+      - name: Generated docs are current
+        run: pnpm check:docs
+
+      - name: Design token contrast table is current and passing
+        run: pnpm check:contrast
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # The same full build as Repository checks, so every suite sees the original built inputs.
+      - name: Build
+        run: pnpm build
+
+      - name: Install Chromium for tooling browser measurements
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+
+      - name: Unit tests with coverage thresholds
+        id: coverage
+        # The step cap leaves job time to retain the reports of a failed or timed-out run.
+        timeout-minutes: 25
+        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
+        run: pnpm exec turbo run test:coverage --concurrency=1
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            packages/*/coverage/coverage-summary.json
+            apps/*/coverage/coverage-summary.json
+            tooling/coverage/coverage-summary.json
+          if-no-files-found: warn
+
+      - name: Coverage report status
+        if: always()
+        shell: bash
+        env:
+          COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
+        run: |
+          reports=$( (ls packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json tooling/coverage/coverage-summary.json 2>/dev/null || true) | wc -l)
+          {
+            echo '## Coverage'
+            echo
+            echo "Coverage step: \`${COVERAGE_OUTCOME:-not run}\`. Package summaries retained: ${reports}."
+            if [ "${COVERAGE_OUTCOME:-}" != success ]; then
+              echo
+              echo 'The coverage step did not succeed: any retained summaries are partial and establish no passing gate.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}"
+
+  # The stable `Gates` status context. It always runs, even when a lane fails, is skipped or is
+  # cancelled, and passes only when both lanes succeeded. It is never skippable, because a skipped
+  # job would satisfy a branch rule that requires it.
+  gates:
+    name: Gates
+    needs: [repository-checks, coverage]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.repository-checks.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
+
+  browser:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      # Match Windows development and the existing Linux routing-performance job.
+      GG_E2E_BROWSER_CHANNEL: msedge
+      # Live checks spend subscription quota and require an installed, signed-in CLI.
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # issue-170-qa reads frozen golden definitions from an earlier commit with git ls-tree.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Edge
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
+
+      - name: Build
+        run: pnpm build
+
+      - name: Functional browser suite (no retries)
+        timeout-minutes: 60
+        working-directory: apps/web
+        run: pnpm exec playwright test --retries=0 --workers=1
+
+      - name: Browser coverage and exclusions
+        if: always()
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Functional browser gate
+
+          Selected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.
+          This includes `script-recovery.spec.ts`: an isolated built API, kill/restart uncertainty, explicit retry consent, and resumed-run observation.
+          The test step and report record the executed result, including any setup failure.
+          The real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.
+
+          Skipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.
+          It requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.
+          No other functional spec or test is skipped or gated on a provider login or installed CLI.
+
+          Optional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),
+          `GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and
+          `GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.
+          `screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.
+          Live/paid checks remain separate, manually authorized checks; this job schedules none.
+          SUMMARY
+
+      - name: Upload browser failure evidence
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          if-no-files-found: warn
+
+  template-image:
+    name: Template image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the distributed image
+        run: docker build --tag graphgoblin-template-check .
+
+      - name: Load installed templates without network or writable storage
+        run: |
+          docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { existsSync, readdirSync } from 'node:fs';
+          import { TemplateCatalog } from '/app/apps/api/dist/templates/catalog.js';
+          const catalog = new TemplateCatalog('/app/apps/api/dist/catalog');
+          const entries = await catalog.list();
+          assert.deepEqual(entries.map(({ manifest }) => manifest.id).sort(),
+            ['implementation', 'qa', 'review', 'starter']);
+          const assetFiles = (root) => readdirSync(root, { withFileTypes: true }).flatMap((entry) =>
+            entry.isDirectory() ? assetFiles(`${root}/${entry.name}`).map((file) => `${entry.name}/${file}`)
+              : [entry.name]).sort();
+          const keptFiles = ['catalog.json', ...entries.flatMap(({ manifest }) =>
+            [`${manifest.id}/manifest.json`, `${manifest.id}/draft.json`])].sort();
+          for (const root of ['/app/apps/api/templates', '/app/apps/api/dist/catalog']) {
+            assert.deepEqual(assetFiles(root), keptFiles,
+              'Only the index, manifests and independent drafts may ship; no configured graphs or support assets');
+          }
+          const supportDir = '/app/apps/api/dist/templates/github';
+          assert.deepEqual(existsSync(supportDir) ? readdirSync(supportDir, { recursive: true }) : [], []);
+          for (const name of ['runtime', 'binding', 'scripts', 'authority', 'prerequisites',
+            'subjects', 'failures', 'support-result', 'instances']) {
+            assert.equal(existsSync(`/app/apps/api/dist/templates/${name}.js`), false);
+          }
+          for (const { manifest, draft } of entries) {
+            assert.ok(draft.nodes.length > 0);
+            const first = await catalog.draft(manifest.id);
+            const second = await catalog.draft(manifest.id);
+            assert.deepEqual(first, draft);
+            assert.notEqual(first, second);
+            first.nodes[0].label = 'Changed copy';
+            assert.deepEqual(second, draft);
+            assert.deepEqual(await catalog.draft(manifest.id), draft);
+            console.log(JSON.stringify({ template: manifest.id, version: manifest.version,
+              draftNodes: draft.nodes.length }));
+          }
+          JS

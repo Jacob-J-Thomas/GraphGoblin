@@ -1,0 +1,297 @@
+{
+  "source": {
+    "artifact": "corrected-00d96d0/fallback-repair.json",
+    "sha256": "09ad2043097906eed0ad555d6cb17cdbb5a8cb95c029734aee4ee88d41b4c568"
+  },
+  "before": {
+    "schemaVersion": 4,
+    "name": "481 ordinary-only external fallback",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 80
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "middle",
+        "label": "Wait",
+        "ui": {
+          "x": 320,
+          "y": 80
+        },
+        "kind": "wait",
+        "config": {
+          "mode": "input",
+          "prompt": "Proceed?",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ],
+          "onTimeout": "continue"
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 760,
+          "y": 80
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      },
+      {
+        "id": "extra",
+        "label": "Alternate start",
+        "ui": {
+          "x": 0,
+          "y": 400
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "middle",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            240
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "middle",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            580,
+            260,
+            700
+          ]
+        }
+      },
+      {
+        "id": "c1",
+        "from": {
+          "node": "extra",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            260,
+            480,
+            720
+          ]
+        }
+      }
+    ]
+  },
+  "saved": {
+    "schemaVersion": 4,
+    "name": "481 ordinary-only external fallback",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "defaults": {
+        "byHarness": {}
+      },
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": null,
+      "subloopDepthLimit": 8
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 80
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "middle",
+        "label": "Wait",
+        "ui": {
+          "x": 320,
+          "y": 80
+        },
+        "kind": "wait",
+        "config": {
+          "mode": "input",
+          "prompt": "Proceed?",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ],
+          "onTimeout": "continue"
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 760,
+          "y": 80
+        },
+        "kind": "exit",
+        "config": {
+          "outcome": "success",
+          "returns": "none",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      },
+      {
+        "id": "extra",
+        "label": "Alternate start",
+        "ui": {
+          "x": 0,
+          "y": 400
+        },
+        "kind": "trigger",
+        "config": {
+          "type": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "middle",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            240
+          ]
+        }
+      },
+      {
+        "id": "middle-edge",
+        "from": {
+          "node": "middle",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            580,
+            260,
+            700
+          ]
+        }
+      },
+      {
+        "id": "c1",
+        "from": {
+          "node": "extra",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            260,
+            480,
+            720
+          ]
+        }
+      }
+    ]
+  },
+  "publishable": true,
+  "issues": [],
+  "conditionalFullDraftSave": true
+}

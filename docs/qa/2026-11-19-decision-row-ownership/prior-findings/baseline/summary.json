@@ -1,0 +1,3429 @@
+{
+  "stage": "baseline",
+  "source": "95c759b7b7d466b1e4c0b9e7a36389d55b96eb6b",
+  "cases": [
+    {
+      "key": "shared-rename",
+      "action": "rename-after-collision",
+      "unique": false,
+      "firstAttemptStatus": "automation-error",
+      "firstAttemptError": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Undo', exact: true })\u001b[22m\n",
+      "continuedWithoutRepeatingRouteEdits": true,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": false,
+        "firstAndUnrelatedNeighborRecordsPreserved": false,
+        "previewNamesIntendedSecondRecord": true,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        }
+      ],
+      "metadataSamples": [
+        {
+          "phase": "collision",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "error-state",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "offline-reloaded",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "first-reconnect-readback",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reloaded",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership shared rename-after-collision baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "affirm",
+                  "label": "No"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "affirm"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                500,
+                200,
+                650
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "no"
+            },
+            "to": {
+              "node": "other",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                670
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence.",
+      "actualRestoredFormIds": [
+        "yes",
+        "affirm",
+        "maybe"
+      ]
+    },
+    {
+      "key": "shared-remove",
+      "action": "remove-after-collision",
+      "unique": false,
+      "firstAttemptStatus": "automation-error",
+      "firstAttemptError": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('All changes saved', { exact: true }) to be visible\u001b[22m\n",
+      "continuedWithoutRepeatingRouteEdits": true,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": false,
+        "firstAndUnrelatedNeighborRecordsPreserved": false,
+        "previewNamesIntendedSecondRecord": false,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        }
+      ],
+      "removalReview": {
+        "text": "Edit decision\npick\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nRemove connected route?\n\nThe repeat settings and listed connections will be removed together in one undoable edit.\n\nThese fields or connections will be removed:\n\nConnection yes → done (e1)\nCancel change\nConfirm change\nDecision kind\n*\nexpression\nReturn one declared route ID from a JSONata expression.\nllm\nGive Codex Liquid instructions and readable routes. Confidence is informational.\nclassifier\nAsk a configured classifier for Choice, Noul or Score.\nJsonata\n*\nJSONata\n1\n\"yes\"\nPreview (sample thread): \"yes\"\nEarlier node outputs (1)\n\nJSONata source; return a declared route id for decisions.\n\nEdit as JSON\nRoutes *\n\nAt least 2 items.\n\nTwo to sixty-four routes with unique ids and unique labels; the expression returns one id.\n\nRoutes 1\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 2\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nroute ids must be unique\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 3\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nAdd routes\nValidation details\n1 config issue\nDelete node\nDone",
+        "entries": [
+          "Connection yes → done (e1)"
+        ]
+      },
+      "metadataSamples": [
+        {
+          "phase": "collision",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "cancelled",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-2",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-2",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "offline-reloaded",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "first-reconnect-readback",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "error-state",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reopened-after-explicit-device-copy-recovery",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership shared remove-after-collision baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "no"
+            },
+            "to": {
+              "node": "other",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                670
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence.",
+      "actualRestoredFormIds": [
+        "yes",
+        "maybe"
+      ]
+    },
+    {
+      "key": "shared-direct",
+      "action": "direct-rename",
+      "unique": false,
+      "firstAttemptStatus": "complete",
+      "continuedWithoutRepeatingRouteEdits": false,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": true,
+        "firstAndUnrelatedNeighborRecordsPreserved": true,
+        "previewNamesIntendedSecondRecord": true,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        }
+      ],
+      "metadataSamples": [
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reloaded",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership shared direct-rename baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "affirm",
+                  "label": "No"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "yes"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                500,
+                200,
+                650
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "affirm"
+            },
+            "to": {
+              "node": "other",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                670
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence."
+    },
+    {
+      "key": "unique-rename",
+      "action": "rename-after-collision",
+      "unique": true,
+      "firstAttemptStatus": "complete",
+      "continuedWithoutRepeatingRouteEdits": false,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": true,
+        "firstAndUnrelatedNeighborRecordsPreserved": true,
+        "previewNamesIntendedSecondRecord": true,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        }
+      ],
+      "metadataSamples": [
+        {
+          "phase": "collision",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reloaded",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership unique rename-after-collision baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "affirm",
+                  "label": "No"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "yes"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                500,
+                200,
+                650
+              ]
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "pick",
+              "port": "affirm"
+            },
+            "to": {
+              "node": "other",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                670
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence."
+    },
+    {
+      "key": "unique-remove",
+      "action": "remove-after-collision",
+      "unique": true,
+      "firstAttemptStatus": "complete",
+      "continuedWithoutRepeatingRouteEdits": false,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": true,
+        "firstAndUnrelatedNeighborRecordsPreserved": true,
+        "previewNamesIntendedSecondRecord": true,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        }
+      ],
+      "removalReview": {
+        "text": "Edit decision\npick\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\n\nRemove connected route?\n\nThe repeat settings and listed connections will be removed together in one undoable edit.\n\nThese fields or connections will be removed:\n\nConnection no → other (e2)\nCancel change\nConfirm change\nDecision kind\n*\nexpression\nReturn one declared route ID from a JSONata expression.\nllm\nGive Codex Liquid instructions and readable routes. Confidence is informational.\nclassifier\nAsk a configured classifier for Choice, Noul or Score.\nJsonata\n*\nJSONata\n1\n\"yes\"\nPreview (sample thread): \"yes\"\nEarlier node outputs (1)\n\nJSONata source; return a declared route id for decisions.\n\nEdit as JSON\nRoutes *\n\nAt least 2 items.\n\nTwo to sixty-four routes with unique ids and unique labels; the expression returns one id.\n\nRoutes 1\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 2\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nroute ids must be unique\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nRoutes 3\nId\n*\n\nStable route id and output port; changing display order does not change the route.\n\nLabel\n*\n\nUnique readable route label, shown on the canvas.\n\nRepeat route\n\nOnly one route can repeat. Connect it back to earlier work in this gate.\n\n↑\n↓\nAdd routes\nValidation details\n1 config issue\nDelete node\nDone",
+        "entries": [
+          "Connection no → other (e2)"
+        ]
+      },
+      "metadataSamples": [
+        {
+          "phase": "collision",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "cancelled",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-2",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-2",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reloaded",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership unique remove-after-collision baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "yes"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                500,
+                200,
+                650
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence."
+    },
+    {
+      "key": "unique-direct",
+      "action": "direct-rename",
+      "unique": true,
+      "firstAttemptStatus": "complete",
+      "continuedWithoutRepeatingRouteEdits": false,
+      "finalSaveMarkerObserved": true,
+      "criteria": {
+        "transientCollisionPreservesEveryEdge": true,
+        "finalOwnershipCorrect": true,
+        "firstAndUnrelatedNeighborRecordsPreserved": true,
+        "previewNamesIntendedSecondRecord": true,
+        "previewMatchesActuallyRemovedRecord": true,
+        "cancelExact": true,
+        "undoFullDefinitionExact": true,
+        "redoFullObservedDefinitionAndActualMapExact": true,
+        "removalUndoCollisionMapExact": true,
+        "offlineReloadExactWhenExercised": true,
+        "publicSavedDraftAndReloadPreserveObservedResult": true,
+        "everyPresentMetadataSampleShapeValid": true
+      },
+      "originalEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "changedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "expectedCorrectedEdges": [
+        {
+          "id": "s1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "pick",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              220
+            ]
+          }
+        },
+        {
+          "id": "e1",
+          "from": {
+            "node": "pick",
+            "port": "yes"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              500,
+              200,
+              650
+            ]
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "affirm"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        },
+        {
+          "id": "m1",
+          "from": {
+            "node": "pick",
+            "port": "maybe"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              550,
+              440,
+              700
+            ]
+          }
+        }
+      ],
+      "actuallyRemovedRecords": [
+        {
+          "id": "e2",
+          "from": {
+            "node": "pick",
+            "port": "no"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              670
+            ]
+          }
+        }
+      ],
+      "metadataSamples": [
+        {
+          "phase": "changed",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "undo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "no"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        },
+        {
+          "phase": "redo-1",
+          "ownFieldPresent": true,
+          "nonemptyShapeValid": true,
+          "synced": false,
+          "rows": [
+            {
+              "key": 0,
+              "edgeIds": [
+                "e1"
+              ],
+              "id": "yes"
+            },
+            {
+              "key": 1,
+              "edgeIds": [
+                "e2"
+              ],
+              "id": "affirm"
+            },
+            {
+              "key": 2,
+              "edgeIds": [
+                "m1"
+              ],
+              "id": "maybe"
+            }
+          ]
+        }
+      ],
+      "finalPublicSourcePhase": "server-reloaded",
+      "finalPublicDefinition": {
+        "schemaVersion": 4,
+        "name": "Ownership unique direct-rename baseline",
+        "description": "Independent transient route-identity ownership QA",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pick",
+            "label": "Pick",
+            "ui": {
+              "x": 310,
+              "y": 100
+            },
+            "kind": "decision",
+            "config": {
+              "kind": "expression",
+              "jsonata": "\"yes\"",
+              "routes": [
+                {
+                  "id": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "id": "affirm",
+                  "label": "No"
+                },
+                {
+                  "id": "maybe",
+                  "label": "Maybe"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 810,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          },
+          {
+            "id": "other",
+            "label": "Other",
+            "ui": {
+              "x": 810,
+              "y": 360
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "s1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pick",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                220
+              ]
+            }
+          },
+          {
+            "id": "e1",
+            "from": {
+              "node": "pick",
+              "port": "yes"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                500,
+                200,
+                650
+              ]
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "pick",
+              "port": "affirm"
+            },
+            "to": {
+              "node": "other",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                670
+              ]
+            }
+          },
+          {
+            "id": "m1",
+            "from": {
+              "node": "pick",
+              "port": "maybe"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            },
+            "ui": {
+              "route": [
+                550,
+                440,
+                700
+              ]
+            }
+          }
+        ]
+      },
+      "syncedDeviceMetadataQualification": "A synced copy without an own decisionRoutes field is not map evidence."
+    }
+  ],
+  "nativeCases": 6,
+  "nativeOwnershipPasses": 4,
+  "nativeOwnershipFailures": [
+    "shared-rename",
+    "shared-remove"
+  ],
+  "storeCases": 6,
+  "storeOwnershipPasses": 4,
+  "storeOwnershipFailures": [
+    {
+      "unique": false,
+      "action": "rename-after-collision"
+    },
+    {
+      "unique": false,
+      "action": "remove-after-collision"
+    }
+  ],
+  "nativeUndoRedoExact": 6,
+  "nativePublicSavedResultExact": 6,
+  "positivelyPresentDeviceMetadataSamples": 34,
+  "allPresentMetadataShapesValid": true,
+  "qualification": "Baseline ownership fails in shared transient-collision rename/removal. First Undo locator timeout, reconnect conflict/save wait timeout, and auxiliary continuation syntax failures remain preserved; completed continuations do not relabel first attempts as passing."
+}

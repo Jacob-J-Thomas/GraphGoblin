@@ -1,0 +1,1673 @@
+{
+  "status": "complete",
+  "scope": "One supported Variables-pane same-window hold/rename/neighbor edit/publish refusal/correction control",
+  "checks": [
+    {
+      "label": "supported Variables Value holds exact malformed text and error",
+      "passed": true
+    },
+    {
+      "label": "Publish recognizes initial held Variables error before rename and sends no request",
+      "passed": true
+    },
+    {
+      "label": "same Variables editor DOM survives rename",
+      "passed": true
+    },
+    {
+      "label": "held variable text and associated error survive rename",
+      "passed": true
+    },
+    {
+      "label": "working-directory reference is repaired",
+      "passed": true
+    },
+    {
+      "label": "neighbor edit preserves repaired template and held variable",
+      "passed": true
+    },
+    {
+      "label": "corrected variable and repaired settings save together",
+      "passed": true
+    },
+    {
+      "label": "correction removes malformed variable feedback",
+      "passed": true
+    },
+    {
+      "label": "same-window correction survives actual server reload",
+      "passed": true
+    }
+  ],
+  "observations": [
+    {
+      "phase": "original",
+      "loopId": "01M7VQSHNWRW9491GVVK332HRX",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.work.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T05:45:12.124Z"
+      },
+      "device": null,
+      "deviceOwnDecisionRoutes": false,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "start-edge",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "work-edge",
+          "label": "pick Yes (yes) to work, manual route"
+        },
+        {
+          "id": "done-edge",
+          "label": "work out to done, manual route"
+        },
+        {
+          "id": "neighbor-edge",
+          "label": "pick No (no) to other, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "variables-held-feedback",
+      "text": "[1, ",
+      "invalid": "true",
+      "description": "Invalid JSON: Unexpected end of JSON input Discard the unparsed text",
+      "saveText": "All changes saved"
+    },
+    {
+      "phase": "variables-publish-refusal-before-rename",
+      "bodyText": "GraphGoblin\nChat\nLoops\nRuns\nEvents\nSettings\nUndo edit variables\nRedo\nLoops\n/\nHeld variables same-window control\ndraft only\nAll changes saved\nOpen in Runs\nPublish the loop first: runs start from a published version.\n1 error, 1 warning\nPublish\n\nPublish failed\n\nSome fields hold input that is not a valid value yet; complete or discard it first.\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nY…\nNo\nTRIGGER\nStart\nstart\nout\nDECISION\nPick\npick\nYes\nNo\nINFERENCE\nWork\nwork\nout\nEXIT\nDone\ndone\nEXIT\nOther\nother\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Structured completion milliseconds bounds each LLM decision evaluation or output-transform repair through the structured port when Limited; it defaults to Unlimited. Same-session inference schema repairs follow the node timeout. Visits and passes can also be explicitly set to Unlimited; cancellation remains available.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nTemplate\n*\nLiquid\n1\n/tmp/{{ outputs.work.value }}\nPreview (sample thread): /tmp/\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nLimited\nUnlimited\n\nFresh entries per node. Default 10; unlimited removes this cutoff.\n\nRun deadline seconds\nLimited\nNo run deadline\n\nElapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.\n\nNo deadline; set one to stop a forgotten run.\n\nStructured completion milliseconds\nLimited\nUnlimited\n\nMilliseconds per LLM decision evaluation or output-transform repair through the structured port. Same-session inference schema repairs follow the node timeout. No deadline by default; Unlimited removes this cutoff.\n\nNo completion deadline; LLM decisions and repairs remain cancellable.\n\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nKey\nValue\n*\nJSON\n1\n[1, \n\nInvalid JSON: Unexpected end of JSON input\nDiscard the unparsed text\n\nAdd entry",
+      "writes": [
+        {
+          "phase": "original",
+          "method": "POST",
+          "path": "/loops/<loop>/validate"
+        }
+      ]
+    },
+    {
+      "phase": "renamed-with-held-variable",
+      "loopId": "01M7VQSHNWRW9491GVVK332HRX",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.work.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T05:45:12.124Z"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.draft.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 4,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "synced": false,
+        "decisionRoutes": {
+          "pick": {
+            "nextKey": 2,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "work-edge"
+                ],
+                "id": "yes"
+              },
+              {
+                "key": 1,
+                "edgeIds": [
+                  "neighbor-edge"
+                ],
+                "id": "no"
+              }
+            ]
+          }
+        }
+      },
+      "deviceOwnDecisionRoutes": true,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "start-edge",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "work-edge",
+          "label": "pick Yes (yes) to draft, manual route"
+        },
+        {
+          "id": "done-edge",
+          "label": "draft out to done, manual route"
+        },
+        {
+          "id": "neighbor-edge",
+          "label": "pick No (no) to other, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "variables-corrected-saved",
+      "loopId": "01M7VQSHNWRW9491GVVK332HRX",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.draft.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 4,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T05:45:19.444Z"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.draft.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 4,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "synced": true
+      },
+      "deviceOwnDecisionRoutes": false,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "start-edge",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "work-edge",
+          "label": "pick Yes (yes) to draft, manual route"
+        },
+        {
+          "id": "done-edge",
+          "label": "draft out to done, manual route"
+        },
+        {
+          "id": "neighbor-edge",
+          "label": "pick No (no) to other, manual route"
+        }
+      ]
+    },
+    {
+      "phase": "variables-server-reloaded",
+      "loopId": "01M7VQSHNWRW9491GVVK332HRX",
+      "server": {
+        "status": 200,
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.draft.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 4,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "definitionSource": "draft",
+        "updatedAt": "2026-11-20T05:45:19.444Z"
+      },
+      "device": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Held variables same-window control",
+          "description": "Inert raw override Value refusal/correction QA; never run.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "template",
+              "template": "/tmp/{{ outputs.draft.value }}"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 4,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 180
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "pick",
+              "label": "Pick",
+              "ui": {
+                "x": 280,
+                "y": 180
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"yes\"",
+                "routes": [
+                  {
+                    "id": "yes",
+                    "label": "Yes"
+                  },
+                  {
+                    "id": "no",
+                    "label": "No"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Work",
+              "ui": {
+                "x": 570,
+                "y": 40
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Inert QA fixture. Never run."
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "read-only",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "previous": true
+                    },
+                    "neighbor": "unchanged"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 920,
+                "y": 40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other",
+              "ui": {
+                "x": 920,
+                "y": 460
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "start-edge",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "pick",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  220
+                ]
+              }
+            },
+            {
+              "id": "work-edge",
+              "from": {
+                "node": "pick",
+                "port": "yes"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  500,
+                  100,
+                  550
+                ]
+              }
+            },
+            {
+              "id": "done-edge",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  850
+                ]
+              }
+            },
+            {
+              "id": "neighbor-edge",
+              "from": {
+                "node": "pick",
+                "port": "no"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  700,
+                  520,
+                  860
+                ]
+              }
+            }
+          ]
+        },
+        "synced": true
+      },
+      "deviceOwnDecisionRoutes": false,
+      "dialogText": null,
+      "renderedEdges": [
+        {
+          "id": "start-edge",
+          "label": "start out to pick, manual route"
+        },
+        {
+          "id": "work-edge",
+          "label": "pick Yes (yes) to draft, manual route"
+        },
+        {
+          "id": "done-edge",
+          "label": "draft out to done, manual route"
+        },
+        {
+          "id": "neighbor-edge",
+          "label": "pick No (no) to other, manual route"
+        }
+      ]
+    }
+  ],
+  "writes": [
+    {
+      "phase": "original",
+      "method": "POST",
+      "path": "/loops/<loop>/validate"
+    },
+    {
+      "phase": "correct-variable",
+      "method": "PUT",
+      "path": "/loops/<loop>/draft"
+    },
+    {
+      "phase": "correct-variable",
+      "method": "POST",
+      "path": "/loops/<loop>/validate"
+    },
+    {
+      "phase": "variables-server-reloaded",
+      "method": "POST",
+      "path": "/loops/<loop>/validate"
+    }
+  ]
+}

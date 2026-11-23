@@ -1,0 +1,32 @@
+{
+  "kind": "Bounded credential/publication check, not an exhaustive security audit",
+  "scan": {
+    "scope": "Only explicitly selected original evidence; bounded publication check, not exhaustive security scan",
+    "patterns": [
+      "github_token",
+      "provider_key",
+      "aws_key",
+      "private_key",
+      "generated_graphgoblin_api_token",
+      "literal_bearer_value"
+    ],
+    "filesScanned": 202,
+    "bytesScanned": 5185830,
+    "candidateCount": 0,
+    "candidates": []
+  },
+  "sensitiveExclusions": [],
+  "derivatives": [],
+  "rawPreservation": "All 202 selected originals copied byte-for-byte; every failure/control and all original reports/manifests retained. No silent rewriting.",
+  "generatedAPITokenHandling": {
+    "generation": "Each independent API driver creates a disposable local token via container.repos.apiKeys.create; the token is held in memory and used only as a Bearer request header.",
+    "recording": "The driver HTTP log records method/path/status/response body/authenticated flag, not request headers. Repository sqlite/settings.ts generates gg_ plus 24 random bytes encoded as 32 base64url characters and persists its SHA-256 hash, not token plaintext.",
+    "verification": "All selected files scanned for the exact generated gg_ token shape and literal Bearer values, in addition to provider/GitHub/AWS/private-key patterns; zero candidates. Declared disposable stores/executable remain local, and their current hashes were verified.",
+    "sourceReference": "packages/infrastructure/src/sqlite/settings.ts:263-294",
+    "scriptReferences": [
+      "independent-qa/api-driver-01.mjs",
+      "independent-qa/api-driver-02.mjs",
+      "independent-qa/api-driver-03.mjs"
+    ]
+  }
+}

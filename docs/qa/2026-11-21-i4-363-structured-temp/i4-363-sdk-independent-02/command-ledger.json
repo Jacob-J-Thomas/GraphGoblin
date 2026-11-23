@@ -1,0 +1,109 @@
+{
+  "scope": "Independent corrected #363 SDK/native boundary QA; frozen detached checkout; no product edits.",
+  "setup": [
+    {
+      "command": "git worktree add --detach G:/ggq/gg-i4-363-sdk-qa/GraphGoblin 7d8467439b9850a555b92ab4b96b58c8b8b78388",
+      "exitCode": 0,
+      "raw": "raw/worktree-create.log",
+      "note": "No fetch; old sealed checkout unchanged."
+    },
+    {
+      "commands": [
+        "Read D177, root freeze, author report/source-binding/managed-patch readback, original independent blocker evidence, prior independent427 native-source-probe pattern.",
+        "Read AGENTS/docsREADME/docs15 and managed patch/lock diff."
+      ],
+      "setupError": "One patch-file read raced worktree population and returned path-not-found. Checkout completion was awaited before install/behavior; patch subsequently read successfully."
+    },
+    {
+      "command": "pnpm.cmd install --offline --frozen-lockfile",
+      "node": "v22.23.4",
+      "pnpm": "12.8.1",
+      "exitCode": 0,
+      "duration": "16.6 seconds",
+      "downloads": 0,
+      "raw": "raw/offline-install.log"
+    },
+    {
+      "tool": "web.run",
+      "purpose": "Verify public Node child_process diagnostics channel; no provider query.",
+      "firstUrl": "https://nodejs.org/docs/latest-v22.x/api/diagnostics_channel.html",
+      "firstResult": "Tool reported inaccessible; no fixture selected from that response.",
+      "verifiedPrimaryUrl": "https://raw.githubusercontent.com/nodejs/node/v22.23.4/doc/api/diagnostics_channel.md",
+      "relevantLines": "1305-1309: child_process event has process ChildProcess, emitted on creation; built-in channel experimental."
+    }
+  ],
+  "behaviorExecution": [
+    {
+      "command": "& 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-363-sdk-independent-02/run-qa.ps1'",
+      "driver": "run-qa-v1.mjs",
+      "sourceFixture": "source-case-v1.mjs",
+      "calls": 8,
+      "exitCode": 1,
+      "rawPass": 0,
+      "rawFail": 8,
+      "raw": "raw/driver-v1-console.txt",
+      "reason": "Observer filtered before spawnargs populated; product states persisted. Harmless abort preloader additionally returned and fell through into missing main exec, invalidating those two abort cases."
+    },
+    {
+      "commands": [
+        "node .../prepare-corrected-native.mjs",
+        "node .../run-native-corrected-v2.mjs"
+      ],
+      "calls": 2,
+      "scope": "Only native short/226 pair; no harmless rerun",
+      "exitCode": 0,
+      "rawPass": 2,
+      "rawFail": 0,
+      "raw": "native-corrected-01/raw/driver-v2-console.txt",
+      "correction": "Observe all published children; fill PID/args on spawn; record exit rather than await close."
+    },
+    {
+      "commands": [
+        "node .../prepare-corrected-abort.mjs",
+        "node .../run-abort-corrected-v3.mjs"
+      ],
+      "calls": 2,
+      "scope": "Only harmless short/226 abort replacement; no success/error or further native rerun",
+      "exitCode": 1,
+      "rawPass": 0,
+      "rawFail": 2,
+      "raw": "abort-corrected-01/raw/driver-v3-console.txt",
+      "correction": "Top-level preload wait prevents Node exec-main fallthrough; default abort gives AbortError.",
+      "remainingGuard": "SDK removes exit-event listeners during abort. Raw callback-exited assertion remains failed, but public process handle exit/signal properties prove termination and are separately verified."
+    }
+  ],
+  "verification": [
+    {
+      "command": "Read original/corrected saved observations, stdout/stderr, schema/CLI markers and request payloads.",
+      "note": "No behavior execution."
+    },
+    {
+      "command": "Get-CimInstance Win32_Process -Filter \"Name = 'node.exe' OR Name = 'codex.exe'\"; filter results to unique owned fixture roots/known fixture PIDs only.",
+      "files": [
+        "raw/final-owned-process-readback.json",
+        "raw/final-owned-process-readback-02.json"
+      ],
+      "finalOwnedMatches": 0,
+      "finalKnownPidsPresent": 0,
+      "note": "Read-only; no process termination."
+    },
+    {
+      "command": "node .../verify-saved-and-seal.mjs",
+      "exitCode": 0,
+      "purpose": "Saved-state verification only. Four original harmless success/error outcomes, two corrected abort outcomes, two corrected native successes established; invalid original aborts excluded."
+    },
+    {
+      "command": "node .../verify-saved-and-seal.mjs --seal",
+      "purpose": "Read/hash saved states and sources; confirm both original sealed QA packets file-by-file; write final manifest. No product import or behavior retry."
+    }
+  ],
+  "totalBehaviorCalls": 12,
+  "nativeCliCalls": 4,
+  "loopbackResponsesRequests": 4,
+  "liveProviderRequests": 0,
+  "publicPipeline": "Actual CodexStructured/default CodexHarness/installed SDK, no clientFactory/cliRunner/temp allocator/builtin/SDK injection. Only CLI/env public override for harmless tier.",
+  "mutations": "Only authorized fresh detached checkout/dependency install, new evidence artifacts and checked unique owned fixtures. No source/index/commit/push/issues/owner state.",
+  "rawFailuresPreserved": true,
+  "originalSdkNegativePacketPreserved": "0 PASS/2 FAIL unchanged; its saved readback separate",
+  "commandsProvenance": "Execution commands exist exactly in saved .ps1/.mjs files; child invocations and sanitized environment-key sets in observations. Discovery inputs and output/errors also remain in agent tool history."
+}

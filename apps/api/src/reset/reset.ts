@@ -1,28 +1,34 @@
-import { readdir, realpath, stat } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
+import { lstat, readdir, realpath, stat } from 'node:fs/promises';
+import { basename, resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
+import { canonicalPath } from '../canonical-path.js';
 import { loadConfig, type ApiConfig } from '../config.js';
 import {
   acquireDataDirLock,
   acquireDatabaseLock,
+  DATA_DIR_LOCK_FILE,
+  databaseLockFileName,
   dataDirLockState,
   databaseLockState,
+  RECLAIM_GUARD_SUFFIX,
   type DataDirLock,
+  type ReleaseOutcome,
 } from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
 import { cleanupStaleStoreCopies } from './store-copy.js';
-import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
+import { hasCode, identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
  * cannot open. Without `--yes` it only lists what a reset would remove (a dry run, which changes
  * no data-directory byte). With `--yes --data-dir <path>` naming the configured data directory it takes
- * the data-directory lock, lists the same manifest and removes exactly that: the database and its
+ * the data-directory and database locks (reclaiming a stale lock file or reclamation guard on the
+ * way), lists the same manifest and removes exactly that: the database and its
  * SQLite sidecars, the artifact and private chat-audio directories, and the run workspaces whose
- * names are stored run IDs,
- * then the lock file last. Planned identities are rechecked before each removal (see tree.ts for
+ * names are stored run IDs, then its own database lock and, last, its data-directory lock when it
+ * releases them. Planned identities are rechecked before each removal (see tree.ts for
  * the remaining external-process race). Links are removed themselves; `master.key` and every
  * other entry are kept. Browser device drafts live in each
  * browser and are discarded from the editor.
@@ -95,6 +101,24 @@ export interface KeptEntry {
   identity?: string | undefined;
 }
 
+/** A confirmed reset releases the database lock first and the data-directory lock last. */
+export type LockRole = 'database lock' | 'data-directory lock';
+
+/**
+ * A lock file or its reclamation guard (ADR-0069) at the path the lock module uses, spelled as the
+ * directory lists it. A confirmed reset takes both locks before its locked plan, which reclaims a
+ * stale lock file or guard, and removes its own lock files when it releases them; none of these
+ * entries is ever listed under Keeps as unrelated data.
+ */
+export interface OwnershipEntry {
+  /** Relative to the data directory, with `/` separators. */
+  path: string;
+  role: LockRole;
+  /** The `.reclaim` guard directory rather than the lock file. */
+  guard: boolean;
+  present: boolean;
+}
+
 export interface ResetPlan {
   /** Physical path of the data directory; every target is inside it. */
   dataDir: string;
@@ -103,13 +127,42 @@ export interface ResetPlan {
   store: StoreFacts | { readable: false; reason: string; absent: true };
   targets: ResetTarget[];
   kept: KeptEntry[];
+  /** The database lock's guard and file, then the data-directory lock's guard and file. */
+  ownership: OwnershipEntry[];
 }
 
-/** Refused before anything was removed. */
+/**
+ * What a refused reset did to the data directory. Nothing before removal changes store data or any
+ * entry other than the reset's lock files and guards, so only those can differ.
+ */
+export type OwnershipEffect =
+  /**
+   * Nothing in the data directory changed: refused before taking a lock, or every lock taken was
+   * removed on release and taking them reclaimed nothing.
+   */
+  | { kind: 'unchanged' }
+  /**
+   * The locks were taken: the stale entries taking them reclaimed, those the preview listed that
+   * were already gone when the lock was taken, and what each release did.
+   */
+  | { kind: 'changed'; lines: readonly string[] }
+  /**
+   * Taking `failed` threw. The lock module reports no more than the error, and the attempt can
+   * create or reclaim that lock's file, guard or guard staging directory and leave any of them, so
+   * the lines give that lock file and guard as found now and just before the attempt (never who
+   * changed them), then the rest as for `changed`.
+   */
+  | { kind: 'uncertain'; failed: LockRole; lines: readonly string[] };
+
+const UNCHANGED: OwnershipEffect = { kind: 'unchanged' };
+
+/** Refused before any store data was removed; `ownership` says what happened to the lock files. */
 export class ResetRefusedError extends Error {
-  constructor(message: string) {
+  readonly ownership: OwnershipEffect;
+  constructor(message: string, ownership: OwnershipEffect = UNCHANGED) {
     super(message);
     this.name = 'ResetRefusedError';
+    this.ownership = ownership;
   }
 }
 
@@ -121,7 +174,8 @@ export class ResetIncompleteError extends Error {
   }
 }
 
-const LOCK_FILES = new Set(['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
+/** A database at the root may not be named like the data-directory lock or its guard. */
+const LOCK_FILES = new Set([DATA_DIR_LOCK_FILE, DATA_DIR_LOCK_FILE + RECLAIM_GUARD_SUFFIX]);
 const OWNED_DIRECTORIES = [
   ['artifacts', 'artifacts'],
   ['chat-audio', 'private chat audio'],
@@ -204,6 +258,38 @@ async function listedName(dir: string, name: string): Promise<string> {
 }
 
 /**
+ * The directory's spelling of the lock file or guard the lock module opens as `name` in `parent`,
+ * decided by filesystem facts and never by case or Unicode folding: the exact name when the
+ * directory lists it; else the one listed entry with the same identity, whatever rule made the
+ * volume equate the spellings (NTFS opens `οσ-1.db.graphgoblin.lock` as a listed
+ * `ΟΣ-1.DB.GRAPHGOBLIN.LOCK`, whose `Σ` JavaScript lowercases to a final `ς`); else, when hard
+ * links share that identity, the one the filesystem's canonical path for `name` names. A hard link
+ * under another name is never taken for the lock, so it stays listed under Keeps. When the
+ * filesystem does not say which listed link `name` opens, the reset refuses rather than list one
+ * entry under both Removes and Keeps. Absent: `name`.
+ */
+async function ownershipName(
+  dataDir: string,
+  parent: readonly string[],
+  name: string,
+): Promise<string> {
+  const dir = resolve(dataDir, ...parent);
+  const identity = await identityOf(resolve(dir, name));
+  if (identity === undefined) return name;
+  const names = await readdir(dir);
+  if (names.includes(name)) return name;
+  const matches: string[] = [];
+  for (const entry of names)
+    if ((await identityOf(resolve(dir, entry))) === identity) matches.push(entry);
+  if (matches.length < 2) return matches[0] ?? name;
+  const canonical = basename(canonicalPath(resolve(dir, name)));
+  if (matches.includes(canonical)) return canonical;
+  throw new ResetRefusedError(
+    `the data directory lists ${[...parent, name].join('/')} under more than one name (${matches.sort().join(', ')}), and the filesystem does not say which one the lock module opens; verify that no GraphGoblin process uses this store, then move the other names yourself`,
+  );
+}
+
+/**
  * The segments of `path` below `root` when `root` is an exact prefix of the resolved path (drive
  * letter normalised, no case folding): a parent that keeps `Data` and `data` apart must never have
  * one directory's database planned against the other, a stream of the directory (`data:review`) is
@@ -259,6 +345,12 @@ export interface PlanResetOptions {
   /** Database file relative to the data directory, `/` separated. */
   database: string;
   readStore: (databaseFile: string) => Promise<StoreFacts>;
+  /**
+   * The caller holds both locks: a reclamation guard present now is listed under Keeps as present,
+   * and the reset leaves it. The listing cannot show who published it, so the row never says.
+   * Otherwise a present lock or guard is one the reset would reclaim.
+   */
+  locked?: boolean;
 }
 
 /** Read-only: what a reset of this data directory would remove, and what it keeps. */
@@ -266,6 +358,7 @@ export async function planReset({
   dataDir,
   database,
   readStore,
+  locked = false,
 }: PlanResetOptions): Promise<ResetPlan> {
   // The path is first spelled as the directory lists it, by filesystem identity, with every
   // ancestor checked to be a physical directory before it is entered; the later checks compare
@@ -369,11 +462,42 @@ export async function planReset({
   // stored spelling and its sidecars, or an `Artifacts` directory on a case-insensitive volume, are
   // never listed under Keeps while their entries are removed.
   const owned = new Set<string>();
-  for (const name of [...RESERVED_ROOTS, ...LOCK_FILES]) {
+  for (const name of RESERVED_ROOTS) {
     owned.add(name);
     const identity = await identityOf(resolve(dataDir, name));
     if (identity !== undefined) owned.add(identity);
   }
+  // The locks a confirmed reset takes, where the lock module keeps them: the database lock beside
+  // the database (in its subdirectory, when it has one) and the data-directory lock at the root,
+  // each with its `.reclaim` guard. Listed after the store read, so a guard created meanwhile is
+  // seen; the lock module reads only regular lock files and directory guards.
+  const ownership: OwnershipEntry[] = [];
+  const locks: [LockRole, string[], string][] = [
+    ['database lock', segments.slice(0, -1), databaseLockFileName(segments.at(-1)!)],
+    ['data-directory lock', [], DATA_DIR_LOCK_FILE],
+  ];
+  for (const [role, parent, lockName] of locks)
+    for (const guard of [true, false]) {
+      const name = await ownershipName(
+        dataDir,
+        parent,
+        guard ? lockName + RECLAIM_GUARD_SUFFIX : lockName,
+      );
+      const path = [...parent, name].join('/');
+      const entry = await statEntry(dataDir, path);
+      if (entry && entry.kind !== (guard ? 'directory' : 'file'))
+        throw new ResetRefusedError(
+          `${path} is a ${NOUNS[entry.kind][0]}, not ${guard ? 'a lock reclamation guard directory' : 'a lock file'}; verify that no GraphGoblin process uses this store, then move it yourself`,
+        );
+      ownership.push({ path, role, guard, present: entry !== undefined });
+      if (parent.length === 0) owned.add(name);
+      if (entry && guard && locked)
+        kept.push({
+          path,
+          why: `${role} guard, present now; the reset leaves it`,
+          identity: entry.identity,
+        });
+    }
   if (segments.length > 1) {
     owned.add(root);
     const identity = await identityOf(resolve(dataDir, root));
@@ -395,7 +519,7 @@ export async function planReset({
   }
   kept.sort((a, b) => (a.path < b.path ? -1 : 1));
   assertDisjointManifest(targets, kept);
-  return { dataDir, database: stored, store, targets, kept };
+  return { dataDir, database: stored, store, targets, kept, ownership };
 }
 
 /**
@@ -471,8 +595,74 @@ function columns(left: string, middle: string, right = ''): string {
   return `  ${left.padEnd(38)} ${middle.padEnd(24)} ${right}`.trimEnd();
 }
 
-/** The bounded manifest: every target and kept entry up to the limit, then totals. */
-export function formatPlan(plan: ResetPlan, options: { dryRun: boolean; configured: string }) {
+/** A lock the confirmed reset took; `lock.reclaimed` is what taking it removed itself. */
+export interface HeldLock {
+  role: LockRole;
+  lock: DataDirLock;
+}
+
+/** What a manifest is printed for: a dry run, or a confirmed reset holding both locks. */
+export type ManifestStage =
+  | { dryRun: true; configured: string }
+  | { dryRun: false; configured: string; preview: ResetPlan; held: readonly HeldLock[] };
+
+/**
+ * The Removes rows for the reset's locks. A dry run takes no lock: a lock file or guard it finds is
+ * stale (a held one refuses the reset), and taking that lock is what would reclaim it. A confirmed
+ * reset says it reclaimed an entry only when the lock module reports that taking the lock removed
+ * it. A stale entry its read-only preview found is otherwise reported as already gone when the lock
+ * was taken: the preview cannot show who removed it.
+ */
+function ownershipRows(plan: ResetPlan, stage: ManifestStage): string[] {
+  const rows: string[] = [];
+  const before = stage.dryRun ? plan : stage.preview;
+  for (const role of ['database lock', 'data-directory lock'] as const) {
+    const found = (guard: boolean) =>
+      before.ownership.find((entry) => entry.role === role && entry.guard === guard)!;
+    const taken = stage.dryRun
+      ? undefined
+      : stage.held.find((held) => held.role === role)!.lock.reclaimed;
+    const guard = found(true);
+    if (taken?.guard || guard.present)
+      rows.push(
+        columns(
+          guard.path,
+          'stale lock guard',
+          taken === undefined
+            ? `reclaimed when the reset takes the ${role}`
+            : taken.guard
+              ? `reclaimed when the reset took the ${role}`
+              : `already gone when the reset took the ${role}`,
+        ),
+      );
+    const release = role === 'database lock' ? 'removed on release' : 'removed last, on release';
+    const lock = plan.ownership.find((entry) => entry.role === role && !entry.guard)!;
+    const stale = found(false).present;
+    rows.push(
+      columns(
+        lock.path,
+        role,
+        taken === undefined
+          ? stale
+            ? `stale; replaced by the reset's own, ${release}`
+            : `the reset's own; ${release}`
+          : taken.file
+            ? `the reset's own, replacing a stale one; ${release}`
+            : stale
+              ? `the reset's own; the stale one was already gone when the reset took the ${role}; ${release}`
+              : `the reset's own; ${release}`,
+      ),
+    );
+  }
+  return rows;
+}
+
+/**
+ * The bounded manifest: every target and kept entry up to the limit, the reset's locks, then totals.
+ * A confirmed reset passes its preview and held locks, so the lock rows say what taking each lock
+ * reclaimed and which stale entries the preview found were already gone.
+ */
+export function formatPlan(plan: ResetPlan, options: ManifestStage) {
   const lines = [
     options.dryRun ? 'GraphGoblin reset (dry run: nothing is removed)' : 'GraphGoblin reset',
     '',
@@ -488,8 +678,8 @@ export function formatPlan(plan: ResetPlan, options: { dryRun: boolean; configur
     lines.push(
       `  ... and ${String(hidden.length)} more: ${counts(hidden.flatMap((target) => target.entries))}`,
     );
-  if (!plan.targets.length) lines.push('  nothing but the lock file');
-  lines.push(columns('graphgoblin.lock', "the reset's own lock", 'removed last, on release'));
+  if (!plan.targets.length) lines.push('  no store data');
+  lines.push(...ownershipRows(plan, options));
   lines.push('', 'Keeps:');
   for (const entry of plan.kept.slice(0, MANIFEST_LIST_LIMIT))
     lines.push(columns(entry.path, entry.why));
@@ -574,6 +764,108 @@ export interface ResetIo {
   readStore: (databaseFile: string) => Promise<StoreFacts>;
 }
 
+const describeOwnership = (entry: OwnershipEntry): string =>
+  `${entry.path} (${entry.guard ? `${entry.role} guard` : entry.role})`;
+
+const RELEASED: Record<ReleaseOutcome, (name: string) => string> = {
+  removed: (name) => `removed ${name}`,
+  missing: (name) => `${name} was already gone`,
+  kept: (name) => `kept ${name}: it holds another process's record`,
+};
+
+/**
+ * Release the held locks, the database lock first and the data-directory lock last, attempting
+ * each even when another fails: one line per lock, saying what its release did to its file.
+ */
+async function releaseLocks(held: readonly HeldLock[], ownership: readonly OwnershipEntry[]) {
+  const lines: string[] = [];
+  let failed = false;
+  let allRemoved = true;
+  for (const { role, lock } of [...held].reverse()) {
+    const name = describeOwnership(ownership.find((entry) => entry.role === role && !entry.guard)!);
+    try {
+      const outcome = await lock.release();
+      if (outcome !== 'removed') allRemoved = false;
+      lines.push(RELEASED[outcome](name));
+    } catch (error) {
+      failed = true;
+      allRemoved = false;
+      lines.push(`could not remove ${name}: ${message(error)}`);
+    }
+  }
+  return { lines, failed, allRemoved };
+}
+
+/**
+ * For each lock the reset took, the stale lock file and guard that taking it removed, as the lock
+ * module reports, and those the preview found that were already gone when it was taken. Absence
+ * after a snapshot never counts as this reset's reclamation: the preview cannot show who removed it.
+ */
+function reclaimedLines(preview: ResetPlan, held: readonly HeldLock[]): string[] {
+  const lines: string[] = [];
+  for (const entry of preview.ownership) {
+    const taken = held.find(({ role }) => role === entry.role)?.lock.reclaimed;
+    if (!taken) continue;
+    if (entry.guard ? taken.guard : taken.file)
+      lines.push(`reclaimed stale ${describeOwnership(entry)}`);
+    else if (entry.present)
+      lines.push(
+        `${describeOwnership(entry)}: stale in the preview, already gone when the reset took that lock`,
+      );
+  }
+  return lines;
+}
+
+/** Whether an entry exists, or why it could not be inspected. */
+type Presence = 'present' | 'absent' | { uninspectable: string };
+
+interface ObservedEntry {
+  entry: OwnershipEntry;
+  presence: Presence;
+}
+
+/**
+ * The guard and lock file of `role` where the preview names them, as they are now. Read-only. An
+ * inspection failure is reported by its own message, with no advice to move or remove the entry.
+ */
+async function observeLock(preview: ResetPlan, role: LockRole): Promise<ObservedEntry[]> {
+  const observed: ObservedEntry[] = [];
+  for (const entry of preview.ownership.filter((candidate) => candidate.role === role)) {
+    let presence: Presence;
+    try {
+      await lstat(resolve(preview.dataDir, ...entry.path.split('/')));
+      presence = 'present';
+    } catch (error) {
+      presence =
+        hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')
+          ? 'absent'
+          : { uninspectable: message(error) };
+    }
+    observed.push({ entry, presence });
+  }
+  return observed;
+}
+
+const presenceText = (presence: Presence, when: string): string =>
+  typeof presence === 'string'
+    ? `${presence} ${when}`
+    : `could not be inspected ${when} (${presence.uninspectable})`;
+
+/**
+ * After taking a lock failed: its guard and lock file as found now and just before the attempt.
+ * Presence only; no line says who created or removed an entry, or that it is the same entry.
+ */
+function attemptLines(before: readonly ObservedEntry[], after: readonly ObservedEntry[]): string[] {
+  return after.map(({ entry, presence: now }, index) => {
+    const then = before[index]!.presence;
+    return `${describeOwnership(entry)}: ${
+      typeof now === 'string' && now === then
+        ? `${now} now and before the attempt`
+        : `${presenceText(now, 'now')}, ${presenceText(then, 'before the attempt')}`
+    }`;
+  });
+}
+
 /** Plan (and, confirmed, perform) the reset of the configured data directory. Returns the exit code. */
 export async function resetDataDirectory(
   config: Pick<ApiConfig, 'dataDir' | 'dbUrl'>,
@@ -609,32 +901,29 @@ export async function resetDataDirectory(
       `the database ${databaseFile} is outside the data directory ${configured}; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory`,
     );
   const database = segments.join('/');
-  // Validate the lock and preview read-only before touching even a stale lock. The fresh plan
-  // can still refuse after acquisition; in that case the reset releases its own lock.
-  const state = await dataDirLockState(dataDir);
-  if (state.state === 'held')
-    throw new ResetRefusedError(
-      `${state.detail}: ${state.path}; verify ownership before resetting`,
-    );
-  const checkDatabaseOwnership = async (file: string): Promise<void> => {
-    const state = await databaseLockState(file);
+  // Validate the locks and preview read-only before touching even a stale lock. The fresh plan
+  // can still refuse after acquisition; in that case the reset releases its own locks.
+  const refuseHeld = (state: Awaited<ReturnType<typeof dataDirLockState>>): void => {
     if (state.state === 'held')
       throw new ResetRefusedError(
         `${state.detail}: ${state.path}; verify ownership before resetting`,
       );
   };
+  refuseHeld(await dataDirLockState(dataDir));
   const preview = await planReset({
     dataDir,
     database,
     readStore: async (file) => {
       // The plan first validates the physical ancestors and regular file without following
       // links. Preserve that refusal guidance before canonical ownership lookup or store reads.
-      await checkDatabaseOwnership(file);
+      refuseHeld(await databaseLockState(file));
       return io.readStore(file);
     },
   });
   // A missing database never invokes readStore, but a live creator may already own its sidecar.
-  await checkDatabaseOwnership(databaseFile);
+  // Both locks are checked again after the listing, so a lock file or guard it lists was not held.
+  refuseHeld(await databaseLockState(databaseFile));
+  refuseHeld(await dataDirLockState(dataDir));
   if (!args.confirmed) {
     io.write(formatPlan(preview, { dryRun: true, configured }));
     io.write(
@@ -646,30 +935,52 @@ export async function resetDataDirectory(
     );
     return 0;
   }
-  let lock: DataDirLock;
-  let databaseLock: DataDirLock | undefined;
-  try {
-    lock = await acquireDataDirLock(dataDir);
-  } catch (error) {
-    throw new ResetRefusedError(`${message(error)}; stop it before resetting`);
-  }
+  // Taking a lock reclaims a stale lock file or guard, and the lock module reports which ones that
+  // acquisition removed itself; a stale entry the preview listed may instead have been removed by
+  // another process first. From here a refusal says which were reclaimed or already gone and how
+  // each held lock was released, instead of that nothing changed. An attempt that throws may
+  // itself have created, reclaimed or left that lock's entries, so its guard and lock file are
+  // observed just before each attempt and again after a failure.
+  const held: HeldLock[] = [];
+  let attempt: { role: LockRole; before: ObservedEntry[] } | undefined;
+  let plan: ResetPlan | undefined;
   let failure: unknown;
   try {
-    databaseLock = await acquireDatabaseLock(databaseFile);
-    // Plan again under the lock, so GraphGoblin cannot change the manifest concurrently. External
-    // processes do not obey this lock; removeEntry rechecks the planned filesystem identities.
-    const plan = await planReset({ dataDir, database, readStore: io.readStore });
+    for (const role of ['data-directory lock', 'database lock'] as const) {
+      attempt = { role, before: await observeLock(preview, role) };
+      try {
+        held.push({
+          role,
+          lock:
+            role === 'data-directory lock'
+              ? await acquireDataDirLock(dataDir)
+              : await acquireDatabaseLock(databaseFile),
+        });
+      } catch (error) {
+        throw new ResetRefusedError(`could not take the ${role}: ${message(error)}`);
+      }
+      attempt = undefined;
+    }
+    // Plan again under the locks, so GraphGoblin cannot change the manifest concurrently. External
+    // processes do not obey them; removeEntry rechecks the planned filesystem identities.
+    const lockedPlan = await planReset({
+      dataDir,
+      database,
+      readStore: io.readStore,
+      locked: true,
+    });
+    plan = lockedPlan;
     // Never discard the run IDs after a transient reader failure or keep a workspace that the
     // preview identified for removal. Refuse before executing any target, so a retry can still
     // identify those workspaces. A store unreadable in both plans retains the damaged-store reset.
-    if (preview.store.readable && !plan.store.readable)
+    if (preview.store.readable && !lockedPlan.store.readable)
       throw new ResetRefusedError(
-        `the store was readable in the preview but could not be read under the data-directory lock (${plan.store.reason}); run the reset again before removing the database or run workspaces`,
+        `the store was readable in the preview but could not be read under the data-directory lock (${lockedPlan.store.reason}); run the reset again before removing the database or run workspaces`,
       );
     const newlyKept = preview.targets.find(
       (target) =>
         target.what === 'run workspace' &&
-        plan.kept.some(
+        lockedPlan.kept.some(
           (entry) => entry.path === target.path || target.path.startsWith(entry.path + '/'),
         ),
     );
@@ -677,40 +988,48 @@ export async function resetDataDirectory(
       throw new ResetRefusedError(
         `${newlyKept.path} was a run workspace in the preview but would be kept by the plan under the data-directory lock; run the reset again before removing its database`,
       );
-    io.write(formatPlan(plan, { dryRun: false, configured }));
+    io.write(formatPlan(lockedPlan, { dryRun: false, configured, preview, held }));
     io.write('Removing:\n');
     try {
-      await executeReset(plan, io.write);
+      await executeReset(lockedPlan, io.write);
     } catch (error) {
       failure = error;
     }
   } catch (error) {
-    // The store changed between the read-only plan and the lock: nothing has been removed.
-    try {
-      await databaseLock?.release();
-    } finally {
-      await lock.release();
-    }
-    throw new ResetRefusedError(message(error));
-  }
-  try {
-    try {
-      await databaseLock?.release();
-    } finally {
-      await lock.release();
-    }
-  } catch (error) {
-    throw new ResetIncompleteError(
-      `${failure ? message(failure) + '\n' : ''}  Could not remove graphgoblin.lock: ${message(error)}`,
+    // Refused before any store data was removed: a lock could not be taken, or the store changed
+    // after the preview. The failed lock's entries are observed before any held lock is released.
+    const observed =
+      attempt && attemptLines(attempt.before, await observeLock(preview, attempt.role));
+    const released = await releaseLocks(held, (plan ?? preview).ownership);
+    const reclaimed = reclaimedLines(preview, held);
+    const lines = [...(observed ?? []), ...reclaimed, ...released.lines];
+    throw new ResetRefusedError(
+      message(error),
+      attempt
+        ? { kind: 'uncertain', failed: attempt.role, lines }
+        : reclaimed.length || !released.allRemoved
+          ? { kind: 'changed', lines }
+          : UNCHANGED,
     );
   }
-  if (failure)
+  const released = await releaseLocks(held, plan.ownership);
+  if (failure || released.failed)
     throw new ResetIncompleteError(
-      `${message(failure)}\n  Released graphgoblin.lock.\nDo not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.`,
+      [
+        failure
+          ? message(failure)
+          : 'Reset stopped: every listed item was removed, but not every lock file was released:',
+        ...released.lines.map((line) => `  ${line}`),
+        ...(failure
+          ? [
+              'Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.',
+            ]
+          : []),
+      ].join('\n'),
     );
   io.write(
     [
-      '  removed graphgoblin.lock',
+      ...released.lines.map((line) => `  ${line}`),
       `Reset complete. The next start creates a new, empty format-${String(CURRENT_DEFINITION_FORMAT)} store in ${configured}.`,
       '',
     ].join('\n'),
@@ -754,7 +1073,19 @@ export async function runResetCli(options: ResetCliOptions = {}): Promise<number
       writeError(`${error.message}\n`);
       return 1;
     }
-    writeError(`reset refused: ${message(error)}\nNothing in the data directory was changed.\n`);
+    writeError(
+      `reset refused: ${message(error)}\n${effectText(error instanceof ResetRefusedError ? error.ownership : UNCHANGED)}`,
+    );
     return 1;
   }
+}
+
+/** What a refusal says about the data directory: store data first, then the lock metadata. */
+function effectText(effect: OwnershipEffect): string {
+  if (effect.kind === 'unchanged') return 'Nothing in the data directory was changed.\n';
+  const head =
+    effect.kind === 'changed'
+      ? 'No store data was removed. Lock files and guards:'
+      : `No store data was removed. Taking the ${effect.failed} failed, and the attempt may have created, reclaimed or left that lock's file, guard or guard staging directory. Lock files and guards:`;
+  return [head, ...effect.lines.map((line) => `  ${line}`), ''].join('\n');
 }

@@ -1,11 +1,19 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import * as fs from 'node:fs/promises';
 import { access, mkdir, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acquireDataDirLock, dataDirLockState } from './data-dir-lock.js';
 import * as processIdentity from './windows-process-identity.js';
+
+// `readFile` passes through to the real call; one case removes a lock file just before it is read.
+vi.mock('node:fs/promises', async (original) => {
+  const actual = await original<typeof fs>();
+  return { ...actual, readFile: vi.fn(actual.readFile) };
+});
+const actual = await vi.importActual<typeof fs>('node:fs/promises');
 
 let dataDir: string;
 let path: string;
@@ -28,6 +36,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.mocked(fs.readFile).mockImplementation(actual.readFile);
   vi.restoreAllMocks();
   for (const file of [path, `${path}.reclaim`, join(dataDir, 'not-a-directory')]) {
     await rm(file, { recursive: true, force: true }).catch(() => undefined);
@@ -115,7 +124,8 @@ describe('data-directory ownership', () => {
     const record = JSON.parse(await readFile(path, 'utf8')) as { pid: number; startedAt: string };
     expect(record.pid).toBe(process.pid);
     expect(Number.isNaN(Date.parse(record.startedAt))).toBe(false);
-    await lock.release();
+    expect(lock.reclaimed).toEqual({ file: false, guard: false });
+    expect(await lock.release()).toBe('removed');
     await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
@@ -183,13 +193,14 @@ describe('data-directory ownership', () => {
 
   it('does not let a delayed repeated release remove a new acquisition', async () => {
     const first = await acquireDataDirLock(dataDir);
-    await Promise.all([first.release(), first.release()]);
+    expect(await Promise.all([first.release(), first.release()])).toEqual(['removed', 'removed']);
     await first.release();
     const second = await acquireDataDirLock(dataDir);
     const original = await readFile(path, 'utf8');
-    await first.release();
+    // A repeated release reports its first outcome and never touches the new acquisition.
+    expect(await first.release()).toBe('removed');
     expect(await readFile(path, 'utf8')).toBe(original);
-    await second.release();
+    expect(await second.release()).toBe('removed');
   });
 
   it('leaves a lock with a different ownership token intact on release', async () => {
@@ -197,14 +208,14 @@ describe('data-directory ownership', () => {
     const record = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>;
     const replacement = JSON.stringify({ ...record, token: randomUUID() });
     await writeFile(path, replacement);
-    await lock.release();
+    expect(await lock.release()).toBe('kept');
     expect(await readFile(path, 'utf8')).toBe(replacement);
   });
 
   it('accepts a missing file during release', async () => {
     const lock = await acquireDataDirLock(dataDir);
     await unlink(path);
-    await lock.release();
+    expect(await lock.release()).toBe('missing');
   });
 
   it.each(['fresh', 'stale', 'own-pid', 'stale-reclaim'])(
@@ -246,7 +257,40 @@ describe('data-directory ownership', () => {
     const lock = await acquireDataDirLock(dataDir);
     expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
     await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
+    // The acquisition reports what it removed itself.
+    expect(lock.reclaimed).toEqual({ file: mainExists, guard: true });
     await lock.release();
+  });
+
+  it('reports nothing reclaimed when another acquisition reclaimed the stale entries first', async () => {
+    await writeFile(path, JSON.stringify({ pid: process.pid, token: 'previous-process' }));
+    await guardRecord({ pid: process.pid });
+    const first = await acquireDataDirLock(dataDir);
+    expect(first.reclaimed).toEqual({ file: true, guard: true });
+    await first.release();
+    const second = await acquireDataDirLock(dataDir);
+    expect(second.reclaimed).toEqual({ file: false, guard: false });
+    await second.release();
+  });
+
+  it('takes the lock without claiming a reclamation when its holder releases it before it is read', async () => {
+    await writeFile(path, JSON.stringify({ pid: process.pid + 1 }));
+    let released = false;
+    vi.mocked(fs.readFile).mockImplementation(
+      async (...args: Parameters<typeof actual.readFile>) => {
+        // The holder releases after this acquisition found its lock, before the record is read.
+        if (args[0] === path && !released) {
+          released = true;
+          await unlink(path);
+        }
+        return actual.readFile(...args);
+      },
+    );
+    const lock = await acquireDataDirLock(dataDir);
+    expect(released).toBe(true);
+    expect(lock.reclaimed).toEqual({ file: false, guard: false });
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+    expect(await lock.release()).toBe('removed');
   });
 
   it('refuses a reclamation guard owned by another live PID', async () => {
@@ -304,7 +348,9 @@ describe('data-directory ownership', () => {
 
   it('reclaims an empty guard, but refuses malformed or mismatched marker directories', async () => {
     await mkdir(`${path}.reclaim`);
-    await (await acquireDataDirLock(dataDir)).release();
+    const lock = await acquireDataDirLock(dataDir);
+    expect(lock.reclaimed).toEqual({ file: false, guard: true });
+    await lock.release();
     const marker = await guardRecord({ pid: process.pid });
     await writeFile(marker, JSON.stringify({ pid: process.pid, token: randomUUID() }));
     await expect(acquireDataDirLock(dataDir)).rejects.toThrow('could not be verified');

@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (31 tests | 1 failed) 51ms
+   ❯ bounded native transport failure outcomes (11)
+     × does not treat a later error of a started child, such as a failed kill, as a spawn refusal 11ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > bounded native transport failure outcomes > does not treat a later error of a started child, such as a failed kill, as a spawn refusal
+AssertionError: expected { exitCode: null, stdout: '', …(4) } to match object { exitCode: +0 }
+(5 matching properties omitted from actual)
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+  {
+-   "exitCode": 0,
++   "exitCode": null,
+  }
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:129:21
+    127|     child.emit('close', 0);
+    128|     const settled = await result;
+    129|     expect(settled).toMatchObject({ exitCode: 0 });
+       |                     ^
+    130|     expect(settled).not.toHaveProperty('spawnCode');
+    131|     expect(stat).not.toHaveBeenCalled();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  02:49:08
+   Duration  1.84s (import 59%, transform 38%, tests 3%)
+
+vitest-exit=1

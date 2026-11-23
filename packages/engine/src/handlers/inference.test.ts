@@ -1,4 +1,8 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { evaluateExpression, TemplateError } from '@graphgoblin/domain';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
@@ -436,3 +440,419 @@ async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void
     await new Promise((r) => setTimeout(r, 5));
   }
 }
+
+const badLiquid = '{{ "PRIVATE_TEMPLATE" | append }}';
+const badExpression = {
+  op: 'set',
+  path: '/vars/value',
+  value: { kind: 'expression', jsonata: '$error("PRIVATE_EXPRESSION")' },
+};
+const repairBoolean = {
+  op: 'coerce',
+  source: '/vars/missing',
+  target: '/vars/boolean',
+  jsonSchema: { type: 'boolean' },
+  repair: { maxAttempts: 1 },
+};
+
+describe('inference authored fields and effects', () => {
+  it.each(['input', 'output'] as const)(
+    'classifies only the failing %s transform after an earlier real structured callback',
+    async (stage) => {
+      const e = await createTestEngine();
+      e.ports.structuredFake.respondWith(() => true);
+      e.ports.harness.script([{ finalText: 'received', announceSession: false, accepted: false }]);
+      const transforms = [repairBoolean, badExpression];
+      const v = e.publish(
+        inferenceLoop(
+          'typed transform',
+          stage === 'input' ? { input: transforms } : { output: { transforms } },
+        ),
+      );
+      const run = await e.runToIdle(v.loopId);
+      const output = stage === 'output';
+      const details = {
+        boundary: output ? 'inference.output.transforms' : 'inference.input',
+        operationIndex: 1,
+        operationKind: 'set',
+        cause: {
+          code: 'EXPRESSION_ERROR',
+          message:
+            'The expression could not evaluate this input. Check its input type and mapping.',
+        },
+        ...(output ? { phase: 'after-result' } : {}),
+      };
+      expect(run.failure).toMatchObject({
+        code: 'MUTATION_ERROR',
+        nodeId: 'infer',
+        resumable: false,
+      });
+      expect(run.failure?.details).toEqual(details);
+      expect(e.events(run.id).filter((x) => x.type === 'run.failed')).toMatchObject([
+        { failure: run.failure },
+      ]);
+      expect(e.ports.structuredFake.requests).toHaveLength(1);
+      expect(e.ports.harness.started).toHaveLength(output ? 1 : 0);
+      const turns = e.events(run.id).filter((x) => x.type === 'harness.turn');
+      expect(turns).toHaveLength(output ? 1 : 0);
+      if (output) {
+        expect(run.failure?.inference).toEqual({
+          turnId: turns[0]!.turnId,
+          visitId: turns[0]!.visitId,
+          promptKind: 'authored',
+          submission: 'delivery-uncertain',
+        });
+        expect(run.failure?.message).toContain(
+          'GraphGoblin received the provider result before this step failed.',
+        );
+        expect(run.failure?.message).not.toContain('no usable session');
+        expect(e.events(run.id).filter((x) => x.type === 'harness.submission')).toMatchObject([
+          { submission: 'delivery-uncertain' },
+        ]);
+        expect(
+          e
+            .events(run.id)
+            .filter((x) => x.type === 'harness.submission')
+            .some((x) => x.marker),
+        ).toBe(false);
+      } else expect(run.failure?.inference).toBeUndefined();
+      expect(await e.manager.getThread(run.id)).not.toHaveProperty(['vars', 'boolean']);
+      expect(JSON.stringify([run.failure, e.ports.logger.lines])).not.toContain(
+        'PRIVATE_EXPRESSION',
+      );
+      await expect(e.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+      expect(e.ports.harness.cancelled).toHaveLength(output ? 1 : 0);
+    },
+  );
+
+  it.each([
+    [{ op: 'append-message', content: badLiquid }, 'TEMPLATE_ERROR'],
+    [
+      { op: 'inject', position: 'end', messages: [{ role: 'user', content: badLiquid }] },
+      'TEMPLATE_ERROR',
+    ],
+    [{ op: 'replace', pattern: '[', replacement: 'x', target: 'messages' }, 'MUTATION_ERROR'],
+    [{ op: 'set', path: '/run/id', value: { kind: 'literal', value: 1 } }, 'MUTATION_ERROR'],
+    [
+      { op: 'set', path: '/vars/missing/leaf', value: { kind: 'literal', value: 1 } },
+      'PATCH_ERROR',
+    ],
+    [{ ...repairBoolean, repair: { maxAttempts: 1, prompt: badLiquid } }, 'TEMPLATE_ERROR'],
+  ] as const)('projects an inference input %j cause without author text', async (op, code) => {
+    const e = await createTestEngine();
+    const v = e.publish(inferenceLoop('operation cause', { input: [op] }));
+    const run = await e.runToIdle(v.loopId);
+    expect(run.failure).toMatchObject({
+      nodeId: 'infer',
+      code: 'MUTATION_ERROR',
+      resumable: false,
+      details: {
+        boundary: 'inference.input',
+        operationIndex: 0,
+        operationKind: op.op,
+        cause: { code },
+      },
+    });
+    expect(run.failure?.message).not.toContain('PRIVATE');
+    expect(e.ports.harness.started).toHaveLength(0);
+  });
+
+  it('preserves completed context bytes when a later file template fails before the first intent', async () => {
+    const e = await createTestEngine();
+    const dir = await mkdtemp(join(tmpdir(), 'graphgoblin-context-'));
+    try {
+      e.ports.workspace.writeFile = async (_cwd, path, content) => {
+        const file = join(dir, path);
+        await writeFile(file, content, 'utf8');
+        return file;
+      };
+      const v = e.publish(
+        inferenceLoop('file preparation', {
+          contextFiles: [
+            { path: 'first', template: 'retained {{ trigger.payload }}' },
+            { path: 'private-second', template: badLiquid },
+            { path: 'third', template: 'later' },
+          ],
+        }),
+      );
+      const run = await e.runToIdle(v.loopId, 'bytes');
+      expect(run.failure).toMatchObject({
+        code: 'TEMPLATE_ERROR',
+        nodeId: 'infer',
+        resumable: false,
+        details: {
+          boundary: 'inference.contextFiles.template',
+          fileIndex: 1,
+          cause: { code: 'TEMPLATE_ERROR' },
+        },
+      });
+      expect(run.failure?.message).toContain('Inference context file template 2');
+      expect(JSON.stringify(run.failure)).not.toMatch(/PRIVATE_TEMPLATE|private-second/);
+      expect(await readdir(dir)).toEqual(['first']);
+      expect(await readFile(join(dir, 'first'), 'utf8')).toBe('retained bytes');
+      expect(e.eventTypes(run.id)).not.toContain('harness.turn');
+      await expect(e.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it.each(['primary', 'repair'] as const)(
+    'attributes only the %s prompt render and reports the most recent actual turn',
+    async (stage) => {
+      const e = await createTestEngine();
+      const repair = stage === 'repair';
+      e.ports.harness.script([{ finalText: 'invalid', accepted: false }]);
+      const v = e.publish(
+        inferenceLoop(
+          'prompt fault',
+          repair
+            ? {
+                output: {
+                  schema: {
+                    jsonSchema: { type: 'number' },
+                    repair: { enabled: true, maxAttempts: 1, prompt: badLiquid },
+                  },
+                },
+              }
+            : { prompt: { template: badLiquid } },
+        ),
+      );
+      const run = await e.runToIdle(v.loopId);
+      expect(run.failure).toMatchObject({
+        nodeId: 'infer',
+        code: 'TEMPLATE_ERROR',
+        resumable: false,
+        details: {
+          boundary: repair ? 'inference.output.schema.repair.prompt' : 'inference.prompt.template',
+          cause: { code: 'TEMPLATE_ERROR' },
+          ...(repair ? { attempt: 1, phase: 'after-result' } : {}),
+        },
+      });
+      const turns = e.events(run.id).filter((x) => x.type === 'harness.turn');
+      expect(turns).toHaveLength(repair ? 1 : 0);
+      expect(e.ports.harness.resumed).toHaveLength(0);
+      if (repair) {
+        expect(run.failure?.inference).toMatchObject({
+          turnId: turns[0]!.turnId,
+          visitId: turns[0]!.visitId,
+          promptKind: 'authored',
+          sessionId: 'fake-session-1',
+          submission: 'delivery-uncertain',
+        });
+        expect(e.ports.harness.cancelled).toHaveLength(1);
+      } else expect(run.failure?.inference).toBeUndefined();
+      expect(JSON.stringify(run.failure)).not.toContain('PRIVATE_TEMPLATE');
+    },
+  );
+
+  const genuine = new TemplateError('external marker');
+  const lookalikes = [
+    genuine,
+    Object.assign(new Error('external marker'), { name: 'TemplateError' }),
+    { code: 'TEMPLATE_ERROR', message: 'external marker' },
+  ];
+  for (const origin of [
+    'model',
+    'resolve',
+    'file',
+    'structured input',
+    'structured output',
+    'coerce resolver input',
+    'coerce resolver output',
+    'contextWindow',
+    'fits',
+    'start',
+    'repair resume',
+    'iterator',
+    'result',
+  ] as const) {
+    it.each(lookalikes)(
+      'keeps the external ' + origin + ' policy for %j',
+      async (external: unknown) => {
+        const e = await createTestEngine();
+        const fail = () => {
+          throw external;
+        };
+        const config: Record<string, unknown> = {};
+        if (origin === 'model') e.ports.modelCatalog.list = fail;
+        if (origin === 'resolve') e.ports.workspace.resolve = fail;
+        if (origin === 'file') {
+          config.contextFiles = [{ path: 'f', template: 'valid' }];
+          e.ports.workspace.writeFile = fail;
+        }
+        if (origin.startsWith('structured') || origin.startsWith('coerce resolver')) {
+          if (origin.endsWith('input')) config.input = [repairBoolean];
+          else config.output = { transforms: [repairBoolean] };
+          if (origin.startsWith('coerce resolver')) {
+            let reads = 0;
+            e.ports.modelCatalog.list = () =>
+              ++reads === 1 ? Promise.resolve(e.ports.modelCatalog.entries) : fail();
+          } else e.ports.structuredFake.respondWith(fail);
+        }
+        const fake = e.ports.harness;
+        if (origin === 'repair resume') {
+          fake.script([{ finalText: 'invalid' }]);
+          config.output = {
+            schema: {
+              jsonSchema: { type: 'number' },
+              repair: { maxAttempts: 1, prompt: 'Repair' },
+            },
+          };
+        }
+        if (
+          origin === 'repair resume' ||
+          origin === 'contextWindow' ||
+          origin === 'fits' ||
+          origin === 'start' ||
+          origin === 'iterator' ||
+          origin === 'result'
+        ) {
+          e.ports.harnesses.codex = {
+            id: 'codex',
+            preflight: () => fake.preflight(),
+            resume: origin === 'repair resume' ? fail : (...args) => fake.resume(...args),
+            contextWindow:
+              origin === 'contextWindow'
+                ? fail
+                : () =>
+                    Promise.resolve({
+                      profile: 'test',
+                      contextTokens: 4096,
+                      outputReserveTokens: 1024,
+                      fits: origin === 'fits' ? fail : () => true,
+                    }),
+            start:
+              origin === 'start'
+                ? fail
+                : (...args) => {
+                    const session = fake.start(...args);
+                    if (origin === 'result') {
+                      const result = Promise.resolve().then(fail);
+                      void result.catch(() => undefined);
+                      return {
+                        ...session,
+                        events: {
+                          [Symbol.asyncIterator]: () => ({
+                            next: () => Promise.resolve({ done: true as const, value: undefined }),
+                          }),
+                        },
+                        result,
+                      };
+                    }
+                    if (origin === 'iterator')
+                      return { ...session, events: { [Symbol.asyncIterator]: fail } };
+                    return session;
+                  },
+          };
+        }
+        const v = e.publish(inferenceLoop('external boundaries', config));
+        const run = await e.runToIdle(v.loopId);
+        const withHandle = origin === 'iterator' || origin === 'result';
+        const noHandle = origin === 'start' || origin === 'repair resume';
+        const harnessError =
+          withHandle || noHandle || origin === 'contextWindow' || origin === 'fits';
+        expect(run.failure?.code).toBe(
+          withHandle
+            ? 'HARNESS_DELIVERY_UNCERTAIN'
+            : harnessError
+              ? 'HARNESS_TURN_FAILED'
+              : 'INTERNAL_ERROR',
+        );
+        expect(run.failure?.resumable).toBe(!withHandle);
+        expect(JSON.stringify(run.failure?.details ?? {})).not.toMatch(/after-result|"boundary"/);
+        if (harnessError) expect(run.failure?.message).toContain('external marker');
+        if (noHandle || withHandle || origin.endsWith('output'))
+          expect(run.failure?.inference?.submission).toBe(
+            noHandle ? 'definitely-not-submitted' : 'delivery-uncertain',
+          );
+        else expect(run.failure?.inference).toBeUndefined();
+      },
+    );
+  }
+
+  it('keeps a genuine earlier evaluator error external on a partially completed write', async () => {
+    const e = await createTestEngine();
+    const error: unknown = await evaluateExpression('$error("PRIVATE_WRITE")', {}).catch(
+      (fault: unknown) => fault,
+    );
+    const writes: string[] = [];
+    e.ports.workspace.writeFile = (_dir, path) => {
+      writes.push(path);
+      throw error;
+    };
+    const v = e.publish(
+      inferenceLoop('partial write', {
+        contextFiles: [
+          { path: 'first', template: 'valid' },
+          { path: 'later', template: 'valid' },
+        ],
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    expect(run.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
+    expect(JSON.stringify(run.failure)).not.toContain('PRIVATE_WRITE');
+    expect(writes).toEqual(['first']);
+  });
+});
+
+it.each(['repair', 'continuation'] as const)(
+  'attaches a post-result transform failure to the actual last %s turn',
+  async (kind) => {
+    const e = await createTestEngine();
+    const config = {
+      output: {
+        transforms: [badExpression],
+        ...(kind === 'repair'
+          ? {
+              schema: {
+                jsonSchema: { type: 'number' },
+                repair: { maxAttempts: 1, prompt: 'Repair' },
+              },
+            }
+          : {}),
+      },
+    };
+    const v = e.publish(inferenceLoop('last actual task', config));
+    e.ports.harness.script(
+      kind === 'repair'
+        ? [{ finalText: 'invalid' }, { finalText: '42' }]
+        : [
+            {
+              finalText: 'interrupted',
+              accepted: true,
+              error: { code: 'HARNESS_TURN_FAILED', message: 'lost result' },
+              submission: 'delivery-uncertain',
+            },
+            { finalText: 'done' },
+          ],
+    );
+    let run = await e.runToIdle(v.loopId);
+    if (kind === 'continuation') {
+      expect(run.failure?.resumable).toBe(true);
+      await e.manager.resume(run.id);
+      run = await e.settle(run.id);
+    }
+    const turns = e.events(run.id).filter((event) => event.type === 'harness.turn');
+    expect(turns).toHaveLength(2);
+    expect(run.failure).toMatchObject({
+      code: 'MUTATION_ERROR',
+      resumable: false,
+      details: { phase: 'after-result' },
+      inference: {
+        visitId: turns[1]!.visitId,
+        turnId: turns[1]!.turnId,
+        sessionId: 'fake-session-1',
+        promptKind: kind,
+        submission: 'delivery-uncertain',
+      },
+    });
+    expect(turns[0]!.turnId).not.toBe(turns[1]!.turnId);
+    await expect(e.manager.resume(run.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+    expect(e.ports.harness.resumed).toHaveLength(1);
+  },
+);

@@ -1,0 +1,164 @@
+{
+  "capturedAtUtc": "2026-11-22T18:22:19.8136780Z",
+  "status": "DIAGNOSTIC UNACCEPTED",
+  "currentDistinctCases": 24,
+  "passed": 21,
+  "failed": 3,
+  "rootCauseBatches": 2,
+  "matrixRows": 17,
+  "matrixPass": 15,
+  "matrixFail": 2,
+  "separateWholeSuiteRun": false,
+  "cases": [
+    {
+      "name": "boundary C1 negative: cold acknowledged resume tail cannot promote an older successful failure observation",
+      "status": "failed",
+      "rawReport": "cold-initial.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary C1 positive: cold stable terminal with audit suffix settles without new event payload or finalizedAt",
+      "status": "passed",
+      "rawReport": "cold-initial.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary C2: 21 public run visits evict A; a late old row cannot certify the new entry, then fresh terminal reads settle",
+      "status": "passed",
+      "rawReport": "remaining-boundaries.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary C3: cold actual 401 refuses a terminal claim",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary C3: cold actual 404 refuses a terminal claim",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G1: rejection immediately withholds header evidence and late old successful observation cannot restore it",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery",
+      "status": "failed",
+      "rawReport": "follower-generation.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G2 stream negative: a pre-rejection stream cannot become current evidence after same-key recovery",
+      "status": "failed",
+      "rawReport": "stream-and-provider.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G2/G4: cross-tab-key recovery rejects old receipts and accepts current-source reads",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G2/G4: replacement-key recovery rejects old receipts and accepts current-source reads",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G2/G4: same-key recovery rejects old receipts and accepts current-source reads",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G3 cache replacement: same client with a new QueryClient requires current receipts",
+      "status": "failed",
+      "rawReport": "remaining-boundaries.json",
+      "excludedFixtureSchedule": true
+    },
+    {
+      "name": "boundary G3 provider replacement: same client with a new provider and QueryClient requires current receipts",
+      "status": "passed",
+      "rawReport": "stream-and-provider.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G3: new API client with the same QueryClient withholds former source until current reads settle",
+      "status": "passed",
+      "rawReport": "auth-source-refusal.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary G4: delayed old-key 401 does not reject replacement key; cross-tab forget withholds prior header",
+      "status": "passed",
+      "rawReport": "remaining-boundaries.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary I1: live progress keeps the existing request budget, event-cache format and server action authority",
+      "status": "passed",
+      "rawReport": "remaining-boundaries.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "boundary R1-D: duplicate prior outcome and foreign observation cannot supersede this run resume",
+      "status": "passed",
+      "rawReport": "duplicate-and-foreign.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R1 desired outcome: delayed-terminal-observation retains predecessor knowledge and converges to parked waiting",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R1 desired outcome: observation-first retains predecessor knowledge and converges to parked waiting",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R1 desired outcome: stream-first retains predecessor knowledge and converges to parked waiting",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R2 desired outcome: equal-sequence row never presents a terminal node without its source",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R2 desired outcome: fresh agreeing row never presents a terminal node without its source",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R2 desired outcome: older row never presents a terminal node without its source",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=false)",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    },
+    {
+      "name": "corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=true)",
+      "status": "passed",
+      "rawReport": "core-eight.json",
+      "excludedFixtureSchedule": false
+    }
+  ]
+}

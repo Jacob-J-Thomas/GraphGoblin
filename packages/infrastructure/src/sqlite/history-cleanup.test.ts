@@ -107,7 +107,7 @@ it.each(['succeeded', 'failed', 'cancelled', 'exhausted'] as const)(
     const retained = await seed('unused-template', undefined, version);
     await repo.update(retained, { status });
     const owner = await seed('ordinary-workspace');
-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
     await writeFile(join(workspace, 'owned'), 'reclaim');
     await mark([owner]);
     expect(await store.prepareBatch('local')).toBe(1);
@@ -154,7 +154,6 @@ it('backfills only live unused template obligations and restores them on Resume'
   }
   const path = await resources.workspace.resolve(
     { kind: 'fixed', path: join(directory, 'user') },
-    {},
     terminal,
   );
   expect(await pending()).toEqual([]);
@@ -191,12 +190,12 @@ it('protects live dynamic templates until termination, and bounds literal templa
   };
   const dynamic = await create('live-dynamic-template', '{{trigger.payload.dir}}');
   const sharedOwner = await seed('literal-shared-owner');
-  const shared = await resources.workspace.resolve({ kind: 'temp' }, {}, sharedOwner);
+  const shared = await resources.workspace.resolve({ kind: 'temp' }, sharedOwner);
   await writeFile(join(shared, 'keep'), 'shared');
   const literal = await create('live-literal-template', `\t ${shared}\n`);
   const empty = await create('live-empty-template', '\t \n');
   const owner = await seed('template-owner');
-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
   await writeFile(join(workspace, 'owned'), 'reclaim');
   await mark([owner, sharedOwner]);
   await store.prepareBatch('local');
@@ -233,7 +232,7 @@ it.each(process.platform === 'win32' ? ['junction', 'short-name'] : ['junction']
     resources = new OwnedRunResources(dataDir, new SqliteRunResources(handle.db));
     store = new SqliteHistoryCleanup(handle.db, resources);
     const id = await seed('alias-data-owner');
-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
     await resources.workspace.writeFile(workspace, 'owned', 'workspace');
     const artifact = await resources.artifacts.put('transcript', 'transcript', id);
     expect(await resources.artifacts.get(artifact.ref)).toBe('transcript');
@@ -259,7 +258,7 @@ it.each(process.platform === 'win32' ? ['junction', 'short-name'] : ['junction']
     await rename(join(physical, 'workspaces'), join(physical, 'old-workspaces'));
     await symlink(target, join(physical, 'workspaces'), 'junction');
     await expect(
-      resources.workspace.resolve({ kind: 'temp' }, {}, fakeUlid('refuse-link')),
+      resources.workspace.resolve({ kind: 'temp' }, fakeUlid('refuse-link')),
     ).rejects.toThrow('Managed resource root is a link');
   },
 );
@@ -314,11 +313,11 @@ it('bounds each root batch and eventually covers approved history without broade
 
 it('reaps a positively owned workspace and artifact but preserves run-shaped, fixed and unrelated paths', async () => {
   const id = await seed('owned');
-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
   await resources.workspace.writeFile(workspace, 'result.txt', 'owned bytes');
   const artifact = await resources.artifacts.put('text', 'owned artifact', id);
   const fixed = join(directory, 'user-owned');
-  await resources.workspace.resolve({ kind: 'fixed', path: fixed }, {}, id);
+  await resources.workspace.resolve({ kind: 'fixed', path: fixed }, id);
   await writeFile(join(fixed, 'keep'), 'user bytes');
   const shaped = join(directory, 'workspaces', fakeUlid('unproven'));
   await mkdir(shaped);
@@ -341,15 +340,15 @@ it('keeps an existing unproven workspace, shared directory, shared artifact and 
   const id = await seed('owned'),
     kept = await seed('kept'),
     unproven = await seed('unproven');
-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, id);
   await writeFile(join(workspace, 'keep'), 'shared');
-  await resources.workspace.resolve({ kind: 'fixed', path: workspace }, {}, kept);
+  await resources.workspace.resolve({ kind: 'fixed', path: workspace }, kept);
   const file = await resources.artifacts.put('text', 'shared artifact', id);
   await resources.artifacts.put('text', 'shared artifact', kept);
   const unprovenPath = join(directory, 'workspaces', unproven);
   await mkdir(unprovenPath);
   await writeFile(join(unprovenPath, 'keep'), 'pre-existing');
-  await resources.workspace.resolve({ kind: 'temp' }, {}, unproven);
+  await resources.workspace.resolve({ kind: 'temp' }, unproven);
   const linked = await resources.artifacts.put('text', 'hard-linked', id);
   const linkedPath = join(directory, 'artifacts', ...linked.ref.slice(9).split('/'));
   const outside = join(directory, 'unrelated-link');
@@ -407,7 +406,7 @@ it('does not infer ownership of old artifact bytes and refuses a replaced worksp
   const id = await seed('owned');
   const legacy = await new FsArtifactStore(directory).put('text', 'old bytes');
   await resources.artifacts.put('text', 'old bytes', id);
-  const path = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+  const path = await resources.workspace.resolve({ kind: 'temp' }, id);
   await writeFile(join(path, 'owned'), 'old workspace');
   await rename(path, join(directory, 'moved'));
   await mkdir(path);
@@ -422,11 +421,11 @@ it('does not infer ownership of old artifact bytes and refuses a replaced worksp
 it('preserves an entire workspace containing a hard link and bounds oversized inventories before removing files', async () => {
   const linked = await seed('linked'),
     large = await seed('large');
-  const linkedPath = await resources.workspace.resolve({ kind: 'temp' }, {}, linked);
+  const linkedPath = await resources.workspace.resolve({ kind: 'temp' }, linked);
   const target = join(directory, 'outside');
   await writeFile(target, 'keep linked bytes');
   await link(target, join(linkedPath, 'link'));
-  const largePath = await resources.workspace.resolve({ kind: 'temp' }, {}, large);
+  const largePath = await resources.workspace.resolve({ kind: 'temp' }, large);
   for (let i = 0; i < 2000; i += 32)
     await Promise.all(
       Array.from({ length: Math.min(32, 2000 - i) }, (_, offset) =>
@@ -563,7 +562,7 @@ it.each(['alias', 'missing-descendant', 'case', 'error', 'deep'] as const)(
   async (mode) => {
     const owner = await seed('owner'),
       retained = await seed('retained');
-    const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+    const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
     await writeFile(join(workspace, 'keep.txt'), 'retained bytes');
     const alias = join(directory, 'alias');
     await symlink(workspace, alias, 'junction');
@@ -609,7 +608,7 @@ it('reports every preserved resource across repeated passes instead of alternati
 it('defers workspaces until a bounded 2048-reference refresh completes, then reclaims them', async () => {
   const owner = await seed('owner'),
     retained = await seed('retained');
-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
   await writeFile(join(workspace, 'keep.txt'), 'unproven bytes');
   const paths = Array.from({ length: 2050 }, (_, i) => join(directory, `missing-${i}`));
   await handle.client.execute({
@@ -728,7 +727,7 @@ it('rechecks retained usage added after inventory before moving anything out of 
 
 it('refreshes a fixed alias created after publication before staging an owned workspace', async () => {
   const owner = await seed('late-alias-owner');
-  const workspace = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
+  const workspace = await resources.workspace.resolve({ kind: 'temp' }, owner);
   await writeFile(join(workspace, 'keep'), 'later alias still protects');
   const alias = join(directory, 'later');
   const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
@@ -780,7 +779,7 @@ describe('large retained stores', () => {
     for (let i = 0; i < 61; i++) {
       const id = await seed('window-' + i);
       ids.push(id);
-      const path = await resources.workspace.resolve({ kind: 'temp' }, {}, id);
+      const path = await resources.workspace.resolve({ kind: 'temp' }, id);
       workspacePaths.push(path);
       await writeFile(join(path, 'result'), 'owned');
       const value = 'protected-' + i;
@@ -826,7 +825,7 @@ describe('large retained stores', () => {
       remove: (r, p, signal) => resources.remove(r, p, signal),
     });
     const small = await seed('small-owner');
-    const smallPath = await resources.workspace.resolve({ kind: 'temp' }, {}, small);
+    const smallPath = await resources.workspace.resolve({ kind: 'temp' }, small);
     await writeFile(join(smallPath, 'result'), 'small');
     await mark([small]);
     await store.prepareBatch('local');
@@ -844,8 +843,8 @@ describe('large retained stores', () => {
     const templateVersion = (await loops.publish(template.loop.id))!;
     const owner = await seed('large-owner'),
       sharedOwner = await seed('large-shared');
-    const free = await resources.workspace.resolve({ kind: 'temp' }, {}, owner);
-    const shared = await resources.workspace.resolve({ kind: 'temp' }, {}, sharedOwner);
+    const free = await resources.workspace.resolve({ kind: 'temp' }, owner);
+    const shared = await resources.workspace.resolve({ kind: 'temp' }, sharedOwner);
     await writeFile(join(free, 'result'), 'reclaim these bytes');
     await writeFile(join(shared, 'keep'), 'retained shared bytes');
     const alias = join(directory, 'shared-alias');

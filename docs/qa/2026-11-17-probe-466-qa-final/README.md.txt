@@ -1,0 +1,22 @@
+# Independent Windows QA for #466 correction 01
+
+**Pass for the corrected finding.** The same real Vitest timeout now reports the timeout, the late body failure and the case-root removal failure as three separate errors. The successor passed after the prior case settled. The unmodified corrected probe-directory suite passed all nine cases.
+
+## Evidence
+
+| Check | Result | Receipt |
+| --- | --- | --- |
+| Corrected source and independent input | The test file changed from SHA-256 `c952e3b40359ef448e3c22a46ebd9ad4f8818f4da608f00aa09c8cccf1be2d6d` to `9d952d1cd6d731e223cc47ac53ec5e40b89db3ddf90f8f4ca983ac1f30b8ec5a`. Only that file was copied into the QA worktree. Both documentation hashes still match the original. The generated QA test uses the corrected helper verbatim with the independent QA body at its original SHA-256 `646e5861c25efdc1783f9b0f00c4f313106f95f83acdc0a23116fb7a20c4c98f`. | [Exact source delta](corrected-vs-original.diff), [source copy](source-copy.txt), [generator receipt](generator-receipt.txt), [generated test](generated-independent-qa.test.ts.txt) |
+| Preserved failure against the original candidate | The first case reported the default 5000 ms timeout and `QA466_ROOT_REMOVE_FAILURE`, with the late body failure absent. The original failure packet's 34 hashes still match. | [Original Vitest output](../i1-probe-466-independent-qa/double-fault-vitest.log), [original manifest](../i1-probe-466-independent-qa/MANIFEST.sha256) |
+| Same fault through Vitest against corrected source | Vitest separately reported the unchanged 5000 ms timeout, `QA466_LATE_BODY_FAILURE`, and `QA466_ROOT_REMOVE_FAILURE` with `EBUSY`. The deliberate timeout failed the first test and the successor passed. Process exit 1 was expected. | [Vitest output](double-fault-vitest.log), [exit receipt](double-fault-receipt.txt), [report and ordering check](result-check.txt) |
+| Successor and fixture ownership | Vitest aborted at 5022 ms. The deferred directory read released at 5683 ms, native probe removal completed at 5688 ms with the case's TEMP stubs active, and the body settled at 5691 ms. Case-root removal then received the deliberate EBUSY fault with environment values already restored. The successor at 5694 ms observed the completed body, no probe directory, no child started, and the expected retained case root. The wrapper found only that root and removed it. Both runs ended with no owned TEMP roots or fake-CLI processes. | [Event stream](double-fault-events.jsonl), [cleanup receipt](final-source-and-cleanup.txt) |
+| Focused regression suite | All nine unmodified candidate tests passed, including the long TEMP path, one and four collisions, real creation fault, ordinary failure and two added combined-failure cases. Process exit 0. | [Vitest output](matrix-vitest.log), [exit receipt](matrix-receipt.txt) |
+
+## Reproduction scope
+
+Windows 11 Pro build 26300, Node 22.23.4, pnpm 12.8.1 and Vitest 5.0.3. QA branch `codex/gg-20261117-probe-466-qa` at base `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. Each invocation used its own TEMP/TMP/TMPDIR and the existing installed dependencies. The runner's default timeout and retry settings applied. The QA sibling file was removed by exact path after verification.
+
+- `pnpm.cmd --filter @graphgoblin/adapter-codex test src/probe-directory.test.ts --reporter=verbose`
+- `pnpm.cmd --filter @graphgoblin/adapter-codex test src/probe-directory.independent-qa.test.ts --reporter=verbose` with `GG_466_QA_SCENARIO=double-fault`
+
+Coverage, Linux, external cancellation and formal review were outside this targeted rerun. The unrelated production Windows cwd-release behavior and repository audit #503 remain outside the result.

@@ -1,0 +1,1566 @@
+{
+  "cases": [],
+  "checks": [
+    {
+      "name": "actual HTTP auth enforced",
+      "pass": true
+    },
+    {
+      "name": "HTTP loop created",
+      "pass": true,
+      "detail": {
+        "method": "POST",
+        "path": "/loops",
+        "status": 201,
+        "body": {
+          "loop": {
+            "id": "01M7Z3791RY32AND2SR5GJCAYZ",
+            "ownerId": "local",
+            "name": "Independent corrective public probe",
+            "draftVersionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+            "createdAt": "2026-11-21T13:02:39.672Z",
+            "updatedAt": "2026-11-21T13:02:39.672Z"
+          },
+          "draft": {
+            "id": "01M7Z3791RY32AND2SR5GJCAZ0",
+            "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Independent corrective public probe",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "infer",
+                  "label": "Infer",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-opus-5-5",
+                    "effort": "xhigh",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "PROMPT_CANARY_API364"
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-21T13:02:39.672Z"
+          },
+          "issues": []
+        },
+        "authenticated": true
+      }
+    },
+    {
+      "name": "HTTP publish ready",
+      "pass": true
+    },
+    {
+      "name": "auth-lost API preflight unknown",
+      "pass": true,
+      "detail": {
+        "state": "unknown",
+        "ok": false,
+        "version": "2.1.285",
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null,
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "harness": "claude"
+      }
+    },
+    {
+      "name": "auth-lost API auth fact",
+      "pass": true,
+      "detail": {
+        "state": "unknown",
+        "ok": false,
+        "version": "2.1.285",
+        "problems": [
+          "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "authMethod": null,
+        "supportedPolicies": [
+          {
+            "sandbox": "read-only",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "builtin-tools",
+            "network": "unconfined"
+          },
+          {
+            "sandbox": "danger-full-access",
+            "approval": "never",
+            "permissionMode": "dontAsk",
+            "tools": [
+              "Read",
+              "Glob",
+              "Grep",
+              "Edit",
+              "Write",
+              "Bash"
+            ],
+            "authMethod": "claude.ai",
+            "boundary": "unconfined",
+            "network": "unconfined"
+          }
+        ],
+        "models": [
+          {
+            "model": "claude-opus-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-fable-5-1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-sonnet-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "model": "claude-haiku-5-5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "harness": "claude"
+      }
+    },
+    {
+      "name": "auth-lost API fixed cause",
+      "pass": true,
+      "detail": [
+        "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+      ]
+    },
+    {
+      "name": "auth-lost preflight no persisted execution",
+      "pass": true,
+      "detail": {
+        "before": {
+          "__drizzle_migrations": 30,
+          "api_keys": 1,
+          "chat_audio": 0,
+          "chat_audio_uploads": 0,
+          "chat_bindings": 1,
+          "chat_conversations": 0,
+          "chat_devices": 0,
+          "chat_pairings": 0,
+          "chat_turns": 0,
+          "classifier_models": 1,
+          "event_receipts": 0,
+          "gg_upgrade_state": 1,
+          "harness_sessions": 0,
+          "inbound_events": 0,
+          "loop_versions": 2,
+          "loops": 2,
+          "model_catalog": 13,
+          "model_discovery": 0,
+          "ollama_connection": 1,
+          "run_events": 0,
+          "run_resource_uses": 0,
+          "run_resources": 0,
+          "runs": 0,
+          "schedules": 0,
+          "secrets": 0,
+          "settings": 0,
+          "timers": 0,
+          "webhook_endpoints": 0,
+          "webhook_receipts": 0,
+          "workspace_reference_state": 1,
+          "workspace_references": 0
+        },
+        "after": {
+          "__drizzle_migrations": 30,
+          "api_keys": 1,
+          "chat_audio": 0,
+          "chat_audio_uploads": 0,
+          "chat_bindings": 1,
+          "chat_conversations": 0,
+          "chat_devices": 0,
+          "chat_pairings": 0,
+          "chat_turns": 0,
+          "classifier_models": 1,
+          "event_receipts": 0,
+          "gg_upgrade_state": 1,
+          "harness_sessions": 0,
+          "inbound_events": 0,
+          "loop_versions": 2,
+          "loops": 2,
+          "model_catalog": 13,
+          "model_discovery": 0,
+          "ollama_connection": 1,
+          "run_events": 0,
+          "run_resource_uses": 0,
+          "run_resources": 0,
+          "runs": 0,
+          "schedules": 0,
+          "secrets": 0,
+          "settings": 0,
+          "timers": 0,
+          "webhook_endpoints": 0,
+          "webhook_receipts": 0,
+          "workspace_reference_state": 1,
+          "workspace_references": 0
+        }
+      }
+    },
+    {
+      "name": "auth-lost refused admission",
+      "pass": true,
+      "detail": {
+        "method": "POST",
+        "path": "/loops/01M7Z3791RY32AND2SR5GJCAYZ/runs",
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/harness-not-ready",
+          "title": "harness not ready",
+          "status": 422,
+          "code": "HARNESS_NOT_READY",
+          "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+          "errors": [
+            {
+              "code": "HARNESS_READINESS_UNKNOWN",
+              "severity": "warning",
+              "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+              "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+              "nodeId": "infer",
+              "path": "config.harness",
+              "message": "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+            }
+          ]
+        },
+        "authenticated": true
+      }
+    },
+    {
+      "name": "auth-lost refused admission no new rows",
+      "pass": true
+    },
+    {
+      "name": "auth-lost admitted ready snapshot",
+      "pass": true,
+      "detail": {
+        "method": "POST",
+        "path": "/loops/01M7Z3791RY32AND2SR5GJCAYZ/runs",
+        "status": 202,
+        "body": {
+          "run": {
+            "id": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "ownerId": "local",
+            "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+            "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent corrective public probe",
+              "label": "Independent corrective public probe v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "claude": {
+                      "model": "claude-opus-5-5",
+                      "effort": "xhigh"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "invocationId": "01M7Z379QPFEJRZ3EQS0XD2SG5",
+            "status": "queued",
+            "iteration": 1,
+            "createdAt": "2026-11-21T13:02:40.374Z",
+            "lastEventSeq": 1
+          }
+        },
+        "authenticated": true
+      }
+    },
+    {
+      "name": "auth-lost persisted fixed nonresumable failure",
+      "pass": false,
+      "detail": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude CLI check output could not be read.",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+          "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      }
+    }
+  ],
+  "ports": [
+    58500
+  ],
+  "calls": [
+    {
+      "mode": "ready",
+      "kind": "version",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-9cdf92a1",
+      "result": {
+        "exitCode": 0,
+        "stdout": "2.1.285 (Claude Code)\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "ready",
+      "kind": "help",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-9cdf92a1",
+      "result": {
+        "exitCode": 0,
+        "stdout": "--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "ready",
+      "kind": "auth",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-9cdf92a1",
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"authMethod\":\"claude.ai\"}\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "version",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-771856cd",
+      "result": {
+        "exitCode": 0,
+        "stdout": "2.1.285 (Claude Code)\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "help",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-771856cd",
+      "result": {
+        "exitCode": 0,
+        "stdout": "--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "auth",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-771856cd",
+      "result": {
+        "stdout": "{\"authMethod\":\"claude.ai\",\"email\":\"authentication@OUTPUT_CANARY_API364",
+        "exitCode": 1,
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "outputFailed": true
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "version",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-e2866e7d",
+      "result": {
+        "exitCode": 0,
+        "stdout": "2.1.285 (Claude Code)\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "help",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-e2866e7d",
+      "result": {
+        "exitCode": 0,
+        "stdout": "--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "auth",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-e2866e7d",
+      "result": {
+        "stdout": "{\"authMethod\":\"claude.ai\",\"email\":\"authentication@OUTPUT_CANARY_API364",
+        "exitCode": 1,
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "outputFailed": true
+      }
+    },
+    {
+      "mode": "ready",
+      "kind": "version",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-d07b9ad7",
+      "result": {
+        "exitCode": 0,
+        "stdout": "2.1.285 (Claude Code)\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "ready",
+      "kind": "help",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-d07b9ad7",
+      "result": {
+        "exitCode": 0,
+        "stdout": "--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "ready",
+      "kind": "auth",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-d07b9ad7",
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"authMethod\":\"claude.ai\"}\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "version",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-f1251497",
+      "result": {
+        "exitCode": 0,
+        "stdout": "2.1.285 (Claude Code)\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "help",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "--max-turns",
+        "1",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-f1251497",
+      "result": {
+        "exitCode": 0,
+        "stdout": "--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume\n",
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false
+      }
+    },
+    {
+      "mode": "auth-lost",
+      "kind": "auth",
+      "binary": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\BINARY_CANARY_Q364.exe",
+      "args": [
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
+        "auth",
+        "status",
+        "--json"
+      ],
+      "cwd": "G:\\ggq\\qa-scratch\\i4-364-probe-independent-01\\gg-claude-probe-f1251497",
+      "result": {
+        "stdout": "{\"authMethod\":\"claude.ai\",\"email\":\"authentication@OUTPUT_CANARY_API364",
+        "exitCode": 1,
+        "timedOut": false,
+        "aborted": false,
+        "overflow": false,
+        "outputFailed": true
+      }
+    }
+  ],
+  "http": [
+    {
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 401,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "an API key is required"
+      },
+      "authenticated": false
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "loop": {
+          "id": "01M7Z3791RY32AND2SR5GJCAYZ",
+          "ownerId": "local",
+          "name": "Independent corrective public probe",
+          "draftVersionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+          "createdAt": "2026-11-21T13:02:39.672Z",
+          "updatedAt": "2026-11-21T13:02:39.672Z"
+        },
+        "draft": {
+          "id": "01M7Z3791RY32AND2SR5GJCAZ0",
+          "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent corrective public probe",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "xhigh",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "PROMPT_CANARY_API364"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-21T13:02:39.672Z"
+        },
+        "issues": []
+      },
+      "authenticated": true
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7Z3791RY32AND2SR5GJCAYZ/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M7Z3791RY32AND2SR5GJCAZ0",
+          "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent corrective public probe",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "xhigh",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "PROMPT_CANARY_API364"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-21T13:02:39.672Z",
+          "publishedAt": "2026-11-21T13:02:39.974Z"
+        },
+        "issues": []
+      },
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "state": "unknown",
+            "ok": false,
+            "version": "2.1.285",
+            "problems": [
+              "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+            ],
+            "authMethod": null,
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": [
+                  "Read",
+                  "Glob",
+                  "Grep"
+                ],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": [
+                  "Read",
+                  "Glob",
+                  "Grep",
+                  "Edit",
+                  "Write",
+                  "Bash"
+                ],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              },
+              {
+                "model": "claude-sonnet-5-5",
+                "efforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              },
+              {
+                "model": "claude-haiku-5-5",
+                "efforts": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      },
+      "authenticated": true
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7Z3791RY32AND2SR5GJCAYZ/runs",
+      "status": 422,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/harness-not-ready",
+        "title": "harness not ready",
+        "status": 422,
+        "code": "HARNESS_NOT_READY",
+        "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+        "errors": [
+          {
+            "code": "HARNESS_READINESS_UNKNOWN",
+            "severity": "warning",
+            "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+            "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+            "nodeId": "infer",
+            "path": "config.harness",
+            "message": "Claude CLI check output could not be read. Check that the Claude CLI starts and responds, then retry preflight."
+          }
+        ]
+      },
+      "authenticated": true
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7Z3791RY32AND2SR5GJCAYZ/runs",
+      "status": 202,
+      "body": {
+        "run": {
+          "id": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+          "ownerId": "local",
+          "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+          "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Independent corrective public probe",
+            "label": "Independent corrective public probe v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-opus-5-5",
+                    "effort": "xhigh"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M7Z379QPFEJRZ3EQS0XD2SG5",
+          "status": "queued",
+          "iteration": 1,
+          "createdAt": "2026-11-21T13:02:40.374Z",
+          "lastEventSeq": 1
+        }
+      },
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/runs/01M7Z379QPFEJRZ3EQS0XD2SG4",
+      "status": 200,
+      "body": {
+        "id": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+        "ownerId": "local",
+        "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+        "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Independent corrective public probe",
+          "label": "Independent corrective public probe v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "claude": {
+                  "model": "claude-opus-5-5",
+                  "effort": "xhigh"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7Z379QPFEJRZ3EQS0XD2SG5",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "HARNESS_TURN_FAILED",
+          "message": "harness turn failed: Claude CLI check output could not be read.",
+          "nodeId": "infer",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+            "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+            "submission": "definitely-not-submitted",
+            "promptKind": "authored"
+          }
+        },
+        "createdAt": "2026-11-21T13:02:40.374Z",
+        "startedAt": "2026-11-21T13:02:40.686Z",
+        "finishedAt": "2026-11-21T13:02:40.948Z",
+        "finalizedAt": "2026-11-21T13:02:40.958Z",
+        "lastEventSeq": 9,
+        "recovery": {
+          "observedSeq": 9,
+          "resume": {
+            "allowed": false,
+            "code": "FAILURE_NOT_RESUMABLE",
+            "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ]
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": []
+            }
+          ]
+        }
+      },
+      "authenticated": true
+    },
+    {
+      "method": "GET",
+      "path": "/runs/01M7Z379QPFEJRZ3EQS0XD2SG4/events?limit=500",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 1,
+            "ts": "2026-11-21T13:02:40.374Z",
+            "type": "run.queued",
+            "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+            "pinned": {
+              "source": "published",
+              "version": 1,
+              "name": "Independent corrective public probe",
+              "label": "Independent corrective public probe v1",
+              "defaults": {
+                "owner": {
+                  "byHarness": {}
+                },
+                "process": {
+                  "byHarness": {
+                    "claude": {
+                      "model": "claude-opus-5-5",
+                      "effort": "xhigh"
+                    }
+                  }
+                }
+              },
+              "limits": {
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null
+              },
+              "classifiers": {}
+            },
+            "initialThread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+                "loopId": "01M7Z3791RY32AND2SR5GJCAYZ",
+                "versionId": "01M7Z3791RY32AND2SR5GJCAZ0",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "01M7Z379QPFEJRZ3EQS0XD2SG5",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "01M7Z378ZSZFJGM7NT6YBWGR4H"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": null,
+                  "receivedAt": "2026-11-21T13:02:40.374Z"
+                }
+              },
+              "messages": [],
+              "vars": {},
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {},
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            }
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 2,
+            "ts": "2026-11-21T13:02:40.689Z",
+            "type": "run.started",
+            "attempt": 1
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 3,
+            "ts": "2026-11-21T13:02:40.709Z",
+            "type": "node.started",
+            "nodeId": "start",
+            "kind": "trigger",
+            "attempt": 1,
+            "configHash": "527dee9c4254fe4e"
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 4,
+            "ts": "2026-11-21T13:02:40.719Z",
+            "type": "node.finished",
+            "nodeId": "start",
+            "patch": [
+              {
+                "op": "add",
+                "path": "/outputs/start",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T13:02:40.716Z"
+                }
+              },
+              {
+                "op": "add",
+                "path": "/lastOutput",
+                "value": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-11-21T13:02:40.716Z"
+                }
+              }
+            ],
+            "route": "out",
+            "durationMs": 2
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 5,
+            "ts": "2026-11-21T13:02:40.738Z",
+            "type": "node.started",
+            "nodeId": "infer",
+            "kind": "inference",
+            "attempt": 1,
+            "configHash": "8d5b375f2508e125"
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 6,
+            "ts": "2026-11-21T13:02:40.753Z",
+            "type": "harness.turn",
+            "nodeId": "infer",
+            "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+            "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+            "harness": "claude",
+            "promptKind": "authored",
+            "prompt": "PROMPT_CANARY_API364"
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 7,
+            "ts": "2026-11-21T13:02:40.931Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+            "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+            "submission": "definitely-not-submitted"
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 8,
+            "ts": "2026-11-21T13:02:40.935Z",
+            "type": "harness.submission",
+            "nodeId": "infer",
+            "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+            "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+            "submission": "definitely-not-submitted"
+          },
+          {
+            "runId": "01M7Z379QPFEJRZ3EQS0XD2SG4",
+            "seq": 9,
+            "ts": "2026-11-21T13:02:40.944Z",
+            "type": "run.failed",
+            "failure": {
+              "code": "HARNESS_TURN_FAILED",
+              "message": "harness turn failed: Claude CLI check output could not be read.",
+              "nodeId": "infer",
+              "resumable": false,
+              "details": {
+                "adapterCode": "HARNESS_TURN_FAILED"
+              },
+              "inference": {
+                "visitId": "01M7Z379QPFEJRZ3EQS0XD2SG4:5",
+                "turnId": "01M7Z37A3H9SHVKYBVKWPCJZFD",
+                "submission": "definitely-not-submitted",
+                "promptKind": "authored"
+              }
+            }
+          }
+        ],
+        "nextAfter": 9,
+        "hasMore": false
+      },
+      "authenticated": true
+    }
+  ]
+}

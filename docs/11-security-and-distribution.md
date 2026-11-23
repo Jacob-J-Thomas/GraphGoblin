@@ -1,5 +1,29 @@
 # 11 - Security and distribution
 
+Windows launcher's read-only identity and ownership helpers each enter a private kill-on-close
+job at process creation (ADR-0086). Only their own descendants are collected; queried owners,
+WMI's service, providers and the detached gateway are outside that lifetime. This needs Windows
+10 or Windows Server 2016 or later and compatible nested jobs. Staged installation checks API
+capability, and every click verifies actual containment before even reusing a gateway. Failure
+refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
+at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share a
+15-second initial work budget. Failed checks use one further two-second cleanup allowance before
+operator presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store
+rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
+fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
+
+Caller admission fixes an absolute monotonic work cutoff before argument/environment preparation.
+Native setup, creation admission, reads, validation and result consumption use that same cutoff;
+equality refuses. Held retries cannot restart a clock after setup or accept a free result inside
+the two-second cleanup reserve. Cleanup itself retains its independent allowance (D167).
+
+The ownership response is one strict JSON object, parsed once from raw decoded output before
+trimming. Only the exact free/held string fields are accepted; duplicate decoded names, unknown
+fields, JavaScript syntax and trailing material refuse. Legal JSON whitespace, Unicode and path
+escapes remain valid. Cleanup credit requires a complete process/job/stream observation before
+2,000 ms; equality or later completion remains unconfirmed even when resources can now be safely
+disposed. This preserves refusal precedence and pending-I/O resource ownership (D166).
+
 ## Licensing (Decided)
 
 - Allowed licences in the dependency tree: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0. Anything else fails the CI allowlist check and needs an ADR to add.
@@ -63,7 +87,7 @@ As an engineering parameter, Windows publication uses six attempts with five del
 ## Distribution (Decided)
 
 - The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.
-- Run exactly one API process per data directory and SQLite database file. Before opening SQLite or running migrations, recovery, timers, or scheduling, the API exclusively creates `<dataDir>/graphgoblin.lock` and `<database-file>.graphgoblin.lock` with its PID and start time. Canonical database ownership also protects an external `GG_DB_URL` reached from another data directory or a directory junction/symlink alias. A database with multiple hard links is refused because file-name locks cannot establish one owner across those aliases. A live owner causes `another GraphGoblin process holds <path>` and exit code 1, even on a different port. A lock is replaced when its PID is confirmed dead or equals this process's own PID without an in-process hold; malformed locks and uncheckable PIDs are refused. Clean shutdown, SIGINT, and SIGTERM release ownership after active runs settle and SQLite closes. `--create-api-key` takes both writer locks; stop the server first. A confirmed `--reset` takes them too, and its dry run checks ownership without taking it. Read-only `--preflight` can run alongside the server. Keep the same `GG_DATA_DIR` with an external database to preserve its master key/artifact association. There is no execution or scheduler lease between processes (05, "One run manager per store").
+- Run exactly one API process per data directory and SQLite database file. Before opening SQLite or running migrations, recovery, timers, or scheduling, the API exclusively creates `<dataDir>/graphgoblin.lock` and `<database-file>.graphgoblin.lock` with its PID and start time. Canonical database ownership also protects an external `GG_DB_URL` reached from another data directory or a directory junction/symlink alias. A database with multiple hard links is refused because file-name locks cannot establish one owner across those aliases. A live owner causes `another GraphGoblin process holds <path>` and exit code 1, even on a different port. For shell API startup this is a single, stack-free line with guidance to check the owner's port/configuration, wait for the owning process to finish or stop it before retrying. Uncertain ownership names the lock or reclamation guard and retains the verification reason; inspect the owner record and running GraphGoblin processes, then resolve the uncertainty before retrying. Control characters and line separators are escaped in these explanations. Unexpected shell startup failures keep their existing diagnostics. A lock is replaced when its PID is confirmed dead or equals this process's own PID without an in-process hold; malformed locks and uncheckable PIDs are refused. Clean shutdown, SIGINT, and SIGTERM release ownership after active runs settle and SQLite closes. `--create-api-key` takes both writer locks; stop the server first. A confirmed `--reset` takes them too, and its dry run checks ownership without taking it. Its manifest lists both lock files, and any stale lock file or `.reclaim` guard that taking them reclaims, as the reset's own rather than as kept data, once each under the name the directory lists, matched by filesystem identity rather than letter case (a hard link under another name stays kept, and hard links the filesystem cannot tell apart refuse the reset); its output says what releasing each lock did. The confirmed manifest and a refusal after taking the locks say a stale entry was reclaimed only when the lock module reports that this acquisition removed it, and otherwise that a stale entry the preview found was already gone when the lock was taken, without saying who removed it; a failed attempt to take either lock is never reported as no change, but names that lock and lists its file and guard as found before and after the attempt. Read-only `--preflight` can run alongside the server. Keep the same `GG_DATA_DIR` with an external database to preserve its master key/artifact association. There is no execution or scheduler lease between processes (05, "One run manager per store").
 - Preflight on first run checks Node version, harnesses, the data directory, and the master key source. Claude requires the owner-installed native Windows CLI version 2.1.285 or newer, required capabilities and Claude.ai login; without a Claude default configured, its absence is a warning. See "First-run preflight" below.
 - Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
 
@@ -73,14 +97,24 @@ The optional [macOS Finder/Dock launcher](decisions/ADR-0082-macos-finder-dock-l
 installs per user from a built checkout, for native Apple Silicon macOS 15 or later. It saves
 the canonical checkout and Node 22.22.2+ path, local store and typed options. It uses direct
 detached process creation and opens the default browser after verifying the intended gateway
-and both web shells. The launcher never stops the gateway; the existing management controls
-retain that authority. Installation and replacement require private descriptor-verified
+and both web shells. The launcher never stops the gateway. Shutdown begins through the
+existing authenticated API. Browser Wait and Force are available only after an externally
+initiated drain reaches its choice phase. Installation and replacement require private descriptor-verified
 bundle/receipt state and same-volume publication. Foreign destinations and uncertain ownership
 refuse. The private APFS log root is independently reserved by the API before loading the
 application; the same bounded writer serves Windows and Mac adapters. The Mac launch also
 rechecks its local key source after both writer leases, before SQLite or key creation.
 The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
 describes alternate app names and log locations. No automatic update or login item is installed.
+
+The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
+case-insensitively, before the installer writes any configuration, including temporary staging
+files. Empty values are refused too. The native launcher also refuses these keys in manually
+edited JSON before starting or reusing a gateway. Refusals never print their values. Use the
+data directory's `master.key` and GraphGoblin's encrypted secret store instead. Ordinary
+non-secret overrides remain supported; inherited `GG_*` variables are still cleared rather
+than copied into launcher configuration or its child environment
+([ADR-0085](decisions/ADR-0085-refuse-launcher-secret-overrides.md)).
 
 A gateway started by the Windows launcher keeps its private server log in the launcher folder,
 which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
@@ -104,6 +138,19 @@ verified live ownership from unverifiable ownership and retain the probe failure
 prove reuse and need independent inspection if their PID now belongs to another process.
 See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
 
+Reading an enumerated recovery marker on Windows can also report `EPERM`. If an independent
+`lstat` finds that exact UUID path absent, recovery continues without unlinking it. An unreadable
+marker that still exists keeps its original error. Reads of the main owner record keep their errors.
+
+Concurrent Windows deletion can report `EPERM` after another contender has removed the same
+stale UUID marker or empty guard directory. The API accepts that outcome only when a separate
+`lstat` establishes that exact path is absent; it never retries the deletion. A marker or directory
+that remains present, or whose absence cannot be verified, retains a filesystem error naming the
+operation and code. Successor markers are preserved. If releasing the recovery guard fails after
+the main lock was acquired, acquisition rolls back the main lock and reports the cleanup failure.
+A failed rollback explicitly reports retained ownership. Failed releases keep their in-process
+holds, and additional cleanup failures retain the original refusal rather than replacing it.
+
 `scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 
 `pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
@@ -121,20 +168,37 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
-`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database and write-ahead log bytes (the `-shm` index is shared memory any reader updates).
+`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing, deferred, or not verified by this check), or `fail` (runs will not work until it is fixed). Nothing in it changes stored state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database bytes, stored rows and any existing write-ahead log bytes. SQLite's read-only open may still create or update the `-shm` shared-memory index and, if a WAL-mode store has no `-wal` file, create an empty one; it holds no frames, so no stored data changes.
 
-| Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                 |
-| Data directory | exists and a new probe file can be created (exclusively, random name) and removed                                                                             | does not exist yet (created on first start)                                                                                                          | not a directory, unreadable, or not writable                                            |
-| Master key     | `GG_MASTER_KEY` or `<dataDir>/master.key` decodes to 32 bytes                                                                                                 | no key yet (generated on first start; back it up)                                                                                                    | present but not a base64 32-byte key, or unreadable                                     |
-| Database       | reachable, no pending migrations                                                                                                                              | file does not exist yet but its nearest existing ancestor is a writable directory (start creates the rest), or migrations pending (applied at start) | cannot be opened, read, or queried, or its file cannot be created                       |
-| Harness `<id>` | `HarnessPort.preflight()` ok (Codex checks its executable and login; Claude checks native Windows CLI 2.1.285 or newer, supported flags, and Claude.ai login) | Claude is unavailable or not logged in while no Claude default is configured                                                                         | required harness not installed, not logged in, unsupported, or no harness is registered |
-| Jev            | `jev-api-key` secret set                                                                                                                                      | no key (Jev is optional; a decision selecting it cannot run), or not checkable before the database is migrated                                       |                                                                                         |
-| Default model  | Codex model is in its enabled catalog; a Claude default is the exact supported model and effort                                                               | configured model is in the catalog but disabled                                                                                                      | model is missing, unknown, wrong-family, or has unsupported effort                      |
+For an existing current, migrated store, offline model admission uses startup's catalog projection:
+stored rows come first, with shipped seeds appended in memory only when their `(harness, model)`
+pair is absent. A newly shipped seed can therefore satisfy `GG_DEFAULTS` before the first upgrade
+start without being inserted by preflight. Stored metadata and disabled rows still take precedence;
+preflight does not refresh them. Codex's disabled default remains a warning; disabled models stay
+unavailable to execution. Missing stores use the shipped catalog; unsupported or unreadable stores
+still fail their database check.
+
+| Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js        | major version 22 only                                                                                                                                         |                                                                                                                                                      | any major other than 22                                                                                                                        |
+| Data directory | exists and a new probe file can be created (exclusively, random name) and removed                                                                             | does not exist yet (created on first start)                                                                                                          | not a directory, unreadable, or not writable                                                                                                   |
+| Master key     | `GG_MASTER_KEY` or `<dataDir>/master.key` decodes to 32 bytes                                                                                                 | no key yet (generated on first start; back it up)                                                                                                    | present but not a base64 32-byte key, or unreadable                                                                                            |
+| Database       | reachable, no pending migrations                                                                                                                              | file does not exist yet but its nearest existing ancestor is a writable directory (start creates the rest), or migrations pending (applied at start) | cannot be opened, read, or queried, or its file cannot be created                                                                              |
+| Harness `<id>` | `HarnessPort.preflight()` ok (Codex checks its executable and login; Claude checks native Windows CLI 2.1.285 or newer, supported flags, and Claude.ai login) | Claude is unavailable or not logged in while no Claude default is configured                                                                         | required harness not installed, not logged in, unsupported, or no harness is registered                                                        |
+| Codex plugins  |                                                                                                                                                               | loaded plugin tools are not verified by this check; inspect inventory and verify expected worker tools                                               |                                                                                                                                                |
+| Jev            | `jev-api-key` secret set                                                                                                                                      | no key (Jev is optional; a decision selecting it cannot run), or not checkable before the database is migrated                                       |                                                                                                                                                |
+| Default model  | Codex model is in its enabled catalog; a configured Claude default is the exact enabled model with a supported effort (no Claude default: not checked)        | Codex default is in the catalog but disabled                                                                                                         | Codex model is missing; a configured Claude default has a missing, unknown, wrong-family or disabled model, or a missing or unsupported effort |
 
 - **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other [non-public route](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). `GET /harness/preflight` remains for the harness check alone.
 - **CLI**: `node apps/api/dist/main.js --preflight` (or `pnpm --filter @graphgoblin/api preflight` after `pnpm build`) reads the same environment as the server, prints the checks as a table, and exits 0 when no check failed and 1 otherwise, without starting the server. It opens the database only when its file exists, and never creates the data directory, the key, or the database, so it is safe before the first start. `GG_DB_URL` is parsed the way libsql parses it (percent-decoded, relative, `file:///C:/...`), and the server's start creates the database file's directory as well as the data directory. The writability probe opens a new randomly named file with `wx`, so it never truncates an existing file, never follows a symlink, and removes only the file it created.
+
+After a successful Codex CLI/login check, system preflight includes the fixed `plugins.codex`
+warning. It states a limit of the check even when a plugin works or is intentionally disabled;
+it does not mark a plugin broken, change harness readiness or prevent starting. Settings shows
+the same scope notice in its Codex preflight card. No inventory, app-server or provider probe is
+added. In the worker directory, `codex plugin list --json` and `codex mcp list --json` help inspect
+configuration, but neither proves that every enabled plugin loaded. Verify an expected tool in
+the worker before relying on it. See [missing Codex tools](guide/07-troubleshooting.md#codex-plugin-tools-are-missing).
 
 ## First API key (Decided, WP-F2, ADR-0015)
 

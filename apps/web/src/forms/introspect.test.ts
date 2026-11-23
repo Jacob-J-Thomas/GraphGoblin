@@ -1,11 +1,12 @@
 import {
   ExpressionSchema,
   field,
+  HarnessOptionsSchema,
   JsonSchemaSchema,
   NodeConfigSchemas,
   TemplateSchema,
 } from '@graphgoblin/contracts';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { humanize, initialValue, matchOption, optionLabel, shapeOf, unwrap } from './introspect.js';
 import { isUnset, stripUnset, UNSET } from './unset.js';
@@ -24,6 +25,7 @@ describe('introspect', () => {
   });
 
   it('classifies every Zod construct the node configs use', () => {
+    expect(shapeOf(HarnessOptionsSchema.shape.configOverrides)).toMatchObject({ kind: 'record' });
     expect(shapeOf(TemplateSchema.optional())).toEqual({ kind: 'string', format: 'template' });
     expect(shapeOf(ExpressionSchema)).toMatchObject({ kind: 'string', format: 'expression' });
     expect(shapeOf(JsonSchemaSchema)).toEqual({ kind: 'json' });
@@ -79,6 +81,43 @@ describe('introspect', () => {
     expect(shapeOf(z.union([z.string(), z.number()]))).toMatchObject({ kind: 'union' });
     expect(shapeOf(z.date())).toEqual({ kind: 'json' });
     expect(shapeOf(z.json())).toEqual({ kind: 'json' });
+  });
+
+  it('shapes an intersection by its other side when one side only refines, without parsing (#429)', () => {
+    // The Codex overrides: an optional record whose raw keys a refining `unknown` checks.
+    const overrides = HarnessOptionsSchema.shape.configOverrides;
+    expect(unwrap(overrides)).toMatchObject({ optional: true, hasDefault: false });
+    expect(initialValue(overrides)).toBeUndefined();
+
+    const record = z.record(z.string(), z.number());
+    const refine = vi.fn(() => true);
+    const superRefine = vi.fn();
+    for (const schema of [
+      z.intersection(record, z.unknown().superRefine(superRefine)),
+      z.intersection(z.unknown().refine(refine), record),
+      z.intersection(record, z.unknown()),
+    ]) {
+      expect(shapeOf(schema)).toEqual(shapeOf(record));
+      expect(initialValue(schema)).toEqual({});
+    }
+    // Only the shape: Zod cannot merge a default inside with the refining side's `undefined`.
+    expect(
+      unwrap(z.intersection(record.default({}), z.unknown().superRefine(superRefine))),
+    ).toMatchObject({ optional: false, hasDefault: false });
+
+    // No side to draw: both sides have shapes, or the `unknown` side changes the value.
+    const overwrite = vi.fn((value: unknown) => value);
+    const transform = vi.fn((value: unknown) => value);
+    for (const schema of [
+      z.intersection(z.object({ a: z.string() }), z.object({ b: z.string() })),
+      z.intersection(record, z.unknown().overwrite(overwrite)),
+      z.intersection(record, z.unknown().transform(transform)),
+    ])
+      expect(shapeOf(schema)).toEqual({ kind: 'json' });
+
+    // Introspection reads definitions; it never parses.
+    for (const effect of [refine, superRefine, overwrite, transform])
+      expect(effect).not.toHaveBeenCalled();
   });
 
   it('builds initial values', () => {

@@ -1,0 +1,82 @@
+{
+  "writtenBeforeExecution": true,
+  "sourceOfExpectations": "Issue #363 contract and independently selected public-method outcomes; author report treated as claims.",
+  "cases": [
+    {
+      "id": "baseline-226",
+      "expected": "Native base mkdtemp fails ENAMETOOLONG before harness; no scratch remains."
+    },
+    {
+      "id": "candidate-226-native-child",
+      "expected": "Native 226-character TMP reaches one local harness in an empty 249-character scratch; real child Node cwd works; structured value and usage survive; scratch removed."
+    },
+    {
+      "id": "fresh-per-call",
+      "expected": "Two completions use distinct empty exclusive scratch paths and remove both; JSON fallback works."
+    },
+    {
+      "id": "configured-precedence",
+      "expected": "Request directory wins, then option directory; no allocation/cleanup; markers survive; raw text/JSON fallback and execution options preserved."
+    },
+    {
+      "id": "real-collision-then-success",
+      "expected": "Controlled random first name collides with actual directory; native EEXIST; second succeeds; sentinel preserved and only new scratch removed."
+    },
+    {
+      "id": "four-real-collisions",
+      "expected": "Four distinct actual collisions yield four native EEXIST errors, no fifth random name, no harness/cleanup, four markers preserved."
+    },
+    {
+      "id": "native-mkdir-error",
+      "expected": "Missing parent yields native ENOENT after one mkdir attempt, no retry/harness/cleanup."
+    },
+    {
+      "id": "pre-aborted",
+      "expected": "Caller reason identity, no mkdir/mkdtemp/harness/cleanup."
+    },
+    {
+      "id": "allocation-abort-cleanup-ok",
+      "expected": "Abort immediately after actual mkdir preserves reason, no harness; newly owned scratch removed."
+    },
+    {
+      "id": "allocation-abort-cleanup-error",
+      "expected": "Same abort reason wins over injected cleanup failure; known residue manually recovered by QA."
+    },
+    {
+      "id": "sync-harness-error-cleanup-ok",
+      "expected": "Synchronous start failure identity wins; native cleanup removes scratch."
+    },
+    {
+      "id": "sync-harness-error-cleanup-error",
+      "expected": "Synchronous start failure identity wins over injected cleanup failure; known residue recovered."
+    },
+    {
+      "id": "async-result-error-cleanup-ok",
+      "expected": "Asynchronous result failure identity wins; native cleanup removes scratch."
+    },
+    {
+      "id": "async-result-error-cleanup-error",
+      "expected": "Asynchronous result failure identity wins over injected cleanup failure; known residue recovered."
+    },
+    {
+      "id": "success-cleanup-error",
+      "expected": "Successful value survives injected cleanup failure; known residue recovered."
+    },
+    {
+      "id": "cancel-resolve-cleanup-ok",
+      "expected": "Scratch exists until deferred cancel resolves; caller reason wins; one cancel then one native cleanup."
+    },
+    {
+      "id": "cancel-reject-cleanup-ok",
+      "expected": "Scratch exists until deferred cancel rejects; cancel error wins over caller reason; one cancel then one native cleanup."
+    },
+    {
+      "id": "cancel-resolve-cleanup-error",
+      "expected": "Caller reason wins after cancel settles despite cleanup failure; known residue recovered."
+    },
+    {
+      "id": "cancel-reject-cleanup-error",
+      "expected": "Cancel error wins over caller reason and cleanup error; known residue recovered."
+    }
+  ]
+}

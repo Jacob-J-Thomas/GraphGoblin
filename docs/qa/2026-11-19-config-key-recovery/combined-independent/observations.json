@@ -1,0 +1,2299 @@
+{
+  "source": {
+    "commit": "2a335040a64b4ddf9ab66019b7e55fda9454707e",
+    "tree": "24c8e058c083caa4674b7ac2e05959c9b0c3264e",
+    "parent": "071f261e72e2894ae8816eee6f71e4ca82ec9f82",
+    "priorPublished": "33708ef35f485978e5a7cc3af9a3b8128540fc7b",
+    "identityMatchesBinding": true,
+    "boundFilesMatched": "16/16",
+    "worktreeClean": true,
+    "packagesChangedSincePriorPublished": false
+  },
+  "build": {
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "command": "pnpm.cmd build --filter=@graphgoblin/api... --filter=@graphgoblin/web... --force",
+    "tasks": "9 successful, 0 cached",
+    "apiDistFiles": 338,
+    "webDistFiles": 28,
+    "webDistManifestSha256": "966cfbe4afb5d9748c9b04e7a73fd170c16002ff0886ca89e4e911467a680645",
+    "apiDistManifestSha256": "d1c9c7f93171adad9bfc242cfa08266303b94ebe2fd707d70be1f124c98fdad9"
+  },
+  "tiers": {
+    "S01": {
+      "create": "201",
+      "draftSave": "200",
+      "publishable": false,
+      "publish": "422 LOOP_INVALID",
+      "matchesExpectation": true
+    },
+    "S02": {
+      "create": "400 EVALUATION_INVALID_CONFIGURATION",
+      "draftSave": "400 EVALUATION_INVALID_CONFIGURATION",
+      "publishable": false,
+      "publish": "not reached (draft not saved)",
+      "matchesExpectation": true
+    }
+  },
+  "tiersIdenticalToOriginalRun": true,
+  "httpMatrixReplay": {
+    "cases": 40,
+    "excluded": "R01-R12 reserved-name group (instruction: no object-prototype behaviour); cited from the original run",
+    "identicalToOriginalCandidateRun": 39,
+    "changed": [
+      {
+        "id": "I08",
+        "differences": [
+          {
+            "at": "create/errors/0/path",
+            "original": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+            "combined": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1slash"
+          },
+          {
+            "at": "draftSave/errors/0/path",
+            "original": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+            "combined": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1slash"
+          },
+          {
+            "at": "validate/errors/0/path",
+            "original": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/slash",
+            "combined": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1slash"
+          }
+        ]
+      }
+    ],
+    "everyChangeIsRfc6901EscapeOfOriginalPath": true,
+    "controls": {
+      "unauthenticated": 401,
+      "wrongToken": 401,
+      "malformedJsonBody": {
+        "status": 400,
+        "code": "MALFORMED_BODY",
+        "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+      }
+    },
+    "byHttp": {
+      "publishable": [
+        "V01",
+        "V02",
+        "V03",
+        "V04",
+        "V05",
+        "V06",
+        "V07",
+        "V08",
+        "V09",
+        "V10",
+        "V11",
+        "V12",
+        "V13",
+        "V14",
+        "V15",
+        "V16",
+        "V17",
+        "V18"
+      ],
+      "schema-rejected": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09",
+        "I10",
+        "I11",
+        "I12",
+        "I13",
+        "I14",
+        "I15",
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "H01",
+        "H02",
+        "H03"
+      ],
+      "transport-refused": [],
+      "other": []
+    },
+    "readbackNotIdentical": [],
+    "fakeCodexCalls": [
+      "--version",
+      "exec --help",
+      "exec resume --help",
+      "login status"
+    ]
+  },
+  "pointerProbe": {
+    "summary": {
+      "cases": 15,
+      "passed": 15,
+      "failed": [],
+      "control": {
+        "create": 201,
+        "draftUnchangedByRefusedSaves": true,
+        "publishAfterRefusals": {
+          "status": 200,
+          "version": 1
+        }
+      },
+      "malformedBody": {
+        "status": 400,
+        "code": "MALFORMED_BODY",
+        "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+      },
+      "flatVsNestedPair": {
+        "P05": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1bad key",
+        "P06": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/bad key",
+        "distinct": true,
+        "oldReadingsEqual": false
+      }
+    },
+    "cases": [
+      {
+        "id": "P01",
+        "title": "literal slash, top level",
+        "overrides": "{\"gg_qa/slash\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1slash",
+        "decodedFinalMember": "gg_qa/slash",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa/slash"
+        },
+        "ok": true
+      },
+      {
+        "id": "P02",
+        "title": "literal tilde, top level",
+        "overrides": "{\"gg_qa~tilde\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~0tilde",
+        "decodedFinalMember": "gg_qa~tilde",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa~tilde"
+        },
+        "ok": true
+      },
+      {
+        "id": "P03",
+        "title": "literal \"~1\" text (must not decode to a slash)",
+        "overrides": "{\"gg_qa~1lit\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~01lit",
+        "decodedFinalMember": "gg_qa~1lit",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa~1lit"
+        },
+        "ok": true
+      },
+      {
+        "id": "P04",
+        "title": "slash and tilde in one key",
+        "overrides": "{\"a/b~c\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/a~1b~0c",
+        "decodedFinalMember": "a/b~c",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.a/b~c"
+        },
+        "ok": true
+      },
+      {
+        "id": "P05",
+        "title": "flat key \"gg_qa/bad key\" (pair with P06)",
+        "overrides": "{\"gg_qa/bad key\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1bad key",
+        "decodedFinalMember": "gg_qa/bad key",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa/bad key"
+        },
+        "ok": true
+      },
+      {
+        "id": "P06",
+        "title": "nested table gg_qa -> \"bad key\" (pair with P05)",
+        "overrides": "{\"gg_qa\": {\"bad key\": 1}}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/bad key",
+        "decodedFinalMember": "bad key",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": true,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa.bad key"
+        },
+        "ok": true
+      },
+      {
+        "id": "P07",
+        "title": "slash inside a nested table key",
+        "overrides": "{\"gg_qa\": {\"in/ner\": true}}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa/in~1ner",
+        "decodedFinalMember": "in/ner",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa.in/ner"
+        },
+        "ok": true
+      },
+      {
+        "id": "P08",
+        "title": "slash in a table key inside an array",
+        "overrides": "{\"gg_qa.items\": [{\"x/y\": 1}]}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.items/0/x~1y",
+        "decodedFinalMember": "x/y",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa.items.0.x/y"
+        },
+        "ok": true
+      },
+      {
+        "id": "P09",
+        "title": "tilde in a table key inside a nested array",
+        "overrides": "{\"gg_qa.items\": [[{\"x~y\": 1}]]}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.items/0/0/x~0y",
+        "decodedFinalMember": "x~y",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa.items.0.0.x~y"
+        },
+        "ok": true
+      },
+      {
+        "id": "P10",
+        "title": "containing record key with a slash, valid inner key",
+        "overrides": "{\"gg_qa/outer\": {\"inner\": 1}}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1outer",
+        "decodedFinalMember": "gg_qa/outer",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa/outer"
+        },
+        "ok": true
+      },
+      {
+        "id": "P11",
+        "title": "valid neighbour before a slash key",
+        "overrides": "{\"features.plugins\": false, \"gg_qa/slash\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa~1slash",
+        "decodedFinalMember": "gg_qa/slash",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa/slash"
+        },
+        "ok": true
+      },
+      {
+        "id": "P12",
+        "title": "dotted key with no slash/tilde (unchanged comparator)",
+        "overrides": "{\"gg_qa.space segment\": 1}",
+        "pointer": "/definition/nodes/1/config/harnessOptions/configOverrides/gg_qa.space segment",
+        "decodedFinalMember": "gg_qa.space segment",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": true,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.configOverrides.gg_qa.space segment"
+        },
+        "ok": true
+      },
+      {
+        "id": "C01",
+        "title": "unrelated field error (sandbox enum) beside valid overrides",
+        "pointer": "/definition/nodes/1/config/harnessOptions/sandbox",
+        "decodedFinalMember": "sandbox",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": true,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.sandbox"
+        },
+        "ok": true
+      },
+      {
+        "id": "C02",
+        "title": "unrelated field error (timeoutSeconds 0) beside valid overrides",
+        "pointer": "/definition/nodes/1/config/timeoutSeconds",
+        "decodedFinalMember": "timeoutSeconds",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": true,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.timeoutSeconds"
+        },
+        "ok": true
+      },
+      {
+        "id": "C03",
+        "title": "unrecognized sibling option whose name holds a slash (pre-existing escaped branch)",
+        "pointer": "/definition/nodes/1/config/harnessOptions/weird~1opt",
+        "decodedFinalMember": "weird/opt",
+        "decodedResolvesInSentBody": true,
+        "sameInCreateDraftValidate": true,
+        "statuses": [
+          400,
+          400,
+          400
+        ],
+        "code": "VALIDATION_FAILED",
+        "unescapedReadingResolves": false,
+        "importComparator": {
+          "status": 400,
+          "code": "LOOP_IMPORT_ERROR",
+          "path": "nodes.1.config.harnessOptions.weird/opt"
+        },
+        "ok": true
+      }
+    ]
+  },
+  "nativeRecoveryReplay": {
+    "checklist": "41/41",
+    "recipeSha256": [
+      "275280dfd41d03c785a3ce0d66bb075d11dbb884df883f9246291215797c3105",
+      "22731d8bfa1ccbcae4496b608dd5bf5c3fb65533bf7fb19369f986cfa3ce9885",
+      "eaec7adda559775c86d5a24ba402d505c4bafff4b79c2f4c0a7fd014c0ca906b",
+      "8edea155a99d090795e9c2aa35137659415e429f7b87e94df22de11f2bfda67d"
+    ],
+    "recipeSha256EqualsBoundRuns": true,
+    "libsqlQuotedRemoval": {
+      "name": "libsql-quoted-removal",
+      "sqliteVersion": "3.45.1",
+      "affected": 1,
+      "originalTextUnchanged": true,
+      "discovered": 1,
+      "omitted": 1,
+      "keyPath": "$.nodes[1].config.harnessOptions.configOverrides.\"native_qa.\\\"review\\\"\""
+    },
+    "keyOnly": {
+      "name": "key-only-authenticated-http",
+      "get": 500,
+      "getCode": "RESPONSE_INVALID",
+      "publish": 500,
+      "publishCode": "INTERNAL_ERROR"
+    },
+    "documentedRepair": {
+      "materialized": 1,
+      "replaced": 1,
+      "textMatchesReplacement": true,
+      "actualDefinitionMatchesApiSeed": true,
+      "discovered": 0,
+      "omitted": 0
+    },
+    "corrected": {
+      "get": 200,
+      "publish": 200,
+      "preservesVersion": true
+    },
+    "restart": {
+      "get": 200,
+      "versionPreserved": true,
+      "exactDefinition": true,
+      "eventCount": 8,
+      "eventsMatch": true
+    }
+  },
+  "recoveryEdges": {
+    "checklist": "27/27",
+    "discoveryAfterHandEdit": {
+      "name": "discovery-after-hand-edit",
+      "keys": [
+        {
+          "status": "draft",
+          "harness_omitted": 1,
+          "key_path": "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\"",
+          "isTarget": true
+        }
+      ],
+      "omitted": 1
+    },
+    "snapshotProtection": {
+      "name": "snapshot-protection",
+      "materializeChanges": 0,
+      "removeChanges": 0,
+      "unfilteredUpdateRefused": "SQLITE_CONSTRAINT",
+      "snapshotBytesExact": true,
+      "triggerMessage": "SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes"
+    },
+    "notACorrection": {
+      "name": "not-a-correction-variants",
+      "added-beside": {
+        "readBackExact": true,
+        "discoveredKeys": [
+          "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.\\\"quoted\\\"\""
+        ],
+        "omitted": 0
+      },
+      "renamed-to-refused-name": {
+        "readBackExact": true,
+        "discoveredKeys": [
+          "$.nodes[1].config.harnessOptions.configOverrides.\"gg_qa.quoted key\""
+        ],
+        "omitted": 0
+      }
+    },
+    "guardRefusedAddedBeside": {
+      "exit": 1,
+      "rowNamed": true,
+      "listened": false
+    },
+    "renameCorrection": {
+      "name": "documented-rename-correction",
+      "materialized": 1,
+      "replaced": 1,
+      "readBackExact": true,
+      "overrideOrder": [
+        "features.plugins",
+        "gg_qa.keep",
+        "gg_qa.quoted"
+      ],
+      "discovered": 0,
+      "omitted": 0,
+      "equalsSeedPlusRenamedMember": true
+    },
+    "correctedHttp": {
+      "name": "corrected-http",
+      "get": 200,
+      "publish": 200,
+      "publishedRowIsSameRow": true,
+      "publishedStatus": "published",
+      "overrides": {
+        "features.plugins": false,
+        "gg_qa.keep": "inert",
+        "gg_qa.quoted": "inert-rename-marker"
+      },
+      "timeoutSeconds": 123,
+      "sandbox": "read-only",
+      "historyRun": 200
+    },
+    "restart": {
+      "get": 200,
+      "hasDraft": false
+    }
+  },
+  "browser": {
+    "environment": {
+      "channel": "msedge",
+      "headless": true,
+      "viewport": "1440x900",
+      "profile": "fresh temporary directory, deleted after the run",
+      "serviceWorkers": "blocked"
+    },
+    "rule": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+    "heldMessage": "Key \"__proto__\" can't be used. The entry keeps its key \"<last key>\" until you choose another.",
+    "firstRun": {
+      "passed": 20,
+      "total": 26,
+      "failed": [
+        "open the node, Settings, Advanced: initial entries and neighbours",
+        "refused key typed character by character into Key 3: gg_qa/slash",
+        "nested key inside a structured value: Key 4 gg_qa.table, Value 4 {\"bad key\": 1}",
+        "correction: Key 3 typed gg_qa.slash_fixed; every control clean; the draft saves",
+        "held key + app UNDO after typing: Tab to Remove, Ctrl+Z",
+        "reload after publish: entries and neighbours persist, nothing marked invalid"
+      ],
+      "note": "retained unchanged; see README for the cause of each failure"
+    },
+    "finalRun": {
+      "passed": 28,
+      "total": 28,
+      "failed": []
+    },
+    "consoleErrors": [
+      {
+        "text": "sign in through the …: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "count": 11
+      }
+    ],
+    "nonGetOrFailedResponses": [
+      {
+        "response": "401 GET /system/shutdown",
+        "count": 1
+      },
+      {
+        "response": "401 GET /system/storage",
+        "count": 1
+      },
+      {
+        "response": "401 GET /harness/ollama/connection",
+        "count": 1
+      },
+      {
+        "response": "401 GET /model-catalog",
+        "count": 1
+      },
+      {
+        "response": "401 GET /harness/preflight",
+        "count": 1
+      },
+      {
+        "response": "401 GET /chat/voice/config",
+        "count": 1
+      },
+      {
+        "response": "401 GET /settings",
+        "count": 1
+      },
+      {
+        "response": "401 GET /system/model-defaults",
+        "count": 1
+      },
+      {
+        "response": "401 GET /classifier-models",
+        "count": 1
+      },
+      {
+        "response": "401 GET /secrets",
+        "count": 1
+      },
+      {
+        "response": "401 GET /api-keys",
+        "count": 1
+      },
+      {
+        "response": "200 POST /loops/<loop>/validate",
+        "count": 8
+      },
+      {
+        "response": "200 PUT /loops/<loop>/draft",
+        "count": 9
+      },
+      {
+        "response": "200 POST /loops/<loop>/publish",
+        "count": 1
+      }
+    ],
+    "autosavePuts": [
+      {
+        "step": "valid edit: Add entry, Key 3 features.multi_agent = false, saved",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "features.multi_agent"
+        ]
+      },
+      {
+        "step": "value correction: Value 4 {\"bad_key\": 1}; every control clean; the draft saves; neighbours intact",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key: the entry value stays usable: Value 2 edited to \"inert-2\" saves under the kept key",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key + app UNDO: paste again, Tab to Remove, Ctrl+Z (what the last step undoes)",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key + app UNDO: paste again, Tab to Remove, Ctrl+Z (what the last step undoes)",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key, TYPED character by character into Key 1 (features.plugins): __proto__",
+        "keys": [
+          "__proto_",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key, typed further: \"x\" then Backspace (the kept key follows the last allowed text)",
+        "keys": [
+          "__proto__x",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key + app UNDO after typing: Tab to Remove, Ctrl+Z twice",
+        "keys": [
+          "__proto_",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      },
+      {
+        "step": "held key + app UNDO after typing: Tab to Remove, Ctrl+Z twice",
+        "keys": [
+          "features.plugins",
+          "gg_qa.notes",
+          "gg_qa.slash_fixed",
+          "gg_qa.table"
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "step": "sign in through the app Settings panel (key typed, never recorded)",
+        "ok": true,
+        "autosavePutKeys": []
+      },
+      {
+        "step": "open the node, Settings, Advanced: initial entries and neighbours",
+        "ok": true,
+        "advanced": "Advanced\n2 set",
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "gg_qa.notes",
+            "\"inert\""
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "valid edit: Add entry, Key 3 features.multi_agent = false, saved",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": [
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "features.multi_agent"
+          ]
+        ]
+      },
+      {
+        "step": "refused key typed character by character into Key 3: gg_qa/slash",
+        "ok": true,
+        "focusAfterEachKey": [
+          "Config overrides key 3"
+        ],
+        "statusDistinctWhileTyping": [
+          "Added config overrides key3",
+          "Key \"gg_qa/\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+        ],
+        "keyText": "gg_qa/slash",
+        "recordStatus": "Key \"gg_qa/\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+        "advanced": "Advanced\n2 set\n1 error",
+        "save": {
+          "text": "Saved on this device only",
+          "title": "Fix the schema errors to save to the server. Changes are kept on this device."
+        },
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "serverAfter": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "true",
+            "description": "Key \"gg_qa/slash\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "keyboard: Tab order from the refused Key 3 (Remove, Value, back)",
+        "ok": true,
+        "order": [
+          "Config overrides key 3",
+          "Remove config overrides gg_qa/slash",
+          "Config overrides value 3",
+          "Config overrides key 3"
+        ],
+        "autosavePutKeys": []
+      },
+      {
+        "step": "genuine value error beside the refused key: unparsed JSON in Value 3, then restored",
+        "ok": true,
+        "valueHasOwnError": true,
+        "keyKeepsOwnError": true,
+        "rowsWithValueError": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "true",
+            "description": "Key \"gg_qa/slash\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+          },
+          "value3": {
+            "invalid": "true",
+            "description": "Invalid JSON: Expected property name or '}' in JSON at position 1 (line 1 column 2) Discard the unparsed text"
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "issue path: the node issue badge lists the key path and choosing it focuses Key 3",
+        "ok": true,
+        "focusAfterChoosing": "Config overrides key 3",
+        "configRows": [
+          "Error\nSCHEMA\nCodex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.\nconfig.harnessOptions.configOverrides.gg_qa/slash"
+        ],
+        "autosavePutKeys": []
+      },
+      {
+        "step": "view transitions while refused: collapse/expand Advanced; open JSON mode and cancel",
+        "ok": true,
+        "collapsedText": "Advanced\n2 set\n1 error",
+        "jsonModeText": "{\n  \"features.plugins\": false,\n  \"gg_qa.notes\": \"inert\",\n  \"gg_qa/slash\": false\n}",
+        "jsonModeApplyDisabled": false,
+        "jsonModeRuleVisible": false,
+        "autosavePutKeys": []
+      },
+      {
+        "step": "remount + reload while refused: Done, reopen; reload, reopen (device draft vs server)",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "saveAfterClose": {
+          "text": "Saved on this device only",
+          "title": "Fix the schema errors to save to the server. Changes are kept on this device."
+        },
+        "saveAfterReload": {
+          "text": "Unsaved changes",
+          "title": ""
+        },
+        "reopened": {
+          "keyText": "gg_qa/slash",
+          "key3": {
+            "role": "textbox",
+            "name": "Config overrides key 3",
+            "description": "Key \"gg_qa/slash\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+            "invalid": "true",
+            "focused": false
+          },
+          "value3": {
+            "role": "textbox",
+            "name": "Config overrides value 3",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          }
+        },
+        "reloaded": {
+          "keyText": "gg_qa/slash",
+          "key3": {
+            "role": "textbox",
+            "name": "Config overrides key 3",
+            "description": "Key \"gg_qa/slash\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+            "invalid": "true",
+            "focused": false
+          },
+          "value3": {
+            "role": "textbox",
+            "name": "Config overrides value 3",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          },
+          "shown": [
+            [
+              "features.plugins",
+              "false"
+            ],
+            [
+              "gg_qa.notes",
+              "\"inert\""
+            ],
+            [
+              "gg_qa/slash",
+              "false"
+            ]
+          ]
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "second refusal while Key 3 is refused: Key 4 gg_qa.table with a nested \"bad key\" value (observation)",
+        "ok": true,
+        "advanced": "Advanced\n2 set\n1 error",
+        "save": {
+          "text": "Saved on this device only",
+          "title": "Fix the schema errors to save to the server. Changes are kept on this device."
+        },
+        "issues": {
+          "badge": "1 issue on work",
+          "rows": [
+            "Error SCHEMA Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. config.harnessOptions.configOverrides.gg_qa/slash"
+          ]
+        },
+        "rows": {
+          "key3": {
+            "invalid": "true",
+            "description": "Key \"gg_qa/slash\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "correction: Key 3 typed gg_qa.slash_fixed; Key 3 clean; the nested value refusal now surfaces without blaming outer Key 4",
+        "ok": true,
+        "advanced": "Advanced\n2 set\n1 error",
+        "save": {
+          "text": "Saved on this device only",
+          "title": "Fix the schema errors to save to the server. Changes are kept on this device."
+        },
+        "issues": {
+          "badge": "1 issue on work",
+          "rows": [
+            "Error SCHEMA Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. config.harnessOptions.configOverrides.gg_qa.table.bad key"
+          ]
+        },
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "serverAfter": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "features.multi_agent",
+            false
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "nested issue path: choosing the nested issue does not focus the innocent outer Key 4",
+        "ok": true,
+        "focusAfterChoosing": "Config overrides value 4",
+        "nestedIssue": [
+          "Error SCHEMA Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. config.harnessOptions.configOverrides.gg_qa.table.bad key"
+        ],
+        "autosavePutKeys": []
+      },
+      {
+        "step": "value correction: Value 4 {\"bad_key\": 1}; every control clean; the draft saves; neighbours intact",
+        "ok": true,
+        "advanced": "Advanced\n2 set",
+        "save": {
+          "text": "All changes saved",
+          "title": ""
+        },
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": [
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "JSON mode refuses a pasted slash key with its path; Apply disabled; Cancel keeps the server",
+        "ok": true,
+        "messageVisible": true,
+        "applyDisabled": true,
+        "serverAfter": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "autosavePutKeys": []
+      },
+      {
+        "step": "held key, PASTE: replace Key 2 (gg_qa.notes) with __proto__ in one input",
+        "ok": true,
+        "keyText": "__proto__",
+        "recordStatus": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+        "advanced": "Advanced\n2 set",
+        "save": {
+          "text": "All changes saved",
+          "title": ""
+        },
+        "issues": {
+          "badge": null,
+          "rows": []
+        },
+        "focusAfterInput": "Config overrides key 2",
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "serverAfter": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "__proto__",
+            "\"inert\""
+          ],
+          [
+            "gg_qa.slash_fixed",
+            "false"
+          ],
+          [
+            "gg_qa.table",
+            "{\"bad_key\": 1}"
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "true",
+            "description": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another."
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "held key: the entry value stays usable: Value 2 edited to \"inert-2\" saves under the kept key",
+        "ok": true,
+        "keyText": "__proto__",
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "rows": {
+          "key2": {
+            "invalid": "true",
+            "description": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another."
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": [
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "held key: Tab away keeps the typed text; Remove names the kept key",
+        "ok": true,
+        "keyText": "__proto__",
+        "recordStatus": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+        "focusAfterTab": "Remove config overrides gg_qa.notes",
+        "autosavePutKeys": []
+      },
+      {
+        "step": "comparator: a DUPLICATE key pasted into Key 4 reverts on Tab (unlike the held name)",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "whileDuplicate": {
+          "keyText": "features.plugins",
+          "key4": {
+            "role": "textbox",
+            "name": "Config overrides key 4",
+            "description": "Key \"features.plugins\" already exists. Choose a unique key.",
+            "invalid": "true",
+            "focused": true
+          },
+          "status": "Key \"features.plugins\" already exists"
+        },
+        "afterTab": {
+          "keyText": "gg_qa.table",
+          "key4": {
+            "role": "textbox",
+            "name": "Config overrides key 4",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          },
+          "status": "Reverted key to \"gg_qa.table\": \"features.plugins\" already exists"
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "held key, REMOUNT: Done and reopen shows the committed key, clean",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "gg_qa.notes",
+            "\"inert-2\""
+          ],
+          [
+            "gg_qa.slash_fixed",
+            "false"
+          ],
+          [
+            "gg_qa.table",
+            "{\n  \"bad_key\": 1\n}"
+          ]
+        ],
+        "rows": {
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "held key + app UNDO: paste again, Tab to Remove, Ctrl+Z (what the last step undoes)",
+        "ok": true,
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "focusBeforeUndo": "Remove config overrides gg_qa.notes",
+        "afterUndo": {
+          "focus": "Remove config overrides gg_qa.notes",
+          "shown": [
+            [
+              "features.plugins",
+              "false"
+            ],
+            [
+              "gg_qa.notes",
+              "\"inert\""
+            ],
+            [
+              "gg_qa.slash_fixed",
+              "false"
+            ],
+            [
+              "gg_qa.table",
+              "{\n  \"bad_key\": 1\n}"
+            ]
+          ],
+          "key2": {
+            "role": "textbox",
+            "name": "Config overrides key 2",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          },
+          "value2": {
+            "role": "textbox",
+            "name": "Config overrides value 2",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          }
+        },
+        "serverAfterUndo": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "afterRedo": {
+          "focus": "Remove config overrides gg_qa.notes",
+          "shown": [
+            [
+              "features.plugins",
+              "false"
+            ],
+            [
+              "gg_qa.notes",
+              "\"inert-2\""
+            ],
+            [
+              "gg_qa.slash_fixed",
+              "false"
+            ],
+            [
+              "gg_qa.table",
+              "{\n  \"bad_key\": 1\n}"
+            ]
+          ],
+          "key2": {
+            "role": "textbox",
+            "name": "Config overrides key 2",
+            "description": "",
+            "invalid": "false",
+            "focused": false
+          }
+        },
+        "serverAfterRedo": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "autosavePutKeys": [
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ],
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "held key, TYPED character by character into Key 1 (features.plugins): __proto__",
+        "ok": true,
+        "focusAfterEachKey": [
+          "Config overrides key 1"
+        ],
+        "recordStatus": "Key \"__proto__\" can't be used. The entry keeps its key \"__proto_\" until you choose another.",
+        "advanced": "Advanced\n2 set",
+        "save": {
+          "text": "All changes saved",
+          "title": ""
+        },
+        "textAfterEachKey": [
+          "_",
+          "__",
+          "__p",
+          "__pr",
+          "__pro",
+          "__prot",
+          "__proto",
+          "__proto_",
+          "__proto__"
+        ],
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "serverAfter": [
+          [
+            "__proto_",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "true",
+            "description": "Key \"__proto__\" can't be used. The entry keeps its key \"__proto_\" until you choose another."
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": [
+          [
+            "__proto_",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "held key, typed further: \"x\" then Backspace (the kept key follows the last allowed text)",
+        "ok": true,
+        "server": [
+          [
+            "__proto__x",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "afterX": {
+          "text": "__proto__x",
+          "key1": {
+            "role": "textbox",
+            "name": "Config overrides key 1",
+            "description": "",
+            "invalid": "false",
+            "focused": true
+          }
+        },
+        "afterBackspace": {
+          "text": "__proto__",
+          "key1": {
+            "role": "textbox",
+            "name": "Config overrides key 1",
+            "description": "Key \"__proto__\" can't be used. The entry keeps its key \"__proto__x\" until you choose another.",
+            "invalid": "true",
+            "focused": true
+          }
+        },
+        "autosavePutKeys": [
+          [
+            "__proto__x",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "held key + app UNDO after typing: Tab to Remove, Ctrl+Z twice",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "focusBeforeUndo": "Remove config overrides __proto__x",
+        "afterFirstUndo": {
+          "focus": "Config overrides key 1",
+          "keyText": "__proto_",
+          "key1": {
+            "role": "textbox",
+            "name": "Config overrides key 1",
+            "description": "",
+            "invalid": "false",
+            "focused": true
+          }
+        },
+        "serverAfterFirstUndo": [
+          [
+            "__proto_",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "afterSecondUndo": {
+          "focus": "Config overrides key 1",
+          "keyText": "features.plugins",
+          "key1": {
+            "role": "textbox",
+            "name": "Config overrides key 1",
+            "description": "",
+            "invalid": "false",
+            "focused": true
+          },
+          "shown": [
+            [
+              "features.plugins",
+              "false"
+            ],
+            [
+              "gg_qa.notes",
+              "\"inert-2\""
+            ],
+            [
+              "gg_qa.slash_fixed",
+              "false"
+            ],
+            [
+              "gg_qa.table",
+              "{\n  \"bad_key\": 1\n}"
+            ]
+          ]
+        },
+        "autosavePutKeys": [
+          [
+            "__proto_",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ],
+          [
+            "features.plugins",
+            "gg_qa.notes",
+            "gg_qa.slash_fixed",
+            "gg_qa.table"
+          ]
+        ]
+      },
+      {
+        "step": "held key + NATIVE text undo: paste into Key 2, Ctrl+Z inside the input",
+        "ok": true,
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "held": {
+          "text": "__proto__",
+          "key2": {
+            "role": "textbox",
+            "name": "Config overrides key 2",
+            "description": "Key \"__proto__\" can't be used. The entry keeps its key \"gg_qa.notes\" until you choose another.",
+            "invalid": "true",
+            "focused": true
+          }
+        },
+        "afterNativeUndo": {
+          "text": "gg_qa.notes",
+          "key2": {
+            "role": "textbox",
+            "name": "Config overrides key 2",
+            "description": "",
+            "invalid": "false",
+            "focused": true
+          },
+          "focus": "Config overrides key 2"
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "held key + RELOAD: paste into Key 2, wait, reload, reopen",
+        "ok": true,
+        "serverBefore": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "gg_qa.notes",
+            "\"inert-2\""
+          ],
+          [
+            "gg_qa.slash_fixed",
+            "false"
+          ],
+          [
+            "gg_qa.table",
+            "{\n  \"bad_key\": 1\n}"
+          ]
+        ],
+        "rows": {
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "final correction by typing; all entries and neighbours intact",
+        "ok": true,
+        "server": [
+          [
+            "features.plugins",
+            false
+          ],
+          [
+            "gg_qa.notes",
+            "inert-2"
+          ],
+          [
+            "gg_qa.slash_fixed",
+            false
+          ],
+          [
+            "gg_qa.table",
+            {
+              "bad_key": 1
+            }
+          ]
+        ],
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "gg_qa.notes",
+            "\"inert-2\""
+          ],
+          [
+            "gg_qa.slash_fixed",
+            "false"
+          ],
+          [
+            "gg_qa.table",
+            "{\n  \"bad_key\": 1\n}"
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "publish through the toolbar: published definition holds the corrected entries and neighbours",
+        "ok": true,
+        "message": "Published version 1.",
+        "published": {
+          "configOverrides": {
+            "features.plugins": false,
+            "gg_qa.notes": "inert-2",
+            "gg_qa.slash_fixed": false,
+            "gg_qa.table": {
+              "bad_key": 1
+            }
+          },
+          "timeoutSeconds": 120,
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "autosavePutKeys": []
+      },
+      {
+        "step": "reload after publish: entries and neighbours persist, nothing marked invalid",
+        "ok": true,
+        "save": {
+          "text": "All changes saved",
+          "title": ""
+        },
+        "issues": {
+          "badge": null,
+          "rows": []
+        },
+        "neighbour": {
+          "timeoutValue": "120",
+          "timeoutInvalid": null,
+          "timeoutEditable": true,
+          "sandboxChecked": "read-only"
+        },
+        "shown": [
+          [
+            "features.plugins",
+            "false"
+          ],
+          [
+            "gg_qa.notes",
+            "\"inert-2\""
+          ],
+          [
+            "gg_qa.slash_fixed",
+            "false"
+          ],
+          [
+            "gg_qa.table",
+            "{\n  \"bad_key\": 1\n}"
+          ]
+        ],
+        "rows": {
+          "key1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value1": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value2": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value3": {
+            "invalid": "false",
+            "description": ""
+          },
+          "key4": {
+            "invalid": "false",
+            "description": ""
+          },
+          "value4": {
+            "invalid": "false",
+            "description": ""
+          }
+        },
+        "autosavePutKeys": []
+      }
+    ]
+  }
+}

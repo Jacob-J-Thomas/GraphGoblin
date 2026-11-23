@@ -2,10 +2,21 @@ import { SlugSchema, UlidSchema, type JsonValue, type RunFailure } from '@graphg
 import { deciderFailure } from './decider-errors.js';
 import { describeError, RunFailureError } from './errors.js';
 
-/** Engine-owned public copy for an internal fault with no raw diagnostic fields. */
+/** Engine-owned public copy; the optional diagnostic is private and never serialized. */
 export class InternalRunFailureError extends RunFailureError {
-  constructor(message: string, options: RunFailureError['options']) {
+  #diagnostic: ReturnType<typeof errorDiagnostic> | undefined;
+
+  constructor(
+    message: string,
+    options: RunFailureError['options'],
+    diagnostic?: ReturnType<typeof errorDiagnostic>,
+  ) {
     super('INTERNAL_ERROR', message, options);
+    this.#diagnostic = diagnostic;
+  }
+
+  get diagnostic() {
+    return this.#diagnostic;
   }
 }
 

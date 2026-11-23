@@ -265,7 +265,7 @@ describe('removing a connection by its id (#207)', () => {
       const before = store();
       store().removeEdge('e1');
       const message =
-        'More than one connection uses the ID "e1"; this action cannot choose just one.';
+        'More than one connection uses the ID "e1", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.';
       // Only the notice changed: both records, the row ownership, history, revision and save
       // state are the very ones loaded.
       expect(store()).toEqual({ ...before, connectionError: message });
@@ -282,26 +282,30 @@ describe('removing a connection by its id (#207)', () => {
     },
   );
 
-  it('removes exactly the one record of a unique id, in one step, and says nothing for an absent id', () => {
-    const definition = sharedId(false);
-    store().load('L1', definition);
-    // An id no edge holds changes nothing, the notice included.
-    const quiet = store();
-    store().removeEdge('missing');
-    expect(store()).toBe(quiet);
-    store().removeEdge('c1');
-    expect(store().definition!.edges).toEqual(definition.edges.slice(0, 2));
-    expect(store().definition!.edges[0]).toBe(definition.edges[0]);
-    expect(store().definition!.edges[1]).toBe(definition.edges[1]);
-    expect(store().past.map((step) => step.label)).toEqual(['remove edge spare to other']);
-    expect(store()).toMatchObject({
-      revision: 1,
-      saveState: 'pending',
-      connectionError: undefined,
-    });
-    store().undo();
-    expect(store().definition).toEqual(definition);
-  });
+  // With a Decision row owning one holder, the other holder's port stays too (#481).
+  it.each([false, true])(
+    'removes exactly the one record of a unique id, in one step, and says nothing for an absent id (one owned by a Decision row: %s)',
+    (decision) => {
+      const definition = sharedId(decision);
+      store().load('L1', definition);
+      // An id no edge holds changes nothing, the notice included.
+      const quiet = store();
+      store().removeEdge('missing');
+      expect(store()).toBe(quiet);
+      store().removeEdge('c1');
+      expect(store().definition!.edges).toEqual(definition.edges.slice(0, 2));
+      expect(store().definition!.edges[0]).toBe(definition.edges[0]);
+      expect(store().definition!.edges[1]).toBe(definition.edges[1]);
+      expect(store().past.map((step) => step.label)).toEqual(['remove edge spare to other']);
+      expect(store()).toMatchObject({
+        revision: 1,
+        saveState: 'pending',
+        connectionError: undefined,
+      });
+      store().undo();
+      expect(store().definition).toEqual(definition);
+    },
+  );
 });
 
 describe('undo and redo', () => {

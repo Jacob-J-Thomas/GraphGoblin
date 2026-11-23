@@ -1,0 +1,59 @@
+{
+  "node": "v22.23.4",
+  "phases": [
+    {
+      "name": "cli-key-mint",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "tokenReturnedInMemory": true
+    },
+    {
+      "name": "seed-cold-start",
+      "health": 200,
+      "listenerPidMatched": true
+    },
+    {
+      "name": "stopped-on-first-unexpected-result",
+      "message": "real public creates and authentication"
+    },
+    {
+      "name": "fallback-owned-child-cleanup",
+      "count": 1,
+      "liveAfter": 0
+    }
+  ],
+  "checklist": [
+    {
+      "name": "four exact source SQL blocks selected",
+      "pass": true
+    },
+    {
+      "name": "native built CLI mints a disposable key",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: bound ephemeral port",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: native child serves health",
+      "pass": true
+    },
+    {
+      "name": "seed-cold-start: guard should refuse before listen",
+      "pass": true
+    },
+    {
+      "name": "real public creates and authentication",
+      "pass": false
+    }
+  ],
+  "recipeSha256": [
+    "275280dfd41d03c785a3ce0d66bb075d11dbb884df883f9246291215797c3105",
+    "22731d8bfa1ccbcae4496b608dd5bf5c3fb65533bf7fb19369f986cfa3ce9885",
+    "eaec7adda559775c86d5a24ba402d505c4bafff4b79c2f4c0a7fd014c0ca906b",
+    "8edea155a99d090795e9c2aa35137659415e429f7b87e94df22de11f2bfda67d"
+  ]
+}

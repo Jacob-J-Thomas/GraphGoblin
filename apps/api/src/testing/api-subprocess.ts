@@ -1,10 +1,11 @@
 /** Disposable built-entry process fixture. No owner environment, listener, or store is reused. */
 import { spawn } from 'node:child_process';
 import { access, mkdtemp, rm } from 'node:fs/promises';
-import { createConnection, createServer } from 'node:net';
+import { createConnection } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { reserveApiPort } from './api-port.js';
 
 const apiRoot = fileURLToPath(new URL('../../', import.meta.url));
 const entry = join(apiRoot, 'dist', 'main.js');
@@ -31,22 +32,6 @@ export function listening(port: number): Promise<boolean> {
     socket.once('connect', () => finish(true));
     socket.once('error', () => finish(false));
   });
-}
-
-export async function freePort(start = 5600, count = 100): Promise<number> {
-  const offset = Math.floor(Math.random() * count);
-  for (let index = 0; index < count; index++) {
-    const port = start + ((offset + index) % count);
-    const server = createServer();
-    const available = await new Promise<boolean>((resolve, reject) => {
-      server.once('error', (error: NodeJS.ErrnoException) =>
-        error.code === 'EADDRINUSE' ? resolve(false) : reject(error),
-      );
-      server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
-    });
-    if (available) return port;
-  }
-  throw new Error(`No disposable API port is free in ${start}-${start + count - 1}`);
 }
 
 function launch(env: NodeJS.ProcessEnv, args: string[]) {
@@ -128,15 +113,16 @@ export async function createApiProcessFixture(
       cause,
     });
   }
+  const reservation = await reserveApiPort(options.portStart, options.portCount);
+  const { port } = reservation;
   const dataDir = await mkdtemp(
     join(tmpdir(), options.prefix ?? process.env.GG_TEST_STORE_PREFIX ?? 'gg-api-process-'),
-  );
+  ).catch(async (error: unknown) => {
+    await reservation.release();
+    throw error;
+  });
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
-  const port = await freePort(
-    options.portStart ?? Number(process.env.GG_TEST_PORT_START ?? 5600),
-    options.portCount ?? Number(process.env.GG_TEST_PORT_COUNT ?? 100),
-  );
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
       ([name]) =>
@@ -192,7 +178,10 @@ export async function createApiProcessFixture(
     },
     async dispose() {
       try {
-        await Promise.all(children.map((child) => child.dispose()));
+        const results = await Promise.allSettled(children.map((child) => child.dispose()));
+        const failed = results.find((result) => result.status === 'rejected');
+        if (failed) throw failed.reason;
+        await reservation.release();
       } finally {
         // libsql can retain closed native connections/statements until collection. On Windows
         // those handles keep observer stores busy even after close(); API Vitest exposes gc,

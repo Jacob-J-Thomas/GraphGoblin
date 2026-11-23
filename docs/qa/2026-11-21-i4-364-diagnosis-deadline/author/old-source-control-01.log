@@ -1,0 +1,41 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (44 tests | 2 failed | 42 skipped) 48ms
+   ❯ lost check output through the runner and harness (#364) (7)
+     × settles a default public turn after refused start despite pending stat and late success 33ms
+     × settles a default public turn after refused start despite pending stat and late rejection 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > settles a default public turn after refused start despite pending stat and late success
+ FAIL  src/claude/process-failure.test.ts > lost check output through the runner and harness (#364) > settles a default public turn after refused start despite pending stat and late rejection
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/claude/process-failure.test.ts:590:24
+    588|       await vi.advanceTimersByTimeAsync(1);
+    589|       // A finite liveness oracle: the exact old source fails here, ra…
+    590|       expect(terminal).toBe(true);
+       |                        ^
+    591|       const failure = {
+    592|         code: 'HARNESS_TURN_FAILED',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 42 skipped (44)
+   Start at  09:13:29
+   Duration  1.98s (import 63%, transform 34%, tests 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-364-claude-
+  │ start\GraphGoblin\packages\infrastructure
+

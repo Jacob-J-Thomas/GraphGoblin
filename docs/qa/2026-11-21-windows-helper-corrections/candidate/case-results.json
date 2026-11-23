@@ -1,0 +1,1944 @@
+{
+  "schema": "qa459c-candidate-case-results/1",
+  "phase": "independent #459 D166 corrected-source (candidate) behavioral QA; not hosted CI, general review, owner acceptance or merge permission",
+  "candidate": {
+    "head": "37803eeef9f55c2a316289aa502798025a7873be",
+    "tree": "647d297990837f7f21e0054c5be15a0109fab2f1",
+    "parent": "2164cd11624c88d66ae64d1ac86ae26505a6c1ea",
+    "target": "47ca4640793a81efa5bec661dba25627de314774"
+  },
+  "sources": {
+    "apps/windows-launcher/Launcher.cs": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520",
+    "apps/api/src/instance-identity.ts": "7afbe98ded3e89d4241c88726b832d1a0f483ad5ef7a359d5afb22d696088d9e",
+    "apps/api/src/data-dir-lock.ts": "5f3ab443bcc4e91bc4a97b444000f85801c6276f2a2deb63a004e277f4cc5d3f",
+    "apps/api/dist/instance-identity.js": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+    "apps/api/dist/data-dir-lock.js": "dfc4e59a48e65191b85cc2508507070c98dc7d14b00f3291651ab60d5b0d9c71"
+  },
+  "f3Assemblies": {
+    "launcher": {
+      "path": "<scratch>\\f3\\bin\\GraphGoblin.exe",
+      "sha256": "aa3f63bd42726133b62be5af61cc5baf551309bab6b81abf8de6f6f56e40f4ed",
+      "bytes": 65536
+    },
+    "harness": {
+      "path": "<scratch>\\f3\\bin\\Qa459iHarness.exe",
+      "sha256": "8df22105dd8ca78e892c238e40fee343772142b9e51b90af70575ae53546bc3b",
+      "bytes": 7168
+    },
+    "compilerSha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3",
+    "compileSteps": [
+      {
+        "label": "production-launcher",
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "independent-harness",
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  },
+  "frozenInputs": {
+    "f3DriverV2Manifest": "766811a8076395f172127dea170220b8827b009ef828de26678d8768a178076e",
+    "f3DriverFileHashesAtRun": {
+      "qa459i-driver.mjs": "e4b6a9e0c0981ebb2055788e35cbc1894f0346abb1db6fa7ea1bb18793fb8a87",
+      "qa459i-cases.mjs": "387b10317e5ac63abb3988548598e23570391ea68c82b1eddba8565b2145c2eb",
+      "qa459i-build.mjs": "648d201f00228297db8c7e891a80fd8e4b4bbea0f817c60b551d60fb510bbf2a",
+      "harness/Qa459iHarness.cs": "bb7e36b6d84dcba5f8d675787045c1ba4c33e48012814d5b56bb1a14e604fd0f"
+    },
+    "f4FreezeRecord": "450314ff1029fa4a569fc80741cb4e65514dd63ba8d8a857186489e018fee20d",
+    "f4Manifest": "344e792473c451429c0d255fe139020c3c5b653a9f39b10e8d3c3308a462bb51",
+    "nativeFreezeRecord": "4b8d71a300cae830b51eef07ef41d7c5f3dde190247985aee1177d1d83ec7024",
+    "nativeManifest": "e38df2c3c19d61fe59f4b5df46258554ef04bbc9e9ecb4ec57f705ad4ce6d75a"
+  },
+  "baselineReference": {
+    "caseResultsSha256": "22e2f05bc3c87d43746cc6c12328d706ceda2552d7a7e2ceb536c2dd7a5fe74c",
+    "conforms": 9,
+    "violates": 7,
+    "executions": 17
+  },
+  "f3": {
+    "runId": "candidate-20261121T045534Z-624fab",
+    "driver": "baseline driver/v2 (unchanged)",
+    "runStatus": "COMPLETED",
+    "setupFaults": [],
+    "rawSummary": {
+      "cases": 16,
+      "matchedPrediction": 9,
+      "differedFromPrediction": 7,
+      "setupFault": 0,
+      "conformsToCorrectedContract": 16,
+      "violatesCorrectedContract": 0,
+      "authorizedFreshGateway": 4
+    },
+    "ports": {
+      "reservation": [
+        25840,
+        25859
+      ],
+      "used": [
+        25840
+      ]
+    },
+    "sentinel": {
+      "aliveAtTeardown": true,
+      "teardown": "driver-teardown",
+      "teardownSignal": "SIGTERM"
+    },
+    "preflight": {
+      "exit": 0,
+      "setup": "ok"
+    },
+    "counts": {
+      "cases": 16,
+      "correctedContractConforms": 16,
+      "correctedContractViolates": 0,
+      "controlsPassed": 176,
+      "controlsTotal": 176,
+      "rawMatchedPrediction": 9,
+      "rawDifferedFromPrediction": 7,
+      "rawSetupFault": 0,
+      "differedIds": [
+        "Q08",
+        "Q09",
+        "Q10",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Q15"
+      ],
+      "differedExactlyIntended": true,
+      "authorizedFreshGatewayStartPath": 4,
+      "refusedBeforeGatewayStart": 12,
+      "malformedAuthorizedFreshGateway": 0,
+      "privacyCanaryLeaks": 0,
+      "storeNotPreserved": 0,
+      "accepted": 16,
+      "distinctClosedMessages": 6
+    },
+    "q09Payload": {
+      "bytes": 37,
+      "sha256": "9fb5d4511478937a531fcb52fe399c2d424b54b50dae94afac971a4ea3da6889",
+      "utf8": "{\"state\":\"held\",\"st\\u0061te\":\"free\"}\n",
+      "matchesBaselineOriginal": true
+    },
+    "cases": [
+      {
+        "id": "Q01",
+        "name": "valid-free-producer-shape",
+        "category": "control: valid free",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 17,
+              "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": true,
+          "gatewayMainMarkers": 1,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 677,
+          "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q02",
+        "name": "valid-free-legal-json-whitespace-and-escapes",
+        "category": "control: legal JSON whitespace/escaping",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 43,
+              "sha256": "074ef8ee1ea40dd2177ba4cd85d891e0c6bfd968cc6ba99e4efa3375cb2a1c1e"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": true,
+          "gatewayMainMarkers": 1,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 517,
+          "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q03",
+        "name": "identity-padding-with-valid-free",
+        "category": "control: identity helper padding preserved",
+        "responses": {
+          "identity": {
+            "bytes": 68,
+            "sha256": "2fe89c489f62b070d15570e66cef0a35b3f4974af6fa944729f0b50b46a44533"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 17,
+              "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": true,
+          "gatewayMainMarkers": 1,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 742,
+          "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q04",
+        "name": "real-producer-free",
+        "category": "control: actual unmodified ownership producer (free)",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "real-producer"
+            }
+          ],
+          "realProducerOutputs": [
+            {
+              "file": "real-producer-1.stdout.bin",
+              "bytes": 17,
+              "sha256": "e521aae93614f96135494591ab2e4c2b1780cf72f3b3e9f39be4a82f1d20bceb"
+            }
+          ]
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": true,
+          "gatewayMainMarkers": 1,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2350
+          ],
+          "realProducerExits": [
+            {
+              "code": 0,
+              "signal": null,
+              "bytes": 17
+            }
+          ],
+          "ensureElapsedMs": 3027,
+          "message": "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q05",
+        "name": "valid-held-reordered-unicode-escaped-path",
+        "category": "control: valid held, field order and path escaping",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 242,
+              "sha256": "c784102acd63a885e87efbb0f41ac501b41f300088c91151268c428d5c246bf5"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 16,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            60
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            60
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "store-held",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 17,
+          "ownershipSampleMs": [
+            2,
+            2,
+            2,
+            1,
+            2,
+            2,
+            2,
+            3,
+            3,
+            2,
+            9,
+            4,
+            2,
+            2,
+            2,
+            2,
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 6065,
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q05\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "lockReported": true,
+          "canariesChecked": 2,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q06",
+        "name": "real-producer-held-driver-record",
+        "category": "control: actual producer (held) and byte-preserved driver-owned owner record",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "real-producer"
+            }
+          ],
+          "realProducerOutputs": [
+            {
+              "file": "real-producer-1.stdout.bin",
+              "bytes": 244,
+              "sha256": "a854937db3faf0ed16aa047d95873ad0db7b4c3a67fe0d46e1bd01ce0cb15f06"
+            },
+            {
+              "file": "real-producer-2.stdout.bin",
+              "bytes": 244,
+              "sha256": "a854937db3faf0ed16aa047d95873ad0db7b4c3a67fe0d46e1bd01ce0cb15f06"
+            }
+          ]
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T043159Z-5ff66d",
+          "driver": "v2",
+          "code": "store-unverified",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 2,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "store-unverified",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            1,
+            60
+          ],
+          "messageIncludes": [
+            "Store ownership could not be verified (malformed or incomplete owner record)",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "store-unverified",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            1,
+            60
+          ],
+          "messageIncludes": [
+            "Store ownership could not be verified (malformed or incomplete owner record)",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "store-unverified",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 2,
+          "ownershipSampleMs": [
+            2061,
+            1690
+          ],
+          "realProducerExits": [
+            {
+              "code": 0,
+              "signal": null,
+              "bytes": 244
+            },
+            {
+              "code": 0,
+              "signal": null,
+              "bytes": 244
+            }
+          ],
+          "ensureElapsedMs": 4564,
+          "message": "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "lockReported": true,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q07",
+        "name": "held-then-inconclusive-retry-retains-guidance",
+        "category": "control: inconclusive retry after held keeps held guidance",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 238,
+              "sha256": "2dcec94cc0002033f0e9998af4b4025175bddeecfdbcbf86f8200a598c4fbea5"
+            },
+            {
+              "call": 2,
+              "source": "bytes",
+              "bytes": 44,
+              "sha256": "259517b017eb63e34e146755af95c45754a94a5476a3359754516b8f62a71ea6"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 2,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            2
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            2
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "store-held",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 2,
+          "ownershipSampleMs": [
+            3,
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 895,
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q07\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "lockReported": true,
+          "canariesChecked": 3,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q08",
+        "name": "malformed-javascript-syntax-multiline-free",
+        "category": "F3 malformed syntax (JavaScript-only)",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 20,
+              "sha256": "895885c3e9316335d7aac4047ce55141295abbabed2e31464ac60b69f66252b9"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 288,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q09",
+        "name": "duplicate-decoded-name-held-then-free",
+        "category": "F3 duplicate decoded name",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 37,
+              "sha256": "9fb5d4511478937a531fcb52fe399c2d424b54b50dae94afac971a4ea3da6889"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 285,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q10",
+        "name": "held-then-duplicate-free-retry",
+        "category": "F3 duplicate name on the held retry path",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 238,
+              "sha256": "d2776243015b5c05a7ae4e4055ec95ad05a96c67cc35770fed6084eb83deab6d"
+            },
+            {
+              "call": 2,
+              "source": "bytes",
+              "bytes": 32,
+              "sha256": "3a65b38585373b5282b31ed8ba614e69394975071d61d368b724ed471b090a1b"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 2,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            2,
+            2
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            2
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "store-held",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 2,
+          "ownershipSampleMs": [
+            3,
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 675,
+          "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q10\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+          "lockReported": true,
+          "canariesChecked": 2,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q11",
+        "name": "outer-leading-no-break-space",
+        "category": "F3 outer non-JSON whitespace",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 19,
+              "sha256": "73ea02950d6c1a2c0cca72799823fda9b8e8cac9f24f7ea3c334ecd5efcf373d"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 320,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q12",
+        "name": "outer-trailing-form-feed",
+        "category": "F3 outer non-JSON whitespace / trailing material",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 18,
+              "sha256": "1499713cabc92f24e8f7787aa2733edac5f2c665b1f3170892e4b812dff1effe"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 356,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q13",
+        "name": "internal-line-separator-whitespace",
+        "category": "F3 malformed syntax (non-JSON whitespace between tokens)",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 20,
+              "sha256": "13d4ca84a8bcaab599dc883e3dd305bd7db1564382d1fd4808b77af0354c1f8d"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": true,
+          "code": "unknown-exit",
+          "childExit": 54,
+          "ownershipCalls": [
+            1,
+            1
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            2
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 333,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "authorizes fresh gateway start",
+          "closed code",
+          "launcher-observed gateway exit"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q14",
+        "name": "unknown-field-with-free",
+        "category": "F3 unknown field",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 51,
+              "sha256": "60126b65025f24a08742216cced3e6aca60054c0121eac8446bde0156ebeae27"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 304,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 2,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q15",
+        "name": "invalid-string-escape-in-held",
+        "category": "F3 invalid string escape",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 241,
+              "sha256": "6cc1dbb4f51b54d08b1b0d8d5aae10be63ab50ab00e1ad0312ff72d17b650a15"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 12,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "VIOLATES"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "store-held",
+          "lock": "lockPath",
+          "ownershipCalls": [
+            2,
+            60
+          ],
+          "messageIncludes": [
+            "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            5
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 347,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 2,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [
+          "closed code",
+          "ownership calls",
+          "lock location",
+          "message includes: another GraphGoblin process holds this store; check its port",
+          "message includes: No second gateway was started. Do not stop an unrelated proc"
+        ],
+        "failedContractChecks": [],
+        "rawStatus": "DIFFERED-FROM-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": true,
+        "expectedRawStatus": "DIFFERED-FROM-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      },
+      {
+        "id": "Q16",
+        "name": "trailing-second-record",
+        "category": "F3 trailing material",
+        "responses": {
+          "identity": {
+            "bytes": 65,
+            "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be"
+          },
+          "ownership": [
+            {
+              "call": 1,
+              "source": "bytes",
+              "bytes": 34,
+              "sha256": "6bf3c12c75f4b6b9c551935f7d6cc1fc45d0c9812d3f40b71b5d705e63b8cf15"
+            }
+          ],
+          "realProducerOutputs": []
+        },
+        "baselineObserved": {
+          "run": "baseline-20261121T042951Z-e1e0e8",
+          "driver": "v1",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS"
+        },
+        "baselinePrediction": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "correctedExpectation": {
+          "authorizes": false,
+          "code": "helper-invalid",
+          "ownershipCalls": [
+            1,
+            1
+          ],
+          "messageIncludes": [
+            "The read-only launcher check returned an invalid or oversized response. No gateway was started."
+          ]
+        },
+        "observed": {
+          "authorizedFreshGateway": false,
+          "gatewayMainMarkers": 0,
+          "code": "helper-invalid",
+          "childExit": 0,
+          "identityCalls": 1,
+          "ownershipCalls": 1,
+          "ownershipSampleMs": [
+            3
+          ],
+          "realProducerExits": [],
+          "ensureElapsedMs": 300,
+          "message": "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+          "lockReported": false,
+          "canariesChecked": 1,
+          "canariesFound": [],
+          "storePreserved": true,
+          "ownerRecordPreserved": true,
+          "logFolderEmptyAfter": true,
+          "helperRootsExitedNaturallyZero": true,
+          "portFreeAfter": true,
+          "sentinelAlive": true,
+          "port": 25840
+        },
+        "controlsPassed": "11/11",
+        "failedControls": [],
+        "failedPredictionChecks": [],
+        "failedContractChecks": [],
+        "rawStatus": "MATCHED-PREDICTION",
+        "correctedContract": "CONFORMS",
+        "intendedPredictionDifference": false,
+        "expectedRawStatus": "MATCHED-PREDICTION",
+        "candidateAcceptance": "ACCEPTED"
+      }
+    ],
+    "distinctClosedMessages": [
+      "GraphGoblin exited during startup with an unrecognized status (exit code 54). No startup diagnostic can be assumed. Run node apps\\api\\dist\\main.js from the checkout in a terminal to see the error.",
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q05\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+      "Store ownership could not be verified (malformed or incomplete owner record): <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q06\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q07\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+      "The read-only launcher check returned an invalid or oversized response. No gateway was started.",
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\f3\\runs\\candidate-20261121T045534Z-624fab\\Q10\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+    ]
+  },
+  "f4": {
+    "runId": "f4-20261121T050513Z-e48422",
+    "status": "COMPLETED-ALL-PASS",
+    "seam": "GraphGoblin.Desktop.HelperProcess.AwaitCleanup(Func<bool>, Func<long>) : bool (internal)",
+    "cleanupMilliseconds": 2000,
+    "binding": {
+      "launcherSourceSha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520",
+      "launcherGitBlob": "f3a4f314703033c7deecece51ed3c8278d08a5a9",
+      "harnessSourceSha256": "f43d09f8791375e0374f8cdf4386eb2330c1dde337b6e97705b20395cb9a1244",
+      "assemblySha256": "e7003f753c0264a9ef26f9c3dc68ea4a327db8f8e0008452fe24bd24d7746287",
+      "assemblyBytes": 74240,
+      "compilerSha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3",
+      "compileExit": 0,
+      "compileArgs": [
+        "/nologo",
+        "/target:exe",
+        "/optimize+",
+        "/platform:x64",
+        "/main:Qa459tCleanupDecision",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\f4\\f4-20261121T050513Z-e48422\\bin\\Qa459tCleanupDecision.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+        "<out>\\f4\\v1\\harness\\Qa459tCleanupDecision.cs"
+      ]
+    },
+    "execution": {
+      "exit": 0,
+      "watchdog": false,
+      "ms": 2446
+    },
+    "summary": {
+      "cases": 8,
+      "passed": 8,
+      "failed": 0,
+      "harnessExit": 0,
+      "watchdog": false
+    },
+    "cases": [
+      {
+        "id": "T1",
+        "name": "complete-at-1999",
+        "purpose": "A complete observation sampled at 1,999 ms (strictly below the deadline) is credited.",
+        "expectedResult": true,
+        "actualResult": true,
+        "trace": "OE",
+        "samples": [
+          1999
+        ],
+        "observations": 1,
+        "wallMs": 0,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T2",
+        "name": "complete-at-2000-equality",
+        "purpose": "A complete observation sampled exactly at 2,000 ms is not credited.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OE",
+        "samples": [
+          2000
+        ],
+        "observations": 1,
+        "wallMs": 0,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T3",
+        "name": "complete-at-2001",
+        "purpose": "A complete observation sampled at 2,001 ms is not credited.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OE",
+        "samples": [
+          2001
+        ],
+        "observations": 1,
+        "wallMs": 0,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T4",
+        "name": "poll-crosses-deadline-within-one-observation",
+        "purpose": "The clock reads 1,999 ms when the observation pass starts; the pass itself advances it to 2,001 ms and completes. The sample must be taken after the full pass, so the late completion is not credited.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OE",
+        "samples": [
+          2001
+        ],
+        "observations": 1,
+        "wallMs": 0,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T5",
+        "name": "incomplete-then-complete-after-deadline",
+        "purpose": "First pass incomplete at 1,999 ms; the next pass completes but is sampled at 2,001 ms. Eventual completion does not credit timely confirmation.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OEOE",
+        "samples": [
+          1999,
+          2001
+        ],
+        "observations": 2,
+        "wallMs": 9,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T6",
+        "name": "incomplete-then-complete-in-budget",
+        "purpose": "First pass incomplete at 1,998 ms; the next pass completes sampled at 1,999 ms and is credited.",
+        "expectedResult": true,
+        "actualResult": true,
+        "trace": "OEOE",
+        "samples": [
+          1998,
+          1999
+        ],
+        "observations": 2,
+        "wallMs": 15,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T7",
+        "name": "incomplete-at-deadline-stops-polling",
+        "purpose": "An incomplete pass sampled at 2,000 ms returns false without starting another observation pass.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OE",
+        "samples": [
+          2000
+        ],
+        "observations": 1,
+        "wallMs": 0,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "elapsed samples read by the seam",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      },
+      {
+        "id": "T8",
+        "name": "real-monotonic-stopwatch-late-pass",
+        "purpose": "With a real Stopwatch, a complete observation pass that takes at least 2,050 ms is sampled at or after 2,000 ms and is not credited.",
+        "expectedResult": false,
+        "actualResult": false,
+        "trace": "OE",
+        "samples": [
+          2065
+        ],
+        "observations": 1,
+        "wallMs": 2065,
+        "checks": [
+          {
+            "name": "no exception from the product seam",
+            "pass": true
+          },
+          {
+            "name": "returned bool",
+            "pass": true
+          },
+          {
+            "name": "delegate call order",
+            "pass": true
+          },
+          {
+            "name": "last elapsed sample at or after",
+            "pass": true
+          }
+        ],
+        "verdict": "PASS"
+      }
+    ]
+  },
+  "native": {
+    "runId": "native-20261121T050530Z-3875a5",
+    "status": "COMPLETED-ALL-PASS",
+    "existingSubtest": "tooling/scripts/windows-launcher.acceptance.mjs: 'bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names' > 'native closed outcomes, launcher pair bounds and NUL stdio checks'",
+    "sources": {
+      "apps/windows-launcher/Launcher.cs": {
+        "sha256": "2ef219c2ac0e8ce3058e581033eea5639c499aaf7b8d0810c7776d5679b2d520",
+        "gitBlob": "f3a4f314703033c7deecece51ed3c8278d08a5a9"
+      },
+      "apps/windows-launcher/NativeChecks.cs": {
+        "sha256": "416ab74fedbd29907302519c4291dd00bbab9e1d959a9eb8341d1d49b2f677d0",
+        "gitBlob": "eb431a9e1b3b0f4278cf9258ce62b74628503cd8"
+      },
+      "tooling/scripts/windows-launcher.acceptance.mjs": {
+        "sha256": "4c0c3318236d55ae809f8433a4602edc1e56a98175ac2cb2213579d3429d4790"
+      }
+    },
+    "assembly": {
+      "sha256": "e07a36ae525e6990ad5b62353143f49ed52215b63f01d098b5316eaf127dd048",
+      "bytes": 95232
+    },
+    "compile": {
+      "exit": 0,
+      "args": [
+        "/nologo",
+        "/target:exe",
+        "/platform:x64",
+        "/main:NativeChecks",
+        "/reference:System.Windows.Forms.dll",
+        "/reference:System.Web.Extensions.dll",
+        "/out:<scratch>\\native\\native-20261121T050530Z-3875a5\\install α\\NativeChecks.exe",
+        "<checkout>\\apps\\windows-launcher\\Launcher.cs",
+        "<checkout>\\apps\\windows-launcher\\NativeChecks.cs"
+      ],
+      "compilerSha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+    },
+    "entries": [
+      {
+        "id": "N1",
+        "mode": "--bounded-log-checks",
+        "expectation": "exit 0 and stdout matches /bounded log, closed outcome and NUL stdio checks passed/",
+        "exit": 0,
+        "signal": null,
+        "timedOut": false,
+        "ms": 976,
+        "stdout": "Native bounded log, closed outcome and NUL stdio checks passed.\r\n",
+        "stderr": "",
+        "verdict": "PASS"
+      },
+      {
+        "id": "N2",
+        "mode": "--helper-checks",
+        "expectation": "exit 0 and stdout matches /Native helper job, pipe and deadline checks passed/",
+        "exit": 0,
+        "signal": null,
+        "timedOut": false,
+        "ms": 33385,
+        "stdout": "helper-fixture both cleanup-confirmed elapsed-ms=2621\r\nhelper-fixture stdout cleanup-confirmed elapsed-ms=2616\r\nhelper-fixture stderr cleanup-confirmed elapsed-ms=2677\r\nhelper-fixture neither cleanup-confirmed elapsed-ms=2690\r\nNative helper job, pipe and deadline checks passed.\r\n",
+        "stderr": "",
+        "verdict": "PASS"
+      },
+      {
+        "id": "N3",
+        "mode": "--cleanup-deadline-checks",
+        "expectation": "exit 0 and trimmed stdout equals 'Deterministic cleanup decision checks passed (no kernel fault injected).'",
+        "exit": 0,
+        "signal": null,
+        "timedOut": false,
+        "ms": 106,
+        "stdout": "Deterministic cleanup decision checks passed (no kernel fault injected).\r\n",
+        "stderr": "",
+        "verdict": "PASS"
+      }
+    ],
+    "isolatedTempManagedLogNames": [],
+    "summary": {
+      "entries": 3,
+      "passed": 3,
+      "failed": 0,
+      "isolatedTempClean": true
+    },
+    "grouping": "Each mode is one grouped native control that exits non-zero at its first failing internal Check; only mode verdicts are counted."
+  }
+}

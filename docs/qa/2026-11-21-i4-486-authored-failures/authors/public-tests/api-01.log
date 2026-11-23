@@ -1,0 +1,86 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/apps/api
+
+ ❯ src/subloop-failure.test.ts (7 tests | 1 failed) 7491ms
+   ❯ subloop child failures over the API (#251) (7)
+     × #486 B25 signal expression remains a request error with the same parked wait and zero effects 219ms
+ ❯ src/prompt-failure-boundaries.test.ts (22 tests | 8 failed) 9591ms
+   × #486 HTTP codex primary authored fails=true has row/event/REST parity and effect counts 189ms
+   × #486 HTTP codex repair authored fails=true has row/event/REST parity and effect counts 180ms
+   × #486 HTTP claude primary authored fails=false has row/event/REST parity and effect counts 142ms
+   × #486 HTTP claude primary authored fails=true has row/event/REST parity and effect counts 151ms
+   × #486 HTTP claude repair authored fails=false has row/event/REST parity and effect counts 136ms
+   × #486 HTTP claude repair authored fails=true has row/event/REST parity and effect counts 149ms
+   × #486 HTTP claude output authored fails=false has row/event/REST parity and effect counts 132ms
+   × #486 HTTP claude output authored fails=true has row/event/REST parity and effect counts 135ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP codex primary authored fails=true has row/event/REST parity and effect counts
+Error: publish failed: {"type":"https://graphgoblin.dev/problems/loop-invalid","title":"loop invalid","status":422,"code":"LOOP_INVALID","detail":"the draft has structural errors","errors":[{"code":"TEMPLATE_INVALID","severity":"error","message":"template at node \"infer\" prompt.template: invalid value expression: \"\", line:1, col:6","nodeId":"infer","path":"config.prompt.template"}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:117:47
+    115|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    116|       const published = await app.inject({ method: 'POST', url: `/loop…
+    117|       if (published.statusCode !== 200) throw new Error(`publish faile…
+       |                                               ^
+    118|       return id;
+    119|     },
+ ❯ src/prompt-failure-boundaries.test.ts:158:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP codex repair authored fails=true has row/event/REST parity and effect counts
+Error: publish failed: {"type":"https://graphgoblin.dev/problems/loop-invalid","title":"loop invalid","status":422,"code":"LOOP_INVALID","detail":"the draft has structural errors","errors":[{"code":"TEMPLATE_INVALID","severity":"error","message":"template at node \"infer\" output.schema.repair.prompt: invalid value expression: \"\", line:1, col:6","nodeId":"infer","path":"config.output.schema.repair.prompt"}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:117:47
+    115|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    116|       const published = await app.inject({ method: 'POST', url: `/loop…
+    117|       if (published.statusCode !== 200) throw new Error(`publish faile…
+       |                                               ^
+    118|       return id;
+    119|     },
+ ❯ src/prompt-failure-boundaries.test.ts:158:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude primary authored fails=false has row/event/REST parity and effect counts
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude primary authored fails=true has row/event/REST parity and effect counts
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude repair authored fails=false has row/event/REST parity and effect counts
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude repair authored fails=true has row/event/REST parity and effect counts
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude output authored fails=false has row/event/REST parity and effect counts
+ FAIL  src/prompt-failure-boundaries.test.ts > #486 HTTP claude output authored fails=true has row/event/REST parity and effect counts
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/harnessOptions/sandbox","message":"Claude workspace-write cannot enforce the requested boundary; choose an explicit supported policy"}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:114:45
+    112|         headers,
+    113|       });
+    114|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    115|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    116|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/prompt-failure-boundaries.test.ts:158:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/subloop-failure.test.ts > subloop child failures over the API (#251) > #486 B25 signal expression remains a request error with the same parked wait and zero effects
+Error: create loop failed: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the schema","errors":[{"path":"/definition/nodes/1/config/name","message":"Invalid input: expected string, received undefined"},{"path":"/definition/nodes/1/config/signalName","message":"Unrecognized key \"signalName\""}]}
+ ❯ Object.publishLoop src/testing/test-app.ts:114:45
+    112|         headers,
+    113|       });
+    114|       if (created.statusCode !== 201) throw new Error(`create loop fai…
+       |                                             ^
+    115|       const id = created.json<{ loop: { id: string } }>().loop.id;
+    116|       const published = await app.inject({ method: 'POST', url: `/loop…
+ ❯ src/subloop-failure.test.ts:116:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  9 failed | 539 passed (548)
+   Start at  06:00:28
+   Duration  112.06s (tests 82%, import 13%, transform 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\apps\api
+

@@ -1,0 +1,399 @@
+{
+  "label": "browser",
+  "browser": {
+    "channel": "msedge",
+    "headless": true,
+    "profile": "fresh temporary directory, deleted after the run"
+  },
+  "gateway": {
+    "port": 6441,
+    "webDist": "apps/web/dist (this checkout)",
+    "apiDist": "apps/api/dist (this checkout)",
+    "store": "temporary, deleted after the run",
+    "stop": {
+      "steps": [
+        {
+          "action": "drain",
+          "status": 202
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  "message": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+  "steps": [
+    {
+      "step": "sign in through the app Settings panel (key typed, never recorded)",
+      "ok": true
+    },
+    {
+      "step": "open the disposable inference node, Advanced",
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": null,
+        "value2": null
+      },
+      "advanced": "Advanced\n2 set",
+      "screenshot": "01-initial.png",
+      "ok": true
+    },
+    {
+      "step": "valid neighbour entry: features.multi_agent = false is saved",
+      "ok": true,
+      "server": {
+        "features.plugins": false,
+        "features.multi_agent": false
+      },
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": true
+        }
+      },
+      "alerts": []
+    },
+    {
+      "step": "type the refused key \"gg_qa.space segment\" key by key into Key 2",
+      "ok": true,
+      "keystrokes": 19,
+      "focusStayedInKey2": true,
+      "focusAfterEachKey": [
+        "Config overrides key 2"
+      ],
+      "keyText": "gg_qa.space segment",
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": true
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "invalid": "true",
+          "focused": false
+        }
+      },
+      "keyDescriptionNamesKey": false,
+      "keyDescriptionHasRule": false,
+      "valueDescriptionHasRule": true,
+      "alerts": [
+        "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+      ],
+      "recordStatus": "Added config overrides key2",
+      "advanced": "Advanced\n2 set\n1 error",
+      "neighbour": {
+        "timeoutSeconds": {
+          "role": "none",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "serverBefore": {
+        "features.plugins": false,
+        "features.multi_agent": false
+      },
+      "serverAfter": {
+        "features.plugins": false,
+        "features.multi_agent": false
+      },
+      "screenshot": "02-refused-key.png"
+    },
+    {
+      "step": "Tab order from the refused Key: Remove, then Value, and back",
+      "ok": true,
+      "order": [
+        "Config overrides key 2",
+        "Remove config overrides gg_qa.space segment",
+        "Config overrides value 2",
+        "Config overrides key 2"
+      ]
+    },
+    {
+      "step": "a real value error alongside the refused key: unparsed JSON in Value 2",
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. Invalid JSON: Expected property name or '}' in JSON at position 1 (line 1 column 2) Discard the unparsed text",
+          "invalid": "true",
+          "focused": true
+        }
+      },
+      "alerts": [
+        "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype."
+      ],
+      "valueDescription": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. Invalid JSON: Expected property name or '}' in JSON at position 1 (line 1 column 2) Discard the unparsed text",
+      "screenshot": "03-refused-key-and-value-error.png",
+      "afterRestore": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+          "invalid": "true",
+          "focused": true
+        }
+      },
+      "ok": true
+    },
+    {
+      "step": "the node issue badge: choosing the key issue (observation only)",
+      "badgePresent": true,
+      "label": "1 issue on work",
+      "configRows": [
+        "Error\nSCHEMA\nCodex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.\nconfig.harnessOptions.configOverrides.gg_qa.space segment"
+      ],
+      "focusAfterChoosing": "Config overrides value 2",
+      "ok": true
+    },
+    {
+      "step": "correct Key 2 to gg_qa.space_segment: feedback clears and the draft saves",
+      "ok": true,
+      "focus": "Config overrides key 2",
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": true
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "alerts": [],
+      "advanced": "Advanced\n2 set",
+      "server": {
+        "features.plugins": false,
+        "gg_qa.space_segment": false
+      },
+      "screenshot": "04-corrected.png"
+    },
+    {
+      "step": "JSON mode still refuses a pasted key with its path (unchanged)",
+      "ok": true,
+      "messageVisible": true,
+      "applyDisabled": true,
+      "serverAfter": {
+        "features.plugins": false,
+        "gg_qa.space_segment": false
+      }
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "nonGetOrFailedResponses": [
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/shutdown"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/storage"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/ollama/connection"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/chat/voice/config"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/model-catalog"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/preflight"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/settings"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/model-defaults"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/api-keys"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/secrets"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/classifier-models"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7RWAQ990C1VE2FH4MQBNSGP/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7RWAQ990C1VE2FH4MQBNSGP/draft"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7RWAQ990C1VE2FH4MQBNSGP/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7RWAQ990C1VE2FH4MQBNSGP/draft"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7RWAQ990C1VE2FH4MQBNSGP/validate"
+    }
+  ],
+  "passed": 9,
+  "failed": []
+}

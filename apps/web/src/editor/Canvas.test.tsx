@@ -48,8 +48,22 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     },
     useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p }),
     useStoreApi: () => flowStoreStub,
-    // The edge's handles read the zoom; everything else here reads the routing geometry.
-    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
+    // The edge's handles read the zoom, and a shared id's note the viewport and the pane, which is
+    // unmeasured here; everything else here reads the routing geometry.
+    useStore: (selector?: { name?: string }) => {
+      switch (selector?.name) {
+        case 'zoomOf':
+          return 1;
+        case 'transformOf':
+        case 'noTransformOf':
+          return [0, 0, 1];
+        case 'paneWidthOf':
+        case 'paneHeightOf':
+          return 0;
+        default:
+          return geometry;
+      }
+    },
   };
 });
 
@@ -90,6 +104,9 @@ function EdgeLayer({ flow: p }: { flow: ReactFlowProps<FlowNode> }) {
 
 const store = () => useEditorStore.getState();
 const flow = () => props as ReactFlowProps<FlowNode>;
+/** What an action by the id `return`, which two stored connections hold, says (#207, #481). */
+const SHARED_RETURN =
+  'More than one connection uses the ID "return", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.';
 
 describe('Canvas handlers', () => {
   beforeEach(() => {
@@ -1303,6 +1320,44 @@ describe('manual edge routes (#44)', () => {
     expect(route('return')).toEqual([1116, 290, 268]);
   });
 
+  it('keeps a manual route whose id another connection holds when a moved card would reset it, and says why (#481)', () => {
+    const definition = simpleLoop();
+    definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
+    // `start → work` shares the loop-back's id, as an imported or API-written draft can.
+    definition.edges.find((e) => e.id === 'start-work')!.id = 'return';
+    store().load('L1', definition);
+    render(<Live />);
+    const loopBack = () => store().definition!.edges.find((e) => e.from.node === 'done')!;
+    const check = flow().nodes!.find((n) => n.id === 'check')!;
+    act(() => flow().onNodeDragStart!({} as never, check, [check]));
+    moveCard('check', 600, 240);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 240 }, dragging: true },
+      ]),
+    );
+    // The plan sets the route aside under the card, as for a unique id.
+    expect(flow().edges!.some((e) => (e.data as OrthogonalEdgeData | undefined)?.suspended)).toBe(
+      true,
+    );
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 240 }, dragging: false },
+      ]),
+    );
+    // The move is made; the route reset by id is refused, so both records stay as authored.
+    expect(store().definition!.nodes.find((n) => n.id === 'check')!.ui).toEqual({ x: 600, y: 240 });
+    expect(loopBack()).toBe(definition.edges[3]);
+    expect(store().definition!.edges[0]).toBe(definition.edges[0]);
+    expect(labels()).toEqual(['move check']);
+    expect(store().connectionError).toBe(SHARED_RETURN);
+    expect(
+      screen.queryByText('A manual route would cross a card and now routes automatically.'),
+    ).toBeNull();
+    act(() => store().undo());
+    expect(store().definition).toBe(definition);
+  });
+
   it('consumes the drop-position plan when the last position change has no preview frame', () => {
     const definition = simpleLoop();
     definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
@@ -1573,16 +1628,21 @@ describe('the selected connection is the one the user selected (#207)', () => {
     act(() => store().select('check'));
     select('start-work');
     const message =
-      'More than one connection uses the ID "start-work"; this action cannot choose just one.';
-    // xyflow marks every edge of the id selected, so each draws a toolbar; each Remove is disabled
-    // with the store's own reason.
+      'More than one connection uses the ID "start-work", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.';
+    // xyflow marks every edge of the id selected, so each draws a toolbar. Each shows the store's
+    // own reason as a note at once, and its Remove is unavailable but focusable, described by
+    // that note (#481). A click on it changes nothing and raises no notice above the canvas.
     expect(removes()).toHaveLength(2);
+    expect(screen.getAllByText(message)).toHaveLength(2);
     for (const remove of removes()) {
-      expect(remove).toBeDisabled();
-      expect(remove).toHaveAttribute('title', message);
-      fireEvent.click(remove);
+      expect(remove).toBeEnabled();
+      expect(remove).toHaveAttribute('aria-disabled', 'true');
+      expect(remove).not.toHaveAttribute('title');
+      expect(remove).toHaveAccessibleDescription(message);
+      for (const detail of [0, 1]) fireEvent.click(remove, { detail });
     }
     expect(store().connectionError).toBeUndefined();
+    expect(store().definition).toBe(definition);
     press('Delete');
     press('Backspace');
     untouched(definition);
@@ -1596,17 +1656,71 @@ describe('the selected connection is the one the user selected (#207)', () => {
     // stand-in edge layer keys edges by id, as xyflow does, so React may keep a stale toolbar for
     // the shared id: use the one on `return` itself.)
     select('return');
-    fireEvent.click(
-      within(canvas().querySelector<HTMLElement>('.react-flow__edge[data-id="return"]')!).getByRole(
-        'button',
-        { name: 'Remove connection' },
-      ),
+    const unique = within(
+      canvas().querySelector<HTMLElement>('.react-flow__edge[data-id="return"]')!,
     );
+    // Its toolbar has no note, and its Remove is the ordinary one.
+    expect(unique.queryByText(message)).toBeNull();
+    const remove = unique.getByRole('button', { name: 'Remove connection' });
+    expect(remove).not.toHaveAttribute('aria-disabled');
+    expect(remove).not.toHaveAttribute('aria-describedby');
+    fireEvent.click(remove);
     expect(store().definition!.edges).toEqual(definition.edges.filter((e) => e.id !== 'return'));
     expect(labels()).toEqual(['remove edge done repeat to work']);
     expect(undo).toHaveFocus();
     act(() => store().undo());
     expect(store().definition).toEqual(definition);
+  });
+
+  it('refuses Reset route, a segment drag and a nudge for an id two connections hold, saying why (#481)', () => {
+    const definition = routed();
+    // `work → check` takes the routed loop-back's id, with a manual route of its own.
+    const shared = definition.edges.find((e) => e.id === 'work-check')!;
+    shared.id = 'return';
+    shared.ui = { route: [450] };
+    load(definition);
+    render(<Live />);
+    select('return');
+    const message = SHARED_RETURN;
+    // Every holder's toolbar: Reset route is unavailable, focusable and described by the note with
+    // the store's reason, as Remove is; a click resets nothing and raises no notice.
+    const resets = screen.getAllByRole('button', { name: 'Reset route' });
+    for (const reset of resets) {
+      expect(reset).toBeEnabled();
+      expect(reset).toHaveAttribute('aria-disabled', 'true');
+      expect(reset).not.toHaveAttribute('title');
+      expect(reset).toHaveAccessibleDescription(message);
+      fireEvent.click(reset);
+    }
+    expect(store().connectionError).toBeUndefined();
+    // The handles are described by the same note; a drag previews nothing and a nudge moves
+    // nothing, each showing the notice.
+    const handles = screen.getAllByRole('button', { name: /^Route segment/ });
+    for (const handle of handles) {
+      expect(handle).toHaveAttribute('aria-disabled', 'true');
+      expect(handle).not.toHaveAttribute('aria-description');
+      expect(handle).toHaveAccessibleDescription(message);
+    }
+    fireEvent.pointerDown(handles[0]!, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(window, { clientX: 40, clientY: 60 });
+    expect(edge('return').ariaLabel).not.toContain('set aside');
+    fireEvent.pointerUp(window);
+    expect(store().connectionError).toBe(message);
+    act(() => useEditorStore.setState({ connectionError: undefined }));
+    const vertical = handles.find((handle) =>
+      handle.getAttribute('aria-label')!.endsWith('vertical'),
+    )!;
+    fireEvent.keyDown(vertical, { key: 'ArrowRight' });
+    expect(store().connectionError).toBe(message);
+    // Nothing changed, nothing was announced as changed, and the selection stays.
+    untouched(definition);
+    expect(said()).toBe('');
+    expect(selected()).toEqual(['return', 'return']);
+    // An unrelated edit keeps both records' ends, so the selection of the shared id stays too: the
+    // gate's `repeat` row no longer moves `work → check` onto its own port.
+    act(() => store().moveNode('start', { x: 5, y: 5 }));
+    expect(store().definition!.edges).toBe(definition.edges);
+    expect(selected()).toEqual(['return', 'return']);
   });
 
   it.each<[string, (definition: LoopDefinitionInput) => LoopDefinitionInput, string]>([

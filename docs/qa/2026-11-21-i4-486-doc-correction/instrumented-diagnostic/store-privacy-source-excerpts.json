@@ -1,0 +1,626 @@
+[
+  {
+    "path": "apps/api/src/testing/test-app.ts",
+    "sha256": "275fd7228ef196733bdcc884a05eaf8f3ffce8498bb4298ce18ca13b4f75cff0",
+    "ranges": [
+      {
+        "start": 60,
+        "end": 78,
+        "lines": [
+          {
+            "line": 60,
+            "text": "/** An API over an in-memory database with fake harness, deciders, and structured completion. */"
+          },
+          {
+            "line": 61,
+            "text": "export async function createTestApp(options: TestAppOptions = {}): Promise<TestApp> {"
+          },
+          {
+            "line": 62,
+            "text": "  const dataDir = await mkdtemp("
+          },
+          {
+            "line": 63,
+            "text": "    join(tmpdir(), options.tempPrefix ?? process.env['GG_TEST_DATA_PREFIX'] ?? 'gg-api-'),"
+          },
+          {
+            "line": 64,
+            "text": "  );"
+          },
+          {
+            "line": 65,
+            "text": "  const config = loadConfig({"
+          },
+          {
+            "line": 66,
+            "text": "    GG_DATA_DIR: dataDir,"
+          },
+          {
+            "line": 67,
+            "text": "    GG_DB_URL: ':memory:',"
+          },
+          {
+            "line": 68,
+            "text": "    GG_SWAGGER_UI: 'false',"
+          },
+          {
+            "line": 69,
+            "text": "    GG_REQUIRE_API_KEY: options.requireApiKey ? 'true' : 'false',"
+          },
+          {
+            "line": 70,
+            "text": "    GG_OLLAMA_ENABLED: 'false',"
+          },
+          {
+            "line": 71,
+            "text": "    GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),"
+          },
+          {
+            "line": 72,
+            "text": "    ...options.env,"
+          },
+          {
+            "line": 73,
+            "text": "  });"
+          },
+          {
+            "line": 74,
+            "text": "  const harness = new FakeHarness();"
+          },
+          {
+            "line": 75,
+            "text": "  const jev = new FakeClassifier('jev');"
+          },
+          {
+            "line": 76,
+            "text": "  const codex = new FakeDecider('codex');"
+          },
+          {
+            "line": 77,
+            "text": "  const structured = new FakeStructured();"
+          },
+          {
+            "line": 78,
+            "text": "  const logger = new CapturingLogger();"
+          }
+        ]
+      },
+      {
+        "start": 121,
+        "end": 133,
+        "lines": [
+          {
+            "line": 121,
+            "text": "    async close() {"
+          },
+          {
+            "line": 122,
+            "text": "      // Teardown is a storage/component boundary, not an operator stop. C2 reopens this store."
+          },
+          {
+            "line": 123,
+            "text": "      // If a test did request managed shutdown, settle that sequence before closing resources."
+          },
+          {
+            "line": 124,
+            "text": "      if (['draining', 'awaiting-choice', 'forcing'].includes(container.shutdown.state().phase)) {"
+          },
+          {
+            "line": 125,
+            "text": "        if (['draining', 'awaiting-choice'].includes(container.shutdown.state().phase))"
+          },
+          {
+            "line": 126,
+            "text": "          await container.requestShutdown('force');"
+          },
+          {
+            "line": 127,
+            "text": "        await container.shutdown.drain();"
+          },
+          {
+            "line": 128,
+            "text": "      }"
+          },
+          {
+            "line": 129,
+            "text": "      await app.close();"
+          },
+          {
+            "line": 130,
+            "text": "      await container.dispose();"
+          },
+          {
+            "line": 131,
+            "text": "      await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);"
+          },
+          {
+            "line": 132,
+            "text": "    },"
+          },
+          {
+            "line": 133,
+            "text": "  };"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/e2e/server.ts",
+    "sha256": "c141941ddf4429ee870cfda0da79ce24bba4a4e002a7aba29001417feb33a98f",
+    "ranges": [
+      {
+        "start": 181,
+        "end": 204,
+        "lines": [
+          {
+            "line": 181,
+            "text": "  requireApiKey = false,"
+          },
+          {
+            "line": 182,
+            "text": "  realClassifiers = false,"
+          },
+          {
+            "line": 183,
+            "text": "  options: { claude?: boolean; id?: string; tempPrefix?: string } = {},"
+          },
+          {
+            "line": 184,
+            "text": ") {"
+          },
+          {
+            "line": 185,
+            "text": "  const id = options.id ?? 'e2e-instance-' + nextInstanceId++;"
+          },
+          {
+            "line": 186,
+            "text": "  const codex = new FakeHarness([], 'codex');"
+          },
+          {
+            "line": 187,
+            "text": "  const claude = options.claude ? new E2eClaudeHarness() : undefined;"
+          },
+          {
+            "line": 188,
+            "text": "  const harnesses = { codex, ...(claude ? { claude } : {}) };"
+          },
+          {
+            "line": 189,
+            "text": "  const storage = { availableBytes: 50 * 1024 ** 3 };"
+          },
+          {
+            "line": 190,
+            "text": "  const app = await createTestApp({"
+          },
+          {
+            "line": 191,
+            "text": "    storageCapacity: {"
+          },
+          {
+            "line": 192,
+            "text": "      read: () =>"
+          },
+          {
+            "line": 193,
+            "text": "        Promise.resolve({ totalBytes: 100 * 1024 ** 3, availableBytes: storage.availableBytes }),"
+          },
+          {
+            "line": 194,
+            "text": "    },"
+          },
+          {
+            "line": 195,
+            "text": "    ...(options.tempPrefix ? { tempPrefix: options.tempPrefix } : {}),"
+          },
+          {
+            "line": 196,
+            "text": "    env: { GG_WEB_DIST: dist, ...env },"
+          },
+          {
+            "line": 197,
+            "text": "    requireApiKey,"
+          },
+          {
+            "line": 198,
+            "text": "    realClassifiers,"
+          },
+          {
+            "line": 199,
+            "text": "    harnesses,"
+          },
+          {
+            "line": 200,
+            "text": "  });"
+          },
+          {
+            "line": 201,
+            "text": "  apps.push(app);"
+          },
+          {
+            "line": 202,
+            "text": "  const url = await app.app.listen({"
+          },
+          {
+            "line": 203,
+            "text": "    host: '127.0.0.1',"
+          },
+          {
+            "line": 204,
+            "text": "    port: id === 'main' ? Number(process.env['GG_E2E_MAIN_PORT'] ?? 0) : 0,"
+          }
+        ]
+      },
+      {
+        "start": 611,
+        "end": 633,
+        "lines": [
+          {
+            "line": 611,
+            "text": "    case '/apps': {"
+          },
+          {
+            "line": 612,
+            "text": "      if (body['threadHistory'] === true) {"
+          },
+          {
+            "line": 613,
+            "text": "        const history = await createThreadHistoryFixture(dist);"
+          },
+          {
+            "line": 614,
+            "text": "        history.manager.stop();"
+          },
+          {
+            "line": 615,
+            "text": "        const instanceId = 'thread-history-' + nextInstanceId++;"
+          },
+          {
+            "line": 616,
+            "text": "        const url = await history.app.listen({ host: '127.0.0.1', port: 0 });"
+          },
+          {
+            "line": 617,
+            "text": "        threadHistories.set(instanceId, history);"
+          },
+          {
+            "line": 618,
+            "text": "        closers.push(() => history.close());"
+          },
+          {
+            "line": 619,
+            "text": "        return { instanceId, url, loopId: history.loopId };"
+          },
+          {
+            "line": 620,
+            "text": "      }"
+          },
+          {
+            "line": 621,
+            "text": "      const extra = await startApp("
+          },
+          {
+            "line": 622,
+            "text": "        (body['env'] as Record<string, string> | undefined) ?? {},"
+          },
+          {
+            "line": 623,
+            "text": "        body['requireApiKey'] === true,"
+          },
+          {
+            "line": 624,
+            "text": "        // The real catalog, secret resolution, and HTTP transport for classifiers (#43)."
+          },
+          {
+            "line": 625,
+            "text": "        body['realClassifiers'] === true,"
+          },
+          {
+            "line": 626,
+            "text": "        {"
+          },
+          {
+            "line": 627,
+            "text": "          claude: body['claude'] === true,"
+          },
+          {
+            "line": 628,
+            "text": "          ...(body['tempPrefix'] === 'gg-wp-e3-' ? { tempPrefix: 'gg-wp-e3-' } : {}),"
+          },
+          {
+            "line": 629,
+            "text": "        },"
+          },
+          {
+            "line": 630,
+            "text": "      );"
+          },
+          {
+            "line": 631,
+            "text": "      // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one."
+          },
+          {
+            "line": 632,
+            "text": "      const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);"
+          },
+          {
+            "line": 633,
+            "text": "      return { instanceId: extra.id, url: extra.url, token };"
+          }
+        ]
+      },
+      {
+        "start": 663,
+        "end": 673,
+        "lines": [
+          {
+            "line": 663,
+            "text": "async function stop(): Promise<void> {"
+          },
+          {
+            "line": 664,
+            "text": "  if (stopping) return;"
+          },
+          {
+            "line": 665,
+            "text": "  stopping = true;"
+          },
+          {
+            "line": 666,
+            "text": "  controlServer.close();"
+          },
+          {
+            "line": 667,
+            "text": "  for (const instance of instances.values()) await setApiListening(instance, true);"
+          },
+          {
+            "line": 668,
+            "text": "  await writeFile(workerPath, originalWorker);"
+          },
+          {
+            "line": 669,
+            "text": "  for (const app of apps) await app.close();"
+          },
+          {
+            "line": 670,
+            "text": "  for (const close of closers) await close();"
+          },
+          {
+            "line": 671,
+            "text": "  process.exit(0);"
+          },
+          {
+            "line": 672,
+            "text": "}"
+          },
+          {
+            "line": 673,
+            "text": "if (process.env['GG_E2E_KEEP_STDIN'] !== '1') {"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/api/src/plugins/auth.ts",
+    "sha256": "437b7a3a96a72ea2fe612fad9c3fb2f102e653eecd03ac9c1c349f092c009765",
+    "ranges": [
+      {
+        "start": 193,
+        "end": 198,
+        "lines": [
+          {
+            "line": 193,
+            "text": "    if (container.config.requireApiKey) {"
+          },
+          {
+            "line": 194,
+            "text": "      return problem(reply, 401, 'UNAUTHORIZED', 'an API key is required');"
+          },
+          {
+            "line": 195,
+            "text": "    }"
+          },
+          {
+            "line": 196,
+            "text": "    request.auth = { ownerId: LOCAL_OWNER, actor: { kind: 'user', id: LOCAL_OWNER }, scopes: '*' };"
+          },
+          {
+            "line": 197,
+            "text": "  });"
+          },
+          {
+            "line": 198,
+            "text": "}"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "packages/infrastructure/src/sqlite/settings.ts",
+    "sha256": "7528d5d291c04dd9728c51849b1fba9d703c873c6b333824ab41db49f3bb6cd8",
+    "ranges": [
+      {
+        "start": 263,
+        "end": 283,
+        "lines": [
+          {
+            "line": 263,
+            "text": "export const API_KEY_PREFIX = 'gg_';"
+          },
+          {
+            "line": 264,
+            "text": ""
+          },
+          {
+            "line": 265,
+            "text": "export function hashApiKey(token: string): string {"
+          },
+          {
+            "line": 266,
+            "text": "  return createHash('sha256').update(token, 'utf8').digest('hex');"
+          },
+          {
+            "line": 267,
+            "text": "}"
+          },
+          {
+            "line": 268,
+            "text": ""
+          },
+          {
+            "line": 269,
+            "text": "export class SqliteApiKeys {"
+          },
+          {
+            "line": 270,
+            "text": "  constructor("
+          },
+          {
+            "line": 271,
+            "text": "    private readonly db: Database,"
+          },
+          {
+            "line": 272,
+            "text": "    private readonly clock: ClockPort,"
+          },
+          {
+            "line": 273,
+            "text": "    private readonly ids: IdPort,"
+          },
+          {
+            "line": 274,
+            "text": "  ) {}"
+          },
+          {
+            "line": 275,
+            "text": ""
+          },
+          {
+            "line": 276,
+            "text": "  /** Create a key. The plaintext token is returned once and never stored. */"
+          },
+          {
+            "line": 277,
+            "text": "  async create("
+          },
+          {
+            "line": 278,
+            "text": "    ownerId: string,"
+          },
+          {
+            "line": 279,
+            "text": "    label: string,"
+          },
+          {
+            "line": 280,
+            "text": "    scopes: string[],"
+          },
+          {
+            "line": 281,
+            "text": "  ): Promise<{ record: ApiKeyRecord; token: string }> {"
+          },
+          {
+            "line": 282,
+            "text": "    const token = `${API_KEY_PREFIX}${randomBytes(24).toString('base64url')}`;"
+          },
+          {
+            "line": 283,
+            "text": "    const record: ApiKeyRecord = {"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "apps/web/src/api/api-key.ts",
+    "sha256": "34d685d2d7bcdd2d93ebc73152f6b1987f42c5094eea764aa654c09a552add3b",
+    "ranges": [
+      {
+        "start": 1,
+        "end": 12,
+        "lines": [
+          {
+            "line": 1,
+            "text": "import { create } from 'zustand';"
+          },
+          {
+            "line": 2,
+            "text": ""
+          },
+          {
+            "line": 3,
+            "text": "/** Where this browser keeps the API key it sends when the server runs with GG_REQUIRE_API_KEY. */"
+          },
+          {
+            "line": 4,
+            "text": "export const API_KEY_STORAGE = 'graphgoblin-api-key';"
+          },
+          {
+            "line": 5,
+            "text": ""
+          },
+          {
+            "line": 6,
+            "text": "function read(): string | undefined {"
+          },
+          {
+            "line": 7,
+            "text": "  try {"
+          },
+          {
+            "line": 8,
+            "text": "    return localStorage.getItem(API_KEY_STORAGE) ?? undefined;"
+          },
+          {
+            "line": 9,
+            "text": "  } catch {"
+          },
+          {
+            "line": 10,
+            "text": "    return undefined;"
+          },
+          {
+            "line": 11,
+            "text": "  }"
+          },
+          {
+            "line": 12,
+            "text": "}"
+          }
+        ]
+      },
+      {
+        "start": 26,
+        "end": 31,
+        "lines": [
+          {
+            "line": 26,
+            "text": " * 401 asks for one, it is kept in `localStorage`, and every request and event stream sends it."
+          },
+          {
+            "line": 27,
+            "text": " */"
+          },
+          {
+            "line": 28,
+            "text": "export const useApiKeyStore = create<ApiKeyState>((set) => ({"
+          },
+          {
+            "line": 29,
+            "text": "  key: read(),"
+          },
+          {
+            "line": 30,
+            "text": "  rejected: false,"
+          },
+          {
+            "line": 31,
+            "text": "  save: (key) => {"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -14,6 +14,7 @@ import {
   UlidSchema,
 } from './common.js';
 import { field } from './meta.js';
+import { CodexConfigOverridesSchema } from './codex-config.js';
 import {
   CollectionSelectionSchema,
   InjectedMessageSchema,
@@ -206,15 +207,15 @@ export const HarnessOptionsSchema = z.strictObject({
     .boolean()
     .optional()
     .meta(field('Let the model search the web.', { advanced: true })),
-  configOverrides: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .meta(
-      field('Raw harness configuration, passed through as is.', {
+  configOverrides: CodexConfigOverridesSchema.optional().meta(
+    field(
+      'Raw Codex configuration. Each dotted key segment must use letters, digits, _ or -, and not __proto__, constructor or prototype.',
+      {
         advanced: true,
         jsonEditor: true,
-      }),
+      },
     ),
+  ),
 });
 export type HarnessOptions = z.infer<typeof HarnessOptionsSchema>;
 

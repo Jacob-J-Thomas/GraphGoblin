@@ -1,0 +1,36 @@
+$ vitest run src/preflight-catalog.test.ts -t 'initially absent WAL' --reporter=verbose
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/preflight-catalog.test.ts > offline startup catalog admission > preserves rows and migrations with an initially absent WAL
+AssertionError: expected { …(2) } to deeply equal { …(1) }
+
+- Expected
++ Received
+
+@@ -479234,6 +479234,7 @@
+        115,
+        104,
+      ],
+      "type": "Buffer",
+    },
++   "gateway.db-wal": [Buffer],
+  }
+
+ ❯ expectStoreUnchanged src/preflight-catalog.test.ts:93:17
+     91|   after: Record<string, Buffer>,
+     92| ) {
+     93|   expect(after).toEqual(before);
+       |                 ^
+     94| }
+     95| async function storedCatalog(dbFile: string) {
+ ❯ src/preflight-catalog.test.ts:322:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-448-
+  │ preflight\GraphGoblin\apps\api
+

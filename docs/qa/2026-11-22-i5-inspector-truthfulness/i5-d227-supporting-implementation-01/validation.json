@@ -1,0 +1,50 @@
+{
+  "node": "v22.23.4",
+  "pnpm": "existing installation",
+  "tmp": "G:/ggq/gg-i5-d227-support-scratch",
+  "focusedInitial": {
+    "command": "pnpm.cmd --filter @graphgoblin/web test src/runs/RunInspectorPage.corrective.test.tsx src/runs/run-header-status.test.ts src/runs/run-header-store.test.tsx src/runs/useRunHeaderStatus.test.tsx src/runs/useRunEvents.test.tsx src/api/queries.reconnect.test.tsx --reporter=default --reporter=json --outputFile=.../focused-tests.json",
+    "exitCode": 1,
+    "passed": 90,
+    "failed": 2,
+    "total": 92,
+    "failedCases": "New HTTP404/500 tests immediately read the observer error after refetch resolved; observer notification had not run. Failing source retained in failed-fixture-source/queries.reconnect.test.tsx."
+  },
+  "fixtureCorrection": "Await the same desired error assertion with existing waitFor; no timeout, request, retry, budget or product assertion changed.",
+  "changedFileValidation": {
+    "command": "pnpm.cmd --filter @graphgoblin/web test src/api/queries.reconnect.test.tsx --reporter=default --reporter=json --outputFile=.../query-fixture-corrected-tests.json",
+    "exitCode": 0,
+    "passed": 37,
+    "failed": 0
+  },
+  "unchangedTestFileValidation": {
+    "passed": 55,
+    "failed": 0,
+    "files": 5,
+    "source": "focused-tests.json"
+  },
+  "finalCaseCoverage": {
+    "passedAcrossScopedRuns": 92,
+    "singleFinal92CaseRerun": false,
+    "newCases": 16
+  },
+  "webTypecheck": {
+    "command": "pnpm.cmd --filter @graphgoblin/web typecheck",
+    "exitCode": 0
+  },
+  "scopedLint": {
+    "command": "pnpm.cmd --filter @graphgoblin/web exec eslint src/runs/RunInspectorPage.corrective.test.tsx src/runs/run-header-status.test.ts src/runs/run-header-store.test.tsx src/runs/useRunHeaderStatus.test.tsx src/runs/useRunEvents.test.tsx src/api/queries.reconnect.test.tsx e2e/inspector-truthfulness.spec.ts",
+    "exitCode": 0
+  },
+  "diffCheck": {
+    "command": "git diff --check",
+    "exitCode": 0
+  },
+  "sealCheckInitialAttempt": "An evidence assertion initially assumed CRLF for the original LF-only E2E comments and stopped before manifest generation; the newline-aware exact-byte check passed. No source was modified by either evidence assertion attempt.",
+  "limits": [
+    "Controlled hook/selector/jsdom evidence only; independent public QA remains separate.",
+    "No full coverage, build, browser, product review, CI/native, publication or acceptance performed by this worker.",
+    "Production source immutable; no product defect was attributed by this worker.",
+    "Fresh actual Claude critique of this exact GPT supporting delta remains required."
+  ]
+}

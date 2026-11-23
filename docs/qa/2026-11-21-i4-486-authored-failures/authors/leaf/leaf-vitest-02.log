@@ -1,0 +1,36 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/handlers/heartbeat-visit.test.ts (25 tests | 1 failed) 1049ms
+   ❯ heartbeat authored boundaries (#486) (24)
+     × keeps false until and valid deadline behavior, then completes on a later true until 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/heartbeat-visit.test.ts > heartbeat authored boundaries (#486) > keeps false until and valid deadline behavior, then completes on a later true until
+AssertionError: expected 'succeeded' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "succeeded"
+
+ ❯ src/handlers/heartbeat-visit.test.ts:355:24
+    353|       ).loopId,
+    354|     );
+    355|     expect(run.status).toBe('waiting');
+       |                        ^
+    356|     expect(run.waiting).toMatchObject({ beat: 1, kind: 'heartbeat' });
+    357|     await e.ports.timers.fire(run.id, 'heartbeat');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 101 passed (102)
+   Start at  05:46:33
+   Duration  5.65s (tests 50%, import 32%, transform 19%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

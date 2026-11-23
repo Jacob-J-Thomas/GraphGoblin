@@ -1,0 +1,529 @@
+# ADR-0088 - Authored failures at execution boundaries
+
+Status: Selected under delegated coordinator decision D188. Consolidated owner decision review is pending.
+
+## Context
+
+A loop pins its definition for the run. An internal-error message gave an author little way to find a failing template or expression, and Resume could repeat a probe, context-file write or provider action before encountering the same field again. The evaluator also serves callers that can supply JavaScript bindings. A library exception and one thrown by a binding can have identical messages, codes and object identities. [Issue and plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/486#issuecomment-7061825658)
+
+## Decision
+
+Project errors at the selected concrete evaluation sites on pinned source and inert run data. A single JSONata evaluation produces a value or its original rejection plus a finite observation of the phase that failed. Parsing and regex safety describe the top-level source. A rejected runtime string in `$eval` receives the ordinary evaluation direction. Per-invocation hook identity establishes a winning depth or time limit. Binding preparation and predicate coercion carry no authored fact.
+
+Use a fixed field, a bounded cause and corrective action in the existing error codes. Report one-based ordinals for people and zero-based indices in details. Names, paths, runtime values and literal `$error` arguments are excluded from the new copy. At these newly typed JSONata sites the evaluator's own message is neither published nor logged. Existing Mutate and Exit failures can expose bounded authored text, including an expression's message. That historical policy differs from the fixed inference-transform and subloop messages selected here. Decision-route evaluation and request-side signal rejection retain their established projections.
+
+A deterministic fault in a pinned field refuses Resume. Workspace templates render and trim in the engine before the filesystem port resolves a fixed or temporary directory. A failed terminal file return uses the existing channel receipt. A parent mapping failure keeps the real terminal child completion. Child-failure links belong to an actual failed child.
+
+Preparation can preserve previous task evidence without recording a new intent. Only the winning repair-prompt or transform fault after a provider result reports that result in its public message and phase. Existing acceptance, uncertainty, cleanup, cancellation and timeout rules determine the last actual turn and the winning cause. Publication uses the existing failure row and event. Historical data remains readable with its original text and recovery state.
+
+## Alternatives considered
+
+Publishing a guarded literal would require an additional AST-shape contract and would help only a narrow form of an expression that always fails. A process-wide error marker or class/code mapper could misattribute a rethrown error from another call. Automatic retry would repeat work from earlier successful steps. The selected approach keeps diagnostics local to the operation and preserves observed effects.
+                    nodeId,
+                    resumable: true,
+                  };
+        // Preparation can fail before a resumed inference visit records its next intent.
+        // The previous task remains informative while the ordinary error classification and
+        // recovery policy stay in charge. Never synthesize retry data or a submission event.
+        if (
+          node.kind === 'inference' &&
+          !events.some((event) => event.seq > startedSeq && event.type === 'harness.turn')
+        ) {
+          const prior = visitTurn(events, nodeId).pending;
+          if (failure instanceof InternalRunFailureError) {
+            failure = new InternalRunFailureError(failure.message, {
+              ...failure.options,
+              nodeId: failure.options.nodeId ?? nodeId,
+              ...(prior && !failure.options.inference ? { inference: provenance(prior) } : {}),
+            });
+          } else if (prior && !failure.inference) {
+            failure = { ...failure, inference: provenance(prior) };
+          }
+        }
+        if (providerFailure)
+          this.ports.logger.warn(
+            { runId, nodeId, ...providerFailure.diagnostic },
+            'node provider failed',
+          );
+        else
+          this.ports.logger.error(
+            {
+              runId,
+              nodeId,
+              failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
+              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+                ? { error: errorDiagnostic(error) }
+                : {}),
+            },
+            'node failed',
+          );
+        await this.failRun(
+          runId,
+          failure,
+          error instanceof RunFailureError ? error.options.records : undefined,
+        );
+        return;
+      }
+        await ctx.services.record({
+          type: 'harness.usage',
+          nodeId: ctx.node.id,
+          usage: event.usage,
+        });
+        break;
+      case 'error':
+        observe(state, event);
+        await recordSubmission(
+          ctx,
+          pending,
+          state,
+          harnessFailureSubmission(state.evidence!, pending.submission, pending.accepted),
+        );
+        break;
+      case 'turn-complete':
+        break;
+    }
+  }
+  let result: HarnessResult;
+  try {
+    result = await session.result;
+  } catch (error) {
+    if (!(error instanceof RunFailureError) || isHarnessFailureCode(error.code)) {
+      observe(state, error);
+      state.rejected = true;
+    }
+    throw error;
+  }
+  // Keep the requested handle as provenance immediately, but claim reuse only on success.
+  if (resumed) await recordSession(ctx, row, resumed);
+  return result;
+}
+
+/** An explicitly returned native candidate stays authoritative, including undefined or null. */
+function outputCandidate(result: HarnessResult): unknown {
+  return Object.hasOwn(result, 'structured') ? result.structured : jsonOrText(result.finalText);
+}
+
+function noteFor(item: HarnessItem): string | undefined {
+  switch (item.type) {
+    case 'command':
+      return `Ran: ${item.summary}`;
+    case 'file-change':
+      return `Changed: ${item.summary}`;
+    case 'tool-call':
+      return `Tool: ${item.summary}`;
+    default:
+      return undefined;
+  }
+}
+
+export const inferenceHandler: NodeHandler<'inference'> = {
+  kind: 'inference',
+  async execute(ctx) {
+    const { config } = ctx;
+    const visit = visitTurn(await ctx.services.events(), ctx.node.id);
+    let pending = visit.pending;
+    if (pending?.submission === 'delivery-uncertain' && !canContinueTurn(pending))
+      throw recoveryFailure(pending, ctx.node.id);
+    const harness: HarnessPort | undefined = ctx.ports.harnesses[config.harness];
+    const { model, effort } = await ctx.services.resolveModel(
+      config.harness,
+      visit.freshSession?.model ?? config.model,
+      visit.freshSession?.effort ?? config.effort,
+    );
+    // Provenance comes from this run's open logical visit, never a session repository row.
+    const missingFailure = (task?: PendingTurn): RunFailureError => {
+      const origin: MissingSession['origin'] =
+        (!task || (task.turn.promptKind === 'authored' && task.turn.resumeSessionId)) &&
+        config.session.policy !== 'fresh'
+          ? config.session.policy
+          : 'current-visit';
+      const sessionId = task?.sessionId ?? task?.turn.resumeSessionId;
+      const missingSession: MissingSession = {
+        visitId: visit.visitId,
+        harness: config.harness,
+        origin,
+        model,
+        effort,
+        ...(sessionId ? { sessionId } : {}),
+      };
+      return new RunFailureError(
+        'HARNESS_SESSION_MISSING',
+        `The ${config.harness} session ${sessionId ? `"${sessionId}"` : '(no recorded handle)'} from ${origin} is missing. Choose Start fresh session for node "${ctx.node.id}" to continue without its prior provider conversation.`,
+        {
+          nodeId: ctx.node.id,
+          resumable: false,
+          missingSession,
+          ...(task ? { inference: provenance(task) } : {}),
+        },
+      );
+    };
+    if (pending?.submission === 'session-missing') throw missingFailure(pending);
+    const workingDirectory = nodeWorkingDirectory(
+      await ctx.services.workingDirectory(),
+      ctx.node.id,
+    );
+
+    // Input transforms shape only the view the prompt sees; they are not persisted.
+    const viewThread: ContextThread = config.input.length
+      ? (
+          await runMutations(ctx, ctx.thread, config.input, undefined, (fact, index, kind) =>
+            transformFailure(ctx.node.id, 'inference.input', fact, index, kind),
+          )
+        ).thread
+      : ctx.thread;
+    const view = threadView(viewThread) as unknown as Record<string, unknown>;
+
+    for (const [fileIndex, file] of (config.contextFiles ?? []).entries()) {
+      await ctx.ports.workspace.writeFile(
+        workingDirectory,
+        file.path,
+        await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'inference.contextFiles.template', fileIndex },
+          file.template,
+          view,
+        ),
+      );
+    }
+
+    let resumeId: string | undefined;
+    let prompt: string;
+    let promptKind: PendingTurn['turn']['promptKind'] = 'authored';
+    if (pending) {
+      if (pending.submission === 'definitely-not-submitted') {
+        prompt = pending.turn.prompt;
+        promptKind = pending.turn.promptKind;
+        resumeId = pending.turn.resumeSessionId;
+      } else {
+        resumeId = pending.sessionId;
+        prompt = CONTINUATION_PROMPT;
+        promptKind = 'continuation';
+      }
+    } else {
+      prompt =
+        visit.freshSession?.prompt ??
+        (await renderAuthored(
+          { nodeId: ctx.node.id, boundary: 'inference.prompt.template' },
+          config.prompt.template,
+          view,
+        ));
+      if (visit.freshSession) {
+        // This explicit choice applies only to this logical visit; the authored policy stays.
+        resumeId = undefined;
+packages/engine/src\authored-failure.test.ts
+packages/engine/src\authored-failure.ts
+packages/engine/src\failure-publication.ts
+import type {
+  JsonValue,
+  LoopDefinition,
+  LoopDefinitionInput,
+  LoopVersionRecord,
+  NodeKind,
+  RunEvent,
+  RunRecord,
+} from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { fakeUlid } from '@graphgoblin/contracts/testing';
+import { RunManager, type StartRunInput } from '../run-manager.js';
+import type { EngineSettings } from '../ports.js';
+import type { HandlerRegistry } from '../handler.js';
+import { DEFAULT_TEST_SETTINGS, createFakePorts, type FakePorts } from './fakes.js';
+
+/** A run manager over fake ports with helpers for scenario tests. */
+export interface TestEngine {
+  ports: FakePorts;
+  manager: RunManager;
+  settings: EngineSettings;
+  /** Register a published version. The loop id is derived from the name unless given. */
+  publish(
+    def: LoopDefinitionInput,
+    options?: { loopId?: string; version?: number; status?: 'draft' | 'published' },
+  ): LoopVersionRecord;
+  /** Start a run from a manual trigger. */
+  start(loopId: string, payload?: JsonValue, extra?: Partial<StartRunInput>): Promise<RunRecord>;
+  /** Start a run and wait until the manager is idle. Returns the final record. */
+  runToIdle(
+    loopId: string,
+    payload?: JsonValue,
+    extra?: Partial<StartRunInput>,
+  ): Promise<RunRecord>;
+  /** Wait for idle and fetch the run. */
+  settle(runId: string): Promise<RunRecord>;
+  events(runId: string): RunEvent[];
+  eventTypes(runId: string): string[];
+  loopId(name: string): string;
+}
+
+export async function createTestEngine(
+  overrides: Partial<EngineSettings> = {},
+  portOptions: { secrets?: Record<string, string>; handlers?: HandlerRegistry } = {},
+): Promise<TestEngine> {
+  const ports = createFakePorts(portOptions);
+  const settings: EngineSettings = { ...DEFAULT_TEST_SETTINGS, ...overrides };
+  const manager = new RunManager(ports, settings, portOptions.handlers);
+  await manager.start();
+  const loopId = (name: string): string => fakeUlid(`loop:${name}`);
+  const engine: TestEngine = {
+    ports,
+    manager,
+    settings,
+    loopId,
+    publish(def, options = {}) {
+      const parsed: LoopDefinition = LoopDefinitionSchema.parse(def);
+      const id = options.loopId ?? loopId(parsed.name);
+      const version = options.version ?? 1;
+      const record: LoopVersionRecord = {
+        id: fakeUlid(`version:${id}:${version}`),
+        loopId: id,
+        version,
+        status: options.status ?? 'published',
+        definition: parsed,
+        createdAt: '2026-10-02T11:00:00.000Z',
+        ...(options.status === 'draft' ? {} : { publishedAt: '2026-10-02T11:00:00.000Z' }),
+      };
+      ports.loops.add(record);
+      return record;
+    },
+    start(id, payload = null, extra = {}) {
+      return manager.startRun({
+        ownerId: 'local',
+        loopId: id,
+        source: 'manual.api',
+        payload,
+        ...extra,
+      });
+    },
+    async runToIdle(id, payload = null, extra = {}) {
+      const run = await engine.start(id, payload, extra);
+      return engine.settle(run.id);
+    },
+    async settle(runId) {
+      await manager.waitForIdle();
+      const run = await ports.runs.get(runId);
+      if (!run) throw new Error(`run ${runId} vanished`);
+      return run;
+    },
+    events(runId) {
+      return ports.events.all(runId);
+    },
+    eventTypes(runId) {
+      return ports.events.all(runId).map((e) => e.type);
+    },
+  };
+  return engine;
+}
+
+/** A loop with one node between trigger and exit. */
+/** Loose node shape for tests: configs are validated by the schemas when the loop is published. */
+export interface TestNode {
+  id: string;
+  kind: NodeKind;
+  label: string;
+  config: unknown;
+}
+
+export function singleNodeLoop(
+  name: string,
+  testNode: TestNode,
+  exitConfig: Record<string, unknown> = {},
+): LoopDefinitionInput {
+  const node = testNode as unknown as LoopDefinitionInput['nodes'][number];
+  const extraEdges =
+    node.kind === 'decision'
+      ? []
+      : [{ id: 'e2', from: { node: node.id, port: 'out' }, to: { node: 'done' } }];
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      node,
+      { id: 'done', kind: 'exit', label: 'Done', config: exitConfig },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: node.id } },
+      ...extraEdges,
+    ],
+  };
+}
+import type { PromptProvenance, RunEvent, TurnSubmission } from '@graphgoblin/contracts';
+import type { NodeContext } from '../handler.js';
+import type { HarnessEvent } from '../ports.js';
+import { RunFailureError } from '../errors.js';
+
+type Turn = Extract<RunEvent, { type: 'harness.turn' }>;
+type FreshSession = NonNullable<Extract<RunEvent, { type: 'run.resumed' }>['freshSession']>;
+export interface PendingTurn {
+  turn: Pick<
+    Turn,
+    'visitId' | 'turnId' | 'prompt' | 'promptKind' | 'resumeSessionId' | 'harness' | 'context'
+  >;
+  submission: PromptProvenance['submission'];
+  sessionId?: string;
+  accepted: boolean;
+  acceptanceObserved?: boolean;
+  intentUnconfirmed?: boolean;
+}
+
+/** The first start since this node last finished identifies one visit across retries/restarts. */
+export function visitTurn(
+  events: readonly RunEvent[],
+  nodeId: string,
+): {
+  visitId: string;
+  pending?: PendingTurn;
+  completedVisits: number;
+  completedAttempt?: number;
+  freshSession?: FreshSession;
+} {
+  let visitId = '';
+  let pending: PendingTurn | undefined;
+  let completedVisits = 0;
+  let attempt: number | undefined;
+  let completedAttempt: number | undefined;
+  let freshSession: FreshSession | undefined;
+  for (const event of events) {
+    if (
+      event.type === 'run.resumed' &&
+      event.freshSession?.nodeId === nodeId &&
+      event.freshSession.visitId === visitId
+    ) {
+      freshSession = event.freshSession;
+      pending = undefined;
+    }
+    if (event.type === 'run.failed' && event.failure.nodeId === nodeId) {
+      const evidence = event.failure.inference;
+      if (evidence?.visitId === visitId) {
+        // Terminal provenance survives a failed classification append. An uninvoked task
+        // also carries its exact intent if a read could not resolve an ambiguous append.
+        if (evidence.retry && evidence.submission === 'definitely-not-submitted')
+          pending = {
+            turn: {
+              visitId,
+              turnId: evidence.turnId,
+              promptKind: evidence.promptKind,
+              ...evidence.retry,
+            },
+            submission: evidence.submission,
+            accepted: false,
+            ...(evidence.sessionId ? { sessionId: evidence.sessionId } : {}),
+          };
+        else if (pending?.turn.turnId === evidence.turnId) {
+          pending.submission = evidence.submission;
+          if (evidence.sessionId) pending.sessionId = evidence.sessionId;
+        }
+      }
+    }
+    if (!('nodeId' in event) || event.nodeId !== nodeId) continue;
+    if (event.type === 'node.finished') {
+      // Durable completion, not a locally finished session row, advances continuity/reset.
+      completedVisits += 1;
+      completedAttempt = attempt;
+      visitId = '';
+      pending = undefined;
+      freshSession = undefined;
+    }
+    if (event.type === 'node.started') {
+      attempt = event.attempt;
+      if (!visitId) visitId = event.runId + ':' + event.seq;
+    }
+    if (event.type === 'harness.turn' && event.visitId === visitId) {
+      pending = {
+        turn: {
+          visitId: event.visitId,
+          turnId: event.turnId,
+          prompt: event.prompt,
+          promptKind: event.promptKind,
+          harness: event.harness,
+          ...(event.context ? { context: event.context } : {}),
+          ...(event.resumeSessionId ? { resumeSessionId: event.resumeSessionId } : {}),
+        },
+        submission: 'delivery-uncertain',
+        accepted: false,
+        ...(event.resumeSessionId ? { sessionId: event.resumeSessionId } : {}),
+      };
+    }
+    if (pending && event.type === 'harness.session') pending.sessionId = event.sessionId;
+    if (pending && event.type === 'harness.submission' && event.turnId === pending.turn.turnId) {
+      pending.submission =
+        event.submission === 'submitted' ? 'delivery-uncertain' : event.submission;
+      pending.accepted ||= event.marker !== undefined;
+    }
+  }
+  return {
+    visitId,
+    completedVisits,
+    ...(completedAttempt === undefined ? {} : { completedAttempt }),
+    ...(pending ? { pending } : {}),
+    ...(freshSession ? { freshSession } : {}),
+  };
+}
+
+export function provenance(pending: PendingTurn): PromptProvenance {
+  return {
+    visitId: pending.turn.visitId,
+    turnId: pending.turn.turnId,
+    promptKind: pending.turn.promptKind,
+    submission: pending.submission,
+    ...(pending.sessionId ? { sessionId: pending.sessionId } : {}),
+    ...(pending.intentUnconfirmed
+      ? {
+          retry: {
+            harness: pending.turn.harness,
+            prompt: pending.turn.prompt,
+            ...(pending.turn.context ? { context: pending.turn.context } : {}),
+            ...(pending.turn.resumeSessionId
+              ? { resumeSessionId: pending.turn.resumeSessionId }
+              : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+export async function submission(
+  ctx: NodeContext<'inference'>,
+  pending: PendingTurn,
+  state: TurnSubmission,
+  marker?: Extract<HarnessEvent, { type: 'submitted' }>['marker'],
+): Promise<void> {
+  // Observed acceptance prevents a safe resend even if its append fails. Only durable
+  // acceptance (accepted) authorizes continuing an inherited authored conversation.
+  pending.acceptanceObserved ||= marker !== undefined;
+  // Once accepted, a later refusal cannot make resending this turn safe.
+  pending.submission =
+    state === 'submitted' ||
+    ((pending.accepted || pending.acceptanceObserved) && state === 'definitely-not-submitted')
+      ? 'delivery-uncertain'
+      : state;
+  await ctx.services.record({
+    type: 'harness.submission',
+    nodeId: ctx.node.id,
+    visitId: pending.turn.visitId,
+    turnId: pending.turn.turnId,
+    submission: state === 'submitted' ? 'submitted' : pending.submission,
+    ...(marker ? { marker } : {}),
+  });
+  // Recovery eligibility must use durable acceptance, including if this append fails.
+  pending.accepted ||= marker !== undefined;
+}
+
+/** An inherited handle alone cannot establish this authored task's conversation (D-022). */
+export function canContinueTurn(pending: PendingTurn): boolean {
+  return (
+    !!pending.sessionId &&
+    (pending.accepted ||
+      pending.turn.promptKind !== 'authored' ||
+      pending.sessionId !== pending.turn.resumeSessionId)
+  );
+}
+
+export function recoveryFailure(pending: PendingTurn, nodeId: string): RunFailureError {
+  const missing = pending.submission === 'session-missing';
+  return new RunFailureError(
+    missing ? 'HARNESS_SESSION_MISSING' : 'HARNESS_DELIVERY_UNCERTAIN',
+    missing
+      ? 'The recorded provider session is missing or refused. An explicit fresh-session choice is required.'
+      : 'Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.',
+    { nodeId, resumable: false, inference: provenance(pending) },
+  );
+}

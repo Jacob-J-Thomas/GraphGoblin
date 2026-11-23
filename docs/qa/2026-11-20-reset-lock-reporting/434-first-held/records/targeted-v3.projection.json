@@ -1,0 +1,473 @@
+{
+  "schemaVersion": 1,
+  "originalSource": {
+    "file": "candidate-a8191dd-v3-targeted-results.json",
+    "bytes": 24377,
+    "sha256": "4228bbb239dff20c60bc44a2c49faeac5ba56b2bc949ba694937683e4bec6659"
+  },
+  "projection": {
+    "retained": "All scenarios, all assertions including expected/actual/outcome, all original totals, CLI stdout/stderr, manifests, filesystem diffs and temporary leftovers.",
+    "omitted": "Raw argv, GG environment values and setup metadata; complete tree snapshots except S08/S11. No assertion or failure is omitted or regraded.",
+    "substitutions": "Only the checkout and QA scratch prefixes become role aliases. Relative paths, values, ordering and all outcomes stay unchanged."
+  },
+  "originalSchema": "gg-434-reset-lock-qa-targeted/v1",
+  "issue": 434,
+  "label": "candidate-a8191dd-v3",
+  "startedAt": "2026-11-20T08:11:48.023Z",
+  "finishedAt": "2026-11-20T08:12:00.703Z",
+  "provenance": {
+    "checkout": "<checkout>",
+    "head": "a8191dd97aacfe9709d2369afd60497214bf00a7",
+    "expectHead": "a8191dd97aacfe9709d2369afd60497214bf00a7",
+    "headMatches": true,
+    "trackedChanges": [],
+    "node": "v22.23.4",
+    "platform": "win32",
+    "fileSha256": {
+      "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+      "apps/api/dist/reset/reset.js": "7e0d3780f53bfe23dc2e11a736304fcfcca7a5660ba6e994dc81d0f2cdf04da5",
+      "apps/api/dist/data-dir-lock.js": "a08499659b375cbe14a1799ec5f68b1461ee2d050a4b2a40b4829bad616b979e",
+      "apps/api/src/reset/reset.ts": "473674bd9a10d2071f1bf535dd24f2922ac3a89d43b328088381a5f89671df65",
+      "apps/api/src/data-dir-lock.ts": "7731874dd6941b1d5cea80549ebd3e5b034722485e1b555567bf7c4964fb37ca"
+    }
+  },
+  "method": {
+    "entrypoint": "node <checkout>/apps/api/dist/main.js --reset [--yes] --data-dir <fixture data dir>",
+    "supplements": "qa-434-reset-locks.mjs (13 cases, run unchanged); these controls never replace its results",
+    "isolation": "minimal child env; GG_DATA_DIR a fixture (T09: unset, with HOME/USERPROFILE inside the fixture and a dry-run gate on the printed data directory); TEMP inside the run folder",
+    "grading": "completion/failure-message checks are wording-neutral: a line naming the path as its own token plus the claimed effect, compared with the after tree",
+    "kinds": {
+      "acceptance": "#434 acceptance criterion",
+      "safety": "no unrelated or unowned change",
+      "positive": "documented behaviour / control",
+      "interpretive": "QA reading beyond the acceptance text; not gating",
+      "precondition": "fixture precondition; dependent checks skipped when it fails",
+      "observation": "recorded fact; not gating"
+    }
+  },
+  "fixtures": "deleted after the run (disposable)",
+  "totals": {
+    "all": {
+      "total": 28,
+      "pass": 26,
+      "fail": 2,
+      "notRun": 0
+    },
+    "byKind": {
+      "acceptance": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "safety": {
+        "total": 8,
+        "pass": 8,
+        "fail": 0,
+        "notRun": 0
+      },
+      "positive": {
+        "total": 20,
+        "pass": 18,
+        "fail": 2,
+        "notRun": 0
+      },
+      "interpretive": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "precondition": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "observation": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      }
+    },
+    "byCriterion": {
+      "AC1": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      },
+      "AC2": {
+        "total": 4,
+        "pass": 2,
+        "fail": 2,
+        "notRun": 0
+      },
+      "AC3": {
+        "total": 4,
+        "pass": 4,
+        "fail": 0,
+        "notRun": 0
+      },
+      "CTL": {
+        "total": 20,
+        "pass": 20,
+        "fail": 0,
+        "notRun": 0
+      },
+      "DIFF": {
+        "total": 0,
+        "pass": 0,
+        "fail": 0,
+        "notRun": 0
+      }
+    },
+    "failed": [
+      "T04f.dry.refusalNamesPath [positive/AC2]",
+      "T04f.confirmed.refusalNamesPath [positive/AC2]"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "T04e",
+      "title": "Malformed ownership path: the database lock path is a directory and no database file exists; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04e.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04e.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04e.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock",
+          "actual": "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04e.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04e.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04e.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04e.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04e.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04e.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04e.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "pass",
+          "expected": "stderr names graphgoblin.db.graphgoblin.lock",
+          "actual": "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04e.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04e.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04e.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04e.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2609,
+          "stdout": "",
+          "stderr": "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2326,
+          "stdout": "",
+          "stderr": "reset refused: graphgoblin.db.graphgoblin.lock is a directory, not a lock file; verify that no GraphGoblin process uses this store, then move it yourself\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    },
+    {
+      "id": "T04f",
+      "title": "Malformed ownership path: the data-directory lock path is a directory and no database file exists; dry run and confirmed reset refuse and change nothing",
+      "assertions": [
+        {
+          "id": "T04f.dry.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04f.dry.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04f.dry.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04f.dry.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04f.dry.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04f.dry.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04f.dry.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        },
+        {
+          "id": "T04f.confirmed.exit1",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "exit 1",
+          "actual": 1
+        },
+        {
+          "id": "T04f.confirmed.stdoutEmpty",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no manifest printed",
+          "actual": ""
+        },
+        {
+          "id": "T04f.confirmed.refusalNamesPath",
+          "kind": "positive",
+          "criterion": "AC2",
+          "outcome": "fail",
+          "expected": "stderr names graphgoblin.lock",
+          "actual": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed."
+        },
+        {
+          "id": "T04f.confirmed.noStackTrace",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no stack trace in stderr",
+          "actual": [
+            "reset refused: EISDIR: illegal operation on a directory, read",
+            "Nothing in the data directory was changed."
+          ]
+        },
+        {
+          "id": "T04f.confirmed.claimsNothingChanged",
+          "kind": "positive",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "refusal says nothing changed",
+          "actual": "Nothing in the data directory was changed."
+        },
+        {
+          "id": "T04f.confirmed.noByteChange",
+          "kind": "safety",
+          "criterion": "AC3",
+          "outcome": "pass",
+          "expected": "fixture tree byte-identical",
+          "actual": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          }
+        },
+        {
+          "id": "T04f.confirmed.tempCopiesCleaned",
+          "kind": "safety",
+          "criterion": "CTL",
+          "outcome": "pass",
+          "expected": "no gg-reset-store-* left",
+          "actual": []
+        }
+      ],
+      "runs": [
+        {
+          "name": "dry",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2323,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        },
+        {
+          "name": "confirmed",
+          "exitCode": 1,
+          "signal": null,
+          "ms": 2114,
+          "stdout": "",
+          "stderr": "reset refused: EISDIR: illegal operation on a directory, read\nNothing in the data directory was changed.\n",
+          "manifest": {
+            "removes": [],
+            "keeps": []
+          },
+          "fsDiff": {
+            "removed": [],
+            "added": [],
+            "changed": []
+          },
+          "tempLeftovers": []
+        }
+      ]
+    }
+  ]
+}

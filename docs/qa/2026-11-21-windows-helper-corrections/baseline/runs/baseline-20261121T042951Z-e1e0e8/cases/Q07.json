@@ -1,0 +1,298 @@
+{
+  "id": "Q07",
+  "name": "held-then-inconclusive-retry-retains-guidance",
+  "category": "control: inconclusive retry after held keeps held guidance",
+  "purpose": "First sample is valid held; the retry returns trailing non-whitespace material that both revisions refuse. The prior held reason and lock stay in the refusal.",
+  "responses": {
+    "identity": {
+      "bytes": 65,
+      "sha256": "bce1a8f48c8c6e5ff764290bfedb77bc79d81a14b62a768e104687ffaf8605be",
+      "text": "db7ae8e80a43b6f650695b2ae212566ddedcaa900e4dc8c60b747d34be200341\n"
+    },
+    "ownership": [
+      {
+        "call": 1,
+        "source": "bytes",
+        "bytes": 217,
+        "sha256": "e075a5f96107ab42480f3a6605a5053b2870d1cc0d61a537ba6528404c530646",
+        "text": "{\"state\":\"held\",\"detail\":\"another GraphGoblin process holds this store; QA459I_DETAIL_CANARY_Q07\",\"path\":\"<scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q07\\\\store-α\\\\graphgoblin.lock\"}\n"
+      },
+      {
+        "call": 2,
+        "source": "bytes",
+        "bytes": 44,
+        "sha256": "259517b017eb63e34e146755af95c45754a94a5476a3359754516b8f62a71ea6",
+        "text": "{\"state\":\"free\"} QA459I_TRAILING_CANARY_Q07\n"
+      }
+    ],
+    "repeatsLast": true,
+    "realProducerOutputs": []
+  },
+  "baselinePrediction": {
+    "authorizes": false,
+    "code": "store-held",
+    "lock": "lockPath",
+    "ownershipCalls": [
+      2,
+      2
+    ],
+    "messageIncludes": [
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+      "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+    ]
+  },
+  "correctedExpectation": {
+    "authorizes": false,
+    "code": "store-held",
+    "lock": "lockPath",
+    "ownershipCalls": [
+      2,
+      2
+    ],
+    "messageIncludes": [
+      "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+      "No second gateway was started. Do not stop an unrelated process or delete an unverified lock."
+    ]
+  },
+  "observed": {
+    "harnessPid": 5356,
+    "harnessExit": 0,
+    "harnessWatchdog": false,
+    "harnessMs": 982,
+    "setup": "ok",
+    "outcome": "launcher-failure",
+    "code": "store-held",
+    "childExit": 0,
+    "lock": "<scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q07\\store-α\\graphgoblin.lock",
+    "logFolder": null,
+    "message": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q07\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.",
+    "presented": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q07\\store-α\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\r\n\r\nConfiguration: <scratch>\\runs\\baseline-20261121T042951Z-e1e0e8\\Q07\\launcher-log\\GraphGoblin.exe.json",
+    "logRecord": "{\"time\":\"2026-11-21T04:30:09.8790845Z\",\"pid\":5356,\"outcome\":\"refused\",\"stage\":\"gateway\",\"code\":\"store-held\",\"message\":\"another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish: <scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q07\\\\store-α\\\\graphgoblin.lock. No second gateway was started. Do not stop an unrelated process or delete an unverified lock.\",\"config\":\"<scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q07\\\\launcher-log\\\\GraphGoblin.exe.json\",\"lock\":\"<scratch>\\\\runs\\\\baseline-20261121T042951Z-e1e0e8\\\\Q07\\\\store-α\\\\graphgoblin.lock\"}\n",
+    "exceptionType": null,
+    "ensureElapsedMs": 866,
+    "authorizedFreshGateway": false,
+    "gatewayMarkers": [],
+    "identityCalls": 1,
+    "ownershipCalls": 2,
+    "helperRuns": [
+      {
+        "kind": "identity",
+        "index": 1,
+        "pid": 31848,
+        "startAt": 1795235409154,
+        "exitAt": 1795235409156,
+        "exitCode": 0,
+        "ms": 2
+      },
+      {
+        "kind": "ownership",
+        "index": 1,
+        "pid": 15816,
+        "startAt": 1795235409319,
+        "exitAt": 1795235409322,
+        "exitCode": 0,
+        "ms": 3
+      },
+      {
+        "kind": "ownership",
+        "index": 2,
+        "pid": 27740,
+        "startAt": 1795235409821,
+        "exitAt": 1795235409834,
+        "exitCode": 0,
+        "ms": 13
+      }
+    ],
+    "helperRootsExitedNaturallyZero": true,
+    "realProducer": [],
+    "realProducerEvents": [],
+    "canariesChecked": [
+      "QA459I_STDERR_CANARY_Q07",
+      "QA459I_DETAIL_CANARY_Q07",
+      "QA459I_TRAILING_CANARY_Q07"
+    ],
+    "canariesFound": [],
+    "storeBefore": [
+      {
+        "path": "graphgoblin.lock",
+        "type": "file",
+        "bytes": 85,
+        "sha256": "79706eba872cd11d33a6590e51aca1b038fb142752adcf94eb8e114dae7ac8e3"
+      },
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "afd15a2d8c9535499fcd75efe63b3f67eaec6fbf76e3146201a9fc92b36391aa"
+      }
+    ],
+    "storeAfter": [
+      {
+        "path": "graphgoblin.lock",
+        "type": "file",
+        "bytes": 85,
+        "sha256": "79706eba872cd11d33a6590e51aca1b038fb142752adcf94eb8e114dae7ac8e3"
+      },
+      {
+        "path": "qa459i-unrelated-sentinel.bin",
+        "type": "file",
+        "bytes": 42,
+        "sha256": "afd15a2d8c9535499fcd75efe63b3f67eaec6fbf76e3146201a9fc92b36391aa"
+      }
+    ],
+    "storePreserved": true,
+    "ownerRecordPreserved": true,
+    "logDirAfter": [],
+    "portFreeAfter": true,
+    "port": 25840,
+    "sentinelAlive": true
+  },
+  "controls": [
+    {
+      "name": "harness completed without watchdog",
+      "pass": true
+    },
+    {
+      "name": "closed LauncherFailure (no unexpected exception)",
+      "pass": true
+    },
+    {
+      "name": "no private canary in message, presentation or log record",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "store bytes and names preserved",
+      "pass": true
+    },
+    {
+      "name": "driver-owned owner record state preserved",
+      "pass": true
+    },
+    {
+      "name": "no gateway.log or launcher.log written in log folder",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "helper roots exited naturally with 0",
+      "pass": true
+    },
+    {
+      "name": "gateway markers parented by harness",
+      "pass": true
+    },
+    {
+      "name": "gateway-start marker agrees with launcher-observed exit 54",
+      "pass": true
+    },
+    {
+      "name": "owned port free after case",
+      "pass": true
+    },
+    {
+      "name": "unrelated sentinel alive",
+      "pass": true
+    }
+  ],
+  "predictionChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": false,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "store-held",
+        "observed": "store-held"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          2,
+          2
+        ],
+        "observed": 2
+      }
+    },
+    {
+      "name": "lock location",
+      "pass": true
+    },
+    {
+      "name": "message includes: another GraphGoblin process holds this store; check its port",
+      "pass": true
+    },
+    {
+      "name": "message includes: No second gateway was started. Do not stop an unrelated proc",
+      "pass": true
+    }
+  ],
+  "correctedContractChecks": [
+    {
+      "name": "authorizes fresh gateway start",
+      "pass": true,
+      "detail": {
+        "expected": false,
+        "observed": false
+      }
+    },
+    {
+      "name": "closed code",
+      "pass": true,
+      "detail": {
+        "expected": "store-held",
+        "observed": "store-held"
+      }
+    },
+    {
+      "name": "identity calls",
+      "pass": true,
+      "detail": {
+        "expected": 1,
+        "observed": 1
+      }
+    },
+    {
+      "name": "ownership calls",
+      "pass": true,
+      "detail": {
+        "expected": [
+          2,
+          2
+        ],
+        "observed": 2
+      }
+    },
+    {
+      "name": "lock location",
+      "pass": true
+    },
+    {
+      "name": "message includes: another GraphGoblin process holds this store; check its port",
+      "pass": true
+    },
+    {
+      "name": "message includes: No second gateway was started. Do not stop an unrelated proc",
+      "pass": true
+    }
+  ],
+  "status": "MATCHED-PREDICTION",
+  "correctedContract": "CONFORMS"
+}

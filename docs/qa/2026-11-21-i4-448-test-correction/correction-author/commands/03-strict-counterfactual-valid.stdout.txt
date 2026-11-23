@@ -1,0 +1,24 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-448-preflight/GraphGoblin/apps/api
+
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > accepts a missing shipped codex seed without storing it
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > accepts a missing shipped claude seed without storing it
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex unknown-model defaults (effort=low, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude gpt-6-luna defaults (effort=low, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL)
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex gpt-5.5 defaults (effort=none, status=ok)
+ × src/preflight-catalog.test.ts > offline startup catalog admission > preserves rows and migrations with an initially absent WAL 2374ms
+   → expected { …(2) } to deeply equal { …(1) }
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves rows and migrations with an initially empty WAL
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > projects a missing seed from a WAL-backed store without checkpointing or writing it
+ ↓ src/preflight-catalog.test.ts > offline startup catalog admission > rejects database changes, existing WAL changes or removal, and new WAL frames
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  06:35:56
+   Duration  7.22s (import 43%, tests 34%, transform 22%)
+

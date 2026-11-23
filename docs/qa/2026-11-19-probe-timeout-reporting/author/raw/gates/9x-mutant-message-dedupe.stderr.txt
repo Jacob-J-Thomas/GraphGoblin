@@ -1,0 +1,29 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports only an error other than the abort reason when a lifecycle test aborted mid-body ends with a copy of the abort reason
+AssertionError: expected undefined to be Error: Simulated test timeout // Object.is equality
+
+- Expected:
+Error {
+  "message": "Simulated test timeout",
+}
+
++ Received:
+undefined
+
+ ❯ src/probe-directory.test.ts:544:26
+    542|         const [reported, ...more] = reportedBy(finished);
+    543|         expect(more).toEqual([]);
+    544|         expect(reported).toBe(ending === 'the abort reason' ? undefine…
+       |                          ^
+    545|       })(context),
+    546|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in D:\GraphGoblin-AIDLC\2026-11-18-five\lane-
+  │ b\GraphGoblin\packages\adapter-codex
+

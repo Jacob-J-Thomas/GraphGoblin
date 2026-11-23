@@ -1,0 +1,31 @@
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-implementation-evidence/hosted/make-488-controls.py	2026-11-17 23:18:58.268970300 -0600
++++ C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/hosted/make-488-controls.py	2026-11-18 00:32:05.782931000 -0600
+@@ -49,16 +49,16 @@
+     lanes = {"repository-checks", "coverage", "gates"}
+     variants = {
+         "qa-488-coverage-fails-early.yml": variant(
+-            text, "qa/gg-488-coverage-fails-early", lanes, COVERAGE,
++            text, "codex/qa/gg-488-coverage-fails-early", lanes, COVERAGE,
+             f"        run: |\n          {PARTIAL}\n          echo 'QA injected coverage failure'\n          exit 1\n",
+             "QA 488 coverage fails early"),
+         "qa-488-coverage-step-timeout.yml": variant(
+-            text, "qa/gg-488-coverage-step-timeout", lanes,
++            text, "codex/qa/gg-488-coverage-step-timeout", lanes,
+             "        timeout-minutes: 25\n" + "        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.\n" + COVERAGE,
+             "        timeout-minutes: 1\n" + f"        run: |\n          {PARTIAL}\n          sleep 180\n",
+             "QA 488 coverage step timeout"),
+         "qa-488-static-fails.yml": variant(
+-            text, "qa/gg-488-static-fails", lanes,
++            text, "codex/qa/gg-488-static-fails", lanes,
+             "      - name: Reset acceptance\n",
+             "      - name: QA injected static failure\n        run: exit 1\n\n      - name: Reset acceptance\n",
+             "QA 488 static lane fails"),
+@@ -83,7 +83,7 @@
+         "# QA-ONLY disposable #488 fan-in control. The aggregate step is the candidate Gates step",
+         "# verbatim, with its two needs remapped to stub jobs. Never merge.",
+         "name: QA 488 Gates fan-in control", "", "on:", "  push:",
+-        "    branches: [qa/gg-488-fanin]", "", "permissions: {}", "", "jobs:",
++        "    branches: [codex/qa/gg-488-fanin]", "", "permissions: {}", "", "jobs:",
+     ]
+     for key, body in stubs.items():
+         fanin.append(f"  {key}:\n    runs-on: ubuntu-latest\n{body.rstrip()}")

@@ -1,0 +1,127 @@
+{
+  "layers": [
+    "L2"
+  ],
+  "honeypotPort": 51518,
+  "udpHoneypotPort": 49684,
+  "parent": {
+    "fetch": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "fetch failed",
+      "cause": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+    },
+    "httpGet": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+    },
+    "netConnect": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+    },
+    "tlsConnect": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+    },
+    "dnsLookup": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "getaddrinfo EACCES localhost"
+    },
+    "dnsPromisesLookup": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "getaddrinfo EACCES localhost"
+    },
+    "udpSend": {
+      "outcome": "rejected",
+      "code": "EACCES",
+      "message": "send EACCES 127.0.0.1:49684"
+    }
+  },
+  "dataFetch": {
+    "outcome": "resolved",
+    "value": "qa448-ok"
+  },
+  "pipeConnect": {
+    "outcome": "resolved",
+    "value": "pipe-ok"
+  },
+  "child": {
+    "outcome": "resolved",
+    "value": {
+      "child": {
+        "fetch": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "fetch failed",
+          "cause": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+        },
+        "httpGet": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+        },
+        "netConnect": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+        },
+        "tlsConnect": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "connect EACCES 127.0.0.1:51518 - Local (undefined:undefined)"
+        },
+        "dnsLookup": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "getaddrinfo EACCES localhost"
+        },
+        "dnsPromisesLookup": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "getaddrinfo EACCES localhost"
+        },
+        "udpSend": {
+          "outcome": "rejected",
+          "code": "EACCES",
+          "message": "send EACCES 127.0.0.1:49684"
+        }
+      },
+      "guard": {
+        "blocked": 7,
+        "attemptObserved": 0,
+        "forwarded": 0,
+        "byKind": {
+          "L2-tcp-connect": 4,
+          "L2-getaddrinfo": 2,
+          "L2-udp-send": 1
+        }
+      }
+    }
+  },
+  "honeypotTcpAccepted": 0,
+  "honeypotUdpReceived": 0,
+  "guardCounts": {
+    "blocked": 7,
+    "attemptObserved": 0,
+    "forwarded": 1,
+    "byKind": {
+      "L2-tcp-connect": 4,
+      "L2-getaddrinfo": 2,
+      "L2-udp-send": 1,
+      "L2-pipe-connect": 1
+    }
+  },
+  "expectations": {
+    "parentAllRejected": true,
+    "childAllRejected": true,
+    "honeypotsUntouched": true,
+    "dataFetchForwarded": true,
+    "pipeForwarded": true
+  },
+  "pass": true
+}

@@ -1,0 +1,63 @@
+# PR #508 marker correction: independent local behavior QA
+
+**PASS for the bounded marker-field correction at the frozen bytes below.** All 83 independent benign cases pass, and the corrected public reader/finalizer reproduces all three genuine archived results exactly. This closes the locally exercised primitive-string behavior defect. Current-head hosted verification, bounded closure review and integration remain separate root-owned gates.
+
+## Source binding
+
+The original frozen parent is `4d2743c2cefaea971d3bdc3ab10e9fdd9bda3523`. Root explicitly confirmed the corrected byte freeze before execution. This QA copied the two changed files and unchanged workflow/native suite into its own external snapshot, asserted root's helper hash, independently matched the test hash, and rechecked every captured file and the Git index after testing.
+
+| File | Raw SHA-256 |
+| --- | --- |
+| Corrected helper | `7ad0d4f971b7197bbc65456d3a23038603846afda62308625a32f05e8c126bf5` |
+| Corrected helper tests | `b7bbaadb7ef44f96219f73acb61fdb73f2acb12f4c891f6e21f421eecf72b380` |
+| Unchanged production CI workflow | `9c3539189770c0efb829550d06ed5cf67829df7db985820b15daf069c801c592` |
+| Unchanged production native suite | `f156e1e7e61ce62d82e54b99bcbc8b62ec5fd56305e5fe425cb64cd4acfa9aa2` |
+| Original helper from Git blob `9555079250f82c08aad9d8cbcfd3e5a2d6273a94` | `5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf` |
+
+Only the helper and its tests differ from the frozen parent. The helper uses one primitive-string type predicate at schema selection, record validation, rejection production and rejection-field validation. The declared contract remains the same: a supported primitive string or `unknown`. No format, scheduling, upload-bound, runtime dependency or coverage-policy change is present in this correction. No numbered-doc change is needed to restate this existing contract.
+
+[Original binding](original-binding.json), [corrected binding](corrected-binding.json), [exact correction diff](corrected-diff.patch), [post-test source/index recheck](corrected-post-test-recheck.json).
+
+## Direct behavior evidence
+
+The external `marker-qa.mjs` invokes only public initializer, recorder, validator, reader and finalizer entry points. It ran under project Node `v22.23.4`, using fresh external directories, ordinary input values and no credentials, sensitive contents, provider calls, custom coercion hooks or exploit cases.
+
+| Independent cases | Count | Original | Corrected |
+| --- | ---: | ---: | ---: |
+| Every supported marker string and `unknown`: validator plus reader | 14 | 14 passed | 14 passed |
+| Unsupported names and ordinary non-string marker values: validator | 17 | 14 passed, 3 failed | 17 passed |
+| Every supported producer type with invalid fields preserves its primitive type name | 13 | 13 passed | 13 passed |
+| Unsupported producer types become primitive `unknown` | 18 | 15 passed, 3 failed | 18 passed |
+| Produced stream closes, accounts for all 31 rejections and remains readable | 1 | 1 passed | 1 passed |
+| Positive/negative marker values through reader and finalizer under native success/failure | 20 | 16 passed, 4 failed | 20 passed |
+| Total | **83** | **73 passed, 10 failed** | **83 passed, 0 failed** |
+
+The original failures were ordinary arrays and boxed strings accepted as marker types. A separate original-source public producer/parser/finalizer receipt shows `record(['child'], {})` produced a structured `recordType`, parsed as valid and was selected for observation upload. Its native-failed status stayed native-failed; the finding does not imply a native test pass.
+
+With the correction, unsupported producer input types write `unknown`. Reader validation refuses unsupported or non-string marker fields. Rejected observation bytes yield `invalid-record`, a nonzero evidence exit, and exactly the two metadata upload paths. A failed native step retains `native-failed`. Valid partial streams with typed rejections remain valid and retain their observations; they cannot satisfy complete evidence for a successful native step.
+
+[Original matrix](original-run/original-results.json), [original artifact-selection receipt](original-finalizer-receipt.json), [corrected matrix](corrected-run/corrected-results.json), [corrected produced stream](corrected-run/corrected-producer.ndjson).
+
+## Genuine archived stream replay
+
+This QA freshly rehashed the three original Windows ZIP files against their retained exact-ID API digest/size receipts and independently rehashed all eight members. It used fresh copies, preserving the original archives and sealed evidence. Both original and corrected helpers read the exact canonical manifests and observations and finalized them in fresh directories. Every resulting `result` object equals its original archived result, using that result's recorded timestamp.
+
+| Original artifact | Observed original outcome | Corrected replay |
+| --- | --- | --- |
+| 14406653340, run 44258283117 | Complete/valid, 234 records, no rejections/omissions | Exact result match; three files selected |
+| 14406691889, run 44258372832 | Not-run/absent after installation failure, metadata only | Exact result match; two files selected |
+| 14407242247, run 44258386159 | Native-failed/valid, 1,019 records, one primitive-string `child` rejection and 296 omissions | Exact result match; original exit-7 child remains present; three files selected |
+
+[Archive byte bindings](archive-corpus-binding.json), [original replay](original-archive-replay/replay-results.json), [corrected replay](corrected-archive-replay/replay-results.json).
+
+## Hosted continuation and limits
+
+The production workflow and native suite bytes are unchanged. Prior hosted uploader-filter, preparation-refusal, install-failure and hard-link/manifest-refusal controls are retained in [the original hosted packet](../i1-ci-hosted-496-results/README.md). Their recorded outcomes are historical evidence; they are not described here as new correction runs. Previously verified scheduler/fan-in controls are unchanged and are not duplicated.
+
+Root has a prepared disposable negative-control overlay for `codex/qa/gg-496-typed-marker-negative`, which must have the corrected candidate as sole parent. Its workflow differs from the previously completed negative workflow only in the push branch filter. Both control jobs, every assertion and the entire negative acceptance fixture remain byte-identical. YAML job/command/condition equality and fixture syntax validation passed. See [overlay byte bindings](hosted-overlay-binding.json), [overlay validation](hosted-overlay-validation.json) and [hosted scope](hosted-scope.md).
+
+Fresh current-head ordinary PR Windows evidence and the dedicated negative-control evidence remain pending at this local report. Local public-method testing and historical archive replay do not substitute for those hosted gates. This pass adds no native platform, live-provider, privilege, installed-PWA or taskbar acceptance claim. It is independent behavior QA, not a formal adversarial scan; root owns closure review, all technical gates, publication and merge.
+
+One QA-harness setup error occurred before workflow validation: YAML was installed transitively and could not be resolved as a root dependency. Loading the already installed package path fixed the verifier; validation then passed. No source behavior failure occurred on the corrected helper. See [harness notes](harness-notes.md).
+
+No Git index action, commit, push, remote write or author-file edit was performed by this QA agent. All new evidence and fixtures are outside Git.

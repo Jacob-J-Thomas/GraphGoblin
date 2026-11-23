@@ -1,0 +1,24 @@
+<!doctype html>
+<!-- Dark is the default theme and Geist the default font. The build adds, right after the charset,
+     the theme-color meta tag (both themes' colours, from the design tokens) and the scripts that
+     show the theme and the font chosen in Settings before first paint; the font script also
+     preloads that font's files (vite.config.ts, src/lib/theme.ts, src/lib/font.ts). -->
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0e0c0a" data-dark="#0e0c0a" data-light="#1a1815" />
+    <script>(function(){try{var t=window.localStorage.getItem("graphgoblin-theme");if(["dark","light"].indexOf(t)<0)return;document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');var c=m&&m.getAttribute('data-'+t);if(c)m.setAttribute('content',c);}catch(e){}})();</script>
+    <script>(function(){var f="geist";try{var s=window.localStorage.getItem("graphgoblin-font");if(["geist","space-grotesk","chakra-petch","atkinson-hyperlegible","opendyslexic","inter"].indexOf(s)>=0){f=s;document.documentElement.setAttribute('data-font',f);}}catch(e){}var p={"geist":["/app/fonts/Geist-Variable.woff2"],"space-grotesk":["/app/fonts/SpaceGrotesk-Variable.woff2"],"chakra-petch":["/app/fonts/Geist-Variable.woff2","/app/fonts/ChakraPetch-SemiBold.woff2"],"atkinson-hyperlegible":["/app/fonts/AtkinsonHyperlegibleNext-Variable.woff2"],"opendyslexic":["/app/fonts/OpenDyslexic-Regular.woff2"],"inter":["/app/fonts/Inter-Variable.woff2"]}[f];for(var i=0;i<p.length;i++){var l=document.createElement('link');l.rel='preload';l.as='font';l.type='font/woff2';l.crossOrigin='anonymous';l.href=p[i];document.head.appendChild(l);}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Design, run, and observe agent loops." />
+    <link rel="icon" type="image/svg+xml" href="/app/favicon.svg" />
+    <link rel="apple-touch-icon" href="/app/icons/icon-192.png" />
+    <link rel="manifest" href="/app/manifest.webmanifest" />
+    <title>GraphGoblin</title>
+    <script type="module" crossorigin src="/app/assets/index-B8YpDZ_-.js"></script>
+    <link rel="stylesheet" crossorigin href="/app/assets/index-DH560BJA.css">
+  <link rel="manifest" href="/app/manifest.webmanifest"></head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

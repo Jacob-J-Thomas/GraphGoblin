@@ -1,0 +1,191 @@
+[
+  {
+    "number": 47,
+    "issue": {
+      "id": 5697752848,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/47",
+      "title": "Bug: the Offline state on a cold load does not retry when the connection returns",
+      "issue_number": 47,
+      "body": "## Context\n\nFound by the #7 QA catalogue (defect I7-QA-05, `docs/qa/2026-10-04-issue-7-qa.md`), not caused by the restyle.\n\nSteps: load the app so the service worker is warm, reload the Loops page while the browser is offline, wait for the \"Offline\" state (\"Loops needs the GraphGoblin API, which cannot be reached right now\"), then restore the network without navigating.\n\nExpected: the list refetches and replaces the Offline message. Actual: `navigator.onLine` becomes true, the `online` event fires, a direct `GET /loops` returns 200, and the top \"You are offline\" banner disappears, but the Loops page keeps showing the Offline message with no rows. Navigating away and back recovers the list without data loss. Editing a previously loaded draft offline, saving locally, and syncing later works.\n\nLikely area: the TanStack Query client's retry and online handling in `apps/web/src/api/` (a query that failed while offline is not refetched when the online manager flips; offline errors may be cached as terminal, or `refetchOnReconnect` is not reaching the failed query).\n\n## Goal\n\nA query that failed because the API was unreachable retries automatically when connectivity returns, on every page that shows the Offline state.\n\n## Acceptance criteria\n\n- [ ] After the reproduction above, the Loops list appears within a few seconds of reconnecting without navigation.\n- [ ] The same holds for Runs, Run inspector, Events, and Settings.\n- [ ] Failures that are not connectivity errors (HTTP errors) do not retry endlessly.\n- [ ] Unit test for the reconnect refetch; Playwright regression that goes offline and online on a cold load.\n- [ ] Gates: typecheck, lint, `check:layers`, `check:deps`, coverage at or above 90% on all four metrics in every changed package, `check:licenses`, `check:docs`, `format:check`, and Edge E2E after `pnpm build`.\n\n## Code pointers\n\n- `apps/web/src/api/queries.ts`, `apps/web/src/api/context.tsx` (query client defaults), `apps/web/src/lib/online.ts`, `apps/web/src/components/status.tsx` (`OfflineState`, `QueryState`)\n\n## QA plan\n\nTouched systems, results catalogued in the PR and this issue: every page with a query-backed Offline state, cold and warm loads, flapping connectivity, a real server error while online.\n\n## Delivery\n\n- Gate `aidlc-ready`: bug fix with no visual change.\n- Implementer: GPT-6.1 Sol, reasoning xhigh.\n- Cross-vendor reviewer: Claude Opus 5.5, reasoning xhigh.\n",
+      "state": "closed",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:web",
+          "color": "BFDADC",
+          "description": "Web app shell and screens"
+        }
+      ],
+      "milestone": 1,
+      "state_reason": "completed",
+      "comments": 0,
+      "created_at": "2026-10-04T08:54:08Z",
+      "updated_at": "2026-10-04T15:57:14Z",
+      "closed_at": "2026-10-04T15:57:14Z",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/47",
+      "display_title": "Bug: the Offline state on a cold load does not retry when the connection returns"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/47",
+    "title": "Bug: the Offline state on a cold load does not retry when the connection returns",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/47",
+    "display_title": "Bug: the Offline state on a cold load does not retry when the connection returns"
+  },
+  {
+    "number": 55,
+    "issue": {
+      "id": 5701101849,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/55",
+      "title": "Recover automatically when the API becomes reachable again while the browser stays online",
+      "issue_number": 55,
+      "body": "## Context\n\nFollow-up to #47 (merged), found by the Opus review of PR #49. #47 fixed queries that failed because the browser was offline: they now retry when the browser's `online` event fires.\n\nA different case is still open and behaves the same on `main`: the API process becomes unreachable (stopped, restarting, or refused) while the browser stays online. No `online` event ever fires, so a page that showed the Offline state (\"Loops needs the GraphGoblin API, which cannot be reached right now\") keeps showing it until the window regains focus, the user navigates, or a poll happens to run. Restarting the API (which the owner does for every update) is the common trigger.\n\n## Goal\n\nWhen the API returns after being unreachable with the browser online, pages recover on their own within a few seconds.\n\n## Scope\n\nIn scope:\n- A lightweight reachability probe while any query is showing the Offline state: retry with capped exponential backoff (for example 2 s up to 30 s) against a cheap endpoint, and refetch active connectivity-failed queries when it succeeds. Stop probing when no query is offline or the tab is hidden.\n- Drive the app's own online indicator from the same signal so the \"You are offline\" banner reflects API reachability as well as browser connectivity, with distinct wording (\"Cannot reach the GraphGoblin API\") when the browser is online.\n- Keep HTTP errors and the one-retry limit as they are.\n\nOut of scope: the SSE stream's own backoff, the in-flight race documented in docs/09.\n\n## Acceptance criteria\n\n- [ ] After stopping and restarting the API with the browser online, Loops, Runs, Events, Settings and the run inspector recover within a few seconds without navigating; a unit test and an Edge E2E (stop and restart the harness server) cover it.\n- [ ] Probing backs off, stops when nothing is offline or the tab is hidden, and never floods the API; at most one probe in flight.\n- [ ] The banner distinguishes \"offline\" from \"API unreachable\"; both clear on recovery.\n- [ ] HTTP 4xx and 5xx responses never trigger probing.\n- [ ] Editor drafts are untouched while the API is down and sync after it returns (existing behaviour preserved).\n- [ ] docs/09 offline section updated.\n- [ ] Gates: typecheck, lint, `check:layers`, `check:deps`, `check:tokens`, coverage at or above 90% on all four metrics in every changed package, `check:licenses`, `check:docs`, `format:check`, and Edge E2E after `pnpm build`.\n\n## Code pointers\n\n- `apps/web/src/app/bootstrap.tsx` (the `online` listener added for #47), `apps/web/src/lib/online.ts`, `apps/web/src/api/queries.ts`, `apps/web/src/components/status.tsx`, `apps/web/src/components/layout/AppShell.tsx` (offline banner)\n- `apps/web/e2e/pwa.spec.ts`, `apps/web/e2e/server.ts` (stopping and restarting the harness)\n\n## QA plan\n\nTouched systems, results catalogued in the PR and this issue: every page with a query-backed Offline state, API stop and restart cycles, flapping, backgrounded tabs, an API returning 500 (no probing), editor draft survival.\n\n## Delivery\n\n- Gate `aidlc-ready`: no visual redesign; wording of one banner changes.\n- Implementer: GPT-6.1 Sol, reasoning xhigh.\n- Cross-vendor reviewer: Claude Opus 5.5, reasoning xhigh.\n",
+      "state": "closed",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:web",
+          "color": "BFDADC",
+          "description": "Web app shell and screens"
+        }
+      ],
+      "milestone": 1,
+      "state_reason": "completed",
+      "comments": 1,
+      "created_at": "2026-10-04T16:21:01Z",
+      "updated_at": "2026-10-06T13:55:22Z",
+      "closed_at": "2026-10-06T13:55:22Z",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/55",
+      "display_title": "Recover automatically when the API becomes reachable again while the browser stays online"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/55",
+    "title": "Recover automatically when the API becomes reachable again while the browser stays online",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/55",
+    "display_title": "Recover automatically when the API becomes reachable again while the browser stays online"
+  },
+  {
+    "number": 56,
+    "issue": {
+      "id": 5701281754,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/56",
+      "title": "The update toast only appears after reopening the app and clicking to another page",
+      "issue_number": 56,
+      "body": "## Context\n\nReported by the owner (low priority): after the API is restarted on a new build, the \"A new version is available\" toast only appears after closing and reopening the application and then clicking on another page. An already open window never shows it, and a fresh open shows it only after a further in-app click.\n\nHow updates are detected today (`apps/web/src/pwa/register.ts`, `apps/web/vite.config.ts`): the service worker is registered once at page load with `workbox-window` (`registerType: 'prompt'`, `skipWaiting: false`, `clientsClaim: false`). The only listener that raises the toast is the `waiting` event. Nothing asks the browser to look for a new worker after load: the app never calls `registration.update()`, and client-side route changes in a single-page app are not navigations, so the browser's own check on navigation does not run either. The update is therefore discovered at the next page load, installs in the background, and the `waiting` event can arrive after the first screen has rendered or only once a later interaction happens.\n\n## Goal\n\nAn open or freshly opened app notices a new build within a short time and shows the update toast without a reload or a second interaction.\n\n## Scope\n\nIn scope:\n- Check for a new worker while the app runs: call `registration.update()` when the window regains focus or becomes visible, on a slow interval (for example hourly) while visible, and after the app detects the API came back from an outage (relates to #55).\n- Handle an already waiting worker at registration time (`registration.waiting`) so the toast shows immediately on a fresh open, not only when a `waiting` event fires later.\n- Keep the prompt flow exactly as is: nothing activates without the user's confirmation; the reload after Update stays.\n- Rate limits and politeness: at most one check in flight, no checks while hidden or offline.\n\nOut of scope: automatic activation, a \"what changed\" dialog, changing the cache strategy.\n\n## Acceptance criteria\n\n- [ ] After serving a new build, an open window shows the toast within about a minute of regaining focus, without navigating or reloading.\n- [ ] A fresh open of the app with a waiting worker shows the toast on first render.\n- [ ] No update checks while the document is hidden or the browser is offline; at most one in flight; the interval is cleared on unmount.\n- [ ] The existing flows still pass (Update applies and reloads; Later dismisses; nothing activates by itself); unit tests for the check scheduling and the waiting-at-registration case; an Edge E2E that serves a changed worker and sees the toast without navigation (extend `apps/web/e2e/pwa.spec.ts`).\n- [ ] docs/09 (PWA update flow) updated.\n- [ ] Gates: typecheck, lint, `check:layers`, `check:deps`, `check:tokens`, coverage at or above 90% on all four metrics in every changed package, `check:licenses`, `check:docs`, `format:check`, and Edge E2E after `pnpm build`.\n\n## Code pointers\n\n- `apps/web/src/pwa/register.ts`, `apps/web/src/pwa/store.ts`, `apps/web/src/pwa/UpdateToast.tsx`, `apps/web/src/pwa/register.test.ts`\n- `apps/web/vite.config.ts` (PWA plugin options), `apps/web/e2e/pwa.spec.ts`\n\n## QA plan\n\nTouched systems, results catalogued in the PR and this issue: open window across a rebuild and API restart, a fresh open with a waiting worker, backgrounded and hidden tabs, offline, repeated focus changes (no check storms), Update and Later paths, installed PWA window versus browser tab.\n\n## Delivery\n\n- Gate `aidlc-ready`: no visual change.\n- Implementer: GPT-6.1 Sol, reasoning xhigh.\n- Cross-vendor reviewer: Claude Opus 5.5, reasoning xhigh.\n",
+      "state": "closed",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:web",
+          "color": "BFDADC",
+          "description": "Web app shell and screens"
+        }
+      ],
+      "milestone": 2,
+      "state_reason": "completed",
+      "comments": 2,
+      "created_at": "2026-10-04T16:44:34Z",
+      "updated_at": "2026-10-06T13:55:25Z",
+      "closed_at": "2026-10-06T13:55:25Z",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/56",
+      "display_title": "The update toast only appears after reopening the app and clicking to another page"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/56",
+    "title": "The update toast only appears after reopening the app and clicking to another page",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/56",
+    "display_title": "The update toast only appears after reopening the app and clicking to another page"
+  }
+]

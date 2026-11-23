@@ -1,0 +1,20 @@
+{
+  "scope": "Environment preparation mechanism correction only; not product QA",
+  "originalRunner": {
+    "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i4-364-deadline-qa-preparation-01\\prepare-environment.py",
+    "bytes": 19494,
+    "sha256": "66bc89608632ccd822f60232bf74ca491300e1afdf76926501ae5fa979953f71"
+  },
+  "priorFailure": "failure.json",
+  "observedWrongBareExecutableVersion": "v23.10.0",
+  "cause": "Windows CreateProcess searched the Python parent executable path for bare node; child PATH alone did not control that lookup",
+  "correction": "Use the absolute project Node 22.23.4 node.exe for version admission; child PowerShell still selects Node 22 first on PATH for all pnpm commands",
+  "absoluteNode": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+  "unchanged": [
+    "Original source/index/dependencies/lock",
+    "All remaining frozen install/build/source/output assertions",
+    "Offline-only boundary",
+    "One build invocation limit"
+  ],
+  "noInstallOrBuildHadRun": true
+}

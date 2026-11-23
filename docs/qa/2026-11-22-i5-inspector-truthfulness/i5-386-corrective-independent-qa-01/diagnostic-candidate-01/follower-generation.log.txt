@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web
+
+ ❯ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx (10 tests | 1 failed | 9 skipped) 694ms
+   ↓ boundary C1 negative: cold acknowledged resume tail cannot promote an older successful failure observation
+   ↓ boundary C1 positive: cold stable terminal with audit suffix settles without new event payload or finalizedAt
+   ↓ boundary G1: rejection immediately withholds header evidence and late old successful observation cannot restore it
+   ↓ boundary G2/G4: same-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G2/G4: replacement-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G2/G4: cross-tab-key recovery rejects old receipts and accepts current-source reads
+   ↓ boundary G3: new API client with the same QueryClient withholds former source until current reads settle
+   ↓ boundary C3: cold actual 401 refuses a terminal claim
+   ↓ boundary C3: cold actual 404 refuses a terminal claim
+   × boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery 692ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx > boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery
+AssertionError: expected <span …(2)>…(2)</span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-bad-bg text-status-bad-fg h-6 gap-[5px] px-2.5 text-xs has-[svg]:pl-[7px] [&_svg]:size-[13px] [&_svg]:stroke-[2.5]"
+  data-status="failed"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="failed"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M6 6l12 12M18 6 6 18"
+    />
+  </svg>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    failed
+  </span>
+</span>
+
+ ❯ noClaim src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx:50:49
+     48|   if (!heading) return; // Existing QueryState may withhold the inspec…
+     49|   const region = heading.closest('header')!;
+     50|   expect(region.querySelector('[data-status]')).toBeNull();
+       |                                                 ^
+     51|   expect(within(region).queryByText(/^at |^Last node in run record:|^S…
+     52| }
+ ❯ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx:247:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  12:10:37
+   Duration  6.15s (transform 33%, environment 26%, import 21%, tests 12%, setup 8%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-independent-qa-01/diagnostic-candidate-01/follower-generation.json
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

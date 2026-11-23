@@ -1,4 +1,5 @@
 import type { CodexOptions } from '@openai/codex-sdk';
+import { plainCodexConfigSegment } from '@graphgoblin/contracts';
 import type { CliCommand, CliRunner } from './cli.js';
 
 /**
@@ -20,8 +21,8 @@ import type { CliCommand, CliRunner } from './cli.js';
  *
  * Order of the `--config` arguments: server switches, these defaults, then the node's own
  * `configOverrides` (so a node turns one server back on with `mcp_servers.<name>.enabled=true`,
- * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which no
- * override can weaken.
+ * or opts out of plugins with `features.plugins=false`), then the SDK's thread options, which
+ * win over overrides of the corresponding keys. Other sandbox-related keys remain separate.
  *
  * Every key segment that reaches `--config`, a listed server name or a node override key, must be
  * one plain TOML key (letters, digits, `_`, `-`) and not `__proto__`, `constructor` or
@@ -34,36 +35,6 @@ type ConfigValue = Config[string];
 
 const isTable = (value: unknown): value is Config =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-
-/** Names a JavaScript object treats as its prototype or constructor rather than as data. */
-const PROTOTYPE_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
-
-/** One plain TOML key the loop may pass through `--config`. */
-export function plainSegment(segment: string): boolean {
-  return /^[A-Za-z0-9_-]+$/.test(segment) && !PROTOTYPE_SEGMENTS.has(segment);
-}
-
-/**
- * The first key path in an authored configuration with a segment that is not plain, if any.
- * Dotted keys are split as the CLI splits them; tables inside arrays are checked too.
- */
-export function unplainKey(value: unknown, prefix = ''): string | undefined {
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = unplainKey(item, prefix);
-      if (found !== undefined) return found;
-    }
-    return undefined;
-  }
-  if (!isTable(value)) return undefined;
-  for (const [key, child] of Object.entries(value)) {
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (!key.split('.').every(plainSegment)) return path;
-    const found = unplainKey(child, path);
-    if (found !== undefined) return found;
-  }
-  return undefined;
-}
 
 /** A node override the loop refuses to pass: the pinned definition cannot run as authored. */
 export function overrideRefusal(path: string): Error {
@@ -229,7 +200,7 @@ export async function configuredServers(
   const names = listed.map((entry) => (entry as { name: string }).name);
   // Validated before any argument is built: a name the loop cannot pass as one plain key stops
   // the turn rather than leaving that server enabled (QA423-01).
-  const unusable = names.find((name) => !plainSegment(name));
+  const unusable = names.find((name) => !plainCodexConfigSegment(name));
   if (unusable !== undefined)
     throw listingFailure(
       'HARNESS_TURN_FAILED',

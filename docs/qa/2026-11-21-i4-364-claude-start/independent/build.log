@@ -1,0 +1,80 @@
+$ turbo run build
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs 5cac3a2e6c939986
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs 36a9bcbe582fe9ed
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache hit, replaying logs f7fa77c65e9d0e2f
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs b0c07c0f6deb5e28
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing 56dfcab35d3329fe
+@graphgoblin/adapter-codex:build: cache hit, replaying logs d8783f753a6d5fc4
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 3e444e601737a181
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache miss, executing 7dfc572c866c3fa3
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: cache miss, executing f51cc3e97b90e97b
+@graphgoblin/mcp:build: cache miss, executing d393e0ed676fbc40
+@graphgoblin/web:build: $ vite build && vite build --config vite.goblin.config.ts
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 781 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/plugin-claude:build: cache bypass, force executing 1f03b7ae7f7bcb9c
+@graphgoblin/plugin-codex:build: cache bypass, force executing aab634d736ec6d6c
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest           0.47 kB
+@graphgoblin/web:build: dist/index.html                     2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-DH560BJA.css     93.27 kB │ gzip:  17.78 kB
+@graphgoblin/web:build: dist/assets/index-ZDYtIq88.js   2,138.44 kB │ gzip: 667.56 kB │ map: 9,535.34 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 4.51s
+@graphgoblin/plugin-claude:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/plugin-claude:build: Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "G:\ggq\gg-i4-364-qa\GraphGoblin\apps\plugin-claude\dist\plugin\graphgoblin"
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "G:\ggq\gg-i4-364-qa\GraphGoblin\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (2657.27 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 285 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist-goblin/manifest.webmanifest         0.46 kB
+@graphgoblin/web:build: dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+@graphgoblin/web:build: dist-goblin/assets/index-C1Wi4LrO.css   77.89 kB │ gzip:  15.55 kB
+@graphgoblin/web:build: dist-goblin/assets/index-rzU0ObXg.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.34 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 707ms
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (989.42 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   ../dist-goblin/sw.js.map
+@graphgoblin/web:build:   ../dist-goblin/sw.js
+@graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js.map
+@graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js
+
+ Tasks:    12 successful, 12 total
+Cached:    5 cached, 12 total
+  Time:    51.733s 
+

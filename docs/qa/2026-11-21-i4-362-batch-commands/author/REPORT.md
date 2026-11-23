@@ -1,0 +1,13 @@
+# #362 bounded regression and guidance
+
+Candidate: `5db3dfd4e2c96e53aa52b5a33403819da8c49196`, tree `c6fc1acd4e0837ed4ec3cad0e8554f926e0f8626`, parent `02351e2fb932b3be44e7cc3fb3943a61d568226c`. Root GPT implemented the four-file documentation/test change under D179. This is author evidence, separate from the actual Claude independent native/public QA on unchanged production at the parent.
+
+Current production already contains the synchronous start-refusal fix. No runtime source, public contract, shell default, dependency or migration changes here. The existing native Windows regression now covers both .cmd and .bat. Each direct invocation must refuse without creating its marker; the exact same authored batch file must then execute through an explicit absolute cmd.exe /d /c invocation and produce the expected marker. The positive control prevents a broken fixture from masquerading as a safe refusal.
+
+Numbered node documentation, troubleshooting and CHANGELOG explain the current SCRIPT_START_FAILED contract, ordinary Resume after proven non-start, explicit shell interpretation/quoting and the need for a corrected definition/new run when changing the pinned command. Internal PROCESS_START_FAILED stderr and the historical report are not renamed into a new public error.
+
+Checks used project Node v22.23.4 and pnpm 12.8.1 after an offline frozen install. The install reused 801 packages with no downloads or lockfile change. `checks.ps1` retained the exact scoped commands. Native-focused Vitest: **4 passed / 43 out-of-scope skipped**, exit0 (both native extensions, synchronous refusal control and missing command). Infrastructure typecheck, touched-test ESLint, four-file Prettier and git diff check passed; the whole check script exited0. These are not a full infrastructure test/coverage or monorepo gate. No provider, owner store or live application was started by these author checks.
+
+Independent actual Claude evidence remains in `i4-362-independent-01/publication`, including the initial failing setup/fixture attempts. Its authoritative accounting is 63 PASS plus one adjacent OBSERVED-AS-PREDICTED, not the original report's 64-PASS wording. Production equality to that tested base is established by this candidate's complete changed path list: the only package file changed is scripts.test.ts; all other changes are documentation. The independent build was not rebuilt or re-executed for this documentation/test child.
+
+Opposite-family review, independent QA/source binding, exact-head/current-target CI and a fresh Astra MAX final audit remain open. No issue closure or owner acceptance is claimed.

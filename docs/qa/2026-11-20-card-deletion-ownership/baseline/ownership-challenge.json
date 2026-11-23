@@ -1,0 +1,886 @@
+{
+  "restored": {
+    "routeIds": [
+      "yes",
+      "affirm",
+      "maybe"
+    ],
+    "initialOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        [
+          "m1"
+        ]
+      ]
+    ],
+    "beforeEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ],
+    "initialCodes": [
+      "DUPLICATE_EDGE_ID",
+      "EDGE_PORT_MISSING",
+      "PORT_UNCONNECTED"
+    ],
+    "expectedEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "actualEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "afterOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        []
+      ]
+    ],
+    "survivorsPreserved": false,
+    "reviewYesAfterDelete": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "exactUndo": true,
+    "exactRedo": true
+  },
+  "fresh-duplicate": {
+    "routeIds": [
+      "yes",
+      "affirm",
+      "maybe"
+    ],
+    "initialOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        [
+          "m1"
+        ]
+      ]
+    ],
+    "beforeEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ],
+    "initialCodes": [
+      "DUPLICATE_EDGE_ID",
+      "EDGE_PORT_MISSING",
+      "PORT_UNCONNECTED"
+    ],
+    "expectedEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "actualEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "afterOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        []
+      ]
+    ],
+    "survivorsPreserved": false,
+    "reviewYesAfterDelete": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "exactUndo": true,
+    "exactRedo": true
+  },
+  "fresh-unique": {
+    "routeIds": [
+      "yes",
+      "affirm",
+      "maybe"
+    ],
+    "initialOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        [
+          "m1"
+        ]
+      ]
+    ],
+    "beforeEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ],
+    "initialCodes": [
+      "EDGE_PORT_MISSING",
+      "PORT_UNCONNECTED"
+    ],
+    "expectedEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "actualEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "afterOwnership": [
+      [
+        "yes",
+        []
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        []
+      ]
+    ],
+    "survivorsPreserved": true,
+    "reviewYesAfterDelete": [],
+    "exactUndo": true,
+    "exactRedo": true
+  },
+  "fresh-both-owned": {
+    "routeIds": [
+      "yes",
+      "no",
+      "maybe"
+    ],
+    "initialOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "no",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "maybe",
+        [
+          "m1"
+        ]
+      ]
+    ],
+    "beforeEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ],
+    "initialCodes": [
+      "DUPLICATE_EDGE_ID"
+    ],
+    "expectedEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "actualEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      }
+    ],
+    "afterOwnership": [
+      [
+        "yes",
+        []
+      ],
+      [
+        "no",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "maybe",
+        []
+      ]
+    ],
+    "survivorsPreserved": true,
+    "reviewYesAfterDelete": [],
+    "exactUndo": true,
+    "exactRedo": true
+  },
+  "fresh-duplicate-keep-target": {
+    "routeIds": [
+      "yes",
+      "affirm",
+      "maybe"
+    ],
+    "initialOwnership": [
+      [
+        "yes",
+        [
+          "e1"
+        ]
+      ],
+      [
+        "affirm",
+        []
+      ],
+      [
+        "maybe",
+        [
+          "m1"
+        ]
+      ]
+    ],
+    "beforeEdges": [
+      {
+        "id": "s1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            220
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            500,
+            200,
+            650
+          ]
+        }
+      },
+      {
+        "id": "e1",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "other",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            670
+          ]
+        }
+      },
+      {
+        "id": "m1",
+        "from": {
+          "node": "pick",
+          "port": "maybe"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            550,
+            440,
+            700
+          ]
+        }
+      }
+    ],
+    "initialCodes": [
+      "DUPLICATE_EDGE_ID",
+      "EDGE_PORT_MISSING",
+      "PORT_UNCONNECTED"
+    ],
+    "unrelatedDescriptionPreservedEveryEdge": true
+  }
+}

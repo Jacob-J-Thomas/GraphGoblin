@@ -1,0 +1,215 @@
+{
+  "at": "2026-11-21T10:03:24.049Z",
+  "source": "Fresh GitHub connector readbacks retained from this active task; original response envelopes",
+  "readbacks": [
+    {
+      "storeKey": "i4-new-readback-1",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issue": {
+              "id": 6526925066,
+              "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+              "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+              "issue_number": 545,
+              "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\n`apps/api/src/preflight.ts:265-289` checks only Codex model membership and enabled state. Ordinary startup also validates the selected effort through `validateHarnessDefaults`. For a configured `gpt-5.5` / `none`, offline preflight can report the default ready and exit 0, while startup rejects `EFFORT_UNSUPPORTED`. The maintained #448 regression at `apps/api/src/preflight-catalog.test.ts:203-211` records the existing disagreement rather than fixing it.\n\nAcceptance when separately dispatched:\n- Reproduce with disposable supported/current stores and the public offline command/startup; include supported-effort and missing-effort controls.\n- Make the Codex default result truthfully account for the effective effort, with no model/provider turn or automatic substitution.\n- Preserve read-only database/WAL behavior, stored enabled preferences, existing harness readiness separation and the documented SQLite SHM reader exception.\n- Do not silently align Codex/Claude disabled-model severity or expand model retirement policy; select any such product change separately.\n- Update preflight documentation and meaningful positive/negative tests; retain numerical coverage, independent QA, opposite-family review and current-target CI.\n\nDuplicate check included open/closed preflight-title, preflight/effort, pending-migration and startup/seed searches; #448 covers missing seeds, #179 CLI prerequisite capability and #132 template-catalog repeated work. None owns this effort-check discrepancy. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+              "state": "open",
+              "user": {
+                "login": "Jacob-J-Thomas",
+                "name": "Jacob-J-Thomas",
+                "email": null,
+                "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+                "id": 92639671
+              },
+              "assignees": null,
+              "labels": [
+                {
+                  "name": "qa:touched-systems",
+                  "color": "FBCA04",
+                  "description": "QA tests and catalogues every system the change touches, positive and negative"
+                },
+                {
+                  "name": "impl:gpt-6.1-sol",
+                  "color": "1D76DB",
+                  "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+                },
+                {
+                  "name": "review:claude-opus-5.5",
+                  "color": "006B75",
+                  "description": "Cross-vendor reviewer: Claude Opus 5.5"
+                },
+                {
+                  "name": "type:bug",
+                  "color": "D73A4A",
+                  "description": "Something does not work as documented"
+                },
+                {
+                  "name": "area:api",
+                  "color": "BFDADC",
+                  "description": "Fastify API"
+                },
+                {
+                  "name": "area:harness",
+                  "color": "BFDADC",
+                  "description": "Harness and model adapters"
+                },
+                {
+                  "name": "backlog",
+                  "color": "9E9E9E",
+                  "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+                }
+              ],
+              "milestone": null,
+              "state_reason": null,
+              "comments": 0,
+              "created_at": "2026-11-21T09:10:05Z",
+              "updated_at": "2026-11-21T09:10:05Z",
+              "closed_at": null,
+              "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+              "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+            },
+            "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+            "title": "Offline Codex preflight can accept an effort that ordinary startup rejects",
+            "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545",
+            "display_title": "Offline Codex preflight can accept an effort that ordinary startup rejects"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "storeKey": "i4-new-readback-2",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issue": {
+              "id": 6526925181,
+              "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+              "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+              "issue_number": 546,
+              "body": "Origin: the independent Claude Opus 5.5 xhigh review of #448, [original review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320). This is a pre-existing P3 follow-up, outside #448's bounded missing-seed projection. Source is signed main `02351e2fb932b3be44e7cc3fb3943a61d568226c`; the reviewed candidate preserves this behavior. This record is not implementation or acceptance.\n\nWhen migrations are pending, `runPreflight` uses the shipped default catalog (`apps/api/src/preflight.ts:366`) instead of stored rows and describes it as the catalog seeded on first start. Ordinary startup can read a current-format store through `readPreMigrationModelCatalog` and admits from stored rows plus missing seeds before migrating. Offline and ordinary startup can therefore disagree about a stored model, disabled flag or supported effort on this path. This finding is source-backed; the review did not execute a new pending-migration reproduction.\n\nAcceptance when separately dispatched:\n- Independently reproduce a current-format/pending-migration store where stored metadata differs from shipped seeds; include a clean migrated store, missing store and unsupported/unreadable store.\n- Define a truthful read-only pre-migration admission result consistent with the startup guard where safe. If a model projection cannot safely be inspected, distinguish that limit rather than asserting unsupported model or ready execution from unrelated seed data.\n- Never migrate, seed, refresh, create or alter the inspected database/WAL; preserve the SQLite SHM reader exception and failure closure of unsupported formats.\n- Keep stored owner disablement, provider/account readiness, and model-retirement policy separate; no automatic model substitution.\n- Verify the public command/startup distinction and update documentation under normal review/QA/coverage/CI gates.\n\nDuplicate check included open/closed preflight-title, pending-migration/catalog and startup/seed searches. #448 explicitly handles current migrated stores; #179 is CLI prerequisite capability, and #495 is aliased-checkout repository guards. This is a separate pre-existing path. Delivery: parked backlog, no implementation gate; proposed Sol xhigh implementation and Opus xhigh review. Not added to the current 26-core-issue batch.",
+              "state": "open",
+              "user": {
+                "login": "Jacob-J-Thomas",
+                "name": "Jacob-J-Thomas",
+                "email": null,
+                "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+                "id": 92639671
+              },
+              "assignees": null,
+              "labels": [
+                {
+                  "name": "qa:touched-systems",
+                  "color": "FBCA04",
+                  "description": "QA tests and catalogues every system the change touches, positive and negative"
+                },
+                {
+                  "name": "impl:gpt-6.1-sol",
+                  "color": "1D76DB",
+                  "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+                },
+                {
+                  "name": "review:claude-opus-5.5",
+                  "color": "006B75",
+                  "description": "Cross-vendor reviewer: Claude Opus 5.5"
+                },
+                {
+                  "name": "type:bug",
+                  "color": "D73A4A",
+                  "description": "Something does not work as documented"
+                },
+                {
+                  "name": "area:api",
+                  "color": "BFDADC",
+                  "description": "Fastify API"
+                },
+                {
+                  "name": "area:harness",
+                  "color": "BFDADC",
+                  "description": "Harness and model adapters"
+                },
+                {
+                  "name": "backlog",
+                  "color": "9E9E9E",
+                  "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+                }
+              ],
+              "milestone": null,
+              "state_reason": null,
+              "comments": 0,
+              "created_at": "2026-11-21T09:10:05Z",
+              "updated_at": "2026-11-21T09:10:05Z",
+              "closed_at": null,
+              "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+              "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+            },
+            "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+            "title": "Pending-migration preflight can disagree with startup's stored model catalog",
+            "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546",
+            "display_title": "Pending-migration preflight can disagree with startup's stored model catalog"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "storeKey": "i4-new-readback-3",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "comments": [
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262#issuecomment-7060390364",
+                "body": "Current source observation from [#448's independent review](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320), preserved for this parked model-capability policy record and its consolidated #271 report:\n\nOn signed `02351e2fb932b3be44e7cc3fb3943a61d568226c`, startup admission checks stored harness-row efforts before `SqliteModelCatalog.seed()` refreshes harness-owned display/effort metadata. A newly added effort can require an initial start with a different default; a removed effort can pass the old admission and disappear during the subsequent seed refresh. These are source-derived transition cases, not newly executed owner observations. Existing enabled preferences remain preserved.\n\n#448 deliberately keeps stored-first admission, and D172 does not change lifecycle or repair policy. Keep this transition question with the existing #262/#271 capability-policy context for future refinement; this comment does not add an accepted requirement, alter post-1.0 scope, unpark the issue, authorize rewriting stored content, or admit #262 to the current five-intent batch. A future decision should distinguish capability additions from removals and reconcile admission with the intended effective catalog while preserving pinned runs, explicit owner choices and no runtime model fallback.",
+                "user": {
+                  "login": "Jacob-J-Thomas",
+                  "name": "Jacob-J-Thomas",
+                  "email": null,
+                  "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+                  "id": 92639671
+                },
+                "id": 7060390364,
+                "pull_request_review_id": null,
+                "in_reply_to_id": null,
+                "created_at": null,
+                "updated_at": null,
+                "review": null,
+                "side": null,
+                "line": null,
+                "start_line": null,
+                "path": null,
+                "body_html": "<p dir=\"auto\">Current source observation from <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448#issuecomment-7060237320\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/448/hovercard\">#448's independent review</a>, preserved for this parked model-capability policy record and its consolidated <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5892896808\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/271\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/271/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/271\">#271</a> report:</p>\n<p dir=\"auto\">On signed <code class=\"notranslate\">02351e2fb932b3be44e7cc3fb3943a61d568226c</code>, startup admission checks stored harness-row efforts before <code class=\"notranslate\">SqliteModelCatalog.seed()</code> refreshes harness-owned display/effort metadata. A newly added effort can require an initial start with a different default; a removed effort can pass the old admission and disappear during the subsequent seed refresh. These are source-derived transition cases, not newly executed owner observations. Existing enabled preferences remain preserved.</p>\n<p dir=\"auto\"><a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6266269240\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/448/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/448\">#448</a> deliberately keeps stored-first admission, and D172 does not change lifecycle or repair policy. Keep this transition question with the existing <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5892892718\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/262/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262\">#262</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5892896808\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/271\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/271/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/271\">#271</a> capability-policy context for future refinement; this comment does not add an accepted requirement, alter post-1.0 scope, unpark the issue, authorize rewriting stored content, or admit <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5892892718\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/262/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262\">#262</a> to the current five-intent batch. A future decision should distinguish capability additions from removals and reconcile admission with the intended effective catalog while preserving pinned runs, explicit owner choices and no runtime model fallback.</p>"
+              }
+            ],
+            "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262",
+            "title": "Jacob-J-Thomas/GraphGoblin Issue #262 comments",
+            "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/262",
+            "display_title": "Jacob-J-Thomas/GraphGoblin Issue #262 comments"
+          },
+          "isError": false
+        }
+      }
+    }
+  ]
+}

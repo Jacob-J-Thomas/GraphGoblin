@@ -1,0 +1,294 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T020839Z-081d57",
+  "label": "candidate",
+  "case": "ext-stdout-at-cap-valid",
+  "title": "Stdout exactly at the 256 KiB cap: a valid identity line padded with spaces to 262144 bytes, natural exit 0",
+  "lane": "fixture",
+  "category": "outcome-taxonomy",
+  "planRow": "Stdout retention bound: exactly 256 KiB is retained and validated",
+  "startedAtMs": 1795226972687,
+  "durationMs": 3802,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 6672,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 780,
+      "osElapsedMs": 762,
+      "osCreatedAtMs": 1795226972704,
+      "osExitedAtMs": 1795226973466,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:09:33.4475408Z",
+          "pid": 6672,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 26848 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\ext-stdout-at-cap-valid\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 344,
+      "stdoutBytes": 0,
+      "stderrBytes": 344,
+      "stdoutText": "",
+      "stderrText": "Port 26848 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\ext-stdout-at-cap-valid\\launcher.json\r\n",
+      "ext": null
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-stdout-at-cap-valid/launcher-click/6672",
+      "case": "ext-stdout-at-cap-valid",
+      "role": "launcher-click",
+      "pid": 6672,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226972709,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 45884,
+        "inAnyJob": false,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226972704,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226972704,
+          "exitedAtMs": 1795226973466
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226972704,
+          "exitedAtMs": 1795226973466
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226972704,
+          "exitedAtMs": 1795226973466
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226972704,
+          "exitedAtMs": 1795226973466
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    },
+    {
+      "tag": "ext-stdout-at-cap-valid/identity-1/45600",
+      "case": "ext-stdout-at-cap-valid",
+      "role": "identity-1",
+      "pid": 45600,
+      "source": "handshake",
+      "self": {
+        "case": "ext-stdout-at-cap-valid",
+        "role": "identity-1",
+        "pid": 45600,
+        "ppid": 6672,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226972914,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 6672,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226972821,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226972821,
+          "exitedAtMs": 1795226973381
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226972821,
+          "exitedAtMs": 1795226973381
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226972821,
+          "exitedAtMs": 1795226973381
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226972911,
+      "pid": 45600,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226972916,
+      "pid": 45600,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226973374,
+      "pid": 45600,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity-padded"
+    },
+    {
+      "at": 1795226973375,
+      "pid": 45600,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [],
+    "accounting": [],
+    "probes": [],
+    "observersClosed": []
+  },
+  "filesystem": [
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 468,
+      "fileId": "810877956:281474978827356",
+      "sha256": "11b24e4bcee8b912e9d429c153ce07d6d1ea389e20e658cc85dc40c2eabc69ae"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 466,
+      "fileId": "810877956:281474978827355",
+      "sha256": "5333b770262600fd22cb84803460c7684cead7cb311722bbb07bae5a0a2448d3"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 471,
+      "fileId": "810877956:281474978827357",
+      "sha256": "7c2f7e2892e36bcd4de1b605fe3b275efb429544d60d8b043864926991971816"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 356,
+      "fileId": "810877956:281474978827354",
+      "sha256": "5627109b94cdf6018565dd598adc7228f086a65f512831fd6aa77de4a6144ef7"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795226972692,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795226972709,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226973474,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "identity-accepted",
+      "kind": "requirement",
+      "text": "a valid result of exactly 262144 bytes is retained, trimmed and accepted",
+      "expected": "foreign-listener",
+      "actual": "foreign-listener",
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "root-natural-zero",
+      "kind": "requirement",
+      "text": "the root completes its 256 KiB write and exits naturally with 0",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 0,
+        "exitedRelativeToLauncherExitMs": -85,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

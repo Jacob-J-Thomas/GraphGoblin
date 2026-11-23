@@ -1,0 +1,39 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-486-authored-errors/GraphGoblin/packages/engine
+
+ ❯ src/awaited-children.test.ts (49 tests | 1 failed) 6392ms
+   ❯ identity-bound child wakes (#242) (2)
+     × a stale child wake never reaches the next visit of the same subloop node 1124ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never reaches the next visit of the same subloop node
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/awaited-children.test.ts:247:85
+    245|   });
+    246|   const parent = await e.start(parentLoopId);
+    247|   await vi.waitFor(async () => expect(nextPark(await get(parent.id), f…
+       |                                                                                     ^
+    248|   release();
+    249|   await e.manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 119 passed (120)
+   Start at  06:00:18
+   Duration  9.43s (tests 58%, import 25%, transform 16%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i4-486-authored-
+  │ errors\GraphGoblin\packages\engine
+

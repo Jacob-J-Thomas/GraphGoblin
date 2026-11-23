@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1775725,
+  "stop_reason": "end_turn",
+  "session_id": "946b7b48-706e-4456-8fa0-b656a04672a7",
+  "total_cost_usd": 13.380532200000001,
+  "usage": {
+    "input_tokens": 280,
+    "cache_creation_input_tokens": 387476,
+    "cache_read_input_tokens": 31214321,
+    "output_tokens": 201837,
+    "output_tokens_details": {
+      "thinking_tokens": 113249
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 387476,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2688,
+        "cache_read_input_tokens": 387216,
+        "cache_creation_input_tokens": 260,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 260
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 280,
+      "outputTokens": 201837,
+      "cacheReadInputTokens": 31214321,
+      "cacheCreationInputTokens": 387476,
+      "webSearchRequests": 0,
+      "costUSD": 13.380532200000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 113249,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 387476,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 169,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "The #364 fix is ready for your review, uncommitted on `codex/gg-i4-364-claude-start` (base `02351e2f`, nothing staged, no engine/contract/other-package changes needed). Claude no longer says the CLI is missing when Windows actually refused the working directory. All focused checks pass. The package-wide infrastructure coverage run fails on this machine because 50 existing symlink tests can't create symlinks here (details below).\n\n## What was wrong (reproduced natively)\nOn Windows 11 with Node 22.23.4, starting a real executable in any of these working directories fails with the same `ENOENT` as a missing executable, and Node blames the executable:\n- a directory that doesn't exist;\n- a path that is a file;\n- an existing directory of 259 or more characters (258 still starts).\n\nFrom 260 characters the stdout/stderr pipes also throw `read ENOTCONN`. Nothing handled it, so my first plain-Node probe died with exit 1. On the unchanged code:\n- **Long TEMP:** preflight reported `cli-missing` (\"Claude CLI was not found…\") even though the binary was present.\n- **Turn in a 300-character workspace:** reported `HARNESS_NOT_INSTALLED`.\n- **Crash risk:** 8 uncaught `ENOTCONN` exceptions fired, and `apps/api` has no handler for those. That this would stop the API is my inference; I didn't run the built API.\n\n## What changed (`packages/infrastructure/src/claude/` plus docs)\n- **`process.ts` (the runner):** a start counts as refused only when Node created no process. A later error from a running CLI, such as a failed kill, is no longer misread as \"nothing was submitted\" (proven only with mocked tests). After a refusal the runner checks the filesystem once, read-only, and returns a fixed label rather than any error text:\n  - **Executable missing:** only when the configured path is a full path and that path and its `.com` and `.exe` forms are all absent or folders. No PATH search, no extra process, no fallback.\n  - **Working directory** missing or not a folder.\n  - **Otherwise no cause:** an existing folder proves nothing, and any other read error means \"unknown\".\n- **Interruptions and pipes:** a cancel or deadline during that check reports the refusal straight away, with no cause and no timeout. Pipe errors from a never-started process are ignored, which removes the crash. If a running CLI's output pipe fails, the CLI is stopped and the turn is \"delivery uncertain\", ahead of any stderr refusal, because lost output could hide that the prompt was accepted.\n- **`harness.ts` (fixed messages, no paths):**\n  - Proven missing executable: `cli-missing` / `HARNESS_NOT_INSTALLED`, as before.\n  - A turn's working directory missing or not a folder: `HARNESS_INVALID_CONFIGURATION`.\n  - The temporary check folder missing or not a folder: `HARNESS_TURN_FAILED`, never treated as configuration.\n  - No cause established: `unknown` in preflight or `HARNESS_TURN_FAILED` for a turn. The message states the path is over 258 characters when it is, otherwise names both the executable and the working directory.\n  - Every refusal stays `definitely-not-submitted`, and the working directory is used exactly as given.\n- **Docs:** doc 06 (new start-refusal paragraph and table), the troubleshooting guide (rows rewritten, column widths kept), and the CHANGELOG. The fake CLI fixture gained a `success` scenario.\n\n## Tests and checks\n- **New native tests (`start-refusal.test.ts`):** cover every case the brief listed, through `ClaudeHarness` and the real runner with a fake CLI. That includes 258/259/260/300-character working directories and long-TEMP preflight, plus two run-through-the-engine checks:\n  - missing working directory → `HARNESS_TURN_FAILED`, `adapterCode: HARNESS_INVALID_CONFIGURATION`, not resumable;\n  - missing executable → `HARNESS_NOT_INSTALLED`, resumable.\n\n  Every case asserts that no planted test path appears in any message.\n- **Mocked tests:** cover the path rules, uncertain reads, cancel/deadline during the check, and each message variant.\n- **Mutation checks:** I broke the code 8 different ways; the tests caught every one, and each file was restored byte-identical.\n- **Results:** frozen install, typecheck, lint, Prettier, `check:layers` and `check:deps` all pass. Claude folder: 259 passed, 2 skipped, coverage 99.24% statements / 98.15% branches / 100% functions / 99.82% lines.\n- **Two pre-existing tests skipped on purpose:** they run your installed `claude.exe`. I pointed `USERPROFILE`/`HOME` at an empty throwaway folder so they skipped rather than reading your real Claude login.\n- **Package-wide run:** exit 1. 50 symlink tests in `src/fs/chat-audio` and `src/process/voice` fail with `EPERM` because this machine lacks the symlink privilege and Developer Mode. They fail the same way without my folder redirect. One SQLite `EBUSY` happened once and didn't recur. All Claude tests passed in that run, but vitest printed no package coverage because of the failures.\n- **Not run (per brief):** monorepo build or coverage, browser suite, `apps/api` tests. No API test uses the changed fields or messages.\n\n## Remaining limits\n- The 258-character message reports the path's length against the Windows limit; it isn't proof of the cause.\n- A `GG_CLAUDE_BINARY` given as a bare name that fails to start now shows \"unknown\" rather than \"CLI not found\", because looking it up on PATH was ruled out.\n- Windows-only native tests skip elsewhere, and I didn't run on Linux CI.\n- For spawn errors Node throws immediately (only seen on POSIX), the runner still rejects and the turn gets the generic \"Claude turn failed\" (delivery uncertain). That's conservative and unchanged.\n\n## Decisions for you\n1. **Unexplained refusals are not resumable** (`HARNESS_TURN_FAILED`, not retriable), like the existing `EACCES` path. Before, `ENOENT` was resumable only because it was wrongly labelled \"not installed\". Marking it retriable would keep resumability but stretch what \"retriable\" means.\n2. **A bad turn working directory is `HARNESS_INVALID_CONFIGURATION`** (pinned, not resumable). The plain `HARNESS_TURN_FAILED` alternative has the same resumability but is less specific. The unused `WORKING_DIRECTORY_MISSING` code would need an engine change.\n3. **I included two fixes beyond the wording** on the same start path: the `ENOTCONN` crash (proven natively) and the running-CLI error guard (proven only with mocked tests).\n\n## Found but not changed (outside scope)\n- The Codex adapter maps any `enoent` to `HARNESS_NOT_INSTALLED` (`adapter-codex/src/events.ts:354`, `isolation.ts:177`).\n- `infrastructure/src/process/scripts.ts` and `adapter-codex/src/cli.ts` also lack stdout/stderr error handlers, so the same `ENOTCONN` crash is plausible for long working directories there. I didn't test it.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-364-author-01`; open `REPORT.md` first. `evidence/candidate.diff` has the full change and `evidence-manifest.json` hashes 32 files.",
+  "ttft_ms": 9396,
+  "type": "result",
+  "duration_ms": 2462741,
+  "uuid": "0db91b7d-4f82-49fb-9709-2b26c003020a",
+  "ttft_stream_ms": 8750,
+  "time_to_request_ms": 4639,
+  "first_content_frame_ms": 8750,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 280,
+      "outputTokens": 201837,
+      "cacheReadInputTokens": 31214321,
+      "cacheCreationInputTokens": 387476,
+      "webSearchRequests": 0,
+      "costUSD": 13.380532200000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 113249,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 387476,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

@@ -1,0 +1,801 @@
+{
+  "schema": "qa167i-case-results/1",
+  "source": "184c95ac2d08590e258c084723eb9ab379f0bbe5",
+  "tree": "404700711621832629aef6d505b69076972474da",
+  "parent": "c6f08d4a62c1488690096f69f577a68c6d382cbc",
+  "target": "47ca4640793a81efa5bec661dba25627de314774",
+  "scope": "Independent D167/F5 behavior QA of the exact source only; not review, Fable acceptance, CI, owner QA or merge authority.",
+  "setup": {
+    "checks": {
+      "passed": 34,
+      "total": 34
+    },
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "compiler": {
+      "banner": [
+        "Microsoft (R) Visual C# Compiler version 14.8.10001.0",
+        "for C# 5"
+      ],
+      "sha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3"
+    },
+    "launcherSourceSha256": "34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce",
+    "launcherGitObject": "4293a97d549cc8920485f86d13e1ab7dce12e77a",
+    "turboDryRun": "all cacheable build tasks HIT; plugin builds are cache:false"
+  },
+  "harness": {
+    "freeze": {
+      "frozenUtc": "2026-11-21T07:01:54.678Z",
+      "manifestSha256": "cdb68877b572cdfb47cdabe9fc3b4d87b88a06d4ea00baa04ad372246d14087c",
+      "executedBeforeFreeze": false
+    },
+    "build": {
+      "compilerSha256": "eca02e6b15cde93009a59a3d129d5a77fb5008f2e1cf62cf573b6737c747ecc3",
+      "steps": [
+        {
+          "label": "production-launcher",
+          "exit": 0
+        },
+        {
+          "label": "deadline-harness-same-assembly",
+          "exit": 0
+        },
+        {
+          "label": "public-entry-harness",
+          "exit": 0
+        }
+      ],
+      "outputs": {
+        "launcher": {
+          "sha256": "a4db890920f57967644b9ed1d533a4ae89e357a8c40ce9b16114bbe9e283bab2",
+          "bytes": 67072
+        },
+        "deadline": {
+          "sha256": "c3ae3529fab6c602e7e22f6eed390e0fa24d49ee85be99b2dbaeca661d639f8e",
+          "bytes": 95744
+        },
+        "publicEntry": {
+          "sha256": "25317c704e22a2f35209378a776f235f3b0dfee008a36a2c1bc9d6f58e8c3ff2",
+          "bytes": 6144
+        }
+      }
+    },
+    "fixtureCorrectionsUsed": 0
+  },
+  "groups": {
+    "deadlineSeam": {
+      "runId": "deadline-20261121T070206Z-8bb4d7",
+      "exit": 0,
+      "cases": [
+        {
+          "id": "D01",
+          "name": "before / equal / after the absolute cutoff",
+          "evidence": "component-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 10,
+            "total": 10
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D02",
+          "name": "already-expired admission starts no callback and no native child",
+          "evidence": "component-deterministic + native-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 11,
+            "total": 11
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D03",
+          "name": "audit example: 250 ms admitted, 50 ms preparation, 225 ms helper work",
+          "evidence": "native-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 8,
+            "total": 8
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D04",
+          "name": "preparation crossing the cutoff admits no native creation",
+          "evidence": "native-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 6,
+            "total": 6
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D05",
+          "name": "validation crossing the cutoff",
+          "evidence": "native-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 9,
+            "total": 9
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D06",
+          "name": "expiry between Read return and caller consumption",
+          "evidence": "native-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 4,
+            "total": 4
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D07",
+          "name": "15-second work cap",
+          "evidence": "component-deterministic + real-clock construction",
+          "status": "PASS",
+          "assertions": {
+            "passed": 8,
+            "total": 8
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D08",
+          "name": "outer release window keeps the 2-second cleanup reserve",
+          "evidence": "component-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 8,
+            "total": 8
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D09",
+          "name": "on-time success through the same deadline",
+          "evidence": "native-real-time",
+          "status": "PASS",
+          "assertions": {
+            "passed": 5,
+            "total": 5
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D10",
+          "name": "real elapsed preparation is charged to the same cutoff",
+          "evidence": "native-real-time",
+          "status": "PASS",
+          "assertions": {
+            "passed": 5,
+            "total": 5
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "D11",
+          "name": "one immutable cutoff shared by sequential guarded operations",
+          "evidence": "component-deterministic",
+          "status": "PASS",
+          "assertions": {
+            "passed": 5,
+            "total": 5
+          },
+          "failedAssertions": []
+        }
+      ],
+      "totals": {
+        "cases": 11,
+        "passed": 11,
+        "assertions": {
+          "passed": 79,
+          "total": 79
+        }
+      }
+    },
+    "nativePublicControls": {
+      "runId": "native-20261121T070224Z-cf8476",
+      "cases": [
+        {
+          "id": "N1",
+          "name": "timely held-to-free admits the ordinary start path (fixture marker, not a ready gateway)",
+          "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+          "status": "PASS",
+          "assertions": {
+            "passed": 17,
+            "total": 17
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "N2",
+          "name": "insufficient remaining time after a held sample starts no new helper",
+          "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+          "status": "PASS",
+          "assertions": {
+            "passed": 19,
+            "total": 19
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "N3",
+          "name": "stalled held retry ends at the reserved cutoff and retains held guidance",
+          "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+          "status": "PASS",
+          "assertions": {
+            "passed": 24,
+            "total": 24
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "N4",
+          "name": "ordinary detached gateway: cold start, warm reuse, unrelated sentinel survival, driver drain teardown",
+          "entry": "GraphGoblin.exe --config <file> --ensure-gateway (real built gateway)",
+          "status": "PASS",
+          "assertions": {
+            "passed": 9,
+            "total": 9
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "N5",
+          "name": "expired absolute deadline supplied at the public helper entry starts no owned marker child",
+          "entry": "Qa167iPublicEntry.exe (public HelperProcess.Read + WorkDeadline.Start)",
+          "status": "PASS",
+          "assertions": {
+            "passed": 8,
+            "total": 8
+          },
+          "failedAssertions": []
+        },
+        {
+          "id": "N6",
+          "name": "stalled initial identity check refuses at its 15-second cap",
+          "entry": "GraphGoblin.exe --config <file> --ensure-gateway",
+          "status": "PASS",
+          "assertions": {
+            "passed": 20,
+            "total": 20
+          },
+          "failedAssertions": []
+        }
+      ],
+      "totals": {
+        "cases": 6,
+        "passed": 6,
+        "assertions": {
+          "passed": 97,
+          "total": 97
+        }
+      },
+      "sentinel": {
+        "aliveAtTeardown": true,
+        "teardown": "driver-teardown"
+      },
+      "setupFaults": 0
+    },
+    "f3Replay": {
+      "driver": "i3-459-correction-independent-01/driver/v2 (unchanged; manifest SHA-256 766811a8076395f172127dea170220b8827b009ef828de26678d8768a178076e)",
+      "build": {
+        "steps": [
+          {
+            "label": "production-launcher",
+            "exit": 0
+          },
+          {
+            "label": "independent-harness",
+            "exit": 0
+          }
+        ],
+        "launcherSha256": "ab15ec805920817ec7b1297c3388317257d65267ae2c0df60526de8d728183d0",
+        "harnessSha256": "e597bca8ffb175d48fcd32fa09e17509d7f4aec0423d489c5adbf14870a4c625"
+      },
+      "runId": "candidate-20261121T070327Z-e99f01",
+      "cases": [
+        {
+          "id": "Q01",
+          "name": "valid-free-producer-shape",
+          "category": "control: valid free",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q02",
+          "name": "valid-free-legal-json-whitespace-and-escapes",
+          "category": "control: legal JSON whitespace/escaping",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q03",
+          "name": "identity-padding-with-valid-free",
+          "category": "control: identity helper padding preserved",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q04",
+          "name": "real-producer-free",
+          "category": "control: actual unmodified ownership producer (free)",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "unknown-exit",
+          "authorizedFreshGateway": true,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q05",
+          "name": "valid-held-reordered-unicode-escaped-path",
+          "category": "control: valid held, field order and path escaping",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 18,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q06",
+          "name": "real-producer-held-driver-record",
+          "category": "control: actual producer (held) and byte-preserved driver-owned owner record",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "store-unverified",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 3,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q07",
+          "name": "held-then-inconclusive-retry-retains-guidance",
+          "category": "control: inconclusive retry after held keeps held guidance",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 2,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q08",
+          "name": "malformed-javascript-syntax-multiline-free",
+          "category": "F3 malformed syntax (JavaScript-only)",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q09",
+          "name": "duplicate-decoded-name-held-then-free",
+          "category": "F3 duplicate decoded name",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q10",
+          "name": "held-then-duplicate-free-retry",
+          "category": "F3 duplicate name on the held retry path",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "store-held",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 2,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 7,
+            "total": 7
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q11",
+          "name": "outer-leading-no-break-space",
+          "category": "F3 outer non-JSON whitespace",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q12",
+          "name": "outer-trailing-form-feed",
+          "category": "F3 outer non-JSON whitespace / trailing material",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q13",
+          "name": "internal-line-separator-whitespace",
+          "category": "F3 malformed syntax (non-JSON whitespace between tokens)",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 5
+          },
+          "baselinePredictionDifferences": [
+            "authorizes fresh gateway start",
+            "closed code",
+            "launcher-observed gateway exit"
+          ]
+        },
+        {
+          "id": "Q14",
+          "name": "unknown-field-with-free",
+          "category": "F3 unknown field",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        },
+        {
+          "id": "Q15",
+          "name": "invalid-string-escape-in-held",
+          "category": "F3 invalid string escape",
+          "status": "DIFFERED-FROM-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 2,
+            "total": 7
+          },
+          "baselinePredictionDifferences": [
+            "closed code",
+            "ownership calls",
+            "lock location",
+            "message includes: another GraphGoblin process holds this store; check its port",
+            "message includes: No second gateway was started. Do not stop an unrelated proc"
+          ]
+        },
+        {
+          "id": "Q16",
+          "name": "trailing-second-record",
+          "category": "F3 trailing material",
+          "status": "MATCHED-PREDICTION",
+          "correctedContract": "CONFORMS",
+          "code": "helper-invalid",
+          "authorizedFreshGateway": false,
+          "ownershipCalls": 1,
+          "controls": {
+            "passed": 11,
+            "total": 11
+          },
+          "correctedContractChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionChecks": {
+            "passed": 5,
+            "total": 5
+          },
+          "baselinePredictionDifferences": []
+        }
+      ],
+      "totals": {
+        "cases": 16,
+        "conforms": 16,
+        "violates": 0,
+        "matchedBaselinePrediction": 9,
+        "differedFromBaselinePrediction": 7,
+        "setupFaults": 0,
+        "controls": {
+          "passed": 176,
+          "total": 176
+        },
+        "correctedContractChecks": {
+          "passed": 88,
+          "total": 88
+        },
+        "baselinePredictionChecks": {
+          "passed": 65,
+          "total": 88
+        }
+      },
+      "sentinel": {
+        "aliveAtTeardown": true,
+        "teardown": "driver-teardown"
+      }
+    },
+    "maintainedBoundedLogGroup": {
+      "attribution": "maintained repository acceptance group (author-maintained modes); run independently here, not an independent case design",
+      "command": "pnpm.cmd exec node --test --test-reporter=tap \"--test-name-pattern=bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names\" tooling/scripts/windows-launcher.acceptance.mjs",
+      "environment": {
+        "set": {
+          "GG_TEST_PORT_START": "25860"
+        },
+        "removed": [
+          "GITHUB_PAT"
+        ]
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "durationMs": 99289,
+      "nodeTest": {
+        "tests": 9,
+        "suites": 0,
+        "pass": 9,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 99015.077
+      },
+      "topLevel": [
+        {
+          "status": "ok",
+          "name": "bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names"
+        }
+      ],
+      "subtests": [
+        {
+          "status": "ok",
+          "name": "native closed outcomes, launcher pair bounds and NUL stdio checks"
+        },
+        {
+          "status": "ok",
+          "name": "a stale built entry beside the current guard module refuses before spawn"
+        },
+        {
+          "status": "ok",
+          "name": "an application startup failure reports its written closed diagnostic (74)"
+        },
+        {
+          "status": "ok",
+          "name": "held ownership retains guidance and budgets the last recheck"
+        },
+        {
+          "status": "ok",
+          "name": "ownership admission requires strict raw JSON and preserves held refusals"
+        },
+        {
+          "status": "ok",
+          "name": "one writer per physical root refuses a junction contender and a disjoint store and port"
+        },
+        {
+          "status": "ok",
+          "name": "deliberate stop, legacy append writer refusal and oversized history replacement"
+        },
+        {
+          "status": "ok",
+          "name": "unsafe managed names are refused and their targets preserved"
+        }
+      ],
+      "checkoutTrackedChangesAfter": 0
+    }
+  },
+  "verdict": {
+    "candidateDefectsFound": 0,
+    "allIndependentCasesPassed": true,
+    "result": "PASS"
+  }
+}

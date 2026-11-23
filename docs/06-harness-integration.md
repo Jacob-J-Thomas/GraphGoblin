@@ -160,6 +160,12 @@ silently fails over to another provider or retries a command. Text needs neither
 text precedes the transcript, and the protected canonical `{text}` check validates the combined
 input before inference or other workflow actions.
 
+### Inference preparation and authored failures
+
+A visit whose earlier prompt has uncertain delivery and no usable session stops before model resolution or preparation. A recorded missing session needs the resolved model and effort for the fresh-session action. If catalogue resolution temporarily fails, its own failure can be resumed. Preparation on an eligible visit may run earlier structured transforms and write context files in order. A preparation failure carries any previous task identity and submission as information. The existing turn and retry records supply the exact task when it is eligible to retry.
+
+An output transform or schema repair prompt can fail after GraphGoblin receives the provider result. The winning authored failure records `details.phase = "after-result"`, identifies the last actual turn and explains that the result arrived. GraphGoblin retains the conservative submission classification and refuses Resume. A provider result alone supplies no durable acceptance marker. A stronger cancellation, timeout, pinned refusal, lost session or unconfirmed termination keeps its own recovery rules. [Authored execution failures](decisions/ADR-0088-authored-execution-failures.md)
+
 ## The harness port (Decided)
 
 ```ts
@@ -461,6 +467,8 @@ over conflicting stdout because stderr is the CLI's primary error channel; stdou
 when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
 Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
 process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
+Lost check output comes next: a check whose stdout or stderr could not be read infers no state,
+sign-out included, from what it captured (#364).
 None of this inference applies to
 model-turn stdout or changes turn retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
@@ -499,7 +507,28 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 ### Mapping inference config to the SDK (Decided, verified in M4)
 
-Every behaviour-affecting setting a node has is passed as a per-thread option on every session, so the machine's `config.toml` values for them (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never apply to a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
+An enabled GraphGoblin catalogue entry or a ready preflight does not establish that the selected
+model is available to the API process user's actual Codex login and provider endpoint. Preflight
+checks installation, supported CLI capabilities and authentication without requesting a model turn.
+The bundled CLI's static model/plan metadata is not a live entitlement check. The October 2026
+ChatGPT-account refusal for `gpt-5.5` in [#427](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/427)
+is dated evidence, not a universal current restriction or proof that an API key always fixes it.
+
+For a Codex inference turn's structured HTTP 400 `invalid_request_error`, the adapter keeps the provider's explanation
+as `HARNESS_ARGUMENTS_REJECTED`; the run records `HARNESS_TURN_FAILED` with that adapter code and
+does not offer Resume. An account/endpoint explanation is evidence for that refused request,
+not a diagnosis for every unavailable model or unknown provider error. Deliberately choose a
+model supported for that login/endpoint, or change the login/endpoint as the API process user;
+correct the applicable definition/default, restart the API if process defaults changed, and start a new run. GraphGoblin does not substitute
+another model or globally disable a seed from one account's refusal. See
+[model-access troubleshooting](guide/07-troubleshooting.md#codex-model-unavailable-for-this-account-or-endpoint).
+
+LLM decisions deliberately omit provider text: the same refusal maps to `DECIDER_HTTP_ERROR`
+and a non-resumable `EVALUATION_PROVIDER_FAILED` with “Decision provider request failed.”
+That run record cannot establish an account-specific cause. Diagnose the selected decision
+model/login/endpoint separately; this change does not expand the decision's diagnostic boundary.
+
+The adapter sends the supported thread settings below explicitly on every session. Their SDK CLI arguments follow `config` overrides and win over the corresponding keys in `configOverrides` or `config.toml`. Other keys, including Windows sandbox backend selection, remain inherited unless overridden. This precedence alone does not establish the enforcement effect of every other sandbox-related key.
 
 Codex turns inherit the user's configured plugins, including their enabled/disabled state and plugin-provided tools/services ([ADR-0067](decisions/ADR-0067-codex-inherits-configured-plugins.md)). No default `features.plugins` override is injected. An inference node opts out of all plugins by adding `"features":{"plugins":false}` to its existing `harnessOptions.configOverrides`; this includes resumes and same-session output-schema repairs. An explicit `true` can override a user feature disable while respecting individually disabled plugins. Individual plugin IDs contain `@` and cannot pass the node override key validation.
 
@@ -507,13 +536,42 @@ LLM decisions and `coerce`/output-transform repairs use separate structured call
 
 Other extension isolation remains ([ADR-0063](decisions/ADR-0063-loop-turns-without-personal-extensions.md)). Before each turn the adapter runs `codex mcp list --json` in the turn's working directory **with plugins switched off only for discovery**, so plugin-owned servers are not listed and then suppressed. It starts the turn with every listed standalone MCP server disabled (`mcp_servers.<name>.enabled=false`), with `features.apps`, `features.memories`, `features.hooks`, `features.multi_agent` (sub-agent spawning) and `features.goals` false, and with `notify=[]`. If the listing fails, the turn does not start. Plain `--config` overrides cannot clear a table such as `mcp_servers={}`, because the CLI merges them into the loaded configuration; standalone servers are therefore disabled by name and remain available through explicit node overrides.
 
-Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded; [#442](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/442) tracks diagnostics for that limit.
+Configuration errors reported by the CLI retain their pre-submission refusal. Plugin inheritance follows normal CLI resolution, rather than checking package health: pinned CLI 0.160.0 silently skips unknown plugin IDs and missing plugin MCP files. A successful turn does not prove every configured plugin loaded. System preflight adds an informational `plugins.codex` warning after Codex CLI/login readiness succeeds, and Settings shows the same scope notice in the Codex card (#442): loaded plugin tools are not verified by this check. Readiness, authentication, normal inheritance and node overrides remain unchanged. The notice starts no inventory, app-server or provider probe. Supported CLI inventory can help investigate, but configuration and tool lists do not establish complete loaded-plugin health; see [missing Codex tools](guide/07-troubleshooting.md#codex-plugin-tools-are-missing).
 
-Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. A listed name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). An override key that breaks it is refused by the adapter with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted.
+Every listed server name and every segment of a node's override key must be one plain TOML key (letters, digits, `_`, `-`), and not `__proto__`, `constructor` or `prototype`. The shared contract checks raw authored keys before record parsing, including dotted keys, nested tables and tables inside arrays. The editor and API reject an invalid key with its field path instead of discarding it; publication also checks retained drafts and reports `CODEX_CONFIG_KEY_INVALID` on the inference node. Ordinary scalar values, valid tables and dotted keys keep their existing behavior. A previously stored invalid-key draft remains unchanged when publication is refused. Such stored definitions must be corrected before restarting with this contract, because the existing store guard refuses invalid definitions (see the CHANGELOG upgrade note).
+
+A listed server name that breaks this rule refuses the turn with `HARNESS_TURN_FAILED` (resumable once the machine's configuration is fixed). The adapter independently checks overrides with the same key rule and refuses them with `HARNESS_INVALID_CONFIGURATION`. The run records this as a non-resumable `HARNESS_TURN_FAILED` with that adapter code, so the node must change. Both are definitely not submitted. Existing HTTP reserved-key guards continue to apply before contract validation.
+
+API request-schema paths preserve literal authored member names with RFC 6901 escaping, including
+`/` and `~` and nested array positions ([API error responses](07-api-and-streaming.md#error-responses-decided)).
+Recovery of a manually edited stored row needs more than removing its bad override key: if its
+defaulted harness was omitted, explicitly store `harness: "codex"` in the node configuration as
+part of the operator correction on the stopped target store, alongside the key repair. Normal
+API writes already materialize that value. Startup and input-schema validation do not rewrite a
+stored omission; key-only repair can allow startup while GET and publication still fail. The
+CHANGELOG recipe identifies the target and full backup procedure, limits any copy rehearsal to
+offline checks without a gateway, and requires both discovery queries plus exact stored-text
+readback because SQLite's affected-row count alone does not prove a quoted member changed. Before
+restart, correct applicable editable rows, resolve invalid-key discovery results and choose a
+deliberate disposition for any actually incompatible snapshots. An omitted harness alone in an
+immutable snapshot is accepted by definition parsing. An explicit version read of that manually
+authored snapshot can still return `500 RESPONSE_INVALID`. Preserve its history.
+If recovery uses a fresh store, adopt that store's configuration and credentials and use the loop
+ID returned by import. An incompatible snapshot still blocks the original database. After the
+operator starts the chosen store for normal service, authenticated read-only GET verifies
+its served draft/current definitions; offline checks cover other retained versions. Verification
+does not publish owner drafts or start runs. Publication and restart tests use separate synthetic
+fixtures with fake harnesses and timers disabled, not a copy of the owner's store. No runtime
+converter or backfill is provided (ADR-0062).
 
 A loop turn still inherits from the machine:
 
-- the login, the model catalog and the account's model access, and the CLI's Windows sandbox mode;
+- the login, the model catalog and the account's model access;
+- the CLI's Windows sandbox backend selection (`windows.sandbox`), unless an explicit node
+  config override supplies it. The SDK's `sandboxMode`
+  becomes the separate `--sandbox` permission level; it does not select that Windows backend.
+  GraphGoblin supplies no dedicated backend selection. The inheritance alone
+  is not evidence that the node's sandbox permissions were weakened;
 - the CLI's other built-in features at their defaults. This includes the code-mode host (`codex-code-mode-host.exe`), which is the CLI's own tool host, not an extension: without it a turn runs no command;
 - the rest of `config.toml` that no node setting covers, such as project trust, model providers, `service_tier`, `personality`, `shell_environment_policy`, the skills under `CODEX_HOME` and the personal `AGENTS.md`. These familiar defaults are accepted by the owner's D2 decision, rather than left unresolved.
 
@@ -567,6 +625,22 @@ The SDK's event stream ends only when the CLI's stdout closes. A process the CLI
 sandbox `read-only`, approval `never`, no command network access and no web search, in the request's
 working directory or an empty temporary directory it removes afterwards. It returns
 parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+
+The request's working directory takes precedence over the adapter's configured directory;
+neither configured directory is removed. Without either, the adapter exclusively creates a
+short random-suffix scratch directory with `mkdir`, avoiding `mkdtemp`'s lower Windows path
+limit. It makes at most four attempts (three retries) on `EEXIST`; other creation errors propagate before the
+harness starts. A colliding directory is never reused or removed, and cleanup belongs only
+to a directory this call created. Cancellation and primary failures keep their existing
+cleanup precedence. The pinned SDK separately writes the required output schema under the
+host temporary root. Its managed patch shortens that directory's native `mkdtemp` prefix
+from `codex-output-schema-` to `gg-schema-`, keeping its allocation and cleanup semantics
+([ADR-0087](decisions/ADR-0087-short-codex-schema-temp-prefix.md)). Real-SDK/harmless-CLI
+tests at the measured 226-character Windows temporary root observe a 249-character adapter
+scratch, 243-character SDK schema directory and 255-character schema file, with normal,
+error and abort cleanup. These controlled fixtures are not a provider turn or a promise of
+arbitrary long-path support; ordinary OS/CLI limits still apply.
+
 Configured plugins are inherited through the common harness, including their tools; the
 read-only sandbox controls local commands rather than the authority of plugin services.
 The engine's LLM decision and coerce-repair callers supply neither a working directory
@@ -689,7 +763,7 @@ The model catalog is authoritative for selected and effective models. Shared adm
 
 The product owner develops on Windows 11. Codex's native Windows sandbox applies. POSIX signals are not available, so process trees are killed with `taskkill /T /F` where GraphGoblin owns the process (scripts); for Codex sessions the CLI's own job object ends the tree on abort (see "Cancellation"). Every provider and tool process starts with `windowsHide: true` and piped stdio, which gives it its own hidden console: Codex preflight, Claude turns and probes, scripts, and Codex sessions. The SDK 0.160.0 spawns sessions without the option, so a pnpm patch adds it (ADR-0049 acceptance amendment); without it the CLI shared the gateway's console and a terminal Ctrl+C killed a running turn. Paths are normalised with `node:path` and never built by string concatenation.
 
-Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
+Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Node reports that refusal as spawn `ENOENT`, the code of a missing executable; the Claude adapter's [start refusals](#claude-code-adapter-26) say which operand it could establish (#364). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
 
 ### Fixtures (Decided)
 
@@ -871,6 +945,46 @@ catalog values fail rather than falling through. Fresh, `resume-previous`, and `
 policies keep their existing meanings. Session lookup filters by harness before selecting the
 newest matching session, so a Codex session is never passed to Claude or vice versa. The same
 resolved request is used for normal and structured-output repair turns. Version, help, and authentication probes run in a fresh empty temporary directory; only the actual turn uses the authored working directory.
+
+**Start refusals (#364).** A spawn `ENOENT` does not say which operand failed: on Windows 11 with
+Node 22.23.4, a missing working directory, one that is a file and an existing one longer than 258
+characters are all refused with the same `ENOENT` as a missing executable, and Node attributes
+each to the executable. After an actual refusal (Node created no process), the runner makes one
+read-only observation of the request's own executable and working directory and returns only a
+closed cause. The executable counts as missing only when its configured path is fully qualified
+and that path and its `.com` and `.exe` forms, the names Windows process start tries, are all
+absent or folders; an executable named without a full path is never resolved through `PATH`. A
+working directory that is absent (or below a file) or is not a folder is established from its own
+metadata. An existing folder establishes nothing, because it can still be unstartable, and a read
+that fails for any other reason leaves the cause unknown. The adapter reports only what was
+established, in fixed text without paths:
+
+| Established                              | Preflight                                                                                                                                                 | Turn                                                                                                                                                      |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Executable missing                       | `cli-missing`: "Claude CLI was not found at the configured path."                                                                                         | `HARNESS_NOT_INSTALLED` (restorable), raised by the turn's own readiness check                                                                            |
+| Turn working directory missing or a file | Not applicable                                                                                                                                            | `HARNESS_INVALID_CONFIGURATION`: "Claude could not be started because the working directory does not exist" (or "is not a folder"); pinned, not resumable |
+| Check folder missing or a file           | `unknown`: "Claude CLI could not be started because its temporary check folder does not exist." (or "is not a folder")                                    | The same detail as `HARNESS_TURN_FAILED`; the check folder is never configuration                                                                         |
+| Nothing, path over 258 characters        | `unknown`: "... from its temporary check folder, whose path (from TEMP or TMP) is longer than the 258 characters Windows allows for a working directory." | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); the working directory path is longer than the 258 characters Windows allows"                |
+| Nothing                                  | `unknown`: "Claude CLI could not be started (ENOENT)." (or the `EACCES`/`UNKNOWN` code)                                                                   | `HARNESS_TURN_FAILED`: "Claude could not be started (ENOENT); check the Claude executable's path and permissions and the working directory"               |
+
+Every refusal stays `definitely-not-submitted`, and the turn uses the working directory exactly as
+given. Unconfirmed termination and cancellation keep their precedence; an abort or deadline that
+arrives during the observation reports the refusal at once, without a cause and without a timeout.
+Optional metadata has its own private 1,000 ms monotonic budget, starting when the runner observes
+the refusal, even for a turn with no request deadline or watchdog. When that budget expires, the
+actual spawn code and definite non-submission remain; the cause stays unknown, without claiming
+a process timeout or cancellation. Only metadata accepted before the absolute deadline can add a
+cause. No subsequent lookup starts after expiry or settlement, and late results cannot change the
+returned failure. The runner releases its diagnostic timer and abort listener; an already issued
+filesystem read may finish later, because the budget bounds the wait rather than cancelling native
+`stat`. See [ADR-0089](decisions/ADR-0089-bounded-claude-refusal-diagnosis.md).
+A later error event of a started process, such as a failed kill, is not a refusal. From 260
+characters Windows also fails the refused process's stdout and stderr pipes (`read ENOTCONN`); the
+runner ignores pipe faults of a process that never started, where they previously escaped as an
+uncaught exception. A started process's stdout or stderr failure stops its tree and fails the turn
+(`HARNESS_TURN_FAILED`, delivery uncertain, ahead of any recognised stderr refusal, because lost
+output can hide acceptance) or the check ("Claude CLI check output could not be read."). The 258-character wording states the path's length against the documented limit; it is
+not proof of the cause.
 
 The CLI streams JSON lines. GraphGoblin records bounded progress, usage, the transcript artifact,
 and a policy-evidence item when transcript capture is enabled. Provider response bodies and raw

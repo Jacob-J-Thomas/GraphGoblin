@@ -1,0 +1,44 @@
+{
+  "base": "33708ef35f485978e5a7cc3af9a3b8128540fc7b",
+  "result": "4 failed / 6 passed (10), before production/doc changes",
+  "observations": [
+    {
+      "finding": "F1",
+      "fixture": "slash",
+      "method": "POST",
+      "code": "VALIDATION_FAILED",
+      "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review/slash"
+    },
+    {
+      "finding": "F1",
+      "fixture": "literal tilde escape text",
+      "method": "POST",
+      "code": "VALIDATION_FAILED",
+      "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review~1text"
+    },
+    {
+      "finding": "F1",
+      "fixture": "nested array member",
+      "method": "POST",
+      "code": "VALIDATION_FAILED",
+      "path": "/definition/nodes/1/config/harnessOptions/configOverrides/review/1/slash/~member"
+    },
+    {
+      "finding": "F2",
+      "phase": "key-only repair",
+      "get": 500,
+      "getCode": "RESPONSE_INVALID",
+      "publish": 500,
+      "publishCode": "INTERNAL_ERROR",
+      "startup": "accepted"
+    },
+    {
+      "finding": "F2",
+      "phase": "complete documented recipe",
+      "materializationStepPresent": false,
+      "get": 500,
+      "publish": 500
+    }
+  ],
+  "F3": "Baseline control passed: product-driver UPDATE affected one row, bytes remained equal, discovery still found the quoted member. The final candidate JSON records the unchanged driver version and values."
+}

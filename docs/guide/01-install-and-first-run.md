@@ -89,7 +89,17 @@ Only supplied overrides are persisted; shell `GG_*` variables are not copied. Th
 inherited `GG_*`, supplies its configured host/port/store/web directory and prepends the selected
 Node directory to PATH. Preserve required overrides when reconfiguring. The JSON next to the
 executable is per-user configuration; keep credentials in GraphGoblin's existing credential/secret
-stores rather than adding them to shortcuts.
+stores rather than adding them to shortcuts. The installer refuses `GG_MASTER_KEY` and
+`GG_JEV_API_KEY` overrides, including case variants and empty values, before writing any JSON.
+The launcher also refuses those keys in manually edited configuration. Use the existing
+data-directory `master.key` for encryption and set Jev's key through
+[Store secrets](06-settings-and-secrets.md#store-secrets). No acknowledgement bypass is offered.
+
+The launcher requires Windows 10 or Windows Server 2016 or later and a host policy that permits
+nested jobs. Installation checks the native capability before replacing shortcuts or
+configuration. Every click checks actual helper containment, including when the gateway already
+runs. A restricted shell can therefore refuse a warm click while the gateway remains available
+at its existing address. See [Windows launcher troubleshooting](07-troubleshooting.md#windows-launcher).
 
 Use the new desktop shortcut. Once its PWA window opens, remove the old direct Chrome taskbar pin
 and pin the new running GraphGoblin button. Both routes now go through readiness before opening

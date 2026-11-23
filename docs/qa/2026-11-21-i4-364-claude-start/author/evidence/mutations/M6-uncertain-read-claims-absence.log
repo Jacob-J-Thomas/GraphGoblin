@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/claude/process-failure.test.ts (31 tests | 4 failed) 62ms
+   ❯ read-only observation after an actual spawn refusal (#364) (15)
+     × leaves the cause open when the executable path is an unreadable path 4ms
+     × leaves the cause open when the executable path is an unclassified read fault 1ms
+     × classifies a working directory that is unreadable without resolving a bare executable name 1ms
+     × classifies a working directory that is denied without resolving a bare executable name 1ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unreadable path
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > leaves the cause open when the executable path is an unclassified read fault
+AssertionError: expected { exitCode: null, stdout: '', …(5) } to not have property "startRefusal"
+System.Management.Automation.RemoteException
+- Expected:
+undefined
+System.Management.Automation.RemoteException
++ Received:
+"executable-missing"
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:198:24
+    196|     const result = await refuse();
+    197|     expect(result).toMatchObject({ spawnCode: 'ENOENT', exitCode: null…
+    198|     expect(result).not.toHaveProperty('startRefusal');
+       |                        ^
+    199|     expect(observed()).toEqual([...names, workspace]);
+    200|     expect(JSON.stringify(result)).not.toContain('PRIVATE');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is unreadable without resolving a bare executable name
+ FAIL  src/claude/process-failure.test.ts > read-only observation after an actual spawn refusal (#364) > classifies a working directory that is denied without resolving a bare executable name
+AssertionError: expected { exitCode: null, stdout: '', …(5) } to not have property "startRefusal"
+System.Management.Automation.RemoteException
+- Expected:
+undefined
+System.Management.Automation.RemoteException
++ Received:
+"working-directory-missing"
+System.Management.Automation.RemoteException
+ ❯ src/claude/process-failure.test.ts:216:31
+    214|       expect(observed()).toEqual([workspace]);
+    215|       if (refusal) expect(result).toMatchObject({ spawnCode: 'ENOENT',…
+    216|       else expect(result).not.toHaveProperty('startRefusal');
+       |                               ^
+    217|     },
+    218|   );
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 27 passed (31)
+   Start at  02:49:33
+   Duration  2.51s (import 57%, transform 40%, tests 3%)
+
+vitest-exit=1

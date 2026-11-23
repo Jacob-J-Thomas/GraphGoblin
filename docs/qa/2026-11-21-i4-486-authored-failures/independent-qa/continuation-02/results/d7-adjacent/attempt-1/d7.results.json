@@ -1,0 +1,137 @@
+{
+ "summary": {
+  "name": "d7",
+  "total": 6,
+  "passed": 6,
+  "failed": [],
+  "driverPid": 47324,
+  "apiPort": 5877,
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d7-adjacent-1\\data\\d7"
+ },
+ "rows": [
+  {
+   "id": "A03",
+   "description": "event dedupe expression failure stays a request-side 422 (fixed copy, literal absent), zero runs",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": 422,
+    "body": {
+     "type": "https://graphgoblin.dev/problems/event-key-expression-failed",
+     "title": "event key expression failed",
+     "status": 422,
+     "code": "EVENT_KEY_EXPRESSION_FAILED",
+     "detail": "the event trigger dedupe expression failed"
+    }
+   }
+  },
+  {
+   "id": "A03c",
+   "description": "valid event dedupe control accepted (202) and starts one run",
+   "pass": true,
+   "class": "PUBLIC-API",
+   "actual": {
+    "status": 202
+   }
+  },
+  {
+   "id": "A01",
+   "description": "poll fireWhen failure stays a pre-run trigger policy: zero runs, private warn only, literal not logged",
+   "pass": true,
+   "class": "PUBLIC-API+SCHEDULER",
+   "actual": {
+    "runs": 0,
+    "logs": [
+     {
+      "level": "warn",
+      "msg": "poll trigger failed",
+      "obj": {
+       "loopId": "01M7ZFZXCE28ZH9K3JN5EG3D00",
+       "nodeId": "start",
+       "code": "POLL_TRIGGER_FAILED"
+      }
+     },
+     {
+      "level": "warn",
+      "msg": "poll trigger failed",
+      "obj": {
+       "loopId": "01M7ZFZXCE28ZH9K3JN5EG3D00",
+       "nodeId": "start",
+       "code": "POLL_TRIGGER_FAILED"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "A01c",
+   "description": "poll control with fireWhen true starts exactly one deduplicated run",
+   "pass": true,
+   "class": "PUBLIC-API+SCHEDULER",
+   "actual": {
+    "runs": [
+     "succeeded"
+    ]
+   }
+  },
+  {
+   "id": "A02",
+   "description": "poll item key failure stays an item rejection/admission diagnostic: zero runs, no literal logged",
+   "pass": true,
+   "class": "PUBLIC-API+SCHEDULER",
+   "actual": {
+    "runs": 0,
+    "logs": [
+     {
+      "level": "warn",
+      "msg": "poll trigger failed",
+      "obj": {
+       "loopId": "01M7ZFZXEM0FR9V9BDAZZ09KTZ",
+       "nodeId": "start",
+       "code": "POLL_ITEMS_INVALID",
+       "reason": "KEY_FAILED",
+       "path": "items.dedupeKey",
+       "itemIndex": 0
+      }
+     },
+     {
+      "level": "warn",
+      "msg": "poll trigger failed",
+      "obj": {
+       "loopId": "01M7ZFZXEM0FR9V9BDAZZ09KTZ",
+       "nodeId": "start",
+       "code": "POLL_ITEMS_INVALID",
+       "reason": "KEY_FAILED",
+       "path": "items.dedupeKey",
+       "itemIndex": 0
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "CLEANUP",
+   "description": "authenticated drain accepted; port refuses",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:46:03.405Z",
+     "choiceAt": "2026-11-21T16:46:33.405Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "0590d7e0-064d-43de-9952-a7ef63bbbf6f:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true
+   }
+  }
+ ]
+}

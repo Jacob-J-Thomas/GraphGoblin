@@ -1,0 +1,23 @@
+// Creates separate v2 observer/driver artifacts. Never modifies v1 or repository source.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+const packet = path.dirname(fileURLToPath(import.meta.url));
+const directory = path.join(packet, 'native-corrected-01');
+assert.equal(fs.existsSync(directory), false);
+fs.mkdirSync(directory); fs.mkdirSync(path.join(directory, 'raw')); fs.mkdirSync(path.join(directory, 'sources'));
+let child = fs.readFileSync(path.join(packet, 'source-case-v1.mjs'), 'utf8');
+child = child.replace("  if (!args.includes('exec') && !args.includes('mcp')) return;\n", '');
+child = child.replace("  child.once('spawn', () => { row.pid = child.pid; row.spawned = true; });", "  child.once('spawn', () => { row.pid = child.pid; row.spawned = true; row.args = [...(child.spawnargs ?? [])]; row.executable = child.spawnfile; });");
+fs.writeFileSync(path.join(packet, 'source-case-v2.mjs'), child);
+let driver = fs.readFileSync(path.join(packet, 'run-qa-v1.mjs'), 'utf8');
+driver = driver.replace("const out = path.dirname(fileURLToPath(import.meta.url));", "const out = path.join(path.dirname(fileURLToPath(import.meta.url)), 'native-corrected-01');");
+driver = driver.replace('const q = path.dirname(out);', 'const q = path.dirname(path.dirname(out));');
+driver = driver.replace("case: path.join(out, 'source-case-v1.mjs')", "case: path.join(path.dirname(out), 'source-case-v2.mjs')");
+driver = driver.replace("fakeCli: path.join(out, 'harmless-cli-v1.mjs')", "fakeCli: path.join(path.dirname(out), 'harmless-cli-v1.mjs')");
+const harmlessLoop = "for (const root of ['short', '226']) for (const mode of ['success', 'error', 'abort']) predictions.push({ id: `harmless-${root}-${mode}`, tier: 'harmless', root, mode, expected: 'Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits.' });";
+assert(driver.includes(harmlessLoop)); driver = driver.replace(harmlessLoop, '// Only the one authorized corrected native pair. Harmless cases are not rerun.');
+driver = driver.replace('expectedCases: 8', 'expectedCases: 2').replace('expected: 8', 'expected: 2').replace('executed !== 8', 'executed !== 2');
+fs.writeFileSync(path.join(packet, 'run-native-corrected-v2.mjs'), driver);
+console.log('Prepared distinct native pair only; original eight-case run retained unchanged.');

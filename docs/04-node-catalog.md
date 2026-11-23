@@ -4,6 +4,8 @@ Every node has an `id`, `kind`, `label`, `config`, canvas position, and ports. E
 
 There are **no error ports** in 1.0. Failures are handled by the engine's resiliency model (05). Nodes that legitimately produce different outcomes express them as labelled routes, which is a routing concept, not an error concept.
 
+A failed authored field identifies the field and, where applicable, its entry or item number. This covers script arguments, HTTP or script heartbeat probe templates, heartbeat conditions and deadlines, decision questions, instructions and message selectors, wait prompts and timestamps, and templated working directories. It also covers subloop input and output mappings and inference preparation, repair prompts and transforms. An earlier probe, completed context-file write or child completion remains visible when a later field fails. A terminal file-return failure is recorded in the delivery receipt. [Execution and recovery](05-execution-engine.md#resiliency-model-decided)
+
 ## Trigger (Decided)
 
 Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape. The strict config discriminator is `type`; both webhook signing variants use `type: 'webhook'`.
@@ -150,6 +152,18 @@ type ScriptConfig = {
 ```
 
 Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, with `failure.script.state: completed` and the exit code. A proven process-start refusal fails with resumable `SCRIPT_START_FAILED` (`definitely-not-started`). Before calling the process runner the engine durably records `script.dispatched { nodeId, visitId, dispatchId }`. A dispatch without a matching recorded outcome fails with resumable `SCRIPT_OUTCOME_UNCERTAIN` (`outcome-uncertain`), including when writing progress or completion fails. A generic bookkeeping failure does not dispose the dispatch. Re-entering an unfinished script visit from an earlier build without a dispatch marker is also uncertain: missing provenance cannot prove the command never ran. Such visits never run automatically after upgrading. The previous attempt may already have produced its effect. In the inspector choose **Recover script**, then **Resume** to rerun knowingly, **Replay** to start a new run from that node, or **Cancel** to leave the run failed. Resume and Replay can repeat the effect; this is not an exactly-once guarantee (05).
+
+Commands use `shell: false`. Windows `.cmd` and `.bat` files therefore require an explicitly
+authored command processor; direct invocation is a proven `SCRIPT_START_FAILED`, not an
+automatic shell fallback. Resume and Replay keep the pinned command, arguments and
+working-directory configuration. To change them, start a fresh run from the corrected definition;
+neither Resume nor Replay applies the correction. The UI's **New run** uses a published version.
+To test an unpublished saved draft, use `POST /loops/{id}/runs` with the editable draft's
+`versionId` and `allowDraft: true`; the run freezes a new snapshot without publication.
+Publishing can arm the new version's cron and webhook triggers and disable the earlier version's
+registrations ([trigger arming](08-triggers-and-integrations.md#arming-decided-shipped-in-m6)). After an external prerequisite
+repair, such as restoring a missing executable, ordinary Resume can retry the pinned definition. See
+[Windows batch commands](guide/07-troubleshooting.md#windows-batch-commands) for an example.
 
 Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
 four-byte characters survive arbitrary subprocess chunk boundaries. Capture is

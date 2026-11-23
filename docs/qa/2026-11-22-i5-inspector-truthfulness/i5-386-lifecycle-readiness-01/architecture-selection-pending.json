@@ -1,0 +1,23 @@
+{
+  "status": "READ_ONLY_PREPARATION",
+  "selectedOption": null,
+  "options": [
+    "A: separate bounded per-run header lifecycle presentation",
+    "B: bounded server-derived execution-header observation plus live presentation"
+  ],
+  "rootScopeClarification": {
+    "issue386": "terminal truth while refreshed response is delayed/in flight",
+    "issue416": "retain inspector evidence after a refused query / broader outage behavior"
+  },
+  "invariants": [
+    "lastEventSeq is not status projection version",
+    "latest started/resumed invalidates earlier terminal for same run",
+    "resumed does not alone establish running phase",
+    "history window is not current lifecycle",
+    "late callbacks/responses cannot cross run or lifecycle generation",
+    "cached snapshot/recovery/control/finalization are not fabricated",
+    "terminal execution is not stream.complete or EOF"
+  ],
+  "implementationTestsBuildsProvidersExecuted": false,
+  "newImplementationCheckoutTouched": false
+}

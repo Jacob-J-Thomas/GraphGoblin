@@ -1,8 +1,9 @@
 import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
-import type { RunEvent } from '@graphgoblin/contracts';
+import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
 import { HistoryEligibility } from './HistoryEligibility.js';
 import { formatDateTime } from '../lib/utils.js';
+import { isTerminal } from '@graphgoblin/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
@@ -10,7 +11,7 @@ import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, BoundedValue, Card } from '../components/ui/index.js';
+import { Alert, Badge, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
@@ -21,6 +22,8 @@ import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
 import { DeliveryPanel } from './inspector/DeliveryPanel.js';
 import { useRunEvents } from './useRunEvents.js';
+import { useRunHeaderStatus } from './useRunHeaderStatus.js';
+import type { HeaderStatus } from './run-header-status.js';
 import { useRunHistory } from './useRunHistory.js';
 import { useLiveRefresh } from './useLiveRefresh.js';
 import { useApi } from '../api/context.js';
@@ -71,6 +74,50 @@ function FailedChildLink({ details }: { details: unknown }) {
 }
 
 /**
+ * The header's execution status (#386): the record's, or a lifecycle event the record has not
+ * caught up with yet. Presentation only; controls, recovery and the failure stay the record's.
+ */
+function HeaderStatusBadge({ status }: { status: HeaderStatus }) {
+  return status.kind === 'updating' ? (
+    <Badge tone="neutral" data-status-updating="">
+      Updating status…
+    </Badge>
+  ) : (
+    <RunStatusBadge status={status.status} />
+  );
+}
+
+/**
+ * Where the run is, beside the header status. A record's position is shown only with the
+ * record's own status: beside a newer event's status or an unresolved one it could be stale. A
+ * finished record's node is the last one its record names, which need not be where the run ended:
+ * the event sequence can advance before the position is projected.
+ */
+function HeaderPosition({
+  status,
+  nodeId,
+  definition,
+}: {
+  status: HeaderStatus;
+  nodeId: string | undefined;
+  definition: LoopDefinition | undefined;
+}) {
+  if (status.kind === 'event')
+    return (
+      <span className="min-w-0 wrap-anywhere">
+        Status from event #{status.seq}; the run record is updating.
+      </span>
+    );
+  if (status.kind === 'updating' || !nodeId) return null;
+  return (
+    <span className="min-w-0 wrap-anywhere">
+      {isTerminal(status.status) ? 'Last node in run record: ' : 'at '}
+      {nodeName(definition, nodeId)}
+    </span>
+  );
+}
+
+/**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the
  * timeline beside the thread at the chosen event (with that event's patch) and node progress.
  */
@@ -79,16 +126,28 @@ export function RunInspectorPage() {
   const runQuery = useRun(runId);
   const threadQuery = useRunThread(runId);
   const live = useLiveRefresh(runId);
-  const log = useRunEvents(runId, live.notify);
   const client = useApi();
+  const header = useRunHeaderStatus(runId);
+  const observation = useQuery({
+    queryKey: keys.observation(runId),
+    // A successful read, under the credentials it was sent with, is lifecycle evidence for the
+    // header (#386); the answer itself is unchanged, and a cached one is not a new read.
+    queryFn: async ({ signal }) => {
+      const lease = header.registry.lease(runId);
+      const read = await runs.observation(client, runId, { signal });
+      if (!signal.aborted) header.registry.lifecycle(lease, read.lifecycle);
+      return read;
+    },
+  });
+  // The stream delivers every accepted batch to the header's evidence itself, whatever window
+  // is shown (#386).
+  const log = useRunEvents(runId, live.notify);
+  // One status for the header's badge and position; controls and recovery take the record.
+  const shownStatus = runQuery.data && header.status(runQuery.data);
   const history = useRunHistory(runId, log);
   const selectedSeq = history.selectedSeq;
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = history.selectedEvent;
-  const observation = useQuery({
-    queryKey: keys.observation(runId),
-    queryFn: ({ signal }) => runs.observation(client, runId, { signal }),
-  });
   const present = (events: (RunEvent | undefined)[]) =>
     events.filter((event): event is RunEvent => event !== undefined);
   const evidence = present([
@@ -171,13 +230,15 @@ export function RunInspectorPage() {
                     {run.id}
                   </span>
                 </h1>
-                <RunStatusBadge status={run.status} />
+                {shownStatus ? <HeaderStatusBadge status={shownStatus} /> : null}
               </div>
               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                {run.currentNodeId ? (
-                  <span className="min-w-0 wrap-anywhere">
-                    at {nodeName(definition, run.currentNodeId)}
-                  </span>
+                {shownStatus ? (
+                  <HeaderPosition
+                    status={shownStatus}
+                    nodeId={run.currentNodeId}
+                    definition={definition}
+                  />
                 ) : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop

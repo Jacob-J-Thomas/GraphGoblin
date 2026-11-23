@@ -1,0 +1,254 @@
+v22.23.4
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+stdout | src/claude/baseline-364.test.ts > baseline > runner missing
+BASELINE runner missing 64 {"exitCode":null,"stdout":"","timedOut":false,"aborted":false,"overflow":false,"spawnCode":"ENOENT"}
+
+stdout | src/claude/baseline-364.test.ts > baseline > runner file
+BASELINE runner file 65 {"exitCode":null,"stdout":"","timedOut":false,"aborted":false,"overflow":false,"spawnCode":"ENOENT"}
+
+stdout | src/claude/baseline-364.test.ts > baseline > runner long259
+BASELINE runner long259 259 {"exitCode":null,"stdout":"","timedOut":false,"aborted":false,"overflow":false,"spawnCode":"ENOENT"}
+
+stdout | src/claude/baseline-364.test.ts > baseline > runner long300
+BASELINE runner long300 300 {"exitCode":null,"stdout":"","timedOut":false,"aborted":false,"overflow":false,"spawnCode":"ENOENT"}
+
+ ✓ src/claude/baseline-364.test.ts > baseline > runner missing 29ms
+ ✓ src/claude/baseline-364.test.ts > baseline > runner file 10ms
+ ✓ src/claude/baseline-364.test.ts > baseline > runner long259 20ms
+ ✓ src/claude/baseline-364.test.ts > baseline > runner long300 21ms
+stdout | src/claude/baseline-364.test.ts > baseline > preflight with TEMP making a 259-char probe cwd
+BASELINE preflight 259 {"state":"cli-missing","problems":["Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."]}
+
+stdout | src/claude/baseline-364.test.ts > baseline > preflight with TEMP making a 300-char probe cwd
+BASELINE preflight 300 {"state":"cli-missing","problems":["Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight."]}
+
+stdout | src/claude/baseline-364.test.ts > baseline > turn with an overlong working directory
+BASELINE turn {"type":"error","code":"HARNESS_NOT_INSTALLED","message":"The installed Claude executable could not be started; check its path and permissions","retriable":false,"submission":"definitely-not-submitted"} The installed Claude executable could not be started; check its path and permissions
+
+ ✓ src/claude/baseline-364.test.ts > baseline > preflight with TEMP making a 259-char probe cwd 29ms
+ ✓ src/claude/baseline-364.test.ts > baseline > preflight with TEMP making a 300-char probe cwd 21ms
+ ✓ src/claude/baseline-364.test.ts > baseline > turn with an overlong working directory 25ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+Vitest caught 8 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "runner long300". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "runner long300". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "preflight with TEMP making a 300-char probe cwd". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "preflight with TEMP making a 300-char probe cwd". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "preflight with TEMP making a 300-char probe cwd". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "preflight with TEMP making a 300-char probe cwd". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+     Errors  8 errors
+   Start at  02:27:59
+   Duration  3.20s (import 50%, transform 39%, tests 11%)
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "turn with an overlong working directory". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: read ENOTCONN
+ ❯ tryReadStart node:net:717:20
+ ❯ Socket._read node:net:732:5
+ ❯ Readable.read node:internal/streams/readable:739:12
+ ❯ Socket.read node:net:786:39
+ ❯ new Socket node:net:495:12
+ ❯ Object.Socket node:net:364:41
+ ❯ createSocket node:internal/child_process:335:14
+ ❯ ChildProcess.spawn node:internal/child_process:450:23
+ ❯ spawn node:child_process:787:9
+ ❯ src/claude/process.ts:53:19
+     51|       return;
+     52|     }
+
+     53|     const child = spawn(request.binary, [...request.args], {
+       |                   ^
+     54|       cwd: request.cwd,
+     55|       env: request.env,
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4053, code: 'ENOTCONN', syscall: 'read' }
+This error originated in "src/claude/baseline-364.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "turn with an overlong working directory". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+vitest-exit=1

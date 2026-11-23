@@ -2,7 +2,10 @@
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
+import { watch } from 'node:fs';
 import {
+  access,
+  chmod,
   copyFile,
   link,
   lstat,
@@ -25,9 +28,18 @@ import process from 'node:process';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import {
+  aliasStage,
+  errorCodeOf,
+  isExpectedOwnershipRefusal,
+  openWindowsLauncherEvidence,
+} from './windows-launcher-evidence.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const execute = promisify(execFile);
+// CI evidence (#496): typed records only, appended as they occur. Without the CI variable nothing
+// is written; the variable is removed from this process before any child starts.
+const ciEvidence = openWindowsLauncherEvidence({ repoRoot: root });
+const execute = ciEvidence.observeExecFile(promisify(execFile));
 const env = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith('GG_') && key !== 'JEV_API_KEY'),
 );
@@ -47,15 +59,38 @@ function ownershipContender(dataDir) {
   const module = pathToFileURL(join(root, 'apps/api/dist/data-dir-lock.js')).href;
   const program = `
     const { acquireDataDirLock } = await import(process.argv[1]);
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const facts = error => {
+      const failures = [];
+      const pending = [error];
+      for (let inspected = 0; pending.length && inspected < 8; inspected++) {
+        const current = pending.shift();
+        if (current.operation) failures.push({ code: current.code ?? null, operation: current.operation, markerToken: current.markerToken ?? null });
+        if (current.errors) pending.push(...current.errors);
+        if (current.cause) pending.push(current.cause);
+      }
+      return { code: error.code ?? null, operation: error.operation ?? null, markerToken: error.markerToken ?? null, failures };
+    };
     process.stdin.resume();
     const released = new Promise(resolve => process.stdin.once('end', resolve));
+    let lock;
     try {
-      const lock = await acquireDataDirLock(process.argv[2]);
-      process.stdout.write(JSON.stringify({ status: 'acquired', pid: process.pid }) + '\\n');
-      await released;
-      await lock.release();
+      lock = await acquireDataDirLock(process.argv[2]);
+      const { token } = JSON.parse(await readFile(join(process.argv[2], 'graphgoblin.lock'), 'utf8'));
+      process.stdout.write(JSON.stringify({ status: 'acquired', pid: process.pid, token }) + '\\n');
     } catch (error) {
-      process.stdout.write(JSON.stringify({ status: 'refused', pid: process.pid, error: error.message }) + '\\n');
+      process.stdout.write(JSON.stringify({ status: 'refused', pid: process.pid, error: error.message, ...facts(error) }) + '\\n');
+    }
+    if (lock) {
+      await released;
+      try {
+        await lock.release();
+        process.stdout.write(JSON.stringify({ status: 'released', pid: process.pid }) + '\\n');
+      } catch (error) {
+        process.stdout.write(JSON.stringify({ status: 'release-failed', pid: process.pid, ...facts(error) }) + '\\n');
+        process.exitCode = 1;
+      }
     }
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', program, module, dataDir], {
@@ -63,7 +98,7 @@ function ownershipContender(dataDir) {
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
-  const exited = new Promise((resolve) => child.once('exit', resolve));
+  const exited = new Promise((resolve) => child.once('close', resolve));
   let stdout = '';
   let stderr = '';
   const result = new Promise((resolve, reject) => {
@@ -95,7 +130,17 @@ function ownershipContender(dataDir) {
         reject(new Error(`Ownership contender exited ${code}: ${stderr}`));
     });
   });
-  return { child, result, exited };
+  return {
+    child,
+    result,
+    exited,
+    messages: () =>
+      stdout
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line)),
+  };
 }
 let nextPort = Number(process.env.GG_TEST_PORT_START ?? 4830);
 const lastPort = nextPort + 20;
@@ -121,9 +166,12 @@ const health = async (config) => {
   };
 };
 async function stop(config) {
+  const cleanup = (result) =>
+    ciEvidence.record('cleanup', { action: 'gateway-drain', result, count: null });
   try {
     await health(config);
   } catch {
+    cleanup('not-running');
     return;
   }
   await fetch(origin(config) + '/system/shutdown', {
@@ -131,15 +179,20 @@ async function stop(config) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ action: 'drain' }),
     signal: AbortSignal.timeout(3000),
+  }).catch((error) => {
+    cleanup('failed');
+    throw error;
   });
   for (let i = 0; i < 100; i++) {
     try {
       await health(config);
     } catch {
+      cleanup('drained');
       return;
     }
     await sleep(100);
   }
+  cleanup('failed');
   throw new Error('Disposable gateway did not finish its normal drain.');
 }
 
@@ -206,10 +259,12 @@ function logRecords(contents) {
 test(
   'Windows PowerShell 5.1 installer validates before replacing native launcher files',
   { skip: process.platform !== 'win32', timeout: 120_000 },
-  async () => {
+  ciEvidence.observeTest('installer', async () => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
+    ciEvidence.fixture('installer', base);
     const install = join(base, 'installed space α');
+    await privateDirectory(install);
     const store = join(base, 'store');
     await mkdir(store);
     const exe = join(install, 'GraphGoblin.exe');
@@ -235,7 +290,7 @@ test(
       DesktopShortcut: desktop,
       StartMenuShortcut: programs,
     };
-    function runPowerShell(script, request) {
+    function runPowerShell(script, request, inherited = {}) {
       return execute(
         powerShell,
         [
@@ -247,7 +302,7 @@ test(
           Buffer.from(script, 'utf16le').toString('base64'),
         ],
         {
-          env: { ...env, GG_INSTALLER_FIXTURE: JSON.stringify(request) },
+          env: { ...env, ...inherited, GG_INSTALLER_FIXTURE: JSON.stringify(request) },
           cwd: base,
           windowsHide: true,
           timeout: 40_000,
@@ -289,7 +344,7 @@ test(
       },
     );
 
-    const invoke = (overrides = {}) =>
+    const invoke = (overrides = {}, inherited = {}) =>
       runPowerShell(
         `$ErrorActionPreference = 'Stop'
       $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
@@ -302,6 +357,7 @@ test(
       }
       & $request.installer @options`,
         { installer, options: { ...options, ...overrides } },
+        inherited,
       );
     async function invokeWithNodeDiscovery(childPath, overrides = {}) {
       const discoveredOptions = { ...options, ...overrides };
@@ -322,10 +378,48 @@ test(
         { installer, options: discoveredOptions, childPath },
       );
     }
+    async function observeStages(action) {
+      const stages = [];
+      let watchFailure;
+      const observer = watch(base, { recursive: true }, (_event, name) => {
+        if (name?.includes('gg-launcher-stage-')) stages.push(name);
+      });
+      observer.on('error', (error) => (watchFailure = error));
+      try {
+        await action();
+        await sleep(50);
+        if (watchFailure) throw watchFailure;
+        return stages;
+      } finally {
+        observer.close();
+      }
+    }
     const sourceBefore = await readFile(source);
-    await invoke();
+    const safeOverrides = {
+      GG_LOG_LEVEL: 'silent',
+      GG_REQUIRE_API_KEY: 'false',
+      GG_OLLAMA_ENABLED: 'false',
+    };
+    const secretCanary = 'GG_LAUNCHER_SECRET_CANARY synthetic only';
+    const ordinaryStages = await observeStages(() =>
+      invoke(
+        { Environment: safeOverrides },
+        {
+          GG_MASTER_KEY: secretCanary,
+          GG_JEV_API_KEY: secretCanary,
+          GG_LOG_LEVEL: 'invalid-inherited-value',
+          GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
+        },
+      ),
+    );
+    assert.ok(
+      ordinaryStages.length > 0,
+      'A normal hashtable install must exercise the stage observer.',
+    );
     assert.deepEqual(await readFile(source), sourceBefore);
     const config = JSON.parse(await readFile(exe + '.json', 'utf8'));
+    assert.deepEqual(config.Environment, safeOverrides);
+    assert.ok(!(await readFile(exe + '.json', 'utf8')).includes(secretCanary));
     const configPath = exe + '.json';
     const validConfig = await execute(fixture, ['--validate-install', '--config', configPath], {
       cwd: base,
@@ -353,6 +447,7 @@ test(
         assert.equal(error.code, 1);
         assert.match(error.stderr, expected);
         assert.doesNotMatch(error.stdout + error.stderr, /GG_INSTALLER_PRIVATE_PATH_CANARY/);
+        assert.ok(!(error.stdout + error.stderr).includes(secretCanary));
         return true;
       });
       assert.deepEqual(await snapshot(), before);
@@ -368,6 +463,97 @@ test(
       assert.deepEqual(await snapshot(), before);
       assert.deepEqual(await readdir(store), []);
       if (stagedOutput) await assert.rejects(lstat(stagedOutput), { code: 'ENOENT' });
+    }
+    const secretRefusal =
+      'Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY (case-insensitive). Keep credentials in GraphGoblin secret stores; use the data directory master.key for encryption.';
+    const secretKeys = [
+      'GG_MASTER_KEY',
+      'GG_JEV_API_KEY',
+      'GG_Master_Key',
+      'GG_Jev_Api_Key',
+      'gg_master_key',
+      'gg_jev_api_key',
+    ];
+    const manualDirectory = join(base, 'manual credentials');
+    await privateDirectory(manualDirectory);
+    const baseEntries = await readdir(base);
+    for (const key of secretKeys) {
+      for (const NoShortcuts of [false, true]) {
+        await refuses(
+          { NoShortcuts, Environment: { ...safeOverrides, [key]: secretCanary } },
+          /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+        );
+        assert.deepEqual(await readdir(base), baseEntries, 'Refusal must create no stage.');
+      }
+      const manual = join(manualDirectory, 'manual-credential-config.json');
+      await writeFile(
+        manual,
+        JSON.stringify({ ...config, Environment: { ...safeOverrides, [key]: secretCanary } }),
+      );
+      const manualBefore = await readFile(manual);
+      await refusesPrivate(['--validate-install', '--config', manual], secretRefusal);
+      const stagedShortcut = join(base, 'refused-credential-shortcut.lnk');
+      await refusesPrivate(
+        ['--stage-shortcut', stagedShortcut, manual, exe],
+        secretRefusal,
+        stagedShortcut,
+      );
+      await assert.rejects(
+        execute(exe, ['--ensure-gateway', '--config', manual], { env, windowsHide: true }),
+        (error) => {
+          assert.equal(error.code, 1);
+          assert.equal(error.stdout, '');
+          assert.ok(error.stderr.startsWith(secretRefusal));
+          assert.ok(!error.stderr.includes(secretCanary));
+          return true;
+        },
+      );
+      assert.deepEqual(await readFile(manual), manualBefore);
+      assert.deepEqual(await snapshot(), before);
+      assert.deepEqual(await readdir(store), []);
+      assert.equal(await listening(port), false, 'Refused config must not start a gateway.');
+      const launcherLog = await readFile(join(manualDirectory, 'launcher.log'), 'utf8');
+      assert.ok(!launcherLog.includes(secretCanary));
+      await unlink(manual);
+    }
+    const protectedOutputs = [exe, configPath, desktop, programs];
+    const originalModes = await Promise.all(
+      protectedOutputs.map(async (file) => (await stat(file)).mode),
+    );
+    try {
+      for (const file of protectedOutputs) await chmod(file, 0o444);
+      for (const key of secretKeys) {
+        const stages = await observeStages(() =>
+          refuses(
+            {
+              Environment: {
+                ...safeOverrides,
+                Keys: 'ordinary companion',
+                [key]: secretCanary,
+              },
+            },
+            /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+          ),
+        );
+        assert.deepEqual(stages, [], 'Credential refusal must precede any temporary stage.');
+      }
+      await refuses(
+        {
+          RepoPath: join(base, 'must-not-be-opened'),
+          NodePath: join(base, 'must-not-be-run.exe'),
+          Environment: { Keys: 'ordinary companion', GG_MASTER_KEY: secretCanary },
+        },
+        /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+      );
+    } finally {
+      for (let index = 0; index < protectedOutputs.length; index++)
+        await chmod(protectedOutputs[index], originalModes[index]);
+    }
+    for (const key of ['GG_MASTER_KEY', 'GG_JEV_API_KEY']) {
+      await refuses(
+        { Environment: { [key]: '' } },
+        /Launcher Environment cannot contain GG_MASTER_KEY or GG_JEV_API_KEY/,
+      );
     }
     const noNodePath = [join(system, 'System32'), system].join(';');
     await assert.rejects(invokeWithNodeDiscovery(noNodePath), (error) => {
@@ -474,15 +660,40 @@ test(
       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
       /Node.+22\.22\.2.+-NodePath/is,
     );
-  },
+    try {
+      const started = await execute(exe, ['--ensure-gateway', '--config', configPath], {
+        env: {
+          ...env,
+          GG_MASTER_KEY: secretCanary,
+          GG_JEV_API_KEY: secretCanary,
+          GG_LOG_LEVEL: 'invalid-inherited-value',
+          GG_MAX_CONCURRENT_RUNS: 'invalid-inherited-value',
+        },
+        windowsHide: true,
+        timeout: 30_000,
+      });
+      assert.deepEqual([started.stdout, started.stderr], ['', '']);
+      await health(config);
+      await access(join(store, 'master.key'));
+      const response = await fetch(origin(config) + '/secrets');
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { items: [] });
+      assert.deepEqual(await readFile(source), sourceBefore);
+      assert.deepEqual(await snapshot(), before);
+      assert.ok(!(await readFile(join(install, 'gateway.log'), 'utf8')).includes(secretCanary));
+    } finally {
+      await stop(config);
+    }
+  }),
 );
 
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
   { skip: process.platform !== 'win32', timeout: 240_000 },
-  async (t) => {
+  ciEvidence.observeTest('launcher', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
+    ciEvidence.fixture('launcher', base);
     const install = join(base, 'launcher space-α');
     await privateDirectory(install);
     const exe = join(install, 'GraphGoblin.exe');
@@ -683,6 +894,11 @@ test(
           if (!closed) {
             fixture.kill();
           }
+          ciEvidence.record('cleanup', {
+            action: 'window-fixture',
+            result: closed ? 'closed' : 'killed',
+            count: null,
+          });
         }
         assert.equal(closed, true, 'Disposable native HWND fixture did not close.');
       });
@@ -907,7 +1123,7 @@ test(
       },
     );
     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));
-  },
+  }),
 );
 
 const identityLine = /^[a-f0-9]{64}\n$/;
@@ -1102,6 +1318,8 @@ function sameFile(current, original) {
 async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
   const fixture = await privateDirectory(await mkdtemp(join(sandbox, `${kind}-`)));
   const alias = join(fixture, 'checkout alias-α');
+  // The link's final state is observed with lstat only; it is never traversed or exported.
+  ciEvidence.fixture('alias-link', alias, ciEvidence.fixture('alias-fixture', fixture));
   const evidence = {
     evidence: 'windows-launcher-checkout-alias',
     kind,
@@ -1112,6 +1330,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
   };
   const fixtureStat = await lstat(fixture, { bigint: true });
   let link;
+  let targetMatched = false;
   let releaseVerified = true;
   let stage = 'create-alias';
   let failure;
@@ -1122,6 +1341,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
     assert.ok(created.isSymbolicLink());
     assert.equal(await realpath(alias), repo);
     assert.equal(await realpath(await readlink(alias)), repo);
+    targetMatched = true;
     evidence.reparse = await nativeObservation(
       `
       $item = Get-Item -LiteralPath $env:GG_TEST_CHECKOUT_ALIAS -Force;
@@ -1273,6 +1493,16 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
           roundFailure = error;
         }
       }
+      ciEvidence.record('alias-round', {
+        kind,
+        spelling: start.name,
+        ownerVerified: owner !== undefined,
+        release: observation.release ?? 'failed',
+        releaseFailure:
+          'releaseFailure' in observation
+            ? errorCodeOf({ code: observation.releaseFailure })
+            : null,
+      });
       if (roundFailure) throw roundFailure;
     }
   } catch (error) {
@@ -1308,18 +1538,47 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
     failure ??= error;
   }
   console.log(JSON.stringify(evidence));
+  // Typed projection of the same facts: no paths, protocol identity or command output.
+  const reparseType = evidence.reparse?.linkType;
+  ciEvidence.record('alias', {
+    kind,
+    observedLinkType:
+      reparseType === 'Junction' || reparseType === 'SymbolicLink'
+        ? reparseType
+        : evidence.reparse
+          ? 'other'
+          : 'unobserved',
+    reparsePoint:
+      typeof evidence.reparse?.reparsePoint === 'boolean' ? evidence.reparse.reparsePoint : null,
+    directory: typeof evidence.reparse?.directory === 'boolean' ? evidence.reparse.directory : null,
+    targetMatched,
+    failureStage: evidence.failure ? aliasStage(evidence.failure.stage) : null,
+    failureCode: evidence.failure ? errorCodeOf(failure) : null,
+    disposition: evidence.aliasUnlinked
+      ? 'unlinked'
+      : evidence.aliasAbsent === true
+        ? 'not-created'
+        : link && !releaseVerified
+          ? 'retained-release-unverified'
+          : evidence.unlinkFailure !== undefined
+            ? 'retained-unlink-refused'
+            : 'retained-unverified-link',
+    unlinkFailure:
+      evidence.unlinkFailure === undefined ? null : errorCodeOf({ code: evidence.unlinkFailure }),
+  });
   if (failure) throw failure;
 }
 
 test(
   'native Windows launcher accepts junction and directory symlink checkout paths',
   { skip: process.platform !== 'win32', timeout: 240_000 },
-  async (t) => {
+  ciEvidence.observeTest('checkout-alias', async (t) => {
     const repo = await realpath(root);
     const temp = await realpath(tmpdir());
     const fromRepo = relative(repo, temp);
     assert.ok(isAbsolute(fromRepo) || fromRepo === '..' || fromRepo.startsWith(`..${sep}`));
     const sandbox = await mkdtemp(join(temp, 'graphgoblin-launcher-alias-'));
+    ciEvidence.fixture('alias-sandbox', sandbox);
     const exe = join(sandbox, 'GraphGoblin.exe');
     await compileLauncher(
       join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'),
@@ -1333,15 +1592,16 @@ test(
         checkLauncherAlias(exe, sandbox, repo, kind, linkType),
       );
     }
-  },
+  }),
 );
 
 test(
   'independent API processes never share ownership while reclaiming a reused PID',
   { skip: process.platform !== 'win32', timeout: 180_000 },
-  async () => {
+  ciEvidence.observeTest('lock-contention', async () => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-contention-'));
+    ciEvidence.fixture('contention', base);
     const { windowsProcessIdentity } =
       await import('../../apps/api/dist/windows-process-identity.js');
     const { identity } = await windowsProcessIdentity(process.pid);
@@ -1356,17 +1616,79 @@ test(
       };
       await ownershipFixture(join(dataDir, 'graphgoblin.lock'), previous);
       await ownershipFixture(join(dataDir, 'graphgoblin.lock.reclaim'), previous);
+      await writeFile(join(dataDir, 'unrelated.txt'), 'retain unrelated bytes');
       const contenders = Array.from({ length: 5 }, () => ownershipContender(dataDir));
       try {
         const results = await Promise.all(contenders.map((contender) => contender.result));
         const owners = results.filter((result) => result.status === 'acquired');
+        const refused = results.filter((result) => result.status === 'refused').length;
+        for (const result of results) {
+          ciEvidence.record('ownership-result', {
+            trial,
+            pid: result.pid,
+            status: result.status,
+            seededToken: previous.token,
+            ownerToken: result.token ?? null,
+            markerToken: result.markerToken ?? null,
+            operation: result.operation ?? null,
+            errorCode: result.code ?? null,
+            diagnostic:
+              result.status === 'acquired'
+                ? 'acquired'
+                : /another GraphGoblin process holds/.test(result.error)
+                  ? 'store-held'
+                  : /Store ownership could not be verified/.test(result.error)
+                    ? 'store-unverified'
+                    : result.code
+                      ? 'filesystem'
+                      : 'other',
+          });
+          for (const [index, failure] of (result.failures ?? []).entries())
+            ciEvidence.record('ownership-error', { trial, pid: result.pid, index, ...failure });
+        }
+        ciEvidence.record('contention', {
+          trial,
+          contenders: contenders.length,
+          acquired: owners.length,
+          refused,
+          other: results.length - owners.length - refused,
+        });
         // No successful contender is released before every result is known. The launcher
         // mutex and in-process acquiringPaths cannot serialize these separate API writers.
+        let liveOwners = 0;
         for (const owner of owners) {
           const contender = contenders.find(({ child }) => child.pid === owner.pid);
-          assert.equal(contender.child.exitCode, null);
-          process.kill(owner.pid, 0);
+          if (contender.child.exitCode === null) {
+            try {
+              process.kill(owner.pid, 0);
+              liveOwners++;
+            } catch {
+              /* recorded below */
+            }
+          }
         }
+        // Retain the final record check before any assertion can stop this trial.
+        const recorded = await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8').then(
+          (contents) => JSON.parse(contents),
+          () => null,
+        );
+        const seededMarker = await lstat(
+          join(dataDir, 'graphgoblin.lock.reclaim', `${previous.token}.json`),
+        ).then(
+          () => 'present',
+          (error) => (error.code === 'ENOENT' ? 'absent' : 'unavailable'),
+        );
+        ciEvidence.record('ownership-check', {
+          trial,
+          liveOwners,
+          recordedPid: recorded?.pid ?? null,
+          recordedToken: recorded?.token ?? null,
+          recordedOwnerMatched:
+            owners.length === 1 &&
+            recorded?.pid === owners[0].pid &&
+            recorded?.token === owners[0].token,
+          seededMarker,
+        });
         console.log(
           JSON.stringify({
             evidence: 'independent-api-lock-contention',
@@ -1380,31 +1702,73 @@ test(
           1,
           'Expected exactly one live owner after stale-guard reclamation.',
         );
+        assert.equal(liveOwners, 1, 'Expected the acquired writer to remain live.');
+        assert.equal(recorded?.pid, owners[0].pid);
+        assert.equal(recorded?.token, owners[0].token);
+        assert.equal(seededMarker, 'absent');
         for (const result of results) {
           if (result.status === 'acquired') continue;
           assert.equal(result.status, 'refused');
-          assert.match(
-            result.error,
-            /another GraphGoblin process holds|Store ownership could not be verified/,
+          assert.ok(
+            isExpectedOwnershipRefusal(result),
+            'Expected an ownership refusal without filesystem or cleanup failures.',
           );
         }
-        const recorded = JSON.parse(await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8'));
-        assert.equal(recorded.pid, owners[0].pid);
       } finally {
         for (const { child } of contenders) child.stdin.end();
+        let closedContenders = 0;
         await Promise.all(
           contenders.map(async ({ child, exited }) => {
             const closed = await Promise.race([
               exited.then(() => true),
               sleep(5000).then(() => false),
             ]);
+            if (closed) closedContenders++;
             if (!closed) child.kill();
             assert.equal(closed, true, 'Ownership contender did not release on stdin EOF.');
           }),
+        ).finally(() =>
+          ciEvidence.record('cleanup', {
+            action: 'contenders',
+            result: closedContenders === contenders.length ? 'closed' : 'killed',
+            count: closedContenders,
+          }),
         );
+        const presence = (path) =>
+          lstat(path).then(
+            () => 'present',
+            (error) => (error.code === 'ENOENT' ? 'absent' : 'unavailable'),
+          );
+        const main = await presence(join(dataDir, 'graphgoblin.lock'));
+        const guard = await presence(join(dataDir, 'graphgoblin.lock.reclaim'));
+        const staging = await readdir(dataDir).then(
+          (entries) =>
+            entries.filter((name) => name.startsWith('graphgoblin.lock.reclaim.')).length,
+          () => null,
+        );
+        const unrelatedIntact = await readFile(join(dataDir, 'unrelated.txt'), 'utf8').then(
+          (contents) => contents === 'retain unrelated bytes',
+          () => false,
+        );
+        const released = contenders
+          .flatMap((contender) => contender.messages())
+          .filter((message) => message.status === 'released').length;
+        ciEvidence.record('ownership-cleanup', {
+          trial,
+          released,
+          main,
+          guard,
+          staging,
+          unrelatedIntact,
+        });
+        assert.equal(released, 1, 'Expected exactly one successful ownership release.');
+        assert.equal(main, 'absent');
+        assert.equal(guard, 'absent');
+        assert.equal(staging, 0);
+        assert.equal(unrelatedIntact, true);
       }
     }
-  },
+  }),
 );
 
 /** Complete LF records totalling exactly `bytes`. */
@@ -1464,9 +1828,10 @@ function holdLegacyAppend(path) {
 test(
   'bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names',
   { skip: process.platform !== 'win32', timeout: 300_000 },
-  async (t) => {
+  ciEvidence.observeTest('bounded-logs', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-logs-'));
+    ciEvidence.fixture('logs', base);
     const install = await privateDirectory(join(base, 'install α'));
     const canonicalInstall = await realpath(install);
     // Gateway and launcher inherit an isolated TEMP: a no-write witness for managed log names.
@@ -1529,6 +1894,30 @@ test(
         timeout: 60_000,
       });
       assert.match(result.stdout, /bounded log, closed outcome and NUL stdio checks passed/);
+      const helpers = await execute(checks, ['--helper-checks', work, process.execPath], {
+        env: environment,
+        windowsHide: true,
+        timeout: 60_000,
+      });
+      assert.match(helpers.stdout, /Native helper job, pipe and deadline checks passed/);
+      const decisions = await execute(checks, ['--cleanup-deadline-checks'], {
+        env: environment,
+        windowsHide: true,
+        timeout: 10_000,
+      });
+      assert.equal(
+        decisions.stdout.trim(),
+        'Deterministic cleanup decision checks passed (no kernel fault injected).',
+      );
+      const workDecisions = await execute(checks, ['--work-deadline-checks'], {
+        env: environment,
+        windowsHide: true,
+        timeout: 10_000,
+      });
+      assert.equal(
+        workDecisions.stdout.trim(),
+        'Deterministic caller work deadline checks passed (no scheduling fault injected).',
+      );
     });
 
     await t.test(
@@ -1611,6 +2000,221 @@ test(
         await assert.rejects(lstat(join(failing.config.DataDir, 'graphgoblin.lock')), {
           code: 'ENOENT',
         });
+      },
+    );
+
+    await t.test('held ownership retains guidance and budgets the last recheck', async () => {
+      // A tiny isolated built checkout replaces only the read-only protocol fixture. Its
+      // main records a spawn then exits; no real gateway, store or owner PID is involved.
+      for (const scenario of ['too-late', 'stalled-recheck', 'released']) {
+        const fixture = join(base, scenario);
+        const samples = join(fixture, 'samples');
+        const spawned = join(fixture, 'spawned');
+        const lock = join(fixture, 'graphgoblin.lock');
+        const marker = JSON.stringify({ pid: 1, token: randomUUID(), fixture: true });
+        for (const directory of ['apps/api/dist/windows-log', 'apps/web/dist'])
+          await mkdir(join(fixture, directory), { recursive: true });
+        await writeFile(lock, marker);
+        const before = await stat(lock, { bigint: true });
+        await writeFile(join(fixture, 'apps/web/dist/index.html'), '<html></html>');
+        await writeFile(join(fixture, 'apps/api/dist/windows-log/guard.js'), '');
+        await writeFile(
+          join(fixture, 'apps/api/dist/main.js'),
+          `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;\nimport fs from 'node:fs';fs.writeFileSync(${JSON.stringify(spawned)},'spawned');process.exit(75);`,
+        );
+        await writeFile(
+          join(fixture, 'apps/api/dist/instance-identity.js'),
+          `import fs from 'node:fs';
+          if(process.argv[2]!=='--store-state'){process.stdout.write('a'.repeat(64));}
+          else {
+            const file=${JSON.stringify(samples)};
+            const count=fs.existsSync(file)?Number(fs.readFileSync(file,'utf8')):0;
+            fs.writeFileSync(file,String(count+1));
+            if(count===0) setTimeout(()=>process.stdout.write(JSON.stringify({state:'held',path:${JSON.stringify(lock)},detail:'another GraphGoblin process holds this store'})),600);
+            else if(${JSON.stringify(scenario)}==='released') process.stdout.write('{"state":"free"}');
+            else setInterval(()=>{},1000);
+          }`,
+        );
+        const attempt = await configuration(install, `held-${scenario}`, {
+          Repo: fixture,
+          // Ten seconds leaves room for the measured first sample and the real TCP probe,
+          // while still forcing a final stalled query below the helper's 15-second cap.
+          StartupTimeoutSeconds: scenario === 'too-late' ? 2 : 10,
+        });
+        const started = performance.now();
+        const result = await launch(attempt.path);
+        const elapsed = performance.now() - started;
+        assert.equal(result.code, 1);
+        assert.ok(elapsed < 13_000, `The ${scenario} refusal exceeded bounded work and cleanup.`);
+        assert.equal(await readFile(lock, 'utf8'), marker);
+        const after = await stat(lock, { bigint: true });
+        assert.deepEqual([after.dev, after.ino], [before.dev, before.ino]);
+        assert.equal(await readFile(samples, 'utf8'), scenario === 'too-late' ? '1' : '2');
+        if (scenario === 'released') {
+          assert.equal(await readFile(spawned, 'utf8'), 'spawned');
+          assert.match(result.stderr, /failed during startup, and no startup diagnostic/);
+        } else {
+          await assert.rejects(lstat(spawned), { code: 'ENOENT' });
+          assert.match(result.stderr, /another GraphGoblin process holds this store/);
+          assert.match(result.stderr, /No second gateway was started/);
+          assert.match(
+            result.stderr,
+            /Do not stop an unrelated process or delete an unverified lock/,
+          );
+          assert.equal((await launcherRecords()).at(-1).code, 'store-held');
+        }
+      }
+    });
+
+    await t.test(
+      'ownership admission requires strict raw JSON and preserves held refusals',
+      async () => {
+        // Only the disposable helper protocol/main are stubbed. The shipped compiled launcher
+        // admits or refuses startup through its public entry; no real owner or WMI is simulated.
+        const fixture = join(base, 'strict protocol fixture');
+        const payload = join(fixture, 'payload');
+        const samples = join(fixture, 'samples');
+        const mode = join(fixture, 'mode');
+        const spawned = join(fixture, 'spawned');
+        const canary = 'GG_STRICT_OWNERSHIP_CANARY';
+        for (const directory of ['apps/api/dist/windows-log', 'apps/web/dist'])
+          await mkdir(join(fixture, directory), { recursive: true });
+        await writeFile(join(fixture, 'apps/web/dist/index.html'), '<html></html>');
+        await writeFile(join(fixture, 'apps/api/dist/windows-log/guard.js'), '');
+        await writeFile(
+          join(fixture, 'apps/api/dist/main.js'),
+          `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;\nimport fs from 'node:fs';fs.writeFileSync(${JSON.stringify(spawned)},'spawned');process.exit(75);`,
+        );
+        await writeFile(
+          join(fixture, 'apps/api/dist/instance-identity.js'),
+          `import fs from 'node:fs';import path from 'node:path';
+        process.stderr.write(${JSON.stringify(canary)});
+        if(process.argv[2]!=='--store-state')process.stdout.write('a'.repeat(64)+'\\n');
+        else {
+          const count=Number(fs.readFileSync(${JSON.stringify(samples)},'utf8'));
+          fs.writeFileSync(${JSON.stringify(samples)},String(count+1));
+          process.stdout.write(count===0&&fs.readFileSync(${JSON.stringify(mode)},'utf8')==='retained'
+            ?JSON.stringify({state:'held',path:path.join(process.env.GG_DATA_DIR,'graphgoblin.lock'),detail:'another GraphGoblin process holds this store'})+'\\n'
+            :fs.readFileSync(${JSON.stringify(payload)},'utf8'));
+        }`,
+        );
+        const cases = [
+          ['javascript-lines', "{\nstate:'free'\n}", 'invalid'],
+          ['single-quotes', "{'state':'free'}", 'invalid'],
+          ['duplicate-held-free', '{"state":"held","state":"free"}', 'invalid'],
+          [
+            'duplicate-free-held',
+            '{"state":"free","state":"held","path":"x","detail":"x"}',
+            'invalid',
+          ],
+          ['escaped-duplicate', '{"state":"held","\\u0073tate":"free"}', 'invalid'],
+          [
+            'duplicate-path',
+            '{"state":"held","path":"x","p\\u0061th":"y","detail":"x"}',
+            'invalid',
+          ],
+          ['unknown-field', JSON.stringify({ state: 'free', extra: canary }), 'invalid'],
+          ['trailing-object', '{"state":"free"}{"state":"free"}', 'invalid'],
+          ['trailing-comma', '{"state":"free",}', 'invalid'],
+          ['comment', `{"state":/*${canary}*/"free"}`, 'invalid'],
+          ['raw-string-lf', '{"state":"fr\nee"}', 'invalid'],
+          ['bad-escape', '{"state":"\\x66ree"}', 'invalid'],
+          ['bad-unicode', '{"state":"\\u00g0"}', 'invalid'],
+          ['apostrophe-escape', '{"state":"fr\\\'ee"}', 'invalid'],
+          ['outer-non-json', '\u00a0{"state":"free"}\u00a0', 'invalid'],
+          ['wrong-type', '{"state":null}', 'invalid'],
+          ['nested-value', '{"state":{"state":"free"}}', 'invalid'],
+          ['empty-object', '{}', 'invalid'],
+          ['unknown-state', '{"state":"other"}', 'invalid'],
+          ['free-with-held-fields', '{"state":"free","path":"x","detail":"x"}', 'invalid'],
+          ['held-missing', '{"state":"held","path":"x"}', 'invalid'],
+          ['held-blank', '{"state":"held","path":" ","detail":"x"}', 'invalid'],
+          ['held-blank-detail', '{"state":"held","path":"x","detail":" "}', 'invalid'],
+          ['producer-free', JSON.stringify({ state: 'free' }) + '\n', 'free'],
+          ['json-whitespace', ' \t\r\n{ "state" \t: "free" }\r\n', 'free'],
+          ['escaped-free', '{"st\\u0061te":"fr\\u0065e"}\n', 'free'],
+          [
+            'producer-held',
+            (lock) =>
+              JSON.stringify({
+                state: 'held',
+                path: lock,
+                detail: `another GraphGoblin process holds this store ${canary}`,
+              }) + '\n',
+            'held',
+          ],
+          [
+            'escaped-reordered-held',
+            (lock) =>
+              `{"detail":"another GraphGoblin process holds this store \\b\\f\\n\\r\\t \\/ \\" \\\\ ${canary}","p\\u0061th":${JSON.stringify(lock).replaceAll('α', '\\u03b1').replaceAll('🦊', '\\ud83e\\udd8a')},"st\\u0061te":"h\\u0065ld"}\n`,
+            'held',
+          ],
+          ['held-then-duplicate', '{"state":"held","\\u0073tate":"free"}', 'retained'],
+          ['held-then-non-json', '\u00a0{"state":"free"}', 'retained'],
+        ];
+        for (const [name, response, expected] of cases) {
+          const attempt = await configuration(install, `strict-${name}`, {
+            Repo: fixture,
+            DataDir: join(fixture, `store α 🦊 ${name}`),
+            StartupTimeoutSeconds: expected === 'retained' ? 10 : 1,
+          });
+          await mkdir(attempt.config.DataDir);
+          const originals = [];
+          for (const file of [
+            'graphgoblin.lock',
+            'graphgoblin.lock.reclaim',
+            'graphgoblin.db.graphgoblin.lock',
+            'graphgoblin.db.graphgoblin.lock.reclaim',
+          ]) {
+            const path = join(attempt.config.DataDir, file);
+            const original = await ownershipFixture(path, { pid: 1, token: randomUUID() });
+            originals.push({ ...original, identity: await stat(original.path, { bigint: true }) });
+            if (file.endsWith('.reclaim'))
+              originals.push({ path, identity: await stat(path, { bigint: true }) });
+          }
+          const lock = join(attempt.config.DataDir, 'graphgoblin.lock');
+          await writeFile(payload, typeof response === 'function' ? response(lock) : response);
+          await writeFile(samples, '0');
+          await writeFile(mode, expected);
+          const result = await launch(attempt.path);
+          assert.equal(result.code, 1, name);
+          assert.equal(result.stdout, '', name);
+          assert.ok(!result.stderr.includes(canary), name);
+          const recorded = (await launcherRecords()).at(-1);
+          assert.ok(!JSON.stringify(recorded).includes(canary), name);
+          if (expected === 'free') {
+            assert.equal(await readFile(spawned, 'utf8'), 'spawned', name);
+            assert.equal(recorded.code, 'startup-failed-unlogged', name);
+            await unlink(spawned);
+          } else {
+            await assert.rejects(lstat(spawned), { code: 'ENOENT' }, name);
+            assert.equal(
+              recorded.code,
+              expected === 'invalid' ? 'helper-invalid' : 'store-held',
+              name,
+            );
+            if (expected !== 'invalid') {
+              assert.equal(recorded.lock, lock, name);
+              assert.match(result.stderr, /No second gateway was started/, name);
+              assert.match(
+                result.stderr,
+                /Do not stop an unrelated process or delete an unverified lock/,
+                name,
+              );
+            }
+          }
+          assert.equal(await readFile(samples, 'utf8'), expected === 'retained' ? '2' : '1', name);
+          for (const original of originals) {
+            const after = await stat(original.path, { bigint: true });
+            assert.deepEqual(
+              [after.dev, after.ino],
+              [original.identity.dev, original.identity.ino],
+              name,
+            );
+            if (original.contents !== undefined)
+              assert.equal(await readFile(original.path, 'utf8'), original.contents, name);
+          }
+        }
       },
     );
 
@@ -1756,5 +2360,5 @@ test(
     assert.ok((await stat(gatewayLog)).size <= 4 * 1024 * 1024);
     assert.ok((await stat(join(install, 'launcher.log'))).size <= 256 * 1024);
     console.log(JSON.stringify({ evidence: 'windows-launcher-bounded-logs', artifacts: base }));
-  },
+  }),
 );

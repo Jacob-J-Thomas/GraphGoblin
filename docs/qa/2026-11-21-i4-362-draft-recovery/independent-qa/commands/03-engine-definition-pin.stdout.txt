@@ -1,0 +1,29 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i4-362-qa/GraphGoblin/packages/engine
+
+ ✓ src/definition-pin.test.ts > draft runs pin a snapshot of the draft > keeps the snapshot through an edit while waiting; a new draft run sees the edit 160ms
+ ✓ src/definition-pin.test.ts > draft runs pin a snapshot of the draft > keeps the snapshot when the draft is edited while a node is running 371ms
+ ✓ src/definition-pin.test.ts > draft runs pin a snapshot of the draft > continues on the snapshot after a restart, and a replay fork reuses the pin 109ms
+ ✓ src/definition-pin.test.ts > draft runs pin a snapshot of the draft > never starts a snapshot directly 33ms
+ ✓ src/definition-pin.test.ts > published runs pin their version > keeps the version through a newer publish while waiting; a new run takes the newer one 137ms
+ ✓ src/definition-pin.test.ts > inherited model defaults are pinned at start > ignores Settings and process default changes for a waiting run, across a restart 153ms
+ ✓ src/definition-pin.test.ts > children keep their own pins > runs the selection pinned at parent start, on every visit, with the parent defaults 368ms
+ ✓ src/definition-pin.test.ts > triggered starts pin like manual ones > pins a webhook admission at claim time and a poll item at admission 34ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > calls the binding pinned at start after a catalog edit while waiting and a restart 79ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > keeps availability live: a disabled classifier fails explicitly, and nothing is substituted 57ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > never looks up a classifier that was missing when the run started 47ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > binds and calls a classifier whose catalog id is an Object property name 75ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > treats an unbound Object property name as missing, not as an inherited binding 47ms
+ ✓ src/definition-pin.test.ts > classifier bindings are pinned at start > gives a child its parent binding for a shared classifier 107ms
+ ✓ src/definition-pin.test.ts > pin labels > name the source and number 0ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  07:03:16
+   Duration  5.90s (transform 37%, import 31%, tests 31%)
+
+  Transform  transforming modules took 2.13s · 37% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i4-362-draft-docs-independent-01/observations/engine-vitest.json

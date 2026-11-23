@@ -1,0 +1,49 @@
+{
+  "budget": "At most three distinct driver/instrumentation corrections",
+  "used": 3,
+  "countingNote": "Counted conservatively: the pre-execution Node-API feasibility probe refinement is counted as correction 1 although it touched no product code. Counting only product-driver/tool corrections gives 2. The cap was reached, not exceeded; no further correction was made and no unchanged failure was retried.",
+  "corrections": [
+    {
+      "n": 1,
+      "what": "Feasibility probe of Node APIs on dummy modules (no product code)",
+      "original": ["tools/feasibility/probe.v1.mjs", "tools/feasibility/dummy-target.v1.mjs"],
+      "originalReceipt": "commands/05-feasibility-node-apis.receipt.json",
+      "originalResult": "exit 0; stat redirect inconclusive because the real and the seam function are both named 'stat'",
+      "corrected": ["tools/feasibility/probe.mjs", "tools/feasibility/dummy-target.mjs"],
+      "correctedReceipt": "commands/05b-feasibility-node-apis-call.receipt.json",
+      "correctedResult": "exit 1 with TypeError 'stat(...).then is not a function'. Only the dummy seam returns a non-promise string, so the error itself establishes that the in-thread resolve hook bound the seam for the chosen parent. Not re-run."
+    },
+    {
+      "n": 2,
+      "what": "C4 scratch old-source builder: fidelity gate (transpile of candidate must equal built dist/claude/process.js)",
+      "original": "tools/build-old-process.mjs (v1, bare fileName 'process.ts')",
+      "originalReceipt": "commands/13-c4-build-old-process.receipt.json",
+      "originalResult": "exit 1, observations/c4-old-build.json: fidelity false; transpileModule emitted CommonJS (NodeNext found no package.json). Nothing written to the old-build folder.",
+      "corrected": "tools/build-old-process.v2.mjs (absolute source path as fileName)",
+      "correctedReceipt": "commands/14-c4-build-old-process-v2.receipt.json",
+      "correctedResult": "exit 1, observations/c4-old-build.v2.json: fidelity still false with identical CommonJS output; transpileModule cannot read package.json. Gate not weakened."
+    },
+    {
+      "n": 3,
+      "what": "C4 scratch old-source builder v3: real build program from infrastructure/tsconfig.build.json, in-memory emit of claude/process.ts with the exact parent text substituted",
+      "diagnosisBeforeCorrection": "tools/diagnosis/diag2.cjs (read-only; ESNext transpile and program emit both equal the built bytes); recorded re-run commands/19-c4-fidelity-diagnosis-receipt.receipt.json",
+      "corrected": "tools/build-old-process.v3.mjs",
+      "correctedReceipt": "commands/15-c4-build-old-process-v3.receipt.json",
+      "correctedResult": "exit 0, observations/c4-old-build.v3.json: unchanged gate passed (candidate program emit == built, sha256 9f8f0011...), cross-check old program emit == old ESNext transpile, parent blob 740f92c3 / sha256 c44ed660..., old build sha256 4c83adaa..."
+    }
+  ],
+  "preExecutionEdits": [
+    "tools/record.mjs: added a single-finish guard before its first use.",
+    "drivers/c1-public-turn.mjs: removed one unsound predicate (engine event types matching /retry|attempt/) before its first run, after finding a 'delivery.attempted' event type exists; one turn attempt is counted at the spawn seam instead."
+  ],
+  "diagnosisOnlyMishaps": [
+    "An inline `node -e` diagnosis failed from shell escaping (createRequire received a path without backslashes); no product code ran, nothing was written.",
+    "tools/diagnosis/diag.cjs was first created through a Bash heredoc that collapsed doubled backslashes and failed the same way; it was rewritten with the file tool (the broken heredoc bytes were overwritten and are not retained). Its corrected run printed the CommonJS diagnostic that led to correction 3. diag.cjs and diag2.cjs were also run once each outside the recorder; diag2 was then re-run under the recorder (receipt 19)."
+  ],
+  "productDriversRunOnceEach": {
+    "c1-public-turn": "commands/10-c1-public-turn.receipt.json, 109 pass / 0 fail",
+    "c2-runner": "commands/11-c2-runner.receipt.json, 126 pass / 0 fail",
+    "c3-public-mapping": "commands/12-c3-public-mapping.receipt.json, 66 pass / 0 fail",
+    "c4-old-source": "commands/16-c4-old-source.receipt.json, 15 pass / 0 fail"
+  }
+}

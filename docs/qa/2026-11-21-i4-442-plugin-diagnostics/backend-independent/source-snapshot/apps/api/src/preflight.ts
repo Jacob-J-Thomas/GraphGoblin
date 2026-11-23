@@ -1,0 +1,707 @@
+import {
+  CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+  readinessDetail,
+  readinessMessage,
+} from '@graphgoblin/domain';
+import { randomUUID } from 'node:crypto';
+import { open, readFile, stat, unlink } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { OllamaHarness } from '@graphgoblin/infrastructure/ollama';
+import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
+import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+import {
+  HarnessReadinessStateSchema,
+  OllamaConnectionSchema,
+  type OllamaConnection,
+  type HarnessId,
+} from '@graphgoblin/contracts';
+import type { HarnessPort } from '@graphgoblin/engine';
+import {
+  DEFAULT_MODEL_CATALOG,
+  SqliteModelCatalog,
+  SqliteClassifierModels,
+  SqliteSecrets,
+  UnsupportedStoreError,
+  databaseFilePath,
+  databaseView,
+  guardCurrentStore,
+  openDatabase,
+  openReadOnlyDatabaseClient,
+  pendingMigrationCount,
+  type Database,
+  type ModelCatalogEntry,
+} from '@graphgoblin/infrastructure/sqlite';
+import { z } from 'zod';
+import { loadConfig, type ApiConfig } from './config.js';
+import { JEV_SECRET, LOCAL_OWNER, type Container } from './container.js';
+import { dataDirArgument, RESET_COMMAND } from './store-refusal.js';
+
+/**
+ * First-run preflight (docs/11): is this machine ready to run GraphGoblin? Each check reports
+ * `ok`, `warn` (works, but something is missing, deferred, or outside this check's scope), or `fail`
+ * (runs will not work until it is fixed). Served at `GET /system/preflight` and printed by
+ * `graphgoblin-api --preflight`. Nothing here spawns a Codex session or changes any state.
+ */
+
+export const PreflightStatusSchema = z.enum(['ok', 'warn', 'fail']);
+export type PreflightStatus = z.infer<typeof PreflightStatusSchema>;
+
+export const PreflightCheckSchema = z.object({
+  state: HarnessReadinessStateSchema.optional(),
+  id: z.string(),
+  label: z.string(),
+  status: PreflightStatusSchema,
+  message: z.string(),
+});
+export type PreflightCheck = z.infer<typeof PreflightCheckSchema>;
+
+export const PreflightReportSchema = z.object({
+  /** False when any check failed. Warnings do not make the report fail. */
+  ok: z.boolean(),
+  checks: z.array(PreflightCheckSchema),
+});
+export type PreflightReport = z.infer<typeof PreflightReportSchema>;
+
+export const SUPPORTED_NODE_MAJOR = 22;
+
+/** Where the checks read their facts from: the running container, or the configuration alone. */
+export interface PreflightSources {
+  config: ApiConfig;
+  /** Default: `process.versions.node`. */
+  nodeVersion?: string;
+  harnesses: Partial<Record<HarnessId, HarnessPort>>;
+  /** CLI cannot inspect saved connection settings until its existing store is current. */
+  ollamaDeferredReason?: string;
+  /** Migrations still to apply, or `'missing'` when the database file does not exist yet. Throws when unreachable. */
+  pendingMigrations(): Promise<number | 'missing'>;
+  /** The Jev API key, if set. Only called once the database is migrated. */
+  jevKey(): Promise<string | undefined>;
+  /** Built-in catalog availability; no provider call. Only read after migration. */
+  jevEnabled(): Promise<boolean>;
+  /** The model catalog. Only called once the database is migrated. */
+  catalog(): Promise<ModelCatalogEntry[]>;
+}
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function check(id: string, label: string, status: PreflightStatus, text: string): PreflightCheck {
+  return { id, label, status, message: text };
+}
+
+export function checkNode(version: string): PreflightCheck {
+  const major = Number(/^v?(\d+)/.exec(version)?.[1] ?? NaN);
+  return major === SUPPORTED_NODE_MAJOR
+    ? check('node', 'Node.js', 'ok', `Node ${version}`)
+    : check(
+        'node',
+        'Node.js',
+        'fail',
+        `Node ${version} is unsupported; GraphGoblin needs Node ${String(SUPPORTED_NODE_MAJOR)} LTS. Select Node ${String(SUPPORTED_NODE_MAJOR)} on PATH`,
+      );
+}
+
+/** A fresh probe file name; random, so concurrent preflights never share one. */
+export type ProbeName = () => string;
+const defaultProbeName: ProbeName = () => `.preflight-${randomUUID()}`;
+
+/**
+ * Prove `dir` is writable by creating a new file in it exclusively (`wx`: never truncates an
+ * existing file and never follows a symlink at that path) and removing only that file. A name
+ * that already exists is skipped for the next one. Throws when the directory is not writable.
+ */
+export async function probeWritable(
+  dir: string,
+  name: ProbeName = defaultProbeName,
+): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    const path = join(dir, name());
+    let handle;
+    try {
+      handle = await open(path, 'wx');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST' && attempt < 4) continue;
+      throw error;
+    }
+    await handle.close();
+    await unlink(path);
+    return;
+  }
+}
+
+export async function checkDataDir(
+  dir: string,
+  probeName: ProbeName = defaultProbeName,
+): Promise<PreflightCheck> {
+  const fail = (text: string): PreflightCheck => check('data-dir', 'Data directory', 'fail', text);
+  let isDirectory: boolean;
+  try {
+    isDirectory = (await stat(dir)).isDirectory();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return check(
+        'data-dir',
+        'Data directory',
+        'warn',
+        `${dir} does not exist yet; it is created on first start`,
+      );
+    }
+    return fail(`cannot read ${dir}: ${message(error)}`);
+  }
+  if (!isDirectory) return fail(`${dir} exists but is not a directory`);
+  try {
+    await probeWritable(dir, probeName);
+  } catch (error) {
+    return fail(`${dir} is not writable: ${message(error)}`);
+  }
+  return check('data-dir', 'Data directory', 'ok', `${dir} is writable`);
+}
+
+/** Read the master key the way `loadMasterKey` does, without generating one. */
+export async function readMasterKey(
+  config: Pick<ApiConfig, 'dataDir' | 'masterKey'>,
+): Promise<{ check: PreflightCheck; key?: Buffer }> {
+  const result = (status: PreflightStatus, text: string, key?: Buffer) => ({
+    check: check('master-key', 'Master key', status, text),
+    ...(key ? { key } : {}),
+  });
+  if (config.masterKey) {
+    const key = Buffer.from(config.masterKey, 'base64');
+    return key.length === 32
+      ? result('ok', 'taken from GG_MASTER_KEY', key)
+      : result('fail', 'GG_MASTER_KEY must be base64 for exactly 32 bytes');
+  }
+  const file = join(config.dataDir, 'master.key');
+  let text: string;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return result(
+        'warn',
+        `${file} does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)`,
+      );
+    }
+    return result('fail', `cannot read ${file}: ${message(error)}`);
+  }
+  const key = Buffer.from(text.trim(), 'base64');
+  return key.length === 32
+    ? result('ok', `read from ${file}`, key)
+    : result('fail', `${file} does not contain a base64 32-byte key`);
+}
+
+async function checkHarnesses(
+  harnesses: Partial<Record<HarnessId, HarnessPort>>,
+  config: ApiConfig,
+  ollamaDeferredReason?: string,
+): Promise<PreflightCheck[]> {
+  const checks: PreflightCheck[] = [];
+  await Promise.all(
+    Object.entries(harnesses).map(async ([id, harness]) => {
+      if (!harness) return;
+      const label = `Harness ${id}`;
+      if (id === 'ollama' && ollamaDeferredReason) {
+        checks.push({
+          state: 'unknown',
+          ...check('harness.ollama', label, 'warn', ollamaDeferredReason),
+        });
+        return;
+      }
+      const unavailableStatus =
+        (id === 'claude' && !config.defaults.byHarness.claude) ||
+        (id === 'ollama' && config.defaults.byHarness.ollama?.model === undefined) ||
+        (id === 'codex' && ollamaOnly(config))
+          ? ('warn' as const)
+          : ('fail' as const);
+      try {
+        const result = await harness.preflight();
+        const version = result.version ? ` ${result.version}` : '';
+        checks.push({
+          state: result.state,
+          ...(result.ok
+            ? check(
+                `harness.${id}`,
+                label,
+                'ok',
+                id === 'ollama'
+                  ? readinessDetail('ollama', 'ready')
+                  : `${id}${version} is installed and logged in`,
+              )
+            : check(
+                `harness.${id}`,
+                label,
+                unavailableStatus,
+                result.problems.join(' ') || readinessMessage(id, result.state),
+              )),
+        });
+        if (id === 'codex' && result.ok)
+          checks.push(
+            check('plugins.codex', 'Codex plugins', 'warn', CODEX_PLUGIN_OBSERVABILITY_NOTICE),
+          );
+      } catch {
+        checks.push({
+          state: 'unknown',
+          ...check(`harness.${id}`, label, unavailableStatus, readinessMessage(id, 'unknown')),
+        });
+      }
+    }),
+  );
+  if (ollamaOnly(config) && !harnesses.codex)
+    checks.push(
+      check(
+        'harness.codex',
+        'Harness codex',
+        'warn',
+        'Codex is optional for the configured Ollama-only defaults',
+      ),
+    );
+  if (checks.length === 0) {
+    checks.push(check('harness', 'Harness', 'fail', 'no harness adapter is configured'));
+  }
+  return checks;
+}
+
+function ollamaOnly(config: ApiConfig): boolean {
+  return (
+    config.defaults.byHarness.ollama?.model !== undefined &&
+    config.defaults.byHarness.codex === undefined
+  );
+}
+
+function checkDefaultModel(
+  model: string | undefined,
+  catalog: ModelCatalogEntry[],
+  seeded: boolean,
+): PreflightCheck {
+  const entry = catalog.find((e) => e.harness === 'codex' && e.model === model);
+  const where = seeded ? 'the model catalog' : 'the default catalog seeded on first start';
+  if (!entry) {
+    return check(
+      'default-model',
+      'Default model',
+      'fail',
+      `GG_DEFAULTS.byHarness.codex.model "${model}" is not in ${where}; pick a listed harness model and enable it in Settings`,
+    );
+  }
+  if (!entry.enabled) {
+    return check('default-model', 'Default model', 'warn', `${model} is in ${where} but disabled`);
+  }
+  return check(
+    'default-model',
+    'Default model',
+    'ok',
+    `${model} (${entry.harness}) is in ${where}`,
+  );
+}
+
+/** Run every check. Never throws: a check that cannot run reports `fail` with the reason. */
+export async function runPreflight(sources: PreflightSources): Promise<PreflightReport> {
+  const { config } = sources;
+  const checks: PreflightCheck[] = [checkNode(sources.nodeVersion ?? process.versions.node)];
+  checks.push(await checkDataDir(config.dataDir));
+  checks.push((await readMasterKey(config)).check);
+
+  let migrated = false;
+  try {
+    const pending = await sources.pendingMigrations();
+    if (pending === 'missing') {
+      checks.push(
+        check(
+          'database',
+          'Database',
+          'warn',
+          'the database does not exist yet; it is created and migrated on first start',
+        ),
+      );
+    } else if (pending > 0) {
+      checks.push(
+        check(
+          'database',
+          'Database',
+          'warn',
+          `${String(pending)} migration(s) pending; they are applied on the next start`,
+        ),
+      );
+    } else {
+      migrated = true;
+      checks.push(check('database', 'Database', 'ok', 'reachable and migrated'));
+    }
+  } catch (error) {
+    checks.push(
+      check(
+        'database',
+        'Database',
+        'fail',
+        error instanceof UnsupportedStoreError
+          ? `${error.reason}. Start refuses this store and converts nothing; to start fresh, list what a reset removes with ${RESET_COMMAND} ${dataDirArgument(config.dataDir)}`
+          : `not reachable: ${message(error)}`,
+      ),
+    );
+  }
+
+  checks.push(...(await checkHarnesses(sources.harnesses, config, sources.ollamaDeferredReason)));
+
+  if (!migrated) {
+    checks.push(
+      check('jev', 'Jev', 'warn', 'not checked until the database is migrated; Jev is optional'),
+    );
+  } else {
+    try {
+      const key = (await sources.jevKey())?.trim();
+      checks.push(
+        key
+          ? check(
+              'jev',
+              'Jev',
+              'ok',
+              `API key set (secret "${JEV_SECRET}")${(await sources.jevEnabled()) ? '' : ' (disabled in Settings)'}`,
+            )
+          : check(
+              'jev',
+              'Jev',
+              'warn',
+              `no API key in secret "${JEV_SECRET}"; Jev is optional; its classifier is unavailable until a key is configured`,
+            ),
+      );
+    } catch (error) {
+      checks.push(check('jev', 'Jev', 'warn', `cannot read the Jev key: ${message(error)}`));
+    }
+  }
+
+  try {
+    const catalog = migrated ? await sources.catalog() : DEFAULT_MODEL_CATALOG;
+    if (!ollamaOnly(config))
+      checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
+    const ollama = config.defaults.byHarness.ollama;
+    if (ollama?.model !== undefined) {
+      const entry = catalog.find((row) => row.harness === 'ollama' && row.model === ollama.model);
+      if (!migrated || !entry)
+        checks.push(
+          check(
+            'default-model.ollama',
+            'Ollama default model',
+            'warn',
+            'The configured Ollama model is not checked until discovery',
+          ),
+        );
+      else {
+        const problem =
+          entry.availability && entry.availability.state !== 'available'
+            ? (entry.availability.reason ??
+              'The configured Ollama model is unavailable; refresh models in Settings')
+            : !entry.enabled
+              ? 'The configured Ollama model is disabled'
+              : !ollama.effort || !entry.efforts.includes(ollama.effort)
+                ? 'Configure an explicit supported Ollama thinking control'
+                : undefined;
+        checks.push(
+          check(
+            'default-model.ollama',
+            'Ollama default model',
+            problem ? 'fail' : 'ok',
+            problem ?? 'Exact Ollama model and effort are configured and available',
+          ),
+        );
+      }
+      if (!sources.harnesses.ollama && !sources.ollamaDeferredReason)
+        checks.push(
+          check(
+            'harness.ollama',
+            'Harness ollama',
+            'fail',
+            'The configured Ollama harness is unavailable',
+          ),
+        );
+    }
+    const defaults = config.defaults.byHarness.claude;
+    if (defaults) {
+      const entry = catalog.find((row) => row.harness === 'claude' && row.model === defaults.model);
+      const problem = !entry
+        ? 'The configured Claude model is not in the catalog'
+        : !defaults.effort || !entry.efforts.includes(defaults.effort)
+          ? 'Configure an explicit supported Claude reasoning effort'
+          : !entry.enabled
+            ? 'The configured Claude model is disabled'
+            : undefined;
+      checks.push(
+        check(
+          'default-model.claude',
+          'Claude default model',
+          problem ? 'fail' : 'ok',
+          problem ?? 'Exact Claude model and effort are configured',
+        ),
+      );
+      if (!sources.harnesses.claude)
+        checks.push(
+          check(
+            'harness.claude',
+            'Harness claude',
+            'fail',
+            'The configured Claude harness is unavailable',
+          ),
+        );
+    }
+  } catch (error) {
+    checks.push(
+      check('default-model', 'Default model', 'fail', `cannot read the catalog: ${message(error)}`),
+    );
+  }
+
+  return { ok: checks.every((c) => c.status !== 'fail'), checks };
+}
+
+/** Facts from a running container, for `GET /system/preflight`. */
+export function containerPreflightSources(container: Container): PreflightSources {
+  return {
+    config: container.config,
+    harnesses: container.ports.harnesses,
+    pendingMigrations: () => container.handle.pendingMigrations(),
+    jevKey: () => container.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET),
+    jevEnabled: async () =>
+      (await container.repos.classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
+    catalog: () => container.repos.catalog.list(),
+  };
+}
+
+function isMissing(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException).code === 'ENOENT';
+}
+
+/**
+ * Whether the server's start can create `file`: it creates the missing directories above it, so
+ * the nearest existing ancestor must be a writable directory. Throws with the reason otherwise.
+ */
+export async function assertCreatable(file: string, probeName?: ProbeName): Promise<void> {
+  let dir = dirname(file);
+  for (;;) {
+    let isDirectory: boolean;
+    try {
+      isDirectory = (await stat(dir)).isDirectory();
+    } catch (error) {
+      if (!isMissing(error) || dirname(dir) === dir) throw error;
+      dir = dirname(dir);
+      continue;
+    }
+    if (!isDirectory) throw new Error(`${file} cannot be created: ${dir} is not a directory`);
+    try {
+      await probeWritable(dir, probeName);
+    } catch (error) {
+      throw new Error(`${file} cannot be created: ${dir} is not writable (${message(error)})`, {
+        cause: error,
+      });
+    }
+    return;
+  }
+}
+
+/** The connection preflight inspects a store through: read-only for a file on disk. */
+interface InspectedDatabase {
+  client: ReturnType<typeof openReadOnlyDatabaseClient>;
+  db: Database;
+  pendingMigrations(): Promise<number>;
+  close(): void;
+}
+
+/** What the CLI can learn about the database before the server has started. */
+type DatabaseState =
+  | { kind: 'missing' }
+  | { kind: 'broken'; error: unknown }
+  | { kind: 'open'; handle: InspectedDatabase };
+
+async function inspectDatabase(url: string): Promise<DatabaseState> {
+  const file = databaseFilePath(url);
+  if (file !== undefined) {
+    try {
+      await stat(file);
+    } catch (error) {
+      if (!isMissing(error)) return { kind: 'broken', error };
+      try {
+        await assertCreatable(file);
+        return { kind: 'missing' };
+      } catch (reason) {
+        return { kind: 'broken', error: reason };
+      }
+    }
+  }
+  try {
+    if (file !== undefined) {
+      // The same read-only connection as startup's guard: a refused or healthy store keeps its
+      // database and write-ahead log bytes (a mutable connection checkpoints the log on close).
+      const client = openReadOnlyDatabaseClient(file);
+      return {
+        kind: 'open',
+        handle: {
+          client,
+          db: databaseView(client),
+          pendingMigrations: () => pendingMigrationCount(client),
+          close: () => client.close(),
+        },
+      };
+    }
+    return { kind: 'open', handle: openDatabase({ url }) };
+  } catch (error) {
+    return { kind: 'broken', error };
+  }
+}
+
+/** Never initializes the singleton or guesses over saved settings in an unverified store. */
+async function inspectedOllamaConnection(
+  database: DatabaseState,
+  config: ApiConfig,
+): Promise<
+  | { connection: OllamaConnection; deferredReason?: never }
+  | { connection?: never; deferredReason: string }
+> {
+  const fallback = { enabled: config.ollamaEnabled, baseUrl: config.ollamaUrl, revision: 1 };
+  if (database.kind === 'missing') return { connection: fallback };
+  if (database.kind === 'broken')
+    return { deferredReason: 'Ollama is not checked until the database can be read' };
+  try {
+    await guardCurrentStore(database.handle.client);
+    if ((await database.handle.pendingMigrations()) !== 0)
+      return { deferredReason: 'Ollama is not checked until the database is migrated' };
+    const row = await database.handle.db.query.ollamaConnection.findFirst({
+      where: (row, { eq }) => eq(row.id, 'gateway'),
+    });
+    return {
+      connection: row
+        ? OllamaConnectionSchema.parse({
+            enabled: row.enabled,
+            baseUrl: row.baseUrl,
+            revision: row.revision,
+          })
+        : fallback,
+    };
+  } catch {
+    return { deferredReason: 'Ollama is not checked until the database is current and readable' };
+  }
+}
+
+export interface ConfigPreflightOptions {
+  /** Replace the native harness map (tests). */
+  harnesses?: Partial<Record<HarnessId, HarnessPort>>;
+  nodeVersion?: string;
+}
+
+/**
+ * Facts from the configuration alone, for the CLI before the server has started. Opens the
+ * database only when its file exists, so a first run creates nothing; a missing file is a
+ * warning only when the server's start could create it.
+ */
+export async function configPreflightSources(
+  config: ApiConfig,
+  options: ConfigPreflightOptions = {},
+): Promise<PreflightSources & { close(): void }> {
+  const database = await inspectDatabase(config.dbUrl);
+  const { key } = await readMasterKey(config);
+  const ollama = await inspectedOllamaConnection(database, config);
+  const harnesses = options.harnesses ?? {
+    codex: createCodexAdapters({
+      ...(config.defaults.byHarness.codex?.model !== undefined
+        ? { model: config.defaults.byHarness.codex.model }
+        : {}),
+      ...(config.defaults.byHarness.codex?.effort !== undefined
+        ? { effort: config.defaults.byHarness.codex.effort }
+        : {}),
+      ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
+    }).harness,
+    claude: new ClaudeHarness({ ...(config.claudeBinary ? { binary: config.claudeBinary } : {}) }),
+    ollama: new OllamaHarness({
+      snapshot: () =>
+        ollama.connection
+          ? Promise.resolve({ connection: ollama.connection, models: [] })
+          : Promise.reject(new Error(ollama.deferredReason)),
+    }),
+  };
+  const base = {
+    config,
+    harnesses,
+    ...(ollama.deferredReason ? { ollamaDeferredReason: ollama.deferredReason } : {}),
+    ...(options.nodeVersion ? { nodeVersion: options.nodeVersion } : {}),
+  };
+  if (database.kind !== 'open') {
+    const { kind } = database;
+    const failure = kind === 'broken' ? database.error : undefined;
+    return {
+      ...base,
+      pendingMigrations: () =>
+        kind === 'missing'
+          ? Promise.resolve('missing' as const)
+          : Promise.reject(failure instanceof Error ? failure : new Error(String(failure))),
+      jevKey: () => Promise.resolve(undefined),
+      jevEnabled: () => Promise.resolve(true),
+      catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
+      close: () => undefined,
+    };
+  }
+  const { handle } = database;
+  return {
+    ...base,
+    // A store start would refuse is reported as such, never as migrations it would apply.
+    pendingMigrations: async () => {
+      await guardCurrentStore(handle.client);
+      return handle.pendingMigrations();
+    },
+    jevKey: () =>
+      key
+        ? new SqliteSecrets(handle.db, { now: () => new Date() }, key, LOCAL_OWNER).resolve(
+            JEV_SECRET,
+          )
+        : Promise.resolve(undefined),
+    catalog: () => new SqliteModelCatalog(handle.db).list(),
+    jevEnabled: async () =>
+      (await new SqliteClassifierModels(handle.db).findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
+    close: () => handle.close(),
+  };
+}
+
+const MARK: Record<PreflightStatus, string> = { ok: 'ok', warn: 'WARN', fail: 'FAIL' };
+
+/** A plain-text table for the terminal. */
+export function formatPreflight(report: PreflightReport): string {
+  const rows = report.checks.map((c) => [MARK[c.status], c.label, c.message] as const);
+  const width = (i: 0 | 1, title: string) =>
+    Math.max(title.length, ...rows.map((r) => r[i].length));
+  const w0 = width(0, 'STATUS');
+  const w1 = width(1, 'CHECK');
+  const line = (a: string, b: string, c: string) => `  ${a.padEnd(w0)}  ${b.padEnd(w1)}  ${c}`;
+  const failed = report.checks.filter((c) => c.status === 'fail').length;
+  const warned = report.checks.filter((c) => c.status === 'warn').length;
+  return [
+    'GraphGoblin preflight',
+    '',
+    line('STATUS', 'CHECK', 'DETAIL'),
+    ...rows.map((r) => line(r[0], r[1], r[2])),
+    '',
+    `${String(failed)} failed, ${String(warned)} warning(s): ${
+      report.ok ? 'ready to start' : 'fix the failed checks before starting'
+    }`,
+    '',
+  ].join('\n');
+}
+
+export interface PreflightCliOptions extends ConfigPreflightOptions {
+  env?: NodeJS.ProcessEnv;
+  write?: (text: string) => void;
+}
+
+/** `graphgoblin-api --preflight`: print the checks and return the exit code (0 unless a check failed). */
+export async function runPreflightCli(options: PreflightCliOptions = {}): Promise<number> {
+  const write = options.write ?? ((text: string) => process.stdout.write(text));
+  let config: ApiConfig;
+  try {
+    config = loadConfig(options.env ?? process.env);
+  } catch (error) {
+    write(`GraphGoblin preflight\n\n  FAIL  configuration  ${message(error)}\n`);
+    return 1;
+  }
+  const sources = await configPreflightSources(config, options);
+  try {
+    const report = await runPreflight(sources);
+    write(formatPreflight(report));
+    return report.ok ? 0 : 1;
+  } finally {
+    sources.close();
+  }
+}

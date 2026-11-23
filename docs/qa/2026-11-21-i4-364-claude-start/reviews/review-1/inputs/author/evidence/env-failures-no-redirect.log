@@ -1,0 +1,713 @@
+v22.23.4
+devmode=
+/usr/bin/whoami: extra operand ‘/priv’
+Try '/usr/bin/whoami --help' for more information.
+symlink-privilege=False
+
+ RUN  v5.0.3 G:/ggq/gg-i4-364-claude-start/GraphGoblin/packages/infrastructure
+
+ ❯ src/fs/chat-audio.test.ts (39 tests | 4 failed) 600ms
+   ❯ ChatAudioStore (25)
+     × refuses to replace existing files, directories, and symlinks 43ms
+     × refuses a non-directory or symlink dedicated storage root 11ms
+     × deletes only the exact ID, is idempotent, and never follows a file symlink 43ms
+   ❯ bounded chat audio orphan cleanup (14)
+     × continues bounded batches and removes only old recognized regular files without metadata 38ms
+ ❯ src/process/voice.test.ts (135 tests | 46 failed) 2817ms
+   ❯ voice manifests and filesystem boundaries (29)
+     × rejects unavailable or unsafe audio: symlink 25ms
+   ❯ private runtime qualification (42)
+     × requires a matching operator record and all current dependency hashes 20ms
+     × invalidates changed runtime binary and symlink target identities 29ms
+     × refuses unsafe qualification storage: record-public 23ms
+     × refuses unsafe qualification storage: parent-public 24ms
+     × refuses unsafe qualification storage: record-link 14ms
+     × refuses unsafe qualification storage: parent-link 16ms
+     × refuses unsafe qualification storage: bad-json 33ms
+     × refuses unsafe qualification storage: too-large 27ms
+     × refuses unsafe qualification storage: empty 34ms
+     × refuses unsafe qualification storage: directory 34ms
+     × refuses malformed or unreviewed runtime evidence 0 33ms
+     × refuses malformed or unreviewed runtime evidence 1 34ms
+     × refuses malformed or unreviewed runtime evidence 2 31ms
+     × refuses malformed or unreviewed runtime evidence 3 36ms
+     × refuses malformed or unreviewed runtime evidence 4 36ms
+     × refuses malformed or unreviewed runtime evidence 5 23ms
+     × refuses malformed or unreviewed runtime evidence 6 42ms
+     × refuses malformed or unreviewed runtime evidence 7 30ms
+     × refuses malformed or unreviewed runtime evidence 8 16ms
+     × refuses malformed or unreviewed runtime evidence 9 21ms
+     × refuses malformed or unreviewed runtime evidence 10 16ms
+     × refuses malformed or unreviewed runtime evidence 11 19ms
+     × refuses malformed or unreviewed runtime evidence 12 16ms
+     × refuses malformed or unreviewed runtime evidence 13 13ms
+     × refuses malformed or unreviewed runtime evidence 14 17ms
+     × refuses malformed or unreviewed runtime evidence 15 15ms
+     × refuses malformed or unreviewed runtime evidence 16 15ms
+     × rejects selection of a different binary, nonexecutables and invalid paths 29ms
+     × rejects a changed backend loader inventory: added 15ms
+     × rejects a changed backend loader inventory: removed 16ms
+     × rejects a changed backend loader inventory: type 16ms
+     × rejects a changed backend loader inventory: duplicate 16ms
+     × rejects a changed backend loader inventory: target 22ms
+     × rejects a changed backend loader inventory: hash 17ms
+     × rejects a changed backend loader inventory: directory-path 14ms
+     × refuses malformed loader directory inventories 0 12ms
+     × refuses malformed loader directory inventories 1 18ms
+     × refuses malformed loader directory inventories 2 16ms
+     × refuses malformed loader directory inventories 3 17ms
+     × refuses malformed loader directory inventories 4 22ms
+     × refuses malformed loader directory inventories 5 18ms
+   ❯ bounded allowlisted model installation (26)
+     × streams tiny.en into an exclusively created private file and atomically commits verified bytes 31ms
+     × streams base.en into an exclusively created private file and atomically commits verified bytes 33ms
+     × rejects symlinked private voice directories 11ms
+     × rejects symlinked private models directories 13ms
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯ Failed Tests 50 ⎯⎯⎯⎯⎯⎯⎯
+System.Management.Automation.RemoteException
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses to replace existing files, directories, and symlinks
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-HZ7euC\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-HZ7euC\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:106:5
+    104|     const outside = join(dataDir, 'outside');
+    105|     await fs.writeFile(outside, 'untouched');
+    106|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    107|     await expect(store.write(id('2'), Buffer.of(2))).rejects.toMatchOb…
+    108|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-vZsZQ9\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-vZsZQ9\chat-audio'
+ ❯ src/fs/chat-audio.test.ts:230:5
+    228|     const outside = join(dataDir, 'outside');
+    229|     await fs.mkdir(outside);
+    230|     await fs.symlink(outside, directory, 'dir');
+       |     ^
+    231|     await expect(store.write(id(), Buffer.of(1))).rejects.toMatchObjec…
+    232|     await expect(store.remove(id())).rejects.toMatchObject({ code: 'st…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > deletes only the exact ID, is idempotent, and never follows a file symlink
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-iC0SDi\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-iC0SDi\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA2.audio'
+ ❯ src/fs/chat-audio.test.ts:248:5
+    246|     const outside = join(dataDir, 'outside');
+    247|     await fs.writeFile(outside, 'untouched');
+    248|     await fs.symlink(outside, store.resolve(id('2')));
+       |     ^
+    249|     expect(await store.remove(id('2'))).toBe(true);
+    250|     expect(await fs.readFile(outside, 'utf8')).toBe('untouched');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/fs/chat-audio.test.ts > bounded chat audio orphan cleanup > continues bounded batches and removes only old recognized regular files without metadata
+Error: ENOENT: no such file or directory, open 'C:\Users\98jak\AppData\Local\Temp\gg-chat-audio-PZTMyA\chat-audio\01ARZ3NDEKTSV4RRFFQ69G5FA5.audio
+'
+ ❯ src/fs/chat-audio.test.ts:284:5
+    282|     await fs.writeFile(join(directory, lock), '');
+    283|     await fs.writeFile(join(directory, 'unknown-file'), 'preserved');
+    284|     await fs.writeFile(join(directory, `${id('5')}.audio\n`), 'preserv…
+       |     ^
+    285|     await fs.mkdir(store.resolve(id('6')));
+    286|     const outside = join(dataDir, 'outside');
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > voice manifests and filesystem boundaries > rejects unavailable or unsafe audio: symlink
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-dJYyvg\audio.wav' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-dJYyvg\audio.wav-link'
+ ❯ src/process/voice.test.ts:218:9
+    216|       if (kind === 'symlink') {
+    217|         path += '-link';
+    218|         await fs.symlink(audioPath, path);
+       |         ^
+    219|       }
+    220|       if (kind === 'directory') path = directory;
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > requires a matching operator record and all current dependency hashes
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-HMrM5L\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-HMrM5L\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:252:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > invalidates changed runtime binary and symlink target identities
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-NXIIPA\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-NXIIPA\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:262:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-public
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-G4NiwG\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-G4NiwG\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-public
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-ngDvSr\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-ngDvSr\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: record-link
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-fpOdlx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-fpOdlx\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: parent-link
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-0jQGXe\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-0jQGXe\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: bad-json
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-VJRJhx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-VJRJhx\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: too-large
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-LsWYmR\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-LsWYmR\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: empty
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-rTBOtA\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-rTBOtA\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses unsafe qualification storage: directory
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-oT32Er\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-oT32Er\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:282:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 0
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-TemdVh\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-TemdVh\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 1
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-OJYteL\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-OJYteL\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 2
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-jusKW5\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-jusKW5\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 3
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qteM7N\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qteM7N\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 4
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BWqMlC\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BWqMlC\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 5
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Nc1W4X\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Nc1W4X\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 6
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-5sEJ4U\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-5sEJ4U\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 7
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-eZIkpM\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-eZIkpM\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 8
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qNe2Wn\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qNe2Wn\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 9
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-yBxe4k\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-yBxe4k\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 10
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-c2kquC\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-c2kquC\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 11
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-zhrNdt\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-zhrNdt\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 12
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-yHW5gx\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-yHW5gx\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 13
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-pPih3U\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-pPih3U\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 14
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-xrukZ4\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-xrukZ4\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 15
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qpp3r6\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qpp3r6\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed or unreviewed runtime evidence 16
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-x7UplF\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-x7UplF\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:325:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects selection of a different binary, nonexecutables and invalid paths
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-W3zxpm\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-W3zxpm\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:340:5
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: added
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BZedi4\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BZedi4\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: removed
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-FZ8zx4\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-FZ8zx4\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: type
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-W9IFi3\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-W9IFi3\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: duplicate
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Pb14ce\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Pb14ce\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: target
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-YczCKa\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-YczCKa\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: hash
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-9ySFYB\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-9ySFYB\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > rejects a changed backend loader inventory: directory-path
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-lVw8Gw\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-lVw8Gw\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:349:22
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 0
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-PlaYon\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-PlaYon\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 1
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BSooQS\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-BSooQS\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 2
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-e4GgOW\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-e4GgOW\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  50 failed | 149 passed (199)
+   Start at  02:53:40
+   Duration  8.05s (tests 51%, import 28%, transform 21%)
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 3
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-cVfMyg\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-cVfMyg\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 4
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-xcz9Yq\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-xcz9Yq\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > private runtime qualification > refuses malformed loader directory inventories 5
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Xj0zNO\backends\libggml-cpu.so' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-Xj0zNO\backends\libggml-alias.so'
+ ❯ qualification src/process/voice.test.ts:115:3
+    113|   await fs.writeFile(backend, 'reviewed backend');
+    114|   const backendAlias = join(loader, 'libggml-alias.so');
+    115|   await fs.symlink(backend, backendAlias);
+       |   ^
+    116|   const record: VoiceRuntimeQualificationRecord = {
+    117|     formatVersion: 1,
+ ❯ src/process/voice.test.ts:385:20
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams tiny.en into an exclusively created private file and atomically commits verified bytes
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > streams base.en into an exclusively created private file and atomically commits verified bytes
+AssertionError: expected 438 to be 384 // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- 384
++ 438
+System.Management.Automation.RemoteException
+ ❯ src/process/voice.test.ts:706:65
+    704|       expect(await fs.readFile(operation.modelPath)).toEqual(bytes);
+    705|       expect(operation.executable).toBe(executable);
+    706|       expect((await fs.stat(operation.modelPath)).mode & 0o777).toBe(0…
+       |                                                                 ^
+    707|       expect((await fs.stat(join(directory, 'voice', 'models'))).mode …
+    708|       expect(await fs.readdir(join(directory, 'voice', 'models'))).toE…
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private voice directories
+
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qCQtea\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-qCQtea\voice'
+ ❯ src/process/voice.test.ts:816:27
+    814|     const target = join(directory, 'outside');
+    815|     await fs.mkdir(target);
+    816|     if (name === 'voice') await fs.symlink(target, join(directory, 'vo…
+       |                           ^
+    817|     else {
+    818|       await fs.mkdir(join(directory, 'voice'));
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/50]⎯
+System.Management.Automation.RemoteException
+ FAIL  src/process/voice.test.ts > bounded allowlisted model installation > rejects symlinked private models directories
+Error: EPERM: operation not permitted, symlink 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-onV3pQ\outside' -> 'C:\Users\98jak\AppData\Local\Temp\gg-voice-test-onV3pQ\voice\models'
+ ❯ src/process/voice.test.ts:819:7
+    817|     else {
+    818|       await fs.mkdir(join(directory, 'voice'));
+    819|       await fs.symlink(target, join(directory, 'voice', 'models'));
+       |       ^
+    820|     }
+    821|     const fetcher = vi.fn<typeof fetch>();
+System.Management.Automation.RemoteException
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/50]⎯
+System.Management.Automation.RemoteException
+vitest-exit=1

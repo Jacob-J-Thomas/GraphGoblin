@@ -1,0 +1,11 @@
+117,118c117,123
+<     baseline: { authorizes: false, code: 'store-unverified', lock: 'lockPath', ownershipCalls: [2, 60], messageIncludes: [UNVERIFIED_TEXT, HELD_GUIDANCE] },
+<     corrected: { authorizes: false, code: 'store-unverified', lock: 'lockPath', ownershipCalls: [2, 60], messageIncludes: [UNVERIFIED_TEXT, HELD_GUIDANCE] },
+---
+>     // v2 correction (the single permitted driver correction): v1 assumed at least two samples.
+>     // ADR-0086 admits a held retry only if the remaining window less the 2 s reserve fits the
+>     // previous sample's measured duration. The actual producer's first sample took 3,375 ms in
+>     // run baseline-20261121T042951Z-e1e0e8 under the 8 s window, so one sample is correct
+>     // behavior. The sample count is timing-dependent and not a D166 contract element.
+>     baseline: { authorizes: false, code: 'store-unverified', lock: 'lockPath', ownershipCalls: [1, 60], messageIncludes: [UNVERIFIED_TEXT, HELD_GUIDANCE] },
+>     corrected: { authorizes: false, code: 'store-unverified', lock: 'lockPath', ownershipCalls: [1, 60], messageIncludes: [UNVERIFIED_TEXT, HELD_GUIDANCE] },

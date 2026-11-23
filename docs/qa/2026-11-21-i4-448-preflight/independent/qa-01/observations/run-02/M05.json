@@ -1,0 +1,222 @@
+{
+  "id": "M05",
+  "kind": "native-isolation-probe",
+  "purpose": "which read-only open creates a 0-byte -wal on a store that has none (no projection involved)",
+  "checks": [
+    {
+      "name": "built openReadOnlyDatabaseClient SELECT: DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "pass": true
+    },
+    {
+      "name": "built openReadOnlyDatabaseClient SELECT: logical hash unchanged",
+      "expected": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "actual": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "pass": true
+    },
+    {
+      "name": "built openReadOnlyDatabaseClient SELECT: no WAL frames (absent or 0 bytes)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "built openReadOnlyDatabaseClient SELECT: observed -wal/-shm after (recorded)",
+      "expected": "recorded",
+      "actual": {
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        }
+      },
+      "pass": true,
+      "observation": true
+    },
+    {
+      "name": "built guardCurrentStore only (shared startup and preflight guard): DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "pass": true
+    },
+    {
+      "name": "built guardCurrentStore only (shared startup and preflight guard): logical hash unchanged",
+      "expected": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "actual": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "pass": true
+    },
+    {
+      "name": "built guardCurrentStore only (shared startup and preflight guard): no WAL frames (absent or 0 bytes)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "built guardCurrentStore only (shared startup and preflight guard): observed -wal/-shm after (recorded)",
+      "expected": "recorded",
+      "actual": {
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        }
+      },
+      "pass": true,
+      "observation": true
+    },
+    {
+      "name": "node sqlite readOnly SELECT (independent SQLite): DB bytes unchanged",
+      "expected": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "actual": {
+        "size": 479232,
+        "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+      },
+      "pass": true
+    },
+    {
+      "name": "node sqlite readOnly SELECT (independent SQLite): logical hash unchanged",
+      "expected": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "actual": "7b5cf6604673fe640ef88b575afd2fd106eda8e397a6f65b786250f00d66b45c",
+      "pass": true
+    },
+    {
+      "name": "node sqlite readOnly SELECT (independent SQLite): no WAL frames (absent or 0 bytes)",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "node sqlite readOnly SELECT (independent SQLite): observed -wal/-shm after (recorded)",
+      "expected": "recorded",
+      "actual": {
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        }
+      },
+      "pass": true,
+      "observation": true
+    }
+  ],
+  "startedUtc": "2026-11-21T09:06:07.991Z",
+  "probes": [
+    {
+      "label": "built openReadOnlyDatabaseClient SELECT",
+      "outcome": {
+        "rows": 1
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": null,
+        "-shm": null,
+        "-journal": null
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "-shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        },
+        "-journal": null
+      }
+    },
+    {
+      "label": "built guardCurrentStore only (shared startup and preflight guard)",
+      "outcome": {
+        "state": "current"
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": null,
+        "-shm": null,
+        "-journal": null
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "-shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        },
+        "-journal": null
+      }
+    },
+    {
+      "label": "node sqlite readOnly SELECT (independent SQLite)",
+      "outcome": {
+        "n": 13
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": null,
+        "-shm": null,
+        "-journal": null
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "08b14bbd77f18cb437d05c307a33b1b78311f0a6b1bb3c4219dcf1c5ea779ed4"
+        },
+        "-wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "-shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        },
+        "-journal": null
+      }
+    }
+  ],
+  "pass": true,
+  "finishedUtc": "2026-11-21T09:06:08.120Z"
+}

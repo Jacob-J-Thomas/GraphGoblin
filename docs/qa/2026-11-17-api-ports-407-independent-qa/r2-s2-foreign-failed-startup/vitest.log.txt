@@ -1,0 +1,28 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407-qa/GraphGoblin/apps/api
+
+ × src/qa407/qa407-s2.test.ts > S2a pre-existing foreign listeners are not handed out to fixtures 13847ms
+   → wildcard foreign 63805 must not be granted: expected [ 63804, 63805 ] to not include 63805
+ ✓ src/qa407/qa407-s2.test.ts > S2b failed startup after a post-probe steal keeps the reservation until fixture cleanup 10827ms
+ ✓ src/qa407/qa407-s2.test.ts > S2c a failed child cleanup keeps the reservation; a successful retry releases it 74040ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/qa407/qa407-s2.test.ts > S2a pre-existing foreign listeners are not handed out to fixtures
+AssertionError: wildcard foreign 63805 must not be granted: expected [ 63804, 63805 ] to not include 63805
+ ❯ src/qa407/qa407-s2.test.ts:62:73
+     60|   expect(after).toEqual({ f806: '200:foreign:127.0.0.1', f805: '200:fo…
+     61|   expect.soft(grants, 'specific-address foreign 63806 must not be gran…
+     62|   expect.soft(grants, 'wildcard foreign 63805 must not be granted').no…
+       |                                                                         ^
+     63|   expect.soft(exhausted ?? '').toContain('No disposable API port is av…
+     64| }, 180_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  23:09:56
+   Duration  99.26s (tests 100%)
+

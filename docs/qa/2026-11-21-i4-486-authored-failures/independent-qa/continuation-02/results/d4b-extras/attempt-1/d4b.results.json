@@ -1,0 +1,169 @@
+{
+ "summary": {
+  "name": "d4b",
+  "total": 8,
+  "passed": 8,
+  "failed": [],
+  "driverPid": 17280,
+  "apiPort": 5878,
+  "dataDir": "G:\\ggq\\qa-scratch\\i4-486-independent-02\\d4b-extras-1\\data\\d4b"
+ },
+ "rows": [
+  {
+   "id": "EXT-LLM-real",
+   "description": "LLM decider callback rejection: provider/internal path (not authored EXPRESSION_ERROR), no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_PROVIDER_FAILED",
+     "message": "Decision provider request failed",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "provenance": {
+       "kind": "llm",
+       "provider": "codex",
+       "classifierId": null,
+       "model": "gpt-6-luna",
+       "effort": "low"
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "EXT-LLM-name",
+   "description": "LLM decider callback rejection: provider/internal path (not authored EXPRESSION_ERROR), no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_PROVIDER_FAILED",
+     "message": "Decision provider request failed",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "provenance": {
+       "kind": "llm",
+       "provider": "codex",
+       "classifierId": null,
+       "model": "gpt-6-luna",
+       "effort": "low"
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "EXT-LLM-code",
+   "description": "LLM decider callback rejection: provider/internal path (not authored EXPRESSION_ERROR), no boundary, marker absent",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "EVALUATION_PROVIDER_FAILED",
+     "message": "Decision provider request failed",
+     "nodeId": "d",
+     "resumable": false,
+     "details": {
+      "provenance": {
+       "kind": "llm",
+       "provider": "codex",
+       "classifierId": null,
+       "model": "gpt-6-luna",
+       "effort": "low"
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "EXT-COERCE-real",
+   "description": "structured coerce rejection during input prep: not an authored inference.input fault; marker absent; no main harness turn",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "inf",
+     "resumable": true
+    },
+    "structuredCalls": 1
+   }
+  },
+  {
+   "id": "EXT-COERCE-name",
+   "description": "structured coerce rejection during input prep: not an authored inference.input fault; marker absent; no main harness turn",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "inf",
+     "resumable": true
+    },
+    "structuredCalls": 1
+   }
+  },
+  {
+   "id": "EXT-COERCE-code",
+   "description": "structured coerce rejection during input prep: not an authored inference.input fault; marker absent; no main harness turn",
+   "pass": true,
+   "class": "SCRIPTED",
+   "actual": {
+    "failure": {
+     "code": "INTERNAL_ERROR",
+     "message": "An unexpected error interrupted the run. See the server logs for this run.",
+     "nodeId": "inf",
+     "resumable": true
+    },
+    "structuredCalls": 1
+   }
+  },
+  {
+   "id": "B17-pos",
+   "description": "canonical rerender trims the oldest history pair to fit: one start whose prompt omits the oldest pair and keeps the recent pair; turn context retained 1/omitted 1; succeeded",
+   "pass": true,
+   "class": "PUBLIC-API+SCRIPTED",
+   "actual": {
+    "status": "succeeded",
+    "context": {
+     "profile": "qa-window",
+     "contextTokens": 1000,
+     "outputReserveTokens": 100,
+     "retainedHistoryPairs": 1,
+     "omittedHistoryPairs": 1
+    },
+    "cw": 1,
+    "promptHasRecent": true
+   }
+  },
+  {
+   "id": "CLEANUP",
+   "description": "authenticated drain accepted; port refuses",
+   "pass": true,
+   "class": "CLEANUP",
+   "actual": {
+    "drainStatus": 202,
+    "drainBody": {
+     "phase": "draining",
+     "graceMs": 30000,
+     "startedAt": "2026-11-21T16:43:37.724Z",
+     "choiceAt": "2026-11-21T16:44:07.724Z",
+     "activeRunIds": [],
+     "unconfirmedRunIds": [],
+     "choices": [
+      "wait",
+      "force"
+     ],
+     "controlToken": "cab94146-07ca-4aec-ada5-d6471f87108a:1:draining"
+    },
+    "drained": "ready",
+    "portRefused": true
+   }
+  }
+ ]
+}

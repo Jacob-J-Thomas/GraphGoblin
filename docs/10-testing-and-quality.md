@@ -21,6 +21,34 @@ linker search paths to its installed `Testing` framework, and runtime dependenci
 prevent test execution. A missing module, runtime-load failure or failed build is not a test
 pass; a build-only check does not establish test execution.
 
+The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
+floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
+exit and bounded work. Generation-specific handshakes retain exact native handles to nested
+members that ignore parent exit and broken pipes, with stdout, stderr, both or neither inherited.
+The Node fixture uses detached children so Node's own child-job cleanup cannot impersonate the
+launcher's collection. The checks require the launcher's distinctive job exit code within one
+shared cleanup allowance, while a same-executable sentinel and a separate helper survive.
+Controlled ownership fixtures verify a too-short retry window, a shortened stalled recheck and
+a conclusive held-to-free transition, preserving lock bytes and file identities on refusal.
+These synthetic cases are separate from the unmodified built helper's real WMI cases below.
+
+D166 controls drive the compiled public launcher with strict ownership protocol fixtures:
+duplicate decoded keys, JavaScript syntax, malformed escapes, wrong shapes, trailing material
+and non-JSON outer whitespace refuse without a gateway-spawn witness. Valid producer output,
+legal JSON whitespace, field order and Unicode/path escapes remain accepted. Held retries keep
+their refusal guidance after an invalid sample; seeded lock/guard bytes and filesystem identities
+remain intact. Compiled NativeChecks also drives the production cleanup-wait decision with a
+deterministic observation/clock seam at 1,999/2,000/2,001 ms and across an observation that passes
+the deadline. Those checks establish decision ordering, not a delayed kernel termination or I/O
+completion. Original native evidence and its remaining limits stay distinct.
+
+D167 controls exercise the immutable caller work cutoff through the shared production guard:
+before/equal/after expiry, setup charged before helper entry, validation or return crossing the
+cutoff, the 15-second cap and reserved cleanup interval. A compiled helper entry given an expired
+deadline cannot create its marker child; a controlled-clock validation reaching equality refuses.
+These establish deadline decisions and controlled entry behavior, not an OS scheduling race.
+The ordinary helper, strict protocol, held-store and cleanup controls retain their own scopes.
+
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
 gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,
@@ -36,6 +64,14 @@ an actual inaccessible SYSTEM PID with a queryable creation identity and confirm
 without stopping it. Matching identities and PID-only records (including a protected PID) remain
 refused with unchanged lock bytes and no gateway startup. The read-only helper names the refused
 path and distinguishes live ownership from unverifiable identity with the probe's failure cause.
+Contention receipts also retain each contender's PID and acquisition token, the seeded marker
+token, bounded filesystem operation/code and marker identity when a removal fails, the live-owner
+and final PID/token readback before refusal assertions, and final release/guard/staging checks.
+Expected ownership refusals must have no structured filesystem or cleanup failures, even when
+the primary message contains expected ownership wording. The assertions additionally require
+clean release and preservation of an unrelated fixture file. CI's existing typed recorder and
+exact-file uploader retain these
+receipts without exporting stores, paths, raw stacks, command lines or environment values.
 Eight repeated silent-TCP trials require refusal without a gateway log write or store acquisition.
 Bounded log cases (#438, ADR-0081) use explicitly private fixture folders: a stale built entry
 beside a current guard module and a missing guard refuse before spawning, in the launcher and the
@@ -129,6 +165,8 @@ The Codex plugin assembly tests use a fresh temporary directory per test and ret
 
 The infrastructure HTTP tests use a local server with an unanswered route for timeout checks and destroy all accepted sockets in teardown. They assert `TimeoutError` and use a pre-aborted caller signal to check `AbortError`, avoiding races between response and abort timers. Ordinary probe and webhook requests allow 20 s for machine load; the timeout test also has a 20 s test budget.
 
+The Codex readiness probe-directory tests (`packages/adapter-codex/src/probe-directory.test.ts`) run each case as owned work (#466). When Vitest abandons a case after a timeout or a cancelled run, it aborts the test context's signal and goes on to the case's finish hooks while the case body may still be running. The fake CLI runner passes that signal to `runCli`, so the running fake CLI is killed and no further one starts. The finish hook waits for the body, including the adapter's own probe-directory removal, and for every fake CLI process to exit; only then does it restore `TEMP`/`TMP`/`TMPDIR` and remove the case directory, so the next case sees none of its calls. A failure the body reaches after the abort is reported with the timeout. A run cancelled after a case has started but before its body runs, as during its `beforeEach` hooks, still enters the body with the signal already aborted; the case then starts nothing and throws the abort reason, so Vitest reports it as cancelled, as it does the cases it never started. The lifecycle regression cases drive a probe case through a simulated abandonment and are owned the same way: their own Vitest case's abort also abandons the simulated case, and their finish hook waits for the whole test body, including its fault restoration, and finishes the simulated case if an early failure left it unfinished, before the next case starts. A lifecycle test whose case is aborted while its body awaits, before it enters its probe case, ends with the abort reason that the probe case throws on entry: the same object Vitest reports as the case's timeout or cancellation, so the hook does not report it again, while it still reports any other late failure, even one with the same message. Further regression cases enter a probe case and a lifecycle test after their simulated Vitest case was aborted, abort a lifecycle test's own case while its fake CLI runs, and abort a lifecycle test's case while its body awaits before its probe case. The 5 s default timeout and the long-path, collision and creation-fault assertions are unchanged. On Windows the adapter can try to remove its probe directory before a killed fake CLI has released it as its working directory; the adapter then keeps its typed failure and leaves that disposable directory, which the case removes once the process has exited.
+
 Domain adversarial probes run untrusted expressions in disposable native Node processes. Their shared TypeScript source loader uses `node:module.register`, available on the verified Node 22.14 baseline, and requires no prior build. Heap caps, external watchdogs, evaluator deadlines and rejection assertions remain enforced; the loader does not patch the evaluated component.
 
 Historical conversion tests, their frozen `V2*`/`V3*` contracts and the offline format-conversion acceptance were retired on 2026-10-18 with the converters ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)); the explicit reset is checked end to end by `pnpm test:reset` after `pnpm build`. `pnpm test:upgrade` now checks only ordinary current-format schema/data migrations and startup preservation; it does not load or convert older formats.
@@ -164,13 +202,15 @@ The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's man
 
 ## CI gates (Decided)
 
-`.github/workflows/ci.yml` runs three jobs on pushes to `main` and pull requests; a failure in any job fails the workflow. Jobs run independently; the steps below describe their execution order within each job.
+`.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
 
-The `gates` job runs:
+The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
+
+The `repository-checks` job (**Repository checks**, 30-minute job budget) runs:
 
 1. Install with a frozen lockfile.
 2. Build every package and app (`pnpm build`).
-3. Reset, recovery, wait restart, prompt restart, webhook retry and current-format migration acceptance (`pnpm test:reset`, `pnpm test:recovery-process`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
+3. Reset, recovery, Chat restart, wait restart, prompt restart, webhook retry and current-format migration acceptance (`pnpm test:reset`, `pnpm test:recovery-process`, `pnpm test:chat-restart`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
 4. Typecheck every TypeScript package, test files included (`pnpm typecheck`; `tooling` is JavaScript and is covered by lint and its coverage gate).
 5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
 6. Declared workspace layer rules (`pnpm check:layers`).
@@ -178,11 +218,39 @@ The `gates` job runs:
 8. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
 9. dependency-cruiser: dependency rules and no circular imports (`pnpm check:deps`).
 10. Shipped templates and deliberate-invalid refusal (`pnpm check:templates`).
-11. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`).
-12. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
-13. Generated reference docs are current (`pnpm check:docs`).
-14. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
-15. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`). An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
+11. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
+12. Generated reference docs are current (`pnpm check:docs`).
+13. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+14. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`). An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
+
+A failing step stops the job and GitHub records the later steps as skipped. A failure therefore leaves the rest of that job unreported, never passed.
+
+The `coverage` job (**Coverage**, 30-minute job budget) runs:
+
+1. Install with a frozen lockfile.
+2. Build every package and app (`pnpm build`), the same full build as Repository checks, so every suite sees the original built inputs.
+3. Install Chromium for the tooling browser measurements (`pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium`).
+4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`). The step has a 25-minute cap inside the job budget.
+5. Upload the package `coverage-summary.json` files as the `coverage` artifact after every outcome (a warning when none exist), and write the coverage step's outcome and the number of retained summaries to the job summary. Summaries from a failed, cancelled or timed-out step are partial and never establish a passing gate.
+
+The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.
+
+The `gates` job (**Gates**, 2 minutes) needs both jobs and runs with `always()`, so it is evaluated even when either job fails, is skipped or is cancelled. It checks out nothing, holds no token permissions, writes both results to its log and job summary, and succeeds only when both results are `success`. Any failed, cancelled, skipped or missing result fails it. It is never skippable, because a skipped job would satisfy a branch rule that requires it. A run cancelled because a newer commit superseded it therefore ends with a non-green Gates. The workflow keeps `Gates` as the one stable status context for such a rule. A read-back of `main` on 2026-11-17 found no branch protection and no rulesets, so no platform-required check is configured. Read individual command results from the Repository checks and Coverage jobs.
+
+Budgets come from the retained #485, #487, #490 and #501 logs (summarized in ADR-0084). The 30-minute lane budgets and the 25-minute coverage cap are this change's architecture choice, made from those measurements; they are not an owner requirement. The slowest coverage step that emitted every group took 20m22s. Two 30-minute deadline attempts were cut off at 20m08s and 20m16s, with tooling and both plugin groups still outstanding; tooling alone took 99 to 133 seconds in comparable runs. On those slow runners the 25-minute cap therefore leaves about 2.5 minutes, not the 4.6 minutes it leaves over the slowest complete run. A coverage run past the cap fails Coverage, and therefore Gates; its partial reports are still uploaded. Measured setup before coverage took 1 to 1.5 minutes. Exhausting a whole job budget, or losing the runner, can still prevent the upload.
+
+The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds and runs `pnpm test:windows-launcher` with its unchanged assertions, timeouts, TAP output and stdout records. It used to upload `.tmp/windows-launcher-*/`, which never produced an archive. The uploader's documented default excludes hidden paths, including everything below a dot-directory such as `.tmp`. The fixture trees also hold stores, keys, shortcuts, binaries, hard links and junctions to the checkout, none of which may be exported. Bounded typed evidence replaces them (#496):
+
+- **Prepare.** After the build step, `node tooling/scripts/windows-launcher-evidence.mjs init` creates a fresh, non-hidden `windows-launcher-evidence-XXXXXX` directory directly below the runner temp folder, outside the checkout and every fixture. It needs only the checkout and Node, so it runs whenever Node setup succeeded and the run is not cancelled, including after a failed install or build, which are then recorded as not run. It writes `manifest.json`, which binds the repository, workflow reference, job key, run ID and attempt, event, ref and SHA, and the event head and base. It also binds the checked-out commit, its tree and its parents read from the commit header, so a shallow merge checkout can be compared with the event, plus the runner image and the Node version. Missing or malformed values are recorded as null and listed under `unavailable` (the event base only for a pull request). A preparation failure fails the job but cannot skip install, build or the native command: the native step runs after every successful build, then receives no evidence directory, and nothing is finalized or uploaded.
+- **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix.
+- **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra, invalid or mutually inconsistent fields become `rejected` records. So does a second statement of a once-per-run fact (each test and subtest start and end, each link kind's alias outcome, each alias round and each contention trial), and any of the recorder's own lifecycle or fixture-state types written through the public API.
+- **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
+- **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
+- **Finalize.** After the native step, on every outcome of a successfully prepared directory, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. The manifest must be exactly the bytes `init` wrote: it is rebuilt from its validated values, the fixed limits and file names, and the fields derived from them (the `unavailable` list and the checkout comparisons), then compared byte for byte, so an unknown or repeated field at any depth, a byte-order mark or other formatting is refused before any path is published. Observation bytes must be the recorder's canonical serialization without a byte-order mark. The stream must start with its one `recorder-open`, hold at most one `overflow` record and at most one final `recorder-closed` record whose counts match the stream, and state each once-per-run fact once. Any other byte or contradiction rejects the file. These checks validate shape and consistency; they do not authenticate files that a hostile runner could write. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
+- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3; and a final state for every fixture. Each contention trial needs its totals, a distinct result for every contender with the same seeded token and no structured filesystem or cleanup failures, exactly one acquired owner with expected refusals from the rest, a live matching owner PID/token readback with the seeded marker absent, and final clean release, absent main lock and guard, zero staging entries and intact unrelated bytes. Totals alone cannot complete a trial. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
+- **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
+
+Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
 
 The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0 --workers=1` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job, and under `CI` a focused (`.only`) test fails the run instead of silently skipping the rest of the suite. The functional step has a 60-minute timeout inside the 75-minute job budget. The expanded serial suite took 45m32s in the Windows candidate run; the step budget leaves about 14 minutes beyond that measurement, with another 15 minutes for setup/build and evidence upload outside the test step. These are whole-job budgets; individual test and performance limits stay unchanged. On Ubuntu the Browser job took 20m47s, its test step 19m04s, for 420 passed tests and the one paid-provider skip (CI run 40184348129, 2026-10-25). A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
 
@@ -223,6 +291,8 @@ The `template-image` job builds the distributed container and checks installed t
 Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
 
 `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
+
+The reference generator, migration check and performance summary CLI also run when invoked directly with Node from a checkout symlink or Windows junction. Tooling regression tests exercise entry dispatch through a checkout alias and verify that importing each module leaves the command idle.
 
 Storage readiness tests cover the current-format store guard (`store-format.test.ts`, `readiness.test.ts`, `fresh-initialization.test.ts`). Before any write, a store must carry the complete format-4 marker, the SQL-derived structure of the format baseline `0013_trigger_configuration`, a timestamp-ordered prefix of the shipped ledger containing that baseline, consistent webhook signing and owner-default data and strict current definitions (with one exception: a definition whose only departure from the contract is a retired exit `event` destination passes the store guard, because that is ADR-0044's per-loop `LOOP_UPGRADE_REQUIRED` condition, not store damage); anything else is refused with `STORE_UNSUPPORTED`, naming what was found, and no stored data is changed: the database and its WAL are untouched, though SQLite may rewrite the `-shm` shared-memory index while reading. Migrations after the baseline apply normally; afterwards the full head catalogue and exact timestamp list are required. Tests cover old markers, missing or malformed markers, unfinished markers, damaged structure and ledgers, historical applied SQL hashes and a head ledger with missing additive structure after a no-op migration. Definitions are parsed once only when the preflight database is covered by the data-directory lock; external database URLs are reparsed. The explicit reset has real-filesystem and real-SQLite tests in `apps/api/src/reset/` and the built-binary check `pnpm test:reset`.
 
@@ -329,9 +399,22 @@ Finding fixed while measuring: libsql's local client does its work in native cod
 `apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
 `test` and `test:coverage` task dependencies. Direct package test commands bypass
 Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
-Each fixture owns a temporary `gg-api-process-*` directory and a free loopback port
-from 5600 to 5699, clears inherited `GG_*` configuration, and creates its API key
-through the binary. CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
+Each fixture owns a temporary `gg-api-process-*` directory, clears inherited `GG_*`
+configuration, and creates its API key through the binary. API Vitest workers
+reserve loopback ports atomically in a temporary directory shared by the run (#407).
+The reservation lasts through startup, restarts and child or listener cleanup.
+Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough for
+the fixtures active at the same time. The default is 5600 to 5699, with 5760 to 5769
+for the dedicated shutdown process and startup suites. An invalid or exhausted
+range fails with the range in the error. TCP bind probes check IPv4 loopback and,
+on Windows and macOS, also check IPv4 and available dual-stack wildcard bindings
+because overlapping addresses can bind the same port on those platforms.
+Probe listeners close before startup. Reservations coordinate fixtures drawing from that range
+in the same Vitest run. Each port records successive claims in separate
+directories that stay until the run closes. An unfinished claim stays reserved
+for that run, and the Vitest parent removes the reservation directory when
+its workers have closed. Give simultaneous test invocations disjoint ranges.
+CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
 refusal, occupied-port cleanup and Linux native signal shutdown are distinct
 evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
 supplies a separate real post-container route-registration fault on POSIX.

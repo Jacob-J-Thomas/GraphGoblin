@@ -1,0 +1,1156 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { LoopDefinitionInput, RunEvent, WorkingDirectorySpec } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { ExpressionError, TemplateError } from '@graphgoblin/domain';
+import {
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  fakeUlid,
+  kitchenSinkLoop,
+  minimalLoop,
+  samplePin,
+} from '@graphgoblin/contracts/testing';
+import {
+  EngineRequestError,
+  RunManager,
+  attemptFor,
+  countEntries,
+  findPendingWake,
+} from './run-manager.js';
+import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+import { FakeHarness, createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
+import { createInitialThread } from './thread.js';
+import { INTERNAL_FAILURE_MESSAGE } from './failure-publication.js';
+
+function barrier() {
+  let resolve = () => {};
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+describe('working directory preparation', () => {
+  it.each([
+    {
+      template: 'private-parse-marker\n{% invalid_private %}',
+      cause: 'The template could not be parsed at line 2, column 1. Check its Liquid syntax.',
+    },
+    {
+      template: 'private-render-marker\n{% include "private-path-marker" %}',
+      cause:
+        'The template could not be rendered at line 2, column 1. Check its filters and input values.',
+    },
+    {
+      template: '\t {{vars.missing}}\r\n',
+      cause: 'The template rendered to an empty path. Supply a nonempty directory.',
+    },
+  ])(
+    'rejects a local workspace template before resolution: $cause',
+    async ({ template, cause }) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop('invalid workspace template', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'unused', cwd: 'workspace' },
+      });
+      loop.settings = { workingDirectory: { kind: 'template', template } };
+      const run = await engine.runToIdle(engine.publish(loop).loopId);
+      expect(run.status).toBe('failed');
+      expect(run.failure).toEqual({
+        code: 'TEMPLATE_ERROR',
+        nodeId: 'script',
+        resumable: false,
+        message: `Working directory template failed. ${cause}`,
+        details: {
+          boundary: 'settings.workingDirectory.template',
+          cause: { code: 'TEMPLATE_ERROR', message: cause },
+        },
+      });
+      const failed = engine.events(run.id).find((event) => event.type === 'run.failed');
+      expect(failed).toMatchObject({ failure: run.failure });
+      expect(JSON.stringify([run.failure, failed])).not.toContain('private-');
+      await expect(engine.manager.resume(run.id)).rejects.toMatchObject({
+        code: 'FAILURE_NOT_RESUMABLE',
+      });
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.workspace.files.size).toBe(0);
+      expect(engine.ports.scripts.calls).toEqual([]);
+      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
+      engine.manager.stop();
+    },
+  );
+
+  it.each<WorkingDirectorySpec>([
+    { kind: 'fixed', path: 'relative/workspace' },
+    { kind: 'temp' },
+    { kind: 'template', template: '\t {{trigger.payload.path}}\r\n' },
+  ])(
+    'passes only a resolved $kind spec and caches it across nodes and file delivery',
+    async (spec) => {
+      const engine = await createTestEngine();
+      const loop = singleNodeLoop(
+        'workspace cache',
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'unused', cwd: 'workspace' },
+        },
+        {
+          returns: '"returned bytes"',
+          destinations: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+        },
+      );
+      loop.settings = { workingDirectory: spec };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, {
+        path: 'relative/workspace',
+      });
+      const directory = spec.kind === 'temp' ? `/tmp/graphgoblin/${run.id}` : 'relative/workspace';
+      expect(run.status).toBe('succeeded');
+      expect(engine.ports.workspace.resolved).toEqual([
+        {
+          spec: spec.kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: directory },
+          runId: run.id,
+        },
+      ]);
+      expect(engine.ports.scripts.calls).toHaveLength(1);
+      expect(engine.ports.scripts.calls[0]?.cwd).toBe(directory);
+      expect(engine.ports.workspace.files.get(`${directory}/result.txt`)).toBe('returned bytes');
+      expect(engine.events(run.id)).toContainEqual(
+        expect.objectContaining({ type: 'return.delivered', target: `${directory}/result.txt` }),
+      );
+      engine.manager.stop();
+    },
+  );
+
+  it.each([
+    new TemplateError('private-external-template', {
+      boundary: 'settings.workingDirectory.template',
+    }),
+    new ExpressionError('private-external-expression'),
+    Object.assign(new Error('private-external-lookalike'), {
+      name: 'TemplateError',
+      code: 'TEMPLATE_ERROR',
+    }),
+    { name: 'TemplateError', code: 'TEMPLATE_ERROR', message: 'private-external-object' },
+  ])(
+    'keeps a workspace port rejection external and retries resolution after repair (%#)',
+    async (fault) => {
+      const engine = await createTestEngine();
+      const resolve = vi.spyOn(engine.ports.workspace, 'resolve').mockRejectedValueOnce(fault);
+      const loop = singleNodeLoop('external workspace failure', {
+        id: 'script',
+        kind: 'script',
+        label: 'Script',
+        config: { command: 'unused', cwd: 'workspace' },
+      });
+      loop.settings = {
+        workingDirectory: { kind: 'template', template: ' {{trigger.payload.path}} ' },
+      };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, { path: '/repaired' });
+      expect(run.failure).toEqual({
+        code: 'INTERNAL_ERROR',
+        nodeId: 'script',
+        message: INTERNAL_FAILURE_MESSAGE,
+        resumable: true,
+      });
+      expect(engine.events(run.id)).toContainEqual(
+        expect.objectContaining({ type: 'run.failed', failure: run.failure }),
+      );
+      expect(engine.ports.scripts.calls).toEqual([]);
+      expect(engine.eventTypes(run.id)).not.toContain('script.dispatched');
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(JSON.stringify(run.failure)).not.toContain('private-external');
+      await engine.manager.resume(run.id);
+      expect((await engine.settle(run.id)).status).toBe('succeeded');
+      expect(resolve).toHaveBeenCalledTimes(2);
+      expect(resolve).toHaveBeenNthCalledWith(2, { kind: 'fixed', path: '/repaired' }, run.id);
+      expect(engine.ports.workspace.resolved).toEqual([
+        { spec: { kind: 'fixed', path: '/repaired' }, runId: run.id },
+      ]);
+      expect(engine.ports.scripts.calls).toHaveLength(1);
+      engine.manager.stop();
+    },
+  );
+
+  it('reuses a successful resolution when the script later fails and resumes', async () => {
+    const engine = await createTestEngine();
+    const resolve = vi.spyOn(engine.ports.workspace, 'resolve');
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 1,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+      state: 'completed',
+      timedOut: false,
+    }));
+    const loop = singleNodeLoop('cache survives later failure', {
+      id: 'script',
+      kind: 'script',
+      label: 'Script',
+      config: { command: 'unused', cwd: 'workspace' },
+    });
+    loop.settings = { workingDirectory: { kind: 'template', template: ' /cached ' } };
+    const run = await engine.runToIdle(engine.publish(loop).loopId);
+    expect(run.failure).toMatchObject({ code: 'SCRIPT_EXIT_CODE', resumable: true });
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+      state: 'completed',
+      timedOut: false,
+    }));
+    await engine.manager.resume(run.id);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
+    expect(resolve).toHaveBeenCalledExactlyOnceWith({ kind: 'fixed', path: '/cached' }, run.id);
+    expect(engine.ports.scripts.calls.map((call) => call.cwd)).toEqual(['/cached', '/cached']);
+    engine.manager.stop();
+  });
+
+  it.each(['\t\n', '{% include "private-receipt-marker" %}'])(
+    'keeps a local file-return workspace failure inside the terminal receipt catch (%#)',
+    async (template) => {
+      const engine = await createTestEngine();
+      const loop = minimalLoop();
+      loop.settings = { workingDirectory: { kind: 'template', template } };
+      loop.nodes[1] = {
+        id: 'done',
+        kind: 'exit',
+        label: 'Done',
+        config: { returns: '"file return payload"' },
+      };
+      const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
+        returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+      });
+      expect(run.status).toBe('succeeded');
+      expect(run.failure).toBeUndefined();
+      const failed = engine.events(run.id).filter((event) => event.type === 'return.failed');
+      expect(failed).toHaveLength(1);
+      expect(failed[0]).toMatchObject({
+        error: expect.stringMatching(/^Working directory template failed\./),
+      });
+      expect(JSON.stringify(failed)).not.toContain('private-receipt-marker');
+      expect(engine.eventTypes(run.id)).not.toContain('run.failed');
+      expect(engine.ports.workspace.resolved).toEqual([]);
+      expect(engine.ports.workspace.files.size).toBe(0);
+      engine.manager.stop();
+    },
+  );
+
+  it('retains the external exception text for a terminal file-return failure', async () => {
+    const engine = await createTestEngine();
+    const resolve = vi
+      .spyOn(engine.ports.workspace, 'resolve')
+      .mockRejectedValue(new TemplateError('private-external-receipt'));
+    const loop = minimalLoop();
+    loop.nodes[1] = {
+      id: 'done',
+      kind: 'exit',
+      label: 'Done',
+      config: { returns: '"file return payload"' },
+    };
+    const run = await engine.runToIdle(engine.publish(loop).loopId, null, {
+      returnDefaults: [{ kind: 'file', path: 'result.txt', format: 'text' }],
+    });
+    expect(run.status).toBe('succeeded');
+    expect(run.failure).toBeUndefined();
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(engine.events(run.id)).toContainEqual(
+      expect.objectContaining({ type: 'return.failed', error: 'private-external-receipt' }),
+    );
+    expect(engine.eventTypes(run.id)).not.toContain('run.failed');
+    expect(engine.ports.workspace.files.size).toBe(0);
+    engine.manager.stop();
+  });
+});
+
+describe('a minimal run', () => {
+  it.each(['DECIDER_HTTP_ERROR', 'DECIDER_private-marker'])(
+    'guards raw coded exceptions at the manager boundary (%s)',
+    async (code) => {
+      const engine = await createTestEngine();
+      // Test the manager's raw-provider guard before dispatch. Script runner rejections after
+      // dispatch now have their own conservative SCRIPT_OUTCOME_UNCERTAIN disposition (#321).
+      engine.ports.workspace.resolve = () =>
+        Promise.reject(
+          Object.assign(new Error('private-marker'), { code, name: 'private-marker', status: 400 }),
+        );
+      const version = engine.publish(
+        singleNodeLoop('raw-provider-error', {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'unused', cwd: 'workspace' },
+        }),
+      );
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        message: 'Decision provider request failed',
+        details: { code: code === 'DECIDER_HTTP_ERROR' ? code : 'DECIDER_ERROR' },
+      });
+      expect(JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines])).not.toContain(
+        'private-marker',
+      );
+      expect(engine.ports.logger.lines).toContainEqual(
+        expect.objectContaining({
+          level: 'warn',
+          obj: expect.objectContaining({ name: 'Error', status: 400 }),
+        }),
+      );
+    },
+  );
+  it('runs trigger to exit and records the expected events', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    const run = await engine.runToIdle(version.loopId, { hello: 'world' });
+
+    expect(run.status).toBe('succeeded');
+    expect(run.outcome).toBe('success');
+    expect(run.currentNodeId).toBeUndefined();
+    expect(run.finishedAt).toBeDefined();
+    expect(engine.eventTypes(run.id)).toEqual([
+      'run.queued',
+      'run.started',
+      'node.started',
+      'node.finished',
+      'node.started',
+      'exit.evaluated',
+      'node.finished',
+      'run.finished',
+    ]);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.outputs['start']?.value).toEqual({ hello: 'world' });
+    expect(thread?.lastOutput?.value).toEqual({ hello: 'world' });
+    expect(thread?.counters.nodeVisits).toEqual({ start: 1, done: 1 });
+    expect(thread?.invocation.trigger.payload).toEqual({ hello: 'world' });
+  });
+
+  it('defaults a null payload, picks the manual trigger, and validates trigger input', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Start',
+      config: { type: 'manual', inputSchema: { type: 'object', required: ['topic'] } },
+    };
+    const version = engine.publish(loop);
+    await expect(engine.start(version.loopId)).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+    const run = await engine.runToIdle(version.loopId, { topic: 'x' });
+    expect(run.status).toBe('succeeded');
+  });
+
+  it('rejects unknown loops, drafts, and unknown triggers', async () => {
+    const engine = await createTestEngine();
+    await expect(engine.start(FIXTURE_IDS.loop)).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+    const draft = engine.publish(minimalLoop(), {
+      status: 'draft',
+      loopId: engine.loopId('draft'),
+    });
+    await expect(engine.start(draft.loopId)).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+    await expect(engine.start(draft.loopId, null, { versionId: draft.id })).rejects.toMatchObject({
+      code: 'VERSION_NOT_PUBLISHED',
+    });
+    const allowed = await engine.runToIdle(draft.loopId, null, {
+      versionId: draft.id,
+      allowDraft: true,
+    });
+    expect(allowed.status).toBe('succeeded');
+    const published = engine.publish(minimalLoop());
+    await expect(
+      engine.start(published.loopId, null, { triggerNodeId: 'nope' }),
+    ).rejects.toMatchObject({ code: 'TRIGGER_NOT_FOUND' });
+    await expect(
+      engine.start(published.loopId, null, { versionId: draft.id }),
+    ).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+  });
+
+  it('uses the first trigger when there is no manual one and the explicit one when named', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Cron',
+      config: { type: 'cron', expression: '* * * * *' },
+    };
+    const version = engine.publish(loop);
+    const run = await engine.runToIdle(version.loopId, null, { source: 'cron' });
+    expect(run.status).toBe('succeeded');
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.invocation.trigger.kind).toBe('cron');
+    const explicit = await engine.runToIdle(version.loopId, null, {
+      triggerNodeId: 'start',
+      triggerKind: 'webhook',
+    });
+    const explicitThread = await engine.manager.getThread(explicit.id);
+    expect(explicitThread?.invocation.trigger.kind).toBe('webhook');
+  });
+});
+
+describe('run control', () => {
+  it('keeps timers running during a fast graph cycle, so the cycle can be cancelled', async () => {
+    const engine = await createTestEngine();
+    const loop = singleNodeLoop('cycle', {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        kind: 'expression',
+        jsonata: '"again"',
+        routes: [
+          { id: 'again', label: 'again', criteria: 'loop' },
+          { id: 'stop', label: 'stop', criteria: 'finish' },
+        ].map(({ id, label }) => ({ id, label })),
+      },
+    });
+    loop.edges.push(
+      { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
+      { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
+    );
+    // A high ceiling keeps the visit cap out of the way: this test is about yielding.
+    loop.settings = { maxNodeVisits: 10_000 };
+    const version = engine.publish(loop);
+    const run = await engine.start(version.loopId);
+    // A timer firing at all proves the executor yields; before the fix this await never returned.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(engine.eventTypes(run.id).filter((t) => t === 'decision.made').length).toBeGreaterThan(
+      1,
+    );
+    await engine.manager.cancel(run.id);
+    expect((await engine.settle(run.id)).status).toBe('cancelled');
+  });
+
+  it('stops before the next node when a pause lands during the yield between nodes', async () => {
+    const engine = await createTestEngine();
+    const loop = singleNodeLoop('pause-yield', {
+      id: 'note',
+      kind: 'mutate',
+      label: 'Note',
+      config: { operations: [{ op: 'append-message', role: 'note', content: 'hi' }] },
+    });
+    const version = engine.publish(loop);
+    const store = engine.ports.events;
+    const original = store.append.bind(store);
+    let pausing: Promise<unknown> | undefined;
+    store.append = async (runId, drafts) => {
+      const appended = await original(runId, drafts);
+      // The trigger just finished; the executor is about to yield before the next node.
+      if (!pausing && drafts.some((d) => d.type === 'node.finished' && d.nodeId === 'start')) {
+        pausing = new Promise((resolve) => setTimeout(resolve, 0)).then(() =>
+          engine.manager.pause(runId),
+        );
+      }
+      return appended;
+    };
+    const run = await engine.start(version.loopId);
+    await engine.manager.waitForIdle();
+    await pausing;
+    const types = engine.eventTypes(run.id);
+    const pausedAt = types.indexOf('run.paused');
+    expect(pausedAt).toBeGreaterThan(0);
+    expect(types.slice(pausedAt)).not.toContain('node.started');
+    expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
+    // Resuming continues from the next node.
+    await engine.manager.resume(run.id);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
+  });
+
+  it('cancels a queued run before it starts', async () => {
+    const engine = await createTestEngine({ maxConcurrentRuns: 1 });
+    const version = engine.publish(
+      singleNodeLoop('slow', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'signal', name: 'go' },
+      }),
+    );
+    const first = await engine.start(version.loopId);
+    const second = await engine.start(version.loopId);
+    await engine.manager.cancel(second.id, { kind: 'user', id: 'u' });
+    const cancelled = await engine.ports.runs.get(second.id);
+    expect(cancelled?.status).toBe('cancelled');
+    expect(engine.eventTypes(second.id)).toEqual([
+      'run.queued',
+      'run.cancel_requested',
+      'run.cancelled',
+    ]);
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(first.id))?.status).toBe('waiting');
+    await expect(engine.manager.cancel(second.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+  });
+
+  it('cancels a waiting run and is idempotent on repeated requests', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('w', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'input', prompt: 'ok?' },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('waiting');
+    const once = await engine.manager.cancel(run.id);
+    expect(once.status).toBe('cancelled');
+    expect(engine.eventTypes(run.id)).toContain('run.cancelled');
+  });
+
+  it('pauses a queued run and resumes it later', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(kitchenSinkLoopWithoutHeavyNodes());
+    const run = await engine.start(version.loopId);
+    const paused = await engine.manager.pause(run.id, { kind: 'user', id: 'u' });
+    expect(paused.status).toBe('paused');
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
+    await expect(engine.manager.pause(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await engine.manager.resume(run.id, { kind: 'user', id: 'u' });
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('succeeded');
+    expect(engine.eventTypes(run.id)).toEqual(
+      expect.arrayContaining(['run.paused', 'run.resumed', 'run.started']),
+    );
+    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'RUN_FINISHED' });
+  });
+
+  it('pauses a running run after the current node and resumes from the next one', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([{ finalText: 'slow', delayMs: 150 }]);
+    const version = engine.publish(
+      singleNodeLoop('slow', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'I',
+        config: { prompt: { template: 'go' } },
+      }),
+    );
+    const run = await engine.start(version.loopId);
+    await waitFor(() => engine.eventTypes(run.id).includes('harness.session'));
+    await engine.manager.pause(run.id, { kind: 'user', id: 'u' });
+    await engine.manager.waitForIdle();
+    const afterPause = await engine.ports.runs.get(run.id);
+    expect(afterPause?.status).toBe('paused');
+    expect(afterPause?.currentNodeId).toBe('done');
+    expect(
+      engine
+        .events(run.id)
+        .filter((e) => e.type === 'node.finished')
+        .map((e) => (e.type === 'node.finished' ? e.nodeId : '')),
+    ).toEqual(['start', 'infer']);
+    await engine.manager.resume(run.id, { kind: 'user', id: 'u' });
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('succeeded');
+    expect(engine.ports.harness.started).toHaveLength(1);
+  });
+
+  it('pauses a waiting run; on resume it waits again with its deadline, and a missed timer fires', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('w', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'duration', seconds: 60 },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('waiting');
+    expect(engine.ports.timers.scheduled).toHaveLength(1);
+    await engine.manager.pause(run.id);
+    engine.ports.clock.advance(61_000);
+    // The timer fires while paused: ignored, and consumed.
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
+    // Resume goes back to waiting on the same wait (no new run.waiting) and re-arms its timer.
+    const resumed = await engine.manager.resume(run.id);
+    expect(resumed).toMatchObject({ status: 'waiting', waiting: { until: run.waiting?.until } });
+    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(1);
+    expect(engine.ports.timers.scheduled).toHaveLength(1);
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
+  });
+
+  it('reports unknown runs', async () => {
+    const engine = await createTestEngine();
+    await expect(engine.manager.cancel(FIXTURE_IDS.run)).rejects.toBeInstanceOf(EngineRequestError);
+    await expect(
+      engine.manager.provideInput(
+        FIXTURE_IDS.run,
+        (await engine.manager.getRun(FIXTURE_IDS.run))?.waiting?.waitId ?? 'unknown',
+        1,
+      ),
+    ).rejects.toMatchObject({
+      code: 'RUN_NOT_FOUND',
+    });
+    expect(await engine.manager.getRun(FIXTURE_IDS.run)).toBeUndefined();
+    expect(await engine.manager.getThread(FIXTURE_IDS.run)).toBeUndefined();
+  });
+
+  it('limits concurrency to the configured number of workers', async () => {
+    const engine = await createTestEngine({ maxConcurrentRuns: 2 });
+    const started = Array.from({ length: 3 }, () => barrier());
+    const releases: (() => void)[] = [];
+    let active = 0,
+      maximum = 0;
+    class BarrierHarness extends FakeHarness {
+      override start(...args: Parameters<FakeHarness['start']>): ReturnType<FakeHarness['start']> {
+        const session = super.start(...args);
+        const index = releases.length;
+        active++;
+        maximum = Math.max(maximum, active);
+        const gate = barrier();
+        let released = false;
+        releases.push(() => {
+          if (released) return;
+          released = true;
+          active--;
+          engine.ports.clock.advance(1000);
+          gate.resolve();
+        });
+        started[index]!.resolve();
+        return { ...session, result: gate.promise.then(() => session.result) };
+      }
+    }
+    engine.ports.harnesses.codex = new BarrierHarness();
+    const version = engine.publish(
+      singleNodeLoop('inf', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'I',
+        config: { prompt: { template: 'go' } },
+      }),
+    );
+    const a = await engine.start(version.loopId);
+    const b = await engine.start(version.loopId);
+    await Promise.all([started[0]!.promise, started[1]!.promise]);
+    const order: string[] = [];
+    const unsubscribeA = engine.ports.events.subscribe(a.id, (event) => {
+      if (event.type === 'run.finished') order.push('finished A');
+    });
+    const c = await engine.start(version.loopId);
+    const unsubscribeC = engine.ports.events.subscribe(c.id, (event) => {
+      if (event.type === 'run.started') order.push('started C');
+    });
+    // No elapsed-time sleep: allow this trigger -> inference graph's executor yields
+    // and fake-port microtasks to drain while both harness results remain held.
+    for (let phase = 0; phase < 4; phase++)
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    const beforeRelease = {
+      active,
+      starts: releases.length,
+      status: (await engine.ports.runs.get(c.id))?.status,
+      events: [...engine.eventTypes(c.id)],
+    };
+    try {
+      releases[0]!();
+      await started[2]!.promise;
+      // Release every owned barrier before asserting, including a wrongly early third turn.
+      for (const release of releases) release();
+      await engine.manager.waitForIdle();
+    } finally {
+      for (const release of releases) release();
+      engine.manager.stop();
+      unsubscribeA();
+      unsubscribeC();
+    }
+    expect(beforeRelease).toMatchObject({ active: 2, starts: 2, status: 'queued' });
+    expect(beforeRelease.events).not.toContain('run.started');
+    expect(order).toEqual(['finished A', 'started C']);
+    expect(active).toBe(0);
+    expect(maximum).toBe(2);
+    for (const run of [a, b, c]) {
+      expect((await engine.ports.runs.get(run.id))?.status).toBe('succeeded');
+      expect(engine.eventTypes(run.id).filter((type) => type === 'run.finished')).toHaveLength(1);
+    }
+  });
+});
+
+describe('failure and recovery', () => {
+  it('fails on a missing edge as an internal error and can be inspected', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.edges = [];
+    const version = engine.publish(loop);
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure?.code).toBe('INTERNAL_ERROR');
+    expect(run.failure?.message).toMatch(/no edge/);
+  });
+
+  it('resumes a failed run from the failed node', async () => {
+    const engine = await createTestEngine();
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'boom',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 4,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    const version = engine.publish(
+      singleNodeLoop('s', { id: 'script', kind: 'script', label: 'S', config: { command: 'x' } }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure).toMatchObject({
+      code: 'SCRIPT_EXIT_CODE',
+      nodeId: 'script',
+      resumable: true,
+    });
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '"fixed"',
+      stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      state: 'completed' as const,
+      timedOut: false,
+    }));
+    await engine.manager.resume(run.id);
+    const resumed = await engine.settle(run.id);
+    expect(resumed.status).toBe('succeeded');
+    expect(resumed.failure).toBeUndefined();
+    const starts = engine
+      .events(run.id)
+      .filter((e) => e.type === 'node.started' && e.nodeId === 'script');
+    expect(starts.map((e) => (e.type === 'node.started' ? e.attempt : 0))).toEqual([1, 2]);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.lastOutput?.value).toBe('fixed');
+  });
+
+  it('recovers runs left running by a previous process and resumes harness sessions', async () => {
+    const ports = createFakePorts();
+    const loopId = fakeUlid('recover-loop');
+    const versionId = fakeUlid('recover-version');
+    const runId = fakeUlid('recover-run');
+    const invocationId = fakeUlid('recover-invocation');
+    const def = singleNodeLoop('inf', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'I',
+      config: {
+        prompt: { template: 'go' },
+        model: 'gpt-6-luna',
+        effort: 'high',
+        harnessOptions: { sandbox: 'read-only', approval: 'never', webSearch: true },
+      },
+    });
+    ports.loops.publish(versionId, loopId, 1, LoopDefinitionSchema.parse(def));
+    const thread = createInitialThread({
+      runId,
+      loopId,
+      versionId,
+      invocation: {
+        id: invocationId,
+        source: 'manual.api',
+        trigger: { nodeId: 'start', kind: 'manual', payload: null, receivedAt: FIXTURE_TS },
+      },
+    });
+    await ports.runs.create(
+      {
+        id: runId,
+        ownerId: 'local',
+        loopId,
+        versionId,
+        pinned: samplePin(),
+        invocationId,
+        status: 'running',
+        currentNodeId: 'infer',
+        iteration: 1,
+        createdAt: FIXTURE_TS,
+        startedAt: FIXTURE_TS,
+        lastEventSeq: 0,
+      },
+      thread,
+    );
+    await ports.events.append(runId, [
+      { type: 'run.queued', versionId, pinned: samplePin() },
+      { type: 'run.started', attempt: 1 },
+      { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
+      { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
+      { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'h' },
+      {
+        type: 'harness.turn',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        harness: 'codex',
+        promptKind: 'authored',
+        prompt: 'go',
+      },
+      {
+        type: 'harness.session',
+        nodeId: 'infer',
+        harness: 'codex',
+        sessionId: 'left-behind',
+        mode: 'fresh',
+      },
+      {
+        type: 'harness.submission',
+        nodeId: 'infer',
+        visitId: runId + ':5',
+        turnId: fakeUlid('recover-turn'),
+        submission: 'delivery-uncertain',
+        marker: 'fake.accepted',
+      },
+    ]);
+    await ports.sessions.upsert({
+      runId,
+      nodeId: 'infer',
+      attempt: 1,
+      harness: 'codex',
+      sessionId: 'left-behind',
+      status: 'active',
+      updatedAt: FIXTURE_TS,
+    });
+    ports.harness.script([
+      { match: (r) => r.prompt.includes('interrupted'), finalText: 'resumed fine' },
+    ]);
+
+    const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+    await manager.start();
+    await manager.waitForIdle();
+
+    const run = await ports.runs.get(runId);
+    expect(run?.status).toBe('succeeded');
+    expect(ports.harness.resumed).toHaveLength(1);
+    expect(ports.harness.resumed[0]?.sessionId).toBe('left-behind');
+    // Crash recovery resumes with the node's own session settings, not harness defaults.
+    expect(ports.harness.resumed[0]?.request).toMatchObject({
+      model: 'gpt-6-luna',
+      effort: 'high',
+      options: { sandbox: 'read-only', approval: 'never', webSearch: true },
+    });
+    expect(ports.harness.resumed[0]?.request.workingDirectory).toEqual(expect.any(String));
+    const starts = ports.events.all(runId).filter((e) => e.type === 'run.started');
+    expect(starts.map((e) => (e.type === 'run.started' ? e.attempt : 0))).toEqual([1, 2]);
+    const final = await manager.getThread(runId);
+    expect(final?.messages.at(-1)?.content).toBe('resumed fine');
+    manager.stop();
+  });
+
+  it('completes pending cancellations at recovery and re-queues queued runs', async () => {
+    const ports = createFakePorts();
+    const version = ports.loops.publish(
+      fakeUlid('rq-version'),
+      fakeUlid('rq-loop'),
+      1,
+      LoopDefinitionSchema.parse(minimalLoop()),
+    );
+    const invocationId = fakeUlid('rq-invocation');
+    const queuedId = fakeUlid('rq-run-1');
+    const cancelledId = fakeUlid('rq-run-2');
+    const base = {
+      ownerId: 'local',
+      loopId: version.loopId,
+      versionId: version.id,
+      pinned: samplePin(),
+      invocationId,
+      iteration: 1,
+      createdAt: FIXTURE_TS,
+      lastEventSeq: 0,
+    } as const;
+    const invocation = {
+      id: invocationId,
+      source: 'manual.api' as const,
+      trigger: { nodeId: 'start', kind: 'manual' as const, payload: null, receivedAt: FIXTURE_TS },
+    };
+    await ports.runs.create(
+      { ...base, id: queuedId, status: 'queued' },
+      createInitialThread({
+        runId: queuedId,
+        loopId: version.loopId,
+        versionId: version.id,
+        invocation,
+      }),
+    );
+    await ports.runs.create(
+      {
+        ...base,
+        id: cancelledId,
+        status: 'waiting',
+        cancelRequestedAt: FIXTURE_TS,
+        waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'x', kind: 'input' },
+      },
+      createInitialThread({
+        runId: cancelledId,
+        loopId: version.loopId,
+        versionId: version.id,
+        invocation,
+      }),
+    );
+    const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+    await manager.start();
+    await manager.waitForIdle();
+    expect((await ports.runs.get(queuedId))?.status).toBe('succeeded');
+    expect((await ports.runs.get(cancelledId))?.status).toBe('cancelled');
+    manager.stop();
+  });
+
+  it('replays the thread from the log when the snapshot is missing', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    const run = await engine.runToIdle(version.loopId, { a: 1 });
+    engine.ports.runs.dropThreadSnapshot(run.id);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.outputs['done']).toBeUndefined();
+    expect(thread?.outputs['start']?.value).toEqual({ a: 1 });
+  });
+
+  it('fails cleanly when the loop version disappears', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    engine.manager.stop();
+    const run = await engine.start(version.loopId);
+    engine.ports.loops.versions.delete(version.id);
+    await engine.manager.start();
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('failed');
+    expect(done.failure?.message).toMatch(/not found/);
+  });
+});
+
+describe('event helpers', () => {
+  const base = { runId: FIXTURE_IDS.run, ts: FIXTURE_TS };
+  it('finds a pending wake only between waiting and the next finish', () => {
+    const events: RunEvent[] = [
+      { ...base, seq: 1, type: 'run.started', attempt: 1 },
+      {
+        ...base,
+        seq: 2,
+        type: 'node.started',
+        nodeId: 'w',
+        kind: 'wait',
+        attempt: 1,
+        configHash: 'h',
+      },
+      {
+        ...base,
+        seq: 3,
+        type: 'run.waiting',
+        nodeId: 'w',
+        wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
+      },
+    ];
+    expect(findPendingWake(events)).toBeUndefined();
+    events.push({
+      ...base,
+      seq: 4,
+      type: 'run.woken',
+      nodeId: 'w',
+      reason: 'input',
+      payload: { ok: true },
+    });
+    expect(findPendingWake(events)).toEqual({ reason: 'input', payload: { ok: true } });
+    events.push({
+      ...base,
+      seq: 5,
+      type: 'node.started',
+      nodeId: 'w',
+      kind: 'wait',
+      attempt: 2,
+      configHash: 'h',
+    });
+    expect(findPendingWake(events)).toEqual({ reason: 'input', payload: { ok: true } });
+    events.push({ ...base, seq: 6, type: 'node.finished', nodeId: 'w', patch: [], durationMs: 1 });
+    expect(findPendingWake(events)).toBeUndefined();
+    expect(
+      findPendingWake([{ ...base, seq: 1, type: 'run.woken', nodeId: 'w', reason: 'timer' }]),
+    ).toEqual({ reason: 'timer' });
+    expect(
+      findPendingWake([
+        {
+          ...base,
+          seq: 1,
+          type: 'run.queued',
+          versionId: FIXTURE_IDS.version,
+          pinned: samplePin(),
+        },
+      ]),
+    ).toBeUndefined();
+  });
+
+  it('counts attempts since the last finish of the node', () => {
+    const events: RunEvent[] = [
+      {
+        ...base,
+        seq: 1,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      },
+      { ...base, seq: 2, type: 'node.finished', nodeId: 'a', patch: [], durationMs: 1 },
+      {
+        ...base,
+        seq: 3,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      },
+      {
+        ...base,
+        seq: 4,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 2,
+        configHash: 'h',
+      },
+    ];
+    expect(attemptFor(events, 'a')).toBe(3);
+    expect(attemptFor(events, 'b')).toBe(1);
+  });
+});
+
+async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error('condition not met in time');
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
+/** The kitchen-sink fixture minus nodes that need external input, so a run completes on its own. */
+function kitchenSinkLoopWithoutHeavyNodes(): LoopDefinitionInput {
+  const loop = kitchenSinkLoop();
+  return {
+    ...loop,
+    nodes: loop.nodes
+      .filter((n) => ['start', 'prep', 'done'].includes(n.id))
+      .map((n) => (n.id === 'done' ? { ...n, config: {} } : n)),
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'prep' } },
+      { id: 'e3', from: { node: 'prep', port: 'out' }, to: { node: 'done' } },
+    ],
+  } as LoopDefinitionInput;
+}
+
+describe('the per-node visit cap (maxNodeVisits)', () => {
+  function selfRoutingLoop(maxNodeVisits: number, jsonata: string): LoopDefinitionInput {
+    const loop = singleNodeLoop('self-routing', {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        kind: 'expression',
+        jsonata: jsonata,
+        routes: [
+          { id: 'again', label: 'again', criteria: 'loop' },
+          { id: 'stop', label: 'stop', criteria: 'finish' },
+        ].map(({ id, label }) => ({ id, label })),
+      },
+    });
+    loop.edges.push(
+      { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
+      { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
+    );
+    loop.settings = { maxNodeVisits };
+    return loop;
+  }
+
+  it('fails a self-routing decision with MAX_NODE_VISITS naming the node', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(selfRoutingLoop(3, '"again"'));
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure).toMatchObject({
+      code: 'MAX_NODE_VISITS',
+      nodeId: 'pick',
+      resumable: false,
+      details: { maxNodeVisits: 3 },
+    });
+    expect(run.failure?.message).toContain('"pick"');
+    expect(run.failure?.message).toContain('maxNodeVisits of 3');
+    const events = await engine.ports.events.read(run.id);
+    expect(countEntries(events, 'pick')).toBe(3);
+    expect(events.filter((e) => e.type === 'decision.made')).toHaveLength(3);
+  });
+
+  it('lets a long but finite cycle finish when every node stays within the cap', async () => {
+    const engine = await createTestEngine();
+    // Routes "again" while fewer than 49 decisions were made: 50 visits of "pick" against a cap of 50.
+    const version = engine.publish(
+      selfRoutingLoop(50, 'counters.nodeVisits.pick < 50 ? "again" : "stop"'),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('succeeded');
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.counters.nodeVisits['pick']).toBe(50);
+  });
+
+  it('counts fresh entries only, not wakes or retries of the same visit', () => {
+    const base = { runId: FIXTURE_IDS.run, ts: FIXTURE_TS, kind: 'wait' as const, configHash: 'h' };
+    const events = [
+      { ...base, seq: 1, type: 'node.started', nodeId: 'w', attempt: 1 },
+      { ...base, seq: 2, type: 'node.started', nodeId: 'w', attempt: 2 },
+      { ...base, seq: 3, type: 'node.started', nodeId: 'other', attempt: 1 },
+      { ...base, seq: 4, type: 'run.started', attempt: 1 },
+    ] as unknown as RunEvent[];
+    expect(countEntries(events, 'w')).toBe(1);
+    expect(countEntries(events, 'other')).toBe(1);
+    expect(countEntries(events, 'missing')).toBe(0);
+  });
+});
+
+describe('the visit cap and re-entries of one visit', () => {
+  it('does not count wakes, pause and resume, or timer fires as visits', async () => {
+    const engine = await createTestEngine();
+    const input = singleNodeLoop('cap-input', {
+      id: 'wait',
+      kind: 'wait',
+      label: 'W',
+      config: { mode: 'input', prompt: 'ok?' },
+    });
+    input.settings = { maxNodeVisits: 1 };
+    const inputRun = await engine.runToIdle(engine.publish(input).loopId);
+    expect(inputRun.status).toBe('waiting');
+    await engine.manager.pause(inputRun.id);
+    await engine.manager.resume(inputRun.id);
+    await engine.manager.provideInput(
+      inputRun.id,
+      (await engine.manager.getRun(inputRun.id))?.waiting?.waitId ?? 'unknown',
+      { ok: true },
+    );
+    expect((await engine.settle(inputRun.id)).status).toBe('succeeded');
+
+    const timer = singleNodeLoop('cap-timer', {
+      id: 'wait',
+      kind: 'wait',
+      label: 'W',
+      config: { mode: 'duration', seconds: 60 },
+    });
+    timer.settings = { maxNodeVisits: 1 };
+    const timerRun = await engine.runToIdle(engine.publish(timer).loopId);
+    expect(timerRun.status).toBe('waiting');
+    engine.ports.clock.advance(61_000);
+    await engine.ports.timers.fireDue(engine.ports.clock.now());
+    const done = await engine.settle(timerRun.id);
+    expect(done.status).toBe('succeeded');
+    const events = await engine.ports.events.read(timerRun.id);
+    expect(events.filter((e) => e.type === 'node.started' && e.nodeId === 'wait').length).toBe(2);
+    expect(countEntries(events, 'wait')).toBe(1);
+  });
+});

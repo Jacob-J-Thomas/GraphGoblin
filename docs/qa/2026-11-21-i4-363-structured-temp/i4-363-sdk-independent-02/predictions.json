@@ -1,0 +1,68 @@
+{
+  "beforeBehaviorExecution": true,
+  "cases": [
+    {
+      "id": "harmless-short-success",
+      "tier": "harmless",
+      "root": "short",
+      "mode": "success",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "harmless-short-error",
+      "tier": "harmless",
+      "root": "short",
+      "mode": "error",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "harmless-short-abort",
+      "tier": "harmless",
+      "root": "short",
+      "mode": "abort",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "harmless-226-success",
+      "tier": "harmless",
+      "root": "226",
+      "mode": "success",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "harmless-226-error",
+      "tier": "harmless",
+      "root": "226",
+      "mode": "error",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "harmless-226-abort",
+      "tier": "harmless",
+      "root": "226",
+      "mode": "abort",
+      "expected": "Actual source Structured/default Harness/pinned SDK reads matching schema through harmless CLI; empty scratch; success or expected error/abort; schema/scratch removed, sentinels preserved, observed child exits."
+    },
+    {
+      "id": "native-short-success",
+      "tier": "native",
+      "root": "short",
+      "mode": "success",
+      "expected": "Actual bundled Codex native CLI accepts SDK schema and cwd and sends one local Responses request with matching JSON schema; returns synthetic structured proof; schema/scratch removed, sentinels preserved, all observed children exit. No live entitlement claim."
+    },
+    {
+      "id": "native-226-success",
+      "tier": "native",
+      "root": "226",
+      "mode": "success",
+      "expected": "Actual bundled Codex native CLI accepts SDK schema and cwd and sends one local Responses request with matching JSON schema; returns synthetic structured proof; schema/scratch removed, sentinels preserved, all observed children exit. No live entitlement claim."
+    }
+  ],
+  "longExpected": {
+    "temp": 226,
+    "adapterScratch": 249,
+    "sdkSchemaDir": 243,
+    "sdkSchemaFile": 255
+  },
+  "fixtureRecoveryBudget": "At most one separately archived corrected attempt for the native pair only; no automatic retry in this driver."
+}

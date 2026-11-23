@@ -1,0 +1,14 @@
+GraphGoblin preflight
+
+  STATUS  CHECK           DETAIL
+  ok      Node.js         Node 22.23.4
+  ok      Data directory  $QA_ROOT\data is writable
+  ok      Master key      read from $QA_ROOT\data\master.key
+  ok      Database        reachable and migrated
+  WARN    Harness ollama  Ollama is off in Settings
+  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.
+  FAIL    Harness codex   Codex sign-in is missing or invalid. Run codex login, then retry preflight.
+  WARN    Jev             no API key in secret "jev-api-key"; Jev is optional; its classifier is unavailable until a key is configured
+  ok      Default model   gpt-6-luna (codex) is in the model catalog
+
+1 failed, 3 warning(s): fix the failed checks before starting

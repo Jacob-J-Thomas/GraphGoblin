@@ -1,0 +1,660 @@
+{
+ "summary": {
+  "name": "d1",
+  "total": 36,
+  "passed": 36,
+  "failed": []
+ },
+ "rows": [
+  {
+   "id": "J01",
+   "description": "direct literal $error -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J01"
+   }
+  },
+  {
+   "id": "J01-legacy",
+   "description": "legacy evaluateExpression still rejects ExpressionError carrying the literal (legacy contract)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "cls": "ExpressionError",
+    "message": "expression failed: QA486-LIT-J01",
+    "details": {
+     "expression": "$error(\"QA486-LIT-J01\")"
+    }
+   }
+  },
+  {
+   "id": "J02",
+   "description": "grouped block -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J02"
+   }
+  },
+  {
+   "id": "J03-taken",
+   "description": "taken conditional -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J03"
+   }
+  },
+  {
+   "id": "J03-untaken",
+   "description": "untaken conditional -> ordinary value 7",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": true,
+    "keys": [
+     "ok",
+     "value"
+    ],
+    "value": 7
+   }
+  },
+  {
+   "id": "J04",
+   "description": "nested function -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J04"
+   }
+  },
+  {
+   "id": "J05",
+   "description": "dynamic $error message -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-IN-J05"
+   }
+  },
+  {
+   "id": "J06",
+   "description": "$assert -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J06"
+   }
+  },
+  {
+   "id": "J07-length",
+   "description": "5,000-char literal -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J07Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx… (4014 more characters)"
+   }
+  },
+  {
+   "id": "J07-chars",
+   "description": "special-character literal -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J07C\n\"quote\" <script>alert(1)</script> 🙂  "
+   }
+  },
+  {
+   "id": "J08",
+   "description": "runtime type errors -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": [
+    {
+     "ok": false,
+     "reason": "evaluation-rejected",
+     "keys": [
+      "error",
+      "ok",
+      "reason"
+     ],
+     "errorClass": "ExpressionError",
+     "errorMessage": "expression failed: Argument 1 of function \"length\" does not match function signature"
+    },
+    {
+     "ok": false,
+     "reason": "evaluation-rejected",
+     "keys": [
+      "error",
+      "ok",
+      "reason"
+     ],
+     "errorClass": "ExpressionError",
+     "errorMessage": "expression failed: Context value is not a compatible type with argument 1 of function \"substring\""
+    }
+   ]
+  },
+  {
+   "id": "J09-malformed",
+   "description": "$eval malformed runtime string -> evaluation-rejected (never compile)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed to compile: Unexpected end of expression"
+   }
+  },
+  {
+   "id": "J09-unsafe",
+   "description": "$eval unsafe runtime regex -> evaluation-rejected (never unsafe-regex)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression uses the regular expression /(a+)+$/, which can run without bound: a repeated group contains another repetition"
+   }
+  },
+  {
+   "id": "J09-input",
+   "description": "$eval of input-supplied malformed source -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed to compile: Unexpected end of expression"
+   }
+  },
+  {
+   "id": "J09-control",
+   "description": "$eval valid string succeeds",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": true,
+    "keys": [
+     "ok",
+     "value"
+    ]
+   }
+  },
+  {
+   "id": "J10-compile",
+   "description": "top-level malformed -> compile (SYNTHETIC: publish refuses)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC/SYNTHETIC",
+   "actual": {
+    "ok": false,
+    "reason": "compile",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed to compile: Unexpected end of expression"
+   }
+  },
+  {
+   "id": "J10-unsafe",
+   "description": "top-level unsafe regex -> unsafe-regex (SYNTHETIC: publish refuses)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC/SYNTHETIC",
+   "actual": {
+    "ok": false,
+    "reason": "unsafe-regex",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression uses the regular expression /(a+)+$/, which can run without bound: a repeated group contains another repetition"
+   }
+  },
+  {
+   "id": "J10-check",
+   "description": "checkExpression refuses both (publish-time validator input)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "a": "expression failed to compile: Unexpected end of expression",
+    "b": "expression uses the regular expression /(a+)+$/, which can run without bound: a repeated group contains another repetition"
+   }
+  },
+  {
+   "id": "J11",
+   "description": "recursion beyond maxDepth -> depth",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "depth",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression exceeded max depth 200"
+   }
+  },
+  {
+   "id": "J12",
+   "description": "controlled deadline -> time",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "time",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression exceeded 20ms"
+   }
+  },
+  {
+   "id": "J13-genuine",
+   "description": "getter throwing genuine ExpressionError: no reason, same identity, one read",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "keys": [
+     "error",
+     "ok"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "QA486-EXT-J13-genuine",
+    "reads": 1,
+    "identity": true
+   }
+  },
+  {
+   "id": "J13-plain",
+   "description": "getter on `error` throwing plain Error: no reason, legacy-wrapped ExpressionError, one read",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "keys": [
+     "error",
+     "ok"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-EXT-J13-plain",
+    "reads2": 1
+   }
+  },
+  {
+   "id": "J14",
+   "description": "earlier depth error rethrown by later callback: identity kept, reason evaluation-rejected (not depth)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression exceeded max depth 200",
+    "identity": true
+   }
+  },
+  {
+   "id": "J15-name",
+   "description": "name-spoofed Error -> only evaluation-rejected; legacy wrapped (not identity)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-EXT-J15-name"
+   }
+  },
+  {
+   "id": "J15-code",
+   "description": "code-spoofed object -> only evaluation-rejected; legacy wrapped",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-EXT-J15-code"
+   }
+  },
+  {
+   "id": "J15-control",
+   "description": "successful callback returns value",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": true,
+    "keys": [
+     "ok",
+     "value"
+    ]
+   }
+  },
+  {
+   "id": "J16",
+   "description": "predicate coercion failure carries no authored reason (propagates or rejects without reason)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC/SYNTHETIC",
+   "actual": {
+    "thrown": {
+     "cls": "Error",
+     "message": "QA486-EXT-J16-coerce"
+    }
+   }
+  },
+  {
+   "id": "J17",
+   "description": "predicate coercion outcomes unchanged",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": [
+    {
+     "e": "true",
+     "ok": true,
+     "value": true,
+     "want": true
+    },
+    {
+     "e": "false",
+     "ok": true,
+     "value": false,
+     "want": false
+    },
+    {
+     "e": "null",
+     "ok": true,
+     "value": false,
+     "want": false
+    },
+    {
+     "e": "[]",
+     "ok": true,
+     "value": false,
+     "want": false
+    },
+    {
+     "e": "[1]",
+     "ok": true,
+     "value": true,
+     "want": true
+    },
+    {
+     "e": "{}",
+     "ok": true,
+     "value": false,
+     "want": false
+    },
+    {
+     "e": "{\"a\":1}",
+     "ok": true,
+     "value": true,
+     "want": true
+    },
+    {
+     "e": "0",
+     "ok": true,
+     "value": false,
+     "want": false
+    },
+    {
+     "e": "\"x\"",
+     "ok": true,
+     "value": true,
+     "want": true
+    },
+    {
+     "e": "missing",
+     "ok": true,
+     "value": false,
+     "want": false
+    }
+   ]
+  },
+  {
+   "id": "J17-fail",
+   "description": "failing predicate expression -> evaluation-rejected",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": false,
+    "reason": "evaluation-rejected",
+    "keys": [
+     "error",
+     "ok",
+     "reason"
+    ],
+    "errorClass": "ExpressionError",
+    "errorMessage": "expression failed: QA486-LIT-J17"
+   }
+  },
+  {
+   "id": "J18",
+   "description": "overlapping same-source invocations are independent",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": [
+    {
+     "ok": false,
+     "reason": "evaluation-rejected",
+     "keys": [
+      "error",
+      "ok",
+      "reason"
+     ],
+     "errorClass": "ExpressionError",
+     "errorMessage": "expression failed: QA486-LIT-J18"
+    },
+    {
+     "ok": true,
+     "keys": [
+      "ok",
+      "value"
+     ],
+     "value": 6
+    },
+    {
+     "ok": false,
+     "reason": "evaluation-rejected",
+     "keys": [
+      "error",
+      "ok",
+      "reason"
+     ],
+     "errorClass": "ExpressionError",
+     "errorMessage": "expression failed: QA486-LIT-J18"
+    }
+   ]
+  },
+  {
+   "id": "J19-include",
+   "description": "include at line 2 -> render fact line 2 column 1",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "fact": {
+     "phase": "render",
+     "line": 2,
+     "column": 1
+    }
+   }
+  },
+  {
+   "id": "J19-taken",
+   "description": "taken-branch filter fault -> render fact",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "fact": {
+     "phase": "render",
+     "line": 1,
+     "column": 14
+    }
+   }
+  },
+  {
+   "id": "J19-untaken",
+   "description": "untaken branch renders ordinary text",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "ok": true,
+    "value": "Main"
+   }
+  },
+  {
+   "id": "J19-parse",
+   "description": "parse error -> parse fact (SYNTHETIC at runtime: publish refuses)",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC/SYNTHETIC",
+   "actual": {
+    "fact": {
+     "phase": "parse",
+     "line": 2,
+     "column": 6
+    }
+   }
+  },
+  {
+   "id": "J19-legacy",
+   "description": "legacy renderTemplate still rejects TemplateError",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": {
+    "cls": "TemplateError",
+    "message": "template failed: ENOENT: Failed to lookup \"QA486-PATH-T\" in \".\", line:1, col:1"
+   }
+  },
+  {
+   "id": "J20-template",
+   "description": "template facts contain only phase/line/column with numeric positions",
+   "pass": true,
+   "class": "DOMAIN-PUBLIC",
+   "actual": [
+    {
+     "phase": "render",
+     "line": 2,
+     "column": 1
+    },
+    {
+     "phase": "render",
+     "line": 1,
+     "column": 14
+    },
+    {
+     "phase": "parse",
+     "line": 2,
+     "column": 6
+    }
+   ]
+  }
+ ]
+}

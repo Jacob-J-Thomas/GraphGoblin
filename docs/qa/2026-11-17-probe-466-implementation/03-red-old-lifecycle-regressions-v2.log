@@ -1,0 +1,89 @@
+# negative control v2 (second control run; regressions restructured after control v1 showed timeouts instead of assertions). Old lifecycle substituted into corrected test. head 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1 + uncommitted candidate; node v22.23.4; started 2026-11-18T04:50:22Z
+# command: pnpm exec vitest run src/probe-lifecycle-old-control.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe 588ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries 658ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries 21ms
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe directory > fails a real directory creation fault before starting the fake CLI or removing anything 9ms
+ × src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes 16ms
+   → expected { bodySettled: false, …(4) } to deeply equal { bodySettled: true, …(4) }
+ × src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes 395ms
+   → expected { bodySettled: false, …(4) } to deeply equal { bodySettled: true, …(4) }
+ ✓ src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > reports an ordinary case failure once, after the same settlement 397ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes
+AssertionError: expected { bodySettled: false, …(4) } to deeply equal { bodySettled: true, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "bodySettled": true,
+-   "removed": [
+-     undefined,
+-     "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-codex-abandoned-82r34L",
+-   ],
++   "bodySettled": false,
++   "removed": [],
+    "root": "ENOENT",
+    "runningFakeClis": 0,
+    "stubbedTemp": [],
+  }
+
+ ❯ src/probe-lifecycle-old-control.test.ts:274:53
+    272|       const [finished] = await Promise.allSettled([lifecycle.finish()]…
+    273|
+    274|       expect(await leftAtFinish(seen, bodySettled)).toEqual(settledCas…
+       |                                                     ^
+    275|       expect(seen.commands).toHaveLength(moment === 'while a fake CLI …
+    276|       expect(runningAtAbort).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-lifecycle-old-control.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes
+AssertionError: expected { bodySettled: false, …(4) } to deeply equal { bodySettled: true, …(4) }
+
+- Expected
++ Received
+
+  {
+-   "bodySettled": true,
+-   "removed": [
+-     "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-codex-abandoned-o3tA9i\\gg-codex-probe-327c9de7",
+-     "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-codex-abandoned-o3tA9i",
++   "bodySettled": false,
++   "removed": [],
++   "root": "present",
++   "runningFakeClis": 1,
++   "stubbedTemp": [
++     "TEMP",
++     "TMP",
++     "TMPDIR",
+    ],
+-   "root": "ENOENT",
+-   "runningFakeClis": 0,
+-   "stubbedTemp": [],
+  }
+
+ ❯ src/probe-lifecycle-old-control.test.ts:274:53
+    272|       const [finished] = await Promise.allSettled([lifecycle.finish()]…
+    273|
+    274|       expect(await leftAtFinish(seen, bodySettled)).toEqual(settledCas…
+       |                                                     ^
+    275|       expect(seen.commands).toHaveLength(moment === 'while a fake CLI …
+    276|       expect(runningAtAbort).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  22:50:23
+   Duration  5.93s (tests 38%, import 32%, transform 30%)
+
+exit=1
+# finished 2026-11-18T04:50:29Z

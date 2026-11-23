@@ -1,0 +1,2983 @@
+{
+  "base": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP",
+  "generated": {
+    "candidate": {
+      "blob": "a187acae037ae928b67715fe2d83f8cc1538c84f",
+      "sha256": "a67356cd6773b265df80ced4e26a9c1f17cd0fe0c48f2d4cb286ddc315c611ae",
+      "lines": [
+        73,
+        103
+      ],
+      "sliceSha256": "4c4362100955612f5be8950fef1c02700c619d236e6ccf2bb1e028433f16823d",
+      "moduleSha256": "5927a71ac61c5bf1c27e2d74748a9b12558715dc57393cf5cdf2c3bb3ee2c0e3"
+    },
+    "parent": {
+      "blob": "582e28eed3ce855dd09741f18bc4debc0cdfdf57",
+      "sha256": "14b1532ec5bbf1d3257883c1ef57798600840db50a282161ffd07ba3166c4b71",
+      "storeBytesLines": [
+        72,
+        85
+      ],
+      "strictStatement": "expect(await storeBytes(dbFile)).toEqual(before);",
+      "strictOccurrences": 4,
+      "moduleSha256": "b411882971f41db7465f8a58cd5f8acf0809c4aba36ff57c1a85bb59b5bca871"
+    },
+    "vitestEsm": "file:///G:/ggq/gg-i4-448-qa/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/index.js"
+  },
+  "scenarios": {
+    "S1-absent": {
+      "setup": {
+        "build": "production writer in child process",
+        "normalize": {
+          "journalMode": "wal",
+          "postBuild": {
+            "db": {
+              "size": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "normalized": {
+            "db": {
+              "size": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "dbUnchanged": true,
+          "fallback": {
+            "used": false
+          }
+        }
+      },
+      "before": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": "absent",
+          "shm": "absent",
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "preflight": {
+        "childStatus": 0,
+        "childStderr": "",
+        "code": 0,
+        "outputLines": [
+          "  ok      Database        reachable and migrated",
+          "  ok      Default model   gpt-6.1-terra (codex) is in the model catalog"
+        ],
+        "dataDirCreated": false
+      },
+      "immediate": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      },
+      "settled": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "evaluations": {
+        "immediate": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "reject",
+          "transition": {
+            "walBefore": "absent",
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "absent",
+            "shmAfter": "present"
+          }
+        },
+        "settled": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "reject",
+          "transition": {
+            "walBefore": "absent",
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "absent",
+            "shmAfter": "present"
+          }
+        }
+      },
+      "raw": {
+        "before": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:04.428Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            }
+          ]
+        },
+        "immediate": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:06.713Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278606587.7222,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278606586.7217,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        },
+        "settled": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:06.759Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278606587.7222,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278606586.7217,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        }
+      }
+    },
+    "S2a-empty-written": {
+      "setup": {
+        "build": "production writer in child process",
+        "normalize": {
+          "journalMode": "wal",
+          "postBuild": {
+            "db": {
+              "size": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "normalized": {
+            "db": {
+              "size": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "dbUnchanged": true
+        },
+        "wal": "zero-byte file written before preflight"
+      },
+      "before": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": "absent",
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "preflight": {
+        "childStatus": 0,
+        "childStderr": "",
+        "code": 0,
+        "outputLines": [
+          "  ok      Database        reachable and migrated",
+          "  ok      Default model   gpt-6.1-terra (codex) is in the model catalog"
+        ],
+        "dataDirCreated": false
+      },
+      "immediate": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      },
+      "settled": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "evaluations": {
+        "immediate": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "absent",
+            "shmAfter": "present"
+          }
+        },
+        "settled": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "absent",
+            "shmAfter": "present"
+          }
+        }
+      },
+      "raw": {
+        "before": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S2a\\store",
+          "utc": "2026-11-21T16:30:09.252Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278609214.4434,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278609252.6562,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        },
+        "immediate": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S2a\\store",
+          "utc": "2026-11-21T16:30:11.842Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278609214.4434,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278611699.7803,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278609252.6562,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        },
+        "settled": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S2a\\store",
+          "utc": "2026-11-21T16:30:11.893Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278609214.4434,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278611699.7803,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278609252.6562,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        }
+      }
+    },
+    "S2b-empty-from-prior-reader": {
+      "setup": {
+        "from": "S1-absent settled state (WAL/-shm created by the first preflight reader)"
+      },
+      "before": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "preflight": {
+        "childStatus": 0,
+        "childStderr": "",
+        "code": 0,
+        "outputLines": [
+          "  ok      Database        reachable and migrated",
+          "  ok      Default model   gpt-6.1-terra (codex) is in the model catalog"
+        ],
+        "dataDirCreated": false
+      },
+      "immediate": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      },
+      "settled": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "evaluations": {
+        "immediate": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "present",
+            "shmAfter": "present"
+          }
+        },
+        "settled": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "walAfter": {
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "shmBefore": "present",
+            "shmAfter": "present"
+          }
+        }
+      },
+      "raw": {
+        "before": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:15.554Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278606587.7222,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278606586.7217,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        },
+        "immediate": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:17.697Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278617578.4592,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278606586.7217,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        },
+        "settled": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S1\\store",
+          "utc": "2026-11-21T16:30:17.743Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278604383.4556,
+              "readSize": 479232,
+              "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278617578.4592,
+              "readSize": 32768,
+              "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 0,
+              "mtimeMs": 1795278606586.7217,
+              "readSize": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "wal": {
+                "size": 0,
+                "empty": true
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.bin"
+            }
+          ]
+        }
+      }
+    },
+    "S3-frozen-nonempty": {
+      "setup": {
+        "build": "production writer (full catalog) in child process",
+        "normalize": {
+          "journalMode": "wal",
+          "postBuild": {
+            "db": {
+              "size": 479232,
+              "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "normalized": {
+            "db": {
+              "size": 479232,
+              "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+              "walModeHeader": true,
+              "pageCount": 117,
+              "fileChangeCounter": 2
+            },
+            "wal": "absent",
+            "shm": "absent",
+            "others": []
+          },
+          "dbUnchanged": true
+        },
+        "freeze": {
+          "journalMode": "wal",
+          "deletedRows": 1
+        }
+      },
+      "before": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 8272,
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "frames": 2,
+            "validFramePrefix": 2,
+            "commitFrames": 1,
+            "headerChecksumValid": true,
+            "pageSize": 4096,
+            "trailingBytes": 0
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "fff2c0b7600bd1f63a38f686cdda8ff782009c5966e104a82004a78a27948292"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "size": 8272
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "preflight": {
+        "childStatus": 0,
+        "childStderr": "",
+        "code": 0,
+        "outputLines": [
+          "  ok      Database        reachable and migrated",
+          "  ok      Default model   gpt-6.1-terra (codex) is in the model catalog"
+        ],
+        "dataDirCreated": false
+      },
+      "immediate": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 8272,
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "frames": 2,
+            "validFramePrefix": 2,
+            "commitFrames": 1,
+            "headerChecksumValid": true,
+            "pageSize": 4096,
+            "trailingBytes": 0
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "size": 8272
+          }
+        }
+      },
+      "settled": {
+        "state": {
+          "db": {
+            "size": 479232,
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "walModeHeader": true,
+            "pageCount": 117,
+            "fileChangeCounter": 2
+          },
+          "wal": {
+            "size": 8272,
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "frames": 2,
+            "validFramePrefix": 2,
+            "commitFrames": 1,
+            "headerChecksumValid": true,
+            "pageSize": 4096,
+            "trailingBytes": 0
+          },
+          "shm": {
+            "size": 32768,
+            "sha256": "b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8"
+          },
+          "others": []
+        },
+        "helperMap": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+            "size": 8272
+          }
+        },
+        "rows": {
+          "sqliteVersion": "3.53.4",
+          "catalogRows": 12,
+          "migrationRows": 30,
+          "hasCodexTerra": false,
+          "catalogSha256": "088644f89bf0e9ca9c1d8d0486123ba62f231ed9f478dc96ef81615647820306",
+          "migrationsSha256": "8f159bc0de91a4844aff67589d5c41d11119b31acb7ccf5cbb5eecb685294fc2"
+        }
+      },
+      "rowsUnchanged": true,
+      "migrationsUnchanged": true,
+      "evaluations": {
+        "immediate": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "frames": 2,
+              "validFramePrefix": 2,
+              "commitFrames": 1,
+              "headerChecksumValid": true,
+              "pageSize": 4096,
+              "trailingBytes": 0
+            },
+            "walAfter": {
+              "size": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "frames": 2,
+              "validFramePrefix": 2,
+              "commitFrames": 1,
+              "headerChecksumValid": true,
+              "pageSize": 4096,
+              "trailingBytes": 0
+            },
+            "shmBefore": "present",
+            "shmAfter": "present"
+          }
+        },
+        "settled": {
+          "myPredicate": {
+            "accept": true,
+            "reasons": []
+          },
+          "candidateHelper": "accept",
+          "oldStrict": "accept",
+          "transition": {
+            "walBefore": {
+              "size": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "frames": 2,
+              "validFramePrefix": 2,
+              "commitFrames": 1,
+              "headerChecksumValid": true,
+              "pageSize": 4096,
+              "trailingBytes": 0
+            },
+            "walAfter": {
+              "size": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "frames": 2,
+              "validFramePrefix": 2,
+              "commitFrames": 1,
+              "headerChecksumValid": true,
+              "pageSize": 4096,
+              "trailingBytes": 0
+            },
+            "shmBefore": "present",
+            "shmAfter": "present"
+          }
+        }
+      },
+      "raw": {
+        "before": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S3\\frozen",
+          "utc": "2026-11-21T16:30:23.350Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278623306.126,
+              "readSize": 479232,
+              "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278623342.6687,
+              "readSize": 32768,
+              "sha256": "fff2c0b7600bd1f63a38f686cdda8ff782009c5966e104a82004a78a27948292",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\fff2c0b7600bd1f63a38f686cdda8ff782009c5966e104a82004a78a27948292.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 8272,
+              "mtimeMs": 1795278623345.6953,
+              "readSize": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "wal": {
+                "size": 8272,
+                "empty": false,
+                "headerComplete": true,
+                "magic": "0x377f0682",
+                "magicValid": true,
+                "formatVersion": 3007000,
+                "pageSize": 4096,
+                "checkpointSequence": 0,
+                "salt1": 1527619498,
+                "salt2": 4078007462,
+                "headerChecksumValid": true,
+                "frameCount": 2,
+                "trailingBytes": 0,
+                "validFramePrefix": 2,
+                "commitFramesInValidPrefix": 1,
+                "frames": [
+                  {
+                    "pageNumber": 16,
+                    "commitSize": 0,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  },
+                  {
+                    "pageNumber": 17,
+                    "commitSize": 117,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  }
+                ]
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a.bin"
+            }
+          ]
+        },
+        "immediate": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S3\\frozen",
+          "utc": "2026-11-21T16:30:25.679Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278623306.126,
+              "readSize": 479232,
+              "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278625545.1392,
+              "readSize": 32768,
+              "sha256": "b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 8272,
+              "mtimeMs": 1795278623345.6953,
+              "readSize": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "wal": {
+                "size": 8272,
+                "empty": false,
+                "headerComplete": true,
+                "magic": "0x377f0682",
+                "magicValid": true,
+                "formatVersion": 3007000,
+                "pageSize": 4096,
+                "checkpointSequence": 0,
+                "salt1": 1527619498,
+                "salt2": 4078007462,
+                "headerChecksumValid": true,
+                "frameCount": 2,
+                "trailingBytes": 0,
+                "validFramePrefix": 2,
+                "commitFramesInValidPrefix": 1,
+                "frames": [
+                  {
+                    "pageNumber": 16,
+                    "commitSize": 0,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  },
+                  {
+                    "pageNumber": 17,
+                    "commitSize": 117,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  }
+                ]
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a.bin"
+            }
+          ]
+        },
+        "settled": {
+          "dir": "G:\\ggq\\qa-scratch\\i4-448-test-independent-01\\qa448-04-pDUsEP\\S3\\frozen",
+          "utc": "2026-11-21T16:30:25.730Z",
+          "entries": [
+            {
+              "name": "gateway.db",
+              "type": "file",
+              "size": 479232,
+              "mtimeMs": 1795278623306.126,
+              "readSize": 479232,
+              "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+              "dbHeader": {
+                "valid": true,
+                "pageSize": 4096,
+                "writeVersion": 2,
+                "readVersion": 2,
+                "walModeHeader": true,
+                "fileChangeCounter": 2,
+                "pageCount": 117,
+                "schemaCookie": 138,
+                "versionValidFor": 2,
+                "sqliteVersionNumber": 3045001
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8.bin"
+            },
+            {
+              "name": "gateway.db-shm",
+              "type": "file",
+              "size": 32768,
+              "mtimeMs": 1795278625545.1392,
+              "readSize": 32768,
+              "sha256": "b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8",
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\b995c0d068018dcb648c7cfb7b227f96a129bf6f91ce14715b68904bf8abffd8.bin"
+            },
+            {
+              "name": "gateway.db-wal",
+              "type": "file",
+              "size": 8272,
+              "mtimeMs": 1795278623345.6953,
+              "readSize": 8272,
+              "sha256": "26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a",
+              "wal": {
+                "size": 8272,
+                "empty": false,
+                "headerComplete": true,
+                "magic": "0x377f0682",
+                "magicValid": true,
+                "formatVersion": 3007000,
+                "pageSize": 4096,
+                "checkpointSequence": 0,
+                "salt1": 1527619498,
+                "salt2": 4078007462,
+                "headerChecksumValid": true,
+                "frameCount": 2,
+                "trailingBytes": 0,
+                "validFramePrefix": 2,
+                "commitFramesInValidPrefix": 1,
+                "frames": [
+                  {
+                    "pageNumber": 16,
+                    "commitSize": 0,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  },
+                  {
+                    "pageNumber": 17,
+                    "commitSize": 117,
+                    "saltMatch": true,
+                    "checksumValid": true
+                  }
+                ]
+              },
+              "blob": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i4-448-test-independent-01\\fixtures\\blobs-04-sqlite\\26e1b8fb8ff8d852a57609b96b5bf1df8f7e0522fedd68ab8de28103220a9e0a.bin"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "controls": [
+    {
+      "id": "P1",
+      "kind": "absent",
+      "description": "absent WAL stays absent; nothing done",
+      "designedIntent": "accept",
+      "info": {},
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": true,
+        "reasons": []
+      },
+      "candidateHelper": "accept",
+      "oldStrict": "accept",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        }
+      }
+    },
+    {
+      "id": "P2",
+      "kind": "absent",
+      "description": "absent WAL becomes a zero-byte file (fs)",
+      "designedIntent": "accept",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": true,
+        "reasons": []
+      },
+      "candidateHelper": "accept",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "P3",
+      "kind": "absent",
+      "description": "absent WAL; real node:sqlite read-only reader open during observation",
+      "designedIntent": "accept",
+      "info": {
+        "rowsSeen": 12
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": true,
+        "reasons": []
+      },
+      "candidateHelper": "accept",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "P4",
+      "kind": "empty",
+      "description": "existing empty WAL stays empty",
+      "designedIntent": "accept",
+      "info": {},
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": true,
+        "reasons": []
+      },
+      "candidateHelper": "accept",
+      "oldStrict": "accept",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "P5",
+      "kind": "frozen",
+      "description": "existing nonempty WAL; real read-only reader open during observation (-shm may change)",
+      "designedIntent": "accept",
+      "info": {
+        "terraRowsVisible": 0
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "551bf590967bd6f0fa0b85628510cbb7099f48c30d430290a6e4c6551e0f7be3"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": true,
+        "reasons": []
+      },
+      "candidateHelper": "accept",
+      "oldStrict": "accept",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        }
+      }
+    },
+    {
+      "id": "N01",
+      "kind": "absent",
+      "description": "one database byte flipped inside page 2",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "1662a1bd0561a27b900551959cc523c9fcc04e2f48a0f42923860b236c7780f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "database bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "1662a1bd0561a27b900551959cc523c9fcc04e2f48a0f42923860b236c7780f8",
+            "size": 479232
+          }
+        }
+      }
+    },
+    {
+      "id": "N02",
+      "kind": "absent",
+      "description": "database file removed (renamed away)",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": "absent",
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "database missing after"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {}
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "absent",
+      "description": "real node:sqlite write then clean close (checkpoint into the database, WAL deleted)",
+      "designedIntent": "reject",
+      "info": {
+        "changes": 1
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "bdb05567c114a529687c50e8aa2658d4f0a2a1a595a16e3981313bb9141794c5",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "database bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "bdb05567c114a529687c50e8aa2658d4f0a2a1a595a16e3981313bb9141794c5",
+            "size": 479232
+          }
+        }
+      }
+    },
+    {
+      "id": "N04",
+      "kind": "empty",
+      "description": "existing empty WAL removed",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL removed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        }
+      }
+    },
+    {
+      "id": "N05",
+      "kind": "absent",
+      "description": "real frames added to an initially absent WAL (writer open)",
+      "designedIntent": "reject",
+      "info": {
+        "changes": 1
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "1d69ecf96462cc253051d7245d56fe899bf37f8134ecff3a3dcbe99ef7995b31",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "1696c1b85b769a3ee0c9053da4b1aff59687ca3f4ec85e9d73026629befeb249"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "new nonempty WAL"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "1d69ecf96462cc253051d7245d56fe899bf37f8134ecff3a3dcbe99ef7995b31",
+            "size": 8272
+          }
+        }
+      }
+    },
+    {
+      "id": "N06",
+      "kind": "empty",
+      "description": "real frames added to an initially empty WAL (writer open)",
+      "designedIntent": "reject",
+      "info": {
+        "changes": 1
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "a4f7d8cfef3a9a17e32eba42db4d08cfd732f845b7768a0acbe110c407b2282d",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a025a43189a25ca798b6b6ea83a905eaafafcb8c69c89758b088d078553e7ca6"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "a4f7d8cfef3a9a17e32eba42db4d08cfd732f845b7768a0acbe110c407b2282d",
+            "size": 8272
+          }
+        }
+      }
+    },
+    {
+      "id": "N07",
+      "kind": "frozen",
+      "description": "existing nonempty WAL: one byte flipped inside the first frame page",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "92edbc1da19b03807358d732ced8efbc9b3ae4bfc1d4b0691090f0b00cc8577c",
+          "frames": 2,
+          "validFramePrefix": 0,
+          "commitFrames": 0,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "92edbc1da19b03807358d732ced8efbc9b3ae4bfc1d4b0691090f0b00cc8577c",
+            "size": 8272
+          }
+        }
+      }
+    },
+    {
+      "id": "N08",
+      "kind": "frozen",
+      "description": "existing nonempty WAL removed",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL removed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          }
+        }
+      }
+    },
+    {
+      "id": "N09",
+      "kind": "frozen",
+      "description": "existing nonempty WAL truncated to zero bytes",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "N10",
+      "kind": "frozen",
+      "description": "existing nonempty WAL: real frames appended by a second transaction (writer open)",
+      "designedIntent": "reject",
+      "info": {
+        "changes": 1
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 16512,
+          "sha256": "4f942134879785569c587d80871d9849d4a406e39364a7fc9fe3b1ffa103d3bb",
+          "frames": 4,
+          "validFramePrefix": 4,
+          "commitFrames": 2,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "79677d063a3816c3cca877c12229435076fd3419014dfc169c27aeedaa285024"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "4f942134879785569c587d80871d9849d4a406e39364a7fc9fe3b1ffa103d3bb",
+            "size": 16512
+          }
+        }
+      }
+    },
+    {
+      "id": "N11",
+      "kind": "frozen",
+      "description": "existing nonempty WAL: real TRUNCATE checkpoint (writer open)",
+      "designedIntent": "reject",
+      "info": {
+        "checkpoint": {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      },
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "9dba930f60144596b2706ee38143941263055991658ad703f6efed8cce3b47f1",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "d0c567df4e8741dc15ab8288588d75b8f89ad6b782f263f558d5878913320e15"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "database bytes changed",
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "9dba930f60144596b2706ee38143941263055991658ad703f6efed8cce3b47f1",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "N12",
+      "kind": "absent",
+      "description": "absent WAL becomes a 32-byte WAL header without frames",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": "absent",
+        "shm": "absent",
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 32,
+          "sha256": "6a06a294c0af954e99dc15d3ead3f3e3c88b1961e90bc6220ad64a5e2c40e6a5",
+          "frames": 0,
+          "validFramePrefix": 0,
+          "commitFrames": 0,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": "absent",
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "new nonempty WAL"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "6a06a294c0af954e99dc15d3ead3f3e3c88b1961e90bc6220ad64a5e2c40e6a5",
+            "size": 32
+          }
+        }
+      }
+    },
+    {
+      "id": "N13",
+      "kind": "frozen",
+      "description": "existing nonempty WAL: salt-1 header byte flipped (same length)",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "18f0e888139cef1020becf9bea3fb77f10fa997024ecd7b8b0dba66f3851817e",
+          "frames": 2,
+          "validFramePrefix": 0,
+          "commitFrames": 0,
+          "headerChecksumValid": false,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "existing WAL bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "18f0e888139cef1020becf9bea3fb77f10fa997024ecd7b8b0dba66f3851817e",
+            "size": 8272
+          }
+        }
+      }
+    },
+    {
+      "id": "N14",
+      "kind": "frozen",
+      "description": "existing nonempty WAL unchanged, database byte flipped",
+      "designedIntent": "reject",
+      "before": {
+        "db": {
+          "size": 479232,
+          "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "after": {
+        "db": {
+          "size": 479232,
+          "sha256": "1204c900fb0a97698867042289a8ee229343b5b62fba0616cb041d5064751887",
+          "walModeHeader": true,
+          "pageCount": 117,
+          "fileChangeCounter": 2
+        },
+        "wal": {
+          "size": 8272,
+          "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+          "frames": 2,
+          "validFramePrefix": 2,
+          "commitFrames": 1,
+          "headerChecksumValid": true,
+          "pageSize": 4096,
+          "trailingBytes": 0
+        },
+        "shm": {
+          "size": 32768,
+          "sha256": "a22ae670a1d20a0332fdf922de45a4ef69d37145ca15edf6537453e5514089b8"
+        },
+        "others": []
+      },
+      "myPredicate": {
+        "accept": false,
+        "reasons": [
+          "database bytes changed"
+        ]
+      },
+      "candidateHelper": "reject",
+      "oldStrict": "reject",
+      "helperAgreesWithMine": true,
+      "intentRealized": true,
+      "helperMaps": {
+        "before": {
+          "gateway.db": {
+            "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        },
+        "after": {
+          "gateway.db": {
+            "sha256": "1204c900fb0a97698867042289a8ee229343b5b62fba0616cb041d5064751887",
+            "size": 479232
+          },
+          "gateway.db-wal": {
+            "sha256": "fa325f2cbe77feb65b9a22a8728c08e12ac427fc9d2eb11532358606fdb38827",
+            "size": 8272
+          }
+        }
+      }
+    }
+  ],
+  "started": "2026-11-21T16:30:02.204Z",
+  "golden": {
+    "journalMode": "wal",
+    "postBuild": {
+      "db": {
+        "size": 479232,
+        "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+        "walModeHeader": true,
+        "pageCount": 117,
+        "fileChangeCounter": 2
+      },
+      "wal": "absent",
+      "shm": "absent",
+      "others": []
+    },
+    "normalized": {
+      "db": {
+        "size": 479232,
+        "sha256": "c749672cfd9f71ccf8903f7db0c705c4670525a43cccf83e6bb5032a3b8c1ca7",
+        "walModeHeader": true,
+        "pageCount": 117,
+        "fileChangeCounter": 2
+      },
+      "wal": "absent",
+      "shm": "absent",
+      "others": []
+    },
+    "dbUnchanged": true
+  },
+  "frozenGoldenSource": {
+    "journalMode": "wal",
+    "postBuild": {
+      "db": {
+        "size": 479232,
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "walModeHeader": true,
+        "pageCount": 117,
+        "fileChangeCounter": 2
+      },
+      "wal": "absent",
+      "shm": "absent",
+      "others": []
+    },
+    "normalized": {
+      "db": {
+        "size": 479232,
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "walModeHeader": true,
+        "pageCount": 117,
+        "fileChangeCounter": 2
+      },
+      "wal": "absent",
+      "shm": "absent",
+      "others": []
+    },
+    "dbUnchanged": true
+  },
+  "frozenGolden": {
+    "journalMode": "wal",
+    "deletedRows": 1
+  },
+  "finished": "2026-11-21T16:30:39.957Z",
+  "summary": {
+    "scenarios": {
+      "S1-absent": {
+        "preflightCode": 0,
+        "walBefore": "absent",
+        "walImmediate": "0B",
+        "walSettled": "0B",
+        "dbUnchanged": true,
+        "myPredicate": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "candidateHelper": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "oldStrict": {
+          "immediate": "reject",
+          "settled": "reject"
+        },
+        "rowsUnchanged": true,
+        "migrationsUnchanged": true,
+        "codexTerraStored": false
+      },
+      "S2a-empty-written": {
+        "preflightCode": 0,
+        "walBefore": "0B",
+        "walImmediate": "0B",
+        "walSettled": "0B",
+        "dbUnchanged": true,
+        "myPredicate": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "candidateHelper": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "oldStrict": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "rowsUnchanged": true,
+        "migrationsUnchanged": true,
+        "codexTerraStored": false
+      },
+      "S2b-empty-from-prior-reader": {
+        "preflightCode": 0,
+        "walBefore": "0B",
+        "walImmediate": "0B",
+        "walSettled": "0B",
+        "dbUnchanged": true,
+        "myPredicate": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "candidateHelper": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "oldStrict": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "rowsUnchanged": true,
+        "migrationsUnchanged": true,
+        "codexTerraStored": false
+      },
+      "S3-frozen-nonempty": {
+        "preflightCode": 0,
+        "walBefore": "8272B",
+        "walImmediate": "8272B",
+        "walSettled": "8272B",
+        "dbUnchanged": true,
+        "myPredicate": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "candidateHelper": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "oldStrict": {
+          "immediate": "accept",
+          "settled": "accept"
+        },
+        "rowsUnchanged": true,
+        "migrationsUnchanged": true,
+        "codexTerraStored": false
+      }
+    },
+    "controls": [
+      "P1 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+      "P2 intent=accept mine=accept helper=accept old=reject agree=true realized=true",
+      "P3 intent=accept mine=accept helper=accept old=reject agree=true realized=true",
+      "P4 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+      "P5 intent=accept mine=accept helper=accept old=accept agree=true realized=true",
+      "N01 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N02 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N03 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N04 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N05 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N06 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N07 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N08 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N09 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N10 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N11 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N12 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N13 intent=reject mine=reject helper=reject old=reject agree=true realized=true",
+      "N14 intent=reject mine=reject helper=reject old=reject agree=true realized=true"
+    ],
+    "allHelperAgree": true,
+    "allIntentsRealized": true
+  }
+}

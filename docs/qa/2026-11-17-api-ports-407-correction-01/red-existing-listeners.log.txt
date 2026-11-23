@@ -1,0 +1,44 @@
+$ vitest run --maxWorkers=1 src/testing/api-port.test.ts -t 'preserves an existing'
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407/GraphGoblin/apps/api
+
+ ❯ src/testing/api-port.test.ts (13 tests | 2 failed | 10 skipped) 87ms
+   × preserves an existing 0.0.0.0 listener and refuses its otherwise unreserved port 18ms
+   × preserves an existing :: listener and refuses its otherwise unreserved port 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/testing/api-port.test.ts > preserves an existing 0.0.0.0 listener and refuses its otherwise unreserved port
+ FAIL  src/testing/api-port.test.ts > preserves an existing :: listener and refuses its otherwise unreserved port
+AssertionError: promise resolved "63650" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+63650
+
+ ❯ src/testing/api-port.test.ts:67:30
+     65|         return unexpected.port;
+     66|       });
+     67|       await expect(attempted).rejects.toThrow('Ports are reserved by t…
+       |                              ^
+     68|       const response = await fetch(`http://127.0.0.1:${probe.port}/`);
+     69|       expect(await response.text()).toBe('independent listener');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 10 skipped (13)
+   Start at  23:26:09
+   Duration  648ms (tests 31%, import 26%, transform 19%, setup 19%, worker 4%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-ports-407\GraphGoblin\apps\api
+

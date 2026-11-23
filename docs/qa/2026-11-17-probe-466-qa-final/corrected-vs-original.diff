@@ -1,0 +1,114 @@
+diff --git a/original-probe-directory.test.ts.txt b/corrected-probe-directory.test.ts.txt
+index 53c2c13..911fef5 100644
+--- a/original-probe-directory.test.ts.txt
++++ b/corrected-probe-directory.test.ts.txt
+@@ -42,7 +42,7 @@ const isRunning = (child: ChildProcess): boolean =>
+  * starts no process after the abort, and the signal kills a running one. The finish hook waits for
+  * the body, including the probe's own directory cleanup, and for every fake CLI process to exit;
+  * only then does it restore the environment and remove the case root. No late call from this case
+- * reaches the next one.
++ * reaches the next one. A body failure after the abort and a failed root removal are both reported.
+  */
+ function probeCase(prefix: string, body: (probe: ProbeCase) => Promise<void>) {
+   return (context: CaseLifecycle): Promise<void> => {
+@@ -60,9 +60,18 @@ function probeCase(prefix: string, body: (probe: ProbeCase) => Promise<void>) {
+           .map((child) => new Promise((resolve) => child.once('exit', resolve))),
+       );
+       vi.unstubAllEnvs();
+-      if (root !== undefined) await probeFs.rm(root, { recursive: true, force: true });
++      const failures: unknown[] = [];
+       // A body that outlived the abort reports how it ended; otherwise the case reported it already.
+-      if (context.signal.aborted && outcome.status === 'rejected') throw outcome.reason;
++      if (context.signal.aborted && outcome.status === 'rejected') failures.push(outcome.reason);
++      try {
++        if (root !== undefined) await probeFs.rm(root, { recursive: true, force: true });
++      } catch (error) {
++        failures.push(error);
++      }
++      // Vitest reports each error of an AggregateError separately, so neither failure hides the other.
++      if (failures.length > 1)
++        throw new AggregateError(failures, 'The probe case failed after its abort and in cleanup');
++      if (failures.length === 1) throw failures[0];
+     });
+     return work;
+   };
+@@ -220,6 +229,13 @@ describe('Codex readiness probe case lifecycle (#466)', () => {
+     };
+   }
+ 
++  /** The errors Vitest records for a finished hook: each error of an `AggregateError` separately. */
++  const reportedBy = (finished: PromiseSettledResult<void>): unknown[] => {
++    if (finished.status === 'fulfilled') return [];
++    const { reason } = finished;
++    return reason instanceof AggregateError ? reason.errors : [reason];
++  };
++
+   interface Seen {
+     root: string;
+     commands: CliCommand[];
+@@ -316,4 +332,65 @@ describe('Codex readiness probe case lifecycle (#466)', () => {
+     expect(outcome).toEqual({ status: 'rejected', reason: failure });
+     expect(finished).toEqual({ status: 'fulfilled', value: undefined });
+   });
++
++  it.for(['after its abort', 'without an abort'] as const)(
++    'reports a body failure %s once, and a failed case-root removal, after the same settlement',
++    async (when) => {
++      const lifecycle = controlledLifecycle();
++      const abandoned = when === 'after its abort';
++      const failure = new Error(`Body failure ${when}`);
++      const removalFailure = Object.assign(new Error('Case root removal failure'), {
++        code: 'EBUSY',
++      });
++      const seen: Seen = { root: '', commands: [], children: [] };
++      let bodySettled = false;
++      const { rm } = await vi.importActual<typeof probeFs>('node:fs/promises');
++      const remove = vi.spyOn(probeFs, 'rm');
++      // The probe still removes its own directory; only the removal of the case root fails.
++      remove.mockImplementation(async (path, options) => {
++        if (String(path) === seen.root) throw removalFailure;
++        return rm(path, options);
++      });
++      try {
++        const run = probeCase('gg-codex-double-fault-', async (probe) => {
++          // `login status` never answers in the hang scenario: only the abort ends it.
++          const { harness, commands } = fixture(probe, abandoned ? 'hang' : 'ready', (args) => {
++            if (abandoned && args.join(' ') === 'login status') lifecycle.abandon();
++          });
++          Object.assign(seen, { root: probe.root, commands, children: probe.children });
++          useTempRoot(probe.root);
++          await harness.preflight();
++          throw failure;
++        })(lifecycle.context).finally(() => {
++          bodySettled = true;
++        });
++        const { signal } = lifecycle.context;
++        // As Vitest does, run the finish hooks once the case is abandoned or its body has failed.
++        await Promise.race([
++          new Promise((resolve) => signal.addEventListener('abort', resolve)),
++          Promise.allSettled([run]),
++        ]);
++        expect(signal.aborted).toBe(abandoned);
++        const [finished] = await Promise.allSettled([lifecycle.finish()]);
++
++        // Only the injected fault left the case root behind.
++        expect(await leftAtFinish(seen, bodySettled)).toEqual({
++          ...settledCase(seen),
++          root: 'present',
++        });
++        expect(seen.children).toHaveLength(4);
++        const [outcome] = await Promise.allSettled([run]);
++        expect(outcome).toEqual({ status: 'rejected', reason: failure });
++        // The case itself reports its timeout after an abort, otherwise its body failure; the hook
++        // adds a body failure only if it came after the abort, then the failed removal.
++        expect(reportedBy(finished)).toEqual(
++          abandoned ? [failure, removalFailure] : [removalFailure],
++        );
++      } finally {
++        remove.mockRestore();
++        // The case's processes have exited; remove the root its failed removal preserved.
++        if (seen.root !== '') await rm(seen.root, { recursive: true, force: true });
++      }
++    },
++  );
+ });

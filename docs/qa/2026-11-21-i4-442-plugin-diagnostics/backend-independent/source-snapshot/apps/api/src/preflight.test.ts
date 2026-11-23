@@ -1,0 +1,743 @@
+import { createHash } from 'node:crypto';
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FakeHarness } from '@graphgoblin/engine/testing';
+import { CODEX_PLUGIN_OBSERVABILITY_NOTICE } from '@graphgoblin/domain';
+import {
+  DEFAULT_MODEL_CATALOG,
+  openDatabase,
+  openReadOnlyDatabaseClient,
+} from '@graphgoblin/infrastructure/sqlite';
+import { loadConfig, type ApiConfig } from './config.js';
+import { JEV_SECRET, LOCAL_OWNER, createContainer } from './container.js';
+import {
+  checkDataDir,
+  checkNode,
+  assertCreatable,
+  formatPreflight,
+  readMasterKey,
+  runPreflight,
+  runPreflightCli,
+  type PreflightReport,
+  type PreflightSources,
+} from './preflight.js';
+import { createTestApp } from './testing/test-app.js';
+
+const KEY = Buffer.alloc(32, 7).toString('base64');
+
+let dir: string;
+
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), 'gg-wp-a5b-preflight-'));
+});
+
+afterEach(async () => {
+  // Windows can hold the database file briefly after close.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await rm(dir, { recursive: true, force: true });
+      return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
+});
+
+function byId(report: PreflightReport, id: string) {
+  return report.checks.find((c) => c.id === id);
+}
+
+function config(overrides: Partial<ApiConfig> = {}): ApiConfig {
+  return {
+    ...loadConfig({ GG_DATA_DIR: dir, GG_DB_URL: ':memory:', GG_MASTER_KEY: KEY }),
+    ...overrides,
+  };
+}
+
+function sources(overrides: Partial<PreflightSources> = {}): PreflightSources {
+  return {
+    config: config(),
+    nodeVersion: '22.14.0',
+    harnesses: { codex: new FakeHarness() },
+    pendingMigrations: () => Promise.resolve(0),
+    jevKey: () => Promise.resolve('jev-key'),
+    jevEnabled: () => Promise.resolve(true),
+    catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
+    ...overrides,
+  };
+}
+
+it('allows read-only CLI preflight alongside a container without changing its lock', async () => {
+  const env = { GG_DATA_DIR: dir, GG_MASTER_KEY: KEY };
+  const container = await createContainer(loadConfig(env), { startTimers: false });
+  await container.start();
+  const lockPath = join(dir, 'graphgoblin.lock');
+  const original = await readFile(lockPath, 'utf8');
+  try {
+    expect(
+      await runPreflightCli({
+        env,
+        harnesses: { codex: new FakeHarness() },
+        write: () => undefined,
+      }),
+    ).toBe(0);
+    expect(await readFile(lockPath, 'utf8')).toBe(original);
+  } finally {
+    await container.stop();
+  }
+});
+
+describe('individual checks', () => {
+  it('accepts Node 22 LTS', () => {
+    expect(checkNode('v22.0.0').status).toBe('ok');
+    expect(checkNode('22.14.0').status).toBe('ok');
+  });
+
+  it.each(['20.11.1', '23.10.0', '24.0.0', 'garbage'])(
+    'refuses unsupported Node %s with the supported baseline',
+    (version) => {
+      const result = checkNode(version);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('GraphGoblin needs Node 22 LTS');
+      expect(result.message).toContain('Select Node 22 on PATH');
+    },
+  );
+
+  it('checks the data directory without creating it', async () => {
+    expect((await checkDataDir(dir)).status).toBe('ok');
+    const missing = join(dir, 'missing');
+    expect(await checkDataDir(missing)).toMatchObject({ status: 'warn', message: /first start/ });
+    const file = join(dir, 'file');
+    await writeFile(file, 'x');
+    expect(await checkDataDir(file)).toMatchObject({ status: 'fail', message: /not a directory/ });
+    expect((await checkDataDir(`${dir}\0bad`)).status).toBe('fail');
+  });
+
+  it('reads the master key from the environment or the data directory without generating one', async () => {
+    expect((await readMasterKey({ dataDir: dir, masterKey: KEY })).check.status).toBe('ok');
+    expect((await readMasterKey({ dataDir: dir, masterKey: 'c2hvcnQ=' })).check.status).toBe(
+      'fail',
+    );
+    const missing = await readMasterKey({ dataDir: dir });
+    expect(missing.check).toMatchObject({ status: 'warn', message: /generated on first start/ });
+    expect(missing.key).toBeUndefined();
+    await writeFile(join(dir, 'master.key'), `${KEY}\n`);
+    const read = await readMasterKey({ dataDir: dir });
+    expect(read.check.status).toBe('ok');
+    expect(read.key?.length).toBe(32);
+    await writeFile(join(dir, 'master.key'), 'c2hvcnQ=');
+    expect((await readMasterKey({ dataDir: dir })).check.status).toBe('fail');
+    const nested = join(dir, 'nested');
+    await mkdir(join(nested, 'master.key'), { recursive: true });
+    expect((await readMasterKey({ dataDir: nested })).check).toMatchObject({
+      status: 'fail',
+      message: /cannot read/,
+    });
+  });
+
+  it('probes writability with a new file and never touches existing ones', async () => {
+    const existing = join(dir, '.preflight-taken');
+    await writeFile(existing, 'keep me');
+    const names = ['.preflight-taken', '.preflight-fresh'];
+    const check = await checkDataDir(dir, () => names.shift() ?? 'unexpected');
+    expect(check.status).toBe('ok');
+    expect(await readFile(existing, 'utf8')).toBe('keep me');
+    expect((await readdir(dir)).sort()).toEqual(['.preflight-taken']);
+    // Five taken names in a row is reported, not looped on.
+    const stuck = await checkDataDir(dir, () => '.preflight-taken');
+    expect(stuck).toMatchObject({ status: 'fail', message: /not writable/ });
+    expect(await readFile(existing, 'utf8')).toBe('keep me');
+  });
+
+  it('lets concurrent preflights probe the same directory', async () => {
+    const checks = await Promise.all(Array.from({ length: 8 }, () => checkDataDir(dir)));
+    expect(checks.every((c) => c.status === 'ok')).toBe(true);
+    expect(await readdir(dir)).toEqual([]);
+  });
+
+  it('accepts a missing database file only when start can create it', async () => {
+    await expect(assertCreatable(join(dir, 'a', 'b', 'gg.db'))).resolves.toBeUndefined();
+    const file = join(dir, 'file');
+    await writeFile(file, 'x');
+    await expect(assertCreatable(join(file, 'sub', 'gg.db'))).rejects.toThrow(/not a directory/);
+    await expect(assertCreatable(join(dir, 'gg.db'), () => '.')).rejects.toThrow(/not writable/);
+    await expect(assertCreatable(join(dir, '\0bad', 'gg.db'))).rejects.toMatchObject({
+      code: 'ERR_INVALID_ARG_VALUE',
+    });
+  });
+});
+
+describe('runPreflight', () => {
+  it('passes when everything is in place', async () => {
+    const report = await runPreflight(sources());
+    expect(report.ok).toBe(true);
+    expect(report.checks.map((c) => [c.id, c.status])).toEqual([
+      ['node', 'ok'],
+      ['data-dir', 'ok'],
+      ['master-key', 'ok'],
+      ['database', 'ok'],
+      ['harness.codex', 'ok'],
+      ['plugins.codex', 'warn'],
+      ['jev', 'ok'],
+      ['default-model', 'ok'],
+    ]);
+    expect(byId(report, 'harness.codex')?.message).toBe('codex fake is installed and logged in');
+  });
+
+  it('reports plugin observability separately without another probe or provider turn', async () => {
+    const harness = new FakeHarness();
+    const readiness = structuredClone(harness.preflightResult);
+    const preflight = vi.spyOn(harness, 'preflight');
+    const start = vi.spyOn(harness, 'start');
+    const resume = vi.spyOn(harness, 'resume');
+    const input = sources({ harnesses: { codex: harness } });
+    const facts = [
+      vi.spyOn(input, 'pendingMigrations'),
+      vi.spyOn(input, 'jevKey'),
+      vi.spyOn(input, 'jevEnabled'),
+      vi.spyOn(input, 'catalog'),
+    ];
+
+    const report = await runPreflight(input);
+    expect(report.ok).toBe(true);
+    expect(byId(report, 'harness.codex')).toMatchObject({ state: 'ready', status: 'ok' });
+    expect(byId(report, 'plugins.codex')).toEqual({
+      id: 'plugins.codex',
+      label: 'Codex plugins',
+      status: 'warn',
+      message: CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+    });
+    expect(harness.preflightResult).toEqual(readiness);
+    expect(preflight).toHaveBeenCalledExactlyOnceWith();
+    for (const fact of facts) expect(fact).toHaveBeenCalledExactlyOnceWith();
+    expect(start).not.toHaveBeenCalled();
+    expect(resume).not.toHaveBeenCalled();
+  });
+
+  it.each(['cli-missing', 'cli-incompatible', 'auth', 'quota', 'transport', 'unknown'] as const)(
+    'keeps a Codex %s failure separate from the plugin scope notice',
+    async (state) => {
+      const harness = new FakeHarness();
+      harness.preflightResult = {
+        state,
+        ok: false,
+        ...(state === 'auth' ? { authenticated: false } : {}),
+        problems: ['Controlled Codex prerequisite failure'],
+      };
+      const report = await runPreflight(sources({ harnesses: { codex: harness } }));
+      expect(report.ok).toBe(false);
+      expect(byId(report, 'harness.codex')).toMatchObject({
+        state,
+        status: 'fail',
+        message: 'Controlled Codex prerequisite failure',
+      });
+      expect(byId(report, 'plugins.codex')).toBeUndefined();
+    },
+  );
+
+  it('does not attach the Codex plugin notice to another harness or an absent adapter', async () => {
+    const claude = await runPreflight(
+      sources({ harnesses: { claude: new FakeHarness([], 'claude') } }),
+    );
+    expect(byId(claude, 'harness.claude')?.status).toBe('ok');
+    expect(byId(claude, 'plugins.codex')).toBeUndefined();
+    const absent = await runPreflight(sources({ harnesses: {} }));
+    expect(byId(absent, 'plugins.codex')).toBeUndefined();
+  });
+
+  it('warns about a database that is missing or behind, and skips checks that need it', async () => {
+    const missing = await runPreflight(
+      sources({ pendingMigrations: () => Promise.resolve('missing') }),
+    );
+    expect(missing.ok).toBe(true);
+    expect(byId(missing, 'database')?.status).toBe('warn');
+    expect(byId(missing, 'jev')).toMatchObject({ status: 'warn', message: /not checked/ });
+    expect(byId(missing, 'default-model')).toMatchObject({
+      status: 'ok',
+      message: /default catalog/,
+    });
+    const behind = await runPreflight(sources({ pendingMigrations: () => Promise.resolve(2) }));
+    expect(byId(behind, 'database')).toMatchObject({ status: 'warn', message: /2 migration/ });
+    const broken = await runPreflight(
+      sources({ pendingMigrations: () => Promise.reject(new Error('SQLITE_CANTOPEN')) }),
+    );
+    expect(broken.ok).toBe(false);
+    expect(byId(broken, 'database')).toMatchObject({
+      status: 'fail',
+      message: 'not reachable: SQLITE_CANTOPEN',
+    });
+  });
+
+  it('fails when a harness is not ready or none is configured', async () => {
+    const harness = new FakeHarness();
+    harness.preflightResult = {
+      state: 'unknown',
+      ok: false,
+      authenticated: false,
+      problems: ['Codex CLI is not logged in; run `codex login`'],
+    };
+    const notReady = await runPreflight(sources({ harnesses: { codex: harness } }));
+    expect(notReady.ok).toBe(false);
+    expect(byId(notReady, 'harness.codex')?.message).toMatch(/codex login/);
+    harness.preflightResult = { state: 'unknown', ok: false, authenticated: false, problems: [] };
+    expect(
+      byId(await runPreflight(sources({ harnesses: { codex: harness } })), 'harness.codex')
+        ?.message,
+    ).toMatch(/readiness could not be confirmed/);
+    const throwing = new FakeHarness();
+    throwing.preflight = () => Promise.reject(new Error('spawn ENOENT'));
+    expect(
+      byId(await runPreflight(sources({ harnesses: { codex: throwing } })), 'harness.codex'),
+    ).toMatchObject({
+      status: 'fail',
+      message: expect.stringMatching(/readiness could not be confirmed/),
+    });
+    const unversioned = new FakeHarness();
+    unversioned.preflightResult = { state: 'ready', ok: true, authenticated: true, problems: [] };
+    expect(
+      byId(await runPreflight(sources({ harnesses: { codex: unversioned } })), 'harness.codex')
+        ?.message,
+    ).toBe('codex is installed and logged in');
+    const none = await runPreflight(sources({ harnesses: {} }));
+    expect(byId(none, 'harness')).toMatchObject({ status: 'fail' });
+  });
+
+  it('only warns about Jev, and checks the default model against the catalog', async () => {
+    const disabledJev = await runPreflight(sources({ jevEnabled: () => Promise.resolve(false) }));
+    expect(byId(disabledJev, 'jev')).toMatchObject({
+      status: 'ok',
+      message: 'API key set (secret "jev-api-key") (disabled in Settings)',
+    });
+    const noJev = await runPreflight(sources({ jevKey: () => Promise.resolve('  ') }));
+    expect(noJev.ok).toBe(true);
+    expect(byId(noJev, 'jev')).toMatchObject({
+      status: 'warn',
+      message: /Jev is optional; its classifier is unavailable/,
+    });
+    // A non-Error rejection still yields a readable message.
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+    const jevError = await runPreflight(sources({ jevKey: () => Promise.reject('bad key') }));
+    expect(byId(jevError, 'jev')).toMatchObject({ status: 'warn', message: /bad key/ });
+
+    const unknown = await runPreflight(
+      sources({
+        config: config({
+          defaults: { byHarness: { codex: { model: 'gpt-nope', effort: 'low' } } },
+        }),
+      }),
+    );
+    expect(unknown.ok).toBe(false);
+    expect(byId(unknown, 'default-model')?.message).toMatch(/gpt-nope/);
+    expect(byId(unknown, 'default-model')?.message).toContain(
+      'pick a listed harness model and enable it in Settings',
+    );
+    const disabled = await runPreflight(
+      sources({
+        catalog: () =>
+          Promise.resolve(DEFAULT_MODEL_CATALOG.map((e) => ({ ...e, enabled: false }))),
+      }),
+    );
+    expect(byId(disabled, 'default-model')).toMatchObject({ status: 'warn', message: /disabled/ });
+    const broken = await runPreflight(sources({ catalog: () => Promise.reject(new Error('io')) }));
+    expect(byId(broken, 'default-model')).toMatchObject({ status: 'fail', message: /io/ });
+  });
+
+  it.each([
+    {
+      model: 'missing-claude-model',
+      effort: 'low',
+      enabled: true,
+      message: 'The configured Claude model is not in the catalog',
+    },
+    {
+      model: 'claude-fixture',
+      effort: undefined,
+      enabled: true,
+      message: 'Configure an explicit supported Claude reasoning effort',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'high',
+      enabled: true,
+      message: 'Configure an explicit supported Claude reasoning effort',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'low',
+      enabled: false,
+      message: 'The configured Claude model is disabled',
+    },
+    {
+      model: 'claude-fixture',
+      effort: 'low',
+      enabled: true,
+      message: 'Exact Claude model and effort are configured',
+    },
+  ] as const)(
+    'checks Claude defaults against the catalogue: $message ($effort)',
+    async ({ model, effort, enabled, message }) => {
+      const report = await runPreflight(
+        sources({
+          config: config({
+            defaults: {
+              byHarness: {
+                codex: { model: 'gpt-6-luna' },
+                claude: { model, ...(effort ? { effort } : {}) },
+              },
+            },
+          }),
+          harnesses: { codex: new FakeHarness(), claude: new FakeHarness([], 'claude') },
+          catalog: () =>
+            Promise.resolve([
+              ...DEFAULT_MODEL_CATALOG,
+              {
+                harness: 'claude',
+                source: 'harness',
+                model: 'claude-fixture',
+                displayName: 'Claude fixture',
+                efforts: ['low'],
+                defaultEffort: 'low',
+                enabled,
+              },
+            ]),
+        }),
+      );
+      expect(byId(report, 'default-model.claude')).toMatchObject({
+        status: message.startsWith('Exact') ? 'ok' : 'fail',
+        message,
+      });
+      expect(report.ok).toBe(message.startsWith('Exact'));
+    },
+  );
+
+  it('reports a configured Claude default whose harness is absent', async () => {
+    const report = await runPreflight(
+      sources({
+        config: config({
+          defaults: { byHarness: { claude: { model: 'claude-fixture', effort: 'low' } } },
+        }),
+      }),
+    );
+    expect(report.ok).toBe(false);
+    expect(byId(report, 'harness.claude')).toMatchObject({
+      status: 'fail',
+      message: 'The configured Claude harness is unavailable',
+    });
+    expect(byId(report, 'default-model')).toMatchObject({
+      status: 'fail',
+      message: expect.stringContaining('"undefined" is not in the model catalog'),
+    });
+  });
+
+  it('formats a readable table', async () => {
+    const report = await runPreflight(sources({ jevKey: () => Promise.resolve(undefined) }));
+    const text = formatPreflight(report);
+    expect(text).toContain('STATUS  CHECK');
+    expect(text).toMatch(/WARN\s+Jev\s+no API key/);
+    expect(text).toContain('0 failed, 2 warning(s): ready to start');
+    const failed = formatPreflight({ ok: false, checks: [] });
+    expect(failed).toContain('fix the failed checks');
+  });
+});
+
+describe('graphgoblin-api --preflight', () => {
+  it('prints configuration refusal to stdout using the process environment defaults', async () => {
+    vi.stubEnv('GG_PORT', 'invalid');
+    const output = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    try {
+      expect(await runPreflightCli()).toBe(1);
+      expect(output).toHaveBeenCalledWith(
+        expect.stringMatching(/FAIL {2}configuration {2}invalid configuration/),
+      );
+    } finally {
+      output.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  function cli(env: Record<string, string>, harness = new FakeHarness()) {
+    let out = '';
+    return runPreflightCli({
+      env,
+      harnesses: { codex: harness },
+      nodeVersion: '22.14.0',
+      write: (text) => {
+        out += text;
+      },
+    }).then((code) => ({ code, out }));
+  }
+
+  it('reports a first run without creating anything', async () => {
+    const dataDir = join(dir, 'fresh');
+    const { code, out } = await cli({ GG_DATA_DIR: dataDir });
+    expect(code).toBe(0);
+    expect(out).toMatch(/WARN\s+Data directory/);
+    expect(out).toMatch(/WARN\s+Master key/);
+    expect(out).toMatch(/WARN\s+Database\s+the database does not exist yet/);
+    expect(out).toMatch(
+      /WARN\s+Codex plugins\s+Loaded plugin tools are not verified by this check/,
+    );
+    expect(out).toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
+    await expect(rm(dataDir)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('checks an installation that has started once', async () => {
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'k');
+    await container.repos.classifiers.setEnabled(LOCAL_OWNER, 'jev', false);
+    await container.stop();
+
+    const ready = await cli(env);
+    expect(ready.code).toBe(0);
+    expect(ready.out).toContain('0 failed, 1 warning(s)');
+    expect(ready.out).toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
+    expect(ready.out).toContain('API key set (secret "jev-api-key") (disabled in Settings)');
+
+    const harness = new FakeHarness();
+    harness.preflightResult = {
+      state: 'unknown',
+      ok: false,
+      authenticated: false,
+      problems: ['not logged in'],
+    };
+    const notLoggedIn = await cli(env, harness);
+    expect(notLoggedIn.code).toBe(1);
+    expect(notLoggedIn.out).toMatch(/FAIL\s+Harness codex\s+not logged in/);
+    expect(notLoggedIn.out).not.toContain(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
+
+    // Without the master key the Jev secret cannot be read.
+    await rm(join(dir, 'master.key'));
+    const keyless = await cli(env);
+    expect(keyless.out).toMatch(/WARN\s+Jev\s+no API key/);
+  });
+
+  it('warns about a database under directories start will create, and start creates them', async () => {
+    const dbPath = join(dir, 'elsewhere', 'deeper', 'gg.db');
+    const env = { GG_DATA_DIR: join(dir, 'data'), GG_DB_URL: pathToFileURL(dbPath).href };
+    const before = await cli(env);
+    expect(before.code).toBe(0);
+    expect(before.out).toMatch(/WARN\s+Database\s+the database does not exist yet/);
+    await expect(stat(join(dir, 'elsewhere'))).rejects.toMatchObject({ code: 'ENOENT' });
+
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.stop();
+    expect((await stat(dbPath)).isFile()).toBe(true);
+    const after = await cli(env);
+    expect(after.out).toMatch(/ok\s+Database\s+reachable and migrated/);
+  });
+
+  it('fails when the database cannot be created, read, or opened', async () => {
+    await writeFile(join(dir, 'blocker'), 'x');
+    const blocked = await cli({
+      GG_DATA_DIR: dir,
+      GG_DB_URL: pathToFileURL(join(dir, 'blocker', 'sub', 'gg.db')).href,
+    });
+    expect(blocked.code).toBe(1);
+    expect(blocked.out).toMatch(/FAIL\s+Database\s+not reachable: .*not a directory/);
+    const unreadable = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file:bad%00name.db' });
+    expect(unreadable.out).toMatch(/FAIL\s+Database\s+not reachable/);
+    const remote = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file://remote-host/gg.db' });
+    expect(remote.code).toBe(1);
+    expect(remote.out).toMatch(/FAIL\s+Database\s+not reachable: .*host/i);
+  });
+
+  it('opens an existing database named by a percent-encoded file URL', async () => {
+    const dbPath = join(dir, 'with space', 'gg db.sqlite');
+    const env = { GG_DATA_DIR: dir, GG_DB_URL: pathToFileURL(dbPath).href };
+    expect(env.GG_DB_URL).toContain('%20');
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'k');
+    await container.stop();
+    const report = await cli(env);
+    expect(report.code).toBe(0);
+    expect(report.out).toMatch(/ok\s+Database\s+reachable and migrated/);
+    expect(report.out).toMatch(/ok\s+Jev\s+API key set/);
+    expect(report.out).toMatch(/ok\s+Default model\s+.*is in the model catalog/);
+  });
+
+  it('fails on a store start would refuse, naming it and the reset, without changing it', async () => {
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version = 3');
+    await container.stop();
+    const report = await cli(env);
+    expect(report.code).toBe(1);
+    expect(report.out).toContain(
+      `The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "${dir}"`,
+    );
+    expect(report.out).toMatch(/FAIL\s+Database\s+The store is format 3/);
+    const inspection = openReadOnlyDatabaseClient(join(dir, 'graphgoblin.db'));
+    try {
+      expect(
+        (await inspection.execute('SELECT format_version FROM gg_upgrade_state')).rows[0],
+      ).toMatchObject({ format_version: 3 });
+    } finally {
+      inspection.close();
+    }
+  });
+
+  it('leaves every byte of a store it refuses untouched, write-ahead log included', async () => {
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.stop();
+    // A committed change that still lives in the write-ahead log: copy the files while a
+    // connection is open, so the copy is a WAL-backed store no connection has checkpointed.
+    const holder = openDatabase({ url: pathToFileURL(join(dir, 'graphgoblin.db')).href });
+    const copy = join(dir, 'copy');
+    await mkdir(copy);
+    try {
+      await holder.client.execute('PRAGMA journal_mode = WAL');
+      await holder.client.execute(
+        'DELETE FROM __drizzle_migrations WHERE created_at = (SELECT MAX(created_at) FROM __drizzle_migrations)',
+      );
+      for (const name of ['graphgoblin.db', 'graphgoblin.db-wal', 'graphgoblin.db-shm']) {
+        await copyFile(join(dir, name), join(copy, name));
+      }
+    } finally {
+      holder.close();
+    }
+    // The database and its write-ahead log hold the data; the -shm file is the shared-memory
+    // index every reader updates (read marks), so it is not part of the byte comparison.
+    const digest = async () =>
+      Object.fromEntries(
+        await Promise.all(
+          ['graphgoblin.db', 'graphgoblin.db-wal'].map(async (name): Promise<[string, string]> => [
+            name,
+            createHash('sha256')
+              .update(await readFile(join(copy, name)))
+              .digest('hex'),
+          ]),
+        ),
+      );
+    const before = await digest();
+    const report = await cli({ GG_DATA_DIR: copy, GG_MASTER_KEY: KEY, GG_SWAGGER_UI: 'false' });
+    expect(report.code).toBe(1);
+    expect(report.out).toContain('the migration ledger is behind the store structure');
+    // A mutable connection would have checkpointed the log into the database and removed it.
+    expect((await readdir(copy)).sort()).toEqual([
+      'graphgoblin.db',
+      'graphgoblin.db-shm',
+      'graphgoblin.db-wal',
+    ]);
+    expect(await digest()).toEqual(before);
+  });
+
+  it('reports an in-memory database as unmigrated and bad configuration as a failure', async () => {
+    const memory = await cli({ GG_DATA_DIR: dir, GG_DB_URL: ':memory:', GG_MASTER_KEY: KEY });
+    expect(memory.out).toMatch(/WARN\s+Database\s+\d+ migration/);
+    const bad = await cli({ GG_PORT: 'nope' });
+    expect(bad.code).toBe(1);
+    expect(bad.out).toMatch(/FAIL\s+configuration\s+invalid configuration/);
+  });
+});
+
+describe('GET /system/preflight', () => {
+  it('reports on the running installation and requires credentials when keys are required', async () => {
+    const t = await createTestApp();
+    try {
+      const response = await t.app.inject('/system/preflight');
+      expect(response.statusCode).toBe(200);
+      const report = response.json<PreflightReport>();
+      expect(byId(report, 'database')?.status).toBe('ok');
+      expect(byId(report, 'harness.codex')?.status).toBe('ok');
+      expect(byId(report, 'plugins.codex')).toMatchObject({
+        status: 'warn',
+        message: CODEX_PLUGIN_OBSERVABILITY_NOTICE,
+      });
+      expect(byId(report, 'master-key')?.status).toBe('ok');
+      expect(byId(report, 'jev')?.status).toBe('warn');
+      expect(byId(report, 'default-model')?.status).toBe('ok');
+      await t.container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'key');
+      await t.app.inject({
+        method: 'PATCH',
+        url: '/classifier-models/jev',
+        payload: { enabled: false },
+      });
+      const disabled = (await t.app.inject('/system/preflight')).json<PreflightReport>();
+      expect(byId(disabled, 'jev')?.message).toContain('(disabled in Settings)');
+    } finally {
+      await t.close();
+    }
+    const strict = await createTestApp({ requireApiKey: true });
+    try {
+      expect((await strict.app.inject('/system/preflight')).statusCode).toBe(401);
+    } finally {
+      await strict.close();
+    }
+  });
+
+  it('preserves harness readiness and authentication while exposing the system scope notice', async () => {
+    const t = await createTestApp();
+    try {
+      const probe = vi.spyOn(t.harness, 'preflight');
+      const started = vi.spyOn(t.harness, 'start');
+      const readyResponse = await t.app.inject('/harness/preflight');
+      expect(readyResponse.statusCode).toBe(200);
+      expect(readyResponse.json()).toEqual({
+        items: [{ harness: 'codex', ...t.harness.preflightResult }],
+      });
+      expect(probe).toHaveBeenCalledTimes(1);
+      const systemResponse = await t.app.inject('/system/preflight');
+      expect(systemResponse.statusCode).toBe(200);
+      const report = systemResponse.json<PreflightReport>();
+      expect(report.ok).toBe(true);
+      expect(byId(report, 'harness.codex')).toMatchObject({ state: 'ready', status: 'ok' });
+      expect(byId(report, 'plugins.codex')?.message).toBe(CODEX_PLUGIN_OBSERVABILITY_NOTICE);
+      expect(probe).toHaveBeenCalledTimes(2);
+      expect(started).not.toHaveBeenCalled();
+
+      t.harness.preflightResult = {
+        state: 'auth',
+        ok: false,
+        authenticated: false,
+        problems: ['Controlled sign-in needed'],
+      };
+      const refusedHarness = await t.app.inject('/harness/preflight');
+      expect(refusedHarness.json()).toEqual({
+        items: [{ harness: 'codex', ...t.harness.preflightResult }],
+      });
+      const refusedSystem = await t.app.inject('/system/preflight');
+      const refusedReport = refusedSystem.json<PreflightReport>();
+      expect(refusedReport.ok).toBe(false);
+      expect(byId(refusedReport, 'harness.codex')).toMatchObject({
+        state: 'auth',
+        status: 'fail',
+        message: 'Controlled sign-in needed',
+      });
+      expect(byId(refusedReport, 'plugins.codex')).toBeUndefined();
+      expect(probe).toHaveBeenCalledTimes(4);
+      expect(started).not.toHaveBeenCalled();
+    } finally {
+      await t.close();
+    }
+  });
+});

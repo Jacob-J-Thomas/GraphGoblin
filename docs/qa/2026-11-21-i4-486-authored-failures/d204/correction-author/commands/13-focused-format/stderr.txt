@@ -1,0 +1,38 @@
+$ vitest run src/handlers/inference-context.test.ts src/handlers/inference-workspace.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-context.test.ts > preserves the private canonical diagnostic when reconstruction attaches prior task provenance
+AssertionError: expected { code: 'INTERNAL_ERROR', …(2) } to match object { code: 'INTERNAL_ERROR', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "inference": {
+-     "promptKind": "authored",
+-     "submission": "definitely-not-submitted",
+-     "turnId": "P2XY8ZMFQ9BGYZMT69CX2PKTZJ",
+-   },
+-   "nodeId": "respond",
+    "resumable": true,
+  }
+
+ ❯ src/handlers/inference-context.test.ts:96:25
+     94|       payload,
+     95|     );
+     96|     expect(run.failure).toMatchObject({
+       |                         ^
+     97|       code: 'INTERNAL_ERROR',
+     98|       nodeId: 'respond',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i4-486-review-
+  │ fixes\GraphGoblin\packages\engine
+

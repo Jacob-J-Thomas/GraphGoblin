@@ -1,0 +1,850 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T020409Z-77d3d7",
+  "label": "candidate",
+  "case": "ext-compatible-job-success",
+  "title": "Compatible enclosing job (kill-on-close, no breakaway, no UI limits): nested helper, short members quiesce, accounting with observers",
+  "lane": "fixture",
+  "category": "enclosing-job",
+  "planRow": "Compatible enclosing jobs; ordinary short members quiesce; job accounting with observer handles retained and closed",
+  "startedAtMs": 1795226651715,
+  "durationMs": 5926,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": true
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 29496,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 2684,
+      "osElapsedMs": 2419,
+      "osCreatedAtMs": 1795226652142,
+      "osExitedAtMs": 1795226654561,
+      "callerEofAfterExitMs": 3,
+      "callerEofAfterTeardown": 0,
+      "code": "foreign-listener",
+      "diagnostic": "foreign-listener",
+      "diagnosticFinal": "foreign-listener",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T02:04:14.5420248Z",
+          "pid": 29496,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "foreign-listener",
+          "message": "Port 26840 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.",
+          "config": "<RUN>\\cases\\ext-compatible-job-success\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 347,
+      "stdoutBytes": 0,
+      "stderrBytes": 347,
+      "stdoutText": "",
+      "stderrText": "Port 26840 belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.\r\n\r\nConfiguration: <RUN>\\cases\\ext-compatible-job-success\\launcher.json\r\n",
+      "ext": {
+        "host": {
+          "job": "harness",
+          "preAssignInAnyJob": false,
+          "inHarnessJob": true
+        },
+        "boundary": null,
+        "killed": null,
+        "stdioAtExit": {
+          "stdoutEofAtMs": 1795226654564,
+          "stderrEofAtMs": 1795226654564,
+          "stdoutBytes": 0,
+          "stderrBytes": 347
+        },
+        "accountingBefore": {
+          "job": "harness",
+          "label": "before:click",
+          "atMs": 1795226651904,
+          "totalProcesses": 4,
+          "activeProcesses": 0,
+          "totalTerminatedProcesses": 0,
+          "assignedProcesses": 0,
+          "activePids": []
+        },
+        "accountingAtExit": {
+          "job": "harness",
+          "label": "atExit:click",
+          "atMs": 1795226654589,
+          "totalProcesses": 9,
+          "activeProcesses": 0,
+          "totalTerminatedProcesses": 0,
+          "assignedProcesses": 0,
+          "activePids": []
+        }
+      }
+    }
+  ],
+  "processes": [
+    {
+      "tag": "ext-compatible-job-success/nest-probe-probe/job",
+      "case": "ext-compatible-job-success",
+      "role": "nest-probe-probe",
+      "pid": 23616,
+      "source": "jobspawn",
+      "self": null,
+      "openedAtMs": 1795226651771,
+      "opened": {
+        "ok": true,
+        "image": "QaWitness.exe",
+        "parentPid": 11732,
+        "inAnyJob": true,
+        "preAssignInAnyJob": false,
+        "inHarnessJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226651760,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226651760,
+          "exitedAtMs": 1795226651888
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226651760,
+          "exitedAtMs": 1795226651888
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226651760,
+          "exitedAtMs": 1795226651888
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795226657603,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-compatible-job-success/launcher-click/job",
+      "case": "ext-compatible-job-success",
+      "role": "launcher-click",
+      "pid": 29496,
+      "source": "jobspawn",
+      "self": null,
+      "openedAtMs": 1795226652155,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 11732,
+        "inAnyJob": true,
+        "preAssignInAnyJob": false,
+        "inHarnessJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226652142,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226652142,
+          "exitedAtMs": 1795226654561
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226652142,
+          "exitedAtMs": 1795226654561
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226652142,
+          "exitedAtMs": 1795226654561
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795226657604,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-compatible-job-success/identity-1/27920",
+      "case": "ext-compatible-job-success",
+      "role": "identity-1",
+      "pid": 27920,
+      "source": "handshake",
+      "self": {
+        "case": "ext-compatible-job-success",
+        "role": "identity-1",
+        "pid": 27920,
+        "ppid": 29496,
+        "helper": "identity",
+        "index": 1
+      },
+      "openedAtMs": 1795226652361,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 29496,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226652267,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226652267,
+          "exitedAtMs": 1795226652486
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 0,
+          "createdAtMs": 1795226652267,
+          "exitedAtMs": 1795226652486
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795226657604,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-compatible-job-success/short-both/44676",
+      "case": "ext-compatible-job-success",
+      "role": "short-both",
+      "pid": 44676,
+      "source": "handshake",
+      "self": {
+        "case": "ext-compatible-job-success",
+        "role": "short-both",
+        "pid": 44676,
+        "ppid": 27920,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "other",
+          "stderr": "other"
+        },
+        "lifetimeMs": 2000
+      },
+      "openedAtMs": 1795226652441,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 27920,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226652369,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226652369,
+          "exitedAtMs": 1795226654449
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226652369,
+          "exitedAtMs": 1795226654449
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795226657605,
+      "finalClassification": "unobserved"
+    },
+    {
+      "tag": "ext-compatible-job-success/short-none/13676",
+      "case": "ext-compatible-job-success",
+      "role": "short-none",
+      "pid": 13676,
+      "source": "handshake",
+      "self": {
+        "case": "ext-compatible-job-success",
+        "role": "short-none",
+        "pid": 13676,
+        "ppid": 27920,
+        "stdio": {
+          "stdin": "char",
+          "stdout": "char",
+          "stderr": "char"
+        },
+        "lifetimeMs": 2000
+      },
+      "openedAtMs": 1795226652452,
+      "opened": {
+        "ok": true,
+        "image": "node.exe",
+        "parentPid": 27920,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226652378,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        41
+      ],
+      "messages": [],
+      "samples": {
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226652378,
+          "exitedAtMs": 1795226654469
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 41,
+          "createdAtMs": 1795226652378,
+          "exitedAtMs": 1795226654469
+        },
+        "final": {
+          "error": "observer-closed"
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "observerClosed": true,
+      "observerClosedAtMs": 1795226657605,
+      "finalClassification": "unobserved"
+    }
+  ],
+  "helperEvents": [
+    {
+      "at": 1795226652356,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-start",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226652478,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-members-ready",
+      "index": 1,
+      "role": "identity-1"
+    },
+    {
+      "at": 1795226652479,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-output-written",
+      "index": 1,
+      "role": "identity-1",
+      "stdout": "identity"
+    },
+    {
+      "at": 1795226652479,
+      "pid": 27920,
+      "kind": "identity",
+      "event": "helper-exit",
+      "index": 1,
+      "role": "identity-1",
+      "code": 0
+    }
+  ],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "ext": {
+    "jobs": [
+      {
+        "tag": "ext-compatible-job-success:harness",
+        "name": "harness",
+        "requested": {
+          "limitFlags": 8192,
+          "uiFlags": 0,
+          "activeLimit": 0
+        },
+        "readBack": {
+          "limitFlags": 8192,
+          "activeProcessLimit": 0,
+          "uiRestrictions": 0
+        },
+        "open": false,
+        "createdAtMs": 1795226651747,
+        "closedAtMs": 1795226657608,
+        "closeOk": true
+      }
+    ],
+    "accounting": [
+      {
+        "job": "harness",
+        "label": "before:probe",
+        "atMs": 1795226651748,
+        "totalProcesses": 0,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "after:probe",
+        "atMs": 1795226651901,
+        "totalProcesses": 4,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "before:click",
+        "atMs": 1795226651904,
+        "totalProcesses": 4,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "atExit:click",
+        "atMs": 1795226654589,
+        "totalProcesses": 9,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "afterGrace:observers-retained",
+        "atMs": 1795226657601,
+        "totalProcesses": 9,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "afterGrace:observers-closed",
+        "atMs": 1795226657605,
+        "totalProcesses": 9,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      },
+      {
+        "job": "harness",
+        "label": "teardown:before-close",
+        "atMs": 1795226657608,
+        "totalProcesses": 9,
+        "activeProcesses": 0,
+        "totalTerminatedProcesses": 0,
+        "assignedProcesses": 0,
+        "activePids": []
+      }
+    ],
+    "probes": [
+      {
+        "name": "probe",
+        "job": "harness",
+        "spawned": true,
+        "inHarnessJob": true,
+        "exitCode": 0,
+        "report": {
+          "innerUiRestrictions": 0,
+          "selfInAnyJob": true,
+          "ownJobUiRestrictions": 0,
+          "nestedJobCreated": true,
+          "jobListAttributeSet": true,
+          "jobListCreateProcess": true,
+          "jobListChildInNestedJob": true,
+          "assignToFreshJob": true
+        },
+        "totalProcessesAdded": 4,
+        "nestingSupported": true
+      }
+    ],
+    "observersClosed": [
+      {
+        "atMs": 1795226657605,
+        "roles": [
+          "nest-probe-probe",
+          "launcher-click",
+          "identity-1",
+          "short-both",
+          "short-none"
+        ]
+      }
+    ]
+  },
+  "filesystem": [
+    {
+      "path": "click.capture.stderr.bin",
+      "type": "file",
+      "size": 347,
+      "fileId": "810877956:281474978826995",
+      "sha256": "f04da2c4e9f8c3540c3043aae11b2b63ef2770037f0c67a3d4c4dbaf2604217b"
+    },
+    {
+      "path": "click.capture.stdout.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978826994",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "events.ndjson",
+      "type": "file",
+      "size": 461,
+      "fileId": "810877956:281474978826996",
+      "sha256": "768c91f369e1001758b73e01ea6597be455f4bc14eed7ae0aa480072e10a9c89"
+    },
+    {
+      "path": "launcher.json",
+      "type": "file",
+      "size": 469,
+      "fileId": "810877956:281474978826990",
+      "sha256": "538047409414f138b979fae4d05fce27e36dfbfc3fe5de7543fe7565ab5dc301"
+    },
+    {
+      "path": "launcher.log",
+      "type": "file",
+      "size": 475,
+      "fileId": "810877956:281474978826999",
+      "sha256": "826cd7ee7287d23857a5d4ccd54837053c86d6936c8cf4fa0b5e189ff88588b6"
+    },
+    {
+      "path": "probe.nest-probe.json",
+      "type": "file",
+      "size": 204,
+      "fileId": "810877956:281474978826993",
+      "sha256": "e96c66b531d1f004a9014b9df06a52fba57f53ba860131a1622b8534c27cd9cf"
+    },
+    {
+      "path": "probe.probe.stderr.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978826992",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "probe.probe.stdout.bin",
+      "type": "file",
+      "size": 0,
+      "fileId": "810877956:281474978826991",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ready",
+      "type": "directory"
+    },
+    {
+      "path": "ready/short-both",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978826997",
+      "sha256": "30a5a4381ce70eb74683f8241d2081eabcc39bb97f940316b2f52e54f14b015f"
+    },
+    {
+      "path": "ready/short-none",
+      "type": "file",
+      "size": 5,
+      "fileId": "810877956:281474978826998",
+      "sha256": "e2868b27c9154b439647c3598c5ae2d646bb5064dfda9d118af6e0d3e8dd65b8"
+    },
+    {
+      "path": "scenario.json",
+      "type": "file",
+      "size": 462,
+      "fileId": "810877956:281474978826989",
+      "sha256": "93bc68f4bf9bd46e2e80da46cf27d365073fe6796c5120d2765a01e67a5ac5ea"
+    }
+  ],
+  "timeline": [
+    {
+      "atMs": 1795226651744,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": true
+    },
+    {
+      "atMs": 1795226651747,
+      "event": "harness-job-created",
+      "name": "harness",
+      "readBack": {
+        "limitFlags": 8192,
+        "activeProcessLimit": 0,
+        "uiRestrictions": 0
+      }
+    },
+    {
+      "atMs": 1795226651903,
+      "event": "nest-probe-done",
+      "name": "probe",
+      "nestingSupported": true
+    },
+    {
+      "atMs": 1795226652155,
+      "event": "launcher-resumed",
+      "name": "click",
+      "job": "harness",
+      "ok": true,
+      "resumedAtMs": 1795226652154
+    },
+    {
+      "atMs": 1795226654588,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    },
+    {
+      "atMs": 1795226657605,
+      "event": "observers-closed",
+      "roles": [
+        "nest-probe-probe",
+        "launcher-click",
+        "identity-1",
+        "short-both",
+        "short-none"
+      ]
+    },
+    {
+      "atMs": 1795226657608,
+      "event": "harness-job-closed",
+      "name": "harness",
+      "activeBeforeClose": 0
+    }
+  ],
+  "assertions": [
+    {
+      "id": "in-job-probe",
+      "kind": "info",
+      "text": "in-job probe: own job UI restrictions read from inside, nested CreateProcess(JOB_LIST) and AssignProcessToJobObject outcomes",
+      "expected": null,
+      "actual": {
+        "name": "probe",
+        "job": "harness",
+        "spawned": true,
+        "inHarnessJob": true,
+        "exitCode": 0,
+        "report": {
+          "innerUiRestrictions": 0,
+          "selfInAnyJob": true,
+          "ownJobUiRestrictions": 0,
+          "nestedJobCreated": true,
+          "jobListAttributeSet": true,
+          "jobListCreateProcess": true,
+          "jobListChildInNestedJob": true,
+          "assignToFreshJob": true
+        },
+        "totalProcessesAdded": 4,
+        "nestingSupported": true
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "identity-accepted",
+      "kind": "requirement",
+      "text": "identity accepted inside a compatible enclosing job (next stage refuses the plain-health marker)",
+      "expected": "foreign-listener",
+      "actual": "foreign-listener",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "helper-nested-in-enclosing-job",
+      "kind": "requirement",
+      "text": "the launcher ran inside the harness job and its helper root and members are members of that job (private job nested under it)",
+      "expected": {
+        "launcherInHarness": true,
+        "launcherInAnyJobBeforeAssignment": false,
+        "rootInHarness": true,
+        "shortBothInHarness": true,
+        "shortNoneInHarness": true
+      },
+      "actual": {
+        "launcherInHarness": true,
+        "launcherInAnyJobBeforeAssignment": false,
+        "rootInHarness": true,
+        "shortBothInHarness": true,
+        "shortNoneInHarness": true
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "root-natural-zero",
+      "kind": "requirement",
+      "text": "helper root exits naturally with 0 before the launcher exits",
+      "expected": "natural 0",
+      "actual": {
+        "role": "identity-1",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 0,
+        "exitedRelativeToLauncherExitMs": -2075,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "short-both-quiesced-before-exit",
+      "kind": "requirement",
+      "text": "short-both exits naturally (41) before the launcher accepts",
+      "expected": {
+        "classification": "natural",
+        "exitCode": 41,
+        "exitedBeforeLauncherExit": true
+      },
+      "actual": {
+        "role": "short-both",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 41,
+        "exitedRelativeToLauncherExitMs": -112,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "short-none-quiesced-before-exit",
+      "kind": "requirement",
+      "text": "short-none exits naturally (41) before the launcher accepts",
+      "expected": {
+        "classification": "natural",
+        "exitCode": 41,
+        "exitedBeforeLauncherExit": true
+      },
+      "actual": {
+        "role": "short-none",
+        "sample": "afterGrace",
+        "alive": false,
+        "exitCode": 41,
+        "exitedRelativeToLauncherExitMs": -92,
+        "exitedBeforeLauncherExit": true,
+        "classification": "natural"
+      },
+      "pass": true,
+      "baselineExpectation": "fail"
+    },
+    {
+      "id": "accounting-empty-with-and-without-observers",
+      "kind": "requirement",
+      "text": "open harness job reports zero active processes after the launcher exits, with witness handles retained and again after they close (observer handles do not keep members active)",
+      "expected": {
+        "observersRetained": {
+          "active": 0
+        },
+        "observersClosed": {
+          "active": 0,
+          "total": "unchanged"
+        },
+        "harnessJobOpen": true
+      },
+      "actual": {
+        "observersRetained": {
+          "active": 0,
+          "total": 9,
+          "activePids": []
+        },
+        "observersClosed": {
+          "active": 0,
+          "total": 9,
+          "activePids": [],
+          "closedRoles": [
+            "nest-probe-probe",
+            "launcher-click",
+            "identity-1",
+            "short-both",
+            "short-none"
+          ]
+        },
+        "harnessJobOpen": true
+      },
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "caller-eof-at-launcher-exit",
+      "kind": "control",
+      "text": "the caller's launcher stdout/stderr reach EOF within 1500 ms of launcher exit",
+      "expected": "<= 1500",
+      "actual": {
+        "afterExitMs": 3,
+        "afterDriverTeardown": "pending"
+      },
+      "pass": true,
+      "baselineExpectation": "observe"
+    },
+    {
+      "id": "sentinel-alive",
+      "kind": "control",
+      "text": "same-executable run sentinel outside every launcher and job remains alive",
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

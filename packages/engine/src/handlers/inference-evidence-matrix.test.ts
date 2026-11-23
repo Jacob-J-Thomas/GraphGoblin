@@ -262,9 +262,46 @@ it.each(
       expect(readFailed).toBe(true);
       expect(fake.cancelled).toHaveLength(0);
       expect(fake.resumed).toHaveLength(0);
+      const prior = run.failure!.inference!;
+      expect(prior.retry).toMatchObject({
+        prompt: 'Repair exactly: "invalid"',
+        harness: family,
+        resumeSessionId: prior.sessionId,
+      });
+      const turnsBefore = e.events(run.id).filter((event) => event.type === 'harness.turn');
+      const catalogue = e.ports.modelCatalog.entries;
+      e.ports.modelCatalog.entries = [];
       await manager.resume(run.id);
       await manager.waitForIdle();
-      expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
+      const temporary = (await e.ports.runs.get(run.id))?.failure;
+      expect(temporary).toMatchObject({
+        code: 'EVALUATION_UNAVAILABLE',
+        resumable: true,
+        inference: {
+          turnId: prior.turnId,
+          visitId: prior.visitId,
+          promptKind: 'repair',
+          submission: 'definitely-not-submitted',
+          sessionId: prior.sessionId,
+        },
+      });
+      expect(temporary?.inference?.retry).toBeUndefined();
+      expect(e.events(run.id).filter((event) => event.type === 'harness.turn')).toEqual(
+        turnsBefore,
+      );
+      expect(fake.resumed).toHaveLength(0);
+      manager.stop();
+      e.ports.modelCatalog.entries = catalogue;
+      const restarted = new RunManager(e.ports, e.settings);
+      try {
+        await restarted.start();
+        await restarted.resume(run.id);
+        await restarted.waitForIdle();
+        expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
+        expect(fake.resumed[0]?.sessionId).toBe(prior.retry?.resumeSessionId);
+      } finally {
+        restarted.stop();
+      }
       expect(fake.resumed[0]?.request.turn.prompt).toBe('Repair exactly: "invalid"');
       const turns = e
         .events(run.id)
@@ -296,7 +333,19 @@ it.each(
       enabled: true,
     });
     const fake = new FakeHarness([{ finalText: '42' }], family);
-    e.ports.harnesses[family] = fake;
+    e.ports.harnesses[family] = {
+      id: family,
+      preflight: () => fake.preflight(),
+      start: (...args) => fake.start(...args),
+      resume: (...args) => fake.resume(...args),
+      contextWindow: () =>
+        Promise.resolve({
+          profile: 'admitted',
+          contextTokens: 1024,
+          outputReserveTokens: 64,
+          fits: () => true,
+        }),
+    };
     const events = e.ports.events;
     let fired = false;
     let readFailed = false;
@@ -353,9 +402,55 @@ it.each(
         inference: { promptKind: 'authored', submission: 'definitely-not-submitted' },
       });
       expect(fake.started).toHaveLength(0);
+      const evidence = failed.failure!.inference!;
+      expect(evidence.retry).toMatchObject({
+        prompt: 'Exact initial task',
+        harness: family,
+        context: { profile: 'admitted' },
+      });
+      const before = e
+        .events(run.id)
+        .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission');
+      const rows = structuredClone(e.ports.sessions.rows);
+      const entries = e.ports.modelCatalog.entries;
+      e.ports.modelCatalog.entries = [];
       await manager.resume(run.id);
       await manager.waitForIdle();
-      expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
+      const temporary = (await e.ports.runs.get(run.id))?.failure;
+      const { retry, ...originalTask } = evidence;
+      expect(temporary).toMatchObject({ code: 'EVALUATION_UNAVAILABLE', resumable: true });
+      expect(temporary?.inference).toEqual(originalTask);
+      expect(
+        e
+          .events(run.id)
+          .filter((event) => event.type === 'harness.turn' || event.type === 'harness.submission'),
+      ).toEqual(before);
+      expect(e.ports.sessions.rows).toEqual(rows);
+      expect(fake.cancelled).toHaveLength(0);
+      expect(fake.started).toHaveLength(0);
+      manager.stop();
+      e.ports.modelCatalog.entries = entries;
+      const restarted = new RunManager(e.ports, e.settings);
+      try {
+        await restarted.start();
+        await restarted.resume(run.id);
+        await restarted.waitForIdle();
+        expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
+        expect(
+          e
+            .events(run.id)
+            .filter((event) => event.type === 'harness.turn')
+            .at(-1),
+        ).toMatchObject({
+          turnId: evidence.turnId,
+          visitId: evidence.visitId,
+          harness: family,
+          prompt: retry?.prompt,
+          context: retry?.context,
+        });
+      } finally {
+        restarted.stop();
+      }
       expect(fake.started[0]?.turn.prompt).toBe('Exact initial task');
       const turns = e.events(run.id).filter((event) => event.type === 'harness.turn');
       expect(new Set(turns.map((turn) => turn.turnId)).size).toBe(1);

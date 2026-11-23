@@ -1,0 +1,224 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/inspector-truthfulness.spec.ts",
+      "--output",
+      "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-browser-fixture-correction-01\\output\\playwright\\corrected-artifacts",
+      "--reporter=list,json",
+      "--trace=on"
+    ],
+    "configFile": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\playwright.config.ts",
+    "rootDir": "G:/ggq/gg-i5-truthful-inspector/GraphGoblin/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-browser-fixture-correction-01/output/playwright/corrected-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "G:/ggq/gg-i5-truthful-inspector/GraphGoblin/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "inspector-truthfulness.spec.ts",
+      "file": "inspector-truthfulness.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "the header shows the outcome the Timeline shows while the run record refresh is held (#386)",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 10909,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n\n    at G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts:104:9",
+                    "location": {
+                      "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                      "column": 9,
+                      "line": 104
+                    },
+                    "snippet": "  102 |       await expect(\n  103 |         timeline.getByRole('button', { name: /run\\.finished.*succeeded/ }),\n> 104 |       ).toBeVisible();\n      |         ^\n  105 |       const header = page\n  106 |         .locator('header')\n  107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                        "column": 9,
+                        "line": 104
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n\n\n  102 |       await expect(\n  103 |         timeline.getByRole('button', { name: /run\\.finished.*succeeded/ }),\n> 104 |       ).toBeVisible();\n      |         ^\n  105 |       const header = page\n  106 |         .locator('header')\n  107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });\n    at G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts:104:9"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-22T16:54:29.287Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-browser-fixture-correction-01\\output\\playwright\\corrected-artifacts\\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-browser-fixture-correction-01\\output\\playwright\\corrected-artifacts\\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                    "column": 9,
+                    "line": 104
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ed18879b9c8d7abdbe5f-aa5a9e92f6607037dadc",
+          "file": "inspector-truthfulness.spec.ts",
+          "line": 45,
+          "column": 3
+        },
+        {
+          "title": "the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386)",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 10873,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n\n    at G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts:104:9",
+                    "location": {
+                      "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                      "column": 9,
+                      "line": 104
+                    },
+                    "snippet": "  102 |       await expect(\n  103 |         timeline.getByRole('button', { name: /run\\.finished.*succeeded/ }),\n> 104 |       ).toBeVisible();\n      |         ^\n  105 |       const header = page\n  106 |         .locator('header')\n  107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                        "column": 9,
+                        "line": 104
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\\.finished.*succeeded/ })\u001b[22m\n\n\n  102 |       await expect(\n  103 |         timeline.getByRole('button', { name: /run\\.finished.*succeeded/ }),\n> 104 |       ).toBeVisible();\n      |         ^\n  105 |       const header = page\n  106 |         .locator('header')\n  107 |         .filter({ has: page.getByRole('heading', { name: `Run ${runId}` }) });\n    at G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts:104:9"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-22T16:54:41.683Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-browser-fixture-correction-01\\output\\playwright\\corrected-artifacts\\inspector-truthfulness-the-b7910-t-the-outcome-sequence-386--chromium\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-browser-fixture-correction-01\\output\\playwright\\corrected-artifacts\\inspector-truthfulness-the-b7910-t-the-outcome-sequence-386--chromium\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\inspector-truthfulness.spec.ts",
+                    "column": 9,
+                    "line": 104
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ed18879b9c8d7abdbe5f-d325456210bcfb113131",
+          "file": "inspector-truthfulness.spec.ts",
+          "line": 45,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-22T16:54:23.376Z",
+    "duration": 30000.818,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

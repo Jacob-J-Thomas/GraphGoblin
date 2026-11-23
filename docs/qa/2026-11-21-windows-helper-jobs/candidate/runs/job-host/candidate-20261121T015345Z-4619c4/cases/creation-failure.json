@@ -1,0 +1,176 @@
+{
+  "schema": "gg459-native-qa-case/1",
+  "runId": "candidate-20261121T015345Z-4619c4",
+  "label": "candidate",
+  "case": "creation-failure",
+  "title": "Creation failure: configured Node path is an existing non-executable file",
+  "lane": "fixture",
+  "category": "positive-control",
+  "planRow": "helper-unavailable covers a distinct known runtime-start failure",
+  "startedAtMs": 1795226140661,
+  "durationMs": 669,
+  "prepared": {
+    "repo": "fixture",
+    "timeoutSeconds": 6,
+    "marker": false
+  },
+  "invocations": [
+    {
+      "name": "click",
+      "pid": 43964,
+      "exitCode": 1,
+      "exitKind": "launcher-natural",
+      "watchdog": null,
+      "elapsedMs": 148,
+      "osElapsedMs": 141,
+      "osCreatedAtMs": 1795226140666,
+      "osExitedAtMs": 1795226140807,
+      "callerEofAfterExitMs": 0,
+      "callerEofAfterTeardown": 0,
+      "code": "helper-unavailable",
+      "diagnostic": "helper-unavailable",
+      "diagnosticFinal": "helper-unavailable",
+      "launcherLogRecords": [
+        {
+          "time": "2026-11-21T01:55:40.7886363Z",
+          "pid": 43964,
+          "outcome": "refused",
+          "stage": "gateway",
+          "code": "helper-unavailable",
+          "message": "The configured Node runtime could not be started. Check the Node path in the launcher configuration.",
+          "config": "<RUN>\\cases\\creation-failure\\launcher.json"
+        }
+      ],
+      "stdoutBytesAtExit": 0,
+      "stderrBytesAtExit": 234,
+      "stdoutBytes": 0,
+      "stderrBytes": 234,
+      "stdoutText": "",
+      "stderrText": "The configured Node runtime could not be started. Check the Node path in the launcher configuration.\r\n\r\nConfiguration: <RUN>\\cases\\creation-failure\\launcher.json\r\n"
+    }
+  ],
+  "processes": [
+    {
+      "tag": "creation-failure/launcher-click/43964",
+      "case": "creation-failure",
+      "role": "launcher-click",
+      "pid": 43964,
+      "source": "spawn",
+      "self": null,
+      "openedAtMs": 1795226140672,
+      "opened": {
+        "ok": true,
+        "image": "GraphGoblin.exe",
+        "parentPid": 29896,
+        "inAnyJob": true,
+        "alive": true,
+        "exitCode": null,
+        "createdAtMs": 1795226140666,
+        "exitedAtMs": null
+      },
+      "naturalCodes": [
+        0,
+        1
+      ],
+      "messages": [],
+      "samples": {
+        "exit": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226140666,
+          "exitedAtMs": 1795226140807
+        },
+        "atExit:click": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226140666,
+          "exitedAtMs": 1795226140807
+        },
+        "afterGrace": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226140666,
+          "exitedAtMs": 1795226140807
+        },
+        "final": {
+          "alive": false,
+          "exitCode": 1,
+          "createdAtMs": 1795226140666,
+          "exitedAtMs": 1795226140807
+        }
+      },
+      "teardown": {
+        "action": "none-already-exited"
+      },
+      "finalClassification": "natural"
+    }
+  ],
+  "helperEvents": [],
+  "privacy": {
+    "checked": true,
+    "leaks": []
+  },
+  "timeline": [
+    {
+      "atMs": 1795226140663,
+      "event": "prepared",
+      "repo": "fixture",
+      "port": "disposable",
+      "timeoutSeconds": 6,
+      "marker": false
+    },
+    {
+      "atMs": 1795226140671,
+      "event": "launcher-spawned",
+      "name": "click"
+    },
+    {
+      "atMs": 1795226140811,
+      "event": "launcher-exited",
+      "name": "click",
+      "exitCode": 1
+    }
+  ],
+  "assertions": [
+    {
+      "id": "helper-unavailable",
+      "kind": "control",
+      "text": "runtime start failure refuses with helper-unavailable",
+      "expected": "helper-unavailable",
+      "actual": "helper-unavailable",
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "prompt-refusal",
+      "kind": "control",
+      "text": "refusal is prompt (< 5000 ms)",
+      "expected": "< 5000",
+      "actual": 141,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-helper-started",
+      "kind": "control",
+      "text": "no helper process ran",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    },
+    {
+      "id": "no-gateway-spawn",
+      "kind": "control",
+      "text": "no gateway process is spawned",
+      "expected": 0,
+      "actual": 0,
+      "pass": true,
+      "baselineExpectation": "pass"
+    }
+  ],
+  "setupFaults": [],
+  "notes": [],
+  "error": null,
+  "verdict": "candidate-pass"
+}

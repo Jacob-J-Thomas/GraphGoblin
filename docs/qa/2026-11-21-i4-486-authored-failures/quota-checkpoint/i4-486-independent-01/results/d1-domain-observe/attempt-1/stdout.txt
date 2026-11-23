@@ -1,0 +1,42 @@
+PASS J01 direct literal $error -> evaluation-rejected
+PASS J01-legacy legacy evaluateExpression still rejects ExpressionError carrying the literal (legacy contract)
+PASS J02 grouped block -> evaluation-rejected
+PASS J03-taken taken conditional -> evaluation-rejected
+PASS J03-untaken untaken conditional -> ordinary value 7
+PASS J04 nested function -> evaluation-rejected
+PASS J05 dynamic $error message -> evaluation-rejected
+PASS J06 $assert -> evaluation-rejected
+PASS J07-length 5,000-char literal -> evaluation-rejected
+PASS J07-chars special-character literal -> evaluation-rejected
+PASS J08 runtime type errors -> evaluation-rejected
+PASS J09-malformed $eval malformed runtime string -> evaluation-rejected (never compile)
+PASS J09-unsafe $eval unsafe runtime regex -> evaluation-rejected (never unsafe-regex)
+PASS J09-input $eval of input-supplied malformed source -> evaluation-rejected
+PASS J09-control $eval valid string succeeds
+PASS J10-compile top-level malformed -> compile (SYNTHETIC: publish refuses)
+PASS J10-unsafe top-level unsafe regex -> unsafe-regex (SYNTHETIC: publish refuses)
+PASS J10-check checkExpression refuses both (publish-time validator input)
+PASS J11 recursion beyond maxDepth -> depth
+PASS J12 controlled deadline -> time
+PASS J13-genuine getter throwing genuine ExpressionError: no reason, same identity, one read
+PASS J13-plain getter on `error` throwing plain Error: no reason, legacy-wrapped ExpressionError, one read
+PASS J14 earlier depth error rethrown by later callback: identity kept, reason evaluation-rejected (not depth)
+PASS J15-name name-spoofed Error -> only evaluation-rejected; legacy wrapped (not identity)
+PASS J15-code code-spoofed object -> only evaluation-rejected; legacy wrapped
+PASS J15-control successful callback returns value
+PASS J16 predicate coercion failure carries no authored reason (propagates or rejects without reason)
+PASS J17 predicate coercion outcomes unchanged
+PASS J17-fail failing predicate expression -> evaluation-rejected
+PASS J18 overlapping same-source invocations are independent
+PASS J19-include include at line 2 -> render fact line 2 column 1
+PASS J19-taken taken-branch filter fault -> render fact
+PASS J19-untaken untaken branch renders ordinary text
+PASS J19-parse parse error -> parse fact (SYNTHETIC at runtime: publish refuses)
+PASS J19-legacy legacy renderTemplate still rejects TemplateError
+PASS J20-template template facts contain only phase/line/column with numeric positions
+{
+ "name": "d1",
+ "total": 36,
+ "passed": 36,
+ "failed": []
+}

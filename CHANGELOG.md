@@ -17,6 +17,361 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
   at their saved paths or rerun the installer. No format change or migration. Part of #456 and
   #326; owner acceptance is tracked separately. See ADR-0082.
+
+- The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
+  after its event is published, so a refresh could still be in flight, or return the earlier status
+  at the terminal event's sequence, and the header kept saying running. The header now also follows
+  the latest observed lifecycle event (streamed batches, whatever history window is browsed, and the
+  run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
+  **Status from event #N; the run record is updating.** in place of the stale position, and shows
+  **Updating status…** while a start or resume has superseded an outcome, or a newer record could
+  include an unseen resume. Provider-owned evidence survives route changes for at most twenty
+  runs and keeps only lifecycle sequences/statuses and four recent record positions per run, in
+  memory. A record needs a successful, non-aborted, matching run read from the current client, query
+  cache and credential generation before its position can supply a status. Rejection and same-key
+  recovery retire old streams and follower reads; evicted entries cannot be restored by late work.
+  Current terminal evidence at the known tail stays event-qualified while an agreeing cached row
+  awaits its own fresh receipt. A response naming another run is refused before it replaces the
+  requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
+  evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
+  the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
+  Management API and owner Chat (Chat and Devices) requests each keep the credential identity and
+  generation they were sent under. A delayed 401 from an older generation, such as a Devices list
+  still pending after the owner opened a run, cannot reject the recovered key, reopen the key form
+  or clear the inspector's freshly verified status; its caller still receives that 401. A matching
+  current-generation 401 still rejects, including one sent through the same reused owner Chat
+  client. An already accepted unchanged key causes no refresh.
+  A retained device cursor is only a negative hint against promoting an older outcome, never status
+  authority; fresh matching terminal reads still converge without new streamed events. A terminal
+  record's node is qualified as **Last node in run record**; event-derived outcomes and neutral
+  synchronization hide stale positions. Presentation only: the record, controls, recovery, delivery
+  and refresh polling are unchanged. Regressions also cover appended patch values (#385), which
+  already show each `add` operation's recorded value with Before absent. No persistent format,
+  store, export or contract change.
+
+- Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
+
+- Claude no longer reports a missing CLI when Windows refused the working directory (#364).
+  Windows refuses a missing working directory, one that is a file and one longer than 258
+  characters with the same spawn `ENOENT` as a missing executable. After a refused start the
+  adapter now reads, without changing anything, the configured executable's full path (with the
+  `.com` and `.exe` forms Windows also tries) and the working directory, and reports only what
+  that establishes: `cli-missing`/`HARNESS_NOT_INSTALLED` when that executable path is absent;
+  `HARNESS_INVALID_CONFIGURATION` (not resumable) when a turn's working directory does not exist
+  or is not a folder; otherwise an `unknown` preflight or `HARNESS_TURN_FAILED` turn whose fixed
+  text names the 258-character limit when the path exceeds it, or both possible causes. An
+  executable named without a full path that cannot be started is now `unknown` rather than
+  `cli-missing`. Refused starts stay `definitely-not-submitted`; cancellation, deadlines and
+  unconfirmed termination keep precedence; no message contains a path or native error text. A
+  refused start in a working directory of 260 characters or more no longer raises an uncaught
+  `read ENOTCONN` pipe error that could stop the API, and a later error of a started CLI, such
+  as a failed kill, is no longer taken for a refused start. No store, export or contract change.
+
+- Offline `--preflight` admits missing shipped model seeds in memory using the same stored-first
+  catalog projection as startup (#448). Existing stored metadata and disabled rows retain
+  precedence, with the existing warning/refusal policy. Preflight does not seed, refresh or
+  migrate the store; database bytes, stored rows and an existing WAL remain unchanged. SQLite's
+  read-only open may create or update `-shm` and, if a WAL-mode store has no `-wal`, create an
+  empty one (no frames, so no stored data).
+  **Upgrade:** rebuild the API. No schema, stored format or reset change.
+
+- Document explicit Windows batch-file invocation and pinned-definition recovery for
+  `SCRIPT_START_FAILED` (#362). Current process-start containment is retained; native regression
+  tests now cover both `.cmd` and `.bat` refusals with a successful explicit-shell control.
+
+- System preflight reports a fixed `plugins.codex` warning after the Codex CLI/login check
+  passes, and Settings displays the same scope notice in its Codex card (#442): loaded plugin
+  tools are not verified by this check. CLI inventory commands are useful for investigation,
+  but do not prove every enabled plugin loaded. Readiness, authentication, exit status and
+  plugin inheritance/overrides keep their existing behavior; no new probe or repair runs.
+  **Upgrade:** rebuild the API and web app. Preflight output parsers must allow the new warning
+  row and warning count. No schema, stored format or reset change.
+
+- Codex structured calls create short scratch names with exclusive `mkdir` in at most four
+  attempts (three `EEXIST` retries), preserving every colliding directory (#363). The existing
+  managed SDK 0.160.0 patch also shortens its schema-directory `mkdtemp` prefix to `gg-schema-`,
+  retaining schema enforcement and normal/error/abort cleanup (ADR-0087). Real-SDK/harmless-CLI
+  verification at the measured 226-character Windows temp root observes a 249-character adapter
+  scratch, 243-character SDK schema directory and 255-character schema file; ordinary OS/CLI
+  limits remain. Request/configured working directories and cleanup precedence are unchanged.
+  **Upgrade:** reinstall dependencies from the updated frozen lockfile, then rebuild the API.
+  No SDK version, dependency, stored schema/format or reset change.
+
+- Clarify that an enabled Codex model and a ready preflight do not establish current access
+  for the API user's login and provider endpoint. Recognized Codex inference-turn refusals retain
+  the provider's explanation; LLM decisions retain only a safe failure category. The guide
+  describes deliberate supported-model/login selection without automatic fallback or an
+  API-key-only promise (#427).
+- Reconcile Codex sandbox documentation and source comments: the authored sandbox permission
+  level is explicit, while Windows backend selection remains inherited unless explicitly
+  overridden. No sandbox permissions or backend behavior changed (#365).
+
+- Windows launcher identity and ownership checks own their descendants in private Windows jobs
+  (#459), drain both output streams within a bounded work window and collect failed checks
+  before displaying errors. Initial checks retain the 15-second work cap, with up to two seconds
+  for cleanup; held-store retries reserve that cleanup time and retain the last held guidance
+  when a conclusive new sample cannot fit. Raw helper output is never displayed or logged.
+  Ownership output is parsed once as strict JSON before whitespace normalization; duplicate
+  decoded keys, unknown fields and JavaScript-only syntax refuse startup. Cleanup is confirmed
+  only when the complete process/job/stream observation finishes before the two-second deadline;
+  a later completion keeps the unconfirmed-cleanup outcome (D166).
+  Caller admission now carries one absolute work cutoff through helper preparation, creation,
+  validation and result consumption. Setup cannot restart the held retry's clock or admit a
+  free sample inside its reserved cleanup interval; equality at the cutoff refuses (D167).
+  **Upgrade:** rebuild and reinstall the launcher. Windows 10 or Windows Server 2016 or later
+  with compatible nested jobs is required, including for warm shortcut clicks. A restricted host
+  can refuse the shortcut while an existing gateway remains callable at its current address.
+  No store, lock or export format change and no reset. PR #460 remains separately held.
+
+- API startup now prints one stack-free line for held or unverifiable data-directory,
+  SQLite-file and reclamation ownership, with exit code 1 (#409). It keeps the lock path and
+  verification reason, gives guidance for live and unknown owners, and escapes control characters
+  and line separators in the explanation. Lock records, acquisition rules, managed startup
+  categories and unrelated diagnostics are unchanged.
+
+- `--reset` manifests and output account for both writer locks and their `.reclaim` guards
+  (#434). The dry run and the confirmed manifest list `<database-file>.graphgoblin.lock` and
+  `graphgoblin.lock` as the reset's own locks, removed on release, where the confirmed manifest
+  previously listed its own database lock under Keeps as unrelated data. A stale lock file or
+  `.reclaim` guard is listed as reclaimed when the reset takes that lock, instead of being kept
+  (the database lock and its guard) or omitted (the data-directory guard); the stale lock of
+  another database, an abandoned guard staging directory and a hard link of a lock stay under
+  Keeps and are never removed. Each lock file and guard is listed once under the name the
+  directory shows, matched by filesystem identity rather than letter case, so a spelling the
+  volume equates with the lock name (such as `ΟΣ-1.DB.GRAPHGOBLIN.LOCK` for
+  `οσ-1.db.graphgoblin.lock` on NTFS, whose `Σ` JavaScript lowercases to a final `ς`) is no
+  longer also listed under Keeps. A reset refuses when the directory lists several hard links
+  that could be a lock or guard and the filesystem does not say which one the lock module opens.
+  The confirmed manifest says a stale lock file or guard was reclaimed only when the reset's own
+  acquisition removed it, as the lock module now reports; one the preview found that another
+  process removed first is listed as `already gone when the reset took` that lock instead of as
+  reclaimed by the reset. Completion and failure output names each lock and what releasing
+  it did (removed, already gone, or kept because another process's record replaced it) instead
+  of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
+  lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
+  its locks names any stale lock file or guard they reclaimed, and any the preview found that
+  was already gone when the reset took its lock (without saying who removed it), instead of
+  saying nothing changed. A failed attempt to take either lock is no longer reported as
+  `Nothing in the data directory was changed.`: taking a lock can itself create or reclaim that
+  lock's file and guard and leave them (for example when removing the guard's owner marker
+  fails, which can leave both the lock file and the guard behind). The refusal now names the stage
+  (`could not take the data-directory lock:` or `could not take the database lock:`, replacing
+  the `; stop it before resetting` suffix), says `No store data was removed.`, lists that lock
+  file and guard as found now and just before the attempt, without saying who changed them, and
+  says what releasing the data-directory lock did. A lock path that is not a regular file, or a
+  guard path that is not a directory, is refused before anything changes.
+  **Upgrade:** no stored data, schema or format change, and no reset. Rebuild the API. Scripts
+  that parse reset output must expect the new lock rows and release lines in place of
+  `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
+  `Released graphgoblin.lock.`, the `could not take the <lock>:` refusal prefix, and the
+  `already gone when the reset took` wording for stale entries another process removed first.
+
+- The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
+  overrides, including case variants and empty values, before writing staged or installed JSON
+  (#437). The native launcher refuses the same keys in manually edited configuration, without
+  printing their values. Ordinary overrides remain supported.
+  **Upgrade:** previously installed JSON containing either key now refuses to launch. Remove
+  those entries and reinstall the launcher. Preserve the existing encryption key using the
+  data directory's `master.key` before restarting; changing that key makes stored secrets
+  unreadable. Set the Jev key through GraphGoblin's encrypted secret store. The installer does
+  not rewrite existing credential-bearing files or clear old copies; protect and remove them
+  yourself after preserving the required credentials.
+
+- Concurrent Windows store recovery handles a refused read of a vanished UUID marker without
+  unlinking it. It accepts `EPERM` deletion only after independently verifying
+  that the exact observed stale marker or empty guard directory is absent (#471). It never retries
+  deletion or removes a successor marker. Genuine filesystem refusals keep their operation and
+  error code. Recovery cleanup failures roll back a newly acquired main lock, explicitly report
+  retained ownership if rollback fails, and preserve the original acquisition failure. Native CI
+  retains bounded contender identities, record readback and cleanup receipts.
+
+- Codex configuration overrides reject reserved or non-plain TOML key segments during authoring,
+  validation and publication, using the adapter's existing rule (#429). Dotted keys, nested tables
+  and tables inside arrays are checked, with a useful field path. Invalid keys are never silently
+  discarded by the contract. In the structured editor, an override entry's JSON Value with a member
+  named `__proto__` at any depth, which the form's object copies cannot keep, is held as typed with
+  the member's path and the key rule instead of being autosaved without it; correcting the member
+  saves the whole value. Previously stored invalid-key drafts cannot be published; the check
+  leaves their data intact. Existing HTTP guards and adapter refusal remain in place.
+  HTTP request-schema paths preserve literal `/` and `~` in member names with RFC 6901 escaping,
+  including nested tables and array positions; ordinary and unknown-field diagnostics retain
+  their existing messages and root-path convention.
+  **Upgrade (ADR-0062):** no stored content is rewritten. The existing startup guard refuses any
+  invalid definition in `loop_versions.definition`, including drafts, published versions and
+  draft-run snapshots. The target store is the database used by the gateway being upgraded;
+  identify its configured `GG_DATA_DIR` and `GG_DB_URL`, including defaults. Before editing it,
+  [stop the gateway and confirm it has exited](docs/guide/01-install-and-first-run.md#stop-and-restart-safely),
+  then follow the [full backup procedure](docs/guide/06-settings-and-secrets.md#back-up-and-restore).
+  Preserve the database with any WAL/SHM files, the data directory and any external database
+  location, configuration and keys described there. Keep that backup unchanged with its previous
+  build. If rehearsing the correction on a separate copy, use offline SQL and structured-JSON
+  checks only, without starting a gateway against the copy. Apply both the key corrections and
+  any required explicit harness values below to the stopped target store itself; a repaired
+  rehearsal copy does not repair that target. On the stopped target, inspect the typed
+  inference-node override keys with this read-only query; it ignores scalar values and authored
+  JSON outside those fields:
+
+  ```sql
+  SELECT v.id, v.loop_id, v.status, json_extract(n.value, '$.id') AS node_id,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path,
+         json_type(n.value, '$.config.harness') IS NULL AS harness_omitted,
+         '$.nodes[' || n.key || '].config.harnessOptions.configOverrides'
+           || substr(k.fullkey, 2) AS key_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n,
+       json_tree(json_extract(n.value, '$.config.harnessOptions.configOverrides')) AS k
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND (json_extract(n.value, '$.config.harness') = 'codex'
+      OR json_type(n.value, '$.config.harness') IS NULL)
+    AND typeof(k.key) = 'text'
+    AND (k.key = '' OR k.key GLOB '*[^A-Za-z0-9_.-]*'
+      OR k.key GLOB '.*' OR k.key GLOB '*.' OR instr(k.key, '..') > 0
+      OR instr('.' || k.key || '.', '.__proto__.') > 0
+      OR instr('.' || k.key || '.', '.constructor.') > 0
+      OR instr('.' || k.key || '.', '.prototype.') > 0);
+  ```
+
+  Retain the target's discovery output before editing. Run this separate read-only query on the
+  same stopped target as well: it finds omitted harnesses even when invalid-key discovery returns
+  zero rows:
+
+  ```sql
+  SELECT n.key AS node_index, v.id, v.loop_id, v.status,
+         '$.nodes[' || n.key || '].config.harness' AS harness_path
+  FROM loop_versions AS v, json_each(v.definition, '$.nodes') AS n
+  WHERE json_extract(n.value, '$.kind') = 'inference'
+    AND json_type(n.value, '$.config.harness') IS NULL;
+  ```
+
+  Public API writes in both builds materialize an omitted Codex harness; an externally authored
+  or hand-edited row can still omit it. For each reported draft or published version with
+  `harness_omitted = 1` (or found by the omission query), explicitly materialize its effective
+  `codex` value on the stopped target store. Bind `harness_path`, `id`, then the same
+  `harness_path` to this operator-only statement (explicit JSON null is not an omitted harness):
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_set(definition, ?, 'codex')
+  WHERE id = ? AND status IN ('draft', 'published')
+    AND json_type(definition, ?) IS NULL;
+  ```
+
+  This is an explicit hand correction, not a product backfill. Correct each reported member's
+  spelling in the stopped target's stored definition, or deliberately remove just that member.
+  For a draft or published version, bind its reported `key_path` and `id` to:
+
+  ```sql
+  UPDATE loop_versions
+  SET definition = json_remove(definition, ?)
+  WHERE id = ? AND status IN ('draft', 'published');
+  ```
+
+  An affected-row count of 1 is not proof that the member was removed: the product's libsql
+  driver can report that count while leaving a quoted member and the stored bytes unchanged.
+  On the stopped target, re-run both discovery queries and read the complete stored text back,
+  comparing it with the exact intended structured JSON correction and confirming unrelated
+  fields/history are unchanged. A zero-key discovery result or successful startup also does not
+  materialize omitted defaults: without the explicit harness correction, GET and publication of
+  such a manually authored row can still fail. A reported path containing quotation marks may
+  not address the member through SQLite JSON1. In that case,
+  parse the complete definition as structured JSON, correct/remove that exact object member,
+  serialize the JSON and bind the replacement and row ID to
+  `UPDATE loop_versions SET definition = ? WHERE id = ? AND status IN ('draft', 'published')`.
+  Include `harness: "codex"` in that node's configuration when it was omitted. Read back the exact
+  complete replacement, re-run discovery and validate it; do not construct a path by interpolating
+  a key. The same explicit node-field correction applies to exported or recovery JSON when its
+  harness was omitted.
+
+  Snapshot rows are immutable: do not update them or disable their triggers. The omission query
+  also reports snapshots, but an omitted harness alone is accepted by definition parsing with
+  its effective `codex` default. An explicit version read can still return `500 RESPONSE_INVALID`
+  for that manually authored snapshot. Preserve its history. Use the following options only for
+  an actually incompatible snapshot, such as one with an invalid override key. Keep the original
+  database backup with its previous build. To preserve authored work in a fresh store, export
+  the affected loop from the original gateway using its previous build. If it needs starting,
+  this is an owner-directed operational start. Use `GET /loops/{loop_id}/export?draft=true`
+  for its draft or omit the query for its published definition. Correct the exported keys as
+  structured JSON and import through `POST /loops/import` into a separate fresh store. The original
+  backup retains its history; the new store carries the imported definition only, without the
+  original runs, events or snapshots. To adopt the fresh store, select its data directory,
+  database configuration and credentials. Use the loop ID returned by import for verification.
+  The original database still holds the incompatible snapshot. To keep using that database
+  with the updated gateway, deliberately finish/cancel the old build's
+  runs and delete the enclosing loop through `DELETE /loops/{loop_id}` (which removes its runs
+  and snapshots), or explicitly reset the store. Exported definitions and saved device/recovery draft copies carry the same
+  `nodes[].config.harnessOptions.configOverrides` fields; correct or remove their offending keys
+  before importing or recovering them. The definition format is unchanged.
+
+  Before resuming service, check the store you will use for unresolved invalid keys and
+  incompatible snapshots. Verify key and explicit-harness corrections on applicable editable
+  rows against the stored text. An omission-only result for an immutable snapshot need not be
+  cleared. Start the new build with the configuration for the repaired original or the adopted
+  fresh store. Startup recovers runs and re-arms published triggers, as described in the
+  [restart guide](docs/guide/01-install-and-first-run.md#stop-and-restart-safely). After that restart,
+  verify authenticated `GET /loops/{loop_id}` returns 200 for each corrected loop and compare its
+  returned draft/current definitions with the intended corrections. Other retained versions are
+  covered by the offline discovery and exact stored-text checks. Keep this verification
+  read-only; do not publish owner drafts or start runs for a test. Synthetic QA can separately
+  exercise publication and restart with inert fixtures, fake harnesses and timers disabled; it
+  does not establish owner-store acceptance.
+
+- The editor keeps every stored edge record when a draft gives two edges one id
+  (`DUPLICATE_EDGE_ID`, #481). Decision route bookkeeping changes or removes only the record a
+  route row names alone among that Decision's own connections, so an unrelated edit no longer
+  rewrites another edge's output port, and removing a route or replacing its JSON no longer removes
+  another node's edge with the same id. A row keeps naming its own record while its ID is typed
+  blank, invalid or the same as another row's, so renaming or removing it then never changes the
+  other row's record. A record two rows name, as in a device copy an earlier editor left after
+  such a collision, belongs to neither: renaming or removing either row keeps it and its manual
+  route, as a load without the device copy's table does, and a row retyped to the port such a
+  record is on takes it up, so removing that row repairs the shared id. Deleting a card one of
+  two connections with an id reaches no longer moves the other connection onto the route that
+  owned the deleted one: it stays on its own output with its manual route, no route claims it,
+  and Undo and Redo give back exactly that; removing a route or applying a whole new draft that
+  leaves one connection with the id does the same. Reset route, segment
+  drags and nudges, and a moved card's route reset refuse a shared id as Remove connection does,
+  changing nothing. Selecting such a
+  connection shows a note with the reason and the repair at once; Reset route and Remove connection
+  stay focusable but unavailable, described by the note, and clicking them changes nothing. The
+  repair leads with removing a Decision route (its review lists just that connection), adding it
+  back and drawing it again, repeated while the id is shared, and otherwise, or without a pointer,
+  the API's draft save; it no longer suggests deleting a card, which also removes the card's other
+  connections and their routes. Validation, draft saves and Publish's refusal are unchanged. No
+  stored, export or device-draft format changes; nothing to upgrade.
+
+- The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
+  times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
+  cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and
+  retry settings are unchanged; no product behaviour changes. (#466)
+
+- Direct Node invocations of the generated-document, migration and performance-summary
+  commands execute when the checkout is reached through a directory alias (#495).
+  Importing those modules remains inert. The supported pnpm checks already rejected invalid
+  inputs through the tested Windows junction.
+
+- API test workers reserve their assigned loopback ports through subprocess startup,
+  restart and cleanup, so parallel fixtures cannot select the same port (#407).
+
+- CI runs the repository checks and the serial coverage gate as two independent jobs, Repository
+  checks and Coverage, each with a 30-minute budget (#488, ADR-0084). Coverage gets its own
+  install and build and a 25-minute step cap, and uploads the package coverage summaries after
+  every outcome. The licence, generated-docs, contrast and dependency-audit checks no longer wait
+  for coverage. The `Gates` status is now a short aggregate that is always evaluated and passes
+  only when both jobs succeed; a failed, cancelled or skipped job never passes it. It stays the one
+  stable status context; `main` currently has no branch protection or ruleset requiring it.
+  Commands, arguments, thresholds and the test workload are unchanged.
+
+- The Windows launcher CI job uploads bounded, typed native evidence as `windows-launcher-<attempt>`
+  (#496). The earlier `.tmp/windows-launcher-*/` upload never produced an archive; by default the
+  uploader skips hidden paths, which include everything below `.tmp`. The evidence comes from a
+  fresh folder in the runner temp directory: a manifest binding the run and checkout, the suite's
+  typed observations, and a validated result, together under 256 KiB. It records test outcomes,
+  child exit codes, signals and timings, alias and cleanup dispositions, and fixture states, but
+  never paths, output, keys, stores or fixture files. The evidence folder is prepared after the
+  build, so a preparation failure fails the job without skipping the native tests and uploads
+  nothing. Only the exact manifest bytes `init` wrote are accepted. A passing native run without
+  its required observations, with a repeated or contradictory record, or with a checkout that does
+  not match, or cannot be matched to, the event fails the job.
+
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher

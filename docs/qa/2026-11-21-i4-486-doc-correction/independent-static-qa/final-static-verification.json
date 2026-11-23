@@ -1,0 +1,208 @@
+{
+  "atUTC": "2026-11-21T18:14:40.812269+00:00",
+  "head": "29e165e14fdda138300ba2a34585ddd47268b475",
+  "tree": "d50fb576f1ef4498cb30e52521198575d6d0ebd4",
+  "parents": [
+    "5d740d50b82c5a6f1a8fbb7854fd34c8dca6803d",
+    "a60843a9050b3a203726db84f6abf1f45b8bc694"
+  ],
+  "cleanPorcelain": true,
+  "indexMatchesRootReceiptSha256": true,
+  "D209Replacements": [
+    {
+      "path": "CHANGELOG.md",
+      "firstLine": 7,
+      "committedReplacement": "Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`.",
+      "sourceParagraphOtherwisePreserved": true,
+      "wholeFileSha256": "72909c098548958babdf66d431fec95b62d79030a9174de7ec71526bb383308d"
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "firstLine": 273,
+      "committedReplacement": "Correct the field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`.",
+      "sourceParagraphOtherwisePreserved": true,
+      "wholeFileSha256": "2b8980040c0ffe37d02eaf7e6ac7dcda29a59c5288d460fa6be49f3c7177ec9c"
+    }
+  ],
+  "sourceContractSnippets": [
+    {
+      "id": "API-body-forward",
+      "path": "apps/api/src/routes/runs.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1"
+    },
+    {
+      "id": "published-pointer",
+      "path": "packages/infrastructure/src/sqlite/loops.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "db324eecb34a44c3dbf19f1bbd4098b611ff7f250cd7701c350d7918e98fef69"
+    },
+    {
+      "id": "create-loop-pointers",
+      "path": "packages/infrastructure/src/sqlite/loops.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "db324eecb34a44c3dbf19f1bbd4098b611ff7f250cd7701c350d7918e98fef69"
+    },
+    {
+      "id": "version-policy",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "draft-freeze-at-start",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "draft-freeze-helper",
+      "path": "packages/engine/src/definition-pin.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "b4a7e26d2be258b796dbccfff7ebfb44ae8ead5a7fc0a3321f493e44c5fdc5ff"
+    },
+    {
+      "id": "UI-published-select",
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8"
+    },
+    {
+      "id": "UI-selected-version-request",
+      "path": "apps/web/src/runs/new/RunLauncher.tsx",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "4336923cc3e9185ab290cc91892b292b267c995e2c12194fb1ccb2b9b0250ee8"
+    },
+    {
+      "id": "UI-no-published-warning",
+      "path": "apps/web/src/runs/new/NewRunPage.tsx",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "ab5f4fe9950c44e33a53a4745f8e1fc65f1e6155a5cca9c1d69f512014f68d63"
+    },
+    {
+      "id": "Resume-transition",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "execution-existing-pin",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "Replay-source-version",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "Replay-existing-pin",
+      "path": "packages/engine/src/run-manager.ts",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e"
+    },
+    {
+      "id": "D197-general-recovery",
+      "path": "docs/guide/03-run-and-observe.md",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "2b8980040c0ffe37d02eaf7e6ac7dcda29a59c5288d460fa6be49f3c7177ec9c"
+    },
+    {
+      "id": "D197-script-recovery",
+      "path": "docs/guide/03-run-and-observe.md",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "2b8980040c0ffe37d02eaf7e6ac7dcda29a59c5288d460fa6be49f3c7177ec9c"
+    },
+    {
+      "id": "D197-diagnostic-checklist",
+      "path": "docs/guide/03-run-and-observe.md",
+      "a608ExcerptStillPresent": true,
+      "finalFileSha256": "2b8980040c0ffe37d02eaf7e6ac7dcda29a59c5288d460fa6be49f3c7177ec9c"
+    }
+  ],
+  "sixD197Paragraphs": [
+    {
+      "id": "D197-1",
+      "path": "docs/04-node-catalog.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 156
+    },
+    {
+      "id": "D197-2",
+      "path": "docs/guide/03-run-and-observe.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 175
+    },
+    {
+      "id": "D197-3",
+      "path": "docs/guide/03-run-and-observe.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 275
+    },
+    {
+      "id": "D197-4",
+      "path": "docs/guide/03-run-and-observe.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 291
+    },
+    {
+      "id": "D197-5",
+      "path": "docs/guide/07-troubleshooting.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 150
+    },
+    {
+      "id": "D197-6",
+      "path": "docs/guide/07-troubleshooting.md",
+      "unchangedNormalizedParagraph": true,
+      "finalFirstLine": 210
+    }
+  ],
+  "frozenNoncombinedEntriesExact": 50,
+  "independentCombinedDocSubtractionProof": "independent-combined-doc-proof.json",
+  "rootCombinedProofHashesVerified": [
+    {
+      "path": ".gitattributes",
+      "committedSha256": "b0e57d1e5cb44d581c6a274469a153671da0bc45729bf843c277a53cd049a127",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    },
+    {
+      "path": ".prettierignore",
+      "committedSha256": "53d4dc3c7d107bffc4490473de6caf28fa72025e280fdf972676ff222b50011c",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    },
+    {
+      "path": "CHANGELOG.md",
+      "committedSha256": "72909c098548958babdf66d431fec95b62d79030a9174de7ec71526bb383308d",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    },
+    {
+      "path": "docs/04-node-catalog.md",
+      "committedSha256": "fb005a667d4ff7bdb3fad4419729866bd93d3859b227dd63d6f37c15f625395d",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    },
+    {
+      "path": "docs/06-harness-integration.md",
+      "committedSha256": "53489aae10da232b8c2f7de0dcf46b0afb5a2d7a85822590945891b3c0d6361b",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    },
+    {
+      "path": "docs/guide/03-run-and-observe.md",
+      "committedSha256": "2b8980040c0ffe37d02eaf7e6ac7dcda29a59c5288d460fa6be49f3c7177ec9c",
+      "matchesRootExpectedSha256": true,
+      "parentLineOrderOrSubtractionReported": true
+    }
+  ],
+  "D211ExactRuleAndArtifact": "D211-static-check.json",
+  "newRuntimeTests": 0,
+  "newBuilds": 0,
+  "newProviders": 0,
+  "sourceIndexWrites": 0
+}

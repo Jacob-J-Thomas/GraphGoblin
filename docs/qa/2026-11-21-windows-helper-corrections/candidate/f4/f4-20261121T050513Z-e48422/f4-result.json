@@ -1,0 +1,353 @@
+{
+  "schema": "qa459t-f4-result/1",
+  "startUtc": "2026-11-21T05:05:15.1599080Z",
+  "seam": "GraphGoblin.Desktop.HelperProcess.AwaitCleanup(Func<bool>, Func<long>) : bool (internal)",
+  "cleanupMilliseconds": 2000,
+  "processId": 41596,
+  "cases": [
+    {
+      "id": "T1",
+      "name": "complete-at-1999",
+      "purpose": "A complete observation sampled at 1,999 ms (strictly below the deadline) is credited.",
+      "startClock": 0,
+      "expectedResult": true,
+      "actualResult": true,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        1999
+      ],
+      "wallMs": 0,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "1999",
+          "observed": "1999"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T2",
+      "name": "complete-at-2000-equality",
+      "purpose": "A complete observation sampled exactly at 2,000 ms is not credited.",
+      "startClock": 0,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        2000
+      ],
+      "wallMs": 0,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "2000",
+          "observed": "2000"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T3",
+      "name": "complete-at-2001",
+      "purpose": "A complete observation sampled at 2,001 ms is not credited.",
+      "startClock": 0,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        2001
+      ],
+      "wallMs": 0,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "2001",
+          "observed": "2001"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T4",
+      "name": "poll-crosses-deadline-within-one-observation",
+      "purpose": "The clock reads 1,999 ms when the observation pass starts; the pass itself advances it to 2,001 ms and completes. The sample must be taken after the full pass, so the late completion is not credited.",
+      "startClock": 1999,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        2001
+      ],
+      "wallMs": 0,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "2001",
+          "observed": "2001"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T5",
+      "name": "incomplete-then-complete-after-deadline",
+      "purpose": "First pass incomplete at 1,999 ms; the next pass completes but is sampled at 2,001 ms. Eventual completion does not credit timely confirmation.",
+      "startClock": 0,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 2,
+      "trace": "OEOE",
+      "samples": [
+        1999,
+        2001
+      ],
+      "wallMs": 9,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OEOE",
+          "observed": "OEOE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "1999,2001",
+          "observed": "1999,2001"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T6",
+      "name": "incomplete-then-complete-in-budget",
+      "purpose": "First pass incomplete at 1,998 ms; the next pass completes sampled at 1,999 ms and is credited.",
+      "startClock": 0,
+      "expectedResult": true,
+      "actualResult": true,
+      "observations": 2,
+      "trace": "OEOE",
+      "samples": [
+        1998,
+        1999
+      ],
+      "wallMs": 15,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": true,
+          "observed": true
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OEOE",
+          "observed": "OEOE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "1998,1999",
+          "observed": "1998,1999"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T7",
+      "name": "incomplete-at-deadline-stops-polling",
+      "purpose": "An incomplete pass sampled at 2,000 ms returns false without starting another observation pass.",
+      "startClock": 0,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        2000
+      ],
+      "wallMs": 0,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "elapsed samples read by the seam",
+          "pass": true,
+          "expected": "2000",
+          "observed": "2000"
+        }
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "id": "T8",
+      "name": "real-monotonic-stopwatch-late-pass",
+      "purpose": "With a real Stopwatch, a complete observation pass that takes at least 2,050 ms is sampled at or after 2,000 ms and is not credited.",
+      "startClock": 0,
+      "expectedResult": false,
+      "actualResult": false,
+      "observations": 1,
+      "trace": "OE",
+      "samples": [
+        2065
+      ],
+      "wallMs": 2065,
+      "fault": null,
+      "checks": [
+        {
+          "name": "no exception from the product seam",
+          "pass": true,
+          "expected": null,
+          "observed": null
+        },
+        {
+          "name": "returned bool",
+          "pass": true,
+          "expected": false,
+          "observed": false
+        },
+        {
+          "name": "delegate call order",
+          "pass": true,
+          "expected": "OE",
+          "observed": "OE"
+        },
+        {
+          "name": "last elapsed sample at or after",
+          "pass": true,
+          "expected": 2000,
+          "observed": 2065
+        }
+      ],
+      "verdict": "PASS"
+    }
+  ],
+  "summary": {
+    "cases": 8,
+    "passed": 8,
+    "failed": 0
+  },
+  "endUtc": "2026-11-21T05:05:17.2559305Z"
+}

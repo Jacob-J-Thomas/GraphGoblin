@@ -1,0 +1,171 @@
+{
+  "broadLocalAggregatesRepeated": false,
+  "commandForms": "curated summaries, not raw environment or argument dumps",
+  "evidenceRole": "author verification only; not independent QA or CI",
+  "focusedCoverage": {
+    "configuredThresholdsOrExclusionsChanged": false,
+    "fullToolingPackageCoverageClaim": false,
+    "metrics": {
+      "branches": {
+        "covered": 670,
+        "pct": 97.38,
+        "skipped": 0,
+        "total": 688
+      },
+      "branchesTrue": {
+        "covered": 0,
+        "pct": "Unknown",
+        "skipped": 0,
+        "total": 0
+      },
+      "functions": {
+        "covered": 143,
+        "pct": 100,
+        "skipped": 0,
+        "total": 143
+      },
+      "lines": {
+        "covered": 570,
+        "pct": 99.47,
+        "skipped": 0,
+        "total": 573
+      },
+      "statements": {
+        "covered": 676,
+        "pct": 98.97,
+        "skipped": 0,
+        "total": 683
+      }
+    },
+    "sourceDenominator": "tooling/scripts/windows-launcher-evidence.mjs only",
+    "sourceSummarySha256": "11874bedb17e7d7aedd92d08563d42f51eeec78364a33340c63a48e8df32d96d",
+    "thresholds": {
+      "branches": 90,
+      "functions": 90,
+      "lines": 90,
+      "statements": 90
+    }
+  },
+  "independentEvidenceConsultedForThisSubset": false,
+  "results": [
+    {
+      "commandSummary": "pnpm.cmd build",
+      "elapsedSeconds": 43.098,
+      "sourceLog": "build.log",
+      "sourceLogSha256": "bdb9ecc1a5fc95318fb751dd7ad8b061fc064baafb8d74a29c8b0148a26e6f2c",
+      "tasks": 12,
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "Framework64 C# compiler: x64 NativeChecks build",
+      "sourceLog": "compile-first.log",
+      "sourceLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "NativeChecks --cleanup-deadline-checks",
+      "controls": 6,
+      "evidenceTier": "deterministic shared production observation/clock decision; not kernel behavior",
+      "sourceLog": "cleanup-decision-first.log",
+      "sourceLogSha256": "0f53fcac1ea703916f7775b4953b1147425beffdf2d96b5454345ebeafe07670",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd exec node --test --test-name-pattern='bounded Windows logs' tooling/scripts/windows-launcher.acceptance.mjs",
+      "elapsedMs": 134290.0744,
+      "protocolCases": 30,
+      "sourceLog": "native-focused-first.log",
+      "sourceLogSha256": "90c225b2ccef3e24c543b09dd01615c45ddebb7e6279d3eff0b0a8636311ad43",
+      "terminalExit": 0,
+      "testsPassed": 9,
+      "testsTotal": 9
+    },
+    {
+      "commandSummary": "Focused evidence unit file with coverage.include=scripts/windows-launcher-evidence.mjs",
+      "sourceLog": "tooling-focused-coverage.log",
+      "sourceLogSha256": "9fda0f2a0f569592756a1d604b2a02b28a26091ff8800c6d8d8642f4f97d3e98",
+      "terminalExit": 0,
+      "testsPassed": 40,
+      "testsTotal": 40
+    },
+    {
+      "commandSummary": "pnpm.cmd typecheck",
+      "elapsedSeconds": 371.728,
+      "sourceLog": "typecheck.log",
+      "sourceLogSha256": "c33a81b20b1d172c989c83b6dce1b1365bfcbe2aa9ec6029d156cc4d27f0840d",
+      "tasks": 21,
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd lint",
+      "elapsedSeconds": 410.05,
+      "sourceLog": "lint.log",
+      "sourceLogSha256": "06bae0bd5a26312d6135fa3834088e6effd7d0e512bc20e1081c2b43dd91b193",
+      "tasks": 13,
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:layers",
+      "sourceLog": "check-layers.log",
+      "sourceLogSha256": "45aad4760f307e105b85b466c4e8bc7ca6162020b1356de2f2257d5d7b909f6c",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:migrations",
+      "sourceLog": "check-migrations.log",
+      "sourceLogSha256": "030705cbb2128856436433ddd057304e369e0a0353bb88468d63a12d03119dee",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:tokens",
+      "sourceLog": "check-tokens.log",
+      "sourceLogSha256": "363ff18c4b41fb6658b9e7a1a68563b2841afd4015ef7d321054f41261397139",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:deps",
+      "sourceLog": "check-deps.log",
+      "sourceLogSha256": "893340ffea3fbf7fcf8bc7d85b9f67dac612f157691301f8b9452467885d99f8",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:licenses",
+      "sourceLog": "check-licenses.log",
+      "sourceLogSha256": "1b4b55d470d1c0468ed1c9c37699e019c1579999a5dac4681ada50d70227cdea",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:templates",
+      "sourceLog": "check-templates.log",
+      "sourceLogSha256": "628a3c8efca45bae5b83a58253a44d8fbb45f8f5030f9c8849059a3b03fe00a2",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:contrast",
+      "sourceLog": "check-contrast.log",
+      "sourceLogSha256": "528afce54a2b48a57830c98b67b6bda70e5fc88489d669a4ba799311468fe4f1",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "pnpm.cmd check:docs",
+      "sourceLog": "check-docs.log",
+      "sourceLogSha256": "b2a516576c58ab69199d7ec52c9b000e0b45d816662f2115d2d97b8732c1c57f",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "Prettier check of changed Markdown/JavaScript files",
+      "sourceLog": "format-check.log",
+      "sourceLogSha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+      "terminalExit": 0
+    },
+    {
+      "commandSummary": "git diff --check",
+      "sourceLog": "diff-check.log",
+      "sourceLogSha256": "66855e9468b61801109316987fec1efb06b17f756c0cc4f04709592504124eda",
+      "terminalExit": 0
+    }
+  ],
+  "sourceHead": "37803eeef9f55c2a316289aa502798025a7873be",
+  "sourceLedgerSha256": "f81ce9457a619209e7a2715505eb5b02f25822a37650b1153eb1e76514f78067",
+  "sourceTree": "647d297990837f7f21e0054c5be15a0109fab2f1"
+}

@@ -1,0 +1,39 @@
+# expect( line counts (baseline blob a966e08 vs corrected blob 3e385dc)
+baseline: 77
+corrected: 79
+
+# expect( lines only in baseline (removed or reworded):
+
+# expect( lines only in corrected (added or reworded):
+> expect(isAbsolute(relativePath)).toBe(false);
+> if (kind === 'relative') expect(isAbsolute(fixedPath)).toBe(false);
+
+# skip/only/timeout/retry tokens (baseline vs corrected):
+skip: 1 vs 1
+\.only: 0 vs 0
+timeout: 0 vs 0
+retry: 0 vs 0
+Timeout: 0 vs 0
+chdir: 0 vs 0
+todo: 0 vs 0
+
+# multi-line port expectation (baseline lines 132-141, corrected 139-143):
+        expect(port).toHaveBeenCalledWith(
+          kind === 'temp'
+            ? { kind: 'temp' }
+            : {
+                kind: 'fixed',
+                path: kind === 'relative' ? relative(process.cwd(), target) : target,
+              },
+          run.id,
+        );
+        expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
+---
+        const path = kind === 'temp' ? join(realpathSync(dataDir), 'workspaces', run.id) : target;
+        expect(run.status).toBe('succeeded');
+        expect(port).toHaveBeenCalledTimes(1);
+        expect(port).toHaveBeenCalledWith(
+          kind === 'temp' ? { kind: 'temp' } : { kind: 'fixed', path: fixedPath },
+          run.id,
+        );
+        expect(engine.ports.scripts.calls[0]?.cwd).toBe(path);
