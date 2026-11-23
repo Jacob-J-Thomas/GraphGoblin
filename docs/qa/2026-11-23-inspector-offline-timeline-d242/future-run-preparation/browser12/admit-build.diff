@@ -1,0 +1,70 @@
+--- i5-416-420-post-feedback-browser12-preparation-01/admit-build.py
++++ i5-d242-b2-browser12-preparation-03/admit-build.py
+@@ -18,30 +18,45 @@
+ def git(*args):
+     return subprocess.check_output(['C:/Program Files/Git/cmd/git.exe', '--no-optional-locks', '-C', str(W), *args], env=os.environ | {'GIT_OPTIONAL_LOCKS': '0'}).decode().strip()
+ 
+-qa = E / 'i5-d241-session-feedback-corrected-qa-01'
++inputs = read(O / 'ROOT-ADMISSION-INPUTS.json')
++assert inputs['rootAdmitted'] is True and inputs['rootReadFullDerivativeDeltaAndPlan'] is True
++for role in ('freeze', 'focusedManifest'):
++    assert isinstance(inputs[role]['path'], str) and Path(inputs[role]['path']).is_absolute()
++    assert digest(Path(inputs[role]['path'])) == inputs[role]['sha256']
++freeze_path = Path(inputs['freeze']['path'])
++freeze = read(freeze_path)
++qa = Path(inputs['independentQa']['folder'])
++assert qa.is_absolute() and digest(qa / 'MANIFEST.json') == inputs['independentQa']['manifestSha256']
+ assert read(qa / 'FRESH2-SELECTION.json')['passed'] == 2
+ assert read(qa / 'FULL63-SELECTION.json')['passed'] == 63
+ receipt = read(qa / 'PHASE-RECEIPT.json')
+ assert receipt['stageReached'] == 'completed' and receipt['failure'] is None and receipt['afterMatchesRootBinding'] is True
+-assert read(qa / 'ROOT-BINDING.executed.json')['source']['head'] == 'a0ce7b781e333b70f4711b5e9201ef63c157df1d'
+-assert digest(O / 'PREPARATION-MANIFEST.json') == '40f2d11197ffef599f31c8bf4a9b5aa4a7abc3055c0d304f6e47cd63c21219c6'
+-assert digest(E / 'i5-d241-session-feedback-checks-01/EXECUTION-MANIFEST.json') == '67fcda88996a67176c088e5d39d58ff6c4e8d98fe9c679e270693b1393a483f4'
++assert read(qa / 'ROOT-BINDING.executed.json')['source']['head'] == freeze['source']['head']
++assert digest(O / 'PREPARATION-MANIFEST.json') == inputs['preparationManifestSha256']
+ count = 0
+-for folder, file in [(O, 'PREPARATION-MANIFEST.json'), (E / 'i5-d241-session-feedback-checks-01', 'EXECUTION-MANIFEST.json')]:
++for folder, file in [(O, 'PREPARATION-MANIFEST.json'), (Path(inputs['focusedManifest']['path']).parent, Path(inputs['focusedManifest']['path']).name), (qa, 'MANIFEST.json')]:
+     members = read(folder / file)['members']
+     items = members.items() if isinstance(members, dict) else ((m['path'], m) for m in members)
+     for rel, expected in items:
+         p = folder / rel
+         assert p.stat().st_size == expected['bytes'] and digest(p) == expected['sha256'], rel
+         count += 1
+-assert digest(O / 'run-browser12.py') == '00d3a23a5fbcfa9ecd546a5c739091f42cc2b045db628a33d9c5dd25b8a0d9a5'
+-freeze = read(E / 'i5-d241-session-feedback-corrected-freeze-01/FREEZE.json')
++assert digest(O / 'run-browser12.py') == read(O / 'PREPARATION-MANIFEST.json')['members']['run-browser12.py']['sha256']
+ b = read(O / 'SOURCE-BINDING.template.json')
+-assert b['rootAdmitted'] is False and b['source'] == freeze['source']
++assert b['rootAdmitted'] is False and b['source'] == {'head': None, 'tree': None, 'parents': None}
++b['source'] = freeze['source']
++b['freeze'] = inputs['freeze']
++b['advanceRef'] = inputs['advanceRef']
++if b['advanceRef'] is not None:
++    assert digest(Path(b['advanceRef']['path'])) == b['advanceRef']['sha256']
+ assert git('rev-parse', 'HEAD') == freeze['source']['head'] and git('rev-parse', 'HEAD^{tree}') == freeze['source']['tree']
+ assert not git('diff', '--name-only') and not git('diff', '--cached', '--name-only')
+ for rel, expected in (freeze['files'] | freeze['protectedCore']).items():
+-    assert b['sourceFiles'][rel] == expected['sha256'] and digest(W / rel) == expected['sha256']
++    if b['sourceFiles'].get(rel) is not None:
++        assert b['sourceFiles'][rel] == expected['sha256'], rel
++    b['sourceFiles'][rel] = expected['sha256']
++    assert digest(W / rel) == expected['sha256']
++assert all(isinstance(value, str) and len(value) == 64 for value in b['sourceFiles'].values())
+ for rel, expected in b['overlays'].items():
+     assert digest(W / rel) == expected
+ dist = W / 'apps/web/dist'
+@@ -49,10 +64,10 @@
+ assert not dist.is_symlink() and dist.lstat().st_file_attributes & 0x400 == 0
+ index = (W / git('rev-parse', '--git-path', 'index')).resolve()
+ b['indexSha256'] = digest(index)
+-assert b['indexSha256'] == '9feea17cb81baceb9640b3c1fdafc63353bfef58f804c4a4d2503bd19a2cf796'
++assert b['indexSha256'] == inputs['expectedUIQAIndexSha256']
+ assert not os.path.lexists((W / git('rev-parse', '--git-common-dir')).resolve() / 'index')
+ b['rootAdmitted'] = True
+-b['rebuildFromPreviousManifestSha256'] = 'df261c0afc987d45e5228ddb265d487be53a899b1cff9f93cc8dd050023f7315'
++b['rebuildFromPreviousManifestSha256'] = '4b63d8a4907641c011fb65822595ed688b6412ee0871dfcd7222f4cd217e13d6'
+ b['rootBuildAdmission'] = {
+     'utc': datetime.now(timezone.utc).isoformat(), 'preparedMembersRehashed': count,
+     'literalWorkingDistVerified': str(dist), 'rootReadFullDerivativeDeltaAndPlan': True,

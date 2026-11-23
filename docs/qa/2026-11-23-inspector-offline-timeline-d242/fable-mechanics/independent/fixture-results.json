@@ -1,0 +1,502 @@
+{
+  "cases": [
+    {
+      "case": "lineage-and-ceiling",
+      "outcome": "pass",
+      "changedDeclarations": [
+        "argv",
+        "launch",
+        "scope_for"
+      ],
+      "unchangedFromD236": 23,
+      "macChangedDeclarations": [
+        "argv",
+        "launch",
+        "scope_for",
+        "source_state"
+      ],
+      "priorReadCeiling": 36,
+      "requiredReads": 11,
+      "manifestMembers": 12,
+      "manifestReferences": 9
+    },
+    {
+      "case": "controller-minimal-positive",
+      "outcome": "pass",
+      "role": "b2-correction-review",
+      "scope": "D242-ordinary-max-b2-correction-assessment",
+      "argvFlags": {
+        "--model": "claude-fable-5-2",
+        "--effort": "xhigh",
+        "--tools": "Read",
+        "--allowedTools": "Read",
+        "--setting-sources": "",
+        "--mcp-config": "{\"mcpServers\":{}}",
+        "--output-format": "stream-json",
+        "--permission-mode": "dontAsk",
+        "--permission-prompts": "none"
+      },
+      "selectedReads": [
+        "CHANGELOG.md",
+        "apps/web/src/api/queries.ts",
+        "apps/web/src/runs/HistoryEligibility.test.tsx",
+        "apps/web/src/runs/HistoryEligibility.tsx",
+        "apps/web/src/runs/RunInspectorPage.offline.test.tsx",
+        "apps/web/src/runs/RunInspectorPage.tsx",
+        "apps/web/src/runs/ScriptRecovery.test.tsx",
+        "apps/web/src/runs/inspector-read-provenance.test.ts",
+        "apps/web/src/runs/inspector-read-provenance.ts",
+        "apps/web/src/runs/inspector/ScriptRecovery.tsx",
+        "docs/09-frontend-and-pwa.md"
+      ]
+    },
+    {
+      "case": "unarmed-controller",
+      "outcome": "refused",
+      "reason": "ROOT_ADMISSION_UNSET"
+    },
+    {
+      "case": "d237-scope-controller",
+      "outcome": "refused",
+      "reason": "ROOT_ADMISSION_UNSET"
+    },
+    {
+      "case": "api-authorization-controller",
+      "outcome": "refused",
+      "reason": "API_ROUTE_MUST_REMAIN_CLOSED"
+    },
+    {
+      "case": "author-controller",
+      "outcome": "refused",
+      "reason": "ROLE_MODEL_UNSET"
+    },
+    {
+      "case": "old-core-controller",
+      "outcome": "refused",
+      "reason": "ROLE_MODEL_UNSET"
+    },
+    {
+      "case": "opus-model-controller",
+      "outcome": "refused",
+      "reason": "ROLE_MODEL_UNSET"
+    },
+    {
+      "case": "high-effort-controller",
+      "outcome": "refused",
+      "reason": "ROLE_MODEL_UNSET"
+    },
+    {
+      "case": "write-controller",
+      "outcome": "refused",
+      "reason": "WRITE_SCOPE_DIFFERS"
+    },
+    {
+      "case": "wildcard-controller",
+      "outcome": "refused",
+      "reason": "UNSAFE_LITERAL_PATH"
+    },
+    {
+      "case": "extra-beyond-ceiling-controller",
+      "outcome": "refused",
+      "reason": "READ_SCOPE_DIFFERS"
+    },
+    {
+      "case": "missing-required-controller",
+      "outcome": "refused",
+      "reason": "READ_SCOPE_DIFFERS"
+    },
+    {
+      "case": "case-duplicate-controller",
+      "outcome": "refused",
+      "reason": "READ_SCOPE_DIFFERS"
+    },
+    {
+      "case": "deadline-controller",
+      "outcome": "refused",
+      "reason": "DEADLINE_UNSET"
+    },
+    {
+      "case": "ordinary-max-and-env",
+      "outcome": "pass",
+      "credentialByteValuesLogged": false
+    },
+    {
+      "case": "owner-stale",
+      "outcome": "refused",
+      "reason": "FRESH_EXCLUSIVE_OWNER_REQUIRED"
+    },
+    {
+      "case": "owner-other-source",
+      "outcome": "refused",
+      "reason": "FRESH_EXCLUSIVE_OWNER_REQUIRED"
+    },
+    {
+      "case": "owner-fresh-positive",
+      "outcome": "pass",
+      "maximumAgeSeconds": 300
+    },
+    {
+      "case": "controller-paired-normal-terminal",
+      "outcome": "pass",
+      "matchedToolResults": 1,
+      "model": "claude-fable-5-2"
+    },
+    {
+      "case": "paired-write",
+      "outcome": "refused",
+      "reason": "OUT_OF_SCOPE_TOOL",
+      "terminalCount": 1
+    },
+    {
+      "case": "paired-glob",
+      "outcome": "refused",
+      "reason": "OUT_OF_SCOPE_TOOL",
+      "terminalCount": 1
+    },
+    {
+      "case": "ceiling-member-outside-selected-roster",
+      "outcome": "refused",
+      "reason": "OUT_OF_SCOPE_TOOL_PATH",
+      "terminalCount": 1
+    },
+    {
+      "case": "pending-read",
+      "outcome": "refused",
+      "reason": "UNPAIRED_TOOL_REQUEST",
+      "terminalCount": 1
+    },
+    {
+      "case": "event-after-terminal",
+      "outcome": "refused",
+      "reason": "EVENT_AFTER_TERMINAL",
+      "terminalCount": 1
+    },
+    {
+      "case": "partial-preservation",
+      "outcome": "pass",
+      "ordinaryHandoffAccepted": false,
+      "partialPreserved": true
+    },
+    {
+      "case": "wrapper-positive",
+      "outcome": "pass",
+      "mockGitCalls": 38,
+      "mockProcessScans": 1,
+      "admissionsWritten": [
+        "owner.json",
+        "fable-review.admitted.json",
+        "ADMISSION.json"
+      ],
+      "configuredReadCount": 11
+    },
+    {
+      "case": "missing-root-file",
+      "outcome": "refused",
+      "reason": "Actual D242 root admission is absent",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "root-false",
+      "outcome": "refused",
+      "reason": "D242 runtime admission is unset",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "api-authorization-wrapper",
+      "outcome": "refused",
+      "reason": "D242 runtime admission is unset",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "closed-author-qa-false",
+      "outcome": "refused",
+      "reason": "D242 runtime admission is unset",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "before-head-mismatch",
+      "outcome": "refused",
+      "reason": "D242 runtime admission is unset",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "target-shape",
+      "outcome": "refused",
+      "reason": "Exact corrected source or target is missing",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "extra-source-field",
+      "outcome": "refused",
+      "reason": "Exact corrected source or target is missing",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "wrong-corrected-head",
+      "outcome": "refused",
+      "reason": "Exact clean frozen source required",
+      "admissionWrites": 0,
+      "mockGitCalls": 1,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "dirty-source",
+      "outcome": "refused",
+      "reason": "Exact clean frozen source required",
+      "admissionWrites": 0,
+      "mockGitCalls": 3,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "merge-source",
+      "outcome": "refused",
+      "reason": "Exact clean frozen source required",
+      "admissionWrites": 0,
+      "mockGitCalls": 4,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "changed-index",
+      "outcome": "refused",
+      "reason": "Index binding differs",
+      "admissionWrites": 0,
+      "mockGitCalls": 7,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "common-index-present",
+      "outcome": "refused",
+      "reason": "Index binding differs",
+      "admissionWrites": 0,
+      "mockGitCalls": 7,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "virtual-store-drift",
+      "outcome": "refused",
+      "reason": "Dependency control changed",
+      "admissionWrites": 0,
+      "mockGitCalls": 7,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "patch-git-mismatch",
+      "outcome": "refused",
+      "reason": "Scoped Git patch differs from root preservation",
+      "admissionWrites": 0,
+      "mockGitCalls": 12,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "unexpected-changed-path",
+      "outcome": "refused",
+      "reason": "Visible patch does not match the named eight-path correction envelope",
+      "admissionWrites": 0,
+      "mockGitCalls": 11,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "literal-roster-outside-ceiling",
+      "outcome": "refused",
+      "reason": "Read roster differs from exact review boundary",
+      "admissionWrites": 0,
+      "mockGitCalls": 16,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "literal-roster-missing-core",
+      "outcome": "refused",
+      "reason": "Read roster differs from exact review boundary",
+      "admissionWrites": 0,
+      "mockGitCalls": 16,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "literal-roster-duplicate",
+      "outcome": "refused",
+      "reason": "Read roster differs from exact review boundary",
+      "admissionWrites": 0,
+      "mockGitCalls": 16,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "author-evidence-drift",
+      "outcome": "refused",
+      "reason": "Public evidence changed: authorClosure.txt",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "independent-qa-evidence-drift",
+      "outcome": "refused",
+      "reason": "Public evidence changed: independentQaReport.txt",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "focused-qa-evidence-drift",
+      "outcome": "refused",
+      "reason": "Public evidence changed: focusedQaReport.txt",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "target-evidence-drift",
+      "outcome": "refused",
+      "reason": "Public evidence changed: targetReadback.txt",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "brief-digest-drift",
+      "outcome": "refused",
+      "reason": "Public evidence changed: BRIEF.md",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "empty-brief",
+      "outcome": "refused",
+      "reason": "Public evidence changed: BRIEF.md",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "mechanics-withheld",
+      "outcome": "refused",
+      "reason": "Fresh independent mechanics acceptance is missing",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "local-git-binary-drift",
+      "outcome": "refused",
+      "reason": "Pinned local binary changed: gitBinary",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "open-print-worker",
+      "outcome": "refused",
+      "reason": "Existing task owner or print worker",
+      "admissionWrites": 0,
+      "mockGitCalls": 38,
+      "mockProcessScans": 1
+    },
+    {
+      "case": "existing-lock",
+      "outcome": "refused",
+      "reason": "Existing lock, owner, admission or output",
+      "admissionWrites": 0,
+      "mockGitCalls": 0,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "changed-protected-core",
+      "outcome": "refused",
+      "reason": "Protected core differs: apps/web/src/api/queries.ts",
+      "admissionWrites": 0,
+      "mockGitCalls": 7,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "changed-old-blob-pin",
+      "outcome": "refused",
+      "reason": "Before/after blob binding differs: apps/web/src/runs/RunInspectorPage.tsx",
+      "admissionWrites": 0,
+      "mockGitCalls": 16,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "changed-read-physical-bytes",
+      "outcome": "refused",
+      "reason": "Bound review input differs: CHANGELOG.md",
+      "admissionWrites": 0,
+      "mockGitCalls": 18,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "changed-read-git-blob",
+      "outcome": "refused",
+      "reason": "Bound review input differs: CHANGELOG.md",
+      "admissionWrites": 0,
+      "mockGitCalls": 18,
+      "mockProcessScans": 0
+    },
+    {
+      "case": "whitespace-brief",
+      "outcome": "observed-wrapper-limit",
+      "fixtureReceiptsWritten": 3,
+      "eventualControllerEmptyGuardRefuses": true
+    },
+    {
+      "case": "non-UTF8-brief",
+      "outcome": "observed-wrapper-limit",
+      "fixtureReceiptsWritten": 3,
+      "eventualControllerEmptyGuardRefuses": false
+    },
+    {
+      "case": "unknown-root-field",
+      "outcome": "observed-wrapper-limit",
+      "fixtureReceiptsWritten": 3,
+      "fieldPropagated": false
+    },
+    {
+      "case": "runtime-exact-generated-prelock",
+      "outcome": "pass",
+      "selectedReadCount": 11,
+      "actualChildLaunch": false
+    },
+    {
+      "case": "runtime-owner-source-differs",
+      "outcome": "refused",
+      "reason": "FRESH_EXCLUSIVE_OWNER_REQUIRED"
+    },
+    {
+      "case": "runtime-actual-tree-differs",
+      "outcome": "refused",
+      "reason": "EXACT_CLEAN_SOURCE_REQUIRED"
+    },
+    {
+      "case": "runtime-scope-and-controls-after-wrapper-edit",
+      "outcome": "observed-separated-trust-boundary",
+      "addedInCeilingRead": "docs/README.md",
+      "indexRebaselined": true,
+      "modulesRebaselined": true,
+      "requiredRootAssumption": "Invoke exact originally materialized config with its verified pins and exclusive source"
+    },
+    {
+      "case": "non-UTF8-brief-controller-prelock",
+      "outcome": "observed-controller-limit",
+      "passedPrefix": true
+    }
+  ],
+  "caseCount": 67,
+  "actualGitCalls": 0,
+  "actualProcessProbes": 0,
+  "actualProviderCalls": 0,
+  "operationalEntrypointsInvoked": 0,
+  "actualSourceOrIndexAccess": false
+}

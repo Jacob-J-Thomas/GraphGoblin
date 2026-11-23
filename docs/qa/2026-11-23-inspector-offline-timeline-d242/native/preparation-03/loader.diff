@@ -1,0 +1,23 @@
+--- sealed-preparation02/native.cjs
++++ preparation03/native.cjs
+@@ -3,6 +3,7 @@
+ const path = require('node:path');
+ const crypto = require('node:crypto');
+ const { createRequire } = require('node:module');
++const { pathToFileURL } = require('node:url');
+ const assert = require('node:assert/strict');
+ const E = 'G:/ggq/delivery-evidence/2026-11-17-five-intents';
+ const ORIGIN = 'https://inspector.invalid';
+@@ -53,11 +54,10 @@
+     selection: b.selection, source: b.source, interceptedOrigin: ORIGIN, liveServer: false, providerLaunched: false });
+   const project = createRequire(b.runtime.projectPackage.source);
+   assert(samePath(project.resolve('@playwright/test'), b.runtime.testEntry.source));
+-  assert(samePath(project.resolve('@graphgoblin/contracts'), b.runtime.contractsEntry.source));
+   const playwrightPackage = createRequire(b.runtime.testEntry.source);
+   assert(samePath(playwrightPackage.resolve('playwright'), b.runtime.playwrightEntry.source));
+   const { chromium } = playwrightPackage('playwright');
+-  const { RunRecordSchema, RunSnapshotSchema, DeletionSelectionSchema, DeletionConfirmationSchema } = project('@graphgoblin/contracts');
++  const { RunRecordSchema, RunSnapshotSchema, DeletionSelectionSchema, DeletionConfirmationSchema } = await import(pathToFileURL(b.runtime.contractsEntry.source).href);
+   verify(b.fixture); verify(b.build.manifest); verify(b.build.shippingEquivalence);
+   const fixture = read(b.fixture.source), manifest = read(b.build.manifest.source), equivalence = read(b.build.shippingEquivalence.source);
+   assert.deepEqual(equivalence.requestedSource, b.source);

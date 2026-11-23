@@ -1,0 +1,14 @@
+--- sealed-preparation01/native.cjs
++++ preparation02/native.cjs
+@@ -143,8 +143,9 @@
+     const confirm = () => dialog().getByRole('button', { name: action === 'script' ? 'Resume' : 'Confirm delete-ready selection', exact: true });
+     const feedbackPattern = action === 'script' ? /The GraphGoblin API cannot be reached\./i : /The change may or may not have been saved/i;
+     const visibleFeedback = async () => {
+-      const values = await page.getByRole('alert').allTextContents();
+-      for (let i = 0; i < values.length; i++) if (feedbackPattern.test(values[i]) && await page.getByRole('alert').nth(i).isVisible()) return values[i];
++      const candidates = action === 'deletion' ? page.getByText(feedbackPattern) : page.getByRole('alert');
++      const values = await candidates.allTextContents();
++      for (let i = 0; i < values.length; i++) if (feedbackPattern.test(values[i]) && await candidates.nth(i).isVisible()) return values[i];
+       return null;
+     };
+     const settle = async (entry, success) => {

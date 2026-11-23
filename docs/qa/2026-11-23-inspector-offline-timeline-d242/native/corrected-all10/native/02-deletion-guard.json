@@ -1,0 +1,143 @@
+{
+  "number": 2,
+  "group": "repro",
+  "action": "deletion",
+  "mode": "guard",
+  "checks": [
+    {
+      "name": "replacement launcher is disabled while original command pending",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "replacement dispatches no second confirmation",
+      "passed": true,
+      "facts": [
+        {
+          "body": {
+            "runIds": [
+              "01M3Y7RKG08245PHCXP916EBMT"
+            ],
+            "action": "mark",
+            "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "confirmed": true
+          },
+          "phase": "before-original-settlement",
+          "ordinal": 1
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "name": "matching-new-generation-read-held",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "same-finalized-body-requalified",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "guard-attempt",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    }
+  ],
+  "state": "passed",
+  "runA": "01M3Y7RKG08245PHCXP916EBMT",
+  "runB": "01M3Y7RKG08245PHCXP916EBMZ",
+  "posts": [
+    {
+      "body": {
+        "runIds": [
+          "01M3Y7RKG08245PHCXP916EBMT"
+        ],
+        "action": "mark",
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "confirmed": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 1
+    }
+  ],
+  "previews": [
+    {
+      "ids": [
+        "01M3Y7RKG08245PHCXP916EBMT"
+      ],
+      "number": 1
+    }
+  ],
+  "runReads": [
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": true
+    }
+  ],
+  "unknown": [],
+  "sourceSameRoute": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "requestFailures": 1,
+  "cleanupCloseResolved": true,
+  "onlyInterceptedDispatchNoServerEffects": true
+}

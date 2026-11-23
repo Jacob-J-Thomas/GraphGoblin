@@ -1,0 +1,19 @@
+# D242 read-only ordinary Max assessment
+
+This packet is unarmed. It derives the controller from the accepted D236 runtime, keeping ordinary first-party Max authentication, the existing task lock, clean source and core controls, permission restrictions, direct-child capture, stream pairing and normal-terminal harvest. The exact delta is controller.diff. The three changed functions are scope_for, argv and launch. This derivative has one review role, b2-correction-review, with Claude Fable 5.2/xhigh and Read only. The bounded literal read roster must contain the eight admitted correction paths and three protected core files, and may include only the fixed supporting-path ceiling. Every live input still needs an exact source pin.
+
+## Root bindings
+
+1. After the Opus author closes, freeze the correction and retain its ordinary closure. Make the exact binary-capable patch from f642 to the corrected commit. For a compatible patch capture use Git diff with --no-ext-diff --no-textconv --no-renames --binary --full-index, from f642 to the corrected head. Bind the original negative final report, root D242 decision, focused and independent QA reports, fresh signed-target readback and an ordinary UTF-8 BRIEF.md at this directory.
+2. Obtain the fresh independent controller-only receipt at E/i5-d242-fable-correction-independent-01/ACCEPTANCE.json. It must bind this exact controller SHA256 e21dd6dd3aadbb85409fd0dad34f6f729d98f26a3a5be123a6fc3066077633dd, D242 scope, named role, readOnly true, authorRoleRejected true, mechanicsAccepted true and actualRuntimeAdmission false. The contained controls are author checks only.
+3. Create ROOT-ADMISSION.json from the template. Source is the corrected head/tree/ordered parents. Set target to the actual signed target. All file references use source canonical absolute path, bytes and sha256. Bind the exact index and prior dependency controls. Populate allowedReadPaths and readFilePins with matching path sets. Each read pin is Git blob, bytes and sha256. Each changedFilePins value is an object with before and after versions using that same blob/bytes/sha256 shape. Bind the three protected core hashes through the fixed controls. Root's explicit admission issue is the named correction with closed author and reviewed QA; API authorization stays false.
+4. Ensure the shared lock and output are absent and no task print worker remains. After rooting the admission, run both commands sequentially. The owner receipt is valid for five minutes. The admission wrapper only materializes its config and receipts. It performs no provider call.
+
+    python G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-fable-correction-preparation-01/admit.py
+    python G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-fable-correction-preparation-01/fable-correction.draft.py --root-admitted-max-continuation G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-fable-correction-preparation-01/fable-review.admitted.json
+
+The controller's normal terminal and ordinary text must reach root intact. Preserve partial outcomes and first failures. Process acceptance is separate from an actual ACCEPT FIX for B2. No paid route, review-count reset, Astra sign-off or merge decision is part of this packet.
+
+## Preparation verification
+
+offline-controls.py ran once under Python isolated mode. OFFLINE-RECEIPT.json pins original stdout, stderr and exit. The harness extracts only selected declarations with synthetic data. It checked exact role/model/Read argv, no write, no broader read path, ordinary Max environment/auth predicates, owner freshness and source, paired Read stream, partial terminal retention, and unarmed wrapper refusal before source/process access. This preparation touched no NEXT source or index and ran no operational entrypoint, provider, product test, build or browser.
