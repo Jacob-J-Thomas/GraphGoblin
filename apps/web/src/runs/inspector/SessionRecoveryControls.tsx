@@ -6,12 +6,14 @@ import { useApi } from '../../api/context.js';
 import { keys } from '../../api/queries.js';
 import { Button, HelpText } from '../../components/ui/index.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
-import { assertOpen, OPEN_GATE, type WriteGate } from './RunControls.js';
+import { assertOpen, type WriteGate } from './RunControls.js';
 
 type Failed = Extract<RunEvent, { type: 'run.failed' }>;
 
 /** The failure a choice answers, frozen when it is chosen. */
 interface Choice {
+  /** The inspector visit that made the choice; only that visit shows its state and outcome. */
+  owner: object;
   gate: WriteGate;
   runId: string;
   nodeId: string;
@@ -21,35 +23,61 @@ interface Choice {
 
 const CHANGED = 'Not sent: the failure shown has changed. Review the run again.';
 
-/** Recovery is deliberately separate from plain Resume and never changes the pinned definition. */
-export function SessionRecoveryControls({
+/** The inspector view's Start fresh session choice for the run it shows (#416). */
+export interface SessionRecovery {
+  /** The recorded failure a choice would answer is in the evidence shown. */
+  readonly answerable: boolean;
+  /** A choice this visit made is queued or in flight; no other is accepted until it settles. */
+  readonly pending: boolean;
+  /** Why this visit's latest choice was refused or not sent, until a new choice replaces it. */
+  readonly refusal: string | undefined;
+  /** Why the view cannot send a choice now; undefined while it can. */
+  readonly blocked: string | undefined;
+  /** Queue a choice for the failure shown now, under the gate it is shown with. */
+  readonly choose: () => void;
+}
+
+/**
+ * The inspector's Start fresh session action (#416), owned by the view rather than by the run
+ * section that presents it. The section is withheld while an unproved row cannot be presented;
+ * a choice queued before that stays pending, and reports its actual outcome, once the section is
+ * shown again. `run` is the run the section presents, undefined while it is withheld, so a queued
+ * choice is compared right before it is sent with what is shown then. A choice belongs to the
+ * visit (`owner`) that made it: another run, or a later visit, shows neither its pending state
+ * nor its outcome.
+ */
+export function useSessionRecovery({
+  owner,
   run,
   events,
-  availability = OPEN_GATE,
+  availability,
 }: {
-  run: RunRecord;
+  owner: object;
+  run: RunRecord | undefined;
   events: readonly RunEvent[];
-  /** In the inspector, also requires a fresh matching observation after an outage (#416). */
-  availability?: WriteGate;
-}) {
+  /** Also requires a fresh matching observation after an outage. */
+  availability: WriteGate;
+}): SessionRecovery {
   const client = useApi();
   const queries = useQueryClient();
-  const missing = run.failure?.missingSession;
-  const nodeId = run.failure?.nodeId;
+  const runId = run?.id;
+  const missing = run?.failure?.missingSession;
+  const nodeId = run?.failure?.nodeId;
   // The recorded failure of this run's current node and missing-session visit. Its own sequence
   // is sent, even when later audit events follow it; a failure of another visit does not count.
   const failed = events.findLast(
     (event): event is Failed =>
       event.type === 'run.failed' &&
-      event.runId === run.id &&
+      event.runId === runId &&
       event.failure.code === 'HARNESS_SESSION_MISSING' &&
       event.failure.nodeId === nodeId &&
       event.failure.missingSession?.visitId === missing?.visitId,
   );
-  // The identity shown now, compared with a queued choice right before it is sent.
-  const shown = useRef({ runId: run.id, nodeId, visitId: missing?.visitId, seq: failed?.seq });
+  // The identity shown now, compared with a queued choice right before it is sent. Nothing is
+  // shown while the section is withheld.
+  const shown = useRef({ runId, nodeId, visitId: missing?.visitId, seq: failed?.seq });
   useLayoutEffect(() => {
-    shown.current = { runId: run.id, nodeId, visitId: missing?.visitId, seq: failed?.seq };
+    shown.current = { runId, nodeId, visitId: missing?.visitId, seq: failed?.seq };
   });
   const action = useMutation({
     mutationFn: async (choice: Choice) => {
@@ -72,6 +100,41 @@ export function SessionRecoveryControls({
       void queries.invalidateQueries({ queryKey: keys.thread(runId) });
     },
   });
+  // The latest choice this view made, only while the visit that made it is shown.
+  const own = action.variables?.owner === owner;
+  const pending = own && action.isPending;
+  return {
+    answerable: failed !== undefined,
+    pending,
+    refusal: own && action.isError ? errorMessage(action.error) : undefined,
+    blocked: availability.blocked,
+    choose: () => {
+      if (pending || !run || !failed || !nodeId || !missing || !availability.open()) return;
+      action.mutate({
+        owner,
+        gate: availability,
+        runId: run.id,
+        nodeId,
+        visitId: missing.visitId,
+        failureSeq: failed.seq,
+      });
+    },
+  };
+}
+
+/** Recovery is deliberately separate from plain Resume and never changes the pinned definition. */
+export function SessionRecoveryControls({
+  run,
+  events,
+  recovery,
+}: {
+  run: RunRecord;
+  events: readonly RunEvent[];
+  /** The view's choice, from `useSessionRecovery` for this run and these events. */
+  recovery: SessionRecovery;
+}) {
+  const missing = run.failure?.missingSession;
+  const nodeId = run.failure?.nodeId;
   const eligible =
     run.status === 'failed' &&
     run.failure?.code === 'HARNESS_SESSION_MISSING' &&
@@ -80,16 +143,6 @@ export function SessionRecoveryControls({
     missing.visitId.startsWith(run.id + ':');
   const choices = events.filter((event) => event.type === 'run.resumed' && event.freshSession);
   if (!eligible && choices.length === 0) return null;
-  const choose = () => {
-    if (!failed || !nodeId || !missing || !availability.open()) return;
-    action.mutate({
-      gate: availability,
-      runId: run.id,
-      nodeId,
-      visitId: missing.visitId,
-      failureSeq: failed.seq,
-    });
-  };
   // Node IDs may be 64 characters: wrap them rather than widening the inspector at 390 px.
   return (
     <div className="grid min-w-0 gap-2 wrap-anywhere">
@@ -103,13 +156,15 @@ export function SessionRecoveryControls({
           </p>
           <Button
             variant="outline"
-            disabled={!failed || action.isPending || availability.blocked !== undefined}
-            onClick={choose}
+            disabled={!recovery.answerable || recovery.pending || recovery.blocked !== undefined}
+            onClick={() => recovery.choose()}
           >
             Start fresh session for {nodeId}
           </Button>
-          {availability.blocked !== undefined ? <HelpText>{availability.blocked}</HelpText> : null}
-          {action.isError ? <HelpText tone="bad">{errorMessage(action.error)}</HelpText> : null}
+          {recovery.blocked !== undefined ? <HelpText>{recovery.blocked}</HelpText> : null}
+          {recovery.refusal !== undefined ? (
+            <HelpText tone="bad">{recovery.refusal}</HelpText>
+          ) : null}
         </>
       ) : null}
       {choices.map((event) =>

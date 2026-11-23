@@ -30,7 +30,10 @@ import {
   useInspectorRead,
 } from './inspector-read-provenance.js';
 import { ScriptRecovery } from './inspector/ScriptRecovery.js';
-import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
+import {
+  SessionRecoveryControls,
+  useSessionRecovery,
+} from './inspector/SessionRecoveryControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
@@ -258,6 +261,8 @@ export function RunInspectorPage() {
   const outage = down || !fresh;
   // A definitive refusal keeps its ordinary error; a later transport error cannot resurrect it.
   const refused = runQuery.isError && !isOfflineError(runQuery.error);
+  // Whether the run section presents the run: during an outage a cold or unproved row never is.
+  const presented = run !== undefined && !refused && (!outage || runRead.committed > 0);
   const blocked = !online
     ? 'This browser is offline.'
     : down
@@ -314,7 +319,7 @@ export function RunInspectorPage() {
     return self;
   }, [blocked, boundary, header.registry, queryClient, runId, visit]);
   // Start fresh session also needs the observation that recorded the failure read after the
-  // outage; the control itself matches its run, node, visit and failure sequence. The gate keeps
+  // outage; its action matches its run, node, visit and failure sequence. The gate keeps
   // the observation boundary it was issued after: a later loss of the observation read alone
   // spends it, even once the observation has been read again. Like the view's write gate, it is
   // replaced when that boundary or the evidence's freshness changes, and only the latest committed
@@ -354,6 +359,15 @@ export function RunInspectorPage() {
       latestSessionGate.current = undefined;
     };
   }, [sessionGate]);
+  // The choice belongs to this visit, not to the run section that presents it: while the section
+  // is withheld, a choice queued before keeps its pending state, and the control shown again
+  // reports its own outcome. Withholding, qualification and the gate above are unchanged.
+  const sessionRecovery = useSessionRecovery({
+    owner: visit,
+    run: presented ? run : undefined,
+    events: recovery,
+    availability: sessionGate,
+  });
 
   // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
   // failed query, a read in flight is joined, and one started before the loss settles first (it
@@ -462,7 +476,7 @@ export function RunInspectorPage() {
       {/* One keyed position for the run section, current or last observed, so a draft or an
           open control survives the switch; another run starts a new section. During an outage
           a cold or unproved row is never presented as the run (#416). */}
-      {run !== undefined && !refused && (!outage || runRead.committed > 0) ? (
+      {presented ? (
         <Fragment key={run.id}>
           {/* DOM order is title, meta links, then controls (the keyboard order before the
               cutover); the grid only places the controls at the top right. */}
@@ -535,7 +549,7 @@ export function RunInspectorPage() {
           {observation.error ? (
             <Alert>Run evidence could not be read: {observation.error.message}</Alert>
           ) : null}
-          <SessionRecoveryControls run={run} events={recovery} availability={sessionGate} />
+          <SessionRecoveryControls run={run} events={recovery} recovery={sessionRecovery} />
           {latestExit ? (
             <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
               <p>{describeEvent(latestExit, sectionDefinition)}</p>

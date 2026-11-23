@@ -201,7 +201,15 @@ freshness changes; a replaced gate stays spent. Once the view has shown a failur
 observation read alone, with the run read and the browser healthy, a choice queued before it
 reports **Not sent** even after the observation is read again with an equal body, including from
 a removed and recreated query or under another accepted API key that the API key panel followed.
-A new choice after the qualifying observation read sends once. Other run controls stay available
+A new choice after the qualifying observation read sends once. The view, not the run section,
+owns a **Start fresh session** choice and its outcome. The section is withheld while its run is
+unproved, for example after the API key panel follows another accepted key once this view has
+recorded a browser loss, until a run read under that key qualifies. A choice queued before that
+stays pending: the control shown again stays disabled until the choice settles, then reports its
+actual outcome, such as **Not sent**, until a new explicit choice replaces it. A choice's pending
+state and outcome belong to the visit that made it; another run opened in the same view, or a
+later visit, shows neither. Withholding, qualification and the gate are unchanged, and the
+section stays hidden while it is withheld. Other run controls stay available
 through an observation-only failure. Script consent keeps the run and observed sequence shown
 when its review opened. The Runs list's delete-ready
 controls share the hold on a sent confirmation, its exception after a browser dismissal and the

@@ -36,10 +36,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   have been saved. Start fresh session additionally needs a post-outage observation
   of the same failure and still sends that failure's own sequence; a choice queued before a
   failure of the observation read alone stays spent after that read recovers, including through a
-  removed and recreated query or another accepted API key. At most one extra
-  deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
-  observation. The Timeline and the thread keep their behaviour. No persistent format, store,
-  export or contract change.
+  removed and recreated query or another accepted API key. That choice belongs to the inspector
+  view rather than its run section: when the section is withheld until a run read under another
+  accepted key qualifies, after a browser loss the view recorded, the control shown again stays
+  disabled while the choice is pending and then reports **Not sent** rather than losing that
+  outcome. Another run or a later visit shows neither its pending state nor its outcome. At most
+  one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
+  it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
+  store, export or contract change.
 
 - The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
   (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,

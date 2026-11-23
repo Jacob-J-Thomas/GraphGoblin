@@ -13,6 +13,7 @@ import { createAppClient } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { App } from '../app/App.js';
 import { Providers } from '../app/bootstrap.js';
+import { errorMessage } from '../lib/utils.js';
 import { NOT_SENT } from './inspector/RunControls.js';
 
 const STALE = 'Last observed, may be out of date';
@@ -517,6 +518,204 @@ describe('run inspector through an outage (#416)', () => {
       expect(posts(api)).toHaveLength(0);
     } finally {
       reads.release();
+      view.unmount();
+    }
+  });
+
+  // Unlike the replacement cases above, this view records a browser loss of its own first, so the
+  // run section is withheld when the credentials change, whatever ran earlier in this file.
+  it('keeps a fresh-session choice queued before an observation-only loss pending through a run section withheld for another accepted API key after a browser outage, then reports it Not sent', async () => {
+    // The first accepted key, stored before the app opens.
+    useApiKeyStore.getState().save('gg_first_key');
+    const api = new FakeApi();
+    const run = missingSessionRun(api);
+    const view = renderApp('/runs/' + run.id, api);
+    const user = userEvent.setup();
+    const start = () => button('Start fresh session for worker');
+    const header = () => screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+    const recoveries = () => api.callsTo('POST', `/runs/${run.id}/recover-session`);
+    const lastKey = (path: string) => api.callsTo('GET', path).at(-1)?.headers.get('authorization');
+    const evidenceError = /^Run evidence could not be read: /;
+    const unconfirmed = /^This run has not been confirmed since the connection was lost\./;
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let queued = false;
+    try {
+      await openRun(run.id);
+      await waitFor(() => expect(start()).toBeEnabled());
+
+      // The browser disconnects and reconnects. The view reads the run and its failure evidence
+      // again after that, and the choice is available once more.
+      act(() => onlineManager.setOnline(false));
+      expect(await screen.findByText(STALE)).toBeVisible();
+      expect(start()).toBeDisabled();
+      act(() => onlineManager.setOnline(true));
+      await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+      await waitFor(() => expect(start()).toBeEnabled());
+      const evidence = view.queryClient.getQueryData(keys.observation(run.id));
+      expect(evidence).toBeDefined();
+      expect(posts(api)).toHaveLength(0);
+
+      // The mutation cache holds the choice before its API call; the gate is read at dispatch.
+      view.queryClient.getMutationCache().config.onMutate = () => {
+        queued = true;
+        return held;
+      };
+      await user.click(start());
+      await waitFor(() => expect(queued).toBe(true));
+      expect(recoveries()).toHaveLength(0);
+
+      // Only the observation read fails in transport, and the view shows it. The run read and the
+      // browser stay healthy, so the run stays current and its other controls available.
+      api.override('GET /runs/:id/observation', () => {
+        throw new TypeError('Failed to fetch');
+      });
+      await act(() =>
+        view.queryClient.refetchQueries({ queryKey: keys.observation(run.id), exact: true }),
+      );
+      expect(await screen.findByText(evidenceError)).toBeVisible();
+      expect(screen.getByText('Reading the run evidence again.')).toBeVisible();
+      expect(start()).toBeDisabled();
+      expect(screen.queryByText(STALE)).toBeNull();
+      expect(button('Replay...')).toBeEnabled();
+      expect(view.queryClient.getQueryState(keys.run(run.id))?.status).toBe('success');
+      expect(onlineManager.isOnline()).toBe(true);
+
+      // Another tab stores a second accepted key, which the mounted API key panel follows. No
+      // read under it has committed yet and this view has recorded a browser loss, so the run
+      // section, its header and its control are withheld rather than shown from an unproved row.
+      api.override('GET /runs/:id/observation', (call) => api.builtIn(call));
+      const originalHeader = header();
+      const originalStart = start();
+      localStorage.setItem(API_KEY_STORAGE, 'gg_second_key');
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+      });
+      expect(originalHeader).not.toBeInTheDocument();
+      expect(originalStart).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Run ' + run.id })).toBeNull();
+      expect(screen.getByText(unconfirmed)).toBeVisible();
+
+      // The run and its observation are read under the second key and return the same failure.
+      await waitFor(() => {
+        expect(lastKey(`/runs/${run.id}/observation`)).toBe('Bearer gg_second_key');
+        expect(lastKey(`/runs/${run.id}`)).toBe('Bearer gg_second_key');
+      });
+      await waitFor(() => {
+        expect(view.queryClient.getQueryState(keys.observation(run.id))).toMatchObject({
+          status: 'success',
+          fetchStatus: 'idle',
+        });
+        expect(view.queryClient.getQueryState(keys.run(run.id))).toMatchObject({
+          status: 'success',
+          fetchStatus: 'idle',
+        });
+      });
+      expect(view.queryClient.getQueryData(keys.observation(run.id))).toEqual(evidence);
+
+      // The run is shown again, with a new header and control. The queued choice is still
+      // pending, which alone keeps the new control disabled.
+      await openRun(run.id);
+      await waitFor(() => {
+        expect(screen.queryByText(unconfirmed)).toBeNull();
+        expect(screen.queryByText(evidenceError)).toBeNull();
+        expect(screen.queryByText('Reading the run evidence again.')).toBeNull();
+      });
+      expect(header()).not.toBe(originalHeader);
+      const replacement = start();
+      expect(replacement).not.toBe(originalStart);
+      expect(replacement).toBeDisabled();
+      expect(screen.queryByText(STALE)).toBeNull();
+      expect(screen.queryByText(NOT_SENT)).toBeNull();
+      expect(recoveries()).toHaveLength(0);
+
+      // Released, the choice queued before the loss is not sent, and the control shown now says so.
+      release();
+      expect(await screen.findByText(NOT_SENT)).toBeVisible();
+      expect(recoveries()).toHaveLength(0);
+      await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+      expect(screen.getByText(NOT_SENT)).toBeVisible();
+      expect(posts(api)).toHaveLength(0);
+
+      // A new explicit choice replaces that report and sends once, with the failure's own sequence.
+      api.override('POST /runs/:id/recover-session', () =>
+        Response.json({ ...api.runs.get(run.id), status: 'running' }),
+      );
+      await waitFor(() => expect(start()).toBeEnabled());
+      await user.click(start());
+      await waitFor(() => expect(recoveries()).toHaveLength(1));
+      expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+      expect(posts(api)).toHaveLength(1);
+      await waitFor(() => expect(screen.queryByText(NOT_SENT)).toBeNull());
+    } finally {
+      release();
+      view.unmount();
+    }
+  });
+
+  it('keeps a fresh-session choice queued for one run from holding or reporting on another run opened in the same view', async () => {
+    const api = new FakeApi();
+    const b = missingSessionRun(api);
+    const a = missingSessionRun(api);
+    api.runs.set(a.id, { ...api.runs.get(a.id)!, parentRunId: b.id });
+    api.override('POST /runs/:id/recover-session', (_call, [runId]) =>
+      Response.json({ ...api.runs.get(runId!), status: 'running' }),
+    );
+    const view = renderApp('/runs/' + a.id, api);
+    const user = userEvent.setup();
+    const start = () => button('Start fresh session for worker');
+    const recoveries = (runId: string) => api.callsTo('POST', `/runs/${runId}/recover-session`);
+    const outcomes = () =>
+      view.queryClient
+        .getMutationCache()
+        .getAll()
+        .map((mutation) =>
+          mutation.state.status === 'error'
+            ? errorMessage(mutation.state.error)
+            : mutation.state.status,
+        );
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let queued = 0;
+    try {
+      await openRun(a.id);
+      await waitFor(() => expect(start()).toBeEnabled());
+      // The mutation cache holds every choice before its API call; the gate is read at dispatch.
+      view.queryClient.getMutationCache().config.onMutate = () => {
+        queued += 1;
+        return held;
+      };
+      await user.click(start());
+      await waitFor(() => expect(queued).toBe(1));
+      expect(start()).toBeDisabled();
+
+      // A's header links its parent, B, which opens in the same view while A's choice is queued.
+      const header = screen.getByRole('heading', { name: 'Run ' + a.id }).closest('header')!;
+      await user.click(within(header).getByRole('link', { name: 'parent run' }));
+      await openRun(b.id);
+      // B shows its own failure: A's queued choice neither holds B's control nor reports there.
+      await waitFor(() => expect(start()).toBeEnabled());
+      expect(screen.queryByText(/^Not sent: /)).toBeNull();
+
+      // B's own choice is queued as well; then both are released.
+      await user.click(start());
+      await waitFor(() => expect(queued).toBe(2));
+      expect(start()).toBeDisabled();
+      release();
+      // A's choice belonged to a visit no longer shown: it is not sent, and that is not reported
+      // as B's outcome. B's choice sends once, with B's own failure sequence.
+      await waitFor(() => expect(outcomes()).toEqual([NOT_SENT, 'success']));
+      expect(screen.queryByText(/^Not sent: /)).toBeNull();
+      expect(recoveries(a.id)).toHaveLength(0);
+      expect(recoveries(b.id)).toHaveLength(1);
+      expect(recoveries(b.id)[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+      expect(posts(api)).toHaveLength(1);
+    } finally {
+      release();
       view.unmount();
     }
   });
