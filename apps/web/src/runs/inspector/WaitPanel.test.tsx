@@ -233,25 +233,25 @@ it('does not send a queued answer whose gate expired before dispatch, and says s
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
-  view.queryClient.setDefaultOptions({
-    queries: { retry: false },
-    mutations: {
-      retry: false,
-      onMutate: () => {
-        queued = true;
-        return held;
-      },
-    },
-  });
-  await user.type(screen.getByLabelText('note'), 'answer');
-  await user.click(screen.getByRole('button', { name: 'Submit input' }));
-  await waitFor(() => expect(queued).toBe(true));
-  // The connection is lost while the answer waits to be sent.
-  open = false;
-  release();
-  expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
-  expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
-  expect(screen.getByLabelText('note')).toHaveValue('answer');
+  // The client's mutation cache delays every mutation before its API call. Unlike default
+  // options set after the panel mounted, the cache's own callback is read at dispatch.
+  view.queryClient.getMutationCache().config.onMutate = () => {
+    queued = true;
+    return held;
+  };
+  try {
+    await user.type(screen.getByLabelText('note'), 'answer');
+    await user.click(screen.getByRole('button', { name: 'Submit input' }));
+    await waitFor(() => expect(queued).toBe(true));
+    // The connection is lost while the answer waits to be sent.
+    open = false;
+    release();
+    expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
+    expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
+    expect(screen.getByLabelText('note')).toHaveValue('answer');
+  } finally {
+    release();
+  }
 });
 
 it('bounds a long prompt and offers the whole text (#259)', async () => {

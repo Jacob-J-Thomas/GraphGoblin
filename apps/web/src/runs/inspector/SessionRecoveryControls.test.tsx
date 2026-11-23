@@ -166,30 +166,30 @@ describe('missing-session recovery control', () => {
       const held = new Promise<void>((resolve) => {
         release = resolve;
       });
-      view.queryClient.setDefaultOptions({
-        queries: { retry: false },
-        mutations: {
-          retry: false,
-          onMutate: () => {
-            queued = true;
-            return held;
-          },
-        },
-      });
-      const user = userEvent.setup();
-      await user.click(screen.getByRole('button', { name: 'Start fresh session for worker' }));
-      await waitFor(() => expect(queued).toBe(true));
-      if (change === 'the gate expired') open = false;
-      else await user.click(screen.getByRole('button', { name: 'Newer failure' }));
-      release();
-      expect(
-        await screen.findByText(
-          change === 'the gate expired'
-            ? NOT_SENT
-            : 'Not sent: the failure shown has changed. Review the run again.',
-        ),
-      ).toBeInTheDocument();
-      expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
+      // The client's mutation cache delays every mutation before its API call. Unlike default
+      // options set after the control mounted, the cache's own callback is read at dispatch.
+      view.queryClient.getMutationCache().config.onMutate = () => {
+        queued = true;
+        return held;
+      };
+      try {
+        const user = userEvent.setup();
+        await user.click(screen.getByRole('button', { name: 'Start fresh session for worker' }));
+        await waitFor(() => expect(queued).toBe(true));
+        if (change === 'the gate expired') open = false;
+        else await user.click(screen.getByRole('button', { name: 'Newer failure' }));
+        release();
+        expect(
+          await screen.findByText(
+            change === 'the gate expired'
+              ? NOT_SENT
+              : 'Not sent: the failure shown has changed. Review the run again.',
+          ),
+        ).toBeInTheDocument();
+        expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
+      } finally {
+        release();
+      }
     },
   );
 

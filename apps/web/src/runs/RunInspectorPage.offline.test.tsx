@@ -308,6 +308,13 @@ describe('run inspector through an outage (#416)', () => {
     const runGets = () => api.callsTo('GET', `/runs/${run.id}`).length;
     try {
       await openRun(run.id);
+      // The stream's first batch (events 1 and 2) is shown, and the live refresh it requested has
+      // read the run once after it and settled. Otherwise that refresh, unrelated to the outage,
+      // could join the held read below and read again after it, or follow the recovery read.
+      expect(
+        await screen.findByRole('heading', { name: /^Timeline \(2 events, / }),
+      ).toBeInTheDocument();
+      await waitFor(() => expect(runGets()).toBe(2));
       await waitFor(() =>
         expect(view.queryClient.getQueryState(keys.run(run.id))?.fetchStatus).toBe('idle'),
       );

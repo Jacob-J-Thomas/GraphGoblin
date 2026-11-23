@@ -125,9 +125,13 @@ export function Timeline({
   function move(index: number) {
     const row = events[index];
     if (!row) return;
+    // The focus request is consumed by the next commit. Within one window the anchor (and the
+    // reader's paused state) may not change, so the target also becomes the active row: that
+    // commit always follows, and focus moves after any window shift, as onFocus would set it.
+    focusRef.current = row.seq;
+    setActive(row.seq);
     onPause?.();
     setAnchor(events[Math.max(0, Math.min(index, events.length - TIMELINE_ROWS))]?.seq);
-    focusRef.current = row.seq;
   }
   return (
     <Card
@@ -265,7 +269,9 @@ export function Timeline({
           if (event.key === 'PageUp') next = Math.max(0, index - TIMELINE_ROWS);
           if (next !== undefined && next >= 0 && next < events.length) {
             event.preventDefault();
-            move(next);
+            // A key naming the focused row itself (Home on the first) moves nothing, so it leaves
+            // no focus request for a later render to act on once focus has moved elsewhere.
+            if (next !== index) move(next);
           }
         }}
       >

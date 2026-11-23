@@ -369,6 +369,37 @@ it('keeps keyboard movement, the single Tab stop and selection with long sequenc
   expect(rows[2]).toHaveFocus();
 });
 
+it('moves focus and the single Tab stop between rows of one window, and a key naming the focused row requests nothing (#186)', async () => {
+  const user = userEvent.setup();
+  render(
+    <Timeline
+      events={large}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      following={false}
+      onSelect={vi.fn()}
+    />,
+  );
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  const rows = within(list).getAllByRole('button');
+  act(() => rows[2]!.focus());
+  // Every row is already shown: the window does not shift and no parent renders again.
+  await user.keyboard('{ArrowUp}');
+  expect(rows[1]).toHaveFocus();
+  expect(rows.map((row) => row.tabIndex)).toEqual([-1, 0, -1]);
+  await user.keyboard('{Home}');
+  expect(rows[0]).toHaveFocus();
+  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
+  // Home on the first row moves nothing; a later render does not pull focus back to it.
+  await user.keyboard('{Home}');
+  const sequence = screen.getByRole('spinbutton', { name: 'Event sequence' });
+  await user.type(sequence, '2');
+  expect(sequence).toHaveFocus();
+  expect(sequence).toHaveValue(2);
+  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
+});
+
 it('ignores controls that cannot act, keeping them focusable (#186 QA)', async () => {
   const user = userEvent.setup();
   const live = vi.fn();
