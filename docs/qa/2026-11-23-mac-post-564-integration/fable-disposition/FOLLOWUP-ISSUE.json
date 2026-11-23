@@ -1,0 +1,23 @@
+{
+  "number": 565,
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/565",
+  "title": "Isolate ordinary API startup fixtures from owner-local provider discovery",
+  "body": "Ordinary API startup fixtures can discover an owner-local Ollama service even when their parent process sets GG_OLLAMA_ENABLED=false.\n\nSource inspection at draft PR #501 integration `d91386a7509a77db4bccdab6f95a3d01e730ad50` found that `apps/api/src/testing/api-subprocess.ts` removes inherited GG_* values without restoring an explicit discovery-disable setting. The in-process startup case in `main.test.ts` reconstructs the same environment. Ordinary configuration defaults Ollama to enabled at http://127.0.0.1:11434 and container admission starts the service. This is a source-supported possible connection, not an observed connection or provider turn.\n\nD243 places that file on disposable hosted runners for the current Mac integration and keeps all coverage/native gates unchanged. Ubuntu coverage and macOS startup run the file, but its Windows-only cases are skipped there; earlier Windows evidence must be stated with its exact source identity. The independent Claude Fable 5.2/xhigh integration review requested this tracked follow-up.\n\nBounded outcome:\n- Give ordinary startup fixtures explicit provider-free defaults after inherited-environment filtering. Preserve deliberate provider tests through named test-owned configuration, not owner credentials or services.\n- Check both subprocess and in-process startup. Add a deterministic public-behavior regression that proves a test-owned discovery endpoint receives no unexpected request in the default fixture and that explicit test-owned discovery still works.\n- Exercise Windows-only startup/log refusal cases on Windows with a documented maintained test venue, without weakening the existing native launcher suite.\n- Reconcile the fixture comment and docs/10 isolation claim with actual environment, process-identity and port behavior. Ephemeral port 0 and point-in-time availability checks must not be described as a fixed port range or universal network isolation.\n- Preserve production defaults, owner configuration/stores/listeners, all existing assertions, zero-retry policy and coverage thresholds.\n\nDuplicate search checked all-state issues for Ollama+fixture, api-subprocess+discovery and GG_OLLAMA_ENABLED. #483 concerns SQLite teardown and #442 plugin diagnostics; neither fixes this fixture default.\n\nParked follow-up outside the five delivered core intents and the bounded Mac integration. No implementation is admitted by this ticket. Future delivery uses GPT architecture/implementation, actual Claude opposing-family review, independent touched-system QA and the repository's existing gates. The current Mac device QA and final audit remain separately required.",
+  "labels": [
+    "area:api",
+    "backlog",
+    "impl:gpt-6.1-sol",
+    "qa:touched-systems",
+    "review:claude-opus-5.5",
+    "type:chore"
+  ],
+  "state": "open",
+  "createdAt": "2026-11-23T17:55:36Z",
+  "duplicateQueries": [
+    "repo:Jacob-J-Thomas/GraphGoblin is:issue \"Ollama\" \"fixture\"",
+    "repo:Jacob-J-Thomas/GraphGoblin is:issue \"api-subprocess\" \"discovery\"",
+    "repo:Jacob-J-Thomas/GraphGoblin is:issue \"GG_OLLAMA_ENABLED\""
+  ],
+  "exactDuplicateFound": false,
+  "initialCreateCall": "Connector schema refused repo_full_name before mutation; corrected repository_full_name succeeded once."
+}
