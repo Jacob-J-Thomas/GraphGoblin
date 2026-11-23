@@ -1,0 +1,32 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthful-inspector/GraphGoblin/packages/infrastructure
+
+ ❯ src/fs/chat-audio.test.ts (39 tests | 1 failed | 38 skipped) 16ms
+   ❯ ChatAudioStore (25)
+     × refuses a non-directory or symlink dedicated storage root 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/fs/chat-audio.test.ts > ChatAudioStore > refuses a non-directory or symlink dedicated storage root
+Error: EPERM: operation not permitted, symlink 'G:\ggq\gg-i5-root-scratch\gg-chat-audio-rZ6eu6\outside' -> 'G:\ggq\gg-i5-root-scratch\gg-chat-audio-rZ6eu6\chat-audio'
+ ❯ src/fs/chat-audio.test.ts:230:5
+    228|     const outside = join(dataDir, 'outside');
+    229|     await fs.mkdir(outside);
+    230|     await fs.symlink(outside, directory, 'dir');
+       |     ^
+    231|     await expect(store.write(id(), Buffer.of(1))).rejects.toMatchObjec…
+    232|     await expect(store.remove(id())).rejects.toMatchObject({ code: 'st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  10:39:58
+   Duration  437ms (transform 57%, import 31%, tests 8%, worker 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthful-
+  │ inspector\GraphGoblin\packages\infrastructure
+

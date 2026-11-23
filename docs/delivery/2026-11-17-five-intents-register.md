@@ -385,3 +385,11 @@ opposite-family review, unchanged coverage, exact-head/current-target CI and the
 independent Astra MAX final audit within the three-general-scan cap. No human `plan-approved`
 label is inferred. Consolidated owner decision review and any requested rework remain before
 owner QA; #460, Mac #501, parked #542/#543/#544 and conditional #379 retain their separate gates.
+
+## Intent 5 inspector candidate — November 22, D222–D229
+
+Signed PR #553 completed intent 4 before this lane began. At admission, the approved five-intent batch stood at 22/26 engineering units and 4/5 intents; owner acceptance and deployment remained separate. The #386/#385 candidate is based on signed main `3a6943a136594162665667a7a55e2b46520912eb` and freezes product/support source at `8632538fea2c95c3a528ef91ddbaefebf3d3bfba`.
+
+Actual Claude owns the production correction; GPT supplies bounded supporting tests/docs. [Exact-source evidence](../qa/2026-11-22-i5-inspector-truthfulness/README.md) records 3,102 passing web tests with 98.65% line and 94.44% branch coverage, 36 distinct independent component outcomes across qualified invocations, and six fresh browser passes. Both prior CHANGES_REQUIRED reviews, budget-stopped author terminals and failed checks/fixtures retain their historical outcomes. This candidate record closes no issue by itself.
+
+Actual Claude targeted review of the final supporting correction, the fresh independent Astra MAX third/final audit, exact-head/current-target ordinary CI/native and signed merge remain required. Preserve the three-scan cap and current owner gates; no fourth general scan, fabricated provider completion or weakened coverage is implied. #416 then #420 follow this pair's engineering delivery. Final owner decision review/rework precedes owner QA; Mac #501, #448/#459 owner obligations, #460 and conditional #379 retain their separate status. Later completion records belong in the linked issue/PR discussions and subsequent register entries.

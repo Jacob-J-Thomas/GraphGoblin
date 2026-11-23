@@ -1,0 +1,22 @@
+diff --git "a/G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-corrective-final-qa-01\\d228-diagnostic-01\\r2-2-schema-fixture-closure-01\\before-RunInspectorPage.review2-independent-qa.test.tsx" b/G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web/src/runs/RunInspectorPage.review2-independent-qa.test.tsx
+index 1bc8411d..10f3c3a4 100644
+--- "a/G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-corrective-final-qa-01\\d228-diagnostic-01\\r2-2-schema-fixture-closure-01\\before-RunInspectorPage.review2-independent-qa.test.tsx"
++++ b/G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web/src/runs/RunInspectorPage.review2-independent-qa.test.tsx
+@@ -1,7 +1,7 @@
+ // DRAFT ONLY: not installed in the QA checkout, typechecked, linted or executed.
+ // Admit with a new immutable candidate before including these five desired-outcome cases.
+ import type { RunRecord } from '@graphgoblin/contracts';
+-import { RunRecordSchema } from '@graphgoblin/contracts';
++import { RunSnapshotSchema } from '@graphgoblin/contracts';
+ import { runs } from '@graphgoblin/api-client';
+ import { QueryClient } from '@tanstack/react-query';
+ import { act, render, screen, waitFor, within } from '@testing-library/react';
+@@ -111,7 +111,7 @@ it('review2 R2-2: a wrong-ID 200 cannot borrow a warm matching receipt or replac
+     });
+     api.override('GET /runs/:id', async (call) => {
+       if (call.path !== `/runs/${a.id}`) return api.builtIn(call);
+-      const originalRow = RunRecordSchema.parse(await (await api.builtIn(call)).json());
++      const originalRow = RunSnapshotSchema.parse(await (await api.builtIn(call)).json());
+       foreignReturned = true;
+       return json({ ...originalRow, id: b.id, currentNodeId: 'foreign-position' });
+     });

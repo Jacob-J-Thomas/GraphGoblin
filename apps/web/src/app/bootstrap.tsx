@@ -1,6 +1,6 @@
 import type { GraphGoblinClient } from '@graphgoblin/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode, useEffect, type ReactNode } from 'react';
+import { StrictMode, useEffect, useMemo, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
@@ -10,6 +10,7 @@ import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '.
 import { startReachability } from '../lib/reachability.js';
 import { setChatUpdateGuardExpected } from '../pwa/chat-update-lock.js';
 import { registerPwa } from '../pwa/register.js';
+import { RunHeaderProvider, RunHeaderRegistry } from '../runs/run-header-store.js';
 import { App } from './App.js';
 
 export function createQueryClient(): QueryClient {
@@ -20,7 +21,10 @@ export function createQueryClient(): QueryClient {
   });
 }
 
-/** Providers shared by the app and its tests: API client, server-state cache. */
+/**
+ * Providers shared by the app and its tests: API client, server-state cache, and the run headers'
+ * lifecycle evidence, which belongs to that client and cache and outlives each route (#386).
+ */
 export function Providers({
   client,
   queryClient,
@@ -43,10 +47,16 @@ export function Providers({
       document.removeEventListener('visibilitychange', visible);
     };
   }, [queryClient]);
+  const runHeaders = useMemo(
+    () => new RunHeaderRegistry({ client, queryClient }),
+    [client, queryClient],
+  );
 
   return (
     <ApiProvider client={client}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <RunHeaderProvider registry={runHeaders}>{children}</RunHeaderProvider>
+      </QueryClientProvider>
     </ApiProvider>
   );
 }

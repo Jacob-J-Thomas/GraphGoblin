@@ -13,6 +13,7 @@ import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
 import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
+import { useRunHeaderRegistry } from './run-header-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
 
@@ -44,10 +45,17 @@ export function useRunEvents(
   // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
   // with a key that was just forgotten (here or in another tab) closes.
   const apiKey = useApiKeyStore((s) => s.key);
+  // Each credential generation has its own stream and follower: work begun under an earlier one,
+  // including the same key accepted again after a rejection, never adds to the current one's.
+  const generation = useApiKeyStore((s) => s.generation);
+  const rejected = useApiKeyStore((s) => s.rejected);
+  const headers = useRunHeaderRegistry();
   const [status, setStatus] = useState<StreamStatus>('connecting');
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
+    // Rejected credentials read nothing until a key is accepted again (a new generation).
+    if (rejected) return;
     const { runs, append } = useRunEventStore.getState();
     const known = runs[runId];
     // Cached outcomes can be superseded or followed by delivery audits. Resume at the
@@ -56,6 +64,16 @@ export function useRunEvents(
     let buffer: RunEvent[] = [];
     let bufferBytes = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // This run's header evidence under the credentials the stream opened with (#386). Constant:
+    // another generation runs this effect again with its own.
+    const lease = headers?.lease(runId);
+    // Whether the credentials this stream opened with are still the accepted ones, checked live:
+    // a rejection or replacement retires its callbacks before React runs this effect's cleanup.
+    const authorized = () => {
+      const auth = useApiKeyStore.getState();
+      return !auth.rejected && auth.generation === generation;
+    };
+    const live = () => active && authorized();
     const flush = () => {
       clearTimeout(timer);
       timer = undefined;
@@ -63,7 +81,13 @@ export function useRunEvents(
       const batch = buffer;
       buffer = [];
       bufferBytes = 0;
+      // Read under credentials since rejected or replaced: dropped, not committed, so the next
+      // stream reads it again under the current ones.
+      if (!authorized()) return;
       append(runId, ...batch);
+      // Every accepted batch, whatever window is shown, and the last one flushed on cleanup:
+      // the next stream for this run starts after it.
+      headers?.events(lease, batch);
       if (!active) return;
       setStatus('live');
       onEvents?.(batch);
@@ -80,23 +104,27 @@ export function useRunEvents(
         cursor: () => useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
         events: () => useRunEventStore.getState().runs[runId]?.events ?? [],
         changed: () => {
-          if (active) onEvents?.();
+          if (live()) onEvents?.();
+        },
+        lifecycle: (lifecycle) => {
+          if (authorized()) headers?.lifecycle(lease, lifecycle);
         },
         append: (events) => {
+          if (!authorized()) return;
           buffer.push(...events);
           flush();
         },
         running: () => {
-          if (active) connect();
+          if (live()) connect();
         },
         finished: () => {
-          if (active) {
+          if (live()) {
             setError(undefined);
             setStatus('finished');
           }
         },
         error: (err) => {
-          if (active) {
+          if (live()) {
             setError(errorMessage(err));
             setStatus('error');
           }
@@ -105,7 +133,7 @@ export function useRunEvents(
     };
     const connect = () => {
       const currentConnection = ++connection;
-      const current = () => active && connection === currentConnection;
+      const current = () => live() && connection === currentConnection;
       let openedAt: number | undefined;
       flush(); // Commit the old connection's buffer before taking its resume cursor.
       subscription?.close();
@@ -192,19 +220,23 @@ export function useRunEvents(
       );
     };
     const unsubscribe = subscribeApiRecovery(() => {
-      if (active && inTransportBackoff) connect();
+      if (live() && inTransportBackoff) connect();
     });
     connect();
     return () => {
       active = false;
       unsubscribe();
       stopHistory?.();
+      // Leaving the run keeps what was accepted: the last batch still advances the cursor and the
+      // header evidence, unless the credentials it was read under are no longer the accepted ones.
       flush();
       subscription?.close();
     };
     // `onEvents` is a notification hook; followRunAttempts follows resumed runs from the cursor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, queryClient, runId, apiKey]);
+  }, [client, queryClient, runId, apiKey, generation, rejected, headers]);
 
-  return { ...log, status, ...(error ? { error } : {}) };
+  // No stream is open while the key is rejected: it is not shown as live.
+  const shown = rejected && status === 'live' ? 'connecting' : status;
+  return { ...log, status: shown, ...(error ? { error } : {}) };
 }

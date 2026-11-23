@@ -1,0 +1,181 @@
+{
+  "ordinaryTextOnly": true,
+  "hiddenReasoningOmitted": true,
+  "ordinaryMessages": [
+    {
+      "event": 672,
+      "block": 0,
+      "text": "## SUPPORTING DELTA VERDICT: CHANGES REQUIRED (tests and docs; the spec comment is accepted)\n\n1. **The known faulty expectation (R2-1, from productreview2).** `run-header-status.test.ts:90` expects `updating` when an unverified `succeeded #3` row agrees with a witnessed `succeeded #3` at the known tail. The correct result is `{kind:'event', status:'succeeded', seq:3}`. It should stay `updating` when the row is past what was seen, sits behind a cold cursor, or comes after a resume. A matching receipt still gives `record`. The delta's own `verified=false` cold-cursor (C1) cases (row `failed #5` with hint 5, and empty evidence) stay correct after the repair. **FIX.**\n2. **Contract error in `queries.reconnect`.** The test \"does not verify \u2026 different run\" asserts `query.data.id === foreign.id`, which accepts B's body installed under A's cache key. It starts from an empty slot with a different status and sequence, so it passes even though a warm slot at the same position lets B borrow A's receipt (R2-2). **REWRITE:** expect a read error, no cache replacement, A's row, receipts and slot kept, then recovery on a correct same-ID read.\n3. **Weakened assertion.** In the corrective R2 test, line 179 was narrowed from `/node-a/` to the exact qualified label. It no longer proves that an event-derived state hides `at node-a`. **STRENGTHEN:** keep the line and add a check that no `/^at /` text appears.\n4. **Docs and CHANGELOG** match the current code. They say nothing about what an unverified row at the tail shows, refusing a wrong-ID body at the cache, recovery reads, or late 401s from an older generation. **UPDATE** them with the repairs.\n5. The title of the `useRunHeaderStatus` cold-cursor test says \"beyond the cold hint\", but the row is at the hint (5 = 5). Naming only, so **ACCEPT**. I'm leaving it unchanged so trace names stay stable.\n6. The stream and follower retirement tests (G2), the registry cursor-hint and eviction tests, the late cancelled 200/404 tests and the 404-vs-500 tests are sound, with no false positives. **ACCEPT.** None of them covers recovery liveness (R2-3) or a 401 from an older generation.\n7. The two-comment correction in `inspector-truthfulness.spec.ts` is accurate: it describes held responses plus animation frames, not React Query consumption. **ACCEPT.** The fixture stays read-only.\n\nThis review does not approve the UI implementation.\n\nNow implementing R2-1, R2-2 and R2-3."
+    }
+  ],
+  "tools": [
+    {
+      "event": 135,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/api/api-key.ts"
+    },
+    {
+      "event": 137,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/RunInspectorPage.corrective.test.tsx"
+    },
+    {
+      "event": 139,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/run-header-status.test.ts"
+    },
+    {
+      "event": 141,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/app/bootstrap.tsx"
+    },
+    {
+      "event": 150,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/RunInspectorPage.tsx"
+    },
+    {
+      "event": 152,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/__fixtures__/render.tsx"
+    },
+    {
+      "event": 154,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/api/api-key-fetch.test.ts"
+    },
+    {
+      "event": 218,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/RunInspectorPage.tsx"
+    },
+    {
+      "event": 220,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/api/ApiKeyPanel.test.tsx"
+    },
+    {
+      "event": 226,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/components/status.tsx"
+    },
+    {
+      "event": 227,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/app/App.tsx"
+    },
+    {
+      "event": 238,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/lib/utils.ts"
+    },
+    {
+      "event": 240,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/__fixtures__/fake-api.ts"
+    },
+    {
+      "event": 362,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/useRunHeaderStatus.test.tsx"
+    },
+    {
+      "event": 364,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/runs/run-header-status.test.ts"
+    },
+    {
+      "event": 673,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.ts"
+    },
+    {
+      "event": 675,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.ts"
+    },
+    {
+      "event": 677,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.ts"
+    },
+    {
+      "event": 679,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.ts"
+    },
+    {
+      "event": 681,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.ts"
+    },
+    {
+      "event": 683,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/runs/run-header-status.test.ts"
+    },
+    {
+      "event": 685,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/api/queries.ts"
+    },
+    {
+      "event": 687,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/api/api-key.ts"
+    },
+    {
+      "event": 689,
+      "block": 0,
+      "tool": "Edit",
+      "path": "apps/web/src/api/ApiKeyPanel.tsx"
+    },
+    {
+      "event": 695,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/api/api-key.test.tsx"
+    },
+    {
+      "event": 697,
+      "block": 0,
+      "tool": "Read",
+      "path": "apps/web/src/api/queries.reconnect.test.tsx"
+    }
+  ],
+  "firstEditingPosition": [
+    673,
+    0
+  ],
+  "ordinaryTextsBeforeFirstEdit": [
+    {
+      "event": 672,
+      "block": 0,
+      "text": "## SUPPORTING DELTA VERDICT: CHANGES REQUIRED (tests and docs; the spec comment is accepted)\n\n1. **The known faulty expectation (R2-1, from productreview2).** `run-header-status.test.ts:90` expects `updating` when an unverified `succeeded #3` row agrees with a witnessed `succeeded #3` at the known tail. The correct result is `{kind:'event', status:'succeeded', seq:3}`. It should stay `updating` when the row is past what was seen, sits behind a cold cursor, or comes after a resume. A matching receipt still gives `record`. The delta's own `verified=false` cold-cursor (C1) cases (row `failed #5` with hint 5, and empty evidence) stay correct after the repair. **FIX.**\n2. **Contract error in `queries.reconnect`.** The test \"does not verify \u2026 different run\" asserts `query.data.id === foreign.id`, which accepts B's body installed under A's cache key. It starts from an empty slot with a different status and sequence, so it passes even though a warm slot at the same position lets B borrow A's receipt (R2-2). **REWRITE:** expect a read error, no cache replacement, A's row, receipts and slot kept, then recovery on a correct same-ID read.\n3. **Weakened assertion.** In the corrective R2 test, line 179 was narrowed from `/node-a/` to the exact qualified label. It no longer proves that an event-derived state hides `at node-a`. **STRENGTHEN:** keep the line and add a check that no `/^at /` text appears.\n4. **Docs and CHANGELOG** match the current code. They say nothing about what an unverified row at the tail shows, refusing a wrong-ID body at the cache, recovery reads, or late 401s from an older generation. **UPDATE** them with the repairs.\n5. The title of the `useRunHeaderStatus` cold-cursor test says \"beyond the cold hint\", but the row is at the hint (5 = 5). Naming only, so **ACCEPT**. I'm leaving it unchanged so trace names stay stable.\n6. The stream and follower retirement tests (G2), the registry cursor-hint and eviction tests, the late cancelled 200/404 tests and the 404-vs-500 tests are sound, with no false positives. **ACCEPT.** None of them covers recovery liveness (R2-3) or a 401 from an older generation.\n7. The two-comment correction in `inspector-truthfulness.spec.ts` is accurate: it describes held responses plus animation frames, not React Query consumption. **ACCEPT.** The fixture stays read-only.\n\nThis review does not approve the UI implementation.\n\nNow implementing R2-1, R2-2 and R2-3."
+    }
+  ],
+  "actualSubstantiveReviewAcceptance": "PENDING_ROOT_READING"
+}

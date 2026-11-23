@@ -1,0 +1,47 @@
+--- a/apps/web/e2e/owner-chat-cross-route.qa.spec.ts
++++ b/apps/web/e2e/owner-chat-cross-route.qa.spec.ts
+@@ -36,7 +36,7 @@
+   await expect(page.getByRole('list', { name: 'Timeline' }).getByRole('button', { name: /run\.waiting/ })).toBeVisible();
+   const warmHeader = page.locator('header').filter({ has: page.getByRole('heading', { name: `Run ${run.id}` }) });
+   await expect(warmHeader.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-  await expect(warmHeader.getByText('at approve', { exact: true })).toBeVisible();
++  await expect(warmHeader.getByText('at Approve (approve)', { exact: true })).toBeVisible();
+   const devices = gate();
+   const rejection = gate();
+   let chatCalls = 0;
+@@ -77,7 +77,7 @@
+     await page.getByRole('link', { name: run.id, exact: true }).click();
+     const header = page.locator('header').filter({ has: page.getByRole('heading', { name: `Run ${run.id}` }) });
+     await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-    await expect(header.getByText('at approve', { exact: true })).toBeVisible();
++    await expect(header.getByText('at Approve (approve)', { exact: true })).toBeVisible();
+     await expect.poll(() => streamCursors.length).toBe(1);
+     expect(streamCursors[0]).toBe(String(baseline.lastEventSeq));
+     const beforeRecovery = runReads;
+@@ -88,7 +88,7 @@
+     await form.getByRole('button', { name: 'Use key' }).click();
+     await expect(form).toHaveCount(0);
+     await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-    await expect(header.getByText('at approve', { exact: true })).toBeVisible();
++    await expect(header.getByText('at Approve (approve)', { exact: true })).toBeVisible();
+     await expect.poll(() => runReads).toBe(beforeRecovery + 1);
+     await expect.poll(() => streamCursors.length).toBe(2);
+     expect(streamCursors.at(-1)).toBe(String(baseline.lastEventSeq));
+@@ -102,7 +102,7 @@
+     await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+     await expect(form).toHaveCount(0);
+     await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-    await expect(header.getByText('at approve', { exact: true })).toBeVisible();
++    await expect(header.getByText('at Approve (approve)', { exact: true })).toBeVisible();
+     await expect(header.getByText('Updating status…', { exact: true })).toHaveCount(0);
+     // Fixed, finite read-budget measurement; never used to synchronize initial rendering.
+     await page.evaluate(() => new Promise<void>((resolve) => setTimeout(resolve, 2200)));
+@@ -111,7 +111,7 @@
+     expect(streamCursors).toHaveLength(2);
+     await expect(form).toHaveCount(0);
+     await expect(header.locator('[data-status]')).toHaveAttribute('data-status', 'waiting');
+-    await expect(header.getByText('at approve', { exact: true })).toBeVisible();
++    await expect(header.getByText('at Approve (approve)', { exact: true })).toBeVisible();
+     // A current server read remains waiting; the browser fixture creates no lifecycle change.
+     const current = await request.get(`${url}/runs/${run.id}`, { headers });
+     expect(current.status()).toBe(200);

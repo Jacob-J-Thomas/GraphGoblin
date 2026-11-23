@@ -1,0 +1,36 @@
+$ vitest run src/api/api-key.test.tsx src/api/api-key-fetch.test.ts src/api/queries.reconnect.test.tsx src/runs/RunInspectorPage.corrective.test.tsx src/api/ApiKeyPanel.test.tsx src/runs/run-header-status.test.ts src/runs/useRunHeaderStatus.test.tsx --reporter=default --reporter=json --outputFile=G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d229-supporting-implementation-01/focused-tests.json
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthful-inspector/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx (7 tests) 3903ms
+   ✓ run header corrective cases (#386) (7)
+     ✓ stays neutral, never failed, when the observation reports the resume firs… (R1) 1152ms
+     ✓ stays neutral, never failed, when the stream delivers the failure and res… (R1) 822ms
+     ✓ shows a new failure over an older failed record and attributes a record node (R2) 375ms
+     ✓ keeps a resumed run neutral across A → B → A with held reads and a stale observation (R3) 796ms
+     ✓ shows nothing from an earlier credential generation until current reads settle it 394ms
+ ✓ src/api/queries.reconnect.test.tsx (38 tests) 4070ms
+   ✓ query reconnect (31)
+     ✓ keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 328ms
+ ✓ src/api/api-key.test.tsx (8 tests) 2079ms
+   ✓ API key entry (6)
+     ✓ review: focuses the key input when access is rejected without stealing it on later renders 399ms
+     ✓ asks for a key on a 401, sends the stored key, and lets Settings forget it 1034ms
+     ✓ restarts a run inspector stream that a 401 ended once a key is entered 427ms
+ ✓ src/api/ApiKeyPanel.test.tsx (6 tests) 3189ms
+   ✓ same-key inspector recovery through the visible API key panel (R2-3) (6)
+     ✓ reads the quiet parked run once after same-key submit, without injected refresh or new SSE data 953ms
+     ✓ retires an old pending 200 read with a warm cache before the fresh recovery read 717ms
+     ✓ retires an old pending 401 read with a warm cache before the fresh recovery read 587ms
+     ✓ retires an old pending 200 read with a empty cache before the fresh recovery read 420ms
+     ✓ retires an old pending 401 read with a empty cache before the fresh recovery read 404ms
+ ✓ src/runs/useRunHeaderStatus.test.tsx (4 tests) 41ms
+ ✓ src/runs/run-header-status.test.ts (17 tests) 14ms
+ ✓ src/api/api-key-fetch.test.ts (15 tests) 15ms
+
+ Test Files  7 passed (7)
+      Tests  95 passed (95)
+   Start at  14:06:07
+   Duration  22.67s (environment 32%, tests 31%, import 16%, setup 11%, transform 10%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d229-supporting-implementation-01/focused-tests.json

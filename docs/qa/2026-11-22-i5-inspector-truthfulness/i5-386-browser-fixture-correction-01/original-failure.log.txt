@@ -1,0 +1,38 @@
+
+Running 1 test using 1 worker
+
+(node:30240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) (1.6s)
+
+
+  1) [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+
+    Error: route.fulfill: Route is already handled!
+
+      59 |           ...row
+      60 |         } = (await response.json()) as Record<string, unknown>;
+    > 61 |         await route.fulfill({
+         |                     ^
+      62 |           response,
+      63 |           json: {
+      64 |             ...row,
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-truthfulness.spec.ts:61:21
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\candidate02-held-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\candidate02-held-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-385-independent-qa-01\output\playwright\candidate02-held-artifacts\inspector-truthfulness-the-2a155-record-refresh-is-held-386--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\inspector-truthfulness.spec.ts:36:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

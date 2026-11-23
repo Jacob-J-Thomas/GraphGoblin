@@ -55,6 +55,82 @@ describe('API key rejection belongs to the request credentials', () => {
     },
   );
 
+  it.each([false, true])(
+    'ignores an old same-key 401 after recovery, independently of cancellation=%s',
+    async (cancelled) => {
+      useApiKeyStore.getState().save('gg_same');
+      let finish!: (response: Response) => void;
+      const held = new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+      const controller = new AbortController();
+      const request = new Request('http://graphgoblin.test/api-keys', {
+        signal: controller.signal,
+      });
+      const pending = withApiKey(() => held)(request);
+      useApiKeyStore.getState().markRejected();
+      useApiKeyStore.getState().save('gg_same');
+      const recoveredGeneration = useApiKeyStore.getState().generation;
+      if (cancelled) controller.abort();
+      finish(new Response(null, { status: 401 }));
+      expect((await pending).status).toBe(401);
+      expect(useApiKeyStore.getState()).toMatchObject({
+        key: 'gg_same',
+        rejected: false,
+        generation: recoveredGeneration,
+      });
+      // A request actually sent in the recovered generation still rejects that generation.
+      await withApiKey(() => Promise.resolve(new Response(null, { status: 401 })))(
+        new Request('http://graphgoblin.test/api-keys'),
+      );
+      expect(useApiKeyStore.getState()).toMatchObject({
+        rejected: true,
+        generation: recoveredGeneration + 1,
+      });
+    },
+  );
+
+  it('does not treat cancellation alone as a new credential generation', async () => {
+    useApiKeyStore.getState().save('gg_same');
+    const sentGeneration = useApiKeyStore.getState().generation;
+    let finish!: (response: Response) => void;
+    const held = new Promise<Response>((resolve) => {
+      finish = resolve;
+    });
+    const controller = new AbortController();
+    const pending = withApiKey(() => held)(
+      new Request('http://graphgoblin.test/api-keys', { signal: controller.signal }),
+    );
+    controller.abort();
+    finish(new Response(null, { status: 401 }));
+    await pending;
+    expect(useApiKeyStore.getState()).toMatchObject({
+      rejected: true,
+      generation: sentGeneration + 1,
+    });
+  });
+
+  it('ignores a retired anonymous 401 after a fresh anonymous credential generation', async () => {
+    useApiKeyStore.getState().forget();
+    let finish!: (response: Response) => void;
+    const pending = withApiKey(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    )(new Request('http://graphgoblin.test/api-keys'));
+    useApiKeyStore.getState().markRejected();
+    useApiKeyStore.getState().forget();
+    const generation = useApiKeyStore.getState().generation;
+    finish(new Response(null, { status: 401 }));
+    await pending;
+    expect(useApiKeyStore.getState()).toMatchObject({
+      key: undefined,
+      rejected: false,
+      generation,
+    });
+  });
+
   it('keeps the key accepted on a non-401 response', async () => {
     useApiKeyStore.setState({ key: 'gg_stored' });
     await withApiKey(() => Promise.resolve(new Response(null, { status: 403 })))(

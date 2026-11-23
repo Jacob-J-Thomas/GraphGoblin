@@ -25,6 +25,25 @@ export function ApiKeyPanel() {
   const [value, setValue] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => syncApiKeyAcrossTabs(), []);
+  // The same key accepted again after a rejection (#386) starts a new credential generation with an
+  // unchanged key, which the key effect below does not see. Reads still pending were sent under the
+  // retired generation, and a refetch would join a pending first read rather than replace it:
+  // cancel them first, then read the active queries once under the accepted credentials, unless the
+  // credentials changed again meanwhile (a rejection, replacement or forgetting is another
+  // generation). Saving the key that is already accepted is no new generation and reads nothing.
+  useEffect(
+    () =>
+      useApiKeyStore.subscribe((state, previous) => {
+        if (!previous.rejected || state.rejected || !state.key || state.key !== previous.key)
+          return;
+        const { generation } = state;
+        void queryClient.cancelQueries().then(async () => {
+          if (useApiKeyStore.getState().generation === generation)
+            await queryClient.invalidateQueries({}, { cancelRefetch: false });
+        });
+      }),
+    [queryClient],
+  );
   useEffect(() => {
     if (!rejected) return;
     let frame = 0;

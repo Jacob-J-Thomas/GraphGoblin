@@ -1,0 +1,106 @@
+diff --git "a/G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-corrective-final-qa-01\\stable-candidate-01\\independent-browser-closure-01\\before-inspector-final-independent-qa.spec.ts" b/apps/web/e2e/inspector-final-independent-qa.spec.ts
+index 2abbff26..93e9281b 100644
+--- "a/G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-386-corrective-final-qa-01\\stable-candidate-01\\independent-browser-closure-01\\before-inspector-final-independent-qa.spec.ts"
++++ b/apps/web/e2e/inspector-final-independent-qa.spec.ts
+@@ -5,7 +5,7 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import { expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
+ 
+ const evidence =
+-  'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-final-qa-01/stable-candidate-01/output/playwright/independent';
++  'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-final-qa-01/stable-candidate-01/independent-browser-closure-01/output/playwright/independent';
+ 
+ test('independent S1/S2: BOTH read models held, then equal-sequence stale run released before observation', async ({
+   page,
+@@ -33,6 +33,7 @@ test('independent S1/S2: BOTH read models held, then equal-sequence stale run re
+   let returnedRun = 0;
+   let heldObservation = 0;
+   let returnedObservation = 0;
++  let activeRoutes = 0;
+   let releaseRun!: () => void;
+   let releaseObservation!: () => void;
+   const runGate = new Promise<void>((resolve) => {
+@@ -44,39 +45,49 @@ test('independent S1/S2: BOTH read models held, then equal-sequence stale run re
+   await page.route(
+     (url) => url.pathname === `/runs/${run.id}/observation`,
+     async (route) => {
+-      heldObservation++;
+-      await observationGate;
+-      const response = await route.fetch();
+-      await route.fulfill({ response });
+-      returnedObservation++;
++      activeRoutes++;
++      try {
++        heldObservation++;
++        await observationGate;
++        const response = await route.fetch();
++        await route.fulfill({ response });
++        returnedObservation++;
++      } finally {
++        activeRoutes--;
++      }
+     },
+   );
+   await page.route(
+     (url) => url.pathname === `/runs/${run.id}`,
+     async (route) => {
+-      runReads++;
+-      if (runReads > 1) {
+-        heldRun++;
+-        await runGate;
++      activeRoutes++;
++      try {
++        runReads++;
++        if (runReads > 1) {
++          heldRun++;
++          await runGate;
++        }
++        const response = await route.fetch();
++        const {
++          finishedAt: _finishedAt,
++          finalizedAt: _finalizedAt,
++          outcome: _outcome,
++          result: _result,
++          ...row
++        } = (await response.json()) as Record<string, unknown>;
++        await route.fulfill({
++          response,
++          json: {
++            ...row,
++            status: 'running',
++            currentNodeId: 'done',
++            lastEventSeq: runReads === 1 ? finished.seq - 1 : finished.seq,
++          },
++        });
++        returnedRun++;
++      } finally {
++        activeRoutes--;
+       }
+-      const response = await route.fetch();
+-      const {
+-        finishedAt: _finishedAt,
+-        finalizedAt: _finalizedAt,
+-        outcome: _outcome,
+-        result: _result,
+-        ...row
+-      } = (await response.json()) as Record<string, unknown>;
+-      await route.fulfill({
+-        response,
+-        json: {
+-          ...row,
+-          status: 'running',
+-          currentNodeId: 'done',
+-          lastEventSeq: runReads === 1 ? finished.seq - 1 : finished.seq,
+-        },
+-      });
+-      returnedRun++;
+     },
+   );
+   try {
+@@ -126,6 +137,7 @@ test('independent S1/S2: BOTH read models held, then equal-sequence stale run re
+   } finally {
+     releaseRun();
+     releaseObservation();
++    await expect.poll(() => activeRoutes).toBe(0);
+     await page.unrouteAll({ behavior: 'wait' });
+   }
+ });

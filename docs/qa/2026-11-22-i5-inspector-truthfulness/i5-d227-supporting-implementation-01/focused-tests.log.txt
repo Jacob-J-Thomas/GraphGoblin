@@ -1,0 +1,113 @@
+$ vitest run src/runs/RunInspectorPage.corrective.test.tsx src/runs/run-header-status.test.ts src/runs/run-header-store.test.tsx src/runs/useRunHeaderStatus.test.tsx src/runs/useRunEvents.test.tsx src/api/queries.reconnect.test.tsx --reporter=default --reporter=json --outputFile=G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d227-supporting-implementation-01/focused-tests.json
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthful-inspector/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.corrective.test.tsx (6 tests) 3437ms
+   ✓ run header corrective cases (#386) (6)
+     ✓ stays neutral, never failed, when the observation reports the resume firs… (R1) 1029ms
+     ✓ stays neutral, never failed, when the stream delivers the failure and res… (R1) 752ms
+     ✓ shows a new failure over an older failed record and attributes a record node (R2) 304ms
+     ✓ keeps a resumed run neutral across A → B → A with held reads and a stale observation (R3) 748ms
+     ✓ shows nothing from an earlier credential generation until current reads settle it 361ms
+ ❯ src/api/queries.reconnect.test.tsx (37 tests | 2 failed) 3653ms
+   ✓ query reconnect (31)
+     ✓ recovers a cold offline Loops query on the online event without navigation 197ms
+     ✓ recovers Loops when the API returns with the browser still online 15ms
+     ✓ recovers loop details when the API returns with the browser still online 11ms
+     ✓ recovers Runs when the API returns with the browser still online 7ms
+     ✓ recovers run inspector when the API returns with the browser still online 10ms
+     ✓ recovers run thread when the API returns with the browser still online 6ms
+     ✓ recovers Events when the API returns with the browser still online 9ms
+     ✓ recovers Settings defaults when the API returns with the browser still online 5ms
+     ✓ recovers Settings models when the API returns with the browser still online 6ms
+     ✓ recovers Settings secrets when the API returns with the browser still online 5ms
+     ✓ recovers Settings API keys when the API returns with the browser still online 4ms
+     ✓ recovers Settings preflight when the API returns with the browser still online 4ms
+     ✓ recovers the cold offline Loops query 151ms
+     ✓ recovers the cold offline loop details query 156ms
+     ✓ recovers the cold offline Runs query 155ms
+     ✓ recovers the cold offline run inspector query 157ms
+     ✓ recovers the cold offline run thread query 158ms
+     ✓ recovers the cold offline Events query 158ms
+     ✓ recovers the cold offline Settings defaults query 157ms
+     ✓ recovers the cold offline Settings models query 157ms
+     ✓ recovers the cold offline Settings secrets query 158ms
+     ✓ recovers the cold offline Settings API keys query 141ms
+     ✓ recovers the cold offline Settings preflight query 158ms
+     ✓ keeps HTTP 400 failures at one retry 80ms
+     ✓ keeps HTTP 401 failures at one retry 78ms
+     ✓ keeps HTTP 404 failures at one retry 78ms
+     ✓ keeps HTTP 500 failures at one retry 78ms
+     ✓ caps retries if reconnect still cannot reach the API, then recovers on the next event 235ms
+     ✓ does not refetch inactive failures or fresh successful queries, and removes its listener 96ms
+     ✓ recovers after Query observes an offline-to-online transition 154ms
+     ✓ keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 330ms
+   ❯ run query header receipts (#386) (6)
+     ✓ verifies only a position returned by its own successful matching run read 79ms
+     ✓ does not verify a successful response for a different run 77ms
+     ✓ ignores a late HTTP 200 response after the run read is cancelled 98ms
+     ✓ ignores a late HTTP 404 response after the run read is cancelled 94ms
+     × handles HTTP 404 without treating other read failures as definitive deletion 101ms
+     × handles HTTP 500 without treating other read failures as definitive deletion 86ms
+ ✓ src/runs/useRunEvents.test.tsx (21 tests) 214ms
+ ✓ src/runs/useRunHeaderStatus.test.tsx (4 tests) 83ms
+ ✓ src/runs/run-header-status.test.ts (17 tests) 18ms
+ ✓ src/runs/run-header-store.test.tsx (7 tests) 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/api/queries.reconnect.test.tsx > run query header receipts (#386) > handles HTTP 404 without treating other read failures as definitive deletion
+AssertionError: expected null to match object { status: 404 }
+
+- Expected:
+{
+  "status": 404,
+}
+
++ Received:
+null
+
+ ❯ src/api/queries.reconnect.test.tsx:435:49
+    433|           await view.result.current.query.refetch();
+    434|         });
+    435|         expect(view.result.current.query.error).toMatchObject({ status…
+       |                                                 ^
+    436|         if (status === 404) {
+    437|           expect(registry.snapshot(run.id)).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/api/queries.reconnect.test.tsx > run query header receipts (#386) > handles HTTP 500 without treating other read failures as definitive deletion
+AssertionError: expected null to match object { status: 500 }
+
+- Expected:
+{
+  "status": 500,
+}
+
++ Received:
+null
+
+ ❯ src/api/queries.reconnect.test.tsx:435:49
+    433|           await view.result.current.query.refetch();
+    434|         });
+    435|         expect(view.result.current.query.error).toMatchObject({ status…
+       |                                                 ^
+    436|         if (status === 404) {
+    437|           expect(registry.snapshot(run.id)).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  2 failed | 90 passed (92)
+   Start at  12:59:32
+   Duration  16.91s (environment 38%, tests 23%, import 15%, setup 12%, transform 11%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d227-supporting-implementation-01/focused-tests.json
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-i5-truthful-
+  │ inspector\GraphGoblin\apps\web
+

@@ -1,0 +1,101 @@
+--- a/apps/web/src/runs/owner-chat-recovery-witness.test.tsx
++++ b/apps/web/src/runs/owner-chat-recovery-witness.test.tsx
+@@ -6,6 +6,10 @@
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { createAppClient } from '../api/context.js';
+ import { useRunEventStore } from './event-store.js';
++
++function requestUrl(input: RequestInfo | URL): string {
++  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++}
+ 
+ it('keeps a quiet inspector recovered when a former owner Devices page returns a retired 401', async () => {
+   const key = 'synthetic-owner-witness';
+@@ -28,19 +32,24 @@
+   let oldHadSignal: boolean | undefined;
+   let oldSentSameKey: boolean | undefined;
+   let releaseChat!: (response: Response) => void;
+-  const held = new Promise<Response>((resolve) => { releaseChat = resolve; });
++  const held = new Promise<Response>((resolve) => {
++    releaseChat = resolve;
++  });
+   const unexpectedGlobalCalls: string[] = [];
+-  vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>((input, init) => {
+-    if (String(input) !== '/chat/devices') {
+-      unexpectedGlobalCalls.push(String(input));
+-      return Promise.reject(new Error('Unplanned fixture request'));
+-    }
+-    chatCalls += 1;
+-    oldGeneration = useApiKeyStore.getState().generation;
+-    oldHadSignal = Boolean(init?.signal);
+-    oldSentSameKey = new Headers(init?.headers).get('authorization') === 'Bearer ' + key;
+-    return held;
+-  }));
++  vi.stubGlobal(
++    'fetch',
++    vi.fn<typeof globalThis.fetch>((input, init) => {
++      if (requestUrl(input) !== '/chat/devices') {
++        unexpectedGlobalCalls.push(requestUrl(input));
++        return Promise.reject(new Error('Unplanned fixture request'));
++      }
++      chatCalls += 1;
++      oldGeneration = useApiKeyStore.getState().generation;
++      oldHadSignal = Boolean(init?.signal);
++      oldSentSameKey = new Headers(init?.headers).get('authorization') === 'Bearer ' + key;
++      return held;
++    }),
++  );
+   const user = userEvent.setup();
+   const view = renderApp('/chat/devices', api);
+   try {
+@@ -51,7 +60,9 @@
+     await user.click(runsLink);
+     await user.click(await screen.findByRole('link', { name: run.id }));
+     expect(screen.getByTestId('location')).toHaveTextContent('/runs/' + run.id);
+-    const header = (await screen.findByRole('heading', { name: 'Run ' + run.id })).closest('header')!;
++    const header = (await screen.findByRole('heading', { name: 'Run ' + run.id })).closest(
++      'header',
++    )!;
+     await within(header).findByText('at real-wait');
+     const runReads = () => api.callsTo('GET', '/runs/' + run.id).length;
+     const before = runReads();
+@@ -85,15 +96,32 @@
+       updating: within(header).queryByText('Updating status…') !== null,
+       recordedWait: within(header).queryByText('at real-wait') !== null,
+     };
+-    console.info('retired owner Devices response', JSON.stringify({
+-      oldGeneration, rejected, recovered, oldSentSameKey, oldHadSignal, chatCalls, runReadsBefore: before,
+-      runReadsAfter: runReads(), route: screen.getByTestId('location').textContent,
+-      cursor: useRunEventStore.getState().runs[run.id]?.lastSeq, unexpectedGlobalCalls, actual,
+-    }));
++    process.stdout.write(
++      'retired owner Devices response ' +
++        JSON.stringify({
++          oldGeneration,
++          rejected,
++          recovered,
++          oldSentSameKey,
++          oldHadSignal,
++          chatCalls,
++          runReadsBefore: before,
++          runReadsAfter: runReads(),
++          route: screen.getByTestId('location').textContent,
++          cursor: useRunEventStore.getState().runs[run.id]?.lastSeq,
++          unexpectedGlobalCalls,
++          actual,
++        }) +
++        '\n',
++    );
+     expect(unexpectedGlobalCalls).toEqual([]);
+     expect(actual).toEqual({
+-      generation: recovered, rejected: false, keyForm: false, badge: 'waiting',
+-      updating: false, recordedWait: true,
++      generation: recovered,
++      rejected: false,
++      keyForm: false,
++      badge: 'waiting',
++      updating: false,
++      recordedWait: true,
+     });
+   } finally {
+     releaseChat(Response.json({ items: [] }));

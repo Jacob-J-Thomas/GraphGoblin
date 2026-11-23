@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.corrective-independent-qa.test.tsx (8 tests) 4946ms
+   ✓ corrective R1 desired outcome: observation-first retains predecessor knowledge and converges to parked waiting 1018ms
+   ✓ corrective R1 desired outcome: stream-first retains predecessor knowledge and converges to parked waiting 636ms
+   ✓ corrective R1 desired outcome: delayed-terminal-observation retains predecessor knowledge and converges to parked waiting 584ms
+   ✓ corrective R2 desired outcome: older row never presents a terminal node without its source 318ms
+   ✓ corrective R2 desired outcome: equal-sequence row never presents a terminal node without its source 312ms
+   ✓ corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=false) 1001ms
+   ✓ corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=true) 832ms
+ ✓ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx (16 tests) 13110ms
+   ✓ boundary C1 negative: cold acknowledged resume tail cannot promote an older successful failure observation 565ms
+   ✓ boundary C1 positive: cold stable terminal with audit suffix settles without new event payload or finalizedAt 367ms
+   ✓ boundary G1: rejection immediately withholds header evidence and late old successful observation cannot restore it 427ms
+   ✓ boundary G2/G4: same-key recovery rejects old receipts and accepts current-source reads 591ms
+   ✓ boundary G2/G4: replacement-key recovery rejects old receipts and accepts current-source reads 513ms
+   ✓ boundary G2/G4: cross-tab-key recovery rejects old receipts and accepts current-source reads 488ms
+   ✓ boundary G3: new API client with the same QueryClient withholds former source until current reads settle 449ms
+   ✓ boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery 390ms
+   ✓ boundary G3 provider replacement: same client with a new provider and QueryClient requires current receipts 557ms
+   ✓ boundary G2 stream negative: a pre-rejection stream cannot become current evidence after same-key recovery 490ms
+   ✓ boundary G4: delayed old-key 401 does not reject replacement key; cross-tab forget withholds prior header 493ms
+   ✓ boundary C2: 21 public run visits evict A; a late old row cannot certify the new entry, then fresh terminal reads settle 5620ms
+   ✓ boundary I1: live progress keeps the existing request budget, event-cache format and server action authority 1382ms
+   ✓ boundary R1-D: duplicate prior outcome and foreign observation cannot supersede this run resume 636ms
+ ✓ src/runs/RunInspectorPage.independent-qa.test.tsx (7 tests) 4183ms
+   ✓ independent S1/S2/S10: streamed outcome owns header with BOTH read models blocked and equal-sequence stale row released 884ms
+   ✓ independent S8: late prior-attempt observation cannot revive failure after resumed start 764ms
+   ✓ independent S6: header retains the streamed outcome after its payload is evicted by event count 423ms
+   ✓ independent S8: a late older terminal run response never flashes failure after a newer resumed start 783ms
+   ✓ independent S9: A to B to A scopes late events and resets the header to the current run 645ms
+   ✓ independent S4/S5: cancel request is not cancellation; later failed delivery is not execution failure 634ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  13:08:40
+   Duration  23.45s (tests 50%, environment 22%, import 11%, transform 11%, setup 5%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-final-qa-01/stable-candidate-01/components.json

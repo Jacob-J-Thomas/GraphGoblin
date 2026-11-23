@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 G:/ggq/gg-i5-truthfulness-qa/GraphGoblin/apps/web
+
+ ✓ src/runs/RunInspectorPage.corrective-independent-qa.test.tsx (8 tests) 4720ms
+   ✓ corrective R1 desired outcome: observation-first retains predecessor knowledge and converges to parked waiting 909ms
+   ✓ corrective R1 desired outcome: stream-first retains predecessor knowledge and converges to parked waiting 564ms
+   ✓ corrective R1 desired outcome: delayed-terminal-observation retains predecessor knowledge and converges to parked waiting 573ms
+   ✓ corrective R2 desired outcome: older row never presents a terminal node without its source 381ms
+   ✓ corrective R2 desired outcome: equal-sequence row never presents a terminal node without its source 300ms
+   ✓ corrective R2 desired outcome: fresh agreeing row never presents a terminal node without its source 302ms
+   ✓ corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=false) 911ms
+   ✓ corrective R3 desired outcome: A to B to A preserves supersession (cleanup buffer=true) 777ms
+ ✓ src/runs/RunInspectorPage.corrective-boundaries-qa.test.tsx (16 tests) 13533ms
+   ✓ boundary C1 negative: cold acknowledged resume tail cannot promote an older successful failure observation 512ms
+   ✓ boundary C1 positive: cold stable terminal with audit suffix settles without new event payload or finalizedAt 332ms
+   ✓ boundary G1: rejection immediately withholds header evidence and late old successful observation cannot restore it 428ms
+   ✓ boundary G2/G4: same-key recovery rejects old receipts and accepts current-source reads 582ms
+   ✓ boundary G2/G4: replacement-key recovery rejects old receipts and accepts current-source reads 530ms
+   ✓ boundary G2/G4: cross-tab-key recovery rejects old receipts and accepts current-source reads 548ms
+   ✓ boundary G3: new API client with the same QueryClient withholds former source until current reads settle 383ms
+   ✓ boundary G2 follower negative: a held pre-rejection attempt observation cannot write after same-key recovery 413ms
+   ✓ boundary G3 provider replacement: same client with a new provider and QueryClient requires current receipts 438ms
+   ✓ boundary G2 stream negative: a pre-rejection stream cannot become current evidence after same-key recovery 507ms
+   ✓ boundary G4: delayed old-key 401 does not reject replacement key; cross-tab forget withholds prior header 551ms
+   ✓ boundary C2: 21 public run visits evict A; a late old row cannot certify the new entry, then fresh terminal reads settle 6211ms
+   ✓ boundary I1: live progress keeps the existing request budget, event-cache format and server action authority 1367ms
+   ✓ boundary R1-D: duplicate prior outcome and foreign observation cannot supersede this run resume 575ms
+ ✓ src/runs/RunInspectorPage.independent-qa.test.tsx (7 tests) 3637ms
+   ✓ independent S1/S2/S10: streamed outcome owns header with BOTH read models blocked and equal-sequence stale row released 839ms
+   ✓ independent S8: late prior-attempt observation cannot revive failure after resumed start 733ms
+   ✓ independent S6: header retains the streamed outcome after its payload is evicted by event count 346ms
+   ✓ independent S8: a late older terminal run response never flashes failure after a newer resumed start 718ms
+   ✓ independent S9: A to B to A scopes late events and resets the header to the current run 513ms
+   ✓ independent S4/S5: cancel request is not cancellation; later failed delivery is not execution failure 447ms
+ ❯ src/runs/RunInspectorPage.review2-independent-qa.test.tsx (5 tests | 1 failed) 12581ms
+   ✓ review2 R2-1: a current terminal event owns an agreeing cache-only row while the current GET is held 595ms
+   × review2 R2-2: a wrong-ID 200 cannot borrow a warm matching receipt or replace the requested inspector 237ms
+   ✓ review2 R2-3: visible same-key recovery reads a quiet parked run in the recovered generation (no predecessor request) 3911ms
+   ✓ review2 R2-3: visible same-key recovery reads a quiet parked run in the recovered generation (old pending 200) 3890ms
+   ✓ review2 R2-3: visible same-key recovery reads a quiet parked run in the recovered generation (old pending 401) 3946ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.review2-independent-qa.test.tsx > review2 R2-2: a wrong-ID 200 cannot borrow a warm matching receipt or replace the requested inspector
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/runs/RunInspectorPage.review2-independent-qa.test.tsx:119:29
+    117|     });
+    118|     await act(async () => { await view.queryClient.invalidateQueries({…
+    119|     expect(foreignReturned).toBe(true);
+       |                             ^
+    120|     expect(screen.getByTestId('location')).toHaveTextContent(`/runs/${…
+    121|     expect(view.queryClient.getQueryData<RunRecord>(keys.run(a.id))?.i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 35 passed (36)
+   Start at  13:58:26
+   Duration  39.04s (tests 57%, environment 18%, import 11%, transform 8%, setup 5%)
+
+JSON report written to G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-386-corrective-final-qa-01/d228-diagnostic-01/components.json
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

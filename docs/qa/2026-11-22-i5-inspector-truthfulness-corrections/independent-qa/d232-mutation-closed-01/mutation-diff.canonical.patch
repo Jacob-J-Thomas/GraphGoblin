@@ -1,0 +1,11 @@
+--- a/apps/web/src/api/ApiKeyPanel.tsx
++++ b/apps/web/src/api/ApiKeyPanel.tsx
+@@ -34,7 +34,7 @@
+   useEffect(
+     () =>
+       useApiKeyStore.subscribe((state, previous) => {
+-        if (!previous.rejected || state.rejected || !state.key || state.key !== previous.key)
++        if (state.rejected || !state.key || state.key !== previous.key)
+           return;
+         const { generation } = state;
+         void queryClient.cancelQueries().then(async () => {

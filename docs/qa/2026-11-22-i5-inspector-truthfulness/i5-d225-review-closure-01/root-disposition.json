@@ -1,0 +1,56 @@
+{
+  "utc": "2026-11-22T18:36:40.902794+00:00",
+  "decision": 225,
+  "reviewCompleted": true,
+  "actualModel": "claude-opus-5-5",
+  "effort": "xhigh",
+  "visibleVerdict": "ACCEPT FIX",
+  "rootSubstantiveFixtureDisposition": "ACCEPT FIX WITH COMMENT ACCURACY CORRECTION PENDING",
+  "sourceHead": "58227ea02a00fcfe67775ddc8d337b3bab61406d",
+  "sourceTree": "0585acf06f5f6a2ff7974ae1e8358b4ba09c4fb3",
+  "beforeHead": "0776ad604e69d17f42a03b52ea27fd5e30b1318e",
+  "review": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d225-review-closure-01\\claude-review.md",
+    "bytes": 4684,
+    "sha256": "1aadcf96b4c428b2114d72cb37568c8c985dd5e20418df4e59824bddd5a0065d"
+  },
+  "findings": [
+    {
+      "id": "D225-F1",
+      "disposition": "FIX-IN-PR",
+      "scope": "Comment only after the D226 protected-author interval closes",
+      "reason": "The browser fixture comment overstates rendering/consumption. Replace it with precise response-completion plus two-animation-frame wording; no assertion or timing change. Actual cache-consumption evidence is independently supplied."
+    },
+    {
+      "id": "D225-F2",
+      "disposition": "NO-CHANGE",
+      "reason": "Second-read expectation intentionally establishes a held stale refresh under the existing refresh contract; missing reads fail loudly. No new request-budget or timeout allowance."
+    },
+    {
+      "id": "D225-F3",
+      "disposition": "NO-CHANGE",
+      "reason": "Possible overlapping-reader ordering is explicitly limited browser evidence, not proof of query consumption; independent public-component receipt witnesses cover that criterion. No observed false pass attributed, and the returned-read assertion fails closed."
+    },
+    {
+      "id": "D225-F4",
+      "disposition": "NO-CHANGE",
+      "reason": "An aborted held read must fail rather than be silently ignored. No observed cancellation cause is asserted. Upcoming actual browser checks must pass unchanged before acceptance."
+    },
+    {
+      "id": "D225-F5",
+      "disposition": "NO-CHANGE",
+      "reason": "Holding observations deliberately isolates the event path. Fresh/old observation with stale record ordering is covered by independent component schedules and original Claude acceptance test; test claim remains bounded."
+    },
+    {
+      "id": "D225-F6",
+      "disposition": "NO-CHANGE",
+      "reason": "Synthetic response status/header, cleanup-error masking and continue-during-navigation are disclosed fixture limits, without demonstrated introduced false pass. Preserve raw failures and fail-closed cleanup; no speculative helper expansion."
+    }
+  ],
+  "d224OrderingFailurePreserved": true,
+  "uiImplementationApproved": false,
+  "generalFeatureReviewsUsed": 1,
+  "generalFeatureReviewsMaximum": 3,
+  "sourceBindingsVerified": true,
+  "sourceUnchanged": true
+}

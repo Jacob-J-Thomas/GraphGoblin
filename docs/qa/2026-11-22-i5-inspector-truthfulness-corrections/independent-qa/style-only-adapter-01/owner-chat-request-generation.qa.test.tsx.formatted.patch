@@ -1,0 +1,124 @@
+--- a/apps/web/src/app/owner-chat-request-generation.qa.test.tsx
++++ b/apps/web/src/app/owner-chat-request-generation.qa.test.tsx
+@@ -7,11 +7,17 @@
+ import { createAppClient } from '../api/context.js';
+ import { useOwnerChatClient } from './useOwnerChatClient.js';
+ 
++function requestUrl(input: RequestInfo | URL): string {
++  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++}
++
+ afterEach(() => vi.unstubAllGlobals());
+ 
+ function heldResponse() {
+   let release!: (response: Response) => void;
+-  const promise = new Promise<Response>((resolve) => { release = resolve; });
++  const promise = new Promise<Response>((resolve) => {
++    release = resolve;
++  });
+   return { promise, release };
+ }
+ 
+@@ -24,7 +30,7 @@
+   const current = heldResponse();
+   let requests = 0;
+   const fetch = vi.fn<typeof globalThis.fetch>((input) => {
+-    expect(String(input)).toBe('/chat/devices');
++    expect(requestUrl(input)).toBe('/chat/devices');
+     requests++;
+     const gate = requests === 1 ? old : current;
+     if (requests > 2) throw new Error('Unplanned owner Chat request');
+@@ -56,7 +62,9 @@
+     const retired = owner.devices().catch((error: unknown) => error);
+     await waitFor(() => expect(schedule.fetch).toHaveBeenCalledTimes(1));
+     const sent = useApiKeyStore.getState().generation;
+-    expect(new Headers(schedule.fetch.mock.calls[0]![1]?.headers).get('authorization')).toBe(`Bearer ${key}`);
++    expect(new Headers(schedule.fetch.mock.calls[0]![1]?.headers).get('authorization')).toBe(
++      `Bearer ${key}`,
++    );
+     await managementRejection();
+     expect(useApiKeyStore.getState().generation).toBe(sent + 1);
+     act(() => useApiKeyStore.getState().save(key));
+@@ -70,13 +78,21 @@
+       schedule.old.release(unauthorized());
+       expect(await retired).toMatchObject({ status: 401 });
+     });
+-    expect(useApiKeyStore.getState()).toMatchObject({ key, rejected: false, generation: recovered });
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key,
++      rejected: false,
++      generation: recovered,
++    });
+     await act(async () => {
+       schedule.current.release(unauthorized());
+       expect(await fresh).toMatchObject({ status: 401 });
+     });
+     expect(view.result.current).toBe(owner);
+-    expect(useApiKeyStore.getState()).toMatchObject({ key, rejected: true, generation: recovered + 1 });
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key,
++      rejected: true,
++      generation: recovered + 1,
++    });
+   } finally {
+     schedule.old.release(Response.json({ items: [] }));
+     schedule.current.release(Response.json({ items: [] }));
+@@ -100,25 +116,41 @@
+       if (transition === 'forget-and-reaccept') {
+         act(() => useApiKeyStore.getState().forget());
+         await waitFor(() => expect(view.result.current).not.toBe(owner));
+-        expect(useApiKeyStore.getState()).toMatchObject({ key: undefined, rejected: false, generation: sent + 1 });
++        expect(useApiKeyStore.getState()).toMatchObject({
++          key: undefined,
++          rejected: false,
++          generation: sent + 1,
++        });
+       }
+       act(() => useApiKeyStore.getState().save(key));
+       const recovered = useApiKeyStore.getState().generation;
+       expect(recovered).toBe(sent + (transition === 'replace' ? 1 : 2));
+       const fresh = view.result.current.devices().catch((error: unknown) => error);
+       await waitFor(() => expect(schedule.fetch).toHaveBeenCalledTimes(2));
+-      expect(new Headers(schedule.fetch.mock.calls[0]![1]?.headers).get('authorization')).toBe(`Bearer ${oldKey}`);
+-      expect(new Headers(schedule.fetch.mock.calls[1]![1]?.headers).get('authorization')).toBe(`Bearer ${key}`);
++      expect(new Headers(schedule.fetch.mock.calls[0]![1]?.headers).get('authorization')).toBe(
++        `Bearer ${oldKey}`,
++      );
++      expect(new Headers(schedule.fetch.mock.calls[1]![1]?.headers).get('authorization')).toBe(
++        `Bearer ${key}`,
++      );
+       await act(async () => {
+         schedule.old.release(unauthorized());
+         expect(await retired).toMatchObject({ status: 401 });
+       });
+-      expect(useApiKeyStore.getState()).toMatchObject({ key, rejected: false, generation: recovered });
++      expect(useApiKeyStore.getState()).toMatchObject({
++        key,
++        rejected: false,
++        generation: recovered,
++      });
+       await act(async () => {
+         schedule.current.release(unauthorized());
+         expect(await fresh).toMatchObject({ status: 401 });
+       });
+-      expect(useApiKeyStore.getState()).toMatchObject({ key, rejected: true, generation: recovered + 1 });
++      expect(useApiKeyStore.getState()).toMatchObject({
++        key,
++        rejected: true,
++        generation: recovered + 1,
++      });
+     } finally {
+       schedule.old.release(Response.json({ items: [] }));
+       schedule.current.release(Response.json({ items: [] }));
+@@ -132,7 +164,10 @@
+   useApiKeyStore.getState().save(key);
+   const sent = useApiKeyStore.getState().generation;
+   const held = heldResponse();
+-  vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>(() => held.promise));
++  vi.stubGlobal(
++    'fetch',
++    vi.fn<typeof globalThis.fetch>(() => held.promise),
++  );
+   const view = renderHook(useOwnerChatClient);
+   try {
+     const controller = new AbortController();

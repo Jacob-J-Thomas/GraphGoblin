@@ -1,0 +1,57 @@
+{
+  "state": "EXPECTED_MUTANT_SENSITIVITY_ESTABLISHED_WITH_INDEX_BYTE_QUALIFICATION",
+  "sourceHead": "2416fc36b703b88d5fa41cbcf42f7f6f2c57dbd9",
+  "sourceTree": "d63ea9f1a2af302ed74cc3c42c36a31055259423",
+  "ordinary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "retries": 0,
+    "cases": [
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) reads the quiet parked run once after same-key submit, without injected refresh or new SSE data",
+        "status": "passed"
+      },
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) retires an old pending 200 read with a warm cache before the fresh recovery read",
+        "status": "passed"
+      },
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) retires an old pending 401 read with a warm cache before the fresh recovery read",
+        "status": "passed"
+      },
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) retires an old pending 200 read with a empty cache before the fresh recovery read",
+        "status": "passed"
+      },
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) retires an old pending 401 read with a empty cache before the fresh recovery read",
+        "status": "passed"
+      },
+      {
+        "name": "same-key inspector recovery through the visible API key panel (R2-3) does not refresh an already accepted unchanged key",
+        "status": "passed"
+      }
+    ]
+  },
+  "mutant": {
+    "selected": 1,
+    "failed": 1,
+    "unselected": 5,
+    "exitCode": 1,
+    "retries": 0,
+    "case": "same-key inspector recovery through the visible API key panel (R2-3) does not refresh an already accepted unchanged key",
+    "expectedGetCount": 1,
+    "actualGetCount": 2,
+    "failedAt": "ApiKeyPanel.test.tsx:220:53"
+  },
+  "positiveRecoveryFromSameOrdinaryInvocation": true,
+  "postRestorationBehaviorRerun": false,
+  "productionRestorationExact": true,
+  "indexQualification": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d231-independent-correction-qa-01\\d232-mutation-01\\index-restoration-qualification.json",
+    "bytes": 1169,
+    "sha256": "fe4caeafae96c1ffd2f5b3a2c5c42b1f8ee9c4df75a470977fb531c6acc36123"
+  },
+  "rootMustRetainAncillaryDriverFailure": true
+}

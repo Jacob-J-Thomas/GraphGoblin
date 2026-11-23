@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { event, runRecord } from '../__fixtures__/fake-api.js';
 import { ApiProvider, createAppClient } from '../api/context.js';
+import { useApiKeyStore } from '../api/api-key.js';
 import {
   markApiReachable,
   markApiUnreachable,
@@ -13,6 +14,7 @@ import {
   useReachability,
 } from '../lib/reachability.js';
 import { useRunEventStore } from './event-store.js';
+import { RunHeaderProvider, RunHeaderRegistry } from './run-header-store.js';
 import { EVENT_BATCH_MS, useRunEvents } from './useRunEvents.js';
 
 const subscribe = vi.hoisted(() => vi.fn<typeof ApiClient.subscribeRunEvents>());
@@ -40,19 +42,24 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   queryClient.clear();
+  useApiKeyStore.getState().forget();
   useRunEventStore.getState().clear(runId);
   markApiReachable();
   vi.useRealTimers();
 });
 
 function mountStream(client = createAppClient('http://graphgoblin.test')) {
-  return renderHook(() => useRunEvents(runId), {
+  const registry = new RunHeaderRegistry({ client, queryClient });
+  const view = renderHook(() => useRunEvents(runId), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <ApiProvider client={client}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <RunHeaderProvider registry={registry}>{children}</RunHeaderProvider>
+        </QueryClientProvider>
       </ApiProvider>
     ),
   });
+  return { ...view, registry };
 }
 function options(index = 0): SubscribeRunEventsOptions {
   return subscribe.mock.calls[index]![0];
@@ -387,6 +394,115 @@ describe('run stream reachability', () => {
     expect(useReachability.getState().apiReachable).toBe(true);
     act(() => options().onError?.(new Error('invalid event frame'), 0));
     expect(useReachability.getState().apiReachable).toBe(true);
+  });
+});
+
+describe('run stream credential and cleanup boundaries (#386)', () => {
+  it('retires the old stream and its buffered events after same-key rejection and recovery (G2)', async () => {
+    vi.useFakeTimers();
+    useApiKeyStore.getState().save('same-key');
+    const view = mountStream();
+    const failure = event(runId, 3, 'run.failed', {
+      failure: { code: 'INTERNAL_ERROR', message: 'old attempt', resumable: true },
+    });
+    await act(async () => {
+      await emit(0, failure);
+    });
+    // The old batch has not yet advanced the device cursor.
+    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
+    act(() => useApiKeyStore.getState().markRejected());
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(subscribe.mock.results[0]!.value.close).toHaveBeenCalledTimes(1);
+    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
+    act(() => useApiKeyStore.getState().save('same-key'));
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    expect(options(1).after).toBe(0);
+    await act(async () => {
+      options(0).onOpen?.();
+      await emit(0, failure);
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
+    expect(view.registry.snapshot(runId)?.evidence.marker).toBeUndefined();
+    await act(async () => {
+      await emit(1, event(runId, 4, 'run.finished', { status: 'succeeded', outcome: 'success' }));
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(4);
+    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({
+      seq: 4,
+      terminal: 'succeeded',
+    });
+  });
+
+  it('retires a held attempt-follower observation on same-key recovery (G2)', async () => {
+    vi.useFakeTimers();
+    useApiKeyStore.getState().save('same-key');
+    const failure = event(runId, 3, 'run.failed', {
+      failure: { code: 'INTERNAL_ERROR', message: 'old attempt', resumable: true },
+    });
+    useRunEventStore.getState().append(runId, failure);
+    let finish!: () => void;
+    let release!: (response: Response) => void;
+    let oldSignal: AbortSignal | undefined;
+    const observation = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const client = createAppClient('http://graphgoblin.test', (request) => {
+      if (new URL(request.url).pathname.endsWith('/observation')) {
+        oldSignal = request.signal;
+        return observation;
+      }
+      return Promise.resolve(
+        Response.json(runRecord({ id: runId, status: 'failed', lastEventSeq: 3 })),
+      );
+    });
+    subscribe.mockImplementation(() => ({
+      lastSeq: 0,
+      done: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+      close: vi.fn(),
+    }));
+    const view = mountStream(client);
+    await act(async () => {
+      finish();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(oldSignal).toBeDefined();
+    act(() => useApiKeyStore.getState().markRejected());
+    expect(oldSignal?.aborted).toBe(true);
+    act(() => useApiKeyStore.getState().save('same-key'));
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      // This transport answers despite cancellation: its lifecycle belongs to the old generation.
+      release(Response.json({ lifecycle: failure, freshSessionChoices: [] }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(view.registry.snapshot(runId)?.evidence.marker).toBeUndefined();
+    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(3);
+    await act(async () => {
+      await emit(1, event(runId, 4, 'run.finished', { status: 'succeeded', outcome: 'success' }));
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({
+      seq: 4,
+      terminal: 'succeeded',
+    });
+  });
+
+  it('preserves a valid same-scope buffered lifecycle batch when the route unmounts', async () => {
+    vi.useFakeTimers();
+    const view = mountStream();
+    await act(async () => {
+      await emit(0, event(runId, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }));
+      await emit(0, event(runId, 4, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
+    });
+    expect(useRunEventStore.getState().runs[runId]).toBeUndefined();
+    view.unmount();
+    expect(useRunEventStore.getState().runs[runId]?.lastSeq).toBe(4);
+    expect(view.registry.snapshot(runId)?.evidence.marker).toEqual({ seq: 4, resumes: true });
+    expect(view.registry.snapshot(runId)?.evidence.terminalSeq).toBe(3);
   });
 });
 

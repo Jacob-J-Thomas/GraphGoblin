@@ -1,0 +1,115 @@
+import type { GraphGoblinClient } from '@graphgoblin/api-client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StrictMode, useEffect, useMemo, type ReactNode } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { BrowserRouter } from 'react-router';
+import { ApiProvider, createAppClient } from '../api/context.js';
+import { refreshModelDefaults } from '../api/queries.js';
+import { applyFont, currentFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
+import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
+import { startReachability } from '../lib/reachability.js';
+import { setChatUpdateGuardExpected } from '../pwa/chat-update-lock.js';
+import { registerPwa } from '../pwa/register.js';
+import { RunHeaderProvider, RunHeaderRegistry } from '../runs/run-header-store.js';
+import { App } from './App.js';
+
+export function createQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: 1, staleTime: 2_000, refetchOnWindowFocus: true },
+    },
+  });
+}
+
+/**
+ * Providers shared by the app and its tests: API client, server-state cache, and the run headers'
+ * lifecycle evidence, which belongs to that client and cache and outlives each route (#386).
+ */
+export function Providers({
+  client,
+  queryClient,
+  children,
+}: {
+  client: GraphGoblinClient;
+  queryClient: QueryClient;
+  children: ReactNode;
+}) {
+  useEffect(() => startReachability(queryClient, client), [queryClient, client]);
+  useEffect(() => {
+    const refresh = () => void refreshModelDefaults(queryClient);
+    const visible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [queryClient]);
+  const runHeaders = useMemo(
+    () => new RunHeaderRegistry({ client, queryClient }),
+    [client, queryClient],
+  );
+
+  return (
+    <ApiProvider client={client}>
+      <QueryClientProvider client={queryClient}>
+        <RunHeaderProvider registry={runHeaders}>{children}</RunHeaderProvider>
+      </QueryClientProvider>
+    </ApiProvider>
+  );
+}
+
+/** Keeps the theme and the font in step with other tabs for as long as the app is mounted. */
+function AppearanceAcrossTabs() {
+  useThemeAcrossTabs();
+  useFontAcrossTabs();
+  return null;
+}
+
+function PwaRegistration() {
+  useEffect(() => {
+    const registration = registerPwa();
+    return () => registration?.dispose();
+  }, []);
+  return null;
+}
+
+export interface BootstrapOptions {
+  /** API origin. Defaults to the page origin: the API serves the app under /app/. */
+  baseUrl?: string;
+  basename?: string;
+  registerServiceWorker?: boolean;
+}
+
+/**
+ * Mount the app into `container`, follow theme and font changes made in other tabs while it is
+ * mounted, and register the service worker. index.html's boot scripts have already shown the stored
+ * theme and font; if they could not run (a future Content-Security-Policy, say), the stored ones are
+ * applied here instead, late but right.
+ */
+export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}): Root {
+  const registerServiceWorker = options.registerServiceWorker ?? true;
+  setChatUpdateGuardExpected(registerServiceWorker);
+  const client = createAppClient(options.baseUrl ?? window.location.origin);
+  const stored = readStoredTheme();
+  if (stored !== currentTheme()) applyTheme(stored);
+  const storedFont = readStoredFont();
+  if (storedFont !== currentFont()) applyFont(storedFont);
+  const root = createRoot(container);
+  root.render(
+    <>
+      {registerServiceWorker ? <PwaRegistration /> : null}
+      <StrictMode>
+        <AppearanceAcrossTabs />
+        <Providers client={client} queryClient={createQueryClient()}>
+          <BrowserRouter basename={options.basename ?? '/app'}>
+            <App />
+          </BrowserRouter>
+        </Providers>
+      </StrictMode>
+    </>,
+  );
+  return root;
+}

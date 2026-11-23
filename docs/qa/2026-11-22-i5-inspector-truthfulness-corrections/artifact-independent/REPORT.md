@@ -1,0 +1,9 @@
+Mechanical provenance confirmed for the recovered ordinary review artifact.
+
+The 6,427-byte ordinary report (SHA256 `53041cdead91fef8c91eb7a9d81794118034b2d7bb590c6ad445b687b710522c`) matches the single text block in assistant event386 and all four saved ordinary copies. It immediately precedes the only terminal result, event387 of388. No tool remains in or after that final assistant message. The text contains both named dispositions, explicit GPT type-adapter treatment and a completed limits section. This confirms attribution/document integrity; root owns substantive acceptance.
+
+All recorded assistant/modelUsage model identities are `claude-fable-5-2`; spec and launch record `xhigh`. There are26 Read requests on24 declared paths, no other tool request, no out-of-scope read or write. Source-before/after index, lock and all read bindings agree; current review-copy pins match, no node_modules is present and the source-after patch is empty. The original provider packet manifest is verified. Closure receipts show no active reservation, and a fresh read finds the three owned PIDs absent.
+
+The failed run is preserved: `stop_reason=end_turn`, `terminal_reason=budget_exhausted`, subtype `error_max_budget_usd`, provider/runner/controller exit1, automated outcome `REVIEW_OUTPUT_BLOCKED`. Document completeness does not make the process successful. Reported estimate rounds from3.2111427999999997 to3.2111428; aggregate25.928061 and remaining4.071939 reconcile under30, while the2.5 flag and3 reservation were exceeded. These remain estimates, not invoices.
+
+No new inference, product scan or substantive product verdict was performed. No thinking, full provider result, session/private material or credentials were copied or published. Requested/recorded effort is verified without claims about hidden reasoning. No whole-PR, merge, publication or owner approval follows.

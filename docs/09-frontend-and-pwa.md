@@ -43,6 +43,77 @@ shows authentication recipe, secret names, body/extraction/key settings or unava
 | Settings      | Model catalog, classifier models, defaults for model and effort, secrets, API keys, harness preflight status, scheduler status                 |
 | Events        | Inbound events and webhook deliveries, with what they triggered                                                                                |
 
+### Run inspector header status (#386)
+
+The server writes a run record's `lastEventSeq` with each event and publishes the event before it
+projects the record's status, so a record read at, or after, a terminal event's sequence can still
+name the earlier phase, and a refresh can still be in flight when the Timeline shows the outcome.
+The inspector header therefore compares the record with the latest lifecycle marker it has
+observed for the run shown (`run.started`, `run.resumed`, `run.finished`, `run.failed`,
+`run.cancelled`): every accepted streamed batch, whatever history window is browsed or kept, and
+the whole-run observation's `lifecycle`. The newest marker by sequence wins, so a delayed older
+observation or batch cannot undo it. The app providers retain this evidence across route changes
+for at most twenty runs, evicting the least recently used. It belongs to one API client, query cache
+and credential generation; replacing either provider source, replacing or forgetting credentials,
+rejecting a key, or accepting even the same key after rejection retires the prior authority. Late
+reads, follower results and stream callbacks from a retired generation or evicted entry cannot
+restore it. Evidence keeps only sequences, terminal statuses and up to four recent run-record
+positions (status and sequence), in memory. It is never written to the persistent event store.
+Cached history, cached query rows and selected historical events are not fresh evidence.
+
+- A terminal marker shows its own status (`run.finished`'s recorded status, `failed` or
+  `cancelled`; never success for a non-terminal finish status) over an older record, even one with
+  the same status label, or while a disagreeing record has not moved past the events this view has
+  seen, including contiguous later delivery events. The header then says
+  **Status from event #N; the run record is updating.** in place of the record's position. An
+  agreeing record settles only at or beyond the marker, after a matching current-scope run read.
+  Until that read succeeds, a current terminal event at the known tail keeps its event-qualified
+  status and sequence even when an unverified cached row has the same status and sequence; that
+  cached row cannot hide the event or supply its node.
+- A record beyond those events is newer evidence. Its terminal status is shown as recorded; an
+  active status could be a lagging projection or an unseen resume, so the header shows a neutral
+  **Updating status…** until the stream or observation catches up.
+- A start or resume supersedes an earlier outcome at once but names no phase (a resume can park in
+  a wait again). An active record from before that marker and a terminal record no later than the
+  accepted coverage show **Updating status…** until a record that has caught up arrives. A delayed
+  older outcome cannot replace the superseding marker.
+- A record names a status only after a successful, non-aborted read for this run under the current
+  scope has returned its exact status and sequence. Rendering a cached row is no receipt. A 404
+  drops that entry; other read failures do not establish deletion. A successful response naming
+  another run is refused before it enters the requested run's query cache. It shows the ordinary
+  read error and preserves that run's earlier row and header evidence, even if the foreign row's
+  status and sequence match a previously accepted position.
+- A new entry notes the event cursor already held on this device as a negative hint only: its
+  skipped events might contain a later resume. An outcome older than that hint stays neutral until
+  accepted contiguous coverage reaches it or a newer marker establishes the current outcome. The
+  cursor never supplies a status or verifies a cached record. A fresh matching terminal record can
+  settle without replaying the skipped suffix or waiting for finalization.
+- When the record supplies a terminal status, its node is explicitly labelled
+  **Last node in run record: …**. An event-derived outcome or neutral synchronization state shows
+  no stale record position; an active record retains its ordinary **at …** position.
+
+Accepting the same key after rejection also refreshes active server reads through the existing API
+key panel. It first cancels outstanding queries, then invalidates active reads once if that accepted
+credential generation is still current. This gives a quiet inspector a fresh run receipt instead of
+joining an old pending first read; no new event, focus change or manual refresh is required. Saving
+an already accepted unchanged key triggers no recovery refresh. Management API requests and owner
+Chat requests (the management app's Chat and Devices pages) each note the credential identity and
+generation current when they are sent. A delayed 401 rejects the key only when both still match: an
+older request, such as a Devices list still pending after the owner opened a run, cannot reject the
+recovered generation merely because its key text is unchanged; its caller still receives its own
+401 error. A 401 to a request sent after recovery still rejects, including one sent through the
+same reused owner Chat client. Cancelling a request alone does not change its credential generation
+or suppress a matching current-generation 401.
+
+The header changes are presentation only. The record's status, failure, result, recovery tokens and permissions,
+delivery and finalization, and every control, Wait panel and recovery action stay the server's; a
+terminal badge does not mean the run is finalized or can be resumed or replayed. Stream completion
+or a dropped connection is never taken as an outcome, and refresh polling is unchanged.
+
+A selected `node.finished` patch shows each `add` operation's recorded value as **Added value**,
+with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
+their own value, not the final array's last element (#385).
+
 ## Native Chat and the Goblin PWA (#443)
 
 Chat is the management application's first navigation item and index destination at `/app/chat`.

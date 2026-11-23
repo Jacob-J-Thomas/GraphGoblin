@@ -4,6 +4,37 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
+  after its event is published, so a refresh could still be in flight, or return the earlier status
+  at the terminal event's sequence, and the header kept saying running. The header now also follows
+  the latest observed lifecycle event (streamed batches, whatever history window is browsed, and the
+  run observation), shows a recorded `failed`, `cancelled`, `exhausted` or `succeeded` outcome with
+  **Status from event #N; the run record is updating.** in place of the stale position, and shows
+  **Updating status…** while a start or resume has superseded an outcome, or a newer record could
+  include an unseen resume. Provider-owned evidence survives route changes for at most twenty
+  runs and keeps only lifecycle sequences/statuses and four recent record positions per run, in
+  memory. A record needs a successful, non-aborted, matching run read from the current client, query
+  cache and credential generation before its position can supply a status. Rejection and same-key
+  recovery retire old streams and follower reads; evicted entries cannot be restored by late work.
+  Current terminal evidence at the known tail stays event-qualified while an agreeing cached row
+  awaits its own fresh receipt. A response naming another run is refused before it replaces the
+  requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
+  evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
+  the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
+  Management API and owner Chat (Chat and Devices) requests each keep the credential identity and
+  generation they were sent under. A delayed 401 from an older generation, such as a Devices list
+  still pending after the owner opened a run, cannot reject the recovered key, reopen the key form
+  or clear the inspector's freshly verified status; its caller still receives that 401. A matching
+  current-generation 401 still rejects, including one sent through the same reused owner Chat
+  client. An already accepted unchanged key causes no refresh.
+  A retained device cursor is only a negative hint against promoting an older outcome, never status
+  authority; fresh matching terminal reads still converge without new streamed events. A terminal
+  record's node is qualified as **Last node in run record**; event-derived outcomes and neutral
+  synchronization hide stale positions. Presentation only: the record, controls, recovery, delivery
+  and refresh polling are unchanged. Regressions also cover appended patch values (#385), which
+  already show each `add` operation's recorded value with Before absent. No persistent format,
+  store, export or contract change.
+
 - Runs now identify failed authored fields in script, heartbeat, decision, wait, subloop and inference nodes and in templated working directories (#486). The message names the field, gives a correction and explains when a provider result was already received. Correct the reported field and start a fresh run from the corrected definition. The UI's **New run** uses a published version, so publish the correction before starting it there; to test an unpublished saved draft through the API, use `POST /loops/{id}/runs` with the editable draft's `versionId` and `allowDraft: true`. Terminal file returns record a failed delivery receipt. Previously recorded history retains its original copy and recovery eligibility. [Execution details](docs/decisions/ADR-0088-authored-execution-failures.md)
 
 - Claude no longer reports a missing CLI when Windows refused the working directory (#364).

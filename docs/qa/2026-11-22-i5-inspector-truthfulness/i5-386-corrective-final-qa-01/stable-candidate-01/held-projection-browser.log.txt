@@ -1,0 +1,45 @@
+
+Running 5 tests using 1 worker
+
+(node:14740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\inspector-final-independent-qa.spec.ts:10:1 › independent S1/S2: BOTH read models held, then equal-sequence stale run released before observation (2.7s)
+(node:48728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 [chromium] › e2e\inspector-final-independent-qa.spec.ts:134:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 1440px (3.7s)
+  ok 3 [chromium] › e2e\inspector-final-independent-qa.spec.ts:134:3 › independent P1-P5: real recorded repeated appends and non-add diffs at 390px (2.1s)
+  ok 4 [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record refresh is held (#386) (1.2s)
+  ok 5 [chromium] › e2e\inspector-truthfulness.spec.ts:45:3 › the header shows the outcome the Timeline shows while the run record still says running at the outcome sequence (#386) (1.1s)
+
+
+  1) [chromium] › e2e\inspector-final-independent-qa.spec.ts:10:1 › independent S1/S2: BOTH read models held, then equal-sequence stale run released before observation 
+
+    Error: route.fulfill: Route is already handled!
+
+      48 |       await observationGate;
+      49 |       const response = await route.fetch();
+    > 50 |       await route.fulfill({ response });
+         |                   ^
+      51 |       returnedObservation++;
+      52 |     },
+      53 |   );
+        at G:\ggq\gg-i5-truthfulness-qa\GraphGoblin\apps\web\e2e\inspector-final-independent-qa.spec.ts:50:19
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-corrective-final-qa-01\stable-candidate-01\output\playwright\held-and-projection\inspector-final-independen-37cdb-released-before-observation-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-corrective-final-qa-01\stable-candidate-01\output\playwright\held-and-projection\inspector-final-independen-37cdb-released-before-observation-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-17-five-intents\i5-386-corrective-final-qa-01\stable-candidate-01\output\playwright\held-and-projection\inspector-final-independen-37cdb-released-before-observation-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\inspector-final-independent-qa.spec.ts:10:1 › independent S1/S2: BOTH read models held, then equal-sequence stale run released before observation 
+  4 passed (21.6s)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-truthfulness-
+  │ qa\GraphGoblin\apps\web
+

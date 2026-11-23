@@ -1,0 +1,176 @@
+diff --git a/apps/web/src/api/ApiKeyPanel.tsx b/apps/web/src/api/ApiKeyPanel.tsx
+index 3175a58e..adad348a 100644
+--- a/apps/web/src/api/ApiKeyPanel.tsx
++++ b/apps/web/src/api/ApiKeyPanel.tsx
+@@ -25,6 +25,25 @@ export function ApiKeyPanel() {
+   const [value, setValue] = useState('');
+   const panelRef = useRef<HTMLDivElement>(null);
+   useEffect(() => syncApiKeyAcrossTabs(), []);
++  // The same key accepted again after a rejection (#386) starts a new credential generation with an
++  // unchanged key, which the key effect below does not see. Reads still pending were sent under the
++  // retired generation, and a refetch would join a pending first read rather than replace it:
++  // cancel them first, then read the active queries once under the accepted credentials, unless the
++  // credentials changed again meanwhile (a rejection, replacement or forgetting is another
++  // generation). Saving the key that is already accepted is no new generation and reads nothing.
++  useEffect(
++    () =>
++      useApiKeyStore.subscribe((state, previous) => {
++        if (!previous.rejected || state.rejected || !state.key || state.key !== previous.key)
++          return;
++        const { generation } = state;
++        void queryClient.cancelQueries().then(async () => {
++          if (useApiKeyStore.getState().generation === generation)
++            await queryClient.invalidateQueries({}, { cancelRefetch: false });
++        });
++      }),
++    [queryClient],
++  );
+   useEffect(() => {
+     if (!rejected) return;
+     let frame = 0;
+diff --git a/apps/web/src/api/api-key.ts b/apps/web/src/api/api-key.ts
+index 92b0b1cb..6d1f1a44 100644
+--- a/apps/web/src/api/api-key.ts
++++ b/apps/web/src/api/api-key.ts
+@@ -72,18 +72,24 @@ export function syncApiKeyAcrossTabs(): () => void {
+ /** Wrap a fetch so it sends the stored key and reports a 401 to the key store. */
+ export function withApiKey(fetch: (request: Request) => Promise<Response>) {
+   return async (request: Request): Promise<Response> => {
+-    const { key } = useApiKeyStore.getState();
++    const { key, generation } = useApiKeyStore.getState();
+     if (key && !request.headers.has('authorization')) {
+       request.headers.set('authorization', `Bearer ${key}`);
+     }
+     // A cancelled query can still deliver a response. Only reject the credentials it sent,
+-    // including an explicit bearer header, while they still belong to this browser.
++    // including an explicit bearer header, while they still belong to this browser, and only in
++    // the credential generation it was sent under: the same key accepted again after a rejection
++    // is a new generation that an older request's 401 cannot reject (#386).
+     const sentKey = /^Bearer\s+(.+)$/i
+       .exec(request.headers.get('authorization') ?? '')?.[1]
+       ?.trim();
+     const response = await fetch(request);
+     const current = useApiKeyStore.getState();
+-    if (response.status === 401 && (current.key?.trim() || undefined) === sentKey)
++    if (
++      response.status === 401 &&
++      current.generation === generation &&
++      (current.key?.trim() || undefined) === sentKey
++    )
+       current.markRejected();
+     return response;
+   };
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index 96288c72..79bb71f3 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -143,12 +143,15 @@ export function useRun(id: string) {
+     queryKey: keys.run(id),
+     // Each read is a receipt for the run header (#386): the status and sequence it returned under
+     // the credentials it was sent with. A definitively missing run drops its header evidence. A
+-    // cancelled read, or one answering for another run, is no receipt.
++    // cancelled read is no receipt. A successful answer for another run is refused here, before it
++    // can replace this run's row or borrow a position this run's reads returned: an ordinary read
++    // error that keeps this run's cached row and evidence, unlike a 404.
+     queryFn: async ({ signal }) => {
+       const lease = headers?.lease(id);
+       try {
+         const run = await runs.get(client, id, { signal });
+-        if (!signal.aborted && run.id === id) headers?.receipt(lease, run);
++        if (run.id !== id) throw new Error(`The API returned run ${run.id} for run ${id}.`);
++        if (!signal.aborted) headers?.receipt(lease, run);
+         return run;
+       } catch (error) {
+         if (!signal.aborted && error instanceof GraphGoblinApiError && error.status === 404)
+diff --git a/apps/web/src/runs/run-header-status.test.ts b/apps/web/src/runs/run-header-status.test.ts
+index 64b3fb8c..2e9d3d76 100644
+--- a/apps/web/src/runs/run-header-status.test.ts
++++ b/apps/web/src/runs/run-header-status.test.ts
+@@ -87,7 +87,22 @@ describe('header status', () => {
+   it('names no status from a record this scope has not read itself', () => {
+     expect(headerStatus(emptyEvidence(R), row('running', 2), false)).toEqual({ kind: 'updating' });
+     const evidence = seen(firstStart(2), succeeded(3));
+-    expect(headerStatus(evidence, row('succeeded', 3), false)).toEqual({ kind: 'updating' });
++    const event3 = { kind: 'event', status: 'succeeded', seq: 3 };
++    // An unread record agreeing at the known tail settles nothing: the witnessed outcome stands
++    // with its own sequence (R2-1); only a matching read of the record settles it.
++    expect(headerStatus(evidence, row('succeeded', 3), false)).toEqual(event3);
++    expect(headerStatus(evidence, row('succeeded', 3), true)).toEqual({
++      kind: 'record',
++      status: 'succeeded',
++    });
++    const audited = seen(firstStart(2), succeeded(3), delivered(4));
++    expect(headerStatus(audited, row('succeeded', 4), false)).toEqual(event3);
++    // Beyond what was seen, behind a cold cursor or after a resume, it stays neutral.
++    expect(headerStatus(evidence, row('succeeded', 4), false)).toEqual({ kind: 'updating' });
++    expect(headerStatus(evidence, row('succeeded', 3), false, 4)).toEqual({ kind: 'updating' });
++    expect(headerStatus(observeEvents(evidence, [resumed(4)]), row('succeeded', 3), false)).toEqual(
++      { kind: 'updating' },
++    );
+     // This view's own evidence still stands, without the record's position.
+     expect(headerStatus(evidence, row('running', 2), false)).toEqual({
+       kind: 'event',
+diff --git a/apps/web/src/runs/run-header-status.ts b/apps/web/src/runs/run-header-status.ts
+index 8c13f366..d66bd4c3 100644
+--- a/apps/web/src/runs/run-header-status.ts
++++ b/apps/web/src/runs/run-header-status.ts
+@@ -143,11 +143,12 @@ export function samePosition(a: RecordedPosition, b: RecordedPosition): boolean
+ /**
+  * The header's status for `row`. A record from before a terminal marker cannot confirm or deny it,
+  * even with the same label, so the marker's own status and sequence are shown. At or after the
+- * marker, an agreeing record is shown as itself; a disagreeing one is shown as the marker while
+- * the record has not moved past what this view has seen (a record at exactly the marker's sequence
+- * that still names the earlier phase, or one whose later events, such as delivery audits, are all
+- * known). Beyond that coverage a terminal record is newer evidence, but an active status could be a
+- * stale projection or an unseen resume, so the header says it is updating.
++ * marker, an agreeing record this scope has read is shown as itself; a disagreeing or unread one is
++ * shown as the marker while the record has not moved past what this view has seen (a record at
++ * exactly the marker's sequence that still names the earlier phase, or one whose later events, such
++ * as delivery audits, are all known). Beyond that coverage a terminal record is newer evidence, but
++ * an active status could be a stale projection or an unseen resume, so the header says it is
++ * updating.
+  *
+  * A resume, a later attempt's start, or any start after a known outcome supersedes that outcome at
+  * once without naming a phase (a resume can park in a wait again): a record from before it, or a
+@@ -155,7 +156,8 @@ export function samePosition(a: RecordedPosition, b: RecordedPosition): boolean
+  * caught up arrives. The ordinary first start leaves an active record as it is.
+  *
+  * `verified` says whether this credential scope's own run read returned `row`'s position. A record
+- * it has not read itself names no status; an event's outcome stands on this view's own evidence.
++ * it has not read itself names no status and settles no outcome by agreeing with it, even at the
++ * same status and sequence; an event's outcome stands on this view's own evidence.
+  *
+  * `cursorHint` is the event cursor the device already held when this evidence began. Those events
+  * were not observed here and may hold a later resume, so an outcome before the hint is shown only
+@@ -168,14 +170,18 @@ export function headerStatus(
+   verified = true,
+   cursorHint = 0,
+ ): HeaderStatus {
+-  const status = fromEvidence(evidence, row);
++  const status = fromEvidence(evidence, row, verified);
+   if (status.kind === 'record') return verified ? status : { kind: 'updating' };
+   if (status.kind === 'event' && status.seq < cursorHint && evidence.through < cursorHint)
+     return { kind: 'updating' };
+   return status;
+ }
+ 
+-function fromEvidence(evidence: HeaderEvidence, row: RecordedPosition): HeaderStatus {
++function fromEvidence(
++  evidence: HeaderEvidence,
++  row: RecordedPosition,
++  verified: boolean,
++): HeaderStatus {
+   const record: HeaderStatus = { kind: 'record', status: row.status };
+   const { marker } = evidence;
+   if (!marker) return record;
+@@ -183,7 +189,9 @@ function fromEvidence(evidence: HeaderEvidence, row: RecordedPosition): HeaderSt
+   if (marker.terminal) {
+     const outcome: HeaderStatus = { kind: 'event', status: marker.terminal, seq: marker.seq };
+     if (row.lastEventSeq < marker.seq) return outcome;
+-    if (row.status === marker.terminal) return record;
++    // Only this scope's own read of an agreeing record settles the outcome (R2-1): a cached row at
++    // the same status and sequence is not that read, so the outcome stays shown until it arrives.
++    if (verified && row.status === marker.terminal) return record;
+     if (row.lastEventSeq <= evidence.through) return outcome;
+     return rowTerminal ? record : { kind: 'updating' };
+   }

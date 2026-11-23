@@ -1,0 +1,344 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 395e699a..c4dbda1f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -21,8 +21,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   requested run's cached row or borrows its prior receipt; the ordinary read error retains earlier
+   evidence. Same-key recovery cancels outstanding queries and refreshes active reads once through
+   the existing API key panel, so a quiet inspector can settle without a new event or manual refresh.
+-  A delayed 401 from the older credential generation cannot reject the recovered generation; a
+-  matching current-generation 401 still does. An already accepted unchanged key causes no refresh.
++  Management API and owner Chat (Chat and Devices) requests each keep the credential identity and
++  generation they were sent under. A delayed 401 from an older generation, such as a Devices list
++  still pending after the owner opened a run, cannot reject the recovered key, reopen the key form
++  or clear the inspector's freshly verified status; its caller still receives that 401. A matching
++  current-generation 401 still rejects, including one sent through the same reused owner Chat
++  client. An already accepted unchanged key causes no refresh.
+   A retained device cursor is only a negative hint against promoting an older outcome, never status
+   authority; fresh matching terminal reads still converge without new streamed events. A terminal
+   record's node is qualified as **Last node in run record**; event-derived outcomes and neutral
+diff --git a/apps/web/src/app/useOwnerChatClient.test.tsx b/apps/web/src/app/useOwnerChatClient.test.tsx
+index 3196a696..27514b1a 100644
+--- a/apps/web/src/app/useOwnerChatClient.test.tsx
++++ b/apps/web/src/app/useOwnerChatClient.test.tsx
+@@ -2,8 +2,30 @@ import { act, renderHook } from '@testing-library/react';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { session } from '../chat/__fixtures__/chat.js';
++import { ChatApiError } from '../chat/client.js';
+ import { useOwnerChatClient } from './useOwnerChatClient.js';
+ afterEach(() => vi.unstubAllGlobals());
++
++/** Stubs fetch so every request waits until the test answers it, by its call index. */
++function heldFetch() {
++  const answers: ((response: Response) => void)[] = [];
++  const fetch = vi.fn<typeof globalThis.fetch>(
++    () =>
++      new Promise<Response>((resolve) => {
++        answers.push(resolve);
++      }),
++  );
++  vi.stubGlobal('fetch', fetch);
++  return {
++    fetch,
++    sentKey: (call: number) =>
++      new Headers(fetch.mock.calls[call]![1]!.headers).get('authorization'),
++    answer: (call: number, response: Response) => answers[call]!(response),
++  };
++}
++
++const unauthorized = () => new Response('{"code":"UNAUTHORIZED"}', { status: 401 });
++
+ describe('owner chat credential composition', () => {
+   it('injects only the current owner key and marks a current 401 rejected', async () => {
+     useApiKeyStore.getState().save('owner-key');
+@@ -39,4 +61,92 @@ describe('owner chat credential composition', () => {
+     await expect(pending).rejects.toMatchObject({ status: 401 });
+     expect(useApiKeyStore.getState().rejected).toBe(false);
+   });
++  it('keeps same-key recovery from an older 401 and rejects a current 401 on the same client', async () => {
++    useApiKeyStore.getState().save('owner-key');
++    const calls = heldFetch();
++    const { result } = renderHook(useOwnerChatClient);
++    const client = result.current;
++    const old = client.devices();
++    expect(calls.sentKey(0)).toBe('Bearer owner-key');
++    // Another request's 401 rejects the key, then the owner enters the same key again.
++    act(() => useApiKeyStore.getState().markRejected());
++    act(() => useApiKeyStore.getState().save('owner-key'));
++    const recovered = useApiKeyStore.getState().generation;
++    expect(result.current).toBe(client);
++    // Sent after recovery through the same memoized client, while the older request is pending.
++    const current = client.devices();
++    expect(calls.sentKey(1)).toBe('Bearer owner-key');
++
++    calls.answer(0, unauthorized());
++    await expect(old).rejects.toBeInstanceOf(ChatApiError);
++    await expect(old).rejects.toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key: 'owner-key',
++      rejected: false,
++      generation: recovered,
++    });
++
++    calls.answer(1, unauthorized());
++    await expect(current).rejects.toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key: 'owner-key',
++      rejected: true,
++      generation: recovered + 1,
++    });
++    expect(calls.fetch).toHaveBeenCalledTimes(2);
++  });
++  it('rejects a current 401 from a client reused across same-key recovery', async () => {
++    useApiKeyStore.getState().save('owner-key');
++    const calls = heldFetch();
++    const { result } = renderHook(useOwnerChatClient);
++    const client = result.current;
++    act(() => useApiKeyStore.getState().markRejected());
++    act(() => useApiKeyStore.getState().save('owner-key'));
++    const recovered = useApiKeyStore.getState().generation;
++    expect(result.current).toBe(client);
++    const current = client.session();
++    calls.answer(0, unauthorized());
++    await expect(current).rejects.toMatchObject({ status: 401 });
++    expect(useApiKeyStore.getState()).toMatchObject({ rejected: true, generation: recovered + 1 });
++  });
++  it.each([
++    {
++      change: 'forgotten and accepted again',
++      apply: () => {
++        useApiKeyStore.getState().forget();
++        useApiKeyStore.getState().save('owner-key');
++      },
++      key: 'owner-key',
++    },
++    {
++      change: 'replaced and accepted again',
++      apply: () => {
++        useApiKeyStore.getState().save('other-key');
++        useApiKeyStore.getState().save('owner-key');
++      },
++      key: 'owner-key',
++    },
++    { change: 'forgotten', apply: () => useApiKeyStore.getState().forget(), key: undefined },
++  ])('rejects only a current 401 after the key is $change', async ({ apply, key }) => {
++    useApiKeyStore.getState().save('owner-key');
++    const calls = heldFetch();
++    const { result } = renderHook(useOwnerChatClient);
++    const old = result.current.devices();
++    expect(calls.sentKey(0)).toBe('Bearer owner-key');
++    act(apply);
++    const settled = useApiKeyStore.getState().generation;
++    calls.answer(0, unauthorized());
++    await expect(old).rejects.toMatchObject({ status: 401, code: 'UNAUTHORIZED' });
++    expect(useApiKeyStore.getState()).toMatchObject({ key, rejected: false, generation: settled });
++
++    const current = result.current.devices();
++    expect(calls.sentKey(1)).toBe(key === undefined ? null : `Bearer ${key}`);
++    calls.answer(1, unauthorized());
++    await expect(current).rejects.toMatchObject({ status: 401 });
++    expect(useApiKeyStore.getState()).toMatchObject({
++      key,
++      rejected: true,
++      generation: settled + 1,
++    });
++  });
+ });
+diff --git a/apps/web/src/app/useOwnerChatClient.ts b/apps/web/src/app/useOwnerChatClient.ts
+index e63a6203..a2563bae 100644
+--- a/apps/web/src/app/useOwnerChatClient.ts
++++ b/apps/web/src/app/useOwnerChatClient.ts
+@@ -2,7 +2,14 @@ import { useMemo } from 'react';
+ import { useApiKeyStore } from '../api/api-key.js';
+ import { createChatClient } from '../chat/client.js';
+ 
+-/** Owner credentials are connected here, outside the shared/peripheral chat module. */
++/**
++ * Owner credentials are connected here, outside the shared/peripheral chat module. Each request
++ * notes the credential generation current when it is sent, and its 401 rejects the key only while
++ * that key and generation are both still current, as a management request's does (#386). A request
++ * left pending across a rejection and same-key recovery, a replacement or a forget cannot reject
++ * the newer state; a request sent afterwards, even through this same memoized client, still can.
++ * Every response reaches its caller unchanged.
++ */
+ export function useOwnerChatClient() {
+   const key = useApiKeyStore((state) => state.key);
+   return useMemo(
+@@ -10,9 +17,12 @@ export function useOwnerChatClient() {
+       createChatClient({
+         getToken: () => key,
+         fetch: async (input, init) => {
++          // Read per request, not per client: one client serves every generation of the same key.
++          const { generation } = useApiKeyStore.getState();
+           const response = await globalThis.fetch(input, init);
+-          if (response.status === 401 && useApiKeyStore.getState().key === key)
+-            useApiKeyStore.getState().markRejected();
++          const current = useApiKeyStore.getState();
++          if (response.status === 401 && current.key === key && current.generation === generation)
++            current.markRejected();
+           return response;
+         },
+       }),
+diff --git a/apps/web/src/runs/RunInspectorPage.owner-chat.test.tsx b/apps/web/src/runs/RunInspectorPage.owner-chat.test.tsx
+new file mode 100644
+index 00000000..c2f484ee
+--- /dev/null
++++ b/apps/web/src/runs/RunInspectorPage.owner-chat.test.tsx
+@@ -0,0 +1,133 @@
++import { act, screen, waitFor, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it, vi } from 'vitest';
++import { event, FakeApi, problem, queuedFields } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++import { useApiKeyStore } from '../api/api-key.js';
++import { createAppClient } from '../api/context.js';
++import { useRunEventStore } from './event-store.js';
++
++/** The URL a global fetch was called with; the owner Chat client passes a path string. */
++function requestUrl(input: RequestInfo | URL): string {
++  return input instanceof Request ? input.url : input.toString();
++}
++
++describe('owner Chat credentials across routes (#386)', () => {
++  // An owner Devices list, sent without an abort signal, is still pending when the owner opens a
++  // quiet waiting run, recovers from a management 401 with the same key and sees the status
++  // verified again. Only then does the Devices request answer 401: it was sent under an earlier
++  // credential generation, so it must not reject the recovered one.
++  it('keeps a quiet inspector recovered when a former owner Devices page returns a retired 401', async () => {
++    const key = 'synthetic-owner-witness';
++    const api = new FakeApi();
++    api.requiredKey = key;
++    useApiKeyStore.getState().save(key);
++    const run = api.addRun({ status: 'waiting', lastEventSeq: 3, currentNodeId: 'real-wait' });
++    api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
++    api.pushEvent(run.id, event(run.id, 2, 'run.started', { attempt: 1 }));
++    api.pushEvent(
++      run.id,
++      event(run.id, 3, 'run.waiting', {
++        nodeId: 'real-wait',
++        wait: { waitId: 'fixture-wait', startedSeq: 3, nodeId: 'real-wait', kind: 'input' },
++      }),
++    );
++    useRunEventStore.getState().append(run.id, ...api.events.get(run.id)!);
++    let oldGeneration: number | undefined;
++    let chatCalls = 0;
++    let oldHadSignal: boolean | undefined;
++    let oldSentSameKey: boolean | undefined;
++    let releaseChat!: (response: Response) => void;
++    const held = new Promise<Response>((resolve) => {
++      releaseChat = resolve;
++    });
++    const unexpectedGlobalCalls: string[] = [];
++    vi.stubGlobal(
++      'fetch',
++      vi.fn<typeof globalThis.fetch>((input, init) => {
++        const url = requestUrl(input);
++        if (url !== '/chat/devices') {
++          unexpectedGlobalCalls.push(url);
++          return Promise.reject(new Error('Unplanned fixture request'));
++        }
++        chatCalls += 1;
++        oldGeneration = useApiKeyStore.getState().generation;
++        oldHadSignal = Boolean(init?.signal);
++        oldSentSameKey = new Headers(init?.headers).get('authorization') === 'Bearer ' + key;
++        return held;
++      }),
++    );
++    const user = userEvent.setup();
++    const view = renderApp('/chat/devices', api);
++    try {
++      await waitFor(() => expect(chatCalls).toBe(1));
++      expect(oldSentSameKey).toBe(true);
++      expect(oldHadSignal).toBe(false);
++      const runsLink = screen.getAllByRole('link', { name: 'Runs' })[0]!;
++      await user.click(runsLink);
++      await user.click(await screen.findByRole('link', { name: run.id }));
++      expect(screen.getByTestId('location')).toHaveTextContent('/runs/' + run.id);
++      const heading = await screen.findByRole('heading', { name: 'Run ' + run.id });
++      const header = heading.closest('header')!;
++      await within(header).findByText('at real-wait');
++      const runReads = () => api.callsTo('GET', '/runs/' + run.id).length;
++      const before = runReads();
++
++      // A separate management request is answered 401, and the owner enters the same key again.
++      api.override('GET /api-keys', () => problem(401, 'UNAUTHORIZED'));
++      const appClient = createAppClient('http://graphgoblin.test', api.fetch);
++      await act(async () => {
++        const { response } = await appClient.GET('/api-keys');
++        expect(response.status).toBe(401);
++      });
++      await screen.findByRole('form', { name: 'Enter API key' });
++      const rejected = useApiKeyStore.getState().generation;
++      expect(rejected).toBeGreaterThan(oldGeneration!);
++      await user.type(screen.getByLabelText('API key', { selector: 'input' }), key);
++      await user.click(screen.getByRole('button', { name: 'Use key' }));
++      await within(header).findByText('at real-wait');
++      await waitFor(() => expect(runReads()).toBe(before + 1));
++      const recovered = useApiKeyStore.getState().generation;
++      expect(recovered).toBeGreaterThan(rejected);
++      expect(useApiKeyStore.getState().rejected).toBe(false);
++      expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
++      expect(screen.queryByRole('form', { name: 'Enter API key' })).toBeNull();
++
++      // Only now does the earlier Devices request answer 401.
++      await act(async () => {
++        releaseChat(Response.json({ code: 'UNAUTHORIZED' }, { status: 401 }));
++        await held;
++        // Let the retired response reach its caller and anything it could schedule.
++        await new Promise((resolve) => setTimeout(resolve, 0));
++      });
++      const actual = {
++        generation: useApiKeyStore.getState().generation,
++        rejected: useApiKeyStore.getState().rejected,
++        keyForm: screen.queryByRole('form', { name: 'Enter API key' }) !== null,
++        badge: header.querySelector('[data-status]')?.getAttribute('data-status') ?? null,
++        updating: within(header).queryByText('Updating status…') !== null,
++        recordedWait: within(header).queryByText('at real-wait') !== null,
++      };
++      expect(unexpectedGlobalCalls).toEqual([]);
++      expect(actual).toEqual({
++        generation: recovered,
++        rejected: false,
++        keyForm: false,
++        badge: 'waiting',
++        updating: false,
++        recordedWait: true,
++      });
++      // The retired response makes no run read and moves neither the event cursor nor the route.
++      expect(chatCalls).toBe(1);
++      expect(runReads()).toBe(before + 1);
++      expect(useRunEventStore.getState().runs[run.id]?.lastSeq).toBe(3);
++      expect(screen.getByTestId('location')).toHaveTextContent('/runs/' + run.id);
++    } finally {
++      releaseChat(Response.json({ items: [] }));
++      view.unmount();
++      view.queryClient.clear();
++      useRunEventStore.getState().clear(run.id);
++      vi.unstubAllGlobals();
++    }
++  });
++});
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index d710a4ca..fcb3e5d5 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -96,10 +96,14 @@ Accepting the same key after rejection also refreshes active server reads throug
+ key panel. It first cancels outstanding queries, then invalidates active reads once if that accepted
+ credential generation is still current. This gives a quiet inspector a fresh run receipt instead of
+ joining an old pending first read; no new event, focus change or manual refresh is required. Saving
+-an already accepted unchanged key triggers no recovery refresh. A delayed 401 is applied only when
+-both the sent credential identity and generation still match: an older request cannot reject the
+-recovered generation merely because its key text is unchanged. Cancelling a request alone does not
+-change its credential generation or suppress a matching current-generation 401.
++an already accepted unchanged key triggers no recovery refresh. Management API requests and owner
++Chat requests (the management app's Chat and Devices pages) each note the credential identity and
++generation current when they are sent. A delayed 401 rejects the key only when both still match: an
++older request, such as a Devices list still pending after the owner opened a run, cannot reject the
++recovered generation merely because its key text is unchanged; its caller still receives its own
++401 error. A 401 to a request sent after recovery still rejects, including one sent through the
++same reused owner Chat client. Cancelling a request alone does not change its credential generation
++or suppress a matching current-generation 401.
+ 
+ The header changes are presentation only. The record's status, failure, result, recovery tokens and permissions,
+ delivery and finalization, and every control, Wait panel and recovery action stay the server's; a

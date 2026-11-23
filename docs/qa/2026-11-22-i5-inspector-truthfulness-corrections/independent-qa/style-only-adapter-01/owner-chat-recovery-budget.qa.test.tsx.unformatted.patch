@@ -1,0 +1,38 @@
+--- a/apps/web/src/runs/owner-chat-recovery-budget.qa.test.tsx
++++ b/apps/web/src/runs/owner-chat-recovery-budget.qa.test.tsx
+@@ -8,6 +8,10 @@
+ import { createAppClient } from '../api/context.js';
+ import { keys } from '../api/queries.js';
+ import { useRunEventStore } from './event-store.js';
++
++function requestUrl(input: RequestInfo | URL): string {
++  return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
++}
+ 
+ it('D230 C1b: keeps the original recovery assertions plus cache, cursor and quiet read budget', async () => {
+   const key = 'synthetic-owner-witness';
+@@ -33,8 +37,8 @@
+   const held = new Promise<Response>((resolve) => { releaseChat = resolve; });
+   const unexpectedGlobalCalls: string[] = [];
+   vi.stubGlobal('fetch', vi.fn<typeof globalThis.fetch>((input, init) => {
+-    if (String(input) !== '/chat/devices') {
+-      unexpectedGlobalCalls.push(String(input));
++    if (requestUrl(input) !== '/chat/devices') {
++      unexpectedGlobalCalls.push(requestUrl(input));
+       return Promise.reject(new Error('Unplanned fixture request'));
+     }
+     chatCalls += 1;
+@@ -87,11 +91,11 @@
+       updating: within(header).queryByText('Updating status…') !== null,
+       recordedWait: within(header).queryByText('at real-wait') !== null,
+     };
+-    console.info('retired owner Devices response', JSON.stringify({
++    process.stdout.write('retired owner Devices response ' + JSON.stringify({
+       oldGeneration, rejected, recovered, oldSentSameKey, oldHadSignal, chatCalls, runReadsBefore: before,
+       runReadsAfter: runReads(), route: screen.getByTestId('location').textContent,
+       cursor: useRunEventStore.getState().runs[run.id]?.lastSeq, unexpectedGlobalCalls, actual,
+-    }));
++    }) + '\n');
+     expect(unexpectedGlobalCalls).toEqual([]);
+     expect(actual).toEqual({
+       generation: recovered, rejected: false, keyForm: false, badge: 'waiting',

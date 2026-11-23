@@ -1,0 +1,14 @@
+--- a/apps/web/src/runs/RunInspectorPage.owner-chat.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.owner-chat.test.tsx
+@@ -63,9 +63,9 @@
+       await waitFor(() => expect(chatCalls).toBe(1));
+       expect(oldSentSameKey).toBe(true);
+       expect(oldHadSignal).toBe(false);
+-      const runsLink = screen.getAllByRole('link', { name: 'Runs', exact: true })[0]!;
++      const runsLink = screen.getAllByRole('link', { name: 'Runs' })[0]!;
+       await user.click(runsLink);
+-      await user.click(await screen.findByRole('link', { name: run.id, exact: true }));
++      await user.click(await screen.findByRole('link', { name: run.id }));
+       expect(screen.getByTestId('location')).toHaveTextContent('/runs/' + run.id);
+       const heading = await screen.findByRole('heading', { name: 'Run ' + run.id });
+       const header = heading.closest('header')!;
