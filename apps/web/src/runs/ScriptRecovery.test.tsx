@@ -1,8 +1,13 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { runs, type RunSnapshot } from '@graphgoblin/api-client';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, event } from '../__fixtures__/fake-api.js';
-import { renderApp } from '../__fixtures__/render.js';
+import { renderApp, renderWith } from '../__fixtures__/render.js';
+import { createAppClient } from '../api/context.js';
+import type { WriteGate } from './inspector/RunControls.js';
+import { ScriptRecovery, useScriptRetry } from './inspector/ScriptRecovery.js';
 
 function failedScript(
   code: 'SCRIPT_OUTCOME_UNCERTAIN' | 'SCRIPT_START_FAILED' = 'SCRIPT_OUTCOME_UNCERTAIN',
@@ -27,6 +32,42 @@ function failedScript(
   });
   api.pushEvent(run.id, event(run.id, 1, 'run.failed', { failure: run.failure! }));
   return { api, run };
+}
+
+let currentGate: WriteGate | undefined;
+function gateFor(blocked: string | undefined) {
+  const gate: WriteGate = {
+    blocked,
+    open: () => blocked === undefined && currentGate === gate,
+    shown: () => true,
+  };
+  currentGate = gate;
+  return { gate };
+}
+
+/**
+ * The inspector's arrangement for one visit of one run (#416): the view owns the retry, an outage
+ * replaces its gate, and the run section presenting the control can be withheld.
+ */
+function Inspector({ run }: { run: RunSnapshot }) {
+  const [state, setState] = useState(() => gateFor(undefined));
+  const [presented, setPresented] = useState(true);
+  const [visit] = useState(() => ({}));
+  const retry = useScriptRetry({ owner: visit, availability: state.gate });
+  return (
+    <>
+      <button type="button" onClick={() => setState(gateFor('This browser is offline.'))}>
+        Lose connection
+      </button>
+      <button type="button" onClick={() => setState(gateFor(undefined))}>
+        Read again
+      </button>
+      <button type="button" onClick={() => setPresented((value) => !value)}>
+        Withhold or show the run
+      </button>
+      {presented ? <ScriptRecovery run={run} retry={retry} /> : null}
+    </>
+  );
 }
 
 describe('deliberate script recovery (#321)', () => {
@@ -155,4 +196,74 @@ describe('deliberate script recovery (#321)', () => {
     await user.click(screen.getByRole('button', { name: 'Resume' }));
     expect(await screen.findByText(/Resume refused/)).toBeInTheDocument();
   });
+
+  it.each(['fails in transport', 'succeeds'] as const)(
+    'keeps a retry sent before its section was withheld the only one in the section shown again, and reports it when it %s (#416)',
+    async (settle) => {
+      const { api, run } = failedScript();
+      let answer!: (response: Response) => void;
+      let fail!: (error: Error) => void;
+      api.override(
+        'POST /runs/:id/resume',
+        () =>
+          new Promise<Response>((resolve, reject) => {
+            answer = resolve;
+            fail = reject;
+          }),
+      );
+      // The run as the inspector shows it, read once through the real client.
+      const client = createAppClient('http://graphgoblin.test', api.fetch);
+      const snapshot = await runs.get(client, run.id);
+      renderWith(<Inspector run={snapshot} />, '/', api);
+      const user = userEvent.setup();
+      const recover = () => screen.getByRole('button', { name: 'Recover script' });
+      const toggle = () => screen.getByRole('button', { name: 'Withhold or show the run' });
+      const resume = async () => {
+        const dialog = screen.getByRole('dialog', { name: 'Recover script' });
+        await user.click(within(dialog).getByRole('button', { name: 'Resume' }));
+      };
+      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
+      await user.click(recover());
+      await resume();
+      await waitFor(() => expect(resumes()).toHaveLength(1));
+      expect(resumes()[0]!.body).toEqual({ observedSeq: 1, retryUncertainScript: true });
+      const original = recover();
+      expect(original).toBeDisabled();
+      // An outage expires the review, and the run section presenting the control is withheld.
+      await user.click(screen.getByRole('button', { name: 'Lose connection' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.click(toggle());
+      expect(original).not.toBeInTheDocument();
+      // The run is read again under a new gate and shown again with a new control, which the
+      // retry sent before, still unresolved, alone keeps disabled.
+      await user.click(screen.getByRole('button', { name: 'Read again' }));
+      await user.click(toggle());
+      const replacement = recover();
+      expect(replacement).not.toBe(original);
+      expect(replacement).toBeDisabled();
+      await user.click(replacement);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(resumes()).toHaveLength(1);
+      await act(async () => {
+        if (settle === 'succeeds') answer(Response.json({ ...snapshot, status: 'running' }));
+        else fail(new TypeError('Failed to fetch'));
+        await Promise.resolve();
+      });
+      if (settle === 'fails in transport')
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+          /^The GraphGoblin API cannot be reached\.$/,
+        );
+      // Only once it has settled may a new review open, and a new explicit choice send again.
+      await waitFor(() => expect(recover()).toBeEnabled());
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      if (settle === 'succeeds') expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(resumes()).toHaveLength(1);
+      api.override('POST /runs/:id/resume', (call) => api.builtIn(call));
+      await user.click(recover());
+      await resume();
+      await waitFor(() => expect(resumes()).toHaveLength(2));
+      expect(resumes()[1]!.body).toEqual({ observedSeq: 1, retryUncertainScript: true });
+    },
+  );
 });

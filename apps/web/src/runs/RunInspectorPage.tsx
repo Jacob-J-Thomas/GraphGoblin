@@ -1,7 +1,7 @@
 import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
 import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
-import { HistoryEligibility } from './HistoryEligibility.js';
+import { HistoryEligibilityControls, useHistoryConfirmation } from './HistoryEligibility.js';
 import { formatDateTime, isOfflineError } from '../lib/utils.js';
 import { isTerminal } from '@graphgoblin/domain';
 import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,7 +29,7 @@ import {
   trackInspectorRead,
   useInspectorRead,
 } from './inspector-read-provenance.js';
-import { ScriptRecovery } from './inspector/ScriptRecovery.js';
+import { ScriptRecovery, useScriptRetry } from './inspector/ScriptRecovery.js';
 import {
   SessionRecoveryControls,
   useSessionRecovery,
@@ -368,6 +368,12 @@ export function RunInspectorPage() {
     events: recovery,
     availability: sessionGate,
   });
+  // Script recovery and the delete-ready confirmation are owned the same way. A retry or
+  // confirmation sent before the section was withheld stays the only one: the controls shown again
+  // stay disabled until it settles, then report its actual outcome. Their reviews belong to the
+  // section and end with it; the write checks are the ones they always made.
+  const scriptRetry = useScriptRetry({ owner: visit, availability: gate });
+  const historyConfirmation = useHistoryConfirmation({ owner: visit, availability: gate });
 
   // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
   // failed query, a read in flight is joined, and one started before the loss settles first (it
@@ -521,7 +527,7 @@ export function RunInspectorPage() {
             </div>
             <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
               <RunControls run={run} availability={gate} />
-              <ScriptRecovery run={run} availability={gate} />
+              <ScriptRecovery run={run} retry={scriptRetry} />
             </div>
           </header>
           {outage ? (
@@ -583,7 +589,7 @@ export function RunInspectorPage() {
                 ? `Delete-ready: confirmed by ${run.deletionApproval.confirmedBy.id} at ${formatDateTime(run.deletionApproval.confirmedAt)}.`
                 : 'History retained.'}
             </p>
-            <HistoryEligibility runIds={[run.id]} availability={gate} />
+            <HistoryEligibilityControls runIds={[run.id]} confirmation={historyConfirmation} />
           </div>
           {/* While the run is last observed, execution context names nodes by their recorded IDs,
               says the pinned definition is unavailable rather than loading, and takes a

@@ -1,5 +1,9 @@
 import { runs } from '@graphgoblin/api-client';
-import type { RunRecord } from '@graphgoblin/contracts';
+import {
+  DeletionConfirmationSchema,
+  DeletionSelectionSchema,
+  type RunRecord,
+} from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { onlineManager, QueryClient } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
@@ -195,6 +199,98 @@ async function loseRunRead(view: Rendered, runId: string) {
 }
 
 const posts = (api: FakeApi) => api.calls.filter((call) => call.method === 'POST');
+
+const UNCONFIRMED = /^This run has not been confirmed since the connection was lost\./;
+const UNCERTAIN =
+  'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.';
+
+/** Failed at `script`, whose outcome is uncertain: Recover script asks for explicit consent. */
+function uncertainScriptRun(api: FakeApi, overrides: Partial<RunRecord> = {}) {
+  const run = startedRun(api, {
+    status: 'failed',
+    lastEventSeq: 3,
+    currentNodeId: 'script',
+    failure: {
+      code: 'SCRIPT_OUTCOME_UNCERTAIN',
+      message: 'uncertain',
+      nodeId: 'script',
+      resumable: true,
+    },
+    ...overrides,
+  });
+  api.pushEvent(run.id, event(run.id, 3, 'run.failed', { failure: run.failure! }));
+  return run;
+}
+
+/** Every delete-ready preview is clear; each confirmation is held until the test settles it. */
+function heldConfirmations(api: FakeApi) {
+  const held: { save: () => void; fail: (error: Error) => void }[] = [];
+  const clear = (runIds: string[]) => ({
+    token: 'b'.repeat(64),
+    items: runIds.map((runId) => ({ runId, reasons: [] })),
+  });
+  api.override('POST /runs/deletion-eligibility/preview', ({ body }) =>
+    Response.json({ ...clear(DeletionSelectionSchema.parse(body).runIds), token: 'a'.repeat(64) }),
+  );
+  api.override(
+    'POST /runs/deletion-eligibility',
+    ({ body }) =>
+      new Promise<Response>((resolve, reject) => {
+        const { runIds } = DeletionConfirmationSchema.parse(body);
+        held.push({ save: () => resolve(Response.json(clear(runIds))), fail: reject });
+      }),
+  );
+  return held;
+}
+
+/** Chooses Resume in the open script recovery review. */
+async function resumeInReview(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await screen.findByRole('dialog', { name: 'Recover script' });
+  await user.click(within(dialog).getByRole('button', { name: 'Resume' }));
+}
+
+/** Confirms the open delete-ready review once its preview has been read. */
+async function confirmReview(user: ReturnType<typeof userEvent.setup>) {
+  const confirm = await screen.findByRole('button', { name: 'Confirm delete-ready selection' });
+  await waitFor(() => expect(confirm).toBeEnabled());
+  await user.click(confirm);
+}
+
+/** The browser disconnects and reconnects; a run read that started after the loss commits. */
+async function browserOutage() {
+  act(() => onlineManager.setOnline(false));
+  expect(await screen.findByText(/This browser is offline\./)).toBeVisible();
+  act(() => onlineManager.setOnline(true));
+  await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+}
+
+/**
+ * Another tab stores a second accepted key, which the mounted API key panel follows, while run
+ * reads are held. No read under that key has committed and this view has recorded a browser
+ * loss, so the run section, its header and its controls are withheld rather than shown from an
+ * unproved row. Returns the header shown before.
+ */
+async function withholdForAnotherKey(
+  api: FakeApi,
+  runId: string,
+  reads: ReturnType<typeof heldRunReads>,
+) {
+  const original = screen.getByRole('heading', { name: 'Run ' + runId }).closest('header')!;
+  reads.state.blocking = true;
+  localStorage.setItem(API_KEY_STORAGE, 'gg_second_key');
+  act(() => {
+    window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
+  });
+  expect(original).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Run ' + runId })).toBeNull();
+  expect(screen.getByText(UNCONFIRMED)).toBeVisible();
+  // The run is read again under the second key, and that read is held.
+  await waitFor(() => expect(reads.state.held).toBeGreaterThan(0));
+  const read = api.callsTo('GET', `/runs/${runId}`).at(-1);
+  expect(read?.headers.get('authorization')).toBe('Bearer gg_second_key');
+  expect(screen.queryByRole('heading', { name: 'Run ' + runId })).toBeNull();
+  return original;
+}
 
 describe('run inspector through an outage (#416)', () => {
   it('keeps a waiting run, its form and same-wait draft as last observed, and sends nothing', async () => {
@@ -1049,6 +1145,260 @@ describe('run inspector through an outage (#416)', () => {
         }
         expect(resumes()).toHaveLength(1);
         expect(posts(api)).toHaveLength(1);
+      } finally {
+        view.unmount();
+      }
+    },
+  );
+
+  it.each(['fails in transport', 'succeeds'] as const)(
+    'keeps a script retry sent before a browser outage the only one through a run section withheld for another accepted API key, and reports it when it %s',
+    async (settle) => {
+      // The first accepted key, stored before the app opens.
+      useApiKeyStore.getState().save('gg_first_key');
+      const api = new FakeApi();
+      const run = uncertainScriptRun(api);
+      const reads = heldRunReads(api);
+      let answer!: (response: Response) => void;
+      let fail!: (error: Error) => void;
+      api.override(
+        'POST /runs/:id/resume',
+        () =>
+          new Promise<Response>((resolve, reject) => {
+            answer = resolve;
+            fail = reject;
+          }),
+      );
+      const view = renderApp('/runs/' + run.id, api);
+      const user = userEvent.setup();
+      const header = () =>
+        screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+      const recover = () => button('Recover script');
+      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
+      try {
+        await openRun(run.id);
+        await user.click(recover());
+        await resumeInReview(user);
+        await waitFor(() => expect(resumes()).toHaveLength(1));
+        expect(resumes()[0]!.body).toEqual({ observedSeq: 3, retryUncertainScript: true });
+
+        // The browser disconnects, which expires the review, and reconnects. A run read that
+        // started after the loss commits the same failure; the retry sent before is unresolved.
+        await browserOutage();
+        expect(screen.getByText('Failed: SCRIPT_OUTCOME_UNCERTAIN')).toBeVisible();
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(recover()).toBeDisabled();
+
+        const originalRecover = recover();
+        const originalHeader = await withholdForAnotherKey(api, run.id, reads);
+        expect(originalRecover).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull();
+
+        // The held read returns the same failed run under the second key. The run is shown again
+        // with a new header and control, which the retry still unresolved alone keeps disabled.
+        reads.release();
+        await openRun(run.id);
+        expect(header()).not.toBe(originalHeader);
+        const replacement = recover();
+        expect(replacement).not.toBe(originalRecover);
+        expect(replacement).toBeDisabled();
+        expect(within(header()).queryByRole('alert')).toBeNull();
+        await user.click(replacement);
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(resumes()).toHaveLength(1);
+
+        if (settle === 'fails in transport') {
+          await act(async () => {
+            fail(new TypeError('Failed to fetch'));
+            await Promise.resolve();
+          });
+          // The control shown now reports the retry's own failure, and keeps reporting it.
+          const outcome = await within(header()).findByRole('alert');
+          expect(outcome).toHaveTextContent(/^The GraphGoblin API cannot be reached\.$/);
+          await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+          expect(within(header()).getByRole('alert')).toHaveTextContent(
+            /^The GraphGoblin API cannot be reached\.$/,
+          );
+          // A new explicit choice, made only now, sends once more with the same consent.
+          api.override('POST /runs/:id/resume', (call) => api.builtIn(call));
+          await waitFor(() => expect(recover()).toBeEnabled());
+          await user.click(recover());
+          await resumeInReview(user);
+          await waitFor(() => expect(resumes()).toHaveLength(2));
+          expect(resumes()[1]!.body).toEqual({ observedSeq: 3, retryUncertainScript: true });
+        } else {
+          const running: RunRecord = { ...api.runs.get(run.id)!, status: 'running' };
+          delete running.failure;
+          await act(async () => {
+            api.runs.set(run.id, running);
+            answer(Response.json(running));
+            await Promise.resolve();
+          });
+          await waitFor(() =>
+            expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull(),
+          );
+          expect(within(header()).queryByRole('alert')).toBeNull();
+          expect(resumes()).toHaveLength(1);
+        }
+        expect(posts(api)).toHaveLength(settle === 'succeeds' ? 1 : 2);
+      } finally {
+        reads.release();
+        view.unmount();
+      }
+    },
+  );
+
+  it.each(['fails in transport', 'succeeds'] as const)(
+    'keeps a delete-ready confirmation sent before a browser outage the only one through a run section withheld for another accepted API key, and reports it when it %s',
+    async (settle) => {
+      // The first accepted key, stored before the app opens.
+      useApiKeyStore.getState().save('gg_first_key');
+      const api = new FakeApi();
+      const run = startedRun(api, { status: 'succeeded', lastEventSeq: 3, currentNodeId: 'done' });
+      api.pushEvent(
+        run.id,
+        event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+      );
+      const confirmations = heldConfirmations(api);
+      const reads = heldRunReads(api);
+      const view = renderApp('/runs/' + run.id, api);
+      const user = userEvent.setup();
+      const header = () =>
+        screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+      const review = () => button('Review delete-ready history');
+      const withdraw = () => button('Withdraw delete-ready mark');
+      const previews = () => api.callsTo('POST', '/runs/deletion-eligibility/preview');
+      const confirms = () => api.callsTo('POST', '/runs/deletion-eligibility');
+      const outcome = settle === 'succeeds' ? '1 run marked delete-ready.' : UNCERTAIN;
+      try {
+        await openRun(run.id);
+        await user.click(review());
+        await confirmReview(user);
+        expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
+        expect(confirms()).toHaveLength(1);
+        expect(confirms()[0]!.body).toEqual({
+          runIds: [run.id],
+          action: 'mark',
+          token: 'a'.repeat(64),
+          confirmed: true,
+        });
+
+        // The browser disconnects, which expires the review, and reconnects. A run read that
+        // started after the loss commits; the confirmation sent before is unresolved.
+        await browserOutage();
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(review()).toBeDisabled();
+        expect(withdraw()).toBeDisabled();
+
+        const originalReview = review();
+        const originalHeader = await withholdForAnotherKey(api, run.id, reads);
+        expect(originalReview).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Review delete-ready history' })).toBeNull();
+
+        // The held read returns the same run under the second key. The run is shown again with
+        // new controls, which the confirmation still unresolved alone holds.
+        reads.release();
+        await openRun(run.id);
+        expect(header()).not.toBe(originalHeader);
+        expect(review()).not.toBe(originalReview);
+        expect(review()).toBeDisabled();
+        expect(withdraw()).toBeDisabled();
+        // An attempt to open a replacement review opens nothing and reads no preview.
+        await user.click(review());
+        await user.click(withdraw());
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(previews()).toHaveLength(1);
+        expect(confirms()).toHaveLength(1);
+        expect(screen.queryByText(outcome)).toBeNull();
+
+        await act(async () => {
+          if (settle === 'succeeds') confirmations[0]!.save();
+          else confirmations[0]!.fail(new TypeError('Failed to fetch'));
+          await Promise.resolve();
+        });
+        // The controls shown now report what happened to it: saved, or possibly saved.
+        expect(await screen.findByText(outcome)).toBeVisible();
+        await waitFor(() => expect(review()).toBeEnabled());
+        expect(withdraw()).toBeEnabled();
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(confirms()).toHaveLength(1);
+
+        // A new explicit review, opened only now, reads its own preview and is confirmed once.
+        await user.click(review());
+        await confirmReview(user);
+        await waitFor(() => expect(confirms()).toHaveLength(2));
+        expect(previews()).toHaveLength(2);
+        expect(posts(api)).toHaveLength(4);
+      } finally {
+        reads.release();
+        view.unmount();
+      }
+    },
+  );
+
+  it.each(['script retry', 'delete-ready confirmation'] as const)(
+    'keeps a %s sent for one run from holding or reporting on another run opened in the same view',
+    async (kind) => {
+      const api = new FakeApi();
+      const b = uncertainScriptRun(api);
+      const a = uncertainScriptRun(api, { parentRunId: b.id });
+      const confirmations = heldConfirmations(api);
+      let fail!: (error: Error) => void;
+      api.override(
+        'POST /runs/:id/resume',
+        () =>
+          new Promise<Response>((_resolve, reject) => {
+            fail = reject;
+          }),
+      );
+      const view = renderApp('/runs/' + a.id, api);
+      const user = userEvent.setup();
+      const script = kind === 'script retry';
+      const launcher = () => button(script ? 'Recover script' : 'Review delete-ready history');
+      const header = (runId: string) =>
+        screen.getByRole('heading', { name: 'Run ' + runId }).closest('header')!;
+      const resumes = (runId: string) => api.callsTo('POST', `/runs/${runId}/resume`);
+      const confirms = () => api.callsTo('POST', '/runs/deletion-eligibility');
+      const selections = () =>
+        confirms().map((call) => DeletionConfirmationSchema.parse(call.body).runIds);
+      const mutations = view.queryClient.getMutationCache();
+      // The shown run's own action, chosen in its review.
+      const choose = async () => {
+        await user.click(launcher());
+        await (script ? resumeInReview(user) : confirmReview(user));
+      };
+      try {
+        await openRun(a.id);
+        await choose();
+        await waitFor(() => expect(script ? resumes(a.id) : confirms()).toHaveLength(1));
+        expect(launcher()).toBeDisabled();
+
+        // A's header links its parent, B, which opens in the same view while A's is unresolved.
+        await user.click(within(header(a.id)).getByRole('link', { name: 'parent run' }));
+        await openRun(b.id);
+        // B shows its own controls: A's action does not hold them.
+        await waitFor(() => expect(launcher()).toBeEnabled());
+
+        // A's action fails in transport while B is shown, and is not reported as B's outcome.
+        await act(async () => {
+          if (script) fail(new TypeError('Failed to fetch'));
+          else confirmations[0]!.fail(new TypeError('Failed to fetch'));
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        });
+        if (script) expect(mutations.getAll().map(({ state }) => state.status)).toEqual(['error']);
+        expect(within(header(b.id)).queryByRole('alert')).toBeNull();
+        expect(screen.queryByText(UNCERTAIN)).toBeNull();
+        expect(launcher()).toBeEnabled();
+
+        // B's own action is sent once, for B.
+        await choose();
+        if (script) {
+          await waitFor(() => expect(resumes(b.id)).toHaveLength(1));
+          expect(resumes(a.id)).toHaveLength(1);
+        } else {
+          await waitFor(() => expect(selections()).toEqual([[a.id], [b.id]]));
+        }
+        expect(posts(api)).toHaveLength(script ? 2 : 4);
       } finally {
         view.unmount();
       }

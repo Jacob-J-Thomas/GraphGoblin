@@ -28,19 +28,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
   a script recovery already sent is unresolved, no replacement review opens over it, so its late
   failure or success is still reported. A sent delete-ready confirmation holds its review the same
-  way while that review is open or was expired by an outage; an outage or reconnect does not
-  release that hold. Only after the browser itself has dismissed that review (as on a repeated
-  Esc) may a new review open and read a new preview, and it cannot be confirmed until the first
-  confirmation settles. The first confirmation's outcome is then reported beside the controls,
-  not in the newer review; if the API could not be reached, it says the change may or may not
-  have been saved. Start fresh session additionally needs a post-outage observation
+  way while that review is open, was expired by an outage or was closed by withholding the run
+  section; an outage, reconnect or the section shown again does not release that hold. Only after
+  the browser itself has dismissed that review (as on a repeated Esc) may a new review open and
+  read a new preview, and it cannot be confirmed until the first confirmation settles. The first
+  confirmation's outcome is then reported beside the controls, not in the newer review; if the
+  API could not be reached, it says the change may or may not have been saved. A confirmation's
+  failure is shown in its own review only while that review is open and current, and otherwise
+  beside the controls. Start fresh session additionally needs a post-outage observation
   of the same failure and still sends that failure's own sequence; a choice queued before a
   failure of the observation read alone stays spent after that read recovers, including through a
-  removed and recreated query or another accepted API key. That choice belongs to the inspector
-  view rather than its run section: when the section is withheld until a run read under another
-  accepted key qualifies, after a browser loss the view recorded, the control shown again stays
-  disabled while the choice is pending and then reports **Not sent** rather than losing that
-  outcome. Another run or a later visit shows neither its pending state nor its outcome. At most
+  removed and recreated query or another accepted API key. That choice, a script recovery retry
+  and a delete-ready confirmation belong to the inspector view rather than its run section; their
+  reviews stay with the section. When the section is withheld until a run read under another
+  accepted key qualifies, after a browser loss the view recorded, the controls shown again stay
+  disabled while the action is pending, so that fresh read cannot offer a second retry or
+  confirmation, and then report its actual outcome (**Not sent**, the retry's own error, or that a
+  confirmation may or may not have been saved) rather than losing it. Another run or a later visit
+  shows neither its pending state nor its outcome. At most
   one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
   it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
   store, export or contract change.

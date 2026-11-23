@@ -177,13 +177,17 @@ or delete-ready review therefore closes when the connection is lost, a preview t
 is discarded, and a command queued or delayed across a loss, a reconnect or an A → B → A visit
 reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
 close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
-was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
-it was in flight reports that outcome beside the controls. While a script recovery
-(queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
-the outage that expired its review has ended: no replacement review resets it or sends a second
-command before it settles, and its eventual failure or success is still reported. A sent
-delete-ready confirmation holds the delete-ready launchers the same way while its review is open
-or has been expired by an outage; an outage or a reconnect does not release that hold. The one
+was already sent keeps its actual outcome; a delete-ready confirmation reports it beside the
+controls, except a failure while the review it was sent from is still open and current, which that
+review shows: cancelling the review dismisses the failure with it, while an outage that expires
+the review, or withholding the run section, moves the failure beside the controls. While a script
+recovery (queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
+the outage that expired its review has ended or the run section showing it was withheld and shown
+again: no replacement review resets it or sends a second command before it settles, and its
+eventual failure or success is still reported. A sent delete-ready confirmation holds the
+delete-ready launchers the same way while its review is open, has been expired by an outage or
+was closed by withholding the run section; an outage, a reconnect or the section shown again does
+not release that hold. The one
 exception is a review the browser itself has already dismissed (it closes a modal dialog on a
 repeated Esc without asking): the confirmation is still pending, but a new review may open and
 read a new preview. That review cannot be confirmed while the first confirmation is pending,
@@ -202,14 +206,21 @@ observation read alone, with the run read and the browser healthy, a choice queu
 reports **Not sent** even after the observation is read again with an equal body, including from
 a removed and recreated query or under another accepted API key that the API key panel followed.
 A new choice after the qualifying observation read sends once. The view, not the run section,
-owns a **Start fresh session** choice and its outcome. The section is withheld while its run is
-unproved, for example after the API key panel follows another accepted key once this view has
-recorded a browser loss, until a run read under that key qualifies. A choice queued before that
-stays pending: the control shown again stays disabled until the choice settles, then reports its
-actual outcome, such as **Not sent**, until a new explicit choice replaces it. A choice's pending
-state and outcome belong to the visit that made it; another run opened in the same view, or a
-later visit, shows neither. Withholding, qualification and the gate are unchanged, and the
-section stays hidden while it is withheld. Other run controls stay available
+owns a **Start fresh session** choice, a script recovery retry and a delete-ready confirmation,
+with their pending state and outcomes; their reviews belong to the section and close with it. The
+section is withheld while its run is unproved, for example after the API key panel follows another
+accepted key once this view has recorded a browser loss, until a run read under that key
+qualifies. A choice, retry or confirmation queued or sent before that stays pending: the controls
+shown again stay disabled until it settles (once the browser has dismissed a pending
+confirmation's review, as above, a new review may open but not be confirmed), so a fresh read of
+the same run cannot offer a second command or confirmation meanwhile. They then report its actual
+outcome, such as **Not sent**, the
+retry's own error or, for a confirmation the API could not be reached for, that the change may or
+may not have been saved, until a new explicit choice or review replaces it. A transport failure is
+never reported as the server refusing the command. Pending state and outcomes belong to the visit
+that made the choice; another run opened in the same view, or a later visit, shows neither.
+Withholding, qualification and the gate are unchanged, and the section stays hidden while it is
+withheld. Other run controls stay available
 through an observation-only failure. Script consent keeps the run and observed sequence shown
 when its review opened. The Runs list's delete-ready
 controls share the hold on a sent confirmation, its exception after a browser dismissal and the
