@@ -709,9 +709,9 @@ describe('run inspector through an outage (#416)', () => {
             await Promise.resolve();
           });
           const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
-          expect(
-            await within(header).findByText('The GraphGoblin API cannot be reached.'),
-          ).toBeVisible();
+          const outcome = await within(header).findByRole('alert');
+          expect(outcome).toBeVisible();
+          expect(outcome).toHaveTextContent(/^The GraphGoblin API cannot be reached\.$/);
           await waitFor(() => expect(button('Recover script')).toBeEnabled());
         } else {
           const running: RunRecord = { ...api.runs.get(run.id)!, status: 'running' };

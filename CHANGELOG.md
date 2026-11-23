@@ -26,9 +26,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   reviews close, late previews are discarded, and a command queued across a loss, reconnect or
   A → B → A visit reports **Not sent** instead of sending. Drafts of the same wait, reading and
   Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
-  a script recovery or delete-ready confirmation already sent is unresolved, no replacement review
-  opens over it, so its late failure or success is still reported, including for a delete-ready
-  review the browser dismissed. Start fresh session additionally needs a post-outage observation
+  a script recovery already sent is unresolved, no replacement review opens over it, so its late
+  failure or success is still reported. A sent delete-ready confirmation holds its review the same
+  way while that review is open or was expired by an outage; an outage or reconnect does not
+  release that hold. Only after the browser itself has dismissed that review (as on a repeated
+  Esc) may a new review open and read a new preview, and it cannot be confirmed until the first
+  confirmation settles. The first confirmation's outcome is then reported beside the controls,
+  not in the newer review; if the API could not be reached, it says the change may or may not
+  have been saved. Start fresh session additionally needs a post-outage observation
   of the same failure and still sends that failure's own sequence; a choice queued before a
   failure of the observation read alone stays spent after that read recovers. At most one extra
   deduplicated read per outage is added, of the run or, where Start fresh session needs it, the

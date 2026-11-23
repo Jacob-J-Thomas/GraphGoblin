@@ -178,12 +178,21 @@ is discarded, and a command queued or delayed across a loss, a reconnect or an A
 reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
 close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
 was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
-it was in flight reports that the change may or may not have been saved. While a script recovery
-(queued or sent) or a sent delete-ready confirmation is unresolved, its launchers stay disabled
-and their handlers refuse, even after the outage that expired its review has ended: no
-replacement review resets it or sends a second command before it settles, and its eventual
-failure or success is still reported. A delete-ready confirmation whose review the browser
-dismissed reports its outcome beside the controls. Nothing is replayed automatically. **Start
+it was in flight reports that outcome beside the controls. While a script recovery
+(queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
+the outage that expired its review has ended: no replacement review resets it or sends a second
+command before it settles, and its eventual failure or success is still reported. A sent
+delete-ready confirmation holds the delete-ready launchers the same way while its review is open
+or has been expired by an outage; an outage or a reconnect does not release that hold. The one
+exception is a review the browser itself has already dismissed (it closes a modal dialog on a
+repeated Esc without asking): the confirmation is still pending, but a new review may open and
+read a new preview. That review cannot be confirmed while the first confirmation is pending,
+because these controls send one confirmation at a time; after the first settles, confirming the
+newer review is a separate explicit choice. The first confirmation's outcome is reported beside
+the controls, never in the newer review, and a newer review opened before it settles neither
+discards that outcome nor is closed by it. The outcome is the success message; when the API could
+not be reached, that the change may or may not have been saved; otherwise **Not saved: …** with
+the reason. Nothing is replayed automatically. **Start
 fresh session** also needs an observation read after the loss whose failure event names the same
 run, node and missing-session visit as the current record; it sends that failure event's own
 sequence even when later delivery audits exist. Its gate keeps the observation boundary it was
@@ -192,8 +201,8 @@ healthy, spends a choice queued before it even after the observation is read aga
 body, and that choice reports **Not sent**. A new choice after the qualifying observation read
 sends once. Other run controls stay available through an observation-only failure. Script consent
 keeps the run and observed sequence shown when its review opened. The Runs list's delete-ready
-controls share the hold on a pending confirmation and the report of a dismissed one; otherwise
-they and other pages keep their behaviour.
+controls share the hold on a sent confirmation, its exception after a browser dismissal and the
+report beside the controls; otherwise they and other pages keep their behaviour.
 
 ### Timeline sequence column (#420)
 
