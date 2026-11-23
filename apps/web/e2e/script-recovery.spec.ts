@@ -209,6 +209,12 @@ test('an uncertain script needs consent; deliberate Replay runs the script as a 
     await eventually(async () =>
       Boolean((await call<RunRecord>('GET', `/runs/${run.id}`)).finalizedAt),
     );
+    // The event-qualified header can lead the full run read. Wait for the inspector's
+    // finalized record before opening a review that freezes its recovery sequence.
+    await expect(
+      page.getByText('Execution: succeeded. Delivery is tracked separately.', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /^Fully finalized\.$/ })).toBeVisible();
     // Deliberate Replay runs the chosen script for a new run, preserving the source history.
     await page.getByRole('button', { name: 'Replay...', exact: true }).click();
     const replayDialog = page.getByRole('dialog', { name: 'Replay as a new run' });

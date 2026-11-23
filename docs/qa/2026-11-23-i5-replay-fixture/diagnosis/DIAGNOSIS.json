@@ -1,0 +1,110 @@
+{
+  "verdict": "CONFIRMED_NAMED_FIXTURE_SYNCHRONIZATION_RACE",
+  "ciRun": "45085137009",
+  "sourceHead": "2bb342d56ca5fb8754097a030fa2dd620bf456e0",
+  "sourceTree": "04e3d621d330dbd15321a6fab36e1d7c90ea9ec8",
+  "sourcePins": [
+    {
+      "path": "apps/web/e2e/script-recovery.spec.ts",
+      "bytes": 11149,
+      "sha256": "52ec358f1fe884acaad19e6f141411c6c5f2cb24988475369880b61a24b948c2",
+      "gitBlob": "2a84fcaa8de2f7a4d96bf84e79d35c2ffe1389eb"
+    },
+    {
+      "path": "apps/web/src/runs/inspector/RunControls.tsx",
+      "bytes": 6851,
+      "sha256": "da88e9b0f055315382e7b68b1c0b50b0e8a7cc4eb8423a0f75595d8e245f463d",
+      "gitBlob": "d315d288a0b2345e3d277aa2c0f528ed207451ce"
+    },
+    {
+      "path": "apps/web/src/runs/inspector/DeliveryPanel.tsx",
+      "bytes": 2201,
+      "sha256": "8dc597d626352d973e207d3241743d2d24f045ed535ad715a5bc3a839897a161",
+      "gitBlob": "6e3a0182160e67af065ea0d924a0b93a80cf80dc"
+    },
+    {
+      "path": "apps/web/src/runs/RunInspectorPage.tsx",
+      "bytes": 17868,
+      "sha256": "e21f759944b6d471c2d8cb32f76704a27d9200adaaec62ba283ba92f398d580e",
+      "gitBlob": "49d9106bc9c9dfe7ee026083322898843c68371b"
+    },
+    {
+      "path": "apps/web/src/api/queries.ts",
+      "bytes": 20887,
+      "sha256": "fa32606fe859b6591359c24526cc8bd797877d92f4bb162d0f793981f475936a",
+      "gitBlob": "79bb71f3d064bd429531d8cef35477c3d0af907d"
+    },
+    {
+      "path": "packages/engine/src/run-manager.ts",
+      "bytes": 137055,
+      "sha256": "51fce7753fbc2743ac266de475bbd4c9188bad671273312cb0c64e307b0eff3e",
+      "gitBlob": "4ad5fd9ad6c844ac54d52a8ed9c46660be598a18"
+    },
+    {
+      "path": "apps/api/src/routes/runs.ts",
+      "bytes": 19590,
+      "sha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+      "gitBlob": "656f81c3122e58d0645b6f9ae3b7cb77658e5674"
+    }
+  ],
+  "ciGateStillFailed": true,
+  "ciAccounting": {
+    "passed": 489,
+    "declaredSkipped": 1,
+    "failed": 1
+  },
+  "traceProof": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d233-script-replay-diagnosis-01\\trace-selected-evidence.json",
+    "bytes": 7061,
+    "sha256": "49bc9007eb9dd1a2096cc83a1eb7637e5f99f59f053a289d9d0c6e01d7b427ae"
+  },
+  "replay": "Dialog opened00:11:18.768 after running query snapshots seq12; browser finalized GETs started00:11:18.880 return succeeded/observedSeq18. POST00:11:18.905 still sends frozen12 and receives409 RECOVERY_STALE.",
+  "namedLocations": [
+    {
+      "path": "apps/web/e2e/script-recovery.spec.ts",
+      "lines": "207,209-216",
+      "fact": "Event-qualified badge plus test-side finalizedAt GET did not establish the browser full-row revision before opening the review."
+    },
+    {
+      "path": "apps/web/src/runs/inspector/RunControls.tsx",
+      "lines": "21,24-28,83-90",
+      "fact": "Review captures observedSeq at opening and submits that frozen sequence."
+    },
+    {
+      "path": "packages/engine/src/run-manager.ts",
+      "lines": "1743-1749",
+      "fact": "Current recovery observedSeq mismatch is refused before fork admission."
+    },
+    {
+      "path": "apps/web/src/runs/inspector/DeliveryPanel.tsx",
+      "lines": "5-14",
+      "fact": "Execution text and Fully finalized status derive from the actual run argument, not the event-qualified header."
+    },
+    {
+      "path": "apps/web/src/runs/RunInspectorPage.tsx",
+      "lines": "220-221,265,332",
+      "fact": "RunControls and DeliveryPanel consume the same full-query run record."
+    }
+  ],
+  "rootCorrectedFixture": {
+    "source": "G:\\ggq\\gg-i5-truthful-inspector\\GraphGoblin\\apps\\web\\e2e\\script-recovery.spec.ts",
+    "bytes": 11556,
+    "sha256": "750e77b3d83478b10591a9c052fc23ab0442e6edaba436cd4d2fe26a6d25320d"
+  },
+  "rootDelta": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d233-script-replay-diagnosis-01\\root-six-line-fixture-only.patch",
+    "bytes": 902,
+    "sha256": "eb9d5943198778f3c8bfc1a6e242dbb138ba11e575dbb32c2d2dc885ef772a14"
+  },
+  "deltaOnlySixAddedLines": true,
+  "newBarrier": "Exact Execution: succeeded. Delivery is tracked separately. first, then exact Fully finalized. status, before opening deliberate Replay.",
+  "whyBoth": "The execution assertion excludes the earlier failed run finalization even if the header leads the full read. The finalization assertion then waits for a succeeded finalized full row, whose recovery sequence will be frozen by the subsequent opener.",
+  "allOriginalAssertionsTimeoutsAndConsentHistoryChecksRetained": true,
+  "productionRepairJustifiedByThisFailure": false,
+  "classificationLimit": "This diagnoses the captured schedule and preserves the server stale-review guard; it is not a general product verdict. Corrected fixture execution and refreshed ordinary CI remain separate.",
+  "testsOrApplicationsLaunchedDuringDiagnosis": 0,
+  "sourceIndexProviderGitHubEditsByThisAgent": false,
+  "d234SourceRoleFundingAdmission": false,
+  "evidenceParserQualification": "Initial log-selection one-liner hit shell quoting; replaced by a file. Initial trace selector included app-navigation HTML, then was narrowed to API resource paths. No product execution or baseline alteration resulted.",
+  "createdUtc": "2026-11-23T00:23:53.523014+00:00"
+}
