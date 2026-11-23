@@ -202,7 +202,7 @@ The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's man
 
 ## CI gates (Decided)
 
-`.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
+`.github/workflows/ci.yml` runs seven jobs on pushes to `main` and pull requests. The jobs are macOS launcher, Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs use separate runners. Gates waits only for Repository checks and Coverage. The macOS launcher reports separately from that aggregate, so Gates can pass while the macOS job fails. The steps below describe the execution order within each job.
 
 The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
 
