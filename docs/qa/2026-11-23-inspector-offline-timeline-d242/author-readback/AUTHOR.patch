@@ -1,0 +1,1398 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c581ba55b206d4be94a903e1fb9aa83fc45f43ad..045744fb1c8ed1819e05d4366542706615ec72f3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -28,19 +28,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
+   a script recovery already sent is unresolved, no replacement review opens over it, so its late
+   failure or success is still reported. A sent delete-ready confirmation holds its review the same
+-  way while that review is open or was expired by an outage; an outage or reconnect does not
+-  release that hold. Only after the browser itself has dismissed that review (as on a repeated
+-  Esc) may a new review open and read a new preview, and it cannot be confirmed until the first
+-  confirmation settles. The first confirmation's outcome is then reported beside the controls,
+-  not in the newer review; if the API could not be reached, it says the change may or may not
+-  have been saved. Start fresh session additionally needs a post-outage observation
++  way while that review is open, was expired by an outage or was closed by withholding the run
++  section; an outage, reconnect or the section shown again does not release that hold. Only after
++  the browser itself has dismissed that review (as on a repeated Esc) may a new review open and
++  read a new preview, and it cannot be confirmed until the first confirmation settles. The first
++  confirmation's outcome is then reported beside the controls, not in the newer review; if the
++  API could not be reached, it says the change may or may not have been saved. A confirmation's
++  failure is shown in its own review only while that review is open and current, and otherwise
++  beside the controls. Start fresh session additionally needs a post-outage observation
+   of the same failure and still sends that failure's own sequence; a choice queued before a
+   failure of the observation read alone stays spent after that read recovers, including through a
+-  removed and recreated query or another accepted API key. That choice belongs to the inspector
+-  view rather than its run section: when the section is withheld until a run read under another
+-  accepted key qualifies, after a browser loss the view recorded, the control shown again stays
+-  disabled while the choice is pending and then reports **Not sent** rather than losing that
+-  outcome. Another run or a later visit shows neither its pending state nor its outcome. At most
++  removed and recreated query or another accepted API key. That choice, a script recovery retry
++  and a delete-ready confirmation belong to the inspector view rather than its run section; their
++  reviews stay with the section. When the section is withheld until a run read under another
++  accepted key qualifies, after a browser loss the view recorded, the controls shown again stay
++  disabled while the action is pending, so that fresh read cannot offer a second retry or
++  confirmation, and then report its actual outcome (**Not sent**, the retry's own error, or that a
++  confirmation may or may not have been saved) rather than losing it. Another run or a later visit
++  shows neither its pending state nor its outcome. At most
+   one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
+   it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
+   store, export or contract change.
+diff --git a/apps/web/src/runs/HistoryEligibility.test.tsx b/apps/web/src/runs/HistoryEligibility.test.tsx
+index af93894e57efb0cb3beb739f964ef6328b55b8f0..6c04284391cbf500c1ff84731e97f43bffb9fd55 100644
+--- a/apps/web/src/runs/HistoryEligibility.test.tsx
++++ b/apps/web/src/runs/HistoryEligibility.test.tsx
+@@ -5,7 +5,11 @@ import { expect, it } from 'vitest';
+ import { DeletionConfirmationSchema, DeletionSelectionSchema } from '@graphgoblin/contracts';
+ import { FakeApi, problem } from '../__fixtures__/fake-api.js';
+ import { renderApp, renderWith } from '../__fixtures__/render.js';
+-import { HistoryEligibility } from './HistoryEligibility.js';
++import {
++  HistoryEligibility,
++  HistoryEligibilityControls,
++  useHistoryConfirmation,
++} from './HistoryEligibility.js';
+ import type { WriteGate } from './inspector/RunControls.js';
+ 
+ function fakeConsent() {
+@@ -250,9 +254,15 @@ it.each([200, 409])(
+   },
+ );
+ 
+-/** The inspector's gate for one run, which an outage replaces (#416). */
++/**
++ * The inspector's arrangement for one visit of one run (#416): the view owns the confirmation, an
++ * outage replaces its gate, and the run section presenting the controls can be withheld.
++ */
+ function InspectorGate({ runId }: { runId: string }) {
+   const [state, setState] = useState(() => gateFor(undefined));
++  const [presented, setPresented] = useState(true);
++  const [visit] = useState(() => ({}));
++  const confirmation = useHistoryConfirmation({ owner: visit, availability: state.gate });
+   return (
+     <>
+       <button type="button" onClick={() => setState(gateFor('This browser is offline.'))}>
+@@ -261,7 +271,12 @@ function InspectorGate({ runId }: { runId: string }) {
+       <button type="button" onClick={() => setState(gateFor(undefined))}>
+         Read again
+       </button>
+-      <HistoryEligibility runIds={[runId]} availability={state.gate} />
++      <button type="button" onClick={() => setPresented((value) => !value)}>
++        Withhold or show the run
++      </button>
++      {presented ? (
++        <HistoryEligibilityControls runIds={[runId]} confirmation={confirmation} />
++      ) : null}
+     </>
+   );
+ }
+@@ -441,6 +456,126 @@ it('reports the outcome of a pending confirmation the browser dismissed (#416)',
+   expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
+ });
+ 
++/** Confirms the open review once its preview has been read. */
++async function confirmReview(user: ReturnType<typeof userEvent.setup>) {
++  const confirm = await screen.findByRole('button', { name: 'Confirm delete-ready selection' });
++  await waitFor(() => expect(confirm).toBeEnabled());
++  await user.click(confirm);
++}
++
++it.each(['fails in transport', 'succeeds'] as const)(
++  'keeps a confirmation sent before its controls were withheld the only one in the controls shown again, and reports there when it %s (#416)',
++  async (settle) => {
++    const api = fakeConsent(),
++      user = userEvent.setup();
++    const run = api.addRun({ status: 'succeeded' });
++    let finish!: (response: Response) => void;
++    let fail!: (error: Error) => void;
++    api.override(
++      'POST /runs/deletion-eligibility',
++      () =>
++        new Promise<Response>((resolve, reject) => {
++          finish = resolve;
++          fail = reject;
++        }),
++    );
++    renderWith(<InspectorGate runId={run.id} />, '/', api);
++    const review = () => screen.getByRole('button', { name: 'Review delete-ready history' });
++    const withdraw = () => screen.getByRole('button', { name: 'Withdraw delete-ready mark' });
++    const toggle = () => screen.getByRole('button', { name: 'Withhold or show the run' });
++    await user.click(review());
++    await confirmReview(user);
++    expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
++    const original = review();
++    // An outage expires the review, and the run section presenting the controls is withheld.
++    await user.click(screen.getByRole('button', { name: 'Lose connection' }));
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    await user.click(toggle());
++    expect(original).not.toBeInTheDocument();
++    // The run is read again under a new gate and shown again with new controls, which the
++    // confirmation sent before, still unresolved, alone holds.
++    await user.click(screen.getByRole('button', { name: 'Read again' }));
++    await user.click(toggle());
++    expect(review()).not.toBe(original);
++    expect(review()).toBeDisabled();
++    expect(withdraw()).toBeDisabled();
++    await user.click(review());
++    await user.click(withdraw());
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(1);
++    await act(async () => {
++      if (settle === 'succeeds')
++        finish(Response.json({ token: 'b'.repeat(64), items: [{ runId: run.id, reasons: [] }] }));
++      else fail(new TypeError('Failed to fetch'));
++      await Promise.resolve();
++    });
++    // The controls shown now report its outcome, and a new review may open only now.
++    const outcome =
++      settle === 'succeeds'
++        ? '1 run marked delete-ready.'
++        : /The change may or may not have been saved/;
++    expect(await screen.findByText(outcome)).toBeInTheDocument();
++    await waitFor(() => expect(review()).toBeEnabled());
++    expect(withdraw()).toBeEnabled();
++    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++    expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
++    api.override('POST /runs/deletion-eligibility', () =>
++      Response.json({ token: 'b'.repeat(64), items: [{ runId: run.id, reasons: [] }] }),
++    );
++    await user.click(review());
++    await confirmReview(user);
++    await waitFor(() => expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(2));
++    expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(2);
++  },
++);
++
++it('keeps a browser dismissal of a pending confirmation through withheld controls: a newer review is not confirmed before the first settles, which reports beside it (#416)', async () => {
++  const api = fakeConsent(),
++    user = userEvent.setup();
++  const run = api.addRun({ status: 'succeeded' });
++  let finish!: (response: Response) => void;
++  api.override(
++    'POST /runs/deletion-eligibility',
++    () =>
++      new Promise<Response>((resolve) => {
++        finish = resolve;
++      }),
++  );
++  renderWith(<InspectorGate runId={run.id} />, '/', api);
++  const review = () => screen.getByRole('button', { name: 'Review delete-ready history' });
++  const toggle = () => screen.getByRole('button', { name: 'Withhold or show the run' });
++  await user.click(review());
++  await confirmReview(user);
++  expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
++  const modal = screen.getByRole('dialog');
++  if (!(modal instanceof HTMLDialogElement)) throw new Error('Expected a native dialog.');
++  // The browser has already closed the native dialog (for example by repeated Escape).
++  act(() => modal.close());
++  await waitFor(() => expect(review()).toBeEnabled());
++  // Withheld and shown again, the controls keep that dismissal.
++  await user.click(toggle());
++  await user.click(toggle());
++  expect(review()).toBeEnabled();
++  // A newer review reads its own preview but cannot be confirmed while the first is pending.
++  await user.click(review());
++  const dialog = await screen.findByRole('dialog');
++  await waitFor(() => expect(posts(api, '/runs/deletion-eligibility/preview')).toHaveLength(2));
++  await waitFor(() => expect(within(dialog).queryByRole('status')).not.toBeInTheDocument());
++  expect(within(dialog).getByRole('button', { name: 'Saving…' })).toBeDisabled();
++  await act(async () => {
++    finish(problem(409, 'DELETION_SELECTION_STALE'));
++    await Promise.resolve();
++  });
++  // The first confirmation reports beside the controls, never in the newer review.
++  expect(await screen.findByText(/^Not saved: .*DELETION_SELECTION_STALE/)).toBeInTheDocument();
++  expect(screen.getByRole('dialog')).toBeVisible();
++  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
++  expect(
++    await screen.findByRole('button', { name: 'Confirm delete-ready selection' }),
++  ).toBeEnabled();
++  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(1);
++});
++
+ it('clears the Runs selection after a successful withdrawal', async () => {
+   const api = fakeConsent(),
+     user = userEvent.setup();
+diff --git a/apps/web/src/runs/HistoryEligibility.tsx b/apps/web/src/runs/HistoryEligibility.tsx
+index d8a03ff67ba417fb8a5a732367c315ef85c5a4e4..7f2bc5edf3560afdef868c3e1c2a469eb3c1dc95 100644
+--- a/apps/web/src/runs/HistoryEligibility.tsx
++++ b/apps/web/src/runs/HistoryEligibility.tsx
+@@ -7,51 +7,181 @@ import { Alert, Button, Dialog } from '../components/ui/index.js';
+ import { errorMessage, isOfflineError } from '../lib/utils.js';
+ import { OPEN_GATE, type WriteGate } from './inspector/RunControls.js';
+ 
++/** A delete-ready review: the explicit run IDs and action frozen when it opened, under its gate. */
++export interface HistoryReview {
++  readonly ids: string[];
++  readonly action: 'mark' | 'withdraw';
++  readonly gate: WriteGate;
++  readonly preview?: DeletionPreview;
++}
++
++/** What the API answered a sent confirmation. */
++export type HistoryResult =
++  | { readonly saved: true }
++  | { readonly saved: false; readonly error: unknown };
++
++/** A confirmation as sent, with the review it was sent from, and what happened to it. */
++interface Sent {
++  /** This confirmation's identity: a later one replaces it, and its late answer is dropped. */
++  readonly ticket: object;
++  readonly owner: object;
++  readonly review: HistoryReview;
++  /** The browser itself has dismissed the review it was sent from. */
++  readonly released: boolean;
++  /** Absent while it is in flight. */
++  readonly result?: HistoryResult;
++}
++
++/** One owner's delete-ready confirmation (#416). */
++export interface HistoryConfirmation {
++  /** The write gate now: a review opens under it, and a confirmation is sent only under it. */
++  readonly availability: WriteGate;
++  /** A confirmation this owner sent is in flight; no other is sent until it settles. */
++  readonly pending: boolean;
++  /** It still holds the review controls: the browser has not dismissed its review. */
++  readonly holding: boolean;
++  /** This owner's latest settled confirmation, until a new review or a dismissal clears it. */
++  readonly settled: { readonly review: HistoryReview; readonly result: HistoryResult } | undefined;
++  /** Send the confirmation `review` asks for; it must be open, current and previewed. */
++  readonly confirm: (review: HistoryReview) => void;
++  /** The browser dismissed the review of the pending confirmation. */
++  readonly release: () => void;
++  /** Clear a settled confirmation; a pending one keeps its report. */
++  readonly clear: () => void;
++}
++
++/**
++ * The delete-ready confirmation, owned apart from the controls that present it. The inspector
++ * calls this for the view (`owner` is its visit), so a confirmation sent before its run section
++ * was withheld keeps holding the controls shown again, and reports there, until it settles;
++ * another run or a later visit shows neither its pending state nor its outcome. The review
++ * itself, with its preview, stays with the controls and ends with them.
++ */
++export function useHistoryConfirmation({
++  owner,
++  availability,
++  onConfirmed,
++}: {
++  owner: object;
++  /** The inspector's write gate (#416); the Runs list keeps ordinary behaviour. */
++  availability: WriteGate;
++  onConfirmed?: (confirmedIds: string[]) => void;
++}): HistoryConfirmation {
++  const client = useApi();
++  const queryClient = useQueryClient();
++  const [sent, setSent] = useState<Sent>();
++  const own = sent?.owner === owner ? sent : undefined;
++  const pending = own !== undefined && own.result === undefined;
++  const update = (ticket: object, change: (current: Sent) => Sent | undefined) =>
++    setSent((current) => (current?.ticket === ticket ? change(current) : current));
++  return {
++    availability,
++    pending,
++    holding: own !== undefined && own.result === undefined && !own.released,
++    settled: own?.result && { review: own.review, result: own.result },
++    confirm: (review) => {
++      const { preview } = review;
++      if (!preview || pending || review.gate !== availability || !review.gate.open()) return;
++      const ticket = {};
++      setSent({ ticket, owner, review, released: false });
++      const send = async () => {
++        try {
++          await runs.confirmDeletion(client, {
++            runIds: review.ids,
++            action: review.action,
++            token: preview.token,
++            confirmed: true,
++          });
++        } catch (error) {
++          update(ticket, (current) => ({ ...current, result: { saved: false, error } }));
++          return;
++        }
++        update(ticket, (current) => ({ ...current, result: { saved: true } }));
++        onConfirmed?.(review.ids);
++        await queryClient.invalidateQueries({ queryKey: ['runs'] });
++      };
++      void send();
++    },
++    release: () => {
++      if (own !== undefined && own.result === undefined)
++        update(own.ticket, (current) => ({ ...current, released: true }));
++    },
++    clear: () => {
++      if (own?.result !== undefined) update(own.ticket, () => undefined);
++    },
++  };
++}
++
++const UNCERTAIN =
++  'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.';
++
++/**
++ * Where a settled confirmation is reported: its failure in the review it was sent from while that
++ * review is open and current, everything else beside the controls, never in a newer review.
++ */
++function report(
++  settled: HistoryConfirmation['settled'],
++  active: HistoryReview | undefined,
++): { review?: string; controls?: string } {
++  if (!settled) return {};
++  const { review, result } = settled;
++  if (result.saved) {
++    const count = review.ids.length;
++    const noun = count === 1 ? 'run' : 'runs';
++    return {
++      controls:
++        review.action === 'mark'
++          ? `${count} ${noun} marked delete-ready.`
++          : `Deletion approval withdrawn for ${count} ${noun}.`,
++    };
++  }
++  const reason = errorMessage(result.error);
++  if (review === active) return { review: reason };
++  return { controls: isOfflineError(result.error) ? UNCERTAIN : `Not saved: ${reason}` };
++}
++
+ /** Freeze the explicit IDs at review time: polling and new history cannot extend consent. */
+-export function HistoryEligibility({
++export function HistoryEligibilityControls({
+   runIds,
+-  onConfirmed,
+-  availability = OPEN_GATE,
++  confirmation,
+ }: {
+   runIds: string[];
+-  onConfirmed?: (confirmedIds: string[]) => void;
+-  /** The inspector's write gate (#416); the Runs list keeps ordinary behaviour. */
+-  availability?: WriteGate;
++  /** The owner's confirmation, from `useHistoryConfirmation`. */
++  confirmation: HistoryConfirmation;
+ }) {
+   const client = useApi();
+-  const queryClient = useQueryClient();
+-  const [review, setReview] = useState<{
+-    ids: string[];
+-    action: 'mark' | 'withdraw';
+-    gate: WriteGate;
+-    preview?: DeletionPreview;
+-  }>();
+-  const [busy, setBusy] = useState(false);
++  const { availability } = confirmation;
++  const [review, setReview] = useState<HistoryReview>();
+   const [error, setError] = useState<string>();
+-  const [outcome, setOutcome] = useState<string>();
+   const selectionRef = useRef<HTMLSpanElement>(null);
+   const generationRef = useRef(0);
+   // A review belongs to the gate it was opened under: an outage, a reconnect or another visit
+-  // expires it, together with any preview that arrives late for it.
+-  const active = review?.gate === availability ? review : undefined;
++  // expires it, together with any preview that arrives late for it. A saved one is finished.
++  const done = confirmation.settled?.result.saved && confirmation.settled.review === review;
++  const active = review?.gate === availability && !done ? review : undefined;
++  const reported = report(confirmation.settled, active);
++  const shownError = error ?? reported.review;
+   const unavailable = availability.blocked !== undefined;
+   // A sent confirmation keeps its review, open or expired by an outage, until it settles: no
+-  // replacement review opens over it, so its outcome is still reported here (#416).
+-  const holding = busy && review !== undefined;
++  // replacement review opens over it, so its outcome is still reported here (#416). Withholding
++  // these controls ends the review but not that hold.
++  const held = confirmation.holding || (confirmation.pending && review !== undefined);
+ 
+   const dismiss = () => {
+     generationRef.current++;
++    // A failure reported in this review is dismissed with it.
++    if (reported.review !== undefined) confirmation.clear();
+     setReview(undefined);
+     setError(undefined);
+   };
+   const begin = async (action: 'mark' | 'withdraw') => {
+     const gate = availability;
+-    if (holding || !gate.open()) return;
++    if (held || !gate.open()) return;
+     const request = ++generationRef.current;
+     const ids = [...runIds];
+     setReview({ ids, action, gate });
+     setError(undefined);
+-    setOutcome(undefined);
++    confirmation.clear();
+     try {
+       const preview = await runs.previewDeletion(client, ids);
+       if (generationRef.current === request && gate.open())
+@@ -60,43 +190,6 @@ export function HistoryEligibility({
+       if (generationRef.current === request) setError(errorMessage(failure));
+     }
+   };
+-  const confirm = async () => {
+-    const current = active;
+-    if (!current?.preview || busy || !current.gate.open()) return;
+-    const request = generationRef.current;
+-    setBusy(true);
+-    setError(undefined);
+-    try {
+-      await runs.confirmDeletion(client, {
+-        runIds: current.ids,
+-        action: current.action,
+-        token: current.preview.token,
+-        confirmed: true,
+-      });
+-      const count = current.ids.length;
+-      const noun = count === 1 ? 'run' : 'runs';
+-      setOutcome(
+-        current.action === 'mark'
+-          ? `${count} ${noun} marked delete-ready.`
+-          : `Deletion approval withdrawn for ${count} ${noun}.`,
+-      );
+-      onConfirmed?.(current.ids);
+-      if (generationRef.current === request) dismiss();
+-      await queryClient.invalidateQueries({ queryKey: ['runs'] });
+-    } catch (failure) {
+-      // A sent confirmation always reports what happened to it: in its review while that is still
+-      // open and current, otherwise beside the controls, leaving any newer review intact.
+-      if (generationRef.current === request && current.gate.open()) setError(errorMessage(failure));
+-      else
+-        setOutcome(
+-          isOfflineError(failure)
+-            ? 'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.'
+-            : `Not saved: ${errorMessage(failure)}`,
+-        );
+-    } finally {
+-      setBusy(false);
+-    }
+-  };
+   const blocked =
+     active?.action === 'mark' && active.preview?.items.some((item) => item.reasons.length > 0);
+   return (
+@@ -105,7 +198,7 @@ export function HistoryEligibility({
+         <Button
+           size="sm"
+           variant="outline"
+-          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
++          disabled={!runIds.length || runIds.length > 500 || unavailable || held}
+           onClick={() => void begin('mark')}
+         >
+           Review delete-ready history
+@@ -113,7 +206,7 @@ export function HistoryEligibility({
+         <Button
+           size="sm"
+           variant="ghost"
+-          disabled={!runIds.length || runIds.length > 500 || unavailable || holding}
++          disabled={!runIds.length || runIds.length > 500 || unavailable || held}
+           onClick={() => void begin('withdraw')}
+         >
+           Withdraw delete-ready mark
+@@ -128,14 +221,18 @@ export function HistoryEligibility({
+           {runIds.length} selected
+         </span>
+         <span className="text-sm text-muted" aria-live="polite" aria-atomic="true">
+-          {outcome}
++          {reported.controls}
+         </span>
+       </div>
+       <Dialog
+         open={active !== undefined}
+-        returnFocus={() => (outcome ? selectionRef.current : undefined)}
++        returnFocus={() => (reported.controls ? selectionRef.current : undefined)}
+         onClose={(reason) => {
+-          if (!busy || reason === 'dismissed') dismiss();
++          if (confirmation.pending && reason !== 'dismissed') return;
++          // The browser has already closed the review of a pending confirmation: that review no
++          // longer holds the controls, though a new one cannot be confirmed until it settles.
++          if (confirmation.pending) confirmation.release();
++          dismiss();
+         }}
+         title={
+           active?.action === 'mark'
+@@ -144,16 +241,22 @@ export function HistoryEligibility({
+         }
+         footer={
+           <div className="flex gap-2">
+-            <Button variant="outline" disabled={busy} onClick={dismiss}>
++            <Button variant="outline" disabled={confirmation.pending} onClick={dismiss}>
+               Cancel
+             </Button>
+             <Button
+               disabled={
+-                busy || unavailable || !active?.preview || Boolean(blocked) || Boolean(error)
++                confirmation.pending ||
++                unavailable ||
++                !active?.preview ||
++                Boolean(blocked) ||
++                shownError !== undefined
+               }
+-              onClick={() => void confirm()}
++              onClick={() => {
++                if (active) confirmation.confirm(active);
++              }}
+             >
+-              {busy
++              {confirmation.pending
+                 ? 'Saving…'
+                 : active?.action === 'mark'
+                   ? 'Confirm delete-ready selection'
+@@ -188,16 +291,31 @@ export function HistoryEligibility({
+               </li>
+             ))}
+           </ul>
+-          {!active?.preview && !error ? <p role="status">Checking selected history…</p> : null}
++          {!active?.preview && shownError === undefined ? (
++            <p role="status">Checking selected history…</p>
++          ) : null}
+           {blocked ? (
+             <Alert>
+               No history will be marked. Resolve every protected record and review the selection
+               again.
+             </Alert>
+           ) : null}
+-          {error ? <Alert>{error} Cancel and review again.</Alert> : null}
++          {shownError !== undefined ? <Alert>{shownError} Cancel and review again.</Alert> : null}
+         </div>
+       </Dialog>
+     </>
+   );
+ }
++
++/** The Runs list's delete-ready controls: one owner, ordinary availability. */
++export function HistoryEligibility({
++  runIds,
++  onConfirmed,
++}: {
++  runIds: string[];
++  onConfirmed?: (confirmedIds: string[]) => void;
++}) {
++  const [owner] = useState(() => ({}));
++  const confirmation = useHistoryConfirmation({ owner, availability: OPEN_GATE, onConfirmed });
++  return <HistoryEligibilityControls runIds={runIds} confirmation={confirmation} />;
++}
+diff --git a/apps/web/src/runs/RunInspectorPage.offline.test.tsx b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+index 168102c47d55b6e43a029d107ded8dcec46a19a9..87de23518a19bc7844b9d021b46897e2a9265bae 100644
+--- a/apps/web/src/runs/RunInspectorPage.offline.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+@@ -1,5 +1,9 @@
+ import { runs } from '@graphgoblin/api-client';
+-import type { RunRecord } from '@graphgoblin/contracts';
++import {
++  DeletionConfirmationSchema,
++  DeletionSelectionSchema,
++  type RunRecord,
++} from '@graphgoblin/contracts';
+ import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import { onlineManager, QueryClient } from '@tanstack/react-query';
+ import { act, render, screen, waitFor, within } from '@testing-library/react';
+@@ -196,6 +200,98 @@ async function loseRunRead(view: Rendered, runId: string) {
+ 
+ const posts = (api: FakeApi) => api.calls.filter((call) => call.method === 'POST');
+ 
++const UNCONFIRMED = /^This run has not been confirmed since the connection was lost\./;
++const UNCERTAIN =
++  'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.';
++
++/** Failed at `script`, whose outcome is uncertain: Recover script asks for explicit consent. */
++function uncertainScriptRun(api: FakeApi, overrides: Partial<RunRecord> = {}) {
++  const run = startedRun(api, {
++    status: 'failed',
++    lastEventSeq: 3,
++    currentNodeId: 'script',
++    failure: {
++      code: 'SCRIPT_OUTCOME_UNCERTAIN',
++      message: 'uncertain',
++      nodeId: 'script',
++      resumable: true,
++    },
++    ...overrides,
++  });
++  api.pushEvent(run.id, event(run.id, 3, 'run.failed', { failure: run.failure! }));
++  return run;
++}
++
++/** Every delete-ready preview is clear; each confirmation is held until the test settles it. */
++function heldConfirmations(api: FakeApi) {
++  const held: { save: () => void; fail: (error: Error) => void }[] = [];
++  const clear = (runIds: string[]) => ({
++    token: 'b'.repeat(64),
++    items: runIds.map((runId) => ({ runId, reasons: [] })),
++  });
++  api.override('POST /runs/deletion-eligibility/preview', ({ body }) =>
++    Response.json({ ...clear(DeletionSelectionSchema.parse(body).runIds), token: 'a'.repeat(64) }),
++  );
++  api.override(
++    'POST /runs/deletion-eligibility',
++    ({ body }) =>
++      new Promise<Response>((resolve, reject) => {
++        const { runIds } = DeletionConfirmationSchema.parse(body);
++        held.push({ save: () => resolve(Response.json(clear(runIds))), fail: reject });
++      }),
++  );
++  return held;
++}
++
++/** Chooses Resume in the open script recovery review. */
++async function resumeInReview(user: ReturnType<typeof userEvent.setup>) {
++  const dialog = await screen.findByRole('dialog', { name: 'Recover script' });
++  await user.click(within(dialog).getByRole('button', { name: 'Resume' }));
++}
++
++/** Confirms the open delete-ready review once its preview has been read. */
++async function confirmReview(user: ReturnType<typeof userEvent.setup>) {
++  const confirm = await screen.findByRole('button', { name: 'Confirm delete-ready selection' });
++  await waitFor(() => expect(confirm).toBeEnabled());
++  await user.click(confirm);
++}
++
++/** The browser disconnects and reconnects; a run read that started after the loss commits. */
++async function browserOutage() {
++  act(() => onlineManager.setOnline(false));
++  expect(await screen.findByText(/This browser is offline\./)).toBeVisible();
++  act(() => onlineManager.setOnline(true));
++  await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
++}
++
++/**
++ * Another tab stores a second accepted key, which the mounted API key panel follows, while run
++ * reads are held. No read under that key has committed and this view has recorded a browser
++ * loss, so the run section, its header and its controls are withheld rather than shown from an
++ * unproved row. Returns the header shown before.
++ */
++async function withholdForAnotherKey(
++  api: FakeApi,
++  runId: string,
++  reads: ReturnType<typeof heldRunReads>,
++) {
++  const original = screen.getByRole('heading', { name: 'Run ' + runId }).closest('header')!;
++  reads.state.blocking = true;
++  localStorage.setItem(API_KEY_STORAGE, 'gg_second_key');
++  act(() => {
++    window.dispatchEvent(new StorageEvent('storage', { key: API_KEY_STORAGE }));
++  });
++  expect(original).not.toBeInTheDocument();
++  expect(screen.queryByRole('heading', { name: 'Run ' + runId })).toBeNull();
++  expect(screen.getByText(UNCONFIRMED)).toBeVisible();
++  // The run is read again under the second key, and that read is held.
++  await waitFor(() => expect(reads.state.held).toBeGreaterThan(0));
++  const read = api.callsTo('GET', `/runs/${runId}`).at(-1);
++  expect(read?.headers.get('authorization')).toBe('Bearer gg_second_key');
++  expect(screen.queryByRole('heading', { name: 'Run ' + runId })).toBeNull();
++  return original;
++}
++
+ describe('run inspector through an outage (#416)', () => {
+   it('keeps a waiting run, its form and same-wait draft as last observed, and sends nothing', async () => {
+     const api = new FakeApi();
+@@ -1055,6 +1151,260 @@ describe('run inspector through an outage (#416)', () => {
+     },
+   );
+ 
++  it.each(['fails in transport', 'succeeds'] as const)(
++    'keeps a script retry sent before a browser outage the only one through a run section withheld for another accepted API key, and reports it when it %s',
++    async (settle) => {
++      // The first accepted key, stored before the app opens.
++      useApiKeyStore.getState().save('gg_first_key');
++      const api = new FakeApi();
++      const run = uncertainScriptRun(api);
++      const reads = heldRunReads(api);
++      let answer!: (response: Response) => void;
++      let fail!: (error: Error) => void;
++      api.override(
++        'POST /runs/:id/resume',
++        () =>
++          new Promise<Response>((resolve, reject) => {
++            answer = resolve;
++            fail = reject;
++          }),
++      );
++      const view = renderApp('/runs/' + run.id, api);
++      const user = userEvent.setup();
++      const header = () =>
++        screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
++      const recover = () => button('Recover script');
++      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
++      try {
++        await openRun(run.id);
++        await user.click(recover());
++        await resumeInReview(user);
++        await waitFor(() => expect(resumes()).toHaveLength(1));
++        expect(resumes()[0]!.body).toEqual({ observedSeq: 3, retryUncertainScript: true });
++
++        // The browser disconnects, which expires the review, and reconnects. A run read that
++        // started after the loss commits the same failure; the retry sent before is unresolved.
++        await browserOutage();
++        expect(screen.getByText('Failed: SCRIPT_OUTCOME_UNCERTAIN')).toBeVisible();
++        expect(screen.queryByRole('dialog')).toBeNull();
++        expect(recover()).toBeDisabled();
++
++        const originalRecover = recover();
++        const originalHeader = await withholdForAnotherKey(api, run.id, reads);
++        expect(originalRecover).not.toBeInTheDocument();
++        expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull();
++
++        // The held read returns the same failed run under the second key. The run is shown again
++        // with a new header and control, which the retry still unresolved alone keeps disabled.
++        reads.release();
++        await openRun(run.id);
++        expect(header()).not.toBe(originalHeader);
++        const replacement = recover();
++        expect(replacement).not.toBe(originalRecover);
++        expect(replacement).toBeDisabled();
++        expect(within(header()).queryByRole('alert')).toBeNull();
++        await user.click(replacement);
++        expect(screen.queryByRole('dialog')).toBeNull();
++        expect(resumes()).toHaveLength(1);
++
++        if (settle === 'fails in transport') {
++          await act(async () => {
++            fail(new TypeError('Failed to fetch'));
++            await Promise.resolve();
++          });
++          // The control shown now reports the retry's own failure, and keeps reporting it.
++          const outcome = await within(header()).findByRole('alert');
++          expect(outcome).toHaveTextContent(/^The GraphGoblin API cannot be reached\.$/);
++          await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
++          expect(within(header()).getByRole('alert')).toHaveTextContent(
++            /^The GraphGoblin API cannot be reached\.$/,
++          );
++          // A new explicit choice, made only now, sends once more with the same consent.
++          api.override('POST /runs/:id/resume', (call) => api.builtIn(call));
++          await waitFor(() => expect(recover()).toBeEnabled());
++          await user.click(recover());
++          await resumeInReview(user);
++          await waitFor(() => expect(resumes()).toHaveLength(2));
++          expect(resumes()[1]!.body).toEqual({ observedSeq: 3, retryUncertainScript: true });
++        } else {
++          const running: RunRecord = { ...api.runs.get(run.id)!, status: 'running' };
++          delete running.failure;
++          await act(async () => {
++            api.runs.set(run.id, running);
++            answer(Response.json(running));
++            await Promise.resolve();
++          });
++          await waitFor(() =>
++            expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull(),
++          );
++          expect(within(header()).queryByRole('alert')).toBeNull();
++          expect(resumes()).toHaveLength(1);
++        }
++        expect(posts(api)).toHaveLength(settle === 'succeeds' ? 1 : 2);
++      } finally {
++        reads.release();
++        view.unmount();
++      }
++    },
++  );
++
++  it.each(['fails in transport', 'succeeds'] as const)(
++    'keeps a delete-ready confirmation sent before a browser outage the only one through a run section withheld for another accepted API key, and reports it when it %s',
++    async (settle) => {
++      // The first accepted key, stored before the app opens.
++      useApiKeyStore.getState().save('gg_first_key');
++      const api = new FakeApi();
++      const run = startedRun(api, { status: 'succeeded', lastEventSeq: 3, currentNodeId: 'done' });
++      api.pushEvent(
++        run.id,
++        event(run.id, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
++      );
++      const confirmations = heldConfirmations(api);
++      const reads = heldRunReads(api);
++      const view = renderApp('/runs/' + run.id, api);
++      const user = userEvent.setup();
++      const header = () =>
++        screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
++      const review = () => button('Review delete-ready history');
++      const withdraw = () => button('Withdraw delete-ready mark');
++      const previews = () => api.callsTo('POST', '/runs/deletion-eligibility/preview');
++      const confirms = () => api.callsTo('POST', '/runs/deletion-eligibility');
++      const outcome = settle === 'succeeds' ? '1 run marked delete-ready.' : UNCERTAIN;
++      try {
++        await openRun(run.id);
++        await user.click(review());
++        await confirmReview(user);
++        expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled();
++        expect(confirms()).toHaveLength(1);
++        expect(confirms()[0]!.body).toEqual({
++          runIds: [run.id],
++          action: 'mark',
++          token: 'a'.repeat(64),
++          confirmed: true,
++        });
++
++        // The browser disconnects, which expires the review, and reconnects. A run read that
++        // started after the loss commits; the confirmation sent before is unresolved.
++        await browserOutage();
++        expect(screen.queryByRole('dialog')).toBeNull();
++        expect(review()).toBeDisabled();
++        expect(withdraw()).toBeDisabled();
++
++        const originalReview = review();
++        const originalHeader = await withholdForAnotherKey(api, run.id, reads);
++        expect(originalReview).not.toBeInTheDocument();
++        expect(screen.queryByRole('button', { name: 'Review delete-ready history' })).toBeNull();
++
++        // The held read returns the same run under the second key. The run is shown again with
++        // new controls, which the confirmation still unresolved alone holds.
++        reads.release();
++        await openRun(run.id);
++        expect(header()).not.toBe(originalHeader);
++        expect(review()).not.toBe(originalReview);
++        expect(review()).toBeDisabled();
++        expect(withdraw()).toBeDisabled();
++        // An attempt to open a replacement review opens nothing and reads no preview.
++        await user.click(review());
++        await user.click(withdraw());
++        expect(screen.queryByRole('dialog')).toBeNull();
++        expect(previews()).toHaveLength(1);
++        expect(confirms()).toHaveLength(1);
++        expect(screen.queryByText(outcome)).toBeNull();
++
++        await act(async () => {
++          if (settle === 'succeeds') confirmations[0]!.save();
++          else confirmations[0]!.fail(new TypeError('Failed to fetch'));
++          await Promise.resolve();
++        });
++        // The controls shown now report what happened to it: saved, or possibly saved.
++        expect(await screen.findByText(outcome)).toBeVisible();
++        await waitFor(() => expect(review()).toBeEnabled());
++        expect(withdraw()).toBeEnabled();
++        expect(screen.queryByRole('dialog')).toBeNull();
++        expect(confirms()).toHaveLength(1);
++
++        // A new explicit review, opened only now, reads its own preview and is confirmed once.
++        await user.click(review());
++        await confirmReview(user);
++        await waitFor(() => expect(confirms()).toHaveLength(2));
++        expect(previews()).toHaveLength(2);
++        expect(posts(api)).toHaveLength(4);
++      } finally {
++        reads.release();
++        view.unmount();
++      }
++    },
++  );
++
++  it.each(['script retry', 'delete-ready confirmation'] as const)(
++    'keeps a %s sent for one run from holding or reporting on another run opened in the same view',
++    async (kind) => {
++      const api = new FakeApi();
++      const b = uncertainScriptRun(api);
++      const a = uncertainScriptRun(api, { parentRunId: b.id });
++      const confirmations = heldConfirmations(api);
++      let fail!: (error: Error) => void;
++      api.override(
++        'POST /runs/:id/resume',
++        () =>
++          new Promise<Response>((_resolve, reject) => {
++            fail = reject;
++          }),
++      );
++      const view = renderApp('/runs/' + a.id, api);
++      const user = userEvent.setup();
++      const script = kind === 'script retry';
++      const launcher = () => button(script ? 'Recover script' : 'Review delete-ready history');
++      const header = (runId: string) =>
++        screen.getByRole('heading', { name: 'Run ' + runId }).closest('header')!;
++      const resumes = (runId: string) => api.callsTo('POST', `/runs/${runId}/resume`);
++      const confirms = () => api.callsTo('POST', '/runs/deletion-eligibility');
++      const selections = () =>
++        confirms().map((call) => DeletionConfirmationSchema.parse(call.body).runIds);
++      const mutations = view.queryClient.getMutationCache();
++      // The shown run's own action, chosen in its review.
++      const choose = async () => {
++        await user.click(launcher());
++        await (script ? resumeInReview(user) : confirmReview(user));
++      };
++      try {
++        await openRun(a.id);
++        await choose();
++        await waitFor(() => expect(script ? resumes(a.id) : confirms()).toHaveLength(1));
++        expect(launcher()).toBeDisabled();
++
++        // A's header links its parent, B, which opens in the same view while A's is unresolved.
++        await user.click(within(header(a.id)).getByRole('link', { name: 'parent run' }));
++        await openRun(b.id);
++        // B shows its own controls: A's action does not hold them.
++        await waitFor(() => expect(launcher()).toBeEnabled());
++
++        // A's action fails in transport while B is shown, and is not reported as B's outcome.
++        await act(async () => {
++          if (script) fail(new TypeError('Failed to fetch'));
++          else confirmations[0]!.fail(new TypeError('Failed to fetch'));
++          await new Promise((resolve) => setTimeout(resolve, 50));
++        });
++        if (script) expect(mutations.getAll().map(({ state }) => state.status)).toEqual(['error']);
++        expect(within(header(b.id)).queryByRole('alert')).toBeNull();
++        expect(screen.queryByText(UNCERTAIN)).toBeNull();
++        expect(launcher()).toBeEnabled();
++
++        // B's own action is sent once, for B.
++        await choose();
++        if (script) {
++          await waitFor(() => expect(resumes(b.id)).toHaveLength(1));
++          expect(resumes(a.id)).toHaveLength(1);
++        } else {
++          await waitFor(() => expect(selections()).toEqual([[a.id], [b.id]]));
++        }
++        expect(posts(api)).toHaveLength(script ? 2 : 4);
++      } finally {
++        view.unmount();
++      }
++    },
++  );
++
+   it.each(['nothing', 'only the run read of A', 'the browser'] as const)(
+     'keeps run B as its own reads say after %s was lost while A was shown',
+     async (lost) => {
+diff --git a/apps/web/src/runs/RunInspectorPage.tsx b/apps/web/src/runs/RunInspectorPage.tsx
+index e577a7f3cabfe40cde01ef70f391c8bcea09342c..0473418f644135d9f5394c70deb281f495cc911a 100644
+--- a/apps/web/src/runs/RunInspectorPage.tsx
++++ b/apps/web/src/runs/RunInspectorPage.tsx
+@@ -1,7 +1,7 @@
+ import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.js';
+ import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
+ import { RunLimits } from './inspector/RunLimits.js';
+-import { HistoryEligibility } from './HistoryEligibility.js';
++import { HistoryEligibilityControls, useHistoryConfirmation } from './HistoryEligibility.js';
+ import { formatDateTime, isOfflineError } from '../lib/utils.js';
+ import { isTerminal } from '@graphgoblin/domain';
+ import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query';
+@@ -29,7 +29,7 @@ import {
+   trackInspectorRead,
+   useInspectorRead,
+ } from './inspector-read-provenance.js';
+-import { ScriptRecovery } from './inspector/ScriptRecovery.js';
++import { ScriptRecovery, useScriptRetry } from './inspector/ScriptRecovery.js';
+ import {
+   SessionRecoveryControls,
+   useSessionRecovery,
+@@ -368,6 +368,12 @@ export function RunInspectorPage() {
+     events: recovery,
+     availability: sessionGate,
+   });
++  // Script recovery and the delete-ready confirmation are owned the same way. A retry or
++  // confirmation sent before the section was withheld stays the only one: the controls shown again
++  // stay disabled until it settles, then report its actual outcome. Their reviews belong to the
++  // section and end with it; the write checks are the ones they always made.
++  const scriptRetry = useScriptRetry({ owner: visit, availability: gate });
++  const historyConfirmation = useHistoryConfirmation({ owner: visit, availability: gate });
+ 
+   // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
+   // failed query, a read in flight is joined, and one started before the loss settles first (it
+@@ -521,7 +527,7 @@ export function RunInspectorPage() {
+             </div>
+             <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
+               <RunControls run={run} availability={gate} />
+-              <ScriptRecovery run={run} availability={gate} />
++              <ScriptRecovery run={run} retry={scriptRetry} />
+             </div>
+           </header>
+           {outage ? (
+@@ -583,7 +589,7 @@ export function RunInspectorPage() {
+                 ? `Delete-ready: confirmed by ${run.deletionApproval.confirmedBy.id} at ${formatDateTime(run.deletionApproval.confirmedAt)}.`
+                 : 'History retained.'}
+             </p>
+-            <HistoryEligibility runIds={[run.id]} availability={gate} />
++            <HistoryEligibilityControls runIds={[run.id]} confirmation={historyConfirmation} />
+           </div>
+           {/* While the run is last observed, execution context names nodes by their recorded IDs,
+               says the pinned definition is unavailable rather than loading, and takes a
+diff --git a/apps/web/src/runs/ScriptRecovery.test.tsx b/apps/web/src/runs/ScriptRecovery.test.tsx
+index de0a59115fa388fdff754144c5e8fc976a264150..84c0f2625dbb9b2cdacb40458fda731431e08e78 100644
+--- a/apps/web/src/runs/ScriptRecovery.test.tsx
++++ b/apps/web/src/runs/ScriptRecovery.test.tsx
+@@ -1,8 +1,13 @@
+-import { screen, waitFor, within } from '@testing-library/react';
++import { runs, type RunSnapshot } from '@graphgoblin/api-client';
++import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
++import { useState } from 'react';
+ import { describe, expect, it } from 'vitest';
+ import { FakeApi, event } from '../__fixtures__/fake-api.js';
+-import { renderApp } from '../__fixtures__/render.js';
++import { renderApp, renderWith } from '../__fixtures__/render.js';
++import { createAppClient } from '../api/context.js';
++import type { WriteGate } from './inspector/RunControls.js';
++import { ScriptRecovery, useScriptRetry } from './inspector/ScriptRecovery.js';
+ 
+ function failedScript(
+   code: 'SCRIPT_OUTCOME_UNCERTAIN' | 'SCRIPT_START_FAILED' = 'SCRIPT_OUTCOME_UNCERTAIN',
+@@ -29,6 +34,42 @@ function failedScript(
+   return { api, run };
+ }
+ 
++let currentGate: WriteGate | undefined;
++function gateFor(blocked: string | undefined) {
++  const gate: WriteGate = {
++    blocked,
++    open: () => blocked === undefined && currentGate === gate,
++    shown: () => true,
++  };
++  currentGate = gate;
++  return { gate };
++}
++
++/**
++ * The inspector's arrangement for one visit of one run (#416): the view owns the retry, an outage
++ * replaces its gate, and the run section presenting the control can be withheld.
++ */
++function Inspector({ run }: { run: RunSnapshot }) {
++  const [state, setState] = useState(() => gateFor(undefined));
++  const [presented, setPresented] = useState(true);
++  const [visit] = useState(() => ({}));
++  const retry = useScriptRetry({ owner: visit, availability: state.gate });
++  return (
++    <>
++      <button type="button" onClick={() => setState(gateFor('This browser is offline.'))}>
++        Lose connection
++      </button>
++      <button type="button" onClick={() => setState(gateFor(undefined))}>
++        Read again
++      </button>
++      <button type="button" onClick={() => setPresented((value) => !value)}>
++        Withhold or show the run
++      </button>
++      {presented ? <ScriptRecovery run={run} retry={retry} /> : null}
++    </>
++  );
++}
++
+ describe('deliberate script recovery (#321)', () => {
+   it('follows a resumed script from running through its next outcome without a reload', async () => {
+     const { api, run } = failedScript();
+@@ -155,4 +196,74 @@ describe('deliberate script recovery (#321)', () => {
+     await user.click(screen.getByRole('button', { name: 'Resume' }));
+     expect(await screen.findByText(/Resume refused/)).toBeInTheDocument();
+   });
++
++  it.each(['fails in transport', 'succeeds'] as const)(
++    'keeps a retry sent before its section was withheld the only one in the section shown again, and reports it when it %s (#416)',
++    async (settle) => {
++      const { api, run } = failedScript();
++      let answer!: (response: Response) => void;
++      let fail!: (error: Error) => void;
++      api.override(
++        'POST /runs/:id/resume',
++        () =>
++          new Promise<Response>((resolve, reject) => {
++            answer = resolve;
++            fail = reject;
++          }),
++      );
++      // The run as the inspector shows it, read once through the real client.
++      const client = createAppClient('http://graphgoblin.test', api.fetch);
++      const snapshot = await runs.get(client, run.id);
++      renderWith(<Inspector run={snapshot} />, '/', api);
++      const user = userEvent.setup();
++      const recover = () => screen.getByRole('button', { name: 'Recover script' });
++      const toggle = () => screen.getByRole('button', { name: 'Withhold or show the run' });
++      const resume = async () => {
++        const dialog = screen.getByRole('dialog', { name: 'Recover script' });
++        await user.click(within(dialog).getByRole('button', { name: 'Resume' }));
++      };
++      const resumes = () => api.callsTo('POST', `/runs/${run.id}/resume`);
++      await user.click(recover());
++      await resume();
++      await waitFor(() => expect(resumes()).toHaveLength(1));
++      expect(resumes()[0]!.body).toEqual({ observedSeq: 1, retryUncertainScript: true });
++      const original = recover();
++      expect(original).toBeDisabled();
++      // An outage expires the review, and the run section presenting the control is withheld.
++      await user.click(screen.getByRole('button', { name: 'Lose connection' }));
++      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++      await user.click(toggle());
++      expect(original).not.toBeInTheDocument();
++      // The run is read again under a new gate and shown again with a new control, which the
++      // retry sent before, still unresolved, alone keeps disabled.
++      await user.click(screen.getByRole('button', { name: 'Read again' }));
++      await user.click(toggle());
++      const replacement = recover();
++      expect(replacement).not.toBe(original);
++      expect(replacement).toBeDisabled();
++      await user.click(replacement);
++      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
++      expect(resumes()).toHaveLength(1);
++      await act(async () => {
++        if (settle === 'succeeds') answer(Response.json({ ...snapshot, status: 'running' }));
++        else fail(new TypeError('Failed to fetch'));
++        await Promise.resolve();
++      });
++      if (settle === 'fails in transport')
++        expect(await screen.findByRole('alert')).toHaveTextContent(
++          /^The GraphGoblin API cannot be reached\.$/,
++        );
++      // Only once it has settled may a new review open, and a new explicit choice send again.
++      await waitFor(() => expect(recover()).toBeEnabled());
++      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
++      if (settle === 'succeeds') expect(screen.queryByRole('alert')).not.toBeInTheDocument();
++      expect(resumes()).toHaveLength(1);
++      api.override('POST /runs/:id/resume', (call) => api.builtIn(call));
++      await user.click(recover());
++      await resume();
++      await waitFor(() => expect(resumes()).toHaveLength(2));
++      expect(resumes()[1]!.body).toEqual({ observedSeq: 1, retryUncertainScript: true });
++    },
++  );
+ });
+diff --git a/apps/web/src/runs/inspector/ScriptRecovery.tsx b/apps/web/src/runs/inspector/ScriptRecovery.tsx
+index 35f84caac32b7a5997a5b52262db9d4ea85033a4..49a342ebbacd2bf4d5eb582fafcf1549435f56e8 100644
+--- a/apps/web/src/runs/inspector/ScriptRecovery.tsx
++++ b/apps/web/src/runs/inspector/ScriptRecovery.tsx
+@@ -7,33 +7,58 @@ import { keys } from '../../api/queries.js';
+ import { Button, Dialog, HelpText } from '../../components/ui/index.js';
+ import { errorMessage } from '../../lib/utils.js';
+ import { ReplayConsequences } from './ReplayConsequences.js';
+-import { assertOpen, OPEN_GATE, type WriteGate } from './RunControls.js';
++import { assertOpen, type WriteGate } from './RunControls.js';
+ 
+ /** The consent under review: the run, node and observed sequence shown when it was opened. */
+-interface ScriptReview {
++export interface ScriptReview {
+   gate: WriteGate;
+   runId: string;
+   nodeId: string;
+   observedSeq: number;
+ }
+ 
+-/** Consent is an action: opening or cancelling this dialog never resumes a script. */
+-export function ScriptRecovery({
+-  run,
+-  availability = OPEN_GATE,
++/** A retry as chosen: the visit that chose it and the review it was chosen in, frozen. */
++interface Retry {
++  owner: object;
++  kind: 'resume' | 'replay';
++  review: ScriptReview;
++}
++
++/** The inspector view's script retry for the run it shows (#416). */
++export interface ScriptRetry {
++  /** The view's write gate now: a review opens under it, and a retry is sent only under it. */
++  readonly availability: WriteGate;
++  /** A retry this visit chose is queued or in flight; no review opens and none other is sent. */
++  readonly pending: boolean;
++  /** Why this visit's latest retry failed, until a new review replaces that report. */
++  readonly failure: string | undefined;
++  /** The review whose retry succeeded: that review is finished. */
++  readonly completed: ScriptReview | undefined;
++  /** Send `kind` with the consent of `review`, which must be open under the current gate. */
++  readonly send: (kind: 'resume' | 'replay', review: ScriptReview) => void;
++  /** Clear this visit's settled report as a new review opens; a pending retry keeps it. */
++  readonly reset: () => void;
++}
++
++/**
++ * The inspector's script retry (#416), owned by the view rather than by the run section that
++ * presents it. The section is withheld while an unproved row cannot be presented; a retry sent or
++ * queued before that stays the only one, and the controls shown again stay disabled until it
++ * settles and then report its actual outcome. A retry belongs to the visit (`owner`) that chose
++ * it: another run, or a later visit, shows neither its pending state nor its outcome.
++ */
++export function useScriptRetry({
++  owner,
++  availability,
+ }: {
+-  run: RunSnapshot;
+-  availability?: WriteGate;
+-}) {
+-  // A review belongs to the gate it was opened under: an outage or a reconnect expires it (#416).
+-  const [review, setReview] = useState<ScriptReview>();
+-  const open = review !== undefined && review.gate === availability;
++  owner: object;
++  availability: WriteGate;
++}): ScriptRetry {
+   const client = useApi();
+   const queryClient = useQueryClient();
+   const navigate = useNavigate();
+-  const nodeId = run.failure?.nodeId ?? run.currentNodeId;
+   const action = useMutation({
+-    mutationFn: async ({ kind, review }: { kind: 'resume' | 'replay'; review: ScriptReview }) => {
++    mutationFn: async ({ kind, review }: Retry) => {
+       assertOpen(review.gate);
+       const command = { observedSeq: review.observedSeq, retryUncertainScript: true as const };
+       return kind === 'resume'
+@@ -44,7 +69,6 @@ export function ScriptRecovery({
+       void queryClient.invalidateQueries({ queryKey: keys.run(review.runId) });
+     },
+     onSuccess: (next, { kind, review }) => {
+-      setReview(undefined);
+       if (kind === 'replay') {
+         if (review.gate.shown()) void navigate(`/runs/${next.id}`);
+       } else {
+@@ -52,6 +76,40 @@ export function ScriptRecovery({
+       }
+     },
+   });
++  // The latest retry this view sent, only while the visit that chose it is shown.
++  const own = action.variables?.owner === owner ? action.variables : undefined;
++  const pending = own !== undefined && action.isPending;
++  return {
++    availability,
++    pending,
++    failure: own && action.isError ? errorMessage(action.error) : undefined,
++    completed: own && action.isSuccess ? own.review : undefined,
++    send: (kind, review) => {
++      if (pending || review.gate !== availability || !availability.open()) return;
++      action.mutate({ owner, kind, review });
++    },
++    reset: () => {
++      // Resetting would detach the view from a retry still unresolved, and hide its outcome.
++      if (!pending) action.reset();
++    },
++  };
++}
++
++/** Consent is an action: opening or cancelling this dialog never resumes a script. */
++export function ScriptRecovery({
++  run,
++  retry,
++}: {
++  run: RunSnapshot;
++  /** The view's retry, from `useScriptRetry` for the visit showing this run. */
++  retry: ScriptRetry;
++}) {
++  const { availability } = retry;
++  // A review belongs to the gate it was opened under: an outage or a reconnect expires it (#416).
++  // It is presentation: it ends with the section that shows it, and once its retry succeeds.
++  const [review, setReview] = useState<ScriptReview>();
++  const open = review !== undefined && review.gate === availability && review !== retry.completed;
++  const nodeId = run.failure?.nodeId ?? run.currentNodeId;
+   if (!run.recovery.scriptConsent || !nodeId) return null;
+   const unavailable = availability.blocked !== undefined;
+   const replayAction = run.recovery.replay.find((node) => node.nodeId === nodeId)?.action;
+@@ -61,19 +119,19 @@ export function ScriptRecovery({
+   const canResume =
+     run.recovery.resume.allowed || run.recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED';
+   const send = (kind: 'resume' | 'replay') => {
+-    if (action.isPending || !review || review.gate !== availability || !availability.open()) return;
+-    action.mutate({ kind, review });
++    if (review) retry.send(kind, review);
+   };
+   return (
+     <>
+       {/* A retry already queued or sent stays the only one until it settles, even after an outage
+-          expired its review: reopening would reset it and hide its outcome (#416). */}
++          expired its review or the section showing it was withheld: reopening would reset it and
++          hide its outcome (#416). */}
+       <Button
+         variant="outline"
+-        disabled={unavailable || action.isPending}
++        disabled={unavailable || retry.pending}
+         onClick={() => {
+-          if (action.isPending || !availability.open()) return;
+-          action.reset();
++          if (retry.pending || !availability.open()) return;
++          retry.reset();
+           setReview({
+             gate: availability,
+             runId: run.id,
+@@ -85,22 +143,22 @@ export function ScriptRecovery({
+         Recover script
+       </Button>
+       {/* A write already sent keeps its outcome after an outage expires the review. */}
+-      {action.isError && !open ? (
++      {retry.failure !== undefined && !open ? (
+         <HelpText tone="bad" role="alert">
+-          {errorMessage(action.error)}
++          {retry.failure}
+         </HelpText>
+       ) : null}
+       <Dialog
+         open={open}
+         onClose={() => {
+-          if (!action.isPending) setReview(undefined);
++          if (!retry.pending) setReview(undefined);
+         }}
+         title="Recover script"
+         footer={
+           <>
+             <Button
+               onClick={() => send('resume')}
+-              disabled={action.isPending || unavailable || !canResume}
++              disabled={retry.pending || unavailable || !canResume}
+             >
+               Resume
+             </Button>
+@@ -108,7 +166,7 @@ export function ScriptRecovery({
+               variant="outline"
+               onClick={() => send('replay')}
+               disabled={
+-                action.isPending ||
++                retry.pending ||
+                 unavailable ||
+                 !run.recovery.replay.some(
+                   (node) =>
+@@ -123,7 +181,7 @@ export function ScriptRecovery({
+             <Button
+               variant="outline"
+               onClick={() => setReview(undefined)}
+-              disabled={action.isPending}
++              disabled={retry.pending}
+             >
+               Cancel
+             </Button>
+@@ -150,7 +208,7 @@ export function ScriptRecovery({
+         replayAction.code !== 'SCRIPT_CONSENT_REQUIRED' ? (
+           <p>Replay unavailable: {replayAction.message}</p>
+         ) : null}
+-        {action.isError ? <HelpText tone="bad">{errorMessage(action.error)}</HelpText> : null}
++        {retry.failure !== undefined ? <HelpText tone="bad">{retry.failure}</HelpText> : null}
+       </Dialog>
+     </>
+   );
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 37b2154150133024e217379b641246207bf389de..3f05980bdbacde88a276986ebdb38d466d589e4e 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -177,13 +177,17 @@ or delete-ready review therefore closes when the connection is lost, a preview t
+ is discarded, and a command queued or delayed across a loss, a reconnect or an A → B → A visit
+ reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
+ close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
+-was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
+-it was in flight reports that outcome beside the controls. While a script recovery
+-(queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
+-the outage that expired its review has ended: no replacement review resets it or sends a second
+-command before it settles, and its eventual failure or success is still reported. A sent
+-delete-ready confirmation holds the delete-ready launchers the same way while its review is open
+-or has been expired by an outage; an outage or a reconnect does not release that hold. The one
++was already sent keeps its actual outcome; a delete-ready confirmation reports it beside the
++controls, except a failure while the review it was sent from is still open and current, which that
++review shows: cancelling the review dismisses the failure with it, while an outage that expires
++the review, or withholding the run section, moves the failure beside the controls. While a script
++recovery (queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
++the outage that expired its review has ended or the run section showing it was withheld and shown
++again: no replacement review resets it or sends a second command before it settles, and its
++eventual failure or success is still reported. A sent delete-ready confirmation holds the
++delete-ready launchers the same way while its review is open, has been expired by an outage or
++was closed by withholding the run section; an outage, a reconnect or the section shown again does
++not release that hold. The one
+ exception is a review the browser itself has already dismissed (it closes a modal dialog on a
+ repeated Esc without asking): the confirmation is still pending, but a new review may open and
+ read a new preview. That review cannot be confirmed while the first confirmation is pending,
+@@ -202,14 +206,21 @@ observation read alone, with the run read and the browser healthy, a choice queu
+ reports **Not sent** even after the observation is read again with an equal body, including from
+ a removed and recreated query or under another accepted API key that the API key panel followed.
+ A new choice after the qualifying observation read sends once. The view, not the run section,
+-owns a **Start fresh session** choice and its outcome. The section is withheld while its run is
+-unproved, for example after the API key panel follows another accepted key once this view has
+-recorded a browser loss, until a run read under that key qualifies. A choice queued before that
+-stays pending: the control shown again stays disabled until the choice settles, then reports its
+-actual outcome, such as **Not sent**, until a new explicit choice replaces it. A choice's pending
+-state and outcome belong to the visit that made it; another run opened in the same view, or a
+-later visit, shows neither. Withholding, qualification and the gate are unchanged, and the
+-section stays hidden while it is withheld. Other run controls stay available
++owns a **Start fresh session** choice, a script recovery retry and a delete-ready confirmation,
++with their pending state and outcomes; their reviews belong to the section and close with it. The
++section is withheld while its run is unproved, for example after the API key panel follows another
++accepted key once this view has recorded a browser loss, until a run read under that key
++qualifies. A choice, retry or confirmation queued or sent before that stays pending: the controls
++shown again stay disabled until it settles (once the browser has dismissed a pending
++confirmation's review, as above, a new review may open but not be confirmed), so a fresh read of
++the same run cannot offer a second command or confirmation meanwhile. They then report its actual
++outcome, such as **Not sent**, the
++retry's own error or, for a confirmation the API could not be reached for, that the change may or
++may not have been saved, until a new explicit choice or review replaces it. A transport failure is
++never reported as the server refusing the command. Pending state and outcomes belong to the visit
++that made the choice; another run opened in the same view, or a later visit, shows neither.
++Withholding, qualification and the gate are unchanged, and the section stays hidden while it is
++withheld. Other run controls stay available
+ through an observation-only failure. Script consent keeps the run and observed sequence shown
+ when its review opened. The Runs list's delete-ready
+ controls share the hold on a sent confirmation, its exception after a browser dismissal and the

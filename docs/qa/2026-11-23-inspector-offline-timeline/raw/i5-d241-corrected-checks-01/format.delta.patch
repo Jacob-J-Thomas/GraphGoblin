@@ -1,0 +1,24 @@
+--- a/apps/web/src/runs/inspector/ScriptRecovery.tsx
++++ b/apps/web/src/runs/inspector/ScriptRecovery.tsx
+@@ -61,8 +61,7 @@
+   const canResume =
+     run.recovery.resume.allowed || run.recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED';
+   const send = (kind: 'resume' | 'replay') => {
+-    if (action.isPending || !review || review.gate !== availability || !availability.open())
+-      return;
++    if (action.isPending || !review || review.gate !== availability || !availability.open()) return;
+     action.mutate({ kind, review });
+   };
+   return (
+--- a/apps/web/src/runs/HistoryEligibility.tsx
++++ b/apps/web/src/runs/HistoryEligibility.tsx
+@@ -86,8 +86,7 @@
+     } catch (failure) {
+       // A sent confirmation always reports what happened to it: in its review while that is still
+       // open and current, otherwise beside the controls, leaving any newer review intact.
+-      if (generationRef.current === request && current.gate.open())
+-        setError(errorMessage(failure));
++      if (generationRef.current === request && current.gate.open()) setError(errorMessage(failure));
+       else
+         setOutcome(
+           isOfflineError(failure)

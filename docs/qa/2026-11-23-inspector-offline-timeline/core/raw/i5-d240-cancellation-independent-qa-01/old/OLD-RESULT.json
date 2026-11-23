@@ -1,0 +1,70 @@
+{
+  "utc": "2026-11-23T07:36:28.7406870+00:00",
+  "phase": "old baseline only; corrected positive not admitted",
+  "head": "30820901e97e2ba3af0e9796b39f14b5d421b99d",
+  "tree": "eab694eaaf05d3698d359f4983872d7c4c08fba1",
+  "identityUnchanged": true,
+  "trackedCount": 41003,
+  "trackedChanges": [],
+  "rawIndexEqual": true,
+  "indexSha256": "e05e6b78f0ba39dc7786e9cce2996fce839cd5960dc2ae900ef22f4469d6913f",
+  "orderedStagedEntriesEqual": true,
+  "commonIndexAbsent": true,
+  "finalStatus": [
+    "?? apps/web/src/runs/inspector-provenance-cancellation.independent.qa.test.tsx",
+    "?? apps/web/src/runs/inspector-read-provenance.independent.qa.test.tsx"
+  ],
+  "selectedModulesEqual": true,
+  "nodeEqual": true,
+  "protectedMetadataSourceChanges": [
+    {
+      "path": "apps/web/src/runs/inspector-provenance-cancellation.independent.qa.test.tsx",
+      "sha256": "ff386e99e6e1c8a31590e6de29551bbe646d7377f433656697b1f96b26e2764c",
+      "SideIndicator": "=>"
+    },
+    {
+      "path": "apps/web/src/runs/inspector-provenance-cancellation.independent.qa.test.tsx",
+      "sha256": "c721a869114d8e2d8617eb51b00defa3c2a7c9ecd0db66834a86379b0e9a7a08",
+      "SideIndicator": "<="
+    }
+  ],
+  "formatOnlyFixtureChange": true,
+  "executedFixtureSha256": "ff386e99e6e1c8a31590e6de29551bbe646d7377f433656697b1f96b26e2764c",
+  "tests": {
+    "total": 7,
+    "passed": 4,
+    "failed": 3,
+    "pending": 0,
+    "files": 1,
+    "cases": [
+      {
+        "name": "independent B1 cancellation retention keeps the exact accepted revision when a not-yet-started paused GET is cancelled",
+        "status": "failed"
+      },
+      {
+        "name": "independent B1 cancellation retention keeps the accepted revision when cancellation lands in the public retry-delay window",
+        "status": "failed"
+      },
+      {
+        "name": "independent B1 cancellation retention retains real useRun provenance through last-observer removal in retry delay and offline remount",
+        "status": "failed"
+      },
+      {
+        "name": "independent B1 cancellation retention does not restore an already manual-retired receipt by paused cancellation or old-state restoration",
+        "status": "passed"
+      },
+      {
+        "name": "independent B1 cancellation retention does not restore an already refused-retired receipt by paused cancellation or old-state restoration",
+        "status": "passed"
+      },
+      {
+        "name": "independent B1 cancellation retention refuses a different object revision and cannot regain proof through cancellation or restoring the old state",
+        "status": "passed"
+      },
+      {
+        "name": "independent B1 cancellation retention refuses a different count revision and cannot regain proof through cancellation or restoring the old state",
+        "status": "passed"
+      }
+    ]
+  }
+}

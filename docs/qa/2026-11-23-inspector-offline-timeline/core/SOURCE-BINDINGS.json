@@ -1,0 +1,83 @@
+{
+  "scope": "D236/D240 core cancellation evidence only; no new review or gate waiver",
+  "originalCore": {
+    "head": "30820901e97e2ba3af0e9796b39f14b5d421b99d",
+    "tree": "eab694eaaf05d3698d359f4983872d7c4c08fba1",
+    "actualReview": "CHANGES_REQUIRED",
+    "rootFindingDisposition": "B1 FIX-IN-PR; S1 comment correction"
+  },
+  "correctedCore": {
+    "head": "458f6cb06eded5cfeb2cf243093b60521a46f676",
+    "tree": "09b29aabeef6ab7e4c4d53dc4f8d2b3b5444d5d6",
+    "parent": "30820901e97e2ba3af0e9796b39f14b5d421b99d",
+    "changedPaths": [
+      "apps/web/src/runs/inspector-read-provenance.ts",
+      "apps/web/src/runs/inspector-read-provenance.test.ts"
+    ],
+    "actualNamedReview": "ACCEPT",
+    "rootAcceptedActualNamedReview": true
+  },
+  "author": {
+    "old": {
+      "passed": 22,
+      "failed": 3,
+      "skipped": 0
+    },
+    "corrected": {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    "scopedTypesLintFormat": "PASS",
+    "oldExecutedTestSha256": "f4ea26570ddb03a4729d708bd20fa34c073fd981ec8bbad5642e16ebe423596e",
+    "correctedExecutedTestSha256": "a6c40321adc8dcfcc934c81bb57e5d92470dc5f3ebbbb21794097a0fa5a23e7e",
+    "formatterDeltaRetained": true,
+    "initialRootReaderFailureRetained": "AUTHOR-ROOT-READBACK.json documents the initial wrong receipt-field reader and correction without test rerun."
+  },
+  "independent": {
+    "old": {
+      "passed": 4,
+      "failed": 3,
+      "skipped": 0
+    },
+    "corrected": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sameFixtureSha256": "ff386e99e6e1c8a31590e6de29551bbe646d7377f433656697b1f96b26e2764c",
+    "fixtureBytes": 11510,
+    "oldFixture": "raw/i5-d240-cancellation-independent-qa-01/old/06-executed-fixture.tsx",
+    "correctedFixture": "raw/i5-d240-cancellation-independent-qa-01/corrected/04-executed-fixture.tsx",
+    "restorationNegativeCases": [
+      "manual-retired receipt",
+      "refused-retired receipt",
+      "different body object",
+      "different update count"
+    ],
+    "retirementNegativesPassBothHeads": 4,
+    "rootAcceptedControlledQa": true,
+    "trackedDescriptors": 41003,
+    "physicalSourceHashesByOriginalQaAndRoot": 1768,
+    "omittedHistoricalQaDescriptors": 39235,
+    "intentionalRootFastForwardBetweenPhases": true,
+    "indexUnchangedWithinEachPhase": true,
+    "allTrackedDescriptorsPhysicallyHashed": false
+  },
+  "semanticBoundary": "Retaining an exact revision preserves existing proof without raising committed or clearing loss. After a qualifying recovery loss can remain nonzero: compare committed > loss and match current run/node/failure/visit/action plus all other gates.",
+  "continuingMandatoryGates": [
+    "Keep helper and tracked provenance regression tests in ordinary web unit/coverage gates; no threshold reduction or exclusions.",
+    "Query/dependency updates must rerun the applicable provenance/cancellation contracts and mandatory unit/coverage gates; preserved independent fixture carries the four restoration negatives as repository evidence.",
+    "Complete real-listener RunSnapshotSchema/body/fallback and browser/UI QA, opposite-family UI review, full repository gates, exact-current CI, final audit and signed merge."
+  ],
+  "reviewLimits": [
+    "Both actual reviewers read source only and executed no tests; root binds source and supplied execution.",
+    "Successful direct process/stream closure does not prove descendants/account-wide inactivity.",
+    "Same-object/count/idle synthetic internal Query.setState restoration can retain existing proof; it cannot create fresh proof and universal forgery resistance is not claimed.",
+    "Independent evidence uses public QueryClient/useRun with controlled transport/online state; no real listener, browser, provider, universal network-absence or GUI acceptance."
+  ],
+  "formalGeneralScansConsumedByThisArchive": 0,
+  "uiAcceptanceGranted": false,
+  "ownerAcceptanceGranted": false,
+  "publicationHeldForRoot": true
+}

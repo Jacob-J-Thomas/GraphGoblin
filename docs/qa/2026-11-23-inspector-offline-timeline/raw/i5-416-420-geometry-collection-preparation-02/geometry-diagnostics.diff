@@ -1,0 +1,207 @@
+--- current/independent-420-geometry.ts
++++ proposed/independent-420-geometry.ts
+@@ -4,6 +4,7 @@
+ export async function measureTimelineRow(page: Page, seq: number, eventType: string) {
+   if (!Number.isSafeInteger(seq) || seq <= 0)
+     throw new Error('Schema-valid positive safe sequence required');
++  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+   const row = page.locator(`[data-seq="${seq}"]`);
+   await expect(row).toHaveCount(1);
+   await row.scrollIntoViewIfNeeded();
+@@ -130,6 +131,188 @@
+         'Raw body range is before clipping and includes intentional sr-only/hidden text. Visible-node ranges exclude script/style/[hidden]/.sr-only/visibility:hidden and intersect contained horizontal overflow clips. Body/document scroll widths are asserted independently; Timeline number/type clipping is always asserted without that qualification. Vertical scrolling is allowed.',
+     };
+   });
++  const culprits = await page.evaluate(() => {
++    const box = (rect: DOMRectReadOnly) => ({
++      left: rect.left,
++      right: rect.right,
++      top: rect.top,
++      bottom: rect.bottom,
++      width: rect.width,
++      height: rect.height,
++    });
++    function selector(element: Element) {
++      const parts: string[] = [];
++      for (let current: Element | null = element; current; current = current.parentElement) {
++        if (current.id) {
++          parts.unshift('#' + CSS.escape(current.id));
++          break;
++        }
++        const tag = current.tagName;
++        const siblings = current.parentElement
++          ? [...current.parentElement.children].filter((sibling) => sibling.tagName === tag)
++          : [current];
++        parts.unshift(
++          current.tagName.toLowerCase() + ':nth-of-type(' + (siblings.indexOf(current) + 1) + ')',
++        );
++      }
++      return parts.join(' > ');
++    }
++    function identity(element: Element) {
++      const style = getComputedStyle(element);
++      return {
++        selector: selector(element),
++        tag: element.tagName,
++        id: element.id,
++        classes: element.getAttribute('class') ?? '',
++        role: element.getAttribute('role'),
++        testId: element.getAttribute('data-testid'),
++        seq: element.getAttribute('data-seq'),
++        rect: box(element.getBoundingClientRect()),
++        scrollWidth: element.scrollWidth,
++        clientWidth: element.clientWidth,
++        scrollHeight: element.scrollHeight,
++        clientHeight: element.clientHeight,
++        scrollLeft: element.scrollLeft,
++        scrollTop: element.scrollTop,
++        style: {
++          display: style.display,
++          visibility: style.visibility,
++          opacity: style.opacity,
++          position: style.position,
++          overflowX: style.overflowX,
++          overflowY: style.overflowY,
++          whiteSpace: style.whiteSpace,
++          overflowWrap: style.overflowWrap,
++          wordBreak: style.wordBreak,
++          minWidth: style.minWidth,
++          width: style.width,
++          transform: style.transform,
++          clip: style.clip,
++          clipPath: style.clipPath,
++          fontFamily: style.fontFamily,
++          fontSize: style.fontSize,
++          lineHeight: style.lineHeight,
++        },
++      };
++    }
++    const outsideX = (rect: { left: number; right: number }) =>
++      rect.left < -1 || rect.right > innerWidth + 1;
++    const textCulprits = [];
++    let scannedTextNodes = 0;
++    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
++    while (walker.nextNode()) {
++      const node = walker.currentNode;
++      const parent = node.parentElement;
++      if (!parent || !node.textContent?.trim()) continue;
++      scannedTextNodes++;
++      const range = document.createRange();
++      range.selectNodeContents(node);
++      const raw = [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0);
++      if (!raw.some(outsideX)) continue;
++      const hidden: string[] = [];
++      const clips: {
++        selector: string;
++        x: boolean;
++        y: boolean;
++        rect: ReturnType<typeof box>;
++        clientLeft: number;
++        clientTop: number;
++        clientWidth: number;
++        clientHeight: number;
++      }[] = [];
++      for (let ancestor: Element | null = parent; ancestor; ancestor = ancestor.parentElement) {
++        const style = getComputedStyle(ancestor);
++        if (
++          style.display === 'none' ||
++          style.opacity === '0' ||
++          ['hidden', 'collapse'].includes(style.visibility) ||
++          ancestor.hasAttribute('hidden') ||
++          ancestor.classList.contains('sr-only') ||
++          ['SCRIPT', 'STYLE'].includes(ancestor.tagName)
++        )
++          hidden.push(selector(ancestor));
++        const x = /(hidden|clip|scroll|auto)/.test(style.overflowX);
++        const y = /(hidden|clip|scroll|auto)/.test(style.overflowY);
++        if (x || y)
++          clips.push({
++            selector: selector(ancestor),
++            x,
++            y,
++            rect: box(ancestor.getBoundingClientRect()),
++            clientLeft: ancestor.clientLeft,
++            clientTop: ancestor.clientTop,
++            clientWidth: ancestor.clientWidth,
++            clientHeight: ancestor.clientHeight,
++          });
++      }
++      const paintable = raw.map((rect) => {
++        let left = rect.left,
++          right = rect.right,
++          top = rect.top,
++          bottom = rect.bottom;
++        for (const clip of clips) {
++          if (clip.x) {
++            left = Math.max(left, clip.rect.left + clip.clientLeft);
++            right = Math.min(right, clip.rect.left + clip.clientLeft + clip.clientWidth);
++          }
++          if (clip.y) {
++            top = Math.max(top, clip.rect.top + clip.clientTop);
++            bottom = Math.min(bottom, clip.rect.top + clip.clientTop + clip.clientHeight);
++          }
++        }
++        return {
++          left,
++          right,
++          top,
++          bottom,
++          width: Math.max(0, right - left),
++          height: Math.max(0, bottom - top),
++        };
++      });
++      const visibleInViewport = paintable
++        .map((rect) => ({
++          left: Math.max(0, rect.left),
++          right: Math.min(innerWidth, rect.right),
++          top: Math.max(0, rect.top),
++          bottom: Math.min(innerHeight, rect.bottom),
++        }))
++        .filter((rect) => rect.right > rect.left && rect.bottom > rect.top && hidden.length === 0);
++      textCulprits.push({
++        text: node.textContent.slice(0, 160),
++        textLength: node.textContent.length,
++        parent: identity(parent),
++        raw: raw.map(box),
++        hiddenAncestors: hidden,
++        clipChain: clips,
++        paintableBeforeViewportClip: paintable,
++        visibleInViewport,
++        paintableOutsideX:
++          hidden.length === 0 &&
++          paintable.some((rect) => rect.width > 0 && rect.height > 0 && outsideX(rect)),
++      });
++    }
++    const elementCulprits = [...document.body.querySelectorAll('*')]
++      .filter((element) => {
++        const rect = element.getBoundingClientRect();
++        return (
++          rect.width > 0 &&
++          rect.height > 0 &&
++          (outsideX(rect) || element.scrollWidth > element.clientWidth + 1)
++        );
++      })
++      .map(identity);
++    return {
++      viewport: { width: innerWidth, height: innerHeight, scrollX, scrollY },
++      fontsStatus: document.fonts.status,
++      document: identity(document.documentElement),
++      body: identity(document.body),
++      scannedTextNodes,
++      textCulprits,
++      elementCulprits,
++      qualification:
++        'Raw element and text-range boxes are native measurements. Contained-clipped and viewport-intersection boxes are calculated from those measured boxes; they do not establish painted pixels, occlusion, transforms or arbitrary clip-path visibility. Hidden/transparent ancestor and computed style records qualify possible culprits. A raw offscreen/hidden range is not claimed visible; all existing strict assertions remain unchanged.',
++    };
++  });
+   const measurement = {
+     seq,
+     eventType,
+@@ -137,6 +320,7 @@
+     type: typeMetrics,
+     viewport,
+     overlaps,
++    culprits,
+   };
+   const label = `geometry-${viewport.width}-${seq}-${Math.round(numberMetrics.fontSize)}`;
+   await test

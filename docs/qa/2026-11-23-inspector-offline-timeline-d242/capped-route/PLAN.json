@@ -1,0 +1,180 @@
+{
+  "state": "METADATA_ONLY_UNARMED_CAPPED_ROUTE_MAP_NO_CORRECTION_OR_COMPLETION",
+  "utc": "2026-11-23T14:59:14.810655+00:00",
+  "pr": 564,
+  "policy": "Existing D-035 bounds D-029; D-042 capped completion adopted by approved current batch and D242. No new scope or gate waiver.",
+  "reviewedNegative": {
+    "head": "f64287619b499c14601e11bce3d1c6b5414b6227",
+    "target": "0f6c325becf3e3e0562ae69dfae2c42bcf1d7129",
+    "report": {
+      "source": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i5-564-final-astra-max-03/REPORT.md",
+      "bytes": 16700,
+      "sha256": "9cb4a10d6241abfa9f6d9dc1711ac44fd8ec412eef03fe6778933fd067e6a61b"
+    },
+    "verdict": "CHANGES REQUIRED",
+    "knownOpenBlocker": "D242/B2 temporary-section-remount loses already-sent script/delete action ownership, P1",
+    "formalPassesConsumed": 3,
+    "formalPassLimit": 3,
+    "generalScansConsumed": 2,
+    "generalScanLimit": 3,
+    "noFourthFormalOrGeneralRescan": true
+  },
+  "derivative": {
+    "required": false,
+    "reason": "Existing generic capped premerge/postmerge verifier accepts PR/issue metadata and the existing GitHub merge connector supports expected_head_sha. Fresh candidate configs suffice. No helper derivative, new framework or altered D-029 validator is needed.",
+    "strictHelpersRemainUnchanged": [
+      "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/check-signed-batch-pr.py",
+      "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/merge-signed-batch-pr.py"
+    ],
+    "strictHelpersInapplicable": "Both require an exact positive Astra SIGN-OFF string. Never fabricate or relabel a root capped report to satisfy them."
+  },
+  "existingHelpers": {
+    "premergeAndPostmerge": "G:/ggq/delivery-evidence/2026-11-17-five-intents/batch-premerge-verifier-01/verify.py",
+    "query": "G:/ggq/delivery-evidence/2026-11-17-five-intents/batch-premerge-verifier-01/premerge.graphql",
+    "commands": [
+      "python -B -X utf8 <verify.py> premerge <filled-config.json>",
+      "python -B -X utf8 <verify.py> postmerge <separate-filled-postmerge-config.json> --expected-merge <actual-merge-sha>"
+    ],
+    "normalCiCollector": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/verify-corrected-ci.py",
+    "sameRunMonitor": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/wait-normal-verification.py",
+    "earlyBinding": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/record-pending-pr-ci-binding.py",
+    "integratedNativeVerifier": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/verify-integrated-native.py",
+    "nativeReplayHelper": "C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/pr508-marker-independent-qa/replay-archives.mjs"
+  },
+  "premergeConfigSchemaAndUnarmedValues": {
+    "pr": 564,
+    "head": null,
+    "target": null,
+    "runAttempt": 1,
+    "expectedClosingIssues": [
+      {
+        "number": 416,
+        "labels": null
+      },
+      {
+        "number": 420,
+        "labels": null
+      }
+    ],
+    "ownerOnlyOpenIssues": [
+      {
+        "number": 448,
+        "labels": null
+      },
+      {
+        "number": 459,
+        "labels": null
+      }
+    ],
+    "completionReportPath": null,
+    "completionReportSha256": null,
+    "completionCommentId": null,
+    "ciDirectory": null,
+    "nativeProofDirectory": null,
+    "outputDirectory": null
+  },
+  "configRequirements": {
+    "headAndTarget": "Different full lowercase 40-hex SHAs from actual corrected publication/current main; null above is deliberate refusal",
+    "runAttempt": "Required literal1, an expectation only, not an observed future attempt",
+    "issueEntries": "Each entry exactly {number:positive integer,labels:exact unique nonempty-name array}; arrays explicit and disjoint; labels null until fresh readback",
+    "paths": "Absolute CI/native/output/report paths; output must be fresh direct child of E; use different fresh pre/post output directories",
+    "completion": "Positive actual public comment ID plus exact 64-hex report hash; public comment UTF-8 bytes must equal local root completion report",
+    "nullSafety": "This skeleton is invalid/unarmed and must not be invoked until all required actual fields are supplied"
+  },
+  "mergeConnector": {
+    "tool": "mcp__codex_apps__github_merge_pull_request",
+    "unarmedArgs": {
+      "repository_full_name": "Jacob-J-Thomas/GraphGoblin",
+      "pr_number": 564,
+      "expected_head_sha": null,
+      "merge_method": "merge"
+    },
+    "readyTool": "mcp__codex_apps__github_mark_pull_request_ready_for_review",
+    "readyArgs": {
+      "repository_full_name": "Jacob-J-Thomas/GraphGoblin",
+      "pr_number": 564
+    },
+    "notInvoked": true,
+    "baseFenceLimit": "Expected head is atomic. Live preflight checks target; independent postmerge verifies ordered target/head parents and tested tree, detecting target drift. No atomic base-SHA precondition is claimed."
+  },
+  "requiredFutureInputs": {
+    "authorCorrection": {
+      "ordinaryHandoffPath": null,
+      "ordinaryHandoffSha256": null,
+      "correctedHead": null,
+      "correctedHeadTree": null,
+      "exactDeltaReceipt": null
+    },
+    "knownFixFableAssessment": {
+      "requiredRole": "Actual Claude Fable scoped assessment of the known D242 correction; no general scan",
+      "reportPath": null,
+      "reportSha256": null,
+      "actualVerdict": null,
+      "actualSourceHead": null,
+      "processAndSourceReceipts": null,
+      "rootDispositionPath": null,
+      "rootDispositionSha256": null,
+      "rootAccepted": null
+    },
+    "independentQa": {
+      "reportPath": null,
+      "manifestPath": null,
+      "manifestSha256": null,
+      "actualHead": null,
+      "sameRouteRemountCases": null,
+      "pendingAndLateOutcomeControls": null,
+      "runVisitIsolationAndDismissalControls": null,
+      "firstOutcomesPreserved": null,
+      "accepted": null
+    },
+    "applicableLocalChecks": {
+      "receiptsPath": null,
+      "allApplicablePassed": null
+    },
+    "freshCiAndNative": {
+      "ciRun": null,
+      "head": null,
+      "target": null,
+      "testedMerge": null,
+      "testedTree": null,
+      "normalVerifiedJson": null,
+      "nativeVerifiedJson": null,
+      "allSixJobsPassed": null,
+      "allThirteenCoverageSummariesAccepted": null,
+      "allApplicableRollupsPassed": null,
+      "canonicalNativeReplayAccepted": null
+    },
+    "coordinatorCompletion": {
+      "reportPath": null,
+      "reportSha256": null,
+      "publicCommentId": null,
+      "publicCommentReadback": null,
+      "remainingBlockingFindings": null,
+      "cappedDispositionIssued": null
+    },
+    "merge": {
+      "premergeReadbackPath": null,
+      "readyTransitionReceipt": null,
+      "actualMergeResponsePath": null,
+      "actualMergeSha": null,
+      "signedPostmergeReceiptPath": null,
+      "signatureParentsTreeAndIssueStatesVerified": null
+    }
+  },
+  "guardrails": [
+    "Preserve every negative Astra/Fable report, first failure and source identity; no renewed Astra approval is asserted.",
+    "Root must substantively accept actual known-fix assessment, independent QA and all applicable checks before issuing completion. Byte equality checks do not replace that judgment.",
+    "Fresh normal CI must cover six required jobs, thirteen coverage summaries and canonical Windows replay at exact corrected head/current target/tested merge. Earlier passing f642 CI is historical.",
+    "Premerge also refuses unresolved threads/live CHANGES_REQUESTED reviews, wrong issue labels/closing references, incomplete pagination, draft/non-clean PR, main drift or nonpassing applicable checks.",
+    "Actual signed postmerge must have exact ordered parents [target,head], tested tree and valid GitHub signature; technical issues close and owner trackers448/459 remain open.",
+    "No owner acceptance, Mac acceptance, deployment or delivery-count increase before actual verified delivery."
+  ],
+  "actionsPerformed": {
+    "productSourceReview": false,
+    "tests": false,
+    "provider": false,
+    "externalMutation": false,
+    "helperExecution": false,
+    "newHelperOrDerivative": false
+  }
+}

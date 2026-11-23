@@ -1,0 +1,11 @@
+--- sealed-prep01/runner.ps1
++++ successor02/runner.ps1
+@@ -3,7 +3,7 @@
+ $ErrorActionPreference = 'Stop'
+ if (-not $Execute) { throw 'UNARMED: explicit root-bound execution switch absent' }
+ $taskRoot = 'G:/ggq/gg-i5-offline-ui-qa/GraphGoblin'
+-$taskEvidence = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-feedback-render-diagnostic-qa-01'
++$taskEvidence = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d241-feedback-render-diagnostic-qa-02'
+ $binding = Get-Content -LiteralPath $BindingPath -Raw | ConvertFrom-Json -AsHashtable
+ if ($binding.schemaVersion -ne 1 -or $binding.executionAdmitted -ne $true) { throw 'UNARMED: root admission absent' }
+ if ([IO.Path]::GetFullPath($binding.worktree) -ine [IO.Path]::GetFullPath($taskRoot) -or [IO.Path]::GetFullPath($binding.executionDirectory) -ine [IO.Path]::GetFullPath($taskEvidence)) { throw 'Unexpected owned paths' }

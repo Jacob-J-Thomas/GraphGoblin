@@ -24,6 +24,7 @@ import {
   HarnessDefaultsSchema,
   HarnessPreflightSchema,
   ModelCatalogEntrySchema,
+  RunSnapshotSchema,
 } from '@graphgoblin/contracts';
 import {
   useInfiniteQuery,
@@ -34,6 +35,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { z } from 'zod';
+import { trackInspectorRead } from '../runs/inspector-read-provenance.js';
 import { useRunHeaderRegistry } from '../runs/run-header-store.js';
 import { useApi } from './context.js';
 
@@ -146,19 +148,26 @@ export function useRun(id: string) {
     // cancelled read is no receipt. A successful answer for another run is refused here, before it
     // can replace this run's row or borrow a position this run's reads returned: an ordinary read
     // error that keeps this run's cached row and evidence, unlike a 404.
-    queryFn: async ({ signal }) => {
-      const lease = headers?.lease(id);
-      try {
-        const run = await runs.get(client, id, { signal });
-        if (run.id !== id) throw new Error(`The API returned run ${run.id} for run ${id}.`);
-        if (!signal.aborted) headers?.receipt(lease, run);
-        return run;
-      } catch (error) {
-        if (!signal.aborted && error instanceof GraphGoblinApiError && error.status === 404)
-          headers?.forget(lease);
-        throw error;
-      }
-    },
+    queryFn: (context) =>
+      trackInspectorRead(
+        headers?.source.client === client ? headers : undefined,
+        context,
+        async () => {
+          const { signal } = context;
+          const lease = headers?.lease(id);
+          try {
+            const run = await runs.get(client, id, { signal });
+            if (run.id !== id) throw new Error(`The API returned run ${run.id} for run ${id}.`);
+            if (!signal.aborted) headers?.receipt(lease, run);
+            return run;
+          } catch (error) {
+            if (!signal.aborted && error instanceof GraphGoblinApiError && error.status === 404)
+              headers?.forget(lease);
+            throw error;
+          }
+        },
+        (run) => RunSnapshotSchema.safeParse(run).success,
+      ),
     refetchInterval: (query) =>
       query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending') ||
       (query.state.data !== undefined &&

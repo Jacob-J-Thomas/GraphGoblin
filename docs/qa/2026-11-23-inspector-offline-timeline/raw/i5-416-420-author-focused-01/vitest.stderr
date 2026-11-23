@@ -1,0 +1,401 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/RunInspectorPage.offline.test.tsx > run inspector through an outage (#416) > stays locked through a browser reconnect and a held pre-loss read; one later read unlocks
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/runs/RunInspectorPage.offline.test.tsx:331:34
+    329|       expect(button(/Pause/)).toBeEnabled();
+    330|       // The held read started before the disconnect and could not unl…
+    331|       expect(runGets() - before).toBe(1);
+       |                                  ^
+    332|       await act(() => new Promise((resolve) => setTimeout(resolve, 50)…
+    333|       expect(runGets() - before).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > does not send a queued choice when the gate expired before dispatch (#416)
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mNewer failure[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid min-w-0 gap-2 wrap-anywhere"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mStart a fresh session for node [0m
+          [0mworker[0m
+          [0m. Its prior provider conversation will not be carried over. The configured context mode, selected loop inputs, model [0m
+          [0mgpt-6-luna[0m
+          [0m [0m
+          [0mand effort [0m
+          [0mlow[0m
+          [0m stay the same. Earlier provider actions are not undone. Leave this choice untouched to keep the run failed.[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0mStart fresh session for worker[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs leading-snug font-medium text-status-bad-fg"[39m
+        [36m>[39m
+          [0mPOST /runs/ETFZT2SCVFB32C4QBV8A9Q82M2/recover-session (NOT_FOUND)[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<output[39m
+        [33mdata-testid[39m=[32m"location"[39m
+      [36m>[39m
+        [0m/[0m
+      [36m</output>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/runs/inspector/SessionRecoveryControls.test.tsx:181:42
+    179|       const user = userEvent.setup();
+    180|       await user.click(screen.getByRole('button', { name: 'Start fresh…
+    181|       await waitFor(() => expect(queued).toBe(true));
+       |                                          ^
+    182|       if (change === 'the gate expired') open = false;
+    183|       else await user.click(screen.getByRole('button', { name: 'Newer …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/runs/inspector/SessionRecoveryControls.test.tsx > missing-session recovery control > does not send a queued choice when the failure changed before dispatch (#416)
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mNewer failure[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid min-w-0 gap-2 wrap-anywhere"[39m
+      [36m>[39m
+        [36m<p>[39m
+          [0mStart a fresh session for node [0m
+          [0mworker[0m
+          [0m. Its prior provider conversation will not be carried over. The configured context mode, selected loop inputs, model [0m
+          [0mgpt-6-luna[0m
+          [0m [0m
+          [0mand effort [0m
+          [0mlow[0m
+          [0m stay the same. Earlier provider actions are not undone. Leave this choice untouched to keep the run failed.[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+          [36m>[39m
+            [0mStart fresh session for worker[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs leading-snug font-medium text-status-bad-fg"[39m
+        [36m>[39m
+          [0mPOST /runs/G5HWQZA2J7H5Q49PM36TD7QBES/recover-session (NOT_FOUND)[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<output[39m
+        [33mdata-testid[39m=[32m"location"[39m
+      [36m>[39m
+        [0m/[0m
+      [36m</output>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/runs/inspector/SessionRecoveryControls.test.tsx:181:42
+    179|       const user = userEvent.setup();
+    180|       await user.click(screen.getByRole('button', { name: 'Start fresh…
+    181|       await waitFor(() => expect(queued).toBe(true));
+       |                                          ^
+    182|       if (change === 'the gate expired') open = false;
+    183|       else await user.click(screen.getByRole('button', { name: 'Newer …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/runs/inspector/Timeline.test.tsx > keeps keyboard movement, the single Tab stop and selection with long sequences (#420)
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button
+  class="flex w-full cursor-pointer flex-wrap content-center items-baseline gap-x-2 gap-y-0.5 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline"
+  data-seq="10593"
+  tabindex="-1"
+  type="button"
+>
+  <span
+    class="min-w-[min(var(--timeline-seq),100%)] text-right font-mono text-xs wrap-anywhere text-subtle"
+  >
+    #
+    10593
+  </span>
+  <code
+    class="min-w-0 text-[0.78125rem] font-medium wrap-anywhere"
+  >
+    run.started
+  </code>
+  <span
+    class="min-w-0 grow basis-40 break-words text-muted"
+  >
+    attempt 1
+  </span>
+</button>
+Received element with focus:
+  <button
+  class="flex w-full cursor-pointer flex-wrap content-center items-baseline gap-x-2 gap-y-0.5 rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11 aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row forced-colors:aria-[current=true]:outline"
+  data-seq="9007199254740991"
+  tabindex="0"
+  type="button"
+>
+  <span
+    class="min-w-[min(var(--timeline-seq),100%)] text-right font-mono text-xs wrap-anywhere text-subtle"
+  >
+    #
+    9007199254740991
+  </span>
+  <code
+    class="min-w-0 text-[0.78125rem] font-medium wrap-anywhere"
+  >
+    return.delivered
+  </code>
+  <span
+    class="min-w-0 grow basis-40 break-words text-muted"
+  >
+    log
+  </span>
+</button>
+ ❯ src/runs/inspector/Timeline.test.tsx:364:19
+    362|   act(() => rows[2]!.focus());
+    363|   await user.keyboard('{Home}');
+    364|   expect(rows[0]).toHaveFocus();
+       |                   ^
+    365|   await user.keyboard('{ArrowDown}{Enter}');
+    366|   expect(rows[1]).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/runs/inspector/WaitPanel.test.tsx > does not send a queued answer whose gate expired before dispatch, and says so (#416)
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-labelledby[39m=[32m"_r_q_"[39m
+        [33mclass[39m=[32m"min-w-0 rounded-lg border border-default bg-surface-raised shadow-1"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"flex items-center gap-2 text-md font-semibold text-heading"[39m
+            [33mid[39m=[32m"_r_q_"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]"[39m
+              [33mdata-kind[39m=[32m"wait"[39m
+              [33mstyle[39m=[32m"--k: var(--kind-wait); --k-subtle: var(--kind-wait-subtle);"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4 shrink-0"[39m
+                [33mdata-icon[39m=[32m"wait"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 3h12M6 21h12M7.5 3v2.5a4.5 4.5 0 0 0 9 0V3M7.5 21v-2.5a4.5 4.5 0 0 1 9 0V21"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [0mInput requested[0m
+          [36m</h2>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-5"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-5"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"min-w-0 text-sm wrap-anywhere text-muted"[39m
+            [36m>[39m
+              [0mAt [0m
+              [0mask[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid min-w-0 gap-1.5 -mx-3"[39m
+            [36m>[39m
+              [36m<pre[39m
+                [33maria-label[39m=[32m"Prompt"[39m
+                [33mclass[39m=[32m"m-0 min-w-0 px-3 py-2 leading-normal whitespace-pre-wrap wrap-anywhere text-lg font-semibold"[39m
+              [36m>[39m
+                [0mWhy?[0m
+              [36m</pre>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33maria-label[39m=[32m"Submit input"[39m
+              [33mclass[39m=[32m"grid gap-field"[39m
+              [33mnovalidate[39m=[32m""[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid min-w-0 content-start gap-1.5 max-w-[440px]"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex min-w-0 items-center justify-between gap-2 pointer-coarse:items-end pointer-coarse:gap-3 pointer-coarse:pb-1.5"[39m
+                [36m>[39m
+                  [36m<label[39m
+                    [33mclass[39m=[32m"block text-sm leading-[1.3] font-medium text-default"[39m
+                    [33mfor[39m=[32m"_r_s_"[39m
+                  [36m>[39m
+                    [0mnote[0m
+                  [36m</label>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"flex shrink-0 items-center gap-2 pointer-coarse:items-end"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33maria-label[39m=[32m"Omit note"[39m
+                      [33mclass[39m=[32m"-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center justify-center rounded-sm px-1.5 border border-transparent bg-transparent text-xs leading-none font-semibold text-default transition-[background-color] hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus pointer-coarse:my-0 pointer-coarse:h-11 pointer-coarse:min-w-11 pointer-coarse:rounded-md pointer-coarse:border-strong pointer-coarse:bg-surface-raised pointer-coarse:shadow-ledge"[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [0mOmit[0m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 pointer-coarse:h-11"[39m
+                  [33mid[39m=[32m"_r_s_"[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m"answer"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-accent-strong bg-accent text-on-accent shadow-ledge-accent hover:bg-accent-hover active:translate-y-0.5 active:bg-accent-active h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11"[39m
+                  [33mtype[39m=[32m"submit"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                  [36m>[39m
+                    [0mSubmit input[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-bad-bg border-status-bad-border"[39m
+              [33mrole[39m=[32m"alert"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-bad-fg"[39m
+                [33mdata-icon[39m=[32m"failed"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"col-start-2 min-w-0 [&_a]:text-link"[39m
+              [36m>[39m
+                [0mThe GraphGoblin API cannot be reached.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<output[39m
+        [33mdata-testid[39m=[32m"location"[39m
+      [36m>[39m
+        [0m/[0m
+      [36m</output>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/runs/inspector/WaitPanel.test.tsx:248:38
+    246|   await user.type(screen.getByLabelText('note'), 'answer');
+    247|   await user.click(screen.getByRole('button', { name: 'Submit input' }…
+    248|   await waitFor(() => expect(queued).toBe(true));
+       |                                      ^
+    249|   // The connection is lost while the answer waits to be sent.
+    250|   open = false;
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-i5-offline-
+  │ inspector\GraphGoblin\apps\web
+

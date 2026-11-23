@@ -1,0 +1,163 @@
+{
+  "number": 3,
+  "group": "repro",
+  "action": "script",
+  "mode": "failure",
+  "checks": [
+    {
+      "name": "replacement control retains pending guard",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "late action failure visible within original two-second budget",
+      "passed": true,
+      "facts": "The GraphGoblin API cannot be reached."
+    },
+    {
+      "name": "one original POST before new deliberate choice",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "fresh deliberate action sends exactly once after first settlement",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "all API/page routes explicitly handled",
+      "passed": true,
+      "facts": []
+    }
+  ],
+  "steps": [
+    {
+      "name": "matching-new-generation-read-held",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "same-finalized-body-requalified",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "late-error",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    }
+  ],
+  "state": "passed",
+  "runA": "01M3Y7RKG08245PHCXP916EBMT",
+  "runB": "01M3Y7RKG08245PHCXP916EBMZ",
+  "posts": [
+    {
+      "body": {
+        "observedSeq": 6,
+        "retryUncertainScript": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 1
+    },
+    {
+      "body": {
+        "observedSeq": 6,
+        "retryUncertainScript": true
+      },
+      "phase": "after-original-settlement",
+      "ordinal": 2
+    }
+  ],
+  "previews": [],
+  "runReads": [
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": true
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "after-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "after-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "after-original-settlement",
+      "bodySha256": "7d76c606deb19046e1d065195b8de7045a9038dd2d06cafaf579d731e36cbf16",
+      "held": false
+    }
+  ],
+  "unknown": [],
+  "sourceSameRoute": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "requestFailures": 1,
+  "cleanupCloseResolved": true,
+  "onlyInterceptedDispatchNoServerEffects": true
+}

@@ -1,0 +1,17 @@
+Corrected native10 is prepared and unarmed at frozen source `20a69d9b53910a5ede81088e9ff67680f348ce68`, tree `8be5890a170f2a51af49467e1f71e88839bef28b`. No native case, test or browser was executed during this preparation. The exact preparation03 wrapper and native fixture remain unchanged; `selection=all` selects the preserved four repro cases plus six supplements.
+
+The closed build manifest is 9364 bytes, SHA256 `846a598b764feddc49b9f5ae241482407814b3fe2d2efe8b9f42ec1cda1cb53f`. Its source equals the requested frozen source exactly. Both the workspace distribution and the retained browser-owned distribution match every one of its 28 members. The draft serves the retained `i5-d242-b2-browser12-execution-01/owned-web-dist` copy. This uses the actual corrected build without a source surrogate.
+
+All 18 sealed preparation03 members, the existing runtime/fixture pins, the five QA overlays, freeze eight files and protected core three files were rehashed. The raw UIQA index intentionally advanced from historical `9feea17c...` (6128927 bytes) to `4eabeb57705bf85c084b6939b22b475d06a9c7df9b1d903115a834d75a71dac6` (6401836 bytes) during root's source rebind. This is the UIQA index, separate from the NEXT index in FREEZE.json. The common index remains absent. The 15 original protected refs otherwise stay exact; the eight frozen paths and three protected core paths are added to the execution binding's read-only protected refs. READBACK.json records the actual pins.
+
+ROOT-BINDING.DRAFT.json and ROOT-ADMISSION.DRAFT.json both remain explicitly unarmed. Root must check the source/index/protected pins and root-owned source/build admission, create a distinct admission with `executionAdmitted=true`, and create a distinct armed binding with its admission's exact source/bytes/SHA256. Keep `preparationManifestSha256=717d855b5a5b03f02a2e588d306e8c13b9bd9436764925a81f95ef6898db117e`; this identifies the unchanged fixture's own preparation03 seal. Do not substitute this metadata packet's manifest. Confirm the fresh output directory is absent and the heavy slot is free before launching.
+
+The root-only future PowerShell invocation is:
+
+```powershell
+& 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-b2-native-qa-preparation-03/run-native.ps1' -BindingPath 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-b2-native-corrected-admission-preparation-01/ROOT-BINDING.admitted.json' -Execute
+```
+
+The unchanged wrapper uses the pinned standalone pnpm executable with structured arguments and the project Node22.23.4 first on PATH. It retains raw commands, streams, cases and screenshots under fresh `i5-d242-b2-native-corrected-execution-01`; no automatic retry or fixture/timing correction is authorized. Root's later admitted files are addenda outside this preparation seal.
+
+The earlier f642 four-case negative remains separately sealed, including its first pre-browser import failure. The corrected independent component phase separately passed fresh2/full63. The closed fixed12 browser phase passed 11 and retained its strict G1 failure; this distribution binding does not waive that result. Native10 acceptance remains pending. Its API responses are entirely intercepted: it can demonstrate browser dispatch, DOM feedback, same-route remount and synthetic second-tab storage behavior, but cannot establish server-side duplicate effects or real authentication/principal behavior.

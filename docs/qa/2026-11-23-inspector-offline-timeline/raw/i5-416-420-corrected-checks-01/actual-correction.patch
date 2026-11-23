@@ -1,0 +1,198 @@
+diff --git a/apps/web/src/runs/RunInspectorPage.offline.test.tsx b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+index 193698a0..c51ef30f 100644
+--- a/apps/web/src/runs/RunInspectorPage.offline.test.tsx
++++ b/apps/web/src/runs/RunInspectorPage.offline.test.tsx
+@@ -308,6 +308,13 @@ describe('run inspector through an outage (#416)', () => {
+     const runGets = () => api.callsTo('GET', `/runs/${run.id}`).length;
+     try {
+       await openRun(run.id);
++      // The stream's first batch (events 1 and 2) is shown, and the live refresh it requested has
++      // read the run once after it and settled. Otherwise that refresh, unrelated to the outage,
++      // could join the held read below and read again after it, or follow the recovery read.
++      expect(
++        await screen.findByRole('heading', { name: /^Timeline \(2 events, / }),
++      ).toBeInTheDocument();
++      await waitFor(() => expect(runGets()).toBe(2));
+       await waitFor(() =>
+         expect(view.queryClient.getQueryState(keys.run(run.id))?.fetchStatus).toBe('idle'),
+       );
+diff --git a/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx b/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
+index 35c4fe9f..73d2c45e 100644
+--- a/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
++++ b/apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx
+@@ -166,30 +166,30 @@ describe('missing-session recovery control', () => {
+       const held = new Promise<void>((resolve) => {
+         release = resolve;
+       });
+-      view.queryClient.setDefaultOptions({
+-        queries: { retry: false },
+-        mutations: {
+-          retry: false,
+-          onMutate: () => {
+-            queued = true;
+-            return held;
+-          },
+-        },
+-      });
+-      const user = userEvent.setup();
+-      await user.click(screen.getByRole('button', { name: 'Start fresh session for worker' }));
+-      await waitFor(() => expect(queued).toBe(true));
+-      if (change === 'the gate expired') open = false;
+-      else await user.click(screen.getByRole('button', { name: 'Newer failure' }));
+-      release();
+-      expect(
+-        await screen.findByText(
+-          change === 'the gate expired'
+-            ? NOT_SENT
+-            : 'Not sent: the failure shown has changed. Review the run again.',
+-        ),
+-      ).toBeInTheDocument();
+-      expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
++      // The client's mutation cache delays every mutation before its API call. Unlike default
++      // options set after the control mounted, the cache's own callback is read at dispatch.
++      view.queryClient.getMutationCache().config.onMutate = () => {
++        queued = true;
++        return held;
++      };
++      try {
++        const user = userEvent.setup();
++        await user.click(screen.getByRole('button', { name: 'Start fresh session for worker' }));
++        await waitFor(() => expect(queued).toBe(true));
++        if (change === 'the gate expired') open = false;
++        else await user.click(screen.getByRole('button', { name: 'Newer failure' }));
++        release();
++        expect(
++          await screen.findByText(
++            change === 'the gate expired'
++              ? NOT_SENT
++              : 'Not sent: the failure shown has changed. Review the run again.',
++          ),
++        ).toBeInTheDocument();
++        expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
++      } finally {
++        release();
++      }
+     },
+   );
+ 
+diff --git a/apps/web/src/runs/inspector/Timeline.test.tsx b/apps/web/src/runs/inspector/Timeline.test.tsx
+index 56d07223..2ac8cded 100644
+--- a/apps/web/src/runs/inspector/Timeline.test.tsx
++++ b/apps/web/src/runs/inspector/Timeline.test.tsx
+@@ -369,6 +369,37 @@ it('keeps keyboard movement, the single Tab stop and selection with long sequenc
+   expect(rows[2]).toHaveFocus();
+ });
+ 
++it('moves focus and the single Tab stop between rows of one window, and a key naming the focused row requests nothing (#186)', async () => {
++  const user = userEvent.setup();
++  render(
++    <Timeline
++      events={large}
++      status="live"
++      error={undefined}
++      selected={undefined}
++      following={false}
++      onSelect={vi.fn()}
++    />,
++  );
++  const list = screen.getByRole('list', { name: 'Timeline' });
++  const rows = within(list).getAllByRole('button');
++  act(() => rows[2]!.focus());
++  // Every row is already shown: the window does not shift and no parent renders again.
++  await user.keyboard('{ArrowUp}');
++  expect(rows[1]).toHaveFocus();
++  expect(rows.map((row) => row.tabIndex)).toEqual([-1, 0, -1]);
++  await user.keyboard('{Home}');
++  expect(rows[0]).toHaveFocus();
++  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
++  // Home on the first row moves nothing; a later render does not pull focus back to it.
++  await user.keyboard('{Home}');
++  const sequence = screen.getByRole('spinbutton', { name: 'Event sequence' });
++  await user.type(sequence, '2');
++  expect(sequence).toHaveFocus();
++  expect(sequence).toHaveValue(2);
++  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
++});
++
+ it('ignores controls that cannot act, keeping them focusable (#186 QA)', async () => {
+   const user = userEvent.setup();
+   const live = vi.fn();
+diff --git a/apps/web/src/runs/inspector/Timeline.tsx b/apps/web/src/runs/inspector/Timeline.tsx
+index ac3d6ea7..e4400f09 100644
+--- a/apps/web/src/runs/inspector/Timeline.tsx
++++ b/apps/web/src/runs/inspector/Timeline.tsx
+@@ -125,9 +125,13 @@ export function Timeline({
+   function move(index: number) {
+     const row = events[index];
+     if (!row) return;
++    // The focus request is consumed by the next commit. Within one window the anchor (and the
++    // reader's paused state) may not change, so the target also becomes the active row: that
++    // commit always follows, and focus moves after any window shift, as onFocus would set it.
++    focusRef.current = row.seq;
++    setActive(row.seq);
+     onPause?.();
+     setAnchor(events[Math.max(0, Math.min(index, events.length - TIMELINE_ROWS))]?.seq);
+-    focusRef.current = row.seq;
+   }
+   return (
+     <Card
+@@ -265,7 +269,9 @@ export function Timeline({
+           if (event.key === 'PageUp') next = Math.max(0, index - TIMELINE_ROWS);
+           if (next !== undefined && next >= 0 && next < events.length) {
+             event.preventDefault();
+-            move(next);
++            // A key naming the focused row itself (Home on the first) moves nothing, so it leaves
++            // no focus request for a later render to act on once focus has moved elsewhere.
++            if (next !== index) move(next);
+           }
+         }}
+       >
+diff --git a/apps/web/src/runs/inspector/WaitPanel.test.tsx b/apps/web/src/runs/inspector/WaitPanel.test.tsx
+index ca99bf6d..051497d6 100644
+--- a/apps/web/src/runs/inspector/WaitPanel.test.tsx
++++ b/apps/web/src/runs/inspector/WaitPanel.test.tsx
+@@ -233,25 +233,25 @@ it('does not send a queued answer whose gate expired before dispatch, and says s
+   const held = new Promise<void>((resolve) => {
+     release = resolve;
+   });
+-  view.queryClient.setDefaultOptions({
+-    queries: { retry: false },
+-    mutations: {
+-      retry: false,
+-      onMutate: () => {
+-        queued = true;
+-        return held;
+-      },
+-    },
+-  });
+-  await user.type(screen.getByLabelText('note'), 'answer');
+-  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+-  await waitFor(() => expect(queued).toBe(true));
+-  // The connection is lost while the answer waits to be sent.
+-  open = false;
+-  release();
+-  expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
+-  expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
+-  expect(screen.getByLabelText('note')).toHaveValue('answer');
++  // The client's mutation cache delays every mutation before its API call. Unlike default
++  // options set after the panel mounted, the cache's own callback is read at dispatch.
++  view.queryClient.getMutationCache().config.onMutate = () => {
++    queued = true;
++    return held;
++  };
++  try {
++    await user.type(screen.getByLabelText('note'), 'answer');
++    await user.click(screen.getByRole('button', { name: 'Submit input' }));
++    await waitFor(() => expect(queued).toBe(true));
++    // The connection is lost while the answer waits to be sent.
++    open = false;
++    release();
++    expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
++    expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
++    expect(screen.getByLabelText('note')).toHaveValue('answer');
++  } finally {
++    release();
++  }
+ });
+ 
+ it('bounds a long prompt and offers the whole text (#259)', async () => {

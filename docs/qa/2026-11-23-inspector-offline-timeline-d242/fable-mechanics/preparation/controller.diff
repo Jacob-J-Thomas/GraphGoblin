@@ -1,0 +1,158 @@
+--- accepted-D236/max-continuation.draft.py
++++ D242/fable-correction.draft.py
+@@ -1,4 +1,4 @@
+-"""Run one separately admitted D236 role on the ordinary Max subscription."""
++"""Run one separately admitted D242 B2 correction assessment on ordinary Max."""
+ from datetime import datetime, timezone
+ from hashlib import sha256
+ import json
+@@ -15,36 +15,66 @@
+ CLAUDE = Path("C:/Users/98jak/.local/bin/claude.exe")
+ GIT = Path("C:/Program Files/Git/cmd/git.exe")
+ NODE = Path("C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64")
+-DECISION = E / "i5-d236-architecture-core-admission-01/decision-236.md"
+-DECISION_SHA = "3634bf8f3341fe69540ae0baabab0f7fc23b630a130c97e0dcfa1831594cbd8c"
++DECISION = E / "i5-d242-b2-remount-correction-01/DECISION.md"
++DECISION_SHA = "fde33cf9501704239af7e45de22b68785b09163f34e5438f97658f3a95b234ec"
+ NOT_BEFORE = 1795417200
+ OWNER_LOCK = E / "i5-d236-max-continuation-owner.lock"
+-SCOPE = "D236-ordinary-max-continuation"
+-REVIEW = "core-review"
+-AUTHOR = "ui-author"
++SCOPE = "D242-ordinary-max-b2-correction-assessment"
++REVIEW = "b2-correction-review"
++MODEL = "claude-fable-5-2"
+ CORE = {
+     "apps/web/src/api/queries.ts",
+     "apps/web/src/runs/inspector-read-provenance.ts",
+     "apps/web/src/runs/inspector-read-provenance.test.ts",
+ }
+-UI_WRITES = (
++CORRECTION_PATHS = {
+     "apps/web/src/runs/RunInspectorPage.tsx",
+-    "apps/web/src/runs/inspector/RunControls.tsx",
++    "apps/web/src/runs/HistoryEligibility.tsx",
+     "apps/web/src/runs/inspector/ScriptRecovery.tsx",
+-    "apps/web/src/runs/inspector/SessionRecoveryControls.tsx",
+-    "apps/web/src/runs/inspector/WaitPanel.tsx",
+-    "apps/web/src/runs/HistoryEligibility.tsx",
+-    "apps/web/src/runs/inspector/Timeline.tsx",
+     "apps/web/src/runs/RunInspectorPage.offline.test.tsx",
+     "apps/web/src/runs/HistoryEligibility.test.tsx",
+-    "apps/web/src/runs/inspector/WaitPanel.test.tsx",
+-    "apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx",
+-    "apps/web/src/runs/inspector/Timeline.test.tsx",
+-    "apps/web/e2e/inspector-availability.spec.ts",
++    "apps/web/src/runs/ScriptRecovery.test.tsx",
+     "docs/09-frontend-and-pwa.md",
+     "CHANGELOG.md",
+-)
+-MODELS = {"claude-fable-5-2", "claude-opus-5-5"}
++}
++READ_LIMIT = {
++    "docs/README.md",
++    "AGENTS.md",
++    "docs/15-issue-workflow.md",
++    "docs/12-implementation-plan.md",
++    "apps/web/src/runs/RunInspectorPage.tsx",
++    "apps/web/src/runs/HistoryEligibility.tsx",
++    "apps/web/src/runs/inspector/ScriptRecovery.tsx",
++    "apps/web/src/runs/RunInspectorPage.offline.test.tsx",
++    "apps/web/src/runs/HistoryEligibility.test.tsx",
++    "apps/web/src/runs/ScriptRecovery.test.tsx",
++    "docs/09-frontend-and-pwa.md",
++    "CHANGELOG.md",
++    "apps/web/src/api/queries.ts",
++    "apps/web/src/runs/inspector-read-provenance.ts",
++    "apps/web/src/runs/inspector-read-provenance.test.ts",
++    "apps/web/src/runs/inspector/SessionRecoveryControls.tsx",
++    "apps/web/src/runs/inspector/RunControls.tsx",
++    "apps/web/src/runs/inspector/SessionRecoveryControls.test.tsx",
++    "apps/web/src/runs/RunsPage.tsx",
++    "apps/web/src/runs/RunInspectorPage.lifecycle.test.tsx",
++    "apps/web/src/runs/RunInspectorPage.corrective.test.tsx",
++    "apps/web/src/runs/RunInspectorPage.test.tsx",
++    "apps/web/src/runs/recovery-controls.test.tsx",
++    "apps/web/src/api/context.tsx",
++    "apps/web/src/api/ApiKeyPanel.tsx",
++    "apps/web/src/api/api-key.ts",
++    "apps/web/src/__fixtures__/fake-api.ts",
++    "apps/web/src/__fixtures__/render.tsx",
++    "apps/web/src/__fixtures__/setup.ts",
++    "apps/web/src/components/ui/dialog.tsx",
++    "apps/web/src/components/ui/alert.tsx",
++    "apps/web/src/lib/reachability.ts",
++    "packages/contracts/src/run.ts",
++    "packages/contracts/src/deletion.ts",
++    "packages/api-client/src/resources.ts",
++    "packages/api-client/src/errors.ts",
++}
+ KEEP_ENV = ("SystemRoot", "WINDIR", "ComSpec", "PATH", "PATHEXT", "TEMP", "TMP",
+             "USERPROFILE", "APPDATA", "LOCALAPPDATA", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS")
+ 
+@@ -110,18 +140,17 @@
+ 
+ def scope_for(c):
+     need(c["rootAdmitted"] is True and c["scope"] == SCOPE, "ROOT_ADMISSION_UNSET")
+-    role, model = c["role"], c["model"]
+-    need(role in (REVIEW, AUTHOR) and model in MODELS and c["effort"] == "xhigh", "ROLE_MODEL_UNSET")
+-    need(role != AUTHOR or model == "claude-opus-5-5", "OPUS_UI_AUTHOR_REQUIRED")
+-    cap = 1200 if role == REVIEW else 7200
+-    need(type(c["deadlineSeconds"]) is int and 0 < c["deadlineSeconds"] <= cap, "DEADLINE_UNSET")
++    need(c.get("apiRouteAuthorized") is False, "API_ROUTE_MUST_REMAIN_CLOSED")
++    need(c["role"] == REVIEW and c["model"] == MODEL and c["effort"] == "xhigh", "ROLE_MODEL_UNSET")
++    need(type(c["deadlineSeconds"]) is int and 0 < c["deadlineSeconds"] <= 1200, "DEADLINE_UNSET")
+     reads, writes = c["allowedReadPaths"], c["allowedWritePaths"]
+     need(isinstance(reads, list) and isinstance(writes, list), "LITERAL_PATHS_UNSET")
+-    reads = [literal(x) for x in reads]
+-    writes = [literal(x) for x in writes]
+-    need(len({x.casefold() for x in reads}) == len(reads) and CORE <= set(reads), "READ_SCOPE_DIFFERS")
+-    need(writes == (list(UI_WRITES) if role == AUTHOR else []), "WRITE_SCOPE_DIFFERS")
+-    return set(reads), set(writes)
++    reads = [literal(name) for name in reads]
++    read_set = set(reads)
++    need(len({name.casefold() for name in reads}) == len(reads)
++         and CORE | CORRECTION_PATHS <= read_set <= READ_LIMIT, "READ_SCOPE_DIFFERS")
++    need(writes == [], "WRITE_SCOPE_DIFFERS")
++    return read_set, set()
+ 
+ 
+ def clean_env(source):
+@@ -139,9 +168,10 @@
+ 
+ 
+ def argv(binary, role, model, reads, writes):
+-    tools = "Read" if role == REVIEW else "Read,Edit,Write"
+-    role_prompt = ("Critique only the three GPT-authored D236 core files."
+-                   if role == REVIEW else "Implement the root-admitted inspector UI scope. Preserve the three D236 core files.")
++    need(role == REVIEW and model == MODEL and not writes, "READ_ONLY_FABLE_ROLE_REQUIRED")
++    tools = "Read"
++    role_prompt = ("Independently assess only the root-admitted D242 B2 script and deletion correction. "
++                   "Give ACCEPT FIX or CHANGES REQUIRED only for this known correction.")
+     prompt = (role_prompt + " Use only root-listed literal paths. No commands, browser, agents, network or credentials. "
+               "Return ordinary text and actual evidence. Do not claim tests ran."
+               f" Read paths: {json.dumps(sorted(reads))}. Write paths: {json.dumps(sorted(writes))}.")
+@@ -409,7 +439,7 @@
+ 
+ def launch(config):
+     need(time.time() >= NOT_BEFORE, "MAX_RESET_NOT_REACHED")
+-    need(sha256(DECISION.read_bytes()).hexdigest() == DECISION_SHA, "D236_DECISION_DIFFERS")
++    need(sha256(DECISION.read_bytes()).hexdigest() == DECISION_SHA, "D242_DECISION_DIFFERS")
+     c = read(evidence_path(config))
+     reads, writes = scope_for(c)
+     cwd, output = path_at(c["checkout"]), path_at(c["output"])
+@@ -428,12 +458,9 @@
+     cli, git_binary = bound(cli_ref), bound(git_ref)
+     acceptance = read(public_ref(c["independentAcceptance"]))
+     need(acceptance["scope"] == SCOPE and acceptance["mechanicsAccepted"] is True
+-         and acceptance["actualRuntimeAdmission"] is False
++         and acceptance["actualRuntimeAdmission"] is False and acceptance["role"] == REVIEW
++         and acceptance["readOnly"] is True and acceptance["authorRoleRejected"] is True
+          and acceptance["controllerSha256"] == pin(HELPER)["sha256"], "INDEPENDENT_MECHANICS_REQUIRED")
+-    if role == AUTHOR:
+-        critique = read(public_ref(c["rootCoreReview"]))
+-        need(critique["source"] == source and critique["rootAcceptedActualClaudeCoreReview"] is True
+-             and critique["model"] in MODELS and critique["effort"] == "xhigh", "ACTUAL_CORE_REVIEW_REQUIRED")
+     owner = read(public_ref(c["singleOwner"]))
+     require_owner(owner, c, time.time())
+     brief = public_ref(c["brief"]).read_bytes()

@@ -1,0 +1,1 @@
+Exact root-admitted type correction only: immediate diagnostic field explicitly allows undefined. No runtime/DOM observation/oracle/wait or original-prefix change. Runner differs only output directory01-to02; module resolver unchanged. First static failure remains sealed with zero behavioral invocations. Root admitted this one successor static+full63 program; no automatic retry.

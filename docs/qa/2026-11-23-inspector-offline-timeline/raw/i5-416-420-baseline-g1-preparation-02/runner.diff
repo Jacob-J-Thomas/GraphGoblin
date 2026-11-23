@@ -1,0 +1,68 @@
+--- prep01/run-baseline-g1.py
++++ prep02/run-baseline-g1.py
+@@ -288,8 +288,45 @@
+          'API source or exact five-overlay roster differs')
+     need(baseline['UIQAApiHarnessEquivalent']['candidateHead'] == binding['source']['head'],
+          'Shipping API harness equivalence missing')
+-    before = snapshot(binding)
+-    need(before == prior, 'Exact original UIQA source, index, dependencies and overlays are required')
++    qa = E / 'i5-d241-observation-entry-loss-independent-qa-01'
++    handoff = read_pinned(P / 'COMPONENT-CLOSURE-BINDING.json', admission['componentClosureBindingSha256'])
++    need(handoff['afterSha256'] == admission['componentAfterSha256']
++         and handoff['phaseSha256'] == admission['componentPhaseSha256'], 'Root must bind the closed B1 phase')
++    m = read_pinned(qa / 'MATERIALIZATION.json', handoff['materializationSha256'])
++    root = read_pinned(qa / 'ROOT-BINDING.admitted.json', handoff['rootBindingSha256'])
++    closed = read_pinned(qa / 'old/after.json', handoff['afterSha256'])
++    phase = read_pinned(qa / 'old/PHASE-RECEIPT.json', handoff['phaseSha256'])
++    selected = read_pinned(qa / 'old/ACTUAL-SELECTION.json', handoff['selectionSha256'])
++    component = {'bytes':71543,'sha256':'8a344821db18ec25fa7cf2219c07721acf4eddae0d109b8eb3a412ca58aa6c2b'}
++    need(phase['stageReached'] == 'replacement2' and phase['afterMatchesRootBinding'] is True
++         and phase['rootBindingSha256'] == handoff['rootBindingSha256']
++         and phase['sourceFixesOrReruns'] is False and selected['actualCases'] == 63
++         and selected['expectedSelected'] == 2 and selected['filteredOrPending'] == 61
++         and selected['failed'] == 2 and selected['processExit'] == 1,
++         'Expected closed two-case B1 evidence is absent')
++    need(m['executedComponentSha256'] == component['sha256']
++         and m['oldComponentSha256'] == binding['overlays'][EXTRA_OVERLAY]
++         and m['onlyCheckoutDelta'] == EXTRA_OVERLAY and m['literalBase61Unchanged'] is True
++         and m['otherFourOverlaysAndSourceIndexDependenciesModulesUnchanged'] is True,
++         'Unexpected B1 component materialization')
++    expected_overlays = binding['overlays'] | {EXTRA_OVERLAY: component['sha256']}
++    source_keys = ('head','tree','indexSha256','stagedEntriesSha256','commonIndexExists','selectedSources','status')
++    need(all(closed[k] == root['source'][k] for k in source_keys)
++         and closed['head'] == binding['source']['head'] and closed['tree'] == binding['source']['tree']
++         and closed['indexSha256'] == binding['indexSha256'] and closed['commonIndexExists'] is False
++         and closed['trackedAndStagedDiffExit'] == 0
++         and closed['overlays'] == root['overlays'] == expected_overlays,
++         'Closed B1 source, index or overlay snapshot differs')
++    need(closed['rootInstallInputs19'] == root['rootInstallInputs19'] and all(
++         pin(W / n) == v for n,v in closed['rootInstallInputs19'].items()), 'B1 installation inputs changed')
++    for key in ('independentInputs18','metadata'):
++        need(closed[key] == root[key] and all(pin(W / n)['sha256'] == v for n,v in closed[key].items()),
++             f'B1 {key} inputs changed')
++    need(pin(W / EXTRA_OVERLAY) == component, 'Exact admitted 63-case component required; no reversal')
++    adopted = binding | {'overlays':expected_overlays}
++    before = snapshot(adopted)
++    need(before == prior | {'overlays':expected_overlays},
++         'Original browser state may differ only by the exact admitted B1 component overlay')
+ 
+     h2 = baseline['H2']
+     retained = Path(h2['webDistRoot'])
+@@ -322,6 +359,8 @@
+     env = make_env(tmp,browser=True)
+     need(check_binaries(env) == read(ORIGINAL_RUN / 'RUNTIME.json'), 'Browser runtime drift')
+     put(OUT/'BROWSER-BEFORE.json',before)
++    put(OUT/'ADOPTED-B1-CLOSURE.json', {'receipt':handoff,'sourceSnapshot':closed,
++        'component':component,'originalFourBrowserOverlays':BROWSER_OVERLAYS})
+     put(OUT/'BASELINE-WEB-MANIFEST.json', {
+         'releaseBase':base, 'actualWebBuildSource':h2['source'], 'apiSource':binding['source'],
+         'baseApiHarnessEquivalence':baseline['UIQAApiHarnessEquivalent'], 'webDist':base_dist,
+@@ -336,7 +375,7 @@
+     status = command('baseline-g1',[PNPM,'--filter','@graphgoblin/web','exec','playwright','test',
+         'e2e/'+G1,'--grep','G1: real built Timeline geometry','--workers=1','--retries=0',
+         '--trace=on','--reporter=list,json','--output',OUT/'browser-artifacts'],env)
+-    after = snapshot(binding)
++    after = snapshot(adopted)
+     put(OUT/'BROWSER-AFTER.json',after)
+     untouched = tree_manifest(DIST) == built_candidate['webDist']
+     retained_unchanged = tree_manifest(retained) == base_dist

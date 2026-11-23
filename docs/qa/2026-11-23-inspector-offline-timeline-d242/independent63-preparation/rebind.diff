@@ -1,0 +1,432 @@
+--- D241/rebind.py
++++ D242-preparation-02/rebind.py
+@@ -1,155 +1,290 @@
++"""Advance the exact D241 UIQA checkout once and bind the unchanged D242 component run."""
+ from datetime import datetime, timezone
+-import hashlib
++from hashlib import sha256
+ import json
+ import os
+ from pathlib import Path
++import re
+ import subprocess
++import sys
+ import traceback
+ 
+-directory = Path(__file__).parent
+-evidence = directory.parent
+-root = Path('G:/ggq/gg-i5-offline-ui-qa/GraphGoblin')
+-prep = evidence / 'i5-d241-session-feedback-rebind-preparation-01'
+-runner_prep = evidence / 'i5-d241-session-feedback-corrected-preparation-01'
+-environment = dict(os.environ, GIT_OPTIONAL_LOCKS='0', GIT_NO_LAZY_FETCH='1')
+-
+-
+-def sha(data):
+-    return hashlib.sha256(data).hexdigest()
++P = Path(__file__).resolve().parent
++E = P.parent
++W = Path('G:/ggq/gg-i5-offline-ui-qa/GraphGoblin')
++REBIND = E / 'i5-d242-b2-independent63-rebind-01'
++RUN = E / 'i5-d242-b2-independent63-execution-01'
++GIT = Path('C:/Program Files/Git/cmd/git.exe')
++ENV = {k: v for k, v in os.environ.items() if not k.upper().startswith('GIT_')}
++ENV.update(GIT_OPTIONAL_LOCKS='0', GIT_NO_LAZY_FETCH='1', GIT_TERMINAL_PROMPT='0')
++
++
++def need(value, message):
++    if not value:
++        raise RuntimeError(message)
++
++
++def digest(data):
++    return sha256(data).hexdigest()
+ 
+ 
+ def pin(path):
+-    data = path.read_bytes()
+-    return {'bytes': len(data), 'sha256': sha(data)}
+-
+-
+-def save(name, value):
+-    with (directory / name).open('x', encoding='utf-8', newline='\n') as stream:
++    raw = path.read_bytes()
++    return {'bytes': len(raw), 'sha256': digest(raw)}
++
++
++def reference(path):
++    return {'source': str(path), **pin(path)}
++
++
++def read(path):
++    return json.loads(path.read_bytes())
++
++
++def save(path, value):
++    with path.open('x', encoding='utf-8', newline='\n') as stream:
+         json.dump(value, stream, indent=2)
+         stream.write('\n')
+ 
+ 
+-def write(name, data):
+-    with (directory / name).open('xb') as stream:
+-        stream.write(data)
+-
+-
+-def git(*arguments):
+-    return subprocess.check_output(['git', '--no-optional-locks', '-C', str(root), *arguments], env=environment)
+-
+-
+-def snapshot():
+-    index = Path(git('rev-parse', '--path-format=absolute', '--git-path', 'index').decode().strip()).resolve()
+-    common = Path(git('rev-parse', '--path-format=absolute', '--git-common-dir').decode().strip()).resolve()
+-    assert (common / 'worktrees') in index.parents and not (common / 'index').exists()
+-    result = {
+-        'source': {
+-            'head': git('rev-parse', 'HEAD').decode().strip(), 'tree': git('rev-parse', 'HEAD^{tree}').decode().strip(),
+-            'indexSha256': sha(index.read_bytes()), 'indexPath': str(index),
+-            'stagedEntriesSha256': sha(git('ls-files', '--stage', '-z')),
+-            'commonIndexExists': (common / 'index').exists(),
+-            'status': git('status', '--porcelain=v1', '--untracked-files=all', '-z').decode().split('\0')[:-1],
+-            'selectedSources': {path: sha((root / path).read_bytes()) for path in target_binding['source']['selectedSources']},
+-        },
+-        'rootInstallInputs19': {path: pin(root / path) for path in plan['root19InputReference']},
+-        'independentInputs18': {path: sha((root / path).read_bytes()) for path in plan['independent18InputReference']},
+-        'metadata': {path: sha((root / path).read_bytes()) for path in plan['metadataReference']},
+-        'overlays': {path: sha((root / path).read_bytes()) for path in plan['preserveRawFiveOverlaysBeforeAfter']},
+-        'protectedCore': {path: pin(root / path) for path in plan['protectedCore']},
+-        'protectedConfigs': {path: pin(root / path) for path in config_paths},
+-        'selectedModuleFiles': {},
+-    }
+-    for module in plan['selectedModulesReference']:
++def copy_bytes(path, raw):
++    with path.open('xb') as stream:
++        stream.write(raw)
++
++
++def checked_ref(ref):
++    path = Path(ref['source'])
++    need(path.is_absolute() and path == path.resolve(strict=True) and path.is_relative_to(E)
++         and path.is_file() and reference(path) == ref, 'Public evidence reference mismatch')
++    return path
++
++
++def git(*args):
++    return subprocess.check_output([str(GIT), '--no-optional-locks', '-C', str(W), *args],
++                                   env=ENV, stderr=subprocess.PIPE, timeout=180)
++
++
++def git_text(*args):
++    return git(*args).decode('utf-8').strip()
++
++
++def git_list(*args):
++    raw = git(*args)
++    return raw.decode('utf-8').split('\0')[:-1]
++
++
++def utc():
++    return datetime.now(timezone.utc).isoformat()
++
++
++def prepare_context(root_manifest_sha256):
++    manifest = P / 'MANIFEST.json'
++    need(pin(manifest)['sha256'] == root_manifest_sha256, 'Root preparation manifest mismatch')
++    for row in read(manifest)['members']:
++        need(pin(P / row['path']) == {k: row[k] for k in ('bytes', 'sha256')}, row['path'])
++    fixed = read(P / 'FIXED-CONTROLS.json')
++    for ref in fixed['references'].values():
++        checked_ref(ref)
++    need(reference(GIT) == fixed['gitBinary'], 'Pinned Git binary differs')
++    return fixed
++
++
++def verify_distributions(fixed):
++    manifest = read(checked_ref(fixed['references']['frozenBuild']))
++    expected = manifest['webDist']
++    need(len(expected) == 28 and manifest['source']['head'] == fixed['baseline']['head'],
++         'Legacy distribution manifest differs')
++    result = {}
++    for label, path in [('ownedLegacy', Path(fixed['oldOwnedDist'])), ('workingWebDist', W / 'apps/web/dist')]:
++        need(path.is_dir() and path.resolve(strict=True) == path, f'Expected exact {label} directory')
++        actual = {p.relative_to(path).as_posix(): pin(p) for p in path.rglob('*') if p.is_file()}
++        need(actual == expected, f'Frozen web distribution differs: {label}')
++        result[label] = {'directory': str(path), 'files': actual}
++    return result
++
++
++def snapshot(fixed, template):
++    need(Path(git_text('rev-parse', '--show-toplevel')).resolve() == W, 'Wrong checkout')
++    index = Path(git_text('rev-parse', '--path-format=absolute', '--git-path', 'index')).resolve()
++    common = Path(git_text('rev-parse', '--path-format=absolute', '--git-common-dir')).resolve()
++    merge_head = Path(git_text('rev-parse', '--path-format=absolute', '--git-path', 'MERGE_HEAD'))
++    need(str(index) == fixed['indexPath'] and (common / 'worktrees') in index.parents
++         and not os.path.lexists(common / 'index') and not os.path.lexists(merge_head), 'Unexpected index/merge state')
++    source = {'head': git_text('rev-parse', 'HEAD'), 'tree': git_text('rev-parse', 'HEAD^{tree}'),
++              'indexSha256': pin(index)['sha256'],
++              'stagedEntriesSha256': digest(git('ls-files', '--stage', '-z')), 'commonIndexExists': False,
++              'status': git_list('status', '--porcelain=v1', '--untracked-files=all', '-z'),
++              'selectedSources': {name: pin(W / name)['sha256'] for name in template['source']['selectedSources']}}
++    controls = {'source': source, 'index': reference(index), 'protectedConfigs': {},
++                'protectedCore': {name: pin(W / name) for name in fixed['protectedCore']}}
++    for field in ('rootInstallInputs19', 'independentInputs18', 'metadata', 'overlays'):
++        values = {name: pin(W / name) for name in template[field]}
++        controls[field] = values if field == 'rootInstallInputs19' else {
++            name: record['sha256'] for name, record in values.items()}
++        need(controls[field] == template[field], f'Protected cohort differs: {field}')
++    controls['protectedConfigs'] = {name: pin(W / name) for name in fixed['protectedConfigs']}
++    need(controls['protectedCore'] == fixed['protectedCore'], 'Protected core file differs')
++    need(pin(Path(template['runtime']['node']['path']))['sha256'] == template['runtime']['node']['sha256'],
++         'Pinned Node binary differs')
++    for path_field, hash_field in [('pnpmLauncher','launcherSha256'), ('pnpmExecutable','executableSha256'),
++                                  ('packagePath','packageSha256')]:
++        pnpm = template['runtime']['pnpm']
++        need(pin(Path(pnpm[path_field]))['sha256'] == pnpm[hash_field], 'Pinned pnpm identity differs')
++    for module in template['selectedModules']:
+         entry = Path(module['entry'])
+-        actual = {'entrySha256': sha(entry.read_bytes()), 'physicalEntry': str(entry.resolve())}
+-        assert actual['entrySha256'] == module['entrySha256'], module['name']
+-        assert actual['physicalEntry'].casefold() == str(Path(module['realEntry']).resolve()).casefold()
++        need(entry.resolve(strict=True) == Path(module['realEntry']).resolve(strict=True)
++             and pin(entry)['sha256'] == module['entrySha256'], f"Module entry differs: {module['name']}")
+         if 'manifest' in module:
+-            actual['manifestSha256'] = sha(Path(module['manifest']).read_bytes())
+-            assert actual['manifestSha256'] == module['manifestSha256'], module['name']
+-        result['selectedModuleFiles'][module['name']] = actual
+-    assert sha(Path(plan['runtimeReference']['node']['path']).read_bytes()) == plan['runtimeReference']['node']['sha256']
+-    for path_key, hash_key in [('pnpmLauncher', 'launcherSha256'), ('pnpmExecutable', 'executableSha256'), ('packagePath', 'packageSha256')]:
+-        assert sha(Path(plan['runtimeReference']['pnpm'][path_key]).read_bytes()) == plan['runtimeReference']['pnpm'][hash_key]
+-    assert not git('diff', '--exit-code', '--no-ext-diff', '--no-textconv')
+-    assert not git('diff', '--cached', '--exit-code', '--no-ext-diff', '--no-textconv')
+-    result['trackedAndStagedDiffExit'] = 0
+-    return result
+-
+-
+-try:
+-    admission_path = prep / 'ROOT-FF-ADMISSION.json'
+-    assert sha(admission_path.read_bytes()) == '30ffcb7435a6330c5239ccc33fb9ee761347a386d3cf2868128c26b0e783a085'
+-    admission = json.loads(admission_path.read_text())
+-    assert admission['ffAdmitted'] and not admission['executionAdmitted']
+-    assert sha((prep / 'FF-PLAN.json').read_bytes()) == admission['planSha256']
+-    plan = json.loads((prep / 'FF-PLAN.json').read_text())
+-    target_binding = json.loads((prep / 'ROOT-BINDING.target.unarmed.json').read_text())
+-    freeze_path = Path(plan['freezePath'])
+-    assert sha(freeze_path.read_bytes()) == plan['freezeSha256']
+-    freeze = json.loads(freeze_path.read_text())
+-    assert freeze['source'] == admission['source'] == plan['targetSource']
+-    assert Path(git('rev-parse', '--show-toplevel').decode().strip()).resolve() == root.resolve()
+-    assert git('rev-list', '--parents', '-n', '1', freeze['source']['head']).decode().strip().split() == [freeze['source']['head'], plan['currentHead']]
+-    assert git('show', '-s', '--format=%T', freeze['source']['head']).decode().strip() == freeze['source']['tree']
+-    changed = git('diff', '--name-only', '--no-renames', '-z', plan['currentHead'], freeze['source']['head']).decode().split('\0')[:-1]
+-    assert changed == plan['exactAllowedDeltaPaths'] == freeze['exactDeltaFromPriorFreeze']
+-    config_paths = git('ls-files', '-z', '--', *plan['protectedConfigPaths']).decode().split('\0')[:-1]
+-    protected_paths = list(dict.fromkeys([*config_paths, *plan['protectedCore'], *plan['root19InputReference'], *plan['independent18InputReference']]))
+-    assert not git('diff', '--exit-code', '--no-ext-diff', '--no-textconv', plan['currentHead'], freeze['source']['head'], '--', *protected_paths)
+-    assert not git('ls-tree', '-r', '--name-only', freeze['source']['head'], '--', *plan['preserveRawFiveOverlaysBeforeAfter']).strip()
+-    before = snapshot()
+-    baseline = json.loads((evidence / 'i5-d241-feedback-render-diagnostic-qa-03/after.json').read_text())
+-    for key in ['head', 'tree', 'indexSha256', 'stagedEntriesSha256', 'commonIndexExists', 'status']:
+-        assert before['source'][key] == baseline[key], key
+-    assert before['source']['selectedSources'] == baseline['selectedSources']
+-    for group in ['rootInstallInputs19', 'independentInputs18', 'metadata', 'overlays']:
+-        assert before[group] == baseline[group], group
+-    assert before['protectedCore'] == freeze['protectedCore']
+-    save('before-d8.json', before)
+-    write('index.before.raw', Path(before['source']['indexPath']).read_bytes())
+-    copies = directory / 'overlays-before'
+-    copies.mkdir(exist_ok=False)
+-    for path, digest in before['overlays'].items():
+-        copy = copies / Path(path).name
+-        with copy.open('xb') as stream:
+-            stream.write((root / path).read_bytes())
+-        assert sha(copy.read_bytes()) == digest
+-    write('source-six-paths.diff', git('diff', '--binary', '--no-ext-diff', '--no-textconv', '--no-renames', plan['currentHead'], freeze['source']['head']))
+-    started = datetime.now(timezone.utc).isoformat()
+-    with (directory / 'ff-only.stdout.log').open('xb') as stdout, (directory / 'ff-only.stderr.log').open('xb') as stderr:
+-        result = subprocess.run(plan['plannedGitArgv'], env=environment, stdout=stdout, stderr=stderr, check=False)
+-    save('FF-ONLY.receipt.json', {'argv': plan['plannedGitArgv'], 'startedUtc': started, 'finishedUtc': datetime.now(timezone.utc).isoformat(),
+-        'exitCode': result.returncode, 'stdout': pin(directory / 'ff-only.stdout.log'), 'stderr': pin(directory / 'ff-only.stderr.log'),
+-        'admissionPath': str(admission_path), 'admissionSha256': sha(admission_path.read_bytes())})
+-    assert result.returncode == 0
+-    after = snapshot()
+-    save('after-a0.json', after)
+-    write('index.after.raw', Path(after['source']['indexPath']).read_bytes())
+-    assert after['source']['head'] == freeze['source']['head'] and after['source']['tree'] == freeze['source']['tree']
+-    assert after['source']['status'] == before['source']['status']
+-    for group in ['rootInstallInputs19', 'independentInputs18', 'metadata', 'overlays', 'protectedCore', 'protectedConfigs', 'selectedModuleFiles']:
+-        assert after[group] == before[group], group
+-    for path, expected in freeze['files'].items():
+-        assert pin(root / path) == expected, path
+-    assert after['source']['selectedSources'] == target_binding['source']['selectedSources']
+-    for path, expected in after['overlays'].items():
+-        assert (root / path).read_bytes() == (copies / Path(path).name).read_bytes()
+-    target_binding['source'] = {key: after['source'][key] for key in target_binding['source']}
+-    assert target_binding['executionAdmitted'] is False and target_binding['rootAdmission'] == {'path': None, 'sha256': None}
+-    save('ROOT-BINDING.unarmed.json', target_binding)
+-    receipt = {'oldHead': before['source']['head'], 'newHead': after['source']['head'], 'newTree': after['source']['tree'],
+-        'oldIndexSha256': before['source']['indexSha256'], 'newIndexSha256': after['source']['indexSha256'],
+-        'newStagedEntriesSha256': after['source']['stagedEntriesSha256'], 'exactSixPathDeltaVerified': changed,
+-        'protectedCoreConfigDependencyGitDeltaEmpty': True, 'allFiveOverlayBytesUnchanged': True,
+-        'b3NotReapplied': True, 'protectedConfigsRecorded': len(config_paths),
+-        'root19Independent18MetadataModulesCoreConfigsUnchanged': True, 'commonIndexAbsent': True,
+-        'trackedAndStagedDiffExit': 0, 'rawIndexCopiesPreserved': True,
+-        'unarmedBindingSha256': sha((directory / 'ROOT-BINDING.unarmed.json').read_bytes()),
+-        'runnerSha256': plan['runnerSha256'], 'testsBuildBrowserRun': False, 'executionAdmitted': False, 'nextRead': False}
+-    save('REBIND.json', receipt)
+-    print(json.dumps(receipt, indent=2))
+-except Exception:
+-    with (directory / 'FAILURE.txt').open('x', encoding='utf-8') as stream:
+-        stream.write(traceback.format_exc())
+-    raise
++            need(pin(Path(module['manifest']))['sha256'] == module['manifestSha256'],
++                 f"Module manifest differs: {module['name']}")
++    for diff in (('diff', '--exit-code'), ('diff', '--cached', '--exit-code')):
++        need(not git(*diff, '--no-ext-diff', '--no-textconv'), 'Tracked or staged diff present')
++    controls['distributions'] = verify_distributions(fixed)
++    return controls
++
++
++def record_index(snapshot_value, name):
++    path = Path(snapshot_value['index']['source'])
++    destination = REBIND / name
++    copy_bytes(destination, path.read_bytes())
++    need(pin(destination) == pin(path), 'Raw index copy drift')
++    return reference(destination)
++
++
++def advance():
++    admission_path = P / 'ROOT-FF-ADMISSION.json'
++    need(admission_path.is_file(), 'UNARMED: actual root fast-forward admission is absent')
++    admission = read(admission_path)
++    need(admission['ffAdmitted'] is True and admission['executionAdmitted'] is False
++         and admission['originalUiqaIndexReleasedByRoot'] is True, 'UNARMED: no root UIQA-advance admission')
++    fixed = prepare_context(admission['preparationManifestSha256'])
++    template = read(P / 'ROOT-BINDING.template.json')
++    freeze = read(checked_ref(admission['freezeReceipt']))
++    checked_ref(admission['focusedReceipt'])
++    checked_ref(admission['oldNativeDisposition'])
++    source = admission['source']
++    need(freeze['source'] == source and set(source) == {'head','tree','parents'} and
++         isinstance(source['parents'], list) and bool(source['parents']) and
++         all(isinstance(v, str) and re.fullmatch(r'[0-9a-f]{40}',v)
++             for v in [source['head'],source['tree'],*source['parents']]), 'Root freeze identity differs')
++    baseline, held = fixed['baseline']['head'], fixed['heldSource']['head']
++    head = source['head']
++    need(head not in (baseline, held) and not REBIND.exists() and not RUN.exists(), 'Fresh rebind and run required')
++    before = snapshot(fixed, template)
++    for key, old in fixed['baseline'].items():
++        if key == 'selectedSources':
++            need(all(before['source']['selectedSources'][name] == old_sha for name, old_sha in old.items()),
++                 'Original selected materialized source differs')
++        else:
++            need(before['source'][key] == old, f'Original protected UIQA identity differs: {key}')
++    need(before['protectedConfigs'] == fixed['protectedConfigs'], 'Baseline config pins differ')
++    need(git_text('show', '-s', '--format=%P', held).split() == [baseline] and
++         git_text('rev-parse', held+'^{tree}') == fixed['heldSource']['tree'], 'Held archive ancestry differs')
++    need(git_text('merge-base', held, head) == held and not git_text('rev-list','--merges',f'{held}..{head}'),
++         'Correction is outside the linear held source history')
++    need(git_text('show','-s','--format=%P',head).split() == source['parents']
++         and git_text('rev-parse',head+'^{tree}') == source['tree'], 'Exact corrected object differs')
++    flags = ('diff', '--no-ext-diff', '--no-textconv', '--no-renames')
++    archive = checked_ref(fixed['references']['archivePaths']).read_bytes().decode('utf-8-sig').split('\0')[:-1]
++    need(len(archive) == len(set(archive)) == 1431 and
++         set(git_list(*flags, '--name-only','-z',baseline,held)) == set(archive), 'Exact prior archive delta differs')
++    correction = set(git_list(*flags,'--name-only','-z',held,head))
++    expected_files = admission['correctedFiles']
++    need(bool(correction) and correction == set(expected_files) and
++         correction <= set(fixed['correctionPaths']), 'Corrected source escaped its exact eight-path envelope')
++    for name, expected in expected_files.items():
++        raw = git('cat-file','blob',head+':'+name)
++        need({'bytes':len(raw),'sha256':digest(raw)} == expected, f'Corrected Git blob pin differs: {name}')
++    need(not git('ls-tree','-r','--name-only',head,'--',*template['overlays']), 'Overlay would become tracked')
++    new_selected = dict(before['source']['selectedSources'])
++    for name in correction & set(new_selected):
++        new_selected[name] = expected_files[name]['sha256']
++    patched_attrs = git('cat-file','blob',held+':.gitattributes')
++    expected_config = fixed['protectedConfigs'] | {
++        '.gitattributes': {'bytes':len(patched_attrs),'sha256':digest(patched_attrs)}}
++
++    REBIND.mkdir(exist_ok=False)
++    try:
++        save(REBIND / 'before.json', before)
++        original_index = record_index(before, 'before-index.raw')
++        overlays = REBIND / 'overlays-before'
++        overlays.mkdir()
++        for name, want in template['overlays'].items():
++            duplicate = overlays / Path(name).name
++            copy_bytes(duplicate, (W / name).read_bytes())
++            need(pin(duplicate)['sha256'] == want, f'Original overlay copy differs: {name}')
++        copy_bytes(REBIND / 'correction.diff', git(*flags,'--binary','--full-index',held,head))
++        copy_bytes(REBIND / 'root-ff-admission.json', admission_path.read_bytes())
++        argv = [str(GIT), '--no-optional-locks', '-C', str(W), 'merge', '--ff-only', head]
++        started = utc()
++        with (REBIND/'ff-only.stdout.log').open('xb') as out, (REBIND/'ff-only.stderr.log').open('xb') as err:
++            result = subprocess.run(argv, env=ENV, stdout=out, stderr=err, check=False, timeout=180)
++        save(REBIND/'FF-ONLY.receipt.json', {'argv':argv,'startedUtc':started,'finishedUtc':utc(),
++             'exitCode':result.returncode,'stdout':reference(REBIND/'ff-only.stdout.log'),
++             'stderr':reference(REBIND/'ff-only.stderr.log'),'rootAdmission':reference(admission_path)})
++        need(result.returncode == 0, 'Fast-forward stopped; preserve the first failure')
++        after = snapshot(fixed, template)
++        save(REBIND / 'after.json', after)
++        corrected_index = record_index(after, 'after-index.raw')
++        need(after['source']['head'] == head and after['source']['tree'] == source['tree'] and
++             after['source']['status'] == before['source']['status'] and
++             after['source']['selectedSources'] == new_selected, 'Corrected checkout parity differs')
++        need(after['protectedConfigs'] == expected_config, 'Only the explicit prior archive attribute may differ')
++        need(after['distributions'] == before['distributions'], 'Existing distributions changed')
++        for name, expected in expected_files.items():
++            need(pin(W / name) == expected, f'Corrected materialized file differs: {name}')
++        for name in template['overlays']:
++            need((W / name).read_bytes() == (overlays / Path(name).name).read_bytes(),
++                 f'Actual overlay bytes differ: {name}')
++        template['source'] = after['source']
++        template['preparationManifestSha256'] = admission['preparationManifestSha256']
++        binding = REBIND / 'ROOT-BINDING.unarmed.json'
++        save(binding, template)
++        save(REBIND/'REBIND.json', {'utc':utc(),'source':source,'beforeIndex':before['index'],
++             'afterIndex':after['index'],'rawIndexBefore':original_index,'rawIndexAfter':corrected_index,
++             'stagedEntriesSha256':after['source']['stagedEntriesSha256'],'allFiveOverlaysUnchanged':True,
++             'afterSnapshot':reference(REBIND/'after.json'),
++             'legacyDistributionPreserved':True,'commonIndexAbsent':True,'archivePathsVerified':len(archive),
++             'correctionPaths':sorted(correction),'freezeReceipt':admission['freezeReceipt'],
++             'executionAdmitted':False,'unarmedBinding':reference(binding)})
++        print(str(REBIND/'REBIND.json'))
++    except BaseException:
++        (REBIND / 'FAILURE.txt').write_text(traceback.format_exc(),encoding='utf-8')
++        raise
++
++
++def bind_execution():
++    path = P/'ROOT-EXECUTION-ADMISSION.json'
++    need(path.is_file(), 'UNARMED: actual root component execution admission is absent')
++    admission = read(path)
++    need(admission['executionAdmitted'] is True and admission['soleHeavySlotAssigned'] is True,
++         'UNARMED: component execution and slot are unset')
++    fixed = prepare_context(admission['preparationManifestSha256'])
++    rebind_path = checked_ref(admission['rebind'])
++    need(rebind_path == REBIND/'REBIND.json' and not RUN.exists(), 'Fresh execution directory required')
++    rebind = read(rebind_path)
++    need(rebind['source'] == admission['source'] and rebind['executionAdmitted'] is False,
++         'Rebind source mismatch')
++    unarmed = checked_ref(rebind['unarmedBinding'])
++    binding = read(unarmed)
++    after_snapshot = checked_ref(rebind['afterSnapshot'])
++    current = snapshot(fixed,binding)
++    need(after_snapshot == REBIND/'after.json' and current == read(after_snapshot)
++         and binding['executionAdmitted'] is False and binding['source'] == current['source']
++         and current['index'] == rebind['afterIndex'], 'Post-advance source or control drift')
++    binding['executionAdmitted'] = True
++    binding['rootAdmission'] = {'path':str(path),'sha256':pin(path)['sha256']}
++    binding['rootInstructions'] = 'Run only the unchanged D241 fresh2 then separate full63 component regression.'
++    output = REBIND/'ROOT-BINDING.admitted.json'
++    save(output,binding)
++    print(json.dumps(reference(output)))
++
++
++if __name__ == '__main__':
++    args = sys.argv[1:]
++    if args == ['--root-execute-ff']:
++        advance()
++    elif args == ['--root-bind-execution']:
++        bind_execution()
++    else:
++        raise SystemExit('UNARMED: supply an explicit root-authorized phase')

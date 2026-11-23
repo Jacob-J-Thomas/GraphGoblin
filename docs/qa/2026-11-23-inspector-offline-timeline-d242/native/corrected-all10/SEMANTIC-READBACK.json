@@ -1,0 +1,567 @@
+{
+  "scope": "Independent post-execution evidence readback, not a new browser run or source review",
+  "rootReportedSession": 10352,
+  "rootReportedTerminalExit": 0,
+  "actualCommandReceiptExit": 0,
+  "startUtc": "2026-11-23T16:02:00.6194467+00:00",
+  "endUtc": "2026-11-23T16:02:19.7005892+00:00",
+  "source": {
+    "head": "20a69d9b53910a5ede81088e9ff67680f348ce68",
+    "tree": "8be5890a170f2a51af49467e1f71e88839bef28b",
+    "parents": [
+      "f64287619b499c14601e11bce3d1c6b5414b6227"
+    ]
+  },
+  "browser": "158.0.4370.33",
+  "node": "v22.23.4",
+  "cases": 10,
+  "passed": 10,
+  "failed": 0,
+  "fixtureErrors": 0,
+  "expectedCorrectCriteriaPassed": 49,
+  "caseSummaries": [
+    {
+      "case": 1,
+      "action": "script",
+      "mode": "guard",
+      "passedCriteria": [
+        "replacement launcher is disabled while original command pending",
+        "replacement dispatches no second confirmation"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "observedSeq": 6,
+          "retryUncertainScript": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "guard-attempt"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 2,
+      "action": "deletion",
+      "mode": "guard",
+      "passedCriteria": [
+        "replacement launcher is disabled while original command pending",
+        "replacement dispatches no second confirmation"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "guard-attempt"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 3,
+      "action": "script",
+      "mode": "failure",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "late action failure visible within original two-second budget",
+        "one original POST before new deliberate choice",
+        "fresh deliberate action sends exactly once after first settlement",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 1,
+      "requestBodies": [
+        {
+          "observedSeq": 6,
+          "retryUncertainScript": true
+        },
+        {
+          "observedSeq": 6,
+          "retryUncertainScript": true
+        }
+      ],
+      "feedback": "The GraphGoblin API cannot be reached.",
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "late-error"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 4,
+      "action": "deletion",
+      "mode": "failure",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "late action failure visible within original two-second budget",
+        "one original POST before new deliberate choice",
+        "fresh deliberate action sends exactly once after first settlement",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 1,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        },
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": "The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.",
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "late-error"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 5,
+      "action": "script",
+      "mode": "success",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "ordinary script success shown on correct run",
+        "ordinary result did not add a second POST",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "observedSeq": 6,
+          "retryUncertainScript": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "ordinary-success"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 6,
+      "action": "deletion",
+      "mode": "success",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "ordinary deletion success shown on correct run",
+        "ordinary result did not add a second POST",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "ordinary-success"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 7,
+      "action": "script",
+      "mode": "isolation-failure",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "different run not blocked by original pending action",
+        "different-run valid review is confirmable without dispatch",
+        "late prior-run outcome does not reach other run after healthy reread",
+        "different run remains actionable after prior outcome",
+        "new visit has no prior action feedback",
+        "new visit does not inherit prior pending restriction",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "observedSeq": 6,
+          "retryUncertainScript": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "different-run-before-old-settlement",
+        "new-visit-to-original-run"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 8,
+      "action": "deletion",
+      "mode": "isolation-failure",
+      "passedCriteria": [
+        "replacement control retains pending guard",
+        "different run not blocked by original pending action",
+        "different-run valid review is confirmable without dispatch",
+        "late prior-run outcome does not reach other run after healthy reread",
+        "different run remains actionable after prior outcome",
+        "new visit has no prior action feedback",
+        "new visit does not inherit prior pending restriction",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "matching-new-generation-read-held",
+        "same-finalized-body-requalified",
+        "different-run-before-old-settlement",
+        "new-visit-to-original-run"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 9,
+      "action": "deletion",
+      "mode": "dismiss-failure",
+      "passedCriteria": [
+        "read-only replacement confirmation remains guarded",
+        "exactly original confirmation remains outstanding",
+        "late action failure visible within original two-second budget",
+        "read-only replacement review remains its own dialog",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": "The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.",
+      "steps": [
+        "native-dismissed-readonly-preview",
+        "late-error"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    },
+    {
+      "case": 10,
+      "action": "deletion",
+      "mode": "dismiss-success",
+      "passedCriteria": [
+        "read-only replacement confirmation remains guarded",
+        "exactly original confirmation remains outstanding",
+        "ordinary deletion success shown on correct run",
+        "ordinary result did not add a second POST",
+        "read-only replacement review remains its own dialog",
+        "all API/page routes explicitly handled"
+      ],
+      "preSettlementPosts": 1,
+      "laterDeliberatePosts": 0,
+      "requestBodies": [
+        {
+          "runIds": [
+            "01M3Y7RKG08245PHCXP916EBMT"
+          ],
+          "action": "mark",
+          "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "confirmed": true
+        }
+      ],
+      "feedback": null,
+      "steps": [
+        "native-dismissed-readonly-preview",
+        "ordinary-success"
+      ],
+      "unknownRoutes": [],
+      "contextCloseResolved": true
+    }
+  ],
+  "originalFourComparison": [
+    {
+      "case": 1,
+      "action": "script",
+      "mode": "guard",
+      "oldState": "failed",
+      "correctedState": "passed",
+      "oldFailedCriteria": [
+        "replacement launcher is disabled while original command pending",
+        "replacement dispatches no second confirmation"
+      ],
+      "sameExpectedCorrectCriteriaAndPreSettlementReadSchedule": true,
+      "oldPreSettlementPosts": 2,
+      "correctedPreSettlementPosts": 1,
+      "oldLateFeedback": null,
+      "correctedLateFeedback": null
+    },
+    {
+      "case": 2,
+      "action": "deletion",
+      "mode": "guard",
+      "oldState": "failed",
+      "correctedState": "passed",
+      "oldFailedCriteria": [
+        "replacement launcher is disabled while original command pending",
+        "replacement dispatches no second confirmation"
+      ],
+      "sameExpectedCorrectCriteriaAndPreSettlementReadSchedule": true,
+      "oldPreSettlementPosts": 2,
+      "correctedPreSettlementPosts": 1,
+      "oldLateFeedback": null,
+      "correctedLateFeedback": null
+    },
+    {
+      "case": 3,
+      "action": "script",
+      "mode": "failure",
+      "oldState": "failed",
+      "correctedState": "passed",
+      "oldFailedCriteria": [
+        "replacement control retains pending guard",
+        "late action failure visible within original two-second budget"
+      ],
+      "sameExpectedCorrectCriteriaAndPreSettlementReadSchedule": true,
+      "oldPreSettlementPosts": 1,
+      "correctedPreSettlementPosts": 1,
+      "oldLateFeedback": null,
+      "correctedLateFeedback": "The GraphGoblin API cannot be reached."
+    },
+    {
+      "case": 4,
+      "action": "deletion",
+      "mode": "failure",
+      "oldState": "failed",
+      "correctedState": "passed",
+      "oldFailedCriteria": [
+        "replacement control retains pending guard",
+        "late action failure visible within original two-second budget"
+      ],
+      "sameExpectedCorrectCriteriaAndPreSettlementReadSchedule": true,
+      "oldPreSettlementPosts": 1,
+      "correctedPreSettlementPosts": 1,
+      "oldLateFeedback": null,
+      "correctedLateFeedback": "The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected."
+    }
+  ],
+  "originalNativeFixtureAndAllExpectedCorrectAssertionsUnchanged": true,
+  "oldNegativeManifest": {
+    "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-old-f642-execution-02\\MANIFEST.json",
+    "bytes": 6573,
+    "sha256": "fc4a57ac0ad05c656e72852707c94f73655704d2c32e18339c512d2eb89b411d"
+  },
+  "firstPreBrowserFailureRetainedSeparately": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-old-f642-execution-01",
+  "protectedCount": 54,
+  "protectedInputCount": 26,
+  "distributionCount": 28,
+  "beforeAfterAndPostClosureRehashEqual": true,
+  "retainedProvenanceCopies": [
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-qa-preparation-03\\native.cjs",
+        "bytes": 27714,
+        "sha256": "649cda5a64a5c4cc93c5f7eb8ff35ec0040032bf52e37739c4a7ff080d29fc30"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.native.cjs",
+        "bytes": 27714,
+        "sha256": "649cda5a64a5c4cc93c5f7eb8ff35ec0040032bf52e37739c4a7ff080d29fc30"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-qa-preparation-03\\run-native.ps1",
+        "bytes": 4556,
+        "sha256": "3cc0a553b3453cd43c491aec8302a5660f2238b2429453b667ee90ae3283a9da"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.run-native.ps1",
+        "bytes": 4556,
+        "sha256": "3cc0a553b3453cd43c491aec8302a5660f2238b2429453b667ee90ae3283a9da"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-qa-preparation-03\\MANIFEST.json",
+        "bytes": 2968,
+        "sha256": "717d855b5a5b03f02a2e588d306e8c13b9bd9436764925a81f95ef6898db117e"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.preparation.MANIFEST.json",
+        "bytes": 2968,
+        "sha256": "717d855b5a5b03f02a2e588d306e8c13b9bd9436764925a81f95ef6898db117e"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-admission-preparation-01\\ROOT-ADMISSION.json",
+        "bytes": 3306,
+        "sha256": "444572e2a9c53117d5abb010b249347ccfb118b0e742b81acbdf3f8bf392bc4d"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.root-admission.json",
+        "bytes": 3306,
+        "sha256": "444572e2a9c53117d5abb010b249347ccfb118b0e742b81acbdf3f8bf392bc4d"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-qa-preparation-01\\API-FIXTURE.json",
+        "bytes": 7927,
+        "sha256": "258e8f2cbaed8373613f5c345f6b7b96e307792266cb8cbce5fce6b2470f6e3a"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.API-FIXTURE.json",
+        "bytes": 7927,
+        "sha256": "258e8f2cbaed8373613f5c345f6b7b96e307792266cb8cbce5fce6b2470f6e3a"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-browser12-execution-01\\BUILD-MANIFEST.json",
+        "bytes": 9364,
+        "sha256": "846a598b764feddc49b9f5ae241482407814b3fe2d2efe8b9f42ec1cda1cb53f"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.BUILD-MANIFEST.json",
+        "bytes": 9364,
+        "sha256": "846a598b764feddc49b9f5ae241482407814b3fe2d2efe8b9f42ec1cda1cb53f"
+      }
+    },
+    {
+      "original": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-admission-preparation-01\\SHIPPING-EQUIVALENCE.json",
+        "bytes": 1811,
+        "sha256": "69896ec0ab339fb1b77d57a566f28e7c5a189c4805655c2efa7664d7e9a42412"
+      },
+      "retained": {
+        "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\executed.SHIPPING-EQUIVALENCE.json",
+        "bytes": 1811,
+        "sha256": "69896ec0ab339fb1b77d57a566f28e7c5a189c4805655c2efa7664d7e9a42412"
+      }
+    }
+  ],
+  "visuallyInspectedCorrectedPngs": [
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\01-script-guard-guard-attempt.png",
+      "bytes": 127304,
+      "sha256": "89c85edaa3789fb3d6f8da331d9e91df26bae432d335f2e532f9c0cec36b839b"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\03-script-failure-late-error.png",
+      "bytes": 130654,
+      "sha256": "7f29cc62ae00e274b9bd65a71bde76a1dc0bfeceffb951f5835919e06bc92dac"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\04-deletion-failure-late-error.png",
+      "bytes": 133902,
+      "sha256": "be3ad11aef6d6b00cff66550fb66f4e5e2fb2eb9e5244c8f944836916897dec8"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\05-script-success-ordinary-success.png",
+      "bytes": 109653,
+      "sha256": "d44bc754cf9d2c8a7a8106b962aabfdfa377ac795bb9bb57ad8982e2a8f4aa7e"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\06-deletion-success-ordinary-success.png",
+      "bytes": 132312,
+      "sha256": "6b8e8d73a8cf35effe71f77fbe011b27fad8f44bd2df6c357c5fc75762132c73"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\09-deletion-dismiss-failure-native-dismissed-readonly-preview.png",
+      "bytes": 165125,
+      "sha256": "6d705fc88f0d7824d10f8e113445b1b2f1ce776b614000c3cbbfc5d201aecc3b"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\09-deletion-dismiss-failure-late-error.png",
+      "bytes": 171261,
+      "sha256": "c6c9b242d7120649dcb9ffa0a760a8f3d059d1f463715a450d449b76a344eaae"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\01-script-guard-matching-new-generation-read-held.png",
+      "bytes": 55965,
+      "sha256": "a90bfbb1b7ed297efc1b9a1230884f7175300461d63cafdbf58dafe030000a65"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-corrected-execution-01\\native\\07-script-isolation-failure-new-visit-to-original-run.png",
+      "bytes": 127311,
+      "sha256": "8d64fd2ad3f81748d12295026aa9acbb713224c15d5f44c667d4f763357eff02"
+    }
+  ],
+  "visuallyRecheckedOldNegativePngs": [
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-old-f642-execution-02\\native\\03-script-failure-late-error.png",
+      "bytes": 127219,
+      "sha256": "68081735ba4d84434e54d27cbb9da50b681a3cc894c2cf4b34fbfb1a7557b5c0"
+    },
+    {
+      "source": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\i5-d242-b2-native-old-f642-execution-02\\native\\04-deletion-failure-late-error.png",
+      "bytes": 127219,
+      "sha256": "c5b7320f4d4a493b911a6176e1598b947d8d4a754bf82ada0977b0b3d5f45b4c"
+    }
+  ],
+  "visualQualification": "Dismissal late-error image keeps the replacement native dialog open; the backdrop dims and dialog partly covers the page-level uncertainty text. The exact text locator visibility and retained dialog identity passed. The remount failure-case page-level uncertainty screenshot is unobscured.",
+  "browserCloseResolved": true,
+  "allTenContextClosesResolved": true,
+  "closureLimit": "Root reported wrapper session terminal exit0; actual pnpm receipt agrees. Browser/context close promises resolved in native records. No independent operating-system descendant census or universal network-absence claim.",
+  "temporaryDiagnostics": "Entire task-owned temp/ retained and excluded from selected evidence manifest; no cleanup or source/runtime writes by this readback.",
+  "scopeLimit": "Every app/API response intercepted at inspector.invalid; native browser dispatch/DOM and actual context offline/online plus synthetic second-tab localStorage event. No backend listener, provider, real server principal, duplicate server effect, whole-app acceptance or waiver of the separate strict G1 failure."
+}

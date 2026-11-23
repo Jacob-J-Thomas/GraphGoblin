@@ -1,0 +1,354 @@
+// Append only to the exact independently executed61-case file after root admission.
+// The targeted command selects only these two cases in a fresh worker: no prior browser loss.
+import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
+import { API_KEY_STORAGE } from '../api/api-key.js';
+import { getConfig } from '@testing-library/react';
+
+function observationReplacementView(api: FakeApi, runId: string) {
+  const hold = barrier();
+  let queued = 0;
+  const queryClient = new QueryClient({
+    mutationCache: new MutationCache({
+      onMutate: async () => {
+        queued++;
+        await hold.promise;
+      },
+    }),
+    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } },
+  });
+  clients.add(queryClient);
+  const client = createAppClient('http://independent-ui.invalid', api.fetch);
+  const tree = () => (
+    <Providers client={client} queryClient={queryClient}>
+      <ApiKeyPanel />
+      <MemoryRouter initialEntries={['/runs/' + runId]}>
+        <Routes>
+          <Route path="/runs/:runId" element={<RunInspectorPage />} />
+        </Routes>
+      </MemoryRouter>
+    </Providers>
+  );
+  const view = render(tree());
+  return {
+    ...view,
+    queryClient,
+    hold,
+    queued: () => queued,
+    sameTree: () => view.rerender(tree()),
+  };
+}
+
+describe('B1 residual: observation replacement after surfaced loss', () => {
+  it.each(['public remove/recreate control', 'accepted cross-tab storage event'] as const)(
+    '%s retires an older queued choice and permits one new matching choice',
+    async (replacement) => {
+      const api = new FakeApi();
+      const keyA = 'gg_independent_observation_A';
+      const keyB = 'gg_independent_observation_B';
+      const rotateKey = replacement === 'accepted cross-tab storage event';
+      if (rotateKey) {
+        api.requiredKey = keyA;
+        act(() => useApiKeyStore.getState().save(keyA));
+      }
+      const run = missing(api);
+      const observationKey = keys.observation(run.id);
+      const runKey = keys.run(run.id);
+      const observationPath = `/runs/${run.id}/observation`;
+      const postPath = endpoint(run.id, 'fresh-session');
+      let failObservation = false;
+      let failures = 0;
+      let successes = 0;
+      api.override('GET /runs/:id/observation', async (call) => {
+        if (failObservation) {
+          failures++;
+          throw new TypeError('Controlled observation-only transport loss before replacement');
+        }
+        const response = await api.builtIn(call);
+        if (response.ok) successes++;
+        return response;
+      });
+      api.override('POST ' + postPath, () => Response.json(run));
+      const view = observationReplacementView(api, run.id);
+      const cache = view.queryClient.getQueryCache();
+      const posts = () => api.callsTo('POST', postPath);
+      const runSamples: { status: string; error: unknown; online: boolean }[] = [];
+      let stopSamples = () => {};
+      let originalSessionButton: HTMLElement | undefined;
+      let originalRunHeader: Element | null = null;
+      let diagnosticPhase = 'initial';
+      let observer: MutationObserver | undefined;
+      let observedBatches = 0;
+      let removedOriginalButtonRecords = 0;
+      let removedOriginalHeaderRecords = 0;
+      const feedbackObservation: {
+        immediate?: { text: string; visible: boolean; diagnostic?: string };
+        settled?: { text: string; visible: boolean; diagnostic?: string };
+        settleOutcome?: string;
+        waitStartedMs?: number;
+        waitFinishedMs?: number;
+      } = {};
+      function domSample(stage: string) {
+        const current = screen.queryByRole('button', { name: 'Start fresh session for worker' });
+        return {
+          stage,
+          phase: diagnosticPhase,
+          atMs: performance.now(),
+          originalButtonConnected: originalSessionButton?.isConnected ?? null,
+          originalHeaderConnected: originalRunHeader?.isConnected ?? null,
+          currentButtonPresent: current !== null,
+          currentButtonIsOriginal:
+            current && originalSessionButton ? current === originalSessionButton : null,
+          currentButtonDisabled: current?.hasAttribute('disabled') ?? null,
+          runHeadingPresent: screen.queryByRole('heading', { name: 'Run ' + run.id }) !== null,
+          notSentText: screen.queryByText(/^Not sent:/)?.textContent ?? null,
+          readingEvidence:
+            screen.queryByText('Reading the run evidence again.', { exact: true }) !== null,
+          lastObserved: screen.queryByText(STALE) !== null,
+        };
+      }
+      const domSamples: ReturnType<typeof domSample>[] = [];
+      const recordDom = (stage: string) => {
+        if (domSamples.length < 64) domSamples.push(domSample(stage));
+      };
+      try {
+        await heading(run.id);
+        await waitFor(() => {
+          expect(view.queryClient.isFetching()).toBe(0);
+          expect(api.callsTo('GET', `/runs/${run.id}`).length).toBeGreaterThanOrEqual(1);
+          expect(screen.getByRole('list', { name: 'Timeline' })).toHaveTextContent('run.started');
+          expect(button('Start fresh session for worker')).toBeEnabled();
+        });
+        originalSessionButton = button('Start fresh session for worker');
+        originalRunHeader = (await heading(run.id)).closest('header');
+        expect(originalRunHeader).not.toBeNull();
+        recordDom('original-session-control');
+        if (rotateKey) {
+          observer = new MutationObserver((records) => {
+            observedBatches++;
+            for (const record of records)
+              for (const node of record.removedNodes) {
+                if (
+                  node === originalSessionButton ||
+                  (node instanceof Element &&
+                    originalSessionButton &&
+                    node.contains(originalSessionButton))
+                )
+                  removedOriginalButtonRecords++;
+                if (
+                  node === originalRunHeader ||
+                  (node instanceof Element && originalRunHeader && node.contains(originalRunHeader))
+                )
+                  removedOriginalHeaderRecords++;
+              }
+            recordDom('observed-dom-mutation');
+          });
+          observer.observe(view.container, { childList: true, subtree: true });
+        }
+        const parentQuery = cache.find({ queryKey: runKey, exact: true });
+        const oldObservation = cache.find({ queryKey: observationKey, exact: true });
+        const originalBody = view.queryClient.getQueryData<Record<string, unknown>>(observationKey);
+        if (!parentQuery || !oldObservation || !originalBody)
+          throw new Error('Actual matching initial queries are required');
+        expect(RunEventSchema.parse(originalBody['lifecycle'])).toMatchObject({
+          type: 'run.failed',
+          seq: 3,
+          runId: run.id,
+        });
+        const initialGeneration = useApiKeyStore.getState().generation;
+        stopSamples = cache.subscribe(() => {
+          const state = view.queryClient.getQueryState(runKey);
+          if (state)
+            runSamples.push({
+              status: state.status,
+              error: state.error,
+              online: onlineManager.isOnline(),
+            });
+        });
+        await choose('fresh-session');
+        await waitFor(() => expect(view.queued()).toBe(1));
+        const oldChoice = view.queryClient.getMutationCache().getAll()[0];
+        if (!oldChoice) throw new Error('Queued original choice required');
+        expect(oldChoice.state.status).toBe('pending');
+        expect(posts()).toHaveLength(0);
+
+        failObservation = true;
+        await act(() => view.queryClient.refetchQueries({ queryKey: observationKey, exact: true }));
+        await screen.findByText(/Run evidence could not be read/);
+        await screen.findByText('Reading the run evidence again.', { exact: true });
+        expect(failures).toBeGreaterThan(0);
+        expect(view.queryClient.getQueryState(observationKey)?.status).toBe('error');
+        expect(view.queryClient.getQueryState(runKey)?.status).toBe('success');
+        expect(onlineManager.isOnline()).toBe(true);
+        expect(screen.queryByText(STALE)).not.toBeInTheDocument();
+        expect(button('Replay...')).toBeEnabled();
+        expect(posts()).toHaveLength(0);
+
+        const successfulReadsBeforeReplacement = successes;
+        failObservation = false;
+        if (rotateKey) {
+          // Actual ApiKeyPanel installs the application's storage listener and invalidation.
+          // Controlled StorageEvent is not a real second browser process/server principal.
+          diagnosticPhase = 'key-rotation';
+          recordDom('before-key-rotation');
+          api.requiredKey = keyB;
+          act(() => {
+            localStorage.setItem(API_KEY_STORAGE, keyB);
+            window.dispatchEvent(
+              new StorageEvent('storage', {
+                key: API_KEY_STORAGE,
+                oldValue: keyA,
+                newValue: keyB,
+                storageArea: localStorage,
+              }),
+            );
+          });
+          recordDom('after-storage-event');
+          await waitFor(() => {
+            expect(useApiKeyStore.getState().generation).toBeGreaterThan(initialGeneration);
+            expect(useApiKeyStore.getState().key === keyB).toBe(true);
+            expect(useApiKeyStore.getState().rejected).toBe(false);
+            expect(
+              api
+                .callsTo('GET', observationPath)
+                .some((call) => call.headers.get('authorization') === `Bearer ${keyB}`),
+            ).toBe(true);
+            expect(
+              api
+                .callsTo('GET', `/runs/${run.id}`)
+                .some((call) => call.headers.get('authorization') === `Bearer ${keyB}`),
+            ).toBe(true);
+          });
+        } else {
+          // Public cache isolation control; no application removal route is claimed.
+          let removed = false;
+          const stopRemoval = cache.subscribe((event) => {
+            if (event.type === 'removed' && event.query === oldObservation) removed = true;
+          });
+          try {
+            act(() => view.queryClient.removeQueries({ queryKey: observationKey, exact: true }));
+            expect(removed).toBe(true);
+            act(() => view.sameTree());
+            await waitFor(() => {
+              const recreated = cache.find({ queryKey: observationKey, exact: true });
+              expect(recreated).toBeDefined();
+              expect(recreated).not.toBe(oldObservation);
+            });
+          } finally {
+            stopRemoval();
+          }
+          expect(useApiKeyStore.getState().generation).toBe(initialGeneration);
+        }
+        await waitFor(() => {
+          expect(successes).toBeGreaterThan(successfulReadsBeforeReplacement);
+          expect(view.queryClient.getQueryState(observationKey)?.status).toBe('success');
+          expect(view.queryClient.getQueryState(observationKey)?.fetchStatus).toBe('idle');
+          expect(view.queryClient.getQueryData(observationKey)).toEqual(originalBody);
+          expect(
+            screen.queryByText('Reading the run evidence again.', { exact: true }),
+          ).not.toBeInTheDocument();
+          expect(screen.queryByText(/Run evidence could not be read/)).not.toBeInTheDocument();
+        });
+        expect(cache.find({ queryKey: runKey, exact: true })).toBe(parentQuery);
+        expect(view.queryClient.getQueryState(runKey)?.status).toBe('success');
+        expect(onlineManager.isOnline()).toBe(true);
+        expect(screen.queryByText(STALE)).not.toBeInTheDocument();
+        expect(button('Replay...')).toBeEnabled();
+        expect(posts()).toHaveLength(0);
+        expect(oldChoice.state.status).toBe('pending');
+
+        diagnosticPhase = 'old-choice-release';
+        recordDom('before-old-choice-release');
+        view.hold.release();
+        await waitFor(() => expect(oldChoice.state.status).not.toBe('pending'));
+        const oldPostCount = posts().length;
+        const oldError = oldChoice.state.error;
+        await waitFor(() => expect(button('Start fresh session for worker')).toBeEnabled());
+        const oldFeedback = screen.queryByText(/^Not sent:/);
+        const oldFeedbackText = oldFeedback?.textContent ?? '';
+        let oldFeedbackVisible = false;
+        let oldFeedbackDiagnostic: string | undefined;
+        // Capture before the fresh choice resets this error; assert the captured result below.
+        // A missing/hidden old error must not stop the fresh positive control on the old bug.
+        try {
+          expect(oldFeedback).toBeVisible();
+          oldFeedbackVisible = true;
+        } catch (error) {
+          oldFeedbackDiagnostic = error instanceof Error ? error.message : String(error);
+        }
+        feedbackObservation.immediate = {
+          text: oldFeedbackText,
+          visible: oldFeedbackVisible,
+          diagnostic: oldFeedbackDiagnostic,
+        };
+        diagnosticPhase = 'feedback-settling';
+        recordDom('original-immediate-feedback-capture');
+        feedbackObservation.waitStartedMs = performance.now();
+        try {
+          await waitFor(() => {
+            const renderedFeedback = screen.queryByText(/^Not sent:/);
+            expect(renderedFeedback).toBeVisible();
+            feedbackObservation.settled = {
+              text: renderedFeedback?.textContent ?? '',
+              visible: true,
+            };
+          });
+          feedbackObservation.settleOutcome = 'visible-within-existing-default';
+        } catch (error) {
+          feedbackObservation.settleOutcome = 'not-visible-within-existing-default';
+          feedbackObservation.settled = {
+            text: screen.queryByText(/^Not sent:/)?.textContent ?? '',
+            visible: false,
+            diagnostic: error instanceof Error ? error.message : String(error),
+          };
+        }
+        feedbackObservation.waitFinishedMs = performance.now();
+        recordDom('after-default-feedback-wait');
+        await choose('fresh-session');
+        diagnosticPhase = 'fresh-choice';
+        recordDom('after-fresh-choice');
+        await waitFor(() => expect(posts()).toHaveLength(oldPostCount + 1));
+        expect(posts()[oldPostCount]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
+        expect(runSamples.length).toBeGreaterThan(0);
+        expect(
+          runSamples.every(
+            (sample) => sample.status === 'success' && sample.error === null && sample.online,
+          ),
+        ).toBe(true);
+        expect.soft(oldPostCount).toBe(0);
+        expect
+          .soft({
+            text: oldFeedbackText,
+            visible: oldFeedbackVisible,
+            diagnostic: oldFeedbackDiagnostic,
+          })
+          .toMatchObject({ text: expect.stringMatching(/^Not sent:/), visible: true });
+        expect(oldError).toMatchObject({ message: expect.stringMatching(/^Not sent:/) });
+      } finally {
+        stopSamples();
+        recordDom('before-test-cleanup');
+        observer?.disconnect();
+        console.info(
+          'B1_FEEDBACK_DIAGNOSTIC ' +
+            JSON.stringify({
+              replacement,
+              defaultWaitForMs: getConfig().asyncUtilTimeout,
+              feedbackObservation,
+              originalButtonEverObservedRemoved: removedOriginalButtonRecords > 0,
+              originalHeaderEverObservedRemoved: removedOriginalHeaderRecords > 0,
+              removedOriginalButtonRecords,
+              removedOriginalHeaderRecords,
+              observedBatches,
+              domSamples,
+              domSampleLimit: 64,
+              domSamplesTruncated: domSamples.length === 64,
+              postCountAtCleanup: posts().length,
+              postBodies: posts().map((call) => call.body),
+            }),
+        );
+        view.hold.release();
+        view.unmount();
+        if (rotateKey) act(() => useApiKeyStore.getState().forget());
+      }
+    },
+  );
+});

@@ -1,0 +1,7 @@
+The admitted diagnostic attempt stopped at full web typecheck: wrapper/pnpm exit1, TypeScript child reported exit2. No lint, format, full63, delayed-feedback wait or DOM witness executed. No product cause or behavioral result is established by this attempt.
+
+Sole error TS2375 at fixture1762: the new immediate diagnostic record declares diagnostic?:string but explicitly receives string|undefined, under exactOptionalPropertyTypes. The actual typechecked b2a6c41a fixture is copied here. A type-only correction was proposed to root; no edit or retry occurred under this admission. Raw first stdout/stderr and every command receipt remain.
+
+Node probe/before-module snapshot passed; after-module readback passed. The runner completed final source/index/cohort/overlay controls and reports afterMatchesRootBinding=true. Source remains d8/treee94, indexe788, componentb2a and other four overlays unchanged. Root19/independent18 inputs, metadata and selected modules remain bound. No product/source/index/Git/build/browser/provider action occurred; only the separately admitted untracked8a→b2a materialization preceded this static phase.
+
+Original8a old2/fresh2/full63 evidence and its strict immediate assertion remain sealed separately. Original b2a preparation and before8a bytes are preserved. Heavy slot was released to root/helper immediately after session36549 closed. All further correction or execution awaits root's exact new disposition; no formal scan was consumed.

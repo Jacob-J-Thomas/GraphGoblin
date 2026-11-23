@@ -1,0 +1,52 @@
+--- i5-416-420-post-feedback-web-coverage-01/run-coverage.py
++++ i5-d242-b2-web-coverage-01/run-coverage.py
+@@ -9,11 +9,8 @@
+ import time
+ 
+ W = Path(r'G:/ggq/gg-i5-offline-inspector/GraphGoblin')
+-E = Path(r'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-416-420-post-feedback-web-coverage-01')
+-FREEZE = E.parent / 'i5-d241-session-feedback-corrected-freeze-01/FREEZE.json'
+-FROZEN_SHA = '777c5e8f9f3a2f6d2d4ef170b5992f3065a2bb1471a55d40d1671dc594fc3ed7'
+-HEAD = 'a0ce7b781e333b70f4711b5e9201ef63c157df1d'
+-TREE = '3f47fed82c18930fc0a56bc8e2598e7190ba8f3c'
++E = Path(r'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-b2-web-coverage-01')
++BINDING = E / 'BINDING.json'  # Root creates only after exact-source admission; template is unarmed.
+ NODE = Path(os.environ['USERPROFILE']) / '.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64'
+ ENV = os.environ | {'PATH': str(NODE) + os.pathsep + os.environ['PATH']}
+ GIT_ENV = ENV | {'GIT_NO_LAZY_FETCH': '1', 'GIT_OPTIONAL_LOCKS': '0'}
+@@ -67,16 +64,33 @@
+ 
+ 
+ def main():
++    binding = read(BINDING)
++    assert binding['launchAdmitted'] is True
++    HEAD, TREE = binding['head'], binding['tree']
++    assert all(isinstance(value, str) and len(value) == 40
++               and all(char in '0123456789abcdef' for char in value) for value in (HEAD, TREE))
++    receipt_pins = {}
++    for role in ('freeze', 'rootFocusedChecks', 'independentQaClosure', 'buildClosure'):
++        receipt = binding[role]
++        assert isinstance(receipt['path'], str) and Path(receipt['path']).is_absolute()
++        assert isinstance(receipt['sha256'], str) and len(receipt['sha256']) == 64
++        assert all(char in '0123456789abcdef' for char in receipt['sha256'])
++        actual = pin(Path(receipt['path']))
++        assert actual['sha256'] == receipt['sha256']
++        receipt_pins[role] = {'path': receipt['path'], **actual}
++    FREEZE = Path(binding['freeze']['path'])
++    FROZEN_SHA = binding['freeze']['sha256']
+     assert pin(FREEZE)['sha256'] == FROZEN_SHA
+     freeze = read(FREEZE)
+-    corrected = read(E.parent / 'i5-d241-session-feedback-checks-01/AFTER.json')
++    corrected = read(Path(binding['rootFocusedChecks']['path']))
+     pre = state(corrected['authors'])
+     assert pre['head'] == HEAD and pre['tree'] == TREE and not pre['status']
+     assert pre['sourceFiles'] == corrected['authors']
+     assert not pre['commonIndexPresent']
+     assert all(pre[role] == corrected['controls'][role] for role in ('core', 'lock', 'modules', 'virtualStoreLock'))
+     old_artifacts = artifacts()
+-    write('BEFORE.json', pre | {'freeze': pin(FREEZE), 'existingCoverageArtifacts': old_artifacts})
++    write('BEFORE.json', pre | {'freeze': pin(FREEZE), 'binding': pin(BINDING),
++                              'admittedReceiptPins': receipt_pins, 'existingCoverageArtifacts': old_artifacts})
+     node = shutil.which('node.exe', path=ENV['PATH'])
+     pnpm = shutil.which('pnpm.cmd', path=ENV['PATH'])
+     assert node and Path(node).resolve() == (NODE / 'node.exe').resolve() and pnpm

@@ -1,0 +1,25 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { createRequire } = require('node:module');
+const root = 'G:/ggq/gg-i5-provenance-core-qa/GraphGoblin';
+const label = process.argv[2];
+if (!['before','after'].includes(label)) throw new Error('Expected explicit before/after label.');
+const destination = path.join(__dirname, label + '.modules.json');
+if (fs.existsSync(destination)) throw new Error('Refusing to overwrite module boundary.');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const req = createRequire(path.join(root,'apps/web/package.json'));
+const names = ['@tanstack/react-query','react','react-dom','vitest','jsdom','typescript','@testing-library/react'];
+const selected = names.map((name) => {
+  const entry = req.resolve(name); let directory = path.dirname(fs.realpathSync(entry));
+  while (!fs.existsSync(path.join(directory,'package.json'))) directory = path.dirname(directory);
+  const manifest = path.join(directory,'package.json');
+  return { name, version:JSON.parse(fs.readFileSync(manifest,'utf8')).version, entry, realEntry:fs.realpathSync(entry), entrySha256:sha(entry), manifest, manifestSha256:sha(manifest) };
+});
+const queryReq = createRequire(req.resolve('@tanstack/react-query'));
+const queryCore = queryReq.resolve('@tanstack/query-core');
+selected.push({name:'@tanstack/query-core',entry:queryCore,realEntry:fs.realpathSync(queryCore),entrySha256:sha(queryCore)});
+const files = ['pnpm-lock.yaml','node_modules/.modules.yaml','node_modules/.pnpm/lock.yaml','node_modules/.pnpm-workspace-state-v1.json','apps/web/src/api/queries.ts','apps/web/src/runs/inspector-read-provenance.ts','apps/web/src/runs/inspector-read-provenance.test.ts','apps/web/src/runs/inspector-read-provenance.independent.qa.test.tsx','apps/web/src/runs/inspector-provenance-cancellation.independent.qa.test.tsx'].map((relative)=>({path:relative,sha256:sha(path.join(root,relative))}));
+const result = {utc:new Date().toISOString(),label,node:{path:process.execPath,version:process.version,sha256:sha(process.execPath)},selected,files,limitation:'Selected modules/metadata/source boundaries, not a complete installation identity. Existing dependencies used; no installation or copy admitted.'};
+fs.writeFileSync(destination,JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify(result,null,2));

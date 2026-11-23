@@ -1,0 +1,206 @@
+{
+  "number": 8,
+  "group": "supplement",
+  "action": "deletion",
+  "mode": "isolation-failure",
+  "checks": [
+    {
+      "name": "replacement control retains pending guard",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "different run not blocked by original pending action",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "different-run valid review is confirmable without dispatch",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "late prior-run outcome does not reach other run after healthy reread",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "different run remains actionable after prior outcome",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "new visit has no prior action feedback",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "new visit does not inherit prior pending restriction",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "all API/page routes explicitly handled",
+      "passed": true,
+      "facts": []
+    }
+  ],
+  "steps": [
+    {
+      "name": "matching-new-generation-read-held",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "same-finalized-body-requalified",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "different-run-before-old-settlement",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMZ",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    },
+    {
+      "name": "new-visit-to-original-run",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": false,
+        "oldHeadingConnected": false,
+        "removedHeaderRecords": 1,
+        "removedHeadingRecords": 1,
+        "storageEvents": [
+          {
+            "sameStorage": true,
+            "oldA": true,
+            "newB": true
+          }
+        ],
+        "dialogs": []
+      }
+    }
+  ],
+  "state": "passed",
+  "runA": "01M3Y7RKG08245PHCXP916EBMT",
+  "runB": "01M3Y7RKG08245PHCXP916EBMZ",
+  "posts": [
+    {
+      "body": {
+        "runIds": [
+          "01M3Y7RKG08245PHCXP916EBMT"
+        ],
+        "action": "mark",
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "confirmed": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 1
+    }
+  ],
+  "previews": [
+    {
+      "ids": [
+        "01M3Y7RKG08245PHCXP916EBMT"
+      ],
+      "number": 1
+    },
+    {
+      "ids": [
+        "01M3Y7RKG08245PHCXP916EBMZ"
+      ],
+      "number": 2
+    }
+  ],
+  "runReads": [
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": true
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMZ",
+      "generation": "B",
+      "phase": "before-original-settlement",
+      "bodySha256": "670276da7bbdb4980e43c03490ad55c3074ec6d80e0eb2007be04afaa832358d",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMZ",
+      "generation": "B",
+      "phase": "after-original-settlement",
+      "bodySha256": "670276da7bbdb4980e43c03490ad55c3074ec6d80e0eb2007be04afaa832358d",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "B",
+      "phase": "after-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    }
+  ],
+  "unknown": [],
+  "sourceSameRoute": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "requestFailures": 1,
+  "cleanupCloseResolved": true,
+  "onlyInterceptedDispatchNoServerEffects": true
+}

@@ -1,0 +1,18 @@
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+const root = 'G:/ggq/gg-i5-offline-ui-qa/GraphGoblin';
+const directory = new URL('./', import.meta.url);
+const require = createRequire(`${root}/apps/web/package.json`);
+const prettier = require('prettier');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+if (process.version !== 'v22.23.4') throw new Error('Project Node22.23.4 required');
+const raw = await readFile(new URL('console-warn.raw55.tsx', directory));
+if (sha(raw) !== '55a0c5a29f8f7dc6de1045d3d4858d790fdca548385237684ec3bbb5c6f31c3a') throw new Error('Exact admitted console.warn bytes required');
+const config = await prettier.resolveConfig(`${root}/apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx`);
+const alreadyFormatted = await prettier.check(raw.toString(), { ...config, filepath: `${root}/apps/web/src/runs/RunInspectorPage.independent-416.qa.test.tsx` });
+const formatted = alreadyFormatted ? raw : Buffer.concat([raw.subarray(0, 60996), Buffer.from('\n'), Buffer.from(await prettier.format(raw.subarray(60997).toString(), { ...config, parser: 'typescript' }))]);
+if (!formatted.subarray(0, 60996).equals(raw.subarray(0, 60996))) throw new Error('Original61 prefix changed');
+if (formatted.toString().replace(/\s/g, '') !== raw.toString().replace(/\s/g, '')) throw new Error('Non-whitespace formatter change');
+await writeFile(new URL('component.final.tsx', directory), formatted, { flag: 'wx' });
+await writeFile(new URL('FORMAT.json', directory), JSON.stringify({ rawSha256: sha(raw), finalSha256: sha(formatted), alreadyFormatted, mechanicalFormattingApplied: !alreadyFormatted, whitespaceOnly: true, literal61PrefixUnchanged: true, formatterVersion: prettier.version }, null, 2) + '\n', { flag: 'wx' });

@@ -1,0 +1,9 @@
+# D242 whole-web coverage preparation
+
+Unarmed preparation only. The runner was compiled as Python source, never imported or executed. No active author output or checkout file was read. The predecessor remains unchanged.
+
+The diff changes the external evidence directory and replaces old D241 literals with an explicit root-created `BINDING.json`. The template keeps corrected HEAD/tree, freeze, root focused-checks receipt, independent QA closure and build closure paths/hashes null, with launch admission false. No actual `BINDING.json` is supplied. After author closure, source freeze, independent QA and build, root must review the diff and create that binding from actual closed receipts. The focused-checks receipt must retain the predecessor's `authors` and `controls` schema, including core, lock, modules and virtual-store lock pins. Root must verify the supplied QA/build receipts actually close the admitted candidate; the runner pins those receipts without reinterpreting their outcome schema.
+
+The runner retains the full-shell Node 22.23.4 PATH selection and pnpm 12.8.1 check; clean exact HEAD/tree and source checks; common-index absence; core/dependency controls; complete before/after source, index and control equality; normal whole-web `test:coverage --retry=0`; JSON/verbose reporters; exclusive original evidence outputs; fresh-artifact timestamp checks; and exact copied artifact hashes. No selection, assertion, coverage threshold or retry policy changes. Only newly generated coverage files are claimed; no `coverage-final.json` claim is prefilled.
+
+Root launches only after admission, using the same normal Python invocation as the predecessor. Keep failures and partial receipts if execution stops; do not overwrite or rerun in a used evidence directory. Coverage is not run by this preparation. `READBACK.json` records source-only compilation and structural comparison; it is not a behavior test or review verdict.

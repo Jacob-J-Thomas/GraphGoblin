@@ -290,6 +290,116 @@ it('keeps keyboard focus on Follow live once it resumes following (#186 QA)', as
   expect(announced()).toContain('Following live.');
 });
 
+// Contract-valid sequences of five, six and sixteen digits, with long event types.
+const large = [
+  event('run', 10_593, 'run.started', { attempt: 1 }),
+  event('run', 123_456, 'iteration.incremented', { from: 1, to: 2, targetNodeId: 'start' }),
+  event('run', Number.MAX_SAFE_INTEGER, 'return.delivered', { channel: { kind: 'log' } }),
+];
+
+it('shows every sequence number in full in a column sized to the widest one shown (#420)', () => {
+  render(
+    <Timeline
+      events={large}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      onSelect={vi.fn()}
+    />,
+  );
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  // `#` and sixteen digits, in characters of the monospace font: no fixed track, cap or rounding.
+  expect(list.style.getPropertyValue('--timeline-seq')).toBe('17ch');
+  for (const [row, name] of [
+    [large[0]!, /#\s*10593\s*run\.started\s*attempt 1/],
+    [large[1]!, /#\s*123456\s*iteration\.incremented\s*iteration 1 → 2 at start/],
+    [large[2]!, /#\s*9007199254740991\s*return\.delivered\s*log/],
+  ] as const) {
+    const button = within(list).getByRole('button', { name });
+    expect(button).toHaveAttribute('data-seq', String(row.seq));
+    expect(button.className).not.toMatch(/30px/);
+    expect(button).toHaveClass('flex-wrap');
+    const [seq, type] = [...button.children];
+    expect(seq).toHaveTextContent(new RegExp(`^#${row.seq}$`));
+    expect(seq).toHaveClass('min-w-[min(var(--timeline-seq),100%)]', 'wrap-anywhere');
+    expect(type).toHaveTextContent(new RegExp(`^${row.type.replace('.', '\\.')}$`));
+  }
+});
+
+it('sizes the sequence column from the rows in the window, not the whole history (#420)', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  // Following live shows events 433–512: three digits and `#`.
+  expect(list.style.getPropertyValue('--timeline-seq')).toBe('4ch');
+  act(() =>
+    within(list)
+      .getByRole('button', { name: /#\s*512\s*run\.started/ })
+      .focus(),
+  );
+  await user.keyboard('{Home}');
+  // Events 1–80: two digits at most.
+  expect(list.style.getPropertyValue('--timeline-seq')).toBe('3ch');
+  expect(within(list).getByRole('button', { name: /#\s*1\s*run\.started/ })).toHaveFocus();
+});
+
+it('keeps keyboard movement, the single Tab stop and selection with long sequences (#420)', async () => {
+  const user = userEvent.setup();
+  const select = vi.fn();
+  render(
+    <Timeline
+      events={large}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      following={false}
+      onSelect={select}
+    />,
+  );
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  const rows = within(list).getAllByRole('button');
+  expect(rows.map((row) => row.tabIndex)).toEqual([-1, -1, 0]);
+  act(() => rows[2]!.focus());
+  await user.keyboard('{Home}');
+  expect(rows[0]).toHaveFocus();
+  await user.keyboard('{ArrowDown}{Enter}');
+  expect(rows[1]).toHaveFocus();
+  expect(select).toHaveBeenCalledWith(123_456);
+  await user.keyboard('{End}');
+  expect(rows[2]).toHaveFocus();
+});
+
+it('moves focus and the single Tab stop between rows of one window, and a key naming the focused row requests nothing (#186)', async () => {
+  const user = userEvent.setup();
+  render(
+    <Timeline
+      events={large}
+      status="live"
+      error={undefined}
+      selected={undefined}
+      following={false}
+      onSelect={vi.fn()}
+    />,
+  );
+  const list = screen.getByRole('list', { name: 'Timeline' });
+  const rows = within(list).getAllByRole('button');
+  act(() => rows[2]!.focus());
+  // Every row is already shown: the window does not shift and no parent renders again.
+  await user.keyboard('{ArrowUp}');
+  expect(rows[1]).toHaveFocus();
+  expect(rows.map((row) => row.tabIndex)).toEqual([-1, 0, -1]);
+  await user.keyboard('{Home}');
+  expect(rows[0]).toHaveFocus();
+  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
+  // Home on the first row moves nothing; a later render does not pull focus back to it.
+  await user.keyboard('{Home}');
+  const sequence = screen.getByRole('spinbutton', { name: 'Event sequence' });
+  await user.type(sequence, '2');
+  expect(sequence).toHaveFocus();
+  expect(sequence).toHaveValue(2);
+  expect(rows.map((row) => row.tabIndex)).toEqual([0, -1, -1]);
+});
+
 it('ignores controls that cannot act, keeping them focusable (#186 QA)', async () => {
   const user = userEvent.setup();
   const live = vi.fn();

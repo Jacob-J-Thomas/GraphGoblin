@@ -10,44 +10,99 @@ import { Button, Checkbox, Dialog, HelpText, Select } from '../../components/ui/
 import { ReplayConsequences } from './ReplayConsequences.js';
 import { errorMessage } from '../../lib/utils.js';
 
+/**
+ * Whether the inspector may send a write for the run it shows (#416). The inspector issues a new
+ * gate whenever the visit, the run or the outage boundary changes, so a gate captured earlier (by
+ * an open review, a queued mutation or a pending preview) stays spent after a reconnect or an
+ * A→B→A visit. Outside the inspector, `OPEN_GATE` keeps ordinary behaviour.
+ */
+export interface WriteGate {
+  /** Why this view cannot send writes now; undefined while it can. */
+  readonly blocked: string | undefined;
+  /** This gate is still the view's current one and its live connectivity and read checks pass. */
+  readonly open: () => boolean;
+  /** The visit that issued this gate is still shown (an outage alone does not end it). */
+  readonly shown: () => boolean;
+}
+
+export const OPEN_GATE: WriteGate = { blocked: undefined, open: () => true, shown: () => true };
+
+export const NOT_SENT =
+  'Not sent: this view lost its connection to the run. Read the run again before retrying.';
+
+/** Checked immediately before each API write, after any queued or delayed mutation step. */
+export function assertOpen(gate: WriteGate): void {
+  if (!gate.open()) throw new Error(NOT_SENT);
+}
+
+/** Everything a command sends, frozen when it is chosen: a refetch can replace these options. */
+type Command =
+  | { kind: 'cancel' | 'pause'; runId: string; gate: WriteGate }
+  | { kind: 'resume'; runId: string; gate: WriteGate; observedSeq: number }
+  | {
+      kind: 'replay';
+      runId: string;
+      gate: WriteGate;
+      nodeId: string;
+      observedSeq: number;
+      consent: boolean;
+    };
+
 /** Recovery decisions and their explanations always come from the server. */
-export function RunControls({ run }: { run: RunSnapshot }) {
+export function RunControls({
+  run,
+  availability = OPEN_GATE,
+}: {
+  run: RunSnapshot;
+  availability?: WriteGate;
+}) {
   const client = useApi();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  // The gate a replay review was opened under. A new gate (an outage, a reconnect) expires it.
+  const [review, setReview] = useState<WriteGate>();
+  const open = review !== undefined && review === availability;
   const [nodeId, setNodeId] = useState('');
   const [consent, setConsent] = useState(false);
   const [replaySeq, setReplaySeq] = useState(run.recovery.observedSeq);
-  const refresh = () => void queryClient.invalidateQueries({ queryKey: keys.run(run.id) });
+  const refresh = (runId: string) =>
+    void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
   const action = useMutation({
-    mutationFn: (kind: 'cancel' | 'pause' | 'resume' | 'replay') =>
-      kind === 'replay'
-        ? runs.replay(client, run.id, nodeId, {
-            observedSeq: replaySeq,
-            ...(consent ? { retryUncertainScript: true } : {}),
-          })
-        : kind === 'resume'
-          ? runs.resume(client, run.id, { observedSeq: run.recovery.observedSeq })
-          : runs[kind](client, run.id),
-    onSuccess: (next, kind) => {
-      refresh();
-      if (kind === 'replay') {
-        setOpen(false);
-        void navigate(`/runs/${next.id}`);
+    mutationFn: async (command: Command) => {
+      assertOpen(command.gate);
+      switch (command.kind) {
+        case 'replay':
+          return runs.replay(client, command.runId, command.nodeId, {
+            observedSeq: command.observedSeq,
+            ...(command.consent ? { retryUncertainScript: true } : {}),
+          });
+        case 'resume':
+          return runs.resume(client, command.runId, { observedSeq: command.observedSeq });
+        default:
+          return runs[command.kind](client, command.runId);
       }
     },
-    onError: refresh,
+    onSuccess: (next, command) => {
+      refresh(command.runId);
+      if (command.kind === 'replay') {
+        setReview(undefined);
+        // A sent replay opens its new run only while the visit that asked for it is shown.
+        if (command.gate.shown()) void navigate(`/runs/${next.id}`);
+      }
+    },
+    onError: (_error, command) => refresh(command.runId),
   });
   const { resume, replay } = run.recovery;
+  const unavailable = availability.blocked !== undefined;
   const selected = replay.find((node) => node.nodeId === nodeId);
   const needsConsent =
     selected && !selected.action.allowed && selected.action.code === 'SCRIPT_CONSENT_REQUIRED';
   // A second pointer click stays in the same intent even if a fast retry already failed again.
   // Use the browser's click count instead of introducing a debounce window; keyboard clicks are 0.
-  const recover = (kind: 'resume' | 'replay', clickCount: number) => {
-    if (clickCount > 1) return;
-    action.mutate(kind);
+  // Nothing is queued once the gate the command captured is spent.
+  const send = (command: Command, clickCount = 0) => {
+    if (clickCount > 1 || !command.gate.open()) return;
+    action.mutate(command);
   };
   return (
     <div className="grid min-w-0 max-w-xl gap-2">
@@ -55,16 +110,26 @@ export function RunControls({ run }: { run: RunSnapshot }) {
         {!isTerminal(run.status) && run.status !== 'paused' ? (
           <Button
             variant="outline"
-            onClick={() => action.mutate('pause')}
-            disabled={action.isPending}
+            onClick={() => send({ kind: 'pause', runId: run.id, gate: availability })}
+            disabled={action.isPending || unavailable}
           >
             <Icon name="paused" /> Pause
           </Button>
         ) : null}
         <Button
           variant="outline"
-          onClick={(event) => recover('resume', event.detail)}
-          disabled={action.isPending || !resume.allowed}
+          onClick={(event) =>
+            send(
+              {
+                kind: 'resume',
+                runId: run.id,
+                gate: availability,
+                observedSeq: run.recovery.observedSeq,
+              },
+              event.detail,
+            )
+          }
+          disabled={action.isPending || !resume.allowed || unavailable}
           aria-describedby={`resume-reason-${run.id}`}
         >
           <Icon name="running" /> Resume
@@ -72,8 +137,8 @@ export function RunControls({ run }: { run: RunSnapshot }) {
         {!isTerminal(run.status) ? (
           <Button
             variant="destructive"
-            onClick={() => action.mutate('cancel')}
-            disabled={action.isPending}
+            onClick={() => send({ kind: 'cancel', runId: run.id, gate: availability })}
+            disabled={action.isPending || unavailable}
           >
             <Icon name="cancelled" /> Cancel run
           </Button>
@@ -81,15 +146,16 @@ export function RunControls({ run }: { run: RunSnapshot }) {
         <Button
           variant="outline"
           onClick={() => {
+            if (!availability.open()) return;
             action.reset();
             setReplaySeq(run.recovery.observedSeq);
             setConsent(false);
             setNodeId(
               replay.find((node) => node.action.allowed)?.nodeId ?? replay[0]?.nodeId ?? '',
             );
-            setOpen(true);
+            setReview(availability);
           }}
-          disabled={action.isPending}
+          disabled={action.isPending || unavailable}
         >
           Replay...
         </Button>
@@ -116,19 +182,38 @@ export function RunControls({ run }: { run: RunSnapshot }) {
         open={open}
         title="Replay as a new run"
         onClose={() => {
-          if (!action.isPending) setOpen(false);
+          if (!action.isPending) setReview(undefined);
         }}
         footer={
           <>
             <Button
               disabled={
-                action.isPending || !(selected?.action.allowed || (needsConsent && consent))
+                action.isPending ||
+                unavailable ||
+                !(selected?.action.allowed || (needsConsent && consent))
               }
-              onClick={(event) => recover('replay', event.detail)}
+              onClick={(event) => {
+                if (!review) return;
+                send(
+                  {
+                    kind: 'replay',
+                    runId: run.id,
+                    gate: review,
+                    nodeId,
+                    observedSeq: replaySeq,
+                    consent,
+                  },
+                  event.detail,
+                );
+              }}
             >
               Create replay run
             </Button>
-            <Button variant="outline" disabled={action.isPending} onClick={() => setOpen(false)}>
+            <Button
+              variant="outline"
+              disabled={action.isPending}
+              onClick={() => setReview(undefined)}
+            >
               Cancel
             </Button>
           </>

@@ -1,0 +1,167 @@
+{
+  "number": 10,
+  "group": "supplement",
+  "action": "deletion",
+  "mode": "dismiss-success",
+  "checks": [
+    {
+      "name": "read-only replacement confirmation remains guarded",
+      "passed": true,
+      "facts": [
+        {
+          "label": "",
+          "disabled": false
+        },
+        {
+          "label": "Cancel",
+          "disabled": true
+        },
+        {
+          "label": "Saving…",
+          "disabled": true
+        }
+      ]
+    },
+    {
+      "name": "exactly original confirmation remains outstanding",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "ordinary deletion success shown on correct run",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "ordinary result did not add a second POST",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "read-only replacement review remains its own dialog",
+      "passed": true,
+      "facts": null
+    },
+    {
+      "name": "all API/page routes explicitly handled",
+      "passed": true,
+      "facts": []
+    }
+  ],
+  "steps": [
+    {
+      "name": "native-dismissed-readonly-preview",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": true,
+        "oldHeadingConnected": true,
+        "removedHeaderRecords": 0,
+        "removedHeadingRecords": 0,
+        "storageEvents": [],
+        "dialogs": [
+          {
+            "text": "Mark selected history delete-ready?\n\nOnly the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.\n\nActive, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.\n\n01M3Y7RKG08245PHCXP916EBMT\nCancel\nSaving…",
+            "buttons": [
+              {
+                "label": "",
+                "disabled": false
+              },
+              {
+                "label": "Cancel",
+                "disabled": true
+              },
+              {
+                "label": "Saving…",
+                "disabled": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "ordinary-success",
+      "facts": {
+        "url": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+        "online": true,
+        "oldHeaderConnected": true,
+        "oldHeadingConnected": true,
+        "removedHeaderRecords": 0,
+        "removedHeadingRecords": 0,
+        "storageEvents": [],
+        "dialogs": [
+          {
+            "text": "Mark selected history delete-ready?\n\nOnly the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.\n\nActive, paused and unfinished history is protected. Required parent, child and replay records must be reviewed together. Artifacts referenced by retained runs stay protected.\n\n01M3Y7RKG08245PHCXP916EBMT\nCancel\nConfirm delete-ready selection",
+            "buttons": [
+              {
+                "label": "",
+                "disabled": false
+              },
+              {
+                "label": "Cancel",
+                "disabled": false
+              },
+              {
+                "label": "Confirm delete-ready selection",
+                "disabled": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "state": "passed",
+  "runA": "01M3Y7RKG08245PHCXP916EBMT",
+  "runB": "01M3Y7RKG08245PHCXP916EBMZ",
+  "posts": [
+    {
+      "body": {
+        "runIds": [
+          "01M3Y7RKG08245PHCXP916EBMT"
+        ],
+        "action": "mark",
+        "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "confirmed": true
+      },
+      "phase": "before-original-settlement",
+      "ordinal": 1
+    }
+  ],
+  "previews": [
+    {
+      "ids": [
+        "01M3Y7RKG08245PHCXP916EBMT"
+      ],
+      "number": 1
+    },
+    {
+      "ids": [
+        "01M3Y7RKG08245PHCXP916EBMT"
+      ],
+      "number": 2
+    }
+  ],
+  "runReads": [
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "before-original-settlement",
+      "bodySha256": "42746fd515431608f0d3c4a5dc537b9d1625b8905356f48595f263828d955ae0",
+      "held": false
+    },
+    {
+      "id": "01M3Y7RKG08245PHCXP916EBMT",
+      "generation": "A",
+      "phase": "after-original-settlement",
+      "bodySha256": "568d380692a305f8c05101cc68f1d0df1bf08b8f2862d1e0fff19b63fdbcc01c",
+      "held": false
+    }
+  ],
+  "unknown": [],
+  "sourceSameRoute": "https://inspector.invalid/app/runs/01M3Y7RKG08245PHCXP916EBMT",
+  "requestFailures": 0,
+  "cleanupCloseResolved": true,
+  "onlyInterceptedDispatchNoServerEffects": true
+}

@@ -1,0 +1,102 @@
+{
+  "sources": [
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i5-564-final-astra-max-03\\diagnostic\\sent-action-01.json",
+      "bytes": 7213,
+      "sha256": "623d134a3fe6427d4f71bbb1403b9af6a549e6f6b747d06a42471b187f43b830"
+    },
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-17-five-intents\\i5-564-final-astra-max-03\\diagnostic\\baseline-comparison-02.json",
+      "bytes": 6961,
+      "sha256": "70838ef8e3bcf2ee7dd08aed7f247460d1bc37006b073cc6bd7db7d53ae7683e"
+    }
+  ],
+  "candidateFirstInvocation": [
+    {
+      "action": "script",
+      "mode": "feedback",
+      "state": "observed",
+      "pendingObserved": true,
+      "oldHeaderConnectedWhileHeld": false,
+      "writes": 1,
+      "feedbackWithin2s": false
+    },
+    {
+      "action": "script",
+      "mode": "duplicate",
+      "state": "observed",
+      "pendingObserved": true,
+      "oldHeaderConnectedWhileHeld": false,
+      "writes": 2,
+      "feedbackWithin2s": null
+    },
+    {
+      "action": "deletion",
+      "mode": "feedback",
+      "state": "observed",
+      "pendingObserved": true,
+      "oldHeaderConnectedWhileHeld": false,
+      "writes": 1,
+      "feedbackWithin2s": false
+    },
+    {
+      "action": "deletion",
+      "mode": "duplicate",
+      "state": "observed",
+      "pendingObserved": true,
+      "oldHeaderConnectedWhileHeld": false,
+      "writes": 2,
+      "feedbackWithin2s": null
+    }
+  ],
+  "firstBaselineFixtureErrorsPreserved": [
+    {
+      "source": "baseline",
+      "action": "script",
+      "mode": "feedback",
+      "buildBundle": "07f5398d93b5691a35365d4838e32bd3de70e23276488de739e52dfca6e0cbf8",
+      "verifiedDistributionMembers": 28,
+      "steps": [
+        "one original write arrived and is held"
+      ],
+      "pendingObserved": false,
+      "dialogAfterRecovery": true,
+      "sameHeaderAfterRecovery": true,
+      "oldPendingAfterRecovery": true,
+      "heldByUiBeforeRotation": false,
+      "state": "fixture-error",
+      "error": "Error: Original pending action or recovery control not established",
+      "unhandled": []
+    },
+    {
+      "source": "baseline",
+      "action": "deletion",
+      "mode": "feedback",
+      "buildBundle": "07f5398d93b5691a35365d4838e32bd3de70e23276488de739e52dfca6e0cbf8",
+      "verifiedDistributionMembers": 28,
+      "steps": [
+        "one original write arrived and is held"
+      ],
+      "pendingObserved": false,
+      "dialogAfterRecovery": true,
+      "sameHeaderAfterRecovery": true,
+      "oldPendingAfterRecovery": true,
+      "state": "fixture-error",
+      "error": "TimeoutError: locator.isDisabled: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByRole('button', { name: 'Confirm delete-ready selection', exact: true })\u001b[22m\n",
+      "unhandled": []
+    }
+  ],
+  "laterBaselineObserved": [
+    {
+      "action": "script",
+      "state": "observed",
+      "feedbackWithin2s": true
+    },
+    {
+      "action": "deletion",
+      "state": "observed",
+      "feedbackWithin2s": true
+    }
+  ],
+  "newFixtureExpectedCorrectAssertionsAreNotTakenFromObservedVerdicts": true
+}
