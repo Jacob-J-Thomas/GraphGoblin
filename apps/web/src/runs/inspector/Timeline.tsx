@@ -1,5 +1,5 @@
 import type { LoopDefinition } from '@graphgoblin/contracts';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { Alert, Button, Card, Input } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { describeEvent, describeParts } from '../projections.js';
@@ -109,6 +109,10 @@ export function Timeline({
   const windowText = events.length
     ? `Showing events ${shown[0]?.seq}–${shown.at(-1)?.seq} of the retained window.`
     : 'No events loaded.';
+  // The sequence column fits the widest number shown, in characters of its own monospace font
+  // (`#` and every digit), so rows stay aligned without capping or truncating any number (#420).
+  const seqWidth = shown.reduce((widest, event) => Math.max(widest, String(event.seq).length), 1);
+  const seqColumn = { '--timeline-seq': `${seqWidth + 1}ch` } as CSSProperties;
   useLayoutEffect(() => {
     if (focusRef.current !== undefined) {
       listRef.current
@@ -128,7 +132,10 @@ export function Timeline({
   return (
     <Card
       flush
-      title={`Timeline (${total} events, ${STREAM_LABEL[status]})`}
+      // A long sequence count wraps rather than widening the card on a narrow screen (#420).
+      title={
+        <span className="wrap-anywhere">{`Timeline (${total} events, ${STREAM_LABEL[status]})`}</span>
+      }
       actions={
         status === 'live' ? (
           <span
@@ -181,7 +188,7 @@ export function Timeline({
         >
           Follow live
         </PagingButton>
-        <span>{windowText}</span>
+        <span className="wrap-anywhere">{windowText}</span>
         {/* Announces what the reader changes (pausing, browsing, returning live), never each live
             append, which would repeat several times a second while following (#186). */}
         <span className="sr-only" aria-live="polite">
@@ -189,7 +196,7 @@ export function Timeline({
         </span>
       </div>
       <form
-        className="flex items-center gap-2 px-4 py-2 text-sm"
+        className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
           if (busy) return;
@@ -218,6 +225,7 @@ export function Timeline({
       <ol
         ref={listRef}
         className="max-h-[60vh] overflow-auto p-2"
+        style={seqColumn}
         aria-label="Timeline"
         onPointerDown={() => {
           readerScrollingRef.current = true;
@@ -273,8 +281,10 @@ export function Timeline({
                   ? 'Select to load the exact event payload from the server.'
                   : undefined
               }
+              // Sequence, type and description wrap onto further lines when a narrow row or
+              // enlarged text cannot hold them side by side; nothing is clipped or shortened.
               className={cn(
-                'grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2',
+                'flex w-full cursor-pointer flex-wrap content-center items-baseline gap-x-2 gap-y-0.5',
                 'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11',
                 'aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row',
                 'forced-colors:aria-[current=true]:outline',
@@ -289,9 +299,13 @@ export function Timeline({
                 onSelect(event.seq);
               }}
             >
-              <span className="text-right font-mono text-xs text-subtle">#{event.seq}</span>
-              <code className="text-[12.5px] font-medium">{event.type}</code>
-              <span className="min-w-0 break-words text-muted">
+              <span className="min-w-[min(var(--timeline-seq),100%)] text-right font-mono text-xs wrap-anywhere text-subtle">
+                #{event.seq}
+              </span>
+              <code className="min-w-0 text-[0.78125rem] font-medium wrap-anywhere">
+                {event.type}
+              </code>
+              <span className="min-w-0 grow basis-40 break-words text-muted">
                 {'uncached' in event ? (
                   <>
                     {describeParts(event.description, definition)}

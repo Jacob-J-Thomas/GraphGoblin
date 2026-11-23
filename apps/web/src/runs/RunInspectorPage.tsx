@@ -2,19 +2,33 @@ import { ExecutionContext, RecordedEvent } from './inspector/ExecutionEvidence.j
 import type { LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { RunLimits } from './inspector/RunLimits.js';
 import { HistoryEligibility } from './HistoryEligibility.js';
-import { formatDateTime } from '../lib/utils.js';
+import { formatDateTime, isOfflineError } from '../lib/utils.js';
 import { isTerminal } from '@graphgoblin/domain';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { onlineManager, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { GraphGoblinApiError, runs } from '@graphgoblin/api-client';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
-import { QueryState, RunStatusBadge } from '../components/status.js';
+import { OfflineState, QueryState, RunStatusBadge } from '../components/status.js';
 import { Alert, Badge, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
-import { RunControls } from './inspector/RunControls.js';
+import { RunControls, type WriteGate } from './inspector/RunControls.js';
+import {
+  getInspectorRead,
+  markInspectorReadLoss,
+  trackInspectorRead,
+  useInspectorRead,
+} from './inspector-read-provenance.js';
 import { ScriptRecovery } from './inspector/ScriptRecovery.js';
 import { SessionRecoveryControls } from './inspector/SessionRecoveryControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
@@ -30,6 +44,68 @@ import { useApi } from '../api/context.js';
 import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
+
+type Observation = Awaited<ReturnType<typeof runs.observation>>;
+
+/**
+ * Whether an observation may later be kept on screen through an outage (#416): every field the
+ * run section shows has its expected kind and names this run. An empty observation is an observed
+ * answer too. This decides eligibility only; the read's ordinary answer and errors are unchanged.
+ */
+function eligibleObservation(read: Observation, runId: string): boolean {
+  const ours = (event: RunEvent | undefined, ...types: RunEvent['type'][]) =>
+    event === undefined || (event.runId === runId && types.includes(event.type));
+  const choices: readonly RunEvent[] | undefined = read.freshSessionChoices;
+  return (
+    ours(
+      read.lifecycle,
+      'run.started',
+      'run.resumed',
+      'run.finished',
+      'run.failed',
+      'run.cancelled',
+    ) &&
+    ours(read.exit, 'exit.evaluated') &&
+    ours(read.gate, 'decision.made') &&
+    ours(read.finished, 'run.finished') &&
+    ours(read.cancelRequested, 'run.cancel_requested') &&
+    ours(read.cancelled, 'run.cancelled') &&
+    (choices ?? []).every(
+      (event) =>
+        event.runId === runId && event.type === 'run.resumed' && event.freshSession !== undefined,
+    )
+  );
+}
+
+/**
+ * The browser's latest disconnect, as a position comparable with inspector read starts (#416);
+ * zero before any. Recorded in the connectivity transition itself, for every inspector visit.
+ */
+let browserLoss = 0;
+const browserLossListeners = new Set<() => void>();
+let watchingBrowser = false;
+
+function watchBrowser(notify: () => void): () => void {
+  if (!watchingBrowser) {
+    watchingBrowser = true;
+    const record = (online: boolean) => {
+      if (online) return;
+      browserLoss = markInspectorReadLoss();
+      for (const listener of [...browserLossListeners]) listener();
+    };
+    // A view first opened while offline starts after a disconnect it did not see.
+    record(onlineManager.isOnline());
+    onlineManager.subscribe(record);
+  }
+  browserLossListeners.add(notify);
+  const stop = onlineManager.subscribe(() => notify());
+  return () => {
+    browserLossListeners.delete(notify);
+    stop();
+  };
+}
+const browserOnline = () => onlineManager.isOnline();
+const browserLossSnapshot = () => browserLoss;
 
 function ChildRunDetails({ runId }: { runId: string }) {
   const query = useRun(runId);
@@ -120,6 +196,11 @@ function HeaderPosition({
 /**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the
  * timeline beside the thread at the chosen event (with that event's patch) and node progress.
+ *
+ * Through a transport outage (#416) the run section keeps the last run this view read with a
+ * qualified receipt, labelled as last observed, and every control that writes stays unavailable
+ * until a run read that started after the outage began has committed. A cold or unproved row
+ * stays unavailable. The Timeline and thread below keep their own behaviour.
  */
 export function RunInspectorPage() {
   const { runId = '' } = useParams();
@@ -127,17 +208,25 @@ export function RunInspectorPage() {
   const threadQuery = useRunThread(runId);
   const live = useLiveRefresh(runId);
   const client = useApi();
+  const queryClient = useQueryClient();
   const header = useRunHeaderStatus(runId);
   const observation = useQuery({
     queryKey: keys.observation(runId),
     // A successful read, under the credentials it was sent with, is lifecycle evidence for the
-    // header (#386); the answer itself is unchanged, and a cached one is not a new read.
-    queryFn: async ({ signal }) => {
-      const lease = header.registry.lease(runId);
-      const read = await runs.observation(client, runId, { signal });
-      if (!signal.aborted) header.registry.lifecycle(lease, read.lifecycle);
-      return read;
-    },
+    // header (#386); the answer itself is unchanged, and a cached one is not a new read. Its
+    // receipt lets the run section keep this evidence through an outage (#416).
+    queryFn: (context) =>
+      trackInspectorRead(
+        header.registry.source.client === client ? header.registry : undefined,
+        context,
+        async () => {
+          const lease = header.registry.lease(runId);
+          const read = await runs.observation(client, runId, { signal: context.signal });
+          if (!context.signal.aborted) header.registry.lifecycle(lease, read.lifecycle);
+          return read;
+        },
+        (read) => eligibleObservation(read, runId),
+      ),
   });
   // The stream delivers every accepted batch to the header's evidence itself, whatever window
   // is shown (#386).
@@ -148,23 +237,143 @@ export function RunInspectorPage() {
   const selectedSeq = history.selectedSeq;
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = history.selectedEvent;
+
+  // #416. Receipts and losses are read-start positions. `loss` keeps the start of the latest
+  // outage even after it ends, so freshness is always `committed > boundary`, never `loss > 0`;
+  // a positive `committed` alone only lets the last observed run stay on screen.
+  const runRead = useInspectorRead(header.registry, keys.run(runId));
+  const observationRead = useInspectorRead(header.registry, keys.observation(runId));
+  const online = useSyncExternalStore(watchBrowser, browserOnline);
+  const lastBrowserLoss = useSyncExternalStore(watchBrowser, browserLossSnapshot);
+  // A credential change empties the receipt's loss as well: remember the newest boundary seen,
+  // so only a later qualified read can release it.
+  const [latch, setLatch] = useState(0);
+  const boundary = Math.max(lastBrowserLoss, runRead.loss, latch);
+  if (boundary > latch) setLatch(boundary);
+  const run = runQuery.data;
+  const down = !online || runQuery.fetchStatus === 'paused' || isOfflineError(runQuery.error);
+  const fresh = boundary === 0 || runRead.committed > boundary;
+  const outage = down || !fresh;
+  // A definitive refusal keeps its ordinary error; a later transport error cannot resurrect it.
+  const refused = runQuery.isError && !isOfflineError(runQuery.error);
+  const blocked = !online
+    ? 'This browser is offline.'
+    : down
+      ? 'The GraphGoblin API cannot be reached; reconnecting.'
+      : fresh
+        ? undefined
+        : 'Reconnecting: reading this run again.';
+  const observationBoundary = Math.max(boundary, observationRead.loss);
+  const observationFresh =
+    observationBoundary === 0 || observationRead.committed > observationBoundary;
+  // During an outage, observation evidence is shown only from a qualified read of it.
+  const observed = !outage || observationRead.committed > 0 ? observation.data : undefined;
+
   const present = (events: (RunEvent | undefined)[]) =>
     events.filter((event): event is RunEvent => event !== undefined);
   const evidence = present([
-    observation.data?.lifecycle,
-    observation.data?.exit,
-    observation.data?.gate,
-    observation.data?.finished,
+    observed?.lifecycle,
+    observed?.exit,
+    observed?.gate,
+    observed?.finished,
   ]);
-  const latestExit = observation.data?.exit;
-  const finished = observation.data?.finished;
+  const latestExit = observed?.exit;
+  const finished = observed?.finished;
   // Whole-run cancellation and recovery evidence, whatever window the Timeline is browsing.
-  const cancellation = observation.data
-    ? present([observation.data.cancelRequested, observation.data.cancelled])
+  const cancellation = observed
+    ? present([observed.cancelRequested, observed.cancelled])
     : undefined;
   const recovery = present([
-    ...(observation.data?.freshSessionChoices ?? []),
-    observation.data?.lifecycle?.type === 'run.failed' ? observation.data.lifecycle : undefined,
+    ...(observed?.freshSessionChoices ?? []),
+    observed?.lifecycle?.type === 'run.failed' ? observed.lifecycle : undefined,
+  ]);
+
+  // The view's write gate: replaced when the visit, the outage boundary or availability changes,
+  // so a review or queued command captured earlier cannot act after a reconnect or A→B→A.
+  const latestGate = useRef<WriteGate | undefined>(undefined);
+  const shownVisit = useRef<object | undefined>(undefined);
+  const visit = useMemo(() => ({ runId }), [runId]);
+  const gate = useMemo<WriteGate>(() => {
+    const key = keys.run(runId);
+    const self: WriteGate = {
+      blocked,
+      shown: () => shownVisit.current === visit,
+      open: () => {
+        if (blocked !== undefined || latestGate.current !== self || !onlineManager.isOnline())
+          return false;
+        const read = getInspectorRead(header.registry, key);
+        // A newer browser or run-read loss starts another outage: this gate is spent.
+        if (Math.max(browserLoss, read.loss) > boundary) return false;
+        if (boundary > 0 && !(read.committed > boundary)) return false;
+        const state = queryClient.getQueryState(key);
+        return state?.fetchStatus !== 'paused' && !isOfflineError(state?.error);
+      },
+    };
+    return self;
+  }, [blocked, boundary, header.registry, queryClient, runId, visit]);
+  // Start fresh session also needs the observation that recorded the failure read after the
+  // outage; the control itself matches its run, node, visit and failure sequence.
+  const sessionGate = useMemo<WriteGate>(() => {
+    const key = keys.observation(runId);
+    const evidenceBlocked =
+      gate.blocked ?? (observationFresh ? undefined : 'Reading the run evidence again.');
+    return {
+      blocked: evidenceBlocked,
+      shown: gate.shown,
+      open: () => {
+        if (evidenceBlocked !== undefined || !gate.open()) return false;
+        const read = getInspectorRead(header.registry, key);
+        const since = Math.max(boundary, read.loss);
+        return since === 0 || read.committed > since;
+      },
+    };
+  }, [boundary, gate, header.registry, observationFresh, runId]);
+  useLayoutEffect(() => {
+    latestGate.current = gate;
+    shownVisit.current = visit;
+    return () => {
+      latestGate.current = undefined;
+      shownVisit.current = undefined;
+    };
+  }, [gate, visit]);
+
+  // At most one otherwise-unserved read per outage boundary: the shared probe already rereads a
+  // failed query, a read in flight is joined, and one started before the loss settles first (it
+  // cannot qualify). The observation is read again only where Start fresh session needs it.
+  const reread = useRef('');
+  const needsEvidence =
+    run?.status === 'failed' && run.failure?.code === 'HARNESS_SESSION_MISSING' && fresh;
+  useEffect(() => {
+    if (!online || runQuery.status !== 'success' || runQuery.fetchStatus !== 'idle') return;
+    const evidenceDue =
+      needsEvidence &&
+      !observationFresh &&
+      observation.status === 'success' &&
+      observation.fetchStatus === 'idle';
+    const target = !fresh
+      ? { key: keys.run(runId), ticket: `${runId}:run:${boundary}` }
+      : evidenceDue
+        ? { key: keys.observation(runId), ticket: `${runId}:observation:${observationBoundary}` }
+        : undefined;
+    if (!target || reread.current === target.ticket) return;
+    reread.current = target.ticket;
+    void queryClient.refetchQueries(
+      { queryKey: target.key, exact: true, type: 'active' },
+      { cancelRefetch: false },
+    );
+  }, [
+    boundary,
+    fresh,
+    needsEvidence,
+    observation.fetchStatus,
+    observation.status,
+    observationBoundary,
+    observationFresh,
+    online,
+    queryClient,
+    runId,
+    runQuery.fetchStatus,
+    runQuery.status,
   ]);
   // Only a selected event reads a historical thread. Following live shows the current thread,
   // whose read stays bounded however long the history grows; a completion's patch diff reads its
@@ -210,117 +419,132 @@ export function RunInspectorPage() {
   // Node and route labels come from the pinned version, so it is always read (#255).
   const versionQuery = useLoopVersion(runQuery.data?.loopId ?? '', runQuery.data?.versionId ?? '');
   const definition = versionQuery.data?.definition;
-  const gateSummary = lastGateSummary(evidence, definition);
-  const returnSummary = threadQuery.data
-    ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
-    : undefined;
+  // In an outage the run section names nodes by their recorded IDs and omits summaries that no
+  // qualified read supplied (#416). The Timeline below keeps the pinned labels.
+  const sectionDefinition = outage ? undefined : definition;
+  const gateSummary = outage ? undefined : lastGateSummary(evidence, definition);
+  const returnSummary =
+    !outage && threadQuery.data
+      ? exitReturnSummary(evidence, definition, threadQuery.data.invocation.returnDefaults)
+      : undefined;
 
   return (
     <Page wide>
-      <QueryState query={runQuery} what="Run">
-        {(run) => (
-          <>
-            {/* DOM order is title, meta links, then controls (the keyboard order before the
-                cutover); the grid only places the controls at the top right. */}
-            <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
-              <div className="col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3">
-                <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading">
-                  Run{' '}
-                  <span className="font-mono text-md font-medium tracking-normal text-muted">
-                    {run.id}
-                  </span>
-                </h1>
-                {shownStatus ? <HeaderStatusBadge status={shownStatus} /> : null}
-              </div>
-              <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                {shownStatus ? (
-                  <HeaderPosition
-                    status={shownStatus}
-                    nodeId={run.currentNodeId}
-                    definition={definition}
-                  />
-                ) : null}
-                <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
-                  loop
-                </Link>
-                {run.recovery.replayOf ? (
-                  <span>
-                    Replay run {run.id} from{' '}
-                    <Link to={`/runs/${run.recovery.replayOf.runId}`} className={META_LINK}>
-                      {run.recovery.replayOf.runId}
-                    </Link>{' '}
-                    at {run.recovery.replayOf.nodeId}
-                  </span>
-                ) : null}
-                {run.parentRunId ? (
-                  <Link to={`/runs/${run.parentRunId}`} className={META_LINK}>
-                    parent run
-                  </Link>
-                ) : null}
-                <Link to={`/runs?parent=${run.id}`} className={META_LINK}>
-                  child runs
-                </Link>
-              </div>
-              <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
-                <RunControls run={run} />
-                <ScriptRecovery run={run} />
-              </div>
-            </header>
-            {run.status === 'failed' && run.failure ? (
-              <Alert title={`Failed: ${run.failure.code}`}>
-                {run.failure.code === 'SCRIPT_OUTCOME_UNCERTAIN' ? (
-                  <p>
-                    The previous script attempt may already have produced its effect. Resume runs
-                    the script again and may repeat that effect.
-                  </p>
-                ) : run.failure.code === 'SCRIPT_START_FAILED' ? (
-                  <p>The script process did not start. Resume tries to start it again.</p>
-                ) : (
-                  run.failure.message
-                )}
-                {run.recovery.resume.allowed ? ' (resumable)' : ''}
-                <FailedChildLink details={run.failure.details} />
-              </Alert>
-            ) : null}
-            {observation.error ? (
-              <Alert>Run evidence could not be read: {observation.error.message}</Alert>
-            ) : null}
-            <SessionRecoveryControls run={run} events={recovery} />
-            {latestExit ? (
-              <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
-                <p>{describeEvent(latestExit, definition)}</p>
-                {gateSummary ? <p>{gateSummary}</p> : null}
-                {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
-              </Card>
-            ) : null}
-            {/* A null return is a value: show the row's recorded result, or the finish event's
-                when the row has none. */}
-            {run.result !== undefined ||
-            (finished?.type === 'run.finished' ? finished.result : undefined) !== undefined ? (
-              <Card title="Result">
-                <BoundedValue
-                  value={
-                    run.result !== undefined
-                      ? run.result
-                      : finished?.type === 'run.finished'
-                        ? finished.result
-                        : undefined
-                  }
-                  label="Result"
-                  testId="run-result"
-                  fileName={`run-${run.id}-result`}
-                />
-              </Card>
-            ) : null}
-            <RunLimits run={run} />
-            <div className="grid gap-2">
-              <p className="text-sm text-muted">
-                {run.deletionApproval
-                  ? `Delete-ready: confirmed by ${run.deletionApproval.confirmedBy.id} at ${formatDateTime(run.deletionApproval.confirmedAt)}.`
-                  : 'History retained.'}
-              </p>
-              <HistoryEligibility runIds={[run.id]} />
+      {/* One keyed position for the run section, current or last observed, so a draft or an
+          open control survives the switch; another run starts a new section. During an outage
+          a cold or unproved row is never presented as the run (#416). */}
+      {run !== undefined && !refused && (!outage || runRead.committed > 0) ? (
+        <Fragment key={run.id}>
+          {/* DOM order is title, meta links, then controls (the keyboard order before the
+              cutover); the grid only places the controls at the top right. */}
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
+            <div className="col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3">
+              <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading">
+                Run{' '}
+                <span className="font-mono text-md font-medium tracking-normal text-muted">
+                  {run.id}
+                </span>
+              </h1>
+              {shownStatus ? <HeaderStatusBadge status={shownStatus} /> : null}
             </div>
+            <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+              {shownStatus ? (
+                <HeaderPosition
+                  status={shownStatus}
+                  nodeId={run.currentNodeId}
+                  definition={sectionDefinition}
+                />
+              ) : null}
+              <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
+                loop
+              </Link>
+              {run.recovery.replayOf ? (
+                <span>
+                  Replay run {run.id} from{' '}
+                  <Link to={`/runs/${run.recovery.replayOf.runId}`} className={META_LINK}>
+                    {run.recovery.replayOf.runId}
+                  </Link>{' '}
+                  at {run.recovery.replayOf.nodeId}
+                </span>
+              ) : null}
+              {run.parentRunId ? (
+                <Link to={`/runs/${run.parentRunId}`} className={META_LINK}>
+                  parent run
+                </Link>
+              ) : null}
+              <Link to={`/runs?parent=${run.id}`} className={META_LINK}>
+                child runs
+              </Link>
+            </div>
+            <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
+              <RunControls run={run} availability={gate} />
+              <ScriptRecovery run={run} availability={gate} />
+            </div>
+          </header>
+          {outage ? (
+            <Alert tone="warn" title="Last observed, may be out of date">
+              {blocked} The run below is the last one this browser read. Changes to it stay
+              unavailable until it is read again.
+            </Alert>
+          ) : null}
+          {run.status === 'failed' && run.failure ? (
+            <Alert title={`Failed: ${run.failure.code}`}>
+              {run.failure.code === 'SCRIPT_OUTCOME_UNCERTAIN' ? (
+                <p>
+                  The previous script attempt may already have produced its effect. Resume runs the
+                  script again and may repeat that effect.
+                </p>
+              ) : run.failure.code === 'SCRIPT_START_FAILED' ? (
+                <p>The script process did not start. Resume tries to start it again.</p>
+              ) : (
+                run.failure.message
+              )}
+              {run.recovery.resume.allowed ? ' (resumable)' : ''}
+              <FailedChildLink details={run.failure.details} />
+            </Alert>
+          ) : null}
+          {observation.error ? (
+            <Alert>Run evidence could not be read: {observation.error.message}</Alert>
+          ) : null}
+          <SessionRecoveryControls run={run} events={recovery} availability={sessionGate} />
+          {latestExit ? (
+            <Card title="Exit evaluation" bodyClassName="min-w-0 wrap-anywhere">
+              <p>{describeEvent(latestExit, sectionDefinition)}</p>
+              {gateSummary ? <p>{gateSummary}</p> : null}
+              {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
+            </Card>
+          ) : null}
+          {/* A null return is a value: show the row's recorded result, or the finish event's
+              when the row has none. */}
+          {run.result !== undefined ||
+          (finished?.type === 'run.finished' ? finished.result : undefined) !== undefined ? (
+            <Card title="Result">
+              <BoundedValue
+                value={
+                  run.result !== undefined
+                    ? run.result
+                    : finished?.type === 'run.finished'
+                      ? finished.result
+                      : undefined
+                }
+                label="Result"
+                testId="run-result"
+                fileName={`run-${run.id}-result`}
+              />
+            </Card>
+          ) : null}
+          <RunLimits run={run} />
+          <div className="grid gap-2">
+            <p className="text-sm text-muted">
+              {run.deletionApproval
+                ? `Delete-ready: confirmed by ${run.deletionApproval.confirmedBy.id} at ${formatDateTime(run.deletionApproval.confirmedAt)}.`
+                : 'History retained.'}
+            </p>
+            <HistoryEligibility runIds={[run.id]} availability={gate} />
+          </div>
+          {/* Execution context reads the pinned version and live evidence: it is omitted while
+              the run is last observed rather than shown from unproved labels. */}
+          {outage ? null : (
             <ExecutionContext
               run={run}
               cancellation={cancellation}
@@ -328,11 +552,24 @@ export function RunInspectorPage() {
               definition={definition}
               definitionLoading={versionQuery.isPending}
             />
-            <WaitPanel run={run} definition={definition} />
-            <DeliveryPanel run={run} />
-          </>
-        )}
-      </QueryState>
+          )}
+          <WaitPanel run={run} definition={sectionDefinition} availability={gate} />
+          <DeliveryPanel run={run} />
+        </Fragment>
+      ) : run !== undefined && !refused && outage ? (
+        down ? (
+          <OfflineState what="Run" />
+        ) : (
+          <p role="status" className="text-sm text-muted">
+            This run has not been confirmed since the connection was lost. It is shown again once it
+            is read.
+          </p>
+        )
+      ) : (
+        <QueryState query={runQuery} what="Run">
+          {() => null}
+        </QueryState>
+      )}
       <div className="grid items-start gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <Timeline
           events={history.rows}

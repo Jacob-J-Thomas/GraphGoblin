@@ -7,69 +7,107 @@ import { keys } from '../../api/queries.js';
 import { Button, Dialog, HelpText } from '../../components/ui/index.js';
 import { errorMessage } from '../../lib/utils.js';
 import { ReplayConsequences } from './ReplayConsequences.js';
+import { assertOpen, OPEN_GATE, type WriteGate } from './RunControls.js';
+
+/** The consent under review: the run, node and observed sequence shown when it was opened. */
+interface ScriptReview {
+  gate: WriteGate;
+  runId: string;
+  nodeId: string;
+  observedSeq: number;
+}
 
 /** Consent is an action: opening or cancelling this dialog never resumes a script. */
-export function ScriptRecovery({ run }: { run: RunSnapshot }) {
-  const [open, setOpen] = useState(false);
-  const [observedSeq, setObservedSeq] = useState(run.recovery.observedSeq);
+export function ScriptRecovery({
+  run,
+  availability = OPEN_GATE,
+}: {
+  run: RunSnapshot;
+  availability?: WriteGate;
+}) {
+  // A review belongs to the gate it was opened under: an outage or a reconnect expires it (#416).
+  const [review, setReview] = useState<ScriptReview>();
+  const open = review !== undefined && review.gate === availability;
   const client = useApi();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const nodeId = run.failure?.nodeId ?? run.currentNodeId;
   const action = useMutation({
-    mutationFn: (kind: 'resume' | 'replay') =>
-      kind === 'resume'
-        ? runs.resume(client, run.id, { observedSeq, retryUncertainScript: true })
-        : runs.replay(client, run.id, nodeId!, { observedSeq, retryUncertainScript: true }),
-    onError: () => {
-      void queryClient.invalidateQueries({ queryKey: keys.run(run.id) });
+    mutationFn: async ({ kind, review }: { kind: 'resume' | 'replay'; review: ScriptReview }) => {
+      assertOpen(review.gate);
+      const command = { observedSeq: review.observedSeq, retryUncertainScript: true as const };
+      return kind === 'resume'
+        ? runs.resume(client, review.runId, command)
+        : runs.replay(client, review.runId, review.nodeId, command);
     },
-    onSuccess: (next, kind) => {
-      setOpen(false);
-      if (kind === 'replay') void navigate(`/runs/${next.id}`);
-      else {
-        void queryClient.invalidateQueries({ queryKey: keys.run(run.id) });
+    onError: (_error, { review }) => {
+      void queryClient.invalidateQueries({ queryKey: keys.run(review.runId) });
+    },
+    onSuccess: (next, { kind, review }) => {
+      setReview(undefined);
+      if (kind === 'replay') {
+        if (review.gate.shown()) void navigate(`/runs/${next.id}`);
+      } else {
+        void queryClient.invalidateQueries({ queryKey: keys.run(review.runId) });
       }
     },
   });
   if (!run.recovery.scriptConsent || !nodeId) return null;
+  const unavailable = availability.blocked !== undefined;
   const replayAction = run.recovery.replay.find((node) => node.nodeId === nodeId)?.action;
   const uncertain =
     run.failure?.code === 'SCRIPT_OUTCOME_UNCERTAIN' ||
     run.failure?.script?.state === 'outcome-uncertain';
   const canResume =
     run.recovery.resume.allowed || run.recovery.resume.code === 'SCRIPT_CONSENT_REQUIRED';
+  const send = (kind: 'resume' | 'replay') => {
+    if (!review || review.gate !== availability || !availability.open()) return;
+    action.mutate({ kind, review });
+  };
   return (
     <>
       <Button
         variant="outline"
+        disabled={unavailable}
         onClick={() => {
+          if (!availability.open()) return;
           action.reset();
-          setObservedSeq(run.recovery.observedSeq);
-          setOpen(true);
+          setReview({
+            gate: availability,
+            runId: run.id,
+            nodeId,
+            observedSeq: run.recovery.observedSeq,
+          });
         }}
       >
         Recover script
       </Button>
+      {/* A write already sent keeps its outcome after an outage expires the review. */}
+      {action.isError && !open ? (
+        <HelpText tone="bad" role="alert">
+          {errorMessage(action.error)}
+        </HelpText>
+      ) : null}
       <Dialog
         open={open}
         onClose={() => {
-          if (!action.isPending) setOpen(false);
+          if (!action.isPending) setReview(undefined);
         }}
         title="Recover script"
         footer={
           <>
             <Button
-              onClick={() => action.mutate('resume')}
-              disabled={action.isPending || !canResume}
+              onClick={() => send('resume')}
+              disabled={action.isPending || unavailable || !canResume}
             >
               Resume
             </Button>
             <Button
               variant="outline"
-              onClick={() => action.mutate('replay')}
+              onClick={() => send('replay')}
               disabled={
                 action.isPending ||
+                unavailable ||
                 !run.recovery.replay.some(
                   (node) =>
                     node.nodeId === nodeId &&
@@ -80,7 +118,11 @@ export function ScriptRecovery({ run }: { run: RunSnapshot }) {
             >
               Replay
             </Button>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={action.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => setReview(undefined)}
+              disabled={action.isPending}
+            >
               Cancel
             </Button>
           </>

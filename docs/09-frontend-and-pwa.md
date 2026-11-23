@@ -114,6 +114,74 @@ A selected `node.finished` patch shows each `add` operation's recorded value as 
 with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
 their own value, not the final array's last element (#385).
 
+### Run inspector during an outage (#416)
+
+When the run read fails to reach the API, pauses because the browser is offline, or the browser
+reports a disconnect, the inspector's run section keeps the last run this view read, under a
+warning titled **Last observed, may be out of date** that says whether the browser is offline,
+the API cannot be reached, or the run is being read again. The retained section shows the
+record's status, failure, result, wait (with its form) and delivery and finalization state as last
+read. It does not claim anything the record did not say: a terminal run that was not finalized
+still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs; the
+pinned version's labels, the gate and return summaries and the execution context are omitted
+until the run is read again. The exit evaluation, a finish event's result and fresh-session notes
+come from the run observation and are kept only from a qualified observation read. The Timeline,
+the selected payload, the exact thread and the preceding selection below keep their own
+behaviour.
+
+Only a qualified receipt lets a run stay on screen. A receipt is in-memory metadata, at most one
+per guarded query and never a copy of the body: the start position of a real run (or
+observation) GET sent by this app's API client, provider, physical query and current credential
+generation, recorded when that GET's own successful, non-manual cache commit arrives, including
+an identical body. The run body must also match the run snapshot contract, and each observation
+field the section shows must be the expected event kind for this run. Cache seeds, placeholders,
+manual writes, removed or replaced query entries, another provider or cache, aborted or retired
+attempts and answers under retired credentials never qualify. A cold or unproved row stays
+unavailable and shows the ordinary offline state. A definitive refusal (an HTTP or authentication
+error, a missing run, a response naming another run or an invalid body) shows its ordinary error
+and retires the receipt; a later transport error cannot bring the run back. Removing the query
+from the cache removes its receipt with it.
+
+Freshness compares positions. A loss records the start of the latest outage; repeated failures
+within it keep that boundary, and it stays recorded after the outage ends, so a nonzero loss alone
+does not mean an outage is current. The run is current again only when its receipt is newer than
+the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
+receipt by itself only permits the last-observed display. Being online again, a successful health
+probe or an open event stream may start the existing rereads but never unlock the view, and a read
+that started before the loss cannot either. The shared API probe, the stream's reread and the API
+key panel's refresh keep doing that work. The inspector adds at most one deduplicated reread per
+outage boundary that nothing else serves, joining a read already in flight: of the run, and of
+the observation only when **Start fresh session** needs it. There is no polling for receipts.
+
+While the run is last observed, every control that writes is unavailable: pause, cancel, resume,
+replay, script recovery, **Start fresh session**, input and signal answers, and the delete-ready
+review with its preview and confirmation. Each view issues a write gate, replaced whenever the
+visit, the run or the outage boundary changes. A control checks it before opening a review,
+before queueing a mutation and again immediately before each API write; the mutation carries the
+gate with its frozen run, wait, consent, failure or selection identity. An open replay, script
+or delete-ready review therefore closes when the connection is lost, a preview that arrives late
+is discarded, and a command queued or delayed across a loss, a reconnect or an A → B → A visit
+reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
+close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
+was already sent keeps its actual outcome; a delete-ready confirmation whose review expired while
+it was in flight reports that the change may or may not have been saved. Nothing is replayed
+automatically. **Start fresh session** also needs an observation read after the loss whose
+failure event names the same run, node and missing-session visit as the current record; it sends
+that failure event's own sequence even when later delivery audits exist. Script consent keeps the
+run and observed sequence shown when its review opened. The Runs list's delete-ready controls and
+other pages keep their behaviour.
+
+### Timeline sequence column (#420)
+
+Each Timeline row sizes its sequence column to the widest sequence in the rows shown, in
+characters of its monospace font, so five-, six-digit and longer contract-valid numbers show in
+full and stay aligned without a cap, rounding or truncation. A row wraps onto further lines,
+sequence and type first and the description below, when a narrow screen or enlarged text cannot
+hold them side by side; the event type's size follows the root text size. The card title's event
+count, the window summary and the sequence form also wrap. Accessible names, `data-seq`, the one
+row Tab stop, selection, keyboard movement, paging, **Follow live**, the 80-row window, the
+512-event and byte budgets, 128-event pages and the independent live cursor are unchanged.
+
 ## Native Chat and the Goblin PWA (#443)
 
 Chat is the management application's first navigation item and index destination at `/app/chat`.

@@ -4,6 +4,33 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The run inspector keeps the last run it read through an API or browser outage (#416). The run
+  section used to disappear behind the offline message as soon as a refresh failed. It now keeps
+  the record's status, failure, result, wait form and delivery or finalization state under
+  **Last observed, may be out of date**, with a notice saying whether the browser is offline,
+  the API cannot be reached or the run is being read again. Only a run read with an in-memory
+  receipt qualifies: a real, non-manual, contract-valid GET from the current client, cache, query
+  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable,
+  and a definitive refusal keeps its error even through a later transport failure. Nodes show
+  their recorded IDs and summaries that no qualified read supplied are omitted. Every control
+  that writes (pause, cancel, resume, replay, script recovery, Start fresh session, input and
+  signal answers, the delete-ready preview and confirmation) stays unavailable until a run read
+  that started after the outage began has committed; reconnecting, a health probe or an open
+  stream alone does not unlock it. Open reviews close, late previews are discarded, and a command
+  queued across a loss, reconnect or A → B → A visit reports **Not sent** instead of sending.
+  Drafts of the same wait, reading and Cancel keep working, and a write already sent keeps its
+  real outcome; nothing is replayed. Start fresh session additionally needs a post-outage
+  observation of the same failure and still sends that failure's own sequence. At most one extra
+  deduplicated read per outage is added, of the run or, where Start fresh session needs it, the
+  observation. The Runs list, the Timeline and the thread keep their behaviour. No persistent
+  format, store, export or contract change.
+
+- The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
+  (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,
+  the title count, the window summary and the sequence form wrap on narrow screens and with
+  enlarged text. Selection, keyboard movement, paging, Follow live and the history budgets are
+  unchanged.
+
 - The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
   after its event is published, so a refresh could still be in flight, or return the earlier status
   at the terminal event's sequence, and the header kept saying running. The header now also follows

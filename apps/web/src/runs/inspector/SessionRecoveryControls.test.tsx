@@ -1,8 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { event, FakeApi } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
+import { NOT_SENT, type WriteGate } from './RunControls.js';
 import { SessionRecoveryControls } from './SessionRecoveryControls.js';
 
 function fixture() {
@@ -100,6 +102,96 @@ describe('missing-session recovery control', () => {
     renderWith(<SessionRecoveryControls run={run} events={[]} />, '/', api);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('answers only the recorded failure of the current node and visit (#416)', () => {
+    const { api, run, failed } = fixture();
+    const otherVisit = event(run.id, 9, 'run.failed', {
+      failure: {
+        ...run.failure!,
+        missingSession: { ...run.failure!.missingSession!, visitId: run.id + ':1' },
+      },
+    });
+    const otherRun = { ...failed, runId: '01ARZ3NDEKTSV4RRFFQ69G5FAV' };
+    const view = renderWith(
+      <SessionRecoveryControls run={run} events={[otherVisit, otherRun]} />,
+      '/',
+      api,
+    );
+    expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeDisabled();
+    view.unmount();
+    renderWith(<SessionRecoveryControls run={run} events={[failed, otherVisit]} />, '/', api);
+    expect(screen.getByRole('button', { name: 'Start fresh session for worker' })).toBeEnabled();
+  });
+
+  it('sends nothing while its gate is blocked and shows why (#416)', async () => {
+    const { api, run, failed } = fixture();
+    const blocked: WriteGate = {
+      blocked: 'Reading the run evidence again.',
+      open: () => false,
+      shown: () => true,
+    };
+    renderWith(
+      <SessionRecoveryControls run={run} events={[failed]} availability={blocked} />,
+      '/',
+      api,
+    );
+    const button = screen.getByRole('button', { name: 'Start fresh session for worker' });
+    expect(button).toBeDisabled();
+    expect(screen.getByText('Reading the run evidence again.')).toBeInTheDocument();
+    await userEvent.setup().click(button);
+    expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
+  });
+
+  it.each(['the gate expired', 'the failure changed'] as const)(
+    'does not send a queued choice when %s before dispatch (#416)',
+    async (change) => {
+      const { api, run, failed } = fixture();
+      let open = true;
+      const gate: WriteGate = { blocked: undefined, open: () => open, shown: () => true };
+      const later = event(run.id, 12, 'run.failed', { failure: run.failure! });
+      function Harness() {
+        const [events, setEvents] = useState([failed]);
+        return (
+          <>
+            <button type="button" onClick={() => setEvents([later])}>
+              Newer failure
+            </button>
+            <SessionRecoveryControls run={run} events={events} availability={gate} />
+          </>
+        );
+      }
+      const view = renderWith(<Harness />, '/', api);
+      let release!: () => void;
+      let queued = false;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      view.queryClient.setDefaultOptions({
+        queries: { retry: false },
+        mutations: {
+          retry: false,
+          onMutate: () => {
+            queued = true;
+            return held;
+          },
+        },
+      });
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('button', { name: 'Start fresh session for worker' }));
+      await waitFor(() => expect(queued).toBe(true));
+      if (change === 'the gate expired') open = false;
+      else await user.click(screen.getByRole('button', { name: 'Newer failure' }));
+      release();
+      expect(
+        await screen.findByText(
+          change === 'the gate expired'
+            ? NOT_SENT
+            : 'Not sent: the failure shown has changed. Review the run again.',
+        ),
+      ).toBeInTheDocument();
+      expect(api.callsTo('POST', `/runs/${run.id}/recover-session`)).toHaveLength(0);
+    },
+  );
 
   it('shows the durable actor, node and lost-context decision after completion', () => {
     const { api, run } = fixture();

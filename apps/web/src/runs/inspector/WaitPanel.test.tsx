@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { FakeApi, runRecord } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { Button } from '../../components/ui/index.js';
+import { NOT_SENT, type WriteGate } from './RunControls.js';
 import { WaitPanel } from './WaitPanel.js';
 
 const noteSchema = { type: 'object', properties: { note: { type: 'string' } } };
@@ -164,6 +165,93 @@ it('binds the displayed identity before an asynchronous mutation can see a newer
     waitId: '3',
     input: { note: 'answer for A' },
   });
+});
+
+const offline: WriteGate = {
+  blocked: 'This browser is offline.',
+  open: () => false,
+  shown: () => true,
+};
+
+let latest: WriteGate | undefined;
+
+/** The inspector's gate as an outage and a post-loss read replace it. */
+function GatedHarness({ run }: { run: RunRecord }) {
+  const [gate, setGate] = useState<WriteGate>(offline);
+  return (
+    <>
+      <Button
+        onClick={() => {
+          const current: WriteGate = {
+            blocked: undefined,
+            open: () => latest === current,
+            shown: () => true,
+          };
+          latest = current;
+          setGate(current);
+        }}
+      >
+        Read again
+      </Button>
+      <WaitPanel run={run} availability={gate} />
+    </>
+  );
+}
+
+it('keeps the same wait draft through an outage and sends nothing from the button or keyboard (#416)', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const run = waiting(3);
+  renderWith(<GatedHarness run={run} />, '/', api);
+  const note = screen.getByLabelText('note');
+  await user.type(note, 'kept draft');
+  expect(screen.getByRole('button', { name: 'Submit input' })).toBeDisabled();
+  await user.type(note, '{Enter}');
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
+  expect(note).toHaveValue('kept draft');
+
+  await user.click(screen.getByRole('button', { name: 'Read again' }));
+  expect(screen.getByLabelText('note')).toHaveValue('kept draft');
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(1));
+  expect(api.callsTo('POST', `/runs/${run.id}/input`)[0]!.body).toEqual({
+    waitId: '3',
+    input: { note: 'kept draft' },
+  });
+});
+
+it('does not send a queued answer whose gate expired before dispatch, and says so (#416)', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const run = waiting(3);
+  let open = true;
+  const gate: WriteGate = { blocked: undefined, open: () => open, shown: () => true };
+  const view = renderWith(<WaitPanel run={run} availability={gate} />, '/', api);
+  let release!: () => void;
+  let queued = false;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  view.queryClient.setDefaultOptions({
+    queries: { retry: false },
+    mutations: {
+      retry: false,
+      onMutate: () => {
+        queued = true;
+        return held;
+      },
+    },
+  });
+  await user.type(screen.getByLabelText('note'), 'answer');
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  await waitFor(() => expect(queued).toBe(true));
+  // The connection is lost while the answer waits to be sent.
+  open = false;
+  release();
+  expect(await screen.findByText(NOT_SENT)).toBeInTheDocument();
+  expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(0);
+  expect(screen.getByLabelText('note')).toHaveValue('answer');
 });
 
 it('bounds a long prompt and offers the whole text (#259)', async () => {

@@ -4,21 +4,26 @@ import { runs } from '@graphgoblin/api-client';
 import type { DeletionPreview } from '@graphgoblin/contracts';
 import { useApi } from '../api/context.js';
 import { Alert, Button, Dialog } from '../components/ui/index.js';
-import { errorMessage } from '../lib/utils.js';
+import { errorMessage, isOfflineError } from '../lib/utils.js';
+import { OPEN_GATE, type WriteGate } from './inspector/RunControls.js';
 
 /** Freeze the explicit IDs at review time: polling and new history cannot extend consent. */
 export function HistoryEligibility({
   runIds,
   onConfirmed,
+  availability = OPEN_GATE,
 }: {
   runIds: string[];
   onConfirmed?: (confirmedIds: string[]) => void;
+  /** The inspector's write gate (#416); the Runs list keeps ordinary behaviour. */
+  availability?: WriteGate;
 }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const [review, setReview] = useState<{
     ids: string[];
     action: 'mark' | 'withdraw';
+    gate: WriteGate;
     preview?: DeletionPreview;
   }>();
   const [busy, setBusy] = useState(false);
@@ -26,6 +31,10 @@ export function HistoryEligibility({
   const [outcome, setOutcome] = useState<string>();
   const selectionRef = useRef<HTMLSpanElement>(null);
   const generationRef = useRef(0);
+  // A review belongs to the gate it was opened under: an outage, a reconnect or another visit
+  // expires it, together with any preview that arrives late for it.
+  const active = review?.gate === availability ? review : undefined;
+  const unavailable = availability.blocked !== undefined;
 
   const dismiss = () => {
     generationRef.current++;
@@ -33,55 +42,67 @@ export function HistoryEligibility({
     setError(undefined);
   };
   const begin = async (action: 'mark' | 'withdraw') => {
+    const gate = availability;
+    if (!gate.open()) return;
     const request = ++generationRef.current;
     const ids = [...runIds];
-    setReview({ ids, action });
+    setReview({ ids, action, gate });
     setError(undefined);
     setOutcome(undefined);
     try {
       const preview = await runs.previewDeletion(client, ids);
-      if (generationRef.current === request) setReview({ ids, action, preview });
+      if (generationRef.current === request && gate.open())
+        setReview({ ids, action, gate, preview });
     } catch (failure) {
       if (generationRef.current === request) setError(errorMessage(failure));
     }
   };
   const confirm = async () => {
-    if (!review?.preview || busy) return;
+    const current = active;
+    if (!current?.preview || busy || !current.gate.open()) return;
     const request = generationRef.current;
     setBusy(true);
     setError(undefined);
     try {
       await runs.confirmDeletion(client, {
-        runIds: review.ids,
-        action: review.action,
-        token: review.preview.token,
+        runIds: current.ids,
+        action: current.action,
+        token: current.preview.token,
         confirmed: true,
       });
-      const count = review.ids.length;
+      const count = current.ids.length;
       const noun = count === 1 ? 'run' : 'runs';
       setOutcome(
-        review.action === 'mark'
+        current.action === 'mark'
           ? `${count} ${noun} marked delete-ready.`
           : `Deletion approval withdrawn for ${count} ${noun}.`,
       );
-      onConfirmed?.(review.ids);
+      onConfirmed?.(current.ids);
       if (generationRef.current === request) dismiss();
       await queryClient.invalidateQueries({ queryKey: ['runs'] });
     } catch (failure) {
-      if (generationRef.current === request) setError(errorMessage(failure));
+      if (generationRef.current !== request) return;
+      // A sent confirmation whose review expired meanwhile still reports what happened to it.
+      if (current.gate.open()) setError(errorMessage(failure));
+      else
+        setOutcome(
+          isOfflineError(failure)
+            ? 'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.'
+            : `Not saved: ${errorMessage(failure)}`,
+        );
     } finally {
       setBusy(false);
     }
   };
   const blocked =
-    review?.action === 'mark' && review.preview?.items.some((item) => item.reasons.length > 0);
+    active?.action === 'mark' && active.preview?.items.some((item) => item.reasons.length > 0);
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
           variant="outline"
-          disabled={!runIds.length || runIds.length > 500}
+          disabled={!runIds.length || runIds.length > 500 || unavailable}
           onClick={() => void begin('mark')}
         >
           Review delete-ready history
@@ -89,7 +110,7 @@ export function HistoryEligibility({
         <Button
           size="sm"
           variant="ghost"
-          disabled={!runIds.length || runIds.length > 500}
+          disabled={!runIds.length || runIds.length > 500 || unavailable}
           onClick={() => void begin('withdraw')}
         >
           Withdraw delete-ready mark
@@ -108,13 +129,13 @@ export function HistoryEligibility({
         </span>
       </div>
       <Dialog
-        open={review !== undefined}
+        open={active !== undefined}
         returnFocus={() => (outcome ? selectionRef.current : undefined)}
         onClose={(reason) => {
           if (!busy || reason === 'dismissed') dismiss();
         }}
         title={
-          review?.action === 'mark'
+          active?.action === 'mark'
             ? 'Mark selected history delete-ready?'
             : 'Withdraw deletion approval?'
         }
@@ -124,12 +145,14 @@ export function HistoryEligibility({
               Cancel
             </Button>
             <Button
-              disabled={busy || !review?.preview || Boolean(blocked) || Boolean(error)}
+              disabled={
+                busy || unavailable || !active?.preview || Boolean(blocked) || Boolean(error)
+              }
               onClick={() => void confirm()}
             >
               {busy
                 ? 'Saving…'
-                : review?.action === 'mark'
+                : active?.action === 'mark'
                   ? 'Confirm delete-ready selection'
                   : 'Confirm withdrawal'}
             </Button>
@@ -138,7 +161,7 @@ export function HistoryEligibility({
       >
         <div className="grid gap-3 text-sm">
           <p>
-            {review?.action === 'mark'
+            {active?.action === 'mark'
               ? 'Only the run IDs listed below become eligible for deletion under storage pressure. Cleanup can permanently remove this history and its owned, unshared workspaces and artifacts. New history stays retained. You can withdraw approval before cleanup starts.'
               : 'These runs stay retained. Approval for related parent, child and replay history is also withdrawn so required records remain protected.'}
           </p>
@@ -148,8 +171,8 @@ export function HistoryEligibility({
           </p>
           <ul className="grid gap-2">
             {(
-              review?.preview?.items ??
-              review?.ids.map((runId) => ({ runId, reasons: [] })) ??
+              active?.preview?.items ??
+              active?.ids.map((runId) => ({ runId, reasons: [] })) ??
               []
             ).map((item) => (
               <li key={item.runId} className="wrap-anywhere">
@@ -162,7 +185,7 @@ export function HistoryEligibility({
               </li>
             ))}
           </ul>
-          {!review?.preview && !error ? <p role="status">Checking selected history…</p> : null}
+          {!active?.preview && !error ? <p role="status">Checking selected history…</p> : null}
           {blocked ? (
             <Alert>
               No history will be marked. Resolve every protected record and review the selection
