@@ -38,6 +38,11 @@ closing the browser, do not stop the gateway or its work. Use the existing authe
 start a shutdown. The browser's Wait and Force choices appear only after an externally initiated
 drain reaches its choice phase. [Gateway shutdown](07-api-and-streaming.md#gateway-shutdown-224)
 
+An unresolved system file-access decision no longer leaves the launch progress waiting for that
+system call indefinitely. After the attempt budget and cleanup tail, an independent watchdog
+delivers the existing conservative failure outcome. A committed gateway may still be running;
+neither the error window nor Quit terminates it. The watchdog does not grant macOS permissions.
+
 Each alternate `GraphGoblin <suffix>.app` has a separate installation ID, receipt, and log
 directory. The launcher takes private per-user coordination locks for the configured data
 directory, database, and port; the API's writer leases remain authoritative, so an alternate app

@@ -1,7 +1,7 @@
 import { createClient, type Client, type Transaction } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
-import { resolve } from 'node:path';
+import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Database } from './database-types.js';
 import { schema } from './schema.js';
@@ -26,12 +26,24 @@ export interface DatabaseHandle {
   close(): void;
 }
 
-/** A file-only SQLite connection opened in the native engine's read-only URI mode.
- * The outer URL encodes the complete SQLite URI so libsql's URL parser leaves mode=ro intact.
- * Writes fail with SQLITE_READONLY and a missing file cannot be created.
+/**
+ * A file-only SQLite connection to exactly `file`, opened in the native engine's read-only URI
+ * mode: writes fail with SQLITE_READONLY and a missing file is refused, never created.
+ *
+ * Two parsers read the name. libsql percent-decodes its URL path once and hands the result to
+ * SQLite, so the outer URL percent-encodes the whole SQLite URI. SQLite (built with
+ * SQLITE_USE_URI) reads any name starting with `file:` as a URI: it decodes `%HH`, ends the path
+ * at `?` (options) or `#` (a fragment, which also discards every option after it) and takes
+ * `//host` as an authority. The path is therefore escaped for SQLite and follows an empty
+ * authority, so no file name can rename the file or add, replace or drop `mode=ro`.
  */
 export function openReadOnlyDatabaseClient(file: string): Client {
-  const uri = 'file:' + resolve(file).replaceAll('\\', '/') + '?mode=ro';
+  // No file name holds a NUL; refuse it here instead of relying on how the native layer reacts.
+  if (file.includes('\0')) throw new TypeError('A database path cannot contain a NUL character');
+  // Only Windows separators become `/`; elsewhere a backslash is an ordinary file name character.
+  // A drive path gains the leading `/` of `file:///C:/...`; POSIX and UNC paths already have it.
+  const path = resolve(file).split(sep).join('/').replace(/^\/?/, '/');
+  const uri = 'file://' + path.replace(/[%?#]/g, (char) => encodeURIComponent(char)) + '?mode=ro';
   return createClient({ url: 'file:' + encodeURIComponent(uri), concurrency: 1 });
 }
 

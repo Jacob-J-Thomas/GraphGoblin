@@ -107,6 +107,13 @@ rechecks its local key source after both writer leases, before SQLite or key cre
 The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
 describes alternate app names and log locations. No automatic update or login item is installed.
 
+Read-only store inspection escapes the physical path for both libsql's URL parser and SQLite's
+URI parser. Literal percent signs, query or fragment characters cannot select another file or
+override `mode=ro`. A missing database is refused rather than created. An existing WAL database
+is read with its live WAL contents; SQLite may still create or update its normal WAL sidecars.
+The default database URL independently encodes the data-directory path. No Unicode normalization
+or stored-content conversion is applied by these path encoders.
+
 The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
 case-insensitively, before the installer writes any configuration, including temporary staging
 files. Empty values are refused too. The native launcher also refuses these keys in manually

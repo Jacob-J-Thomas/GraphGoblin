@@ -103,6 +103,17 @@ major 22, and Swift 6 for installer updates. The saved checkout and Node paths m
 after either moves, rebuild if needed and run the installer again. There is no automatic retry or
 updater.
 
+If launch waits at **Checking GraphGoblin…**, look for a pending macOS folder-access prompt.
+A checkout under Documents, Desktop or Downloads can require this decision, including after a
+replacement rebuild. Review the request yourself or use a stable checkout outside those personal
+folders and reinstall from it. Do not remove the existing store or its lock files to resolve a
+folder permission. The launcher does not grant permission or change system security settings.
+The check has a one-minute admission budget and a short cleanup tail. If a system call is still
+blocked, the launcher reports that it cannot verify the result; system scheduling can delay the
+message. Dismiss the error before trying again after the pending system decision is resolved.
+A committed gateway may still be running, and an inaccessible log location can leave no new
+diagnostic or **Show Log in Finder** action.
+
 ### Resolve a launch outcome
 
 The launcher uses a closed outcome and exit code for headless diagnostics. The progress window uses

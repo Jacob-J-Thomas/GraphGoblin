@@ -25,6 +25,16 @@ automatic updater, login item or dedicated PWA-window implementation.
 
 **Validate, observe, then start once.** One monotonic 60-second gateway admission and observation
 budget begins before preflight.
+Graphical and `--ensure-gateway` entry points also arrange an independent completion watchdog,
+eligible one second after that budget. This tail permits a reached refusal and best-effort
+diagnostic to finish; it never extends admission or permits a late management handoff. A system
+call blocked by an unresolved macOS privacy decision cannot leave the attempt awaiting that call
+indefinitely: the watchdog answers from the synchronized attempt state without filesystem I/O.
+It reports uncertainty for an already committed spawn, which may still complete. It does not
+stop a worker thread or release that thread's locks; those remain held until the call returns or
+the launcher process exits. Timer scheduling and system sleep can delay delivery, so this is not
+a strict wall-clock launch promise. The presentation's existing Show Log offer remains separately
+bounded, and a blocked filesystem can leave no diagnostic for the abandoned attempt.
 Bounded helpers establish the effective instance fingerprint and authoritative store ownership.
 Cooperating launcher locks serialize admission across the canonical directory, database and
 port, but the API's two writer leases remain authoritative. A fresh connection refusal and

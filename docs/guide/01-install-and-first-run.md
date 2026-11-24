@@ -151,6 +151,12 @@ Dock if desired. It starts or reuses the matching GraphGoblin and opens your def
 The saved checkout and Node executable must stay in place; rerun the installer after moving
 either. The installer builds the launcher, so it also requires the Swift compiler when updating.
 
+Choose a stable checkout location. If it is in a macOS-protected folder such as Documents,
+Desktop or Downloads, macOS may ask whether the app can read that folder. A rebuilt launcher
+can prompt again. Review that system request yourself; the installer does not grant access or
+change privacy settings. A checkout in a dedicated development folder, such as `~/src`, avoids
+requiring access to those personal folders.
+
 Optional flags are `--data-dir ABS_PATH`, `--port N`, `--require-api-key`, `--disable-ollama`,
 `--codex-binary ABS_PATH` and `--claude-binary ABS_PATH`. Use separate flag/value tokens, with
 each flag at most once. `--help` lists the options. Provider installation and login remain
@@ -270,7 +276,7 @@ node apps/api/dist/main.js
 | `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                                                                       |
 | `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                                                                               |
 | `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                                                                       |
-| `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                                                  |
+| `GG_DB_URL`              | An encoded `file:` URL for `<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                            |
 | `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
 | `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |

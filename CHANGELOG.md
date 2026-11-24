@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
+  keeps read-only SQLite mode intact, and refuses missing files without creating a different
+  database. Default database configuration also encodes the data directory as a file URL.
+  No store format change or stored-content rewrite is required.
+
 - Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
   macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
   `bash scripts/install-macos-launcher.sh`; it builds `~/Applications/GraphGoblin.app`, starts
@@ -13,6 +18,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   independent identities and logs. Private gateway logs share the existing bounded writer,
   with a Darwin directory reservation and a local-key check after both writer leases.
   Installation and cold launch tolerate malformed inherited locale values.
+  Graphical and headless launches now deliver a conservative outcome when a system call remains
+  blocked past the attempt budget, and refuse a successful handoff that arrives after the budget
+  or Quit. This does not grant folder permissions or stop a gateway whose start was committed.
   **Setup:** an existing store needs its owned local `master.key`; external database paths and
   shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
   at their saved paths or rerun the installer. No format change or migration. Part of #456 and
