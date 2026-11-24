@@ -92,8 +92,10 @@ jobs:
         id: build
         run: pnpm build
       - name: Native Windows SQLite file paths
+        id: sqlite_paths
         run: pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/db.test.ts --maxWorkers=1
       - name: Native Windows default database configuration
+        id: database_config
         run: pnpm --filter @graphgoblin/api exec vitest run src/config.test.ts --maxWorkers=1
       # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
       # outside the checkout and every fixture. The suite writes typed records only. Prepared

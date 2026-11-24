@@ -1566,8 +1566,20 @@ test('the Windows job runs the exact native command after a successful build wha
     steps.filter((step) => step.id).map((step) => [step.id, step.run]),
   );
   assert.deepEqual(
-    [commands.install, commands.build, commands.native],
-    ['pnpm install --frozen-lockfile', 'pnpm build', 'pnpm test:windows-launcher'],
+    [
+      commands.install,
+      commands.build,
+      commands.sqlite_paths,
+      commands.database_config,
+      commands.native,
+    ],
+    [
+      'pnpm install --frozen-lockfile',
+      'pnpm build',
+      'pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/db.test.ts --maxWorkers=1',
+      'pnpm --filter @graphgoblin/api exec vitest run src/config.test.ts --maxWorkers=1',
+      'pnpm test:windows-launcher',
+    ],
   );
   assert.ok(
     steps.every((step) => !('continue-on-error' in step)),
@@ -1592,6 +1604,8 @@ test('the Windows job runs the exact native command after a successful build wha
   assert.deepEqual(ran(passing).slice(3), [
     'install',
     'build',
+    'sqlite_paths',
+    'database_config',
     'evidence',
     'native',
     'finalize',
@@ -1605,7 +1619,14 @@ test('the Windows job runs the exact native command after a successful build wha
   for (const native of ['success', 'failure']) {
     const failedPrepare = prepared();
     const result = schedule(steps, { ...failedPrepare, end: { evidence: 'failure', native } });
-    assert.deepEqual(ran(result).slice(3), ['install', 'build', 'evidence', 'native']);
+    assert.deepEqual(ran(result).slice(3), [
+      'install',
+      'build',
+      'sqlite_paths',
+      'database_config',
+      'evidence',
+      'native',
+    ]);
     assert.equal(result.ran.native.run, 'pnpm test:windows-launcher');
     assert.equal(result.outcomes.native, native);
     assert.deepEqual([result.outcomes.finalize, result.outcomes.upload], ['skipped', 'skipped']);
@@ -1617,7 +1638,11 @@ test('the Windows job runs the exact native command after a successful build wha
   // A failed checkout or Node setup runs nothing further and publishes nothing.
   for (const setupStep of ['#0', 'node']) {
     const result = schedule(steps, { ...prepared(), end: { [setupStep]: 'failure' } });
-    assert.ok(!['evidence', 'native', 'finalize', 'upload'].some((id) => id in result.ran));
+    assert.ok(
+      !['sqlite_paths', 'database_config', 'evidence', 'native', 'finalize', 'upload'].some(
+        (id) => id in result.ran,
+      ),
+    );
   }
 
   // After a failed install or build the prepared folder still uploads truthful not-run metadata.
@@ -1625,8 +1650,14 @@ test('the Windows job runs the exact native command after a successful build wha
     const { setup, outputs } = prepared();
     const result = schedule(steps, { outputs, end: { [failing]: 'failure' } });
     assert.deepEqual(
-      [result.outcomes.native, 'finalize' in result.ran, 'upload' in result.ran],
-      ['skipped', true, true],
+      [
+        result.outcomes.sqlite_paths,
+        result.outcomes.database_config,
+        result.outcomes.native,
+        'finalize' in result.ran,
+        'upload' in result.ran,
+      ],
+      ['skipped', 'skipped', 'skipped', true, true],
     );
     const outcome = finalizeFrom(result, setup);
     assert.equal(outcome.status, 'not-run');
@@ -1635,6 +1666,43 @@ test('the Windows job runs the exact native command after a successful build wha
       outcome.upload.map((path) => basename(path)),
       [FILES.manifest, FILES.result],
     );
+  }
+
+  // The focused native checks run after a successful build, the second under GitHub's implicit
+  // success(), so it is skipped once the first fails. A failed check fails the job yet still
+  // prepares evidence and runs the exact native command with its folder, then finalizes and
+  // uploads; a cancelled check starts no evidence preparation, native work or upload.
+  for (const [check, focused] of [
+    ['sqlite_paths', ['sqlite_paths']],
+    ['database_config', ['sqlite_paths', 'database_config']],
+  ]) {
+    const { setup, outputs } = prepared();
+    const failed = schedule(steps, { outputs, end: { [check]: 'failure' } });
+    assert.deepEqual(ran(failed).slice(3), [
+      'install',
+      'build',
+      ...focused,
+      'evidence',
+      'native',
+      'finalize',
+      'upload',
+    ]);
+    assert.deepEqual(
+      [failed.outcomes.sqlite_paths, failed.outcomes.database_config],
+      check === 'sqlite_paths' ? ['failure', 'skipped'] : ['success', 'failure'],
+    );
+    assert.equal(failed.ran.native.run, 'pnpm test:windows-launcher');
+    assert.equal(failed.ran.native.env[DIRECTORY_VARIABLE], setup.directory);
+    assert.equal(failed.outcomes.native, 'success');
+    assert.equal(failed.conclusion, 'failure');
+
+    const cancelled = schedule(steps, { outputs, end: { [check]: 'cancelled' } });
+    assert.deepEqual(ran(cancelled).slice(3), ['install', 'build', ...focused]);
+    assert.deepEqual(
+      ['evidence', 'native', 'finalize', 'upload'].map((id) => cancelled.outcomes[id]),
+      ['skipped', 'skipped', 'skipped', 'skipped'],
+    );
+    assert.equal(cancelled.conclusion, 'cancelled');
   }
 
   // A failed or cancelled native step is finalized and uploaded; its outcome sets the status.
