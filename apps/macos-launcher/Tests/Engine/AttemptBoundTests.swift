@@ -6,28 +6,78 @@ import Synchronization
 @testable import LauncherEngine
 import Testing
 
-/// An attempt step that blocks in one call, as a file access held for a macOS decision does,
-/// until the test releases it. It then tries the same spawn commitment the engine makes.
+/// An attempt step that blocks in one real call on an engine worker thread, as a file access held
+/// for a macOS decision does, until the test opens it. It then tries the same spawn commitment the
+/// engine makes.
+///
+/// Only the engine worker ever waits here. The test signals the call and polls for its return with
+/// `Task.sleep`, so a stranded case never holds a Swift concurrency thread that other cases need.
 private final class StrandedStep: @unchecked Sendable {
     private let gate = DispatchSemaphore(value: 0)
-    private let finished = DispatchSemaphore(value: 0)
-    private let committed = Mutex<Bool?>(nil)
+    private let lock = NSLock()
+    private var opened = false
+    private var openedWithoutAnswer = false
+    private var committed: Bool?
 
     /// `cleanup` runs once the blocked call returns, as the step then releases what it holds.
     func block(_ state: AttemptState, _ time: AttemptTime, cleanup: () -> Void = {}) -> LaunchOutcome {
         gate.wait()
         let started = state.commit(before: time)
-        committed.withLock { $0 = started }
         cleanup()
-        finished.signal()
+        lock.withLock { committed = started }
         return started ? .openManagement(port: 1, mode: .running) : .unexpected
     }
 
-    /// Releases the blocked call and reports whether the step could still commit a start.
-    func release() -> Bool? {
-        gate.signal()
-        guard finished.wait(timeout: .now() + .seconds(5)) == .success else { return nil }
-        return committed.withLock { $0 }
+    /// Lets the blocked call return. It never waits and signals only once, so every case also
+    /// calls it from `defer`: no step outlives its case blocked, whatever the case recorded.
+    func open(withoutAnswer: Bool = false) {
+        let first: Bool = lock.withLock {
+            guard !opened else { return false }
+            opened = true
+            openedWithoutAnswer = withoutAnswer
+            return true
+        }
+        if first { gate.signal() }
+    }
+
+    /// Whether the case had to open the step because no answer came while it was blocked.
+    var rescued: Bool { lock.withLock { openedWithoutAnswer } }
+
+    /// The commitment the step could still make, once its blocked call has returned.
+    private var returned: Bool? { lock.withLock { committed } }
+
+    /// Opens the blocked call and reports whether the step could still commit a start, or nil if
+    /// its call has not returned within `limit`. The wait holds no thread.
+    func release(within limit: Duration = .seconds(10)) async -> Bool? {
+        open()
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: limit)
+        while true {
+            if let value = returned { return value }
+            guard clock.now < deadline else { return nil }
+            do {
+                try await Task.sleep(for: .milliseconds(5))
+            } catch {
+                return returned
+            }
+        }
+    }
+}
+
+/// A descriptor closed exactly once: by the stranded step's own return or, failing that, teardown.
+private final class Holder: @unchecked Sendable {
+    let descriptor: Int32
+    private let lock = NSLock()
+    private var isOpen = true
+
+    init(_ descriptor: Int32) { self.descriptor = descriptor }
+
+    func close() {
+        let first: Bool = lock.withLock {
+            defer { isOpen = false }
+            return isOpen
+        }
+        if first { _ = Darwin.close(descriptor) }
     }
 }
 
@@ -45,10 +95,17 @@ enum BoundForm: CaseIterable, Sendable {
     case blocking
 }
 
-@Suite struct AttemptBoundTests {
+/// The cases run one at a time, as the product runs one attempt per process. Each drives the
+/// process-wide engine worker and watchdog queues, and four of them deliberately strand an engine
+/// worker thread, so running them together would make sibling cases compete for that shared pool
+/// inside the real-time margins measured here. Other suites still run in parallel with this one.
+@Suite(.serialized) struct AttemptBoundTests {
     private static let grace: UInt64 = 100_000_000
     /// Far longer than any step here needs, so only the step itself can answer within it.
     private static let longGrace: UInt64 = 10_000_000_000
+    /// After this, a case opens its stranded step itself, so a missing answer fails the case on its
+    /// outcome instead of hanging the run. It exceeds every bound asserted here.
+    private static let rescueAfter: Duration = .seconds(12)
 
     private func budget(milliseconds: UInt64) -> AttemptTime {
         AttemptTime(end: DispatchTime.now().uptimeNanoseconds + milliseconds * 1_000_000)
@@ -76,6 +133,27 @@ enum BoundForm: CaseIterable, Sendable {
         }
     }
 
+    /// Answers `form` for an attempt whose step stays blocked in `step` until the answer arrives.
+    private func answerStranded(
+        _ form: BoundForm, step: StrandedStep, time: AttemptTime, state: AttemptState,
+        sourceLocation: SourceLocation = #_sourceLocation,
+        cleanup: @escaping @Sendable () -> Void = {}
+    ) async -> LaunchOutcome {
+        let rescue = Task {
+            try await Task.sleep(for: Self.rescueAfter)
+            step.open(withoutAnswer: true)
+        }
+        defer { rescue.cancel() }
+        let outcome = await answer(form, time: time, state: state, grace: Self.grace) {
+            step.block(state, time, cleanup: cleanup)
+        }
+        if step.rescued {
+            Issue.record("No answer arrived while the step was blocked; the case opened it after \(Self.rescueAfter)",
+                         sourceLocation: sourceLocation)
+        }
+        return outcome
+    }
+
     /// Returns `outcome` only once the budget has passed, as a last check held by macOS does.
     private func late(_ outcome: LaunchOutcome, after time: AttemptTime) -> @Sendable () -> LaunchOutcome {
         {
@@ -92,17 +170,17 @@ enum BoundForm: CaseIterable, Sendable {
         #expect(state.begin())
         let time = budget(milliseconds: 150)
         let step = StrandedStep()
+        defer { step.open() }
 
-        let outcome = await answer(form, time: time, state: state, grace: Self.grace) {
-            step.block(state, time)
-        }
+        let outcome = await answerStranded(form, step: step, time: time, state: state)
         let elapsed = clock.now - started
 
         #expect(HeadlessResult(outcome).code == "cannot-verify")
         // The answer never cuts the attempt's own budget short, and it does arrive.
         #expect(elapsed >= .milliseconds(240))
         #expect(elapsed < .seconds(10))
-        #expect(step.release() == false)
+        let released = await step.release()
+        #expect(released == false)
         #expect(!state.didCommit)
     }
 
@@ -113,14 +191,14 @@ enum BoundForm: CaseIterable, Sendable {
         let time = budget(milliseconds: 150)
         #expect(state.commit(before: time))
         let step = StrandedStep()
+        defer { step.open() }
 
-        let outcome = await answer(form, time: time, state: state, grace: Self.grace) {
-            step.block(state, time)
-        }
+        let outcome = await answerStranded(form, step: step, time: time, state: state)
 
         // A committed spawn may still complete, so the answer never claims there is no child.
         #expect(HeadlessResult(outcome).code == "startup-unverified")
-        #expect(step.release() == false)
+        let released = await step.release()
+        #expect(released == false)
         #expect(state.didCommit)
     }
 
@@ -131,22 +209,25 @@ enum BoundForm: CaseIterable, Sendable {
         state.requestQuit()
         let time = budget(milliseconds: 100)
         let step = StrandedStep()
+        defer { step.open() }
 
-        let outcome = await answer(form, time: time, state: state, grace: Self.grace) {
-            step.block(state, time)
-        }
+        let outcome = await answerStranded(form, step: step, time: time, state: state)
 
         #expect(HeadlessResult(outcome).code == "cancelled")
-        #expect(step.release() == false)
+        let released = await step.release()
+        #expect(released == false)
     }
 
     @Test(arguments: BoundForm.allCases)
     func strandedStepKeepsWhatItHoldsUntilItsCallReturns(form: BoundForm) async throws {
         let path = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-        let holder = open(path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0o600)
-        try #require(holder >= 0)
+        let descriptor = open(path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0o600)
+        try #require(descriptor >= 0)
         defer { _ = unlink(path) }
-        try #require(flock(holder, LOCK_EX | LOCK_NB) == 0)
+        // The step's own return closes this; teardown closes it only if the step never returned.
+        let holder = Holder(descriptor)
+        defer { holder.close() }
+        try #require(flock(holder.descriptor, LOCK_EX | LOCK_NB) == 0)
         let competitor = open(path, O_RDWR | O_CLOEXEC)
         try #require(competitor >= 0)
         defer { _ = close(competitor) }
@@ -154,10 +235,9 @@ enum BoundForm: CaseIterable, Sendable {
         #expect(state.begin())
         let time = budget(milliseconds: 100)
         let step = StrandedStep()
+        defer { step.open() }
 
-        let outcome = await answer(form, time: time, state: state, grace: Self.grace) {
-            step.block(state, time) { _ = close(holder) }
-        }
+        let outcome = await answerStranded(form, step: step, time: time, state: state) { holder.close() }
         let whileStranded = flock(competitor, LOCK_EX | LOCK_NB)
         let issue = errno
 
@@ -165,7 +245,8 @@ enum BoundForm: CaseIterable, Sendable {
         // The answer neither stops the stranded thread nor releases its lock; only the
         // thread's own return, or the process exiting, does.
         #expect(whileStranded == -1 && issue == EWOULDBLOCK)
-        #expect(step.release() == false)
+        let released = await step.release()
+        #expect(released == false)
         #expect(flock(competitor, LOCK_EX | LOCK_NB) == 0)
     }
 
@@ -234,9 +315,12 @@ enum BoundForm: CaseIterable, Sendable {
     func returningStepAnswersAndTheLaterWatchdogChangesNothing(form: BoundForm) async throws {
         let state = AttemptState()
         #expect(state.begin())
-        let time = budget(milliseconds: 50)
+        // The step returns at once. The budget only has to outlast an engine worker picking the
+        // step up under parallel load, so the watchdog fires after the answer instead of racing it.
+        let time = budget(milliseconds: 1_000)
+        let grace: UInt64 = 50_000_000
 
-        let outcome = await answer(form, time: time, state: state, grace: 50_000_000) {
+        let outcome = await answer(form, time: time, state: state, grace: grace) {
             .portInUse(port: 45123)
         }
 
@@ -244,7 +328,7 @@ enum BoundForm: CaseIterable, Sendable {
         #expect(HeadlessResult(outcome).exitCode == 20)
         // The watchdog fires against an answered attempt here. A second delivery would trap or
         // overwrite the answer.
-        try await Task.sleep(for: .milliseconds(300))
+        try await Task.sleep(nanoseconds: time.remaining + grace + 300_000_000)
     }
 
     @Test func handoffIsAdmittedOnlyInsideTheBudgetAndBeforeQuit() {
