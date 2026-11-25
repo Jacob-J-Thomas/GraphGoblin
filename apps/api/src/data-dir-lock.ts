@@ -226,10 +226,10 @@ async function removeMarker(path: string, operation: CleanupOperation): Promise<
 }
 
 type StaleRecovery = { state: 'stale'; directory: BigIntStats; marker?: string };
+type RecoveryObservation = { state: 'absent' | 'marker-absent' } | HeldOwner | StaleRecovery;
+const recoveryAttempts = 8;
 
-async function recoveryState(
-  path: string,
-): Promise<Exclude<OwnerState, { state: 'stale' }> | StaleRecovery> {
+async function observeRecovery(path: string): Promise<RecoveryObservation> {
   if (heldPaths.has(path)) return live();
   try {
     const info = await lstat(path, { bigint: true });
@@ -243,6 +243,8 @@ async function recoveryState(
     if (entries.length !== 1 || !entry?.isFile() || !match)
       return unknown('reclamation guard is not a physical directory with one valid owner marker');
     const state = await lockFileState(join(path, entry.name), match[1]);
+    // The guard can still be present as an empty directory or already hold a new marker.
+    if (state.state === 'absent') return { state: 'marker-absent' };
     return state.state === 'stale'
       ? { state: 'stale', directory: info, marker: entry.name }
       : state;
@@ -385,8 +387,9 @@ async function acquireRecovery(
   let reclaimed = false;
   try {
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const observed = await recoveryState(path);
+    for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
+      const observed = await observeRecovery(path);
+      if (observed.state === 'marker-absent') continue;
       if (observed.state === 'held') throw held(path, observed.detail);
       if (observed.state === 'stale') {
         if (observed.marker) {
@@ -469,11 +472,18 @@ export async function dataDirLockState(
       path: recovery,
       detail: 'another GraphGoblin process is acquiring this store',
     };
-  const guard = await recoveryState(recovery);
-  if (guard.state === 'held') return { ...guard, path: recovery };
-  const owner = heldPaths.has(path) ? live() : await lockFileState(path);
-  if (owner.state === 'held') return { ...owner, path };
-  return { state: 'free' };
+  for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
+    const guard = await observeRecovery(recovery);
+    if (guard.state === 'marker-absent') continue;
+    if (guard.state === 'held') return { ...guard, path: recovery };
+    const owner = heldPaths.has(path) ? live() : await lockFileState(path);
+    if (owner.state === 'held') return { ...owner, path };
+    return { state: 'free' };
+  }
+  return {
+    ...unknown('reclamation guard marker repeatedly disappeared during the check'),
+    path: recovery,
+  };
 }
 
 async function verifyWriterArtifact(

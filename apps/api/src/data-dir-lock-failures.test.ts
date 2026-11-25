@@ -126,6 +126,25 @@ it('preserves a live guard published after observing absence and before atomic p
   await expectSuccessorIntact(successor);
 });
 
+it.each([false, true])(
+  'credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: %s)',
+  async (removedGuard) => {
+    const marker = await seed();
+    vi.mocked(fs.readFile).mockImplementationOnce(async (...args) => {
+      expect(args[0]).toBe(marker);
+      await actual.unlink(marker);
+      if (removedGuard) await actual.rmdir(guard);
+      return actual.readFile(...args);
+    });
+    const lock = await acquireDataDirLock(directory);
+    expect(lock.reclaimed).toEqual({ file: false, guard: !removedGuard });
+    expect(vi.mocked(fs.rmdir).mock.calls).toEqual(removedGuard ? [[guard]] : [[guard], [guard]]);
+    expect(vi.mocked(fs.unlink).mock.calls.map(([target]) => target)).not.toContain(marker);
+    await expect(lock.release()).resolves.toBe('removed');
+    expect(await fs.readdir(directory)).toEqual([]);
+  },
+);
+
 it('recognizes a Windows recovery marker that disappeared before its owner could be read', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' });
   const marker = await seed();
@@ -135,10 +154,55 @@ it('recognizes a Windows recovery marker that disappeared before its owner could
     throw denied();
   });
   const lock = await acquireDataDirLock(directory);
+  expect(lock.reclaimed).toEqual({ file: false, guard: true });
   await expect(actual.readFile(path, 'utf8')).resolves.toContain(String(process.pid));
   expect(vi.mocked(fs.unlink).mock.calls.some(([target]) => target === marker)).toBe(false);
   await lock.release();
   expect(await fs.readdir(directory)).toEqual([]);
+});
+
+it('finds a live successor in a read-only check after the original marker disappears', async () => {
+  stubLiveWindowsIdentity();
+  const marker = await seed();
+  const successor = await stageSuccessor();
+  vi.mocked(fs.readFile).mockImplementationOnce(async (...args) => {
+    expect(args[0]).toBe(marker);
+    await actual.unlink(marker);
+    await actual.rmdir(guard);
+    await actual.rename(successor.staging, guard);
+    return actual.readFile(...args);
+  });
+  await expect(dataDirLockState(directory)).resolves.toMatchObject({
+    state: 'held',
+    path: guard,
+    detail: expect.stringContaining('another GraphGoblin process holds'),
+  });
+  expect(vi.mocked(fs.rmdir).mock.calls).toEqual([]);
+  expect(vi.mocked(fs.rename).mock.calls).toEqual([]);
+  await expectSuccessorIntact(successor);
+});
+
+it('refuses read-only ownership after bounded rechecks of repeatedly disappearing markers', async () => {
+  let marker = await seed();
+  vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+    if (args[0] === path) return actual.readFile(...args);
+    expect(args[0]).toBe(marker);
+    await actual.unlink(marker);
+    const token = randomUUID();
+    marker = join(guard, `${token}.json`);
+    await fs.writeFile(marker, JSON.stringify({ pid: process.pid, token }));
+    return actual.readFile(...args);
+  });
+  await expect(dataDirLockState(directory)).resolves.toMatchObject({
+    state: 'held',
+    path: guard,
+    detail: expect.stringContaining('Store ownership could not be verified'),
+  });
+  expect(vi.mocked(fs.readFile)).toHaveBeenCalledTimes(8);
+  expect(vi.mocked(fs.rmdir).mock.calls).toEqual([]);
+  expect(vi.mocked(fs.unlink).mock.calls).toEqual([]);
+  expect(vi.mocked(fs.rename).mock.calls).toEqual([]);
+  expect(await fs.readdir(guard)).toHaveLength(1);
 });
 
 it('preserves a refused read when the recovery marker still exists', async () => {

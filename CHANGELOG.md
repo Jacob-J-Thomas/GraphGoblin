@@ -25,7 +25,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - A Windows API startup racing stale lock recovery now reports ordinary store contention when
   a denied guard-directory removal reveals a verified live successor (#581). Acquisition skips
   shared removal when the guard is absent and checks it again if another process removed the
-  observed stale marker. A denial with unverified ownership retains its filesystem diagnostic.
+  observed stale marker during a read or deletion. If the empty guard survives and this caller
+  removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
+  its filesystem diagnostic.
 
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
