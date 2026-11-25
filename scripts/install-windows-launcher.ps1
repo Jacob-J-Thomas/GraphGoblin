@@ -238,6 +238,27 @@ function Publish-LauncherArtifacts {
     }
 }
 
+# The .NET Framework C# compiler reports failed Win32 resource preparation as error CS1567 or
+# CS1619; a long staging path is one cause. Each stdout and stderr line is classified by its leading
+# diagnostic field alone. The line either starts with it, as in 'error CS1619:', or it follows a csc
+# tool label or file name prefix, with or without a numeric location, that ends at the first colon
+# other than a leading drive colon; file names may contain spaces. The field is identified before
+# the allowlist applies, so a warning, fatal error or other code never qualifies, nor does a later
+# separator or code text in its message. Only an allowlisted code from a failed compile is
+# returned, never compiler text, paths or the localized system reason.
+function Get-CompilerResourceFailure($Result) {
+    if ($Result.Code -eq 0) { return $null }
+    foreach ($text in @($Result.Stdout, $Result.Stderr)) {
+        if (!$text) { continue }
+        foreach ($line in $text -split '\r\n|\r|\n') {
+            # The prefix is optional and tried last, so a line that starts with a field keeps it.
+            if ($line -imatch '^(?:(?:[a-z]:[\\/]|[^\s:])[^:]*:\s*)??((?:fatal\s+)?error|warning)\s+([^\s:]+)\s*:' -and
+                $Matches[1] -ceq 'error' -and $Matches[2] -cin 'CS1567', 'CS1619') { return $Matches[2] }
+        }
+    }
+    $null
+}
+
 function Invoke-StagedLauncher([string[]]$Arguments, [string]$Failure) {
     $result = Invoke-InstallerProcess $stagedExe $Arguments 15
     if ($result.Code -ne 0 -or $result.Stderr) { Refuse-LauncherInstall $Failure }
@@ -358,6 +379,10 @@ try {
             "/out:$stagedExe", (Join-Path $RepoPath 'apps/windows-launcher/Launcher.cs')
         ) 30
     } catch { Refuse-LauncherInstall 'Launcher compilation failed. Check the .NET Framework compiler and checkout.' }
+    $resourceFailure = Get-CompilerResourceFailure $compile
+    if ($resourceFailure) {
+        Refuse-LauncherInstall "Launcher compilation failed while the .NET Framework C# compiler prepared the launcher's Win32 resources (compiler error $resourceFailure). The installer compiles in a temporary gg-launcher-stage folder inside the install folder, or its nearest existing parent, and that staging path may be too long for this compiler. Choose a shorter writable local folder with -InstallDir, then run the installer again."
+    }
     if ($compile.Code -ne 0 -or ![IO.File]::Exists($stagedExe)) { Refuse-LauncherInstall 'Launcher compilation failed.' }
 
     $linkHelp = 'PwaShortcut must name an installed Chrome PWA shortcut.'
