@@ -1,0 +1,15 @@
+check:qa: local QA packet pre-publication check; pnpm format:check and CI remain the full gates.
+Base: main = 88a2e5dde60ee2ad3cb83b8eac9b49a597e5739c
+Selection: docs/qa paths changed from merge base 88a2e5dde60ee2ad3cb83b8eac9b49a597e5739c to the working tree (committed, staged, unstaged and untracked; Git-ignored files excluded), deduplicated.
+Selected docs/qa paths: 3 = checked with Prettier 1 (Markdown 1) + Prettier errors 1 + refused Markdown originals 0 + retained archived originals 0 + deleted 0 + unavailable 1
+  UNAVAILABLE  docs/qa/qa524-omitted/README.md  [not in this working tree (sparse checkout or skip-worktree); not checked]
+  CHECK-ERROR  docs/qa/qa524-visible/a-bad [v2].html  [Prettier stopped with an error; not checked, see its detail below]
+  formatted    docs/qa/qa524-visible/z-valid.md
+CHECK-ERROR detail for docs/qa/qa524-visible/a-bad [v2].html:
+    | SyntaxError: Unexpected closing tag "main". It may happen when the tag has already been closed by another tag. For more info see https://www.w3.org/TR/html5/syntax.html#closing-elements-that-have-implied-end-tags (1:21)
+    | > 1 | <main><section>Hello</main>
+    |     |                     ^^^^^^^
+    |   2 |
+UNAVAILABLE: selected paths missing from this working tree were not checked. In a sparse checkout run git sparse-checkout add docs/qa, or run check:qa from a full checkout; restore a removed file or stage its removal with git rm.
+CHECK-ERROR: Prettier stopped with an error on a selected path, so its formatting was not checked; its message is shown above under the path. Correct the cause it reports at the line and column given, then run check:qa again. Never edit an immutable original to satisfy Prettier: keep its recorded bytes as the QA packet file conventions in docs/15-issue-workflow.md describe.
+Result: FAILED (2 problems; 2 of 3 selected paths not checked).

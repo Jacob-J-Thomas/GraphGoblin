@@ -1,0 +1,39 @@
+The #524 candidate passes every check I was allowed to run, and I didn't edit any file. The six files are the same as at the checkpoint: four modified, two untracked, nothing staged. I didn't commit, stash or publish anything, and I didn't touch GitHub, owner data, services or credentials.
+
+**Check results (Node v22.23.4)**
+| Command | Result |
+|---|---|
+| `pnpm --filter @graphgoblin/tooling test scripts/check-qa-packet.test.mjs` | 1 file, 10/10 tests passed |
+| `… test:coverage … --coverage.include=scripts/check-qa-packet.mjs` | 10/10 passed; lines 100% (79/79), branches 100% (50/50), statements 100% (91/91), functions 100% (15/15) |
+| `pnpm --filter @graphgoblin/tooling lint` | passed, no findings |
+| `pnpm exec prettier --check` on the six files | "All matched files use Prettier code style!" (so `--write` wasn't needed) |
+| `git --no-pager diff --check` | clean |
+
+**What `pnpm check:qa --base <ref>` does** (`tooling/scripts/check-qa-packet.mjs`)
+- **Selection:** it picks the `docs/qa` paths changed from the merge base of `<ref>` and HEAD to the working tree: committed, staged, unstaged and untracked, each listed once. Files Git ignores are left out.
+- **Markdown:** it checks Markdown in memory with the repository Prettier config, even when `.gitignore` or `.prettierignore` hides a page from `pnpm format:check`.
+- **Other files:** files Prettier would normally check are checked the same way. Everything else, including `.md.txt` originals and ignored JSON, is left untouched and listed with its SHA-256.
+- **Originals:** a newly added Markdown file whose name ends in "original" is refused. Historical files, directory names and other uses of the word are not affected.
+- **Missing paths:** a path that existed at the merge base and is now gone counts as a deletion. Any other selected path missing from the working tree (sparse checkout, skip-worktree, or an addition that was later removed) is reported as not checked and fails.
+- **Exit codes and read-only:** 0 means passed, 1 means a path failed, 2 means it couldn't run, with no partial report. Git runs without optional locks, and the test confirms the index and file bytes are unchanged.
+- **Unchanged:** `format` and `format:check` in `package.json` are the same, and `check:qa` is not part of `pnpm check` or CI. The behaviour is documented in docs 10 and 15 and the CHANGELOG.
+
+**Acceptance controls, all covered by the existing 10 tests (I added none):**
+- **Prose:** valid new prose passes; invalid new prose and HTML fail without being rewritten.
+- **`.md.txt` originals:** a malformed CRLF original stored as `.md.txt` is kept with exact bytes and hash, and the historical archive original is unchanged.
+- **Original names:** new `*original.md` names are refused, while a historical `README-original.md`, `original-final-audit/` and `original-hash-verification.md` are not.
+- **Ignored pages:** a malformed new page hidden by an ignore rule fails, with a control showing that the normal `prettier --check` passes it.
+- **No QA change:** passes and reports the base.
+- **Sparse checkout:** a page outside the checkout is reported unavailable, next to a real deletion.
+- **Deletions:** staged and unstaged deletions pass; a committed addition that was later removed fails.
+- **Deduplication:** staged, unstaged and untracked combinations are each listed once.
+- **Bad input:** invalid base, a base starting with `-`, unrelated history, bad arguments and a directory outside any repository all exit 2.
+- **Spaces:** fixture repository paths and packet paths contain spaces.
+
+**Limitations and open gaps**
+- I only checked that the four tracked files match the expected content (by reading and searching them), because `git diff` isn't in the allowed command list. I didn't read their full diffs.
+- The test and coverage runs reached 100% on this one module only. I didn't run the full `pnpm test:coverage`, the repository-wide `pnpm format:check`, or `pnpm check`.
+- The tests run on Windows only; I haven't checked Linux or CI behaviour.
+- The original-name rule only catches files that call themselves "original". A raw report added under any other `.md` name is checked as ordinary prose.
+- Independent GPT review, separate QA, CI and the final scan are still to be done by you. I'm not claiming any of them passed.
+- I preserved the original attempt and interruption evidence: no source edits came from this session.
