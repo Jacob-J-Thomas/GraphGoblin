@@ -73,6 +73,25 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   unchanged; existing tests keep their time limits, assertions and retries, and coverage
   thresholds are unchanged.
 
+- A Windows API startup racing stale lock recovery now reports ordinary store contention when
+  a denied guard-directory removal reveals a verified live successor (#581). Acquisition skips
+  shared removal when the guard is absent and checks it again if another process removed the
+  observed stale marker during a read or deletion. If the empty guard survives and this caller
+  removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
+  its filesystem diagnostic.
+
+- The run inspector treats its event stream's transport failure as an outage of the run it shows
+  from that moment (#575). Previously a run read already in flight when the API listener
+  stopped could answer successfully afterwards and leave the run current: no **Last observed,
+  may be out of date** warning, and Pause, Cancel, Replay and Submit input still available. Now
+  the run stays on screen as last observed with its typed answer kept, every write, including
+  one already queued or submitted from the keyboard, is refused at once, and only a run read
+  started after the loss makes the run current again. Refused stream reconnection attempts
+  trigger no further rereads. A stream that opens again records a new loss when it drops, or when
+  its reconnection is refused after it ended otherwise, such as the graceful close the API sends
+  when it shuts down. HTTP refusals, graceful closes and other stream errors are not losses
+  themselves. No stored, export or contract change.
+
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
   database. Default database configuration also encodes the data directory as a file URL.

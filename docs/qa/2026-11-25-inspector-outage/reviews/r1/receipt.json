@@ -1,0 +1,128 @@
+{
+  "reviewedAt": "2026-11-25T07:22:15.573547+00:00",
+  "issue": 575,
+  "pull": 577,
+  "reviewRequestCommentId": 7155677796,
+  "reviewer": "/root/inspector_final_review_r1",
+  "role": "independent final architecture and QA reviewer",
+  "model": "gpt-6-astra",
+  "effort": "xhigh",
+  "round": 1,
+  "cap": 3,
+  "priorRoundsThisLeaf": 0,
+  "previousSeparateLineage": {
+    "pr": 501,
+    "roundsConsumed": 3,
+    "closed": true
+  },
+  "verdict": "REQUEST_CHANGES",
+  "base": "600f36fa51cc154a4e9ce6914411652431a087f0",
+  "head": "32a7b68e02d695096b1d73df20f1e2696b364fa7",
+  "tree": "57b16d31432bade27c416f6341d424ae6d553e3b",
+  "effectiveDiffSha256": "75a5ab1539ea3f1be1700f551448268935da330eda4eb103e2f3dc4c6735288f",
+  "finalDelta": "none; no product changes during review",
+  "findings": [
+    {
+      "id": "R1-575-1",
+      "priority": "P1",
+      "disposition": "FIX-IN-PR",
+      "mergeBlocking": true,
+      "path": "apps/web/src/runs/useRunEvents.ts",
+      "line": 187,
+      "cause": "A graceful EOF clears openedAt; the first new transport failure after a confirmed quiet reopen is classified as another never-opened retry. No loss reaches the write gate.",
+      "observed": {
+        "chronology": [
+          "SSE response 1",
+          "refused during outage 1",
+          "held successful GET 1",
+          "first refused reconnect blocked writes",
+          "SSE response 2",
+          "run recovered, second stream live with unchanged cursor",
+          "held successful GET 2",
+          "refused during outage 2",
+          "post-second-loss run GET refused"
+        ],
+        "atSecondFailure": {
+          "stale": false,
+          "submitDisabled": false,
+          "writes": 0
+        },
+        "afterOldSuccess": {
+          "stale": false,
+          "submitDisabled": false
+        },
+        "writesAfterImplicitSubmit": 1
+      },
+      "requiredFix": "Remember a confirmed reopen across ordinary EOF or retryable protocol error until a transport failure consumes it; keep direct reread budgeting separate, then add the component ordering and retain existing repeated refusal bounds."
+    }
+  ],
+  "verification": {
+    "rebaseEffectivePatchByteEqual": true,
+    "upstreamPaths": 32,
+    "upstreamOverlap": 0,
+    "effectiveChangedPaths": 34,
+    "allSourceHashesMatch": 8,
+    "localFocusedPassed": 89,
+    "webTypecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 5
+    },
+    "aggregateBuild": {
+      "successful": 12,
+      "cached": 0
+    },
+    "permanentFileBrowserPassed": 5,
+    "permanentFileBrowserRetries": 0,
+    "original416BodyByteEqual": true,
+    "identicalIndependentBrowserProbe": {
+      "baseline": "failed",
+      "candidate": "passed",
+      "sha256": "ed2cb8bfc7fdd999acc45cc23972eab968ef7ba6cac00be6659a4fbd6be9bde0"
+    },
+    "finalManifestAssetsMatched": 28,
+    "reviewerDiagnostic": {
+      "type": "whole-app jsdom using actual app, providers, SSE helper/backoff, TanStack and fake HTTP",
+      "exitCode": 1,
+      "testsFailed": 1,
+      "testsPassed": 0,
+      "diagnosticLimits": "Client dispatch to in-memory HTTP fixture. Real gateway EOF semantics verified in production source. No device or network writes.",
+      "setup": "An initial relative config path and an external-root Vite allowlist prevented test collection in setup; only the collected, executed diagnostic is counted."
+    }
+  },
+  "hostedAtDisposition": {
+    "id": 45566702222,
+    "attempt": 1,
+    "status": "in_progress",
+    "syntheticMerge": "d86afc9ba8accd529db5aec7db5266921452d1cd",
+    "tree": "57b16d31432bade27c416f6341d424ae6d553e3b",
+    "parents": [
+      "600f36fa51cc154a4e9ce6914411652431a087f0",
+      "32a7b68e02d695096b1d73df20f1e2696b364fa7"
+    ],
+    "snapshotSha256": "49024e6f416ffe227a65b32944e0f7bea653a2f84920d40c088c0fcafda5a783",
+    "snapshotJobs": {
+      "Browser": "in_progress",
+      "Template image": "success",
+      "Coverage": "in_progress",
+      "Repository checks": "in_progress",
+      "Windows launcher": "in_progress",
+      "macOS launcher": "in_progress"
+    },
+    "fullGatesPassed": false,
+    "fullGatesUnresolved": true
+  },
+  "ownerItemsRemainOpen": [
+    456,
+    64,
+    323,
+    125,
+    221
+  ],
+  "artifacts": {
+    "report.md": "3df59dfcc09c5f5f5d04624b8406a3d1766a29d368721b300e1897861b9083e8",
+    "diagnostic/graceful-second-loss.test.ts": "8f945585eeea53f97804bcc76272d08cdce8d38788e24acbf08cb6009c1a3214",
+    "diagnostic/vitest.config.mjs": "5c75a5f42898491bd5ced6acbf67904e5e9cc63cb4e6e98a340193a71ec0a2bf",
+    "diagnostic/probe.log": "c0547509aadd663a2d9965190619e0c5b178600741574614dcd98bad5e8b05da"
+  }
+}

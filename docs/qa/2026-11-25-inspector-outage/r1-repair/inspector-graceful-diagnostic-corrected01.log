@@ -1,0 +1,13 @@
+
+ RUN  v5.0.3 /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-review-r1/diagnostic
+
+stdout | graceful-second-loss.test.ts > treats a refused reconnection after a recovered and gracefully closed stream as a second loss
+{"chronology":["SSE response 1","refused during outage 1","held successful GET 1","first refused reconnect blocked writes","SSE response 2","run recovered, second stream live with unchanged cursor","held successful GET 2","refused during outage 2","post-second-loss run GET refused"],"atSecondFailure":{"stale":true,"submitDisabled":true,"writes":0},"afterOldSuccess":{"stale":true,"submitDisabled":true},"writesAfterImplicitSubmit":0}
+
+ ✓ graceful-second-loss.test.ts > treats a refused reconnection after a recovered and gracefully closed stream as a second loss 1500ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:34:06
+   Duration  4.04s (tests 38%, transform 28%, environment 18%, import 10%, setup 6%)
+

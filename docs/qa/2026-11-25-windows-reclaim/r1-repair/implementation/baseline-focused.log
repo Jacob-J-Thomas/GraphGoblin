@@ -1,0 +1,113 @@
+$ vitest run src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts
+
+ RUN  v5.0.3 /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+
+ ❯ src/data-dir-lock-failures.test.ts (36 tests | 4 failed) 75ms
+   × credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: false) 6ms
+   × recognizes a Windows recovery marker that disappeared before its owner could be read 2ms
+   × finds a live successor in a read-only check after the original marker disappears 2ms
+   × refuses read-only ownership after bounded rechecks of repeatedly disappearing markers 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: false)
+AssertionError: expected { file: false, guard: false } to deeply equal { file: false, guard: true }
+
+- Expected
++ Received
+
+  {
+    "file": false,
+-   "guard": true,
++   "guard": false,
+  }
+
+ ❯ src/data-dir-lock-failures.test.ts:140:28
+    138|     });
+    139|     const lock = await acquireDataDirLock(directory);
+    140|     expect(lock.reclaimed).toEqual({ file: false, guard: !removedGuard…
+       |                            ^
+    141|     expect(vi.mocked(fs.rmdir).mock.calls).toEqual(removedGuard ? [[gu…
+    142|     expect(vi.mocked(fs.unlink).mock.calls.map(([target]) => target)).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > recognizes a Windows recovery marker that disappeared before its owner could be read
+AssertionError: expected { file: false, guard: false } to deeply equal { file: false, guard: true }
+
+- Expected
++ Received
+
+  {
+    "file": false,
+-   "guard": true,
++   "guard": false,
+  }
+
+ ❯ src/data-dir-lock-failures.test.ts:157:26
+    155|   });
+    156|   const lock = await acquireDataDirLock(directory);
+    157|   expect(lock.reclaimed).toEqual({ file: false, guard: true });
+       |                          ^
+    158|   await expect(actual.readFile(path, 'utf8')).resolves.toContain(Strin…
+    159|   expect(vi.mocked(fs.unlink).mock.calls.some(([target]) => target ===…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > finds a live successor in a read-only check after the original marker disappears
+AssertionError: expected { state: 'free' } to match object { state: 'held', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "detail": StringContaining "another GraphGoblin process holds",
+-   "path": "/private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-CmePZB/graphgoblin.lock.reclaim",
+-   "state": "held",
++   "state": "free",
+  }
+
+ ❯ src/data-dir-lock-failures.test.ts:175:44
+    173|     return actual.readFile(...args);
+    174|   });
+    175|   await expect(dataDirLockState(directory)).resolves.toMatchObject({
+       |                                            ^
+    176|     state: 'held',
+    177|     path: guard,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > refuses read-only ownership after bounded rechecks of repeatedly disappearing markers
+AssertionError: promise rejected "AssertionError: expected '/private/var/fo… { …(4) }" instead of resolving
+ ❯ src/data-dir-lock-failures.test.ts:195:44
+    193|     return actual.readFile(...args);
+    194|   });
+    195|   await expect(dataDirLockState(directory)).resolves.toMatchObject({
+       |                                            ^
+    196|     state: 'held',
+    197|     path: guard,
+
+Caused by: AssertionError: expected '/private/var/folders/0g/7cv638n558vbt…' to be '/private/var/folders/0g/7cv638n558vbt…' // Object.is equality
+
+Expected: "/private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-chc1r4/graphgoblin.lock.reclaim/7c00a0ea-4ba6-4822-9d62-bf214fbf4b07.json"
+Received: "/private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-chc1r4/graphgoblin.lock"
+
+ ❯ src/data-dir-lock-failures.test.ts:188:21
+ ❯ lockFileState src/data-dir-lock.ts:143:20
+ ❯ Module.dataDirLockState src/data-dir-lock.ts:474:54
+ ❯ src/data-dir-lock-failures.test.ts:195:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 81 passed (85)
+   Start at  02:09:24
+   Duration  569ms (tests 75%, transform 18%, import 3%, setup 2%, worker 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/jake/Documents/Codex/2026-11-23/
+  │ files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+

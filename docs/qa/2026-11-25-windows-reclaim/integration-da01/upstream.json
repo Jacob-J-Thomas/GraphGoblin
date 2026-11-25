@@ -1,0 +1,548 @@
+{
+  "sha": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+  "parents": [
+    "600f36fa51cc154a4e9ce6914411652431a087f0",
+    "2901f8f35e63d80c61c4390f73e8192e0e6ad624"
+  ],
+  "tree": "bbab01e14ca0d8de05e2f1005f381a4e0489748a",
+  "signatureVerified": true,
+  "message": "Merge pull request #570: isolate API startup fixtures and canonicalize diagnostics\n\nIsolate disposable API startup from inherited provider discovery",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "status": "modified",
+      "changes": 7
+    },
+    {
+      "path": "CHANGELOG.md",
+      "status": "modified",
+      "changes": 18
+    },
+    {
+      "path": "apps/api/src/main.test.ts",
+      "status": "modified",
+      "changes": 18
+    },
+    {
+      "path": "apps/api/src/testing/api-subprocess.ts",
+      "status": "modified",
+      "changes": 18
+    },
+    {
+      "path": "apps/api/src/testing/provider-isolation.test.ts",
+      "status": "added",
+      "changes": 137
+    },
+    {
+      "path": "docs/10-testing-and-quality.md",
+      "status": "modified",
+      "changes": 39
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/.gitattributes",
+      "status": "added",
+      "changes": 6
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/MANIFEST.json",
+      "status": "added",
+      "changes": 62
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/README.md",
+      "status": "added",
+      "changes": 11
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/baseline/RESULT.json",
+      "status": "added",
+      "changes": 13
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/baseline/stderr.log",
+      "status": "added",
+      "changes": 110
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/baseline/stdout.log",
+      "status": "added",
+      "changes": 37
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/check-canonical-temp.py",
+      "status": "added",
+      "changes": 37
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/corrected/RESULT.json",
+      "status": "added",
+      "changes": 13
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/corrected/stderr.log",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/corrected/stdout.log",
+      "status": "added",
+      "changes": 32
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/test-correction.patch",
+      "status": "added",
+      "changes": 42
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/windows.log",
+      "status": "added",
+      "changes": 925
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-ci01/windows.stderr.log",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/.gitattributes",
+      "status": "added",
+      "changes": 6
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/MANIFEST.json",
+      "status": "added",
+      "changes": 243
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/README.md",
+      "status": "added",
+      "changes": 47
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/binding/CORRECTION-FREEZE.json",
+      "status": "added",
+      "changes": 41
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/binding/CORRECTION-SOURCE.patch",
+      "status": "added",
+      "changes": 42
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/cleanup/ROOT-FIXTURE-CLEANUP-BLOCKED.json",
+      "status": "added",
+      "changes": 13
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/drivers/bind-correction.py.txt",
+      "status": "added",
+      "changes": 127
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/drivers/run-check.py.txt",
+      "status": "added",
+      "changes": 95
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/hosted/coverage-573-EVIDENCE.json",
+      "status": "added",
+      "changes": 88
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/mac/recorded-INTEGRATION-FOOTPRINT.md.txt",
+      "status": "added",
+      "changes": 26
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/mac/recorded-LIVE-BOUNDARY.json",
+      "status": "added",
+      "changes": 38
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/BASELINE-SOURCE-BINDING.json",
+      "status": "added",
+      "changes": 18
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/HISTORICAL-PORT-BINDING.json",
+      "status": "added",
+      "changes": 25
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/HOSTED-FAILURE-NAMES.json",
+      "status": "added",
+      "changes": 32
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/PACKET-10-RECOMPUTED.json",
+      "status": "added",
+      "changes": 79
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/RAW-TEST-NAMES.json",
+      "status": "added",
+      "changes": 224
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/RECONCILIATION-BINDINGS.json",
+      "status": "added",
+      "changes": 327
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/RECONCILIATION.md.txt",
+      "status": "added",
+      "changes": 39
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/SOURCE-AFTER.json",
+      "status": "added",
+      "changes": 7
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/SOURCE-BEFORE.json",
+      "status": "added",
+      "changes": 7
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-HOSTED-BINDING.json",
+      "status": "added",
+      "changes": 44
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-LOG-ANCHORS.json",
+      "status": "added",
+      "changes": 22
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-jobs.raw.json",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-runs.raw.json",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-windows.download.stderr.log.txt",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/corrected-head-windows.raw.log.txt",
+      "status": "added",
+      "changes": 740
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-HOSTED-BINDING.json",
+      "status": "added",
+      "changes": 44
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-LOG-ANCHORS.json",
+      "status": "added",
+      "changes": 114
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-jobs.raw.json",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-runs.raw.json",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-windows.download.stderr.log.txt",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/provenance/initial-parent-windows.raw.log.txt",
+      "status": "added",
+      "changes": 925
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/API-RESULT.json",
+      "status": "added",
+      "changes": 23
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/BUILD-RESULT.json",
+      "status": "added",
+      "changes": 23
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/CLAUDE-EXIT.json",
+      "status": "added",
+      "changes": 54
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/FROZEN-AFTER.json",
+      "status": "added",
+      "changes": 41
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/FROZEN-BEFORE.json",
+      "status": "added",
+      "changes": 41
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/JUNCTION-RESULT.json",
+      "status": "added",
+      "changes": 31
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/QA-REPORT.claude.md.txt",
+      "status": "added",
+      "changes": 53
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/ROOT-QA-ADJUDICATION.json",
+      "status": "added",
+      "changes": 33
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/api.stderr.log.txt",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/api.stdout.log.txt",
+      "status": "added",
+      "changes": 48
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/build.stderr.log.txt",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/build.stdout.log.txt",
+      "status": "added",
+      "changes": 25
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/junction.stderr.log.txt",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/qa-02/junction.stdout.log.txt",
+      "status": "added",
+      "changes": 32
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/review-02/CLAUDE-EXIT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565-qa02/review-02/REVIEW-REPORT.claude.md.txt",
+      "status": "added",
+      "changes": 124
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/.gitattributes",
+      "status": "added",
+      "changes": 6
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/ADJUDICATION.md",
+      "status": "added",
+      "changes": 21
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/MANIFEST.json",
+      "status": "added",
+      "changes": 273
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/README.md",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/continuation-checkpoint.md.txt",
+      "status": "added",
+      "changes": 8
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/continuation-exit.json",
+      "status": "added",
+      "changes": 88
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/continuation-report.md.txt",
+      "status": "added",
+      "changes": 30
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/first-exit.json",
+      "status": "added",
+      "changes": 144
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/first-report.md.txt",
+      "status": "added",
+      "changes": 39
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/first-tool-proof.json",
+      "status": "added",
+      "changes": 285
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/provider-red.log",
+      "status": "added",
+      "changes": 100
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/author/workflow-checkpoint.log",
+      "status": "added",
+      "changes": 58
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/API-RESULT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/BUILD-RESULT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/CLAUDE-EXIT.json",
+      "status": "added",
+      "changes": 87
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/DIFF-RESULT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/FORMAT-RESULT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/FROZEN-AFTER.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/FROZEN-BEFORE.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/SOURCE-BINDINGS.json",
+      "status": "added",
+      "changes": 34
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/WORKFLOW-RESULT.json",
+      "status": "added",
+      "changes": 20
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/api.stderr.log",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/api.stdout.log",
+      "status": "added",
+      "changes": 51
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/build.stderr.log",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/build.stdout.log",
+      "status": "added",
+      "changes": 25
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/diff.stderr.log",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/diff.stdout.log",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/format.stderr.log",
+      "status": "added",
+      "changes": 0
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/format.stdout.log",
+      "status": "added",
+      "changes": 2
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/report.md.txt",
+      "status": "added",
+      "changes": 54
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/workflow.stderr.log",
+      "status": "added",
+      "changes": 1
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/qa/workflow.stdout.log",
+      "status": "added",
+      "changes": 49
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/FINDINGS.json",
+      "status": "added",
+      "changes": 17
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/REVIEW.json",
+      "status": "added",
+      "changes": 28
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/SOURCE-INTEGRITY.json",
+      "status": "added",
+      "changes": 54
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/WORKFLOW-TEST.json",
+      "status": "added",
+      "changes": 6
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/report.md.txt",
+      "status": "added",
+      "changes": 34
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/review/workflow-test.log",
+      "status": "added",
+      "changes": 10
+    },
+    {
+      "path": "docs/qa/2026-11-24-api-fixtures-565/source-binding.json",
+      "status": "added",
+      "changes": 67
+    },
+    {
+      "path": "tooling/scripts/windows-launcher-evidence.test.mjs",
+      "status": "modified",
+      "changes": 69
+    }
+  ],
+  "disposition": "Integratecurrenttarget;productionownershipandwebunchanged, APItestingfixture/providerisolation/workflowchanged. RepeataffectedAPI+workflowchecks; preservepreintegrationcoverage, do notclaimthatpreisolationfixture ruledoutproviderdiscovery."
+}

@@ -1,0 +1,36 @@
+{
+  "shell": "zsh",
+  "pathPrefix": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin",
+  "executions": [
+    {
+      "name": "baseline-focused",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim",
+      "command": "mkdir -p '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair'\nexport PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\ncorepack pnpm --filter @graphgoblin/api test src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/baseline-focused.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/baseline-focused.exit'\nexit \"$rc\""
+    },
+    {
+      "name": "format-write",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim",
+      "command": "export PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\ncorepack pnpm exec prettier --write apps/api/src/data-dir-lock.ts apps/api/src/data-dir-lock-failures.test.ts docs/11-security-and-distribution.md 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/format-write.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/format-write.exit'\nexit \"$rc\""
+    },
+    {
+      "name": "focused",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim",
+      "command": "export PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\n{ corepack pnpm --filter @graphgoblin/api test src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts; } 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/focused.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/focused.exit'\nexit \"$rc\""
+    },
+    {
+      "name": "api-typecheck",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim",
+      "command": "export PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\n{ corepack pnpm --filter @graphgoblin/api typecheck; } 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/api-typecheck.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/api-typecheck.exit'\nexit \"$rc\""
+    },
+    {
+      "name": "changed-lint",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api",
+      "command": "export PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\n{ corepack pnpm exec eslint src/data-dir-lock.ts src/data-dir-lock-failures.test.ts; } 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/changed-lint.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/changed-lint.exit'\nexit \"$rc\""
+    },
+    {
+      "name": "format-diff",
+      "cwd": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim",
+      "command": "export PATH=/opt/homebrew/Cellar/node@22/22.22.2_2/bin:$PATH\nset -o pipefail\n{ corepack pnpm exec prettier --check apps/api/src/data-dir-lock.ts apps/api/src/data-dir-lock-failures.test.ts docs/11-security-and-distribution.md CHANGELOG.md && git diff --check; } 2>&1 | tee '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/format-diff.log'\nrc=$?\nprintf '%s\\n' \"$rc\" > '/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-r2-repair/format-diff.exit'\nexit \"$rc\""
+    }
+  ]
+}
