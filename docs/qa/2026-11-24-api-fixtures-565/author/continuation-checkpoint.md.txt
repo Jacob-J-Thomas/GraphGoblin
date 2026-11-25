@@ -1,0 +1,8 @@
+# #565 continuation evidence
+
+The first actual Claude run completed with six changed files and reported its author completion gap. The exact focused tooling test before adding the Windows API step passed 40/40. The exact run after adding the step failed 1 of 40, because the workflow simulator expected the original executed step list. The first-run raw events and exit retain one denied env-rewriting shell attempt and the green result piped through grep. Use the successful unpiped API rerun only, which passed 18 tests with 5 existing skips across both files. The workflow test needs its own successful exact rerun.
+
+Current API fixtures use the cooperative 5600–5699 default pool, with 5760–5769 in the dedicated shutdown suites. Probe sockets close before the API binds. The owned stand-in Ollama test listener binds loopback port 0. Current docs describe those distinct mechanisms accurately.
+
+Compared the candidate's base d2df8600c2c8574bec420947de686b936910b245 to Mac PR #501's previously verified head 420594587a269a1daa73a8b991bd867ca4530fa0 in the local Git object store. The Mac diff leaves both API port reservation and subprocess fixture files unchanged. It adds macOS CI and two existing Windows SQLite/config check steps, and updates the same Windows workflow simulation assertions for those steps. The later merge needs to preserve both sets of steps and rerun the merged workflow simulation, plus the current main.test.ts startup cases against the merged API. The #565 branch owns only its API-entry addition and corresponding assertions.
+
