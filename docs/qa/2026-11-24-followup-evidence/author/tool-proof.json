@@ -1,0 +1,92 @@
+{
+  "providerModel": "claude-opus-5-5",
+  "providerApiKeySource": "none",
+  "permissionMode": "dontAsk",
+  "effectiveTools": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read",
+    "Write"
+  ],
+  "usingOverage": false,
+  "overageStatus": "rejected",
+  "completed": true,
+  "permissionDenials": [],
+  "toolResults": {
+    "Glob:ok": 1,
+    "Bash:ok": 8,
+    "Read:ok": 4,
+    "Grep:ok": 2
+  },
+  "checkedCommandsAndWrites": [
+    {
+      "tool": "Bash",
+      "command": "git --no-optional-locks status --short",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "node --version",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "v22.23.4"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  43 passed (43)"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test:coverage scripts/windows-launcher-evidence.test.mjs --coverage.include=scripts/windows-launcher-evidence.mjs",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  43 passed (43)"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling lint",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm exec prettier --check tooling/scripts/windows-launcher-evidence.mjs tooling/scripts/windows-launcher-evidence.test.mjs docs/10-testing-and-quality.md CHANGELOG.md",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "git --no-pager diff --check",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "git --no-optional-locks status --short",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    }
+  ]
+}

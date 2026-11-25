@@ -1,0 +1,30 @@
+The candidate passed all five checks. I changed nothing: the same four files are still modified and unstaged, and nothing was staged or committed.
+
+**Check results** (Node v22.23.4):
+
+| Check | Result |
+|---|---|
+| `pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs` | Passed: 43 of 43 tests in 1 file |
+| Focused coverage of `scripts/windows-launcher-evidence.mjs` | Passed: lines 99.48% (582/585), branches 97.43% (683/701), statements 99% (693/700), functions 100% (145/145) |
+| `pnpm --filter @graphgoblin/tooling lint` | Passed, no findings |
+| `pnpm exec prettier --check …` on the four files | Passed, so I didn't run `--write` |
+| `git --no-pager diff --check` | Passed, no output |
+
+**How the tests cover the acceptance criteria** (from reading the test file):
+- **#534** (test at line 1101): it starts a real `node --test` run of a generated suite. That suite has ordinary pass and failure cases, a subtest that times out, a parent that times out while a subtest is still running, and a parent that returns before its subtest finishes. Each held test body returns late, or fails late, after it has been cancelled. The test checks that:
+  - each recorded end matches node:test's own outcome and its pass, fail and cancelled totals;
+  - each test ends exactly once and no records are rejected;
+  - cleanup recorded after the test ended stays with that test;
+  - no stderr text or failure message is kept, and the run still exits with code 1;
+  - after the failed run, finalizing gives `native-failed`, keeps valid closed observations, and uploads the manifest, result and observations files.
+- **#539** (test at line 1510):
+  - For each of `contenders`, `acquired`, `refused` and `other`, changing that one field alone is rejected by the existing sum check (`validateRecord(...) === false`).
+  - A balanced variant that changes two fields is accepted as a single row while the trial's other records stay the same. It then gives exactly `['contention-trials']` as missing: `incomplete`/exit 1 on native success and `native-failed`/exit 0 on native failure. The observations file stays byte-for-byte the same and is uploaded.
+  - It also checks that a repeated totals row is refused (`records-rejected`), and that two rows for one trial never complete it.
+- `CHANGELOG.md` (lines 8 and 16) and `docs/10-testing-and-quality.md` (lines 197 and 199) both mention #534 and #539.
+
+**Gaps:**
+- I couldn't read the full diff, because only `git diff --check` is in the command contract. Reviewing the change itself is left to the independent GPT review.
+- Coverage was measured only for `windows-launcher-evidence.mjs`. I didn't run the whole-package tooling coverage gate, broader tests, built-API acceptance tests or CI, as the contract asked.
+- No provider completion is claimed for the earlier invocations. These results are from this run of the current candidate only.
+- Separate Claude QA, CI, publication and issue updates are still open for the orchestrator.
