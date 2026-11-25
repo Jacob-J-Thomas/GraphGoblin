@@ -8,6 +8,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
   database. Default database configuration also encodes the data directory as a file URL.
   No store format change or stored-content rewrite is required.
+  **Upgrade:** with `GG_DB_URL` unset, a data directory path containing a percent escape now
+  selects a different database file: `GG_DATA_DIR='/example/active %41'` used to open
+  `/example/active A/graphgoblin.db` and now opens `/example/active %41/graphgoblin.db`. If that
+  file is absent, startup creates an empty store, so existing data seems missing and new writes go to it. The earlier
+  database is not changed or removed, and `master.key` and artifacts stay in the data directory.
+  Before the first start, identify the earlier database from evidence, stop its gateway and back
+  it up with its `-wal`/`-shm` files, `master.key` and artifacts. A shell start can then keep
+  `GG_DATA_DIR` and set an escaped `GG_DB_URL` for that file; the macOS launcher accepts no
+  external database, so restore the stopped store into an empty data directory instead. This is not
+  a format change: do not reset. See
+  [Same-format upgrade: default database location](docs/guide/08-offline-upgrade.md#same-format-upgrade-default-database-location).
 
 - Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
   macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
@@ -18,6 +29,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   independent identities and logs. Private gateway logs share the existing bounded writer,
   with a Darwin directory reservation and a local-key check after both writer leases.
   Installation and cold launch tolerate malformed inherited locale values.
+  Managed replacement applies the same file permission rules to admission and cleanup, checks
+  every managed bundle object for unexpected ACL entries, and refuses case-alias overlaps
+  between the app and its inputs before publication.
   Graphical and headless launches now deliver a conservative outcome when a system call remains
   blocked past the attempt budget, and refuse a successful handoff that arrives after the budget
   or Quit. This does not grant folder permissions or stop a gateway whose start was committed.

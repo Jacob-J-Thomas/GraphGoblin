@@ -74,13 +74,12 @@ package enum LauncherInstaller {
         let target = applications.path + "/" + name
         let inputs = [config.checkout, config.dataDirectory, config.node, releaseBinary]
             + [config.codexBinary, config.claudeBinary].compactMap { $0 }
-        guard !inputs.contains(where: { overlapping(target, $0) }) else {
-            throw InstallerRefusal.destination
-        }
+        guard try disjoint(target, inputs) else { throw InstallerRefusal.destination }
 
         let stageName = InstallationFiles.stagePrefix + installationID()
-        guard !inputs.contains(where: { overlapping(applications.path + "/" + stageName, $0) })
-        else { throw InstallerRefusal.destination }
+        guard try disjoint(applications.path + "/" + stageName, inputs) else {
+            throw InstallerRefusal.destination
+        }
         let stage = try applications.createDirectory(stageName)
         try requireSafeACL(stage.handle, ancestor: false)
         guard applications.identity.device == stage.identity.device else { throw InstallerRefusal.staging }
@@ -293,9 +292,10 @@ package enum LauncherInstaller {
             let contents = try app.child("Contents")
             let executable = try contents.child("MacOS")
             let resources = try contents.child("Resources")
-            try unlink(executable, "GraphGoblin")
-            try unlink(resources, "launcher.json")
-            try unlink(contents, "Info.plist")
+            // Each file is removed under the same mode rule InstallationFiles.inspect admitted it with.
+            try unlink(executable, "GraphGoblin", privateMode: false)
+            try unlink(resources, "launcher.json", privateMode: true)
+            try unlink(contents, "Info.plist", privateMode: false)
             try removeDirectory(contents, "MacOS", executable.identity)
             try removeDirectory(contents, "Resources", resources.identity)
             try removeDirectory(app, "Contents", contents.identity)
@@ -304,9 +304,9 @@ package enum LauncherInstaller {
         try removeDirectory(applications, stageName, stage.identity)
     }
 
-    private static func unlink(_ parent: Directory, _ name: String) throws {
-        let file = try parent.openRegular(name, privateMode: true)
-        try parent.match(name, file, privateMode: true)
+    private static func unlink(_ parent: Directory, _ name: String, privateMode: Bool) throws {
+        let file = try parent.openRegular(name, privateMode: privateMode)
+        try parent.match(name, file, privateMode: privateMode)
         guard unlinkat(parent.fd, name, 0) == 0 else { throw FileRefusal.system(errno) }
     }
 
@@ -315,8 +315,77 @@ package enum LauncherInstaller {
               unlinkat(parent.fd, name, AT_REMOVEDIR) == 0 else { throw FileRefusal.invalid }
     }
 
-    private static func overlapping(_ a: String, _ b: String) -> Bool {
-        a == b || a.hasPrefix(b == "/" ? "/" : b + "/") || b.hasPrefix(a + "/")
+    private static func disjoint(_ destination: String, _ inputs: [String]) throws -> Bool {
+        do {
+            return try !inputs.contains { try overlapping(destination, $0) }
+        } catch {
+            // A name comparison the volume cannot answer never admits a destination.
+            throw InstallerRefusal.destination
+        }
+    }
+
+    /// Whether one absolute path names the other or an ancestor of it. Components are compared
+    /// one at a time. Equal spellings continue. Different spellings consult the shared parent:
+    /// two existing entries are compared by identity; otherwise the nearest existing ancestor's
+    /// own name semantics decide, because a missing entry will be created on that volume.
+    static func overlapping(
+        _ a: String, _ b: String,
+        caseSensitive: (Directory) throws -> Bool = LauncherInstaller.caseSensitiveNames
+    ) throws -> Bool {
+        let left = a.split(separator: "/").map(String.init)
+        let right = b.split(separator: "/").map(String.init)
+        guard absolutePath(a), absolutePath(b), (left + right).allSatisfy(safeComponent) else {
+            throw FileRefusal.invalid
+        }
+        var parent: [String] = []
+        for (mine, theirs) in zip(left, right) {
+            if mine != theirs,
+               try !sameEntry(mine, theirs, parent: parent, caseSensitive: caseSensitive) {
+                return false
+            }
+            parent.append(mine)
+        }
+        return true
+    }
+
+    private static func sameEntry(
+        _ mine: String, _ theirs: String, parent: [String], caseSensitive: (Directory) throws -> Bool
+    ) throws -> Bool {
+        var ancestor = parent
+        while true {
+            let directory: Directory
+            do {
+                directory = try Directory(path: "/" + ancestor.joined(separator: "/"))
+            } catch FileRefusal.system(let code) where code == ENOENT && !ancestor.isEmpty {
+                ancestor.removeLast()
+                continue
+            }
+            if ancestor.count == parent.count {
+                let left = try directory.named(mine)
+                let right = try directory.named(theirs)
+                switch (left, right) {
+                case let (found?, other?): return FileIdentity(found) == FileIdentity(other)
+                case (nil, nil): break
+                default: return false
+                }
+            }
+            if try caseSensitive(directory) { return false }
+            // Explicit non-localized folding: inherited LANG or locale never changes the answer.
+            return mine.compare(theirs, options: .caseInsensitive, range: nil, locale: nil) == .orderedSame
+        }
+    }
+
+    static func caseSensitiveNames(_ directory: Directory) throws -> Bool {
+        errno = 0
+        return try caseSensitivity(fpathconf(directory.fd, Int32(_PC_CASE_SENSITIVE)))
+    }
+
+    static func caseSensitivity(_ answer: Int) throws -> Bool {
+        switch answer {
+        case 1: return true
+        case 0: return false
+        default: throw FileRefusal.system(errno)
+        }
     }
 
     private static func installationID() -> String {

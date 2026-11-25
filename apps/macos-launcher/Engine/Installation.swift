@@ -289,24 +289,31 @@ package enum InstallationFiles {
     }
 
     package static func inspect(_ bundle: Directory) throws -> BundleContents {
+        // Every managed object is a non-ancestor: any present ACL entry beyond an empty list refuses.
         try bundle.requireOwnedDirectory()
+        try requireSafeACL(bundle.handle, ancestor: false)
         guard try bundle.names() == ["Contents"] else { throw FileRefusal.invalid }
         let contents = try bundle.child("Contents")
         try contents.requireOwnedDirectory()
+        try requireSafeACL(contents.handle, ancestor: false)
         guard try contents.names() == ["Info.plist", "MacOS", "Resources"] else { throw FileRefusal.invalid }
         let macOS = try contents.child("MacOS")
         let resources = try contents.child("Resources")
         try macOS.requireOwnedDirectory()
+        try requireSafeACL(macOS.handle, ancestor: false)
         try resources.requireOwnedDirectory()
+        try requireSafeACL(resources.handle, ancestor: false)
         guard try macOS.names() == ["GraphGoblin"], try resources.names() == ["launcher.json"] else {
             throw FileRefusal.invalid
         }
         let executable = try macOS.openRegular("GraphGoblin")
+        try requireSafeACL(executable, ancestor: false)
         let executableDigest = try fileSHA256(executable)
         guard try executable.metadata().st_mode & 0o100 != 0 else { throw FileRefusal.invalid }
         try macOS.match("GraphGoblin", executable, privateMode: false)
 
         let plist = try contents.openRegular("Info.plist")
+        try requireSafeACL(plist, ancestor: false)
         let plistBytes = try readBounded(plist, maximum: 16_384)
         try contents.match("Info.plist", plist, privateMode: false)
         guard let properties = try PropertyListSerialization.propertyList(
@@ -316,6 +323,7 @@ package enum InstallationFiles {
               let id = properties[idKey] as? String, asciiHex(id, count: 32),
               let bundleID = properties["CFBundleIdentifier"] as? String else { throw FileRefusal.invalid }
         let config = try resources.openRegular("launcher.json", privateMode: true)
+        try requireSafeACL(config, ancestor: false)
         let configBytes = try readBounded(config, maximum: 32_768)
         try resources.match("launcher.json", config, privateMode: true)
         return BundleContents(id: id, bundleID: bundleID, witness: BundleWitness(

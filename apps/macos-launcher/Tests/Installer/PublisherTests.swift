@@ -4,6 +4,40 @@ import Foundation
 @testable import LauncherInstaller
 import Testing
 
+/// Attaches one read entry naming a fresh random principal, so the entry allows or denies nobody real.
+/// Only use it on disposable objects the test created.
+func attachHarmlessACL(_ fd: Int32, tag: acl_tag_t = ACL_EXTENDED_ALLOW) throws {
+    var list: acl_t? = acl_init(1)
+    defer { if let list { _ = acl_free(UnsafeMutableRawPointer(list)) } }
+    var entry: acl_entry_t?
+    try #require(list != nil)
+    try #require(acl_create_entry(&list, &entry) == 0)
+    let created = try #require(entry)
+    try #require(acl_set_tag_type(created, tag) == 0)
+    let principal = UUID().uuid
+    let qualified = withUnsafeBytes(of: principal) { acl_set_qualifier(created, $0.baseAddress) }
+    try #require(qualified == 0)
+    var permissions: acl_permset_t?
+    try #require(acl_get_permset(created, &permissions) == 0)
+    let granted = try #require(permissions)
+    try #require(acl_add_perm(granted, ACL_READ_DATA) == 0)
+    try #require(acl_set_permset(created, granted) == 0)
+    try #require(acl_set_fd_np(fd, list, ACL_TYPE_EXTENDED) == 0)
+    let state = try classifyACL(fd)
+    let expected: ACLClassification = tag == ACL_EXTENDED_ALLOW ? .allowsAccess : .denyOnly
+    try #require(state == expected)
+}
+
+/// Replaces the object's ACL with an empty list; the classifier must then report absent or empty.
+func clearACL(_ fd: Int32) throws {
+    let empty: acl_t? = acl_init(0)
+    defer { if let empty { _ = acl_free(UnsafeMutableRawPointer(empty)) } }
+    try #require(empty != nil)
+    try #require(acl_set_fd_np(fd, empty, ACL_TYPE_EXTENDED) == 0)
+    let state = try classifyACL(fd)
+    try #require(state == .absent || state == .empty)
+}
+
 @Suite struct PublisherTests {
     private struct Fixture {
         let root: Directory
@@ -264,6 +298,36 @@ import Testing
             #expect(try readBounded(contents.openRegular("Info.plist"), maximum: 16_384) == incomplete)
             try contents.match("Info.plist", witness, privateMode: true)
             #expect(try binaryDirectory.named("GraphGoblin").map(FileIdentity.init) == binaryIdentity)
+        }
+    }
+
+    @Test func bundleInspectionRefusesAnyACLEntryOnEveryManagedObject() throws {
+        try fixture { fixture in
+            let baseline = try fixture.bundle(in: fixture.applications, marker: "installed")
+            let bundle = try fixture.applications.child(fixture.name)
+            let contents = try bundle.child("Contents")
+            let binaries = try contents.child("MacOS")
+            let resources = try contents.child("Resources")
+            let managed: [(String, OwnedDescriptor)] = [
+                ("bundle", bundle.handle), ("Contents", contents.handle), ("MacOS", binaries.handle),
+                ("Resources", resources.handle), ("GraphGoblin", try binaries.openRegular("GraphGoblin")),
+                ("Info.plist", try contents.openRegular("Info.plist")),
+                ("launcher.json", try resources.openRegular("launcher.json", privateMode: true))
+            ]
+            let identities = try managed.map { FileIdentity(try $0.1.metadata()) }
+            for (label, handle) in managed {
+                let initial = try classifyACL(handle.fd)
+                #expect(initial == .absent || initial == .empty, "\(label)")
+                // Deny-only lists are tolerated on ancestors only; a managed object refuses both kinds.
+                for tag in [ACL_EXTENDED_ALLOW, ACL_EXTENDED_DENY] {
+                    try attachHarmlessACL(handle.fd, tag: tag)
+                    #expect(throws: FileRefusal.self, "\(label)") { try InstallationFiles.inspect(bundle) }
+                    try clearACL(handle.fd)
+                    #expect(try InstallationFiles.inspect(bundle).witness == baseline, "\(label)")
+                }
+            }
+            #expect(try managed.map { FileIdentity(try $0.1.metadata()) } == identities)
+            #expect(try fixture.applications.child(fixture.name).identity == baseline.bundle)
         }
     }
 
