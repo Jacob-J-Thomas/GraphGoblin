@@ -1,0 +1,174 @@
+{
+  "mode": "hosted",
+  "exitCode": 0,
+  "sourceUnchanged": true,
+  "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a",
+  "before": {
+    "head": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "tree": "806813008973429e85c18f343f2cbffaef9d91f9",
+    "branch": "codex/gg-fu-jsonata-package-20261124",
+    "clean": true,
+    "parents": [
+      "7064dab41e11f38229a31a8626f930a8f139b915",
+      "631d16e39b8e9932f4763390a4166fa67eea8df3"
+    ],
+    "sourceFilesSha256": {
+      ".github/workflows/ci.yml": "258392369515c01dacd4932a0a8ab90bd8001be3fd03159ced9734c484a14900",
+      "CHANGELOG.md": "73dd6a62f663e63e5ab826cc7b9adad05d3f4b6cd8b127dac1913086abff759d",
+      "docs/10-testing-and-quality.md": "9fc1557fdba75b892739890328a3b926e359371d3defbf5718a4e4861a63875f",
+      "docs/research/licenses.md": "b7bb8605b0f711b100f5111d5d6259f7ed29a45dab26d31d2adcc5cb855d7a88"
+    },
+    "indexSha256": "d60a33410d8cb7bbadf3f159f29ba1296ecae025fd5385a1fc9791edfe6021b5",
+    "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a"
+  },
+  "after": {
+    "head": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "tree": "806813008973429e85c18f343f2cbffaef9d91f9",
+    "branch": "codex/gg-fu-jsonata-package-20261124",
+    "clean": true,
+    "parents": [
+      "7064dab41e11f38229a31a8626f930a8f139b915",
+      "631d16e39b8e9932f4763390a4166fa67eea8df3"
+    ],
+    "sourceFilesSha256": {
+      ".github/workflows/ci.yml": "258392369515c01dacd4932a0a8ab90bd8001be3fd03159ced9734c484a14900",
+      "CHANGELOG.md": "73dd6a62f663e63e5ab826cc7b9adad05d3f4b6cd8b127dac1913086abff759d",
+      "docs/10-testing-and-quality.md": "9fc1557fdba75b892739890328a3b926e359371d3defbf5718a4e4861a63875f",
+      "docs/research/licenses.md": "b7bb8605b0f711b100f5111d5d6259f7ed29a45dab26d31d2adcc5cb855d7a88"
+    },
+    "indexSha256": "d60a33410d8cb7bbadf3f159f29ba1296ecae025fd5385a1fc9791edfe6021b5",
+    "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a"
+  },
+  "result": {
+    "runId": 45542221565,
+    "runHead": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "runAttempt": 1,
+    "workflowStatus": "completed",
+    "workflowConclusion": "success",
+    "workflowPullRequestReadback": [
+      {
+        "number": 571,
+        "head": "d312119ccbb8be2690fe719d460f31ee0a804221",
+        "base": "631d16e39b8e9932f4763390a4166fa67eea8df3"
+      }
+    ],
+    "jobId": 138963218351,
+    "jobStatus": "completed",
+    "jobConclusion": "success",
+    "steps": [
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-11-25T03:46:06Z",
+        "completed_at": "2026-11-25T03:46:32Z"
+      },
+      {
+        "name": "Build the distributed image",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-11-25T03:46:32Z",
+        "completed_at": "2026-11-25T03:48:11Z"
+      },
+      {
+        "name": "Load installed templates without network or writable storage",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-11-25T03:48:11Z",
+        "completed_at": "2026-11-25T03:48:15Z"
+      },
+      {
+        "name": "Evaluate expressions with the installed JSONata patch",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-11-25T03:48:15Z",
+        "completed_at": "2026-11-25T03:48:16Z"
+      }
+    ],
+    "checkoutTree": "806813008973429e85c18f343f2cbffaef9d91f9",
+    "checkoutParents": [
+      "631d16e39b8e9932f4763390a4166fa67eea8df3",
+      "d312119ccbb8be2690fe719d460f31ee0a804221"
+    ],
+    "logFile": "template-image.raw.log",
+    "logSha256": "bbe322326e76e2517562354c6792751af8d7f6a4711e016f432ff7380897977e",
+    "logBytes": 45990,
+    "checkoutLogged": "ad2bab47f4d9d70a63737bb10e8b6083cb905cff",
+    "buildCommand": "docker build --tag graphgoblin-template-check .",
+    "containerCommand": "docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --workdir /app/apps/api --entrypoint node graphgoblin-template-check --input-type=module <<'JS'",
+    "loggedProbeSha256": "062bb6e33b4bf80dcf0c2a0c4519a89497d128abbd4b58907a6daad47eadd06d",
+    "result": {
+      "check": "installed-jsonata-patch",
+      "ordinary": 3,
+      "wideSiblings": 250,
+      "depth": {
+        "reason": "depth",
+        "message": "expression exceeded max depth 0"
+      },
+      "time": {
+        "reason": "time",
+        "message": "expression exceeded -1ms"
+      },
+      "fresh": 1
+    },
+    "exportDigestLines": [
+      "#20 exporting manifest sha256:67c1f35f8c00ebc936fa4c2e78a165f72108821a6b27744d942437fd42683d1b done",
+      "#20 exporting config sha256:b18af31b7f73bbd350b62f957bd2f8d7de6287b795893412e8cf7274788e7bf1 done"
+    ],
+    "sourceOfEvidence": "GitHub Actions container stdout",
+    "historicalResults": {
+      "originalPublication": {
+        "runId": 45530276243,
+        "jobId": 138923566196,
+        "runHead": "87dcfec6883568494f75d8279347110e5bf62e01",
+        "target": "d2df8600c2c8574bec420947de686b936910b245",
+        "checkoutLogged": "2385c4f14b0e0ad7c7fb554fe7bdfa15848ae1da",
+        "logSha256": "32efa5405af92aedb1e47dc7e60507f9afb4cd251bedbc647f32d22e70f6b776",
+        "result": {
+          "check": "installed-jsonata-patch",
+          "ordinary": 3,
+          "wideSiblings": 250,
+          "depth": {
+            "reason": "depth",
+            "message": "expression exceeded max depth 0"
+          },
+          "time": {
+            "reason": "time",
+            "message": "expression exceeded -1ms"
+          },
+          "fresh": 1
+        },
+        "limit": "Historical run; never substitutes for the current integrated image."
+      },
+      "priorIntegration": {
+        "runId": 45533399432,
+        "jobId": 138934022396,
+        "runHead": "7064dab41e11f38229a31a8626f930a8f139b915",
+        "target": "154e78d54ee485330816d606032280de44d6e891",
+        "checkoutLogged": "1d79c2f3b17ceab7c410e460aff894da6ab8d738",
+        "logSha256": "a11f21f9efb4a48a5fcd24b6501f37d0f10f4b69b9892cfb86c093d76134e559",
+        "result": {
+          "check": "installed-jsonata-patch",
+          "ordinary": 3,
+          "wideSiblings": 250,
+          "depth": {
+            "reason": "depth",
+            "message": "expression exceeded max depth 0"
+          },
+          "time": {
+            "reason": "time",
+            "message": "expression exceeded -1ms"
+          },
+          "fresh": 1
+        },
+        "limit": "Historical run; never substitutes for the current integrated image."
+      }
+    }
+  },
+  "error": null,
+  "capturedAt": "2026-11-25T05:38:08.077603+00:00"
+}
