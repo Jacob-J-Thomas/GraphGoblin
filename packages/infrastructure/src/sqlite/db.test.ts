@@ -1,17 +1,19 @@
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { Client, Transaction } from '@libsql/client';
+import { createClient, type Client, type Transaction } from '@libsql/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   Mutex,
   YIELD_INTERVAL_MS,
   databaseFilePath,
   openDatabase,
+  openReadOnlyDatabaseClient,
   serializeClient,
   type DatabaseHandle,
 } from './db.js';
+import { guardCurrentStore } from './store-format.js';
 
 const handles: DatabaseHandle[] = [];
 const dirs: string[] = [];
@@ -232,6 +234,141 @@ describe('databaseFilePath', () => {
     const path = databaseFilePath(url);
     expect(path).toBe(join(dir, 'space db.sqlite'));
     expect(existsSync(path!)).toBe(true);
+  });
+});
+
+describe('openReadOnlyDatabaseClient', () => {
+  /** Every entry below `dir`, sorted, so a test can show nothing appeared anywhere in it. */
+  function tree(dir: string): string[] {
+    return readdirSync(dir, { recursive: true, encoding: 'utf8' }).sort();
+  }
+
+  /** A one-row SQLite file written at its literal path by an ordinary (non-URI) connection. */
+  async function writeMarkedFile(file: string, marker: string): Promise<void> {
+    mkdirSync(dirname(file), { recursive: true });
+    const client = createClient({ url: pathToFileURL(file).href });
+    try {
+      await client.execute('CREATE TABLE probe (marker TEXT NOT NULL)');
+      await client.execute({ sql: 'INSERT INTO probe (marker) VALUES (?)', args: [marker] });
+    } finally {
+      client.close();
+    }
+    expect(existsSync(file)).toBe(true);
+  }
+
+  async function readMarker(client: Client): Promise<unknown> {
+    return (await client.execute('SELECT marker FROM probe')).rows[0]?.['marker'];
+  }
+
+  function caseRoot(): string {
+    const root = mkdtempSync(join(tmpdir(), 'gg-ro-'));
+    dirs.push(root);
+    return root;
+  }
+
+  // `file` is the intended database below a fresh root; a mis-parsed name would open a decoy
+  // instead, create a stray file, or open in another mode. Windows refuses `?` in file names and
+  // treats `\` as a separator, so those names are POSIX-only.
+  const names: { name: string; file: string; decoys?: string[]; posixOnly?: true }[] = [
+    { name: 'an ordinary name', file: join('data', 'graphgoblin.db') },
+    {
+      name: 'a percent escape, spaces and a fragment',
+      file: join('uri-probe %41 #1', 'probe.db'),
+    },
+    {
+      name: 'a percent-encoded parent step',
+      file: join('inner', '%2E%2E%2Fdecoy.db'),
+      decoys: ['decoy.db'],
+    },
+    // `e` and a combining acute accent (NFD), spelled out so no editor can recompose it.
+    { name: 'decomposed Unicode', file: 'Cafe' + String.fromCodePoint(0x301) + ' store.db' },
+    {
+      name: 'a query asking for read-write-create',
+      file: 'store?mode=rwc&x=.db',
+      posixOnly: true,
+    },
+    { name: 'a query asking for memory', file: 'store?mode=memory&x=.db', posixOnly: true },
+    {
+      name: 'a backslash',
+      file: 'a\\b.db',
+      decoys: [join('a', 'b.db')],
+      posixOnly: true,
+    },
+  ];
+  const cases = names.filter((entry) => !(entry.posixOnly && process.platform === 'win32'));
+
+  it.each(cases)(
+    'reads only the named file, read-only, through $name',
+    async ({ file, decoys = [] }) => {
+      const root = caseRoot();
+      const intended = join(root, file);
+      for (const decoy of decoys) await writeMarkedFile(join(root, decoy), 'decoy');
+      await writeMarkedFile(intended, 'intended');
+      const before = tree(root);
+      const bytes = readFileSync(intended);
+      for (const path of [intended, relative(process.cwd(), intended)]) {
+        const client = openReadOnlyDatabaseClient(path);
+        try {
+          expect(await readMarker(client)).toBe('intended');
+          await expect(
+            client.execute("INSERT INTO probe (marker) VALUES ('written')"),
+          ).rejects.toMatchObject({ code: 'SQLITE_READONLY' });
+          await expect(client.execute('CREATE TABLE intruder (x)')).rejects.toMatchObject({
+            code: 'SQLITE_READONLY',
+          });
+        } finally {
+          client.close();
+        }
+      }
+      expect(tree(root)).toEqual(before);
+      expect(readFileSync(intended).equals(bytes)).toBe(true);
+    },
+  );
+
+  it.each(cases)(
+    'refuses a missing file through $name and creates nothing',
+    async ({ file, decoys = [] }) => {
+      const root = caseRoot();
+      const intended = join(root, file);
+      mkdirSync(dirname(intended), { recursive: true });
+      for (const decoy of decoys) await writeMarkedFile(join(root, decoy), 'decoy');
+      const before = tree(root);
+      expect(() => openReadOnlyDatabaseClient(intended)).toThrow();
+      expect(tree(root)).toEqual(before);
+      // The same name opens once the file exists: the refusal was the missing file, not the name.
+      await writeMarkedFile(intended, 'intended');
+      const client = openReadOnlyDatabaseClient(intended);
+      try {
+        expect(await readMarker(client)).toBe('intended');
+      } finally {
+        client.close();
+      }
+    },
+  );
+
+  it('guards the current store behind a hostile path, not a fresh one', async () => {
+    const root = caseRoot();
+    const file = join(root, 'uri-probe %41 #1', 'graphgoblin.db');
+    mkdirSync(dirname(file), { recursive: true });
+    const handle = openDatabase({ url: pathToFileURL(file).href });
+    handles.push(handle);
+    await handle.migrate();
+    handle.close();
+    const client = openReadOnlyDatabaseClient(file);
+    try {
+      await expect(guardCurrentStore(client)).resolves.toBe('current');
+    } finally {
+      client.close();
+    }
+    // The name SQLite would read without escaping: `%41` decoded and everything from `#` dropped.
+    expect(existsSync(join(root, 'uri-probe A '))).toBe(false);
+    expect(readdirSync(root)).toEqual(['uri-probe %41 #1']);
+  });
+
+  it('refuses a path holding a NUL before opening anything', () => {
+    const root = caseRoot();
+    expect(() => openReadOnlyDatabaseClient(join(root, 'store.db\0.db'))).toThrow(TypeError);
+    expect(tree(root)).toEqual([]);
   });
 });
 

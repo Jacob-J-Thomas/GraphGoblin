@@ -1,0 +1,900 @@
+diff --git a/apps/macos-launcher/Tests/Engine/ChildTests.swift b/apps/macos-launcher/Tests/Engine/ChildTests.swift
+index 9c288df0..bce5d56f 100644
+--- a/apps/macos-launcher/Tests/Engine/ChildTests.swift
++++ b/apps/macos-launcher/Tests/Engine/ChildTests.swift
+@@ -5,6 +5,35 @@ import Foundation
+ import Testing
+ 
+ @Suite struct ChildTests {
++    @Test func nulInArgumentsOrEnvironmentIsRefusedBeforeSpawning() throws {
++        try normalizeChildStatusDisposition()
++        let scratch = try TemporaryEngineDirectory()
++        defer { scratch.remove() }
++        let cwd = scratch.root.path
++        let program = #"printf '%s|%s\n' "$1" "$CANARY" > spawned"#
++        let arguments = ["-c", program, "fixture"]
++        for (argument, environment) in [("visible\0hidden", "intact"), ("visible", "intact\0hidden")] {
++            do {
++                _ = try captureReadOnly(
++                    executable: "/bin/sh", arguments: arguments + [argument],
++                    cwd: cwd, environment: ["CANARY": environment], time: AttemptTime(seconds: 3)
++                )
++                Issue.record("The helper accepted an embedded NUL")
++            } catch ChildSpawnError.noChild {
++                #expect(try scratch.root.named("spawned") == nil)
++            }
++        }
++        let valid = try captureReadOnly(
++            executable: "/bin/sh", arguments: arguments + ["visible"],
++            cwd: cwd, environment: ["CANARY": "intact"], time: AttemptTime(seconds: 3)
++        )
++        #expect(valid.exitCode == 0)
++        #expect(valid.stdout.isEmpty && valid.stderr.isEmpty)
++        #expect(try readBounded(scratch.root.openRegular("spawned"), maximum: 64)
++                == Data("visible|intact\n".utf8))
++        #expect(try scratch.root.names() == ["spawned"])
++    }
++
+     @Test func twoStreamsAndVerifiedExit() throws {
+         try normalizeChildStatusDisposition()
+         let output = try captureReadOnly(
+diff --git a/apps/macos-launcher/Tests/Engine/DiagnosticsTests.swift b/apps/macos-launcher/Tests/Engine/DiagnosticsTests.swift
+index 0799fb9a..efbde31a 100644
+--- a/apps/macos-launcher/Tests/Engine/DiagnosticsTests.swift
++++ b/apps/macos-launcher/Tests/Engine/DiagnosticsTests.swift
+@@ -44,6 +44,48 @@ private struct DiagnosticFixture {
+ }
+ 
+ @Suite struct DiagnosticsTests {
++    @Test func standardAndAlternateDiagnosticsKeepDistinctPrivatePaths() throws {
++        let scratch = try TemporaryEngineDirectory()
++        defer { scratch.remove() }
++        let id = "0123456789abcd0123456789abcd0123"
++        let config = try LauncherConfiguration(
++            checkout: scratch.root.path, node: "/bin/sh", dataDirectory: scratch.root.path + "/store",
++            port: 45123, requireAPIKey: false, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
++        )
++        let witness = BundleWitness(bundle: scratch.root.identity, executable: "", plist: "", configuration: "")
++        func openLog(_ name: String) throws -> LogDirectory {
++            let contents = BundleContents(
++                id: id, bundleID: AppName.bundleID(name: name, id: id), witness: witness, configuration: config
++            )
++            return try LogDirectory.open(
++                for: VerifiedInstallation(home: scratch.root.path, name: name, contents: contents), create: true
++            )
++        }
++        #expect(AppName.bundleID(name: AppName.standard, id: id) == "com.graphgoblin.launcher")
++        let standard = try openLog(AppName.standard)
++        let alternate = try openLog("GraphGoblin QA fixture.app")
++        #expect(standard.root.path == scratch.root.path + "/Library/Logs/GraphGoblin/Launcher")
++        #expect(alternate.root.path == scratch.root.path + "/Library/Logs/GraphGoblin/LauncherInstances/" + id)
++        #expect(standard.root.identity != alternate.root.identity)
++        try #require(fchmod(standard.root.fd, 0o500) == 0)
++        defer { _ = fchmod(standard.root.fd, 0o700) }
++        do {
++            _ = try standard.gatewayAdmission()
++            Issue.record("Gateway admission authorized a private directory without write access")
++        } catch FileRefusal.system(let code) {
++            #expect(code == EACCES)
++        }
++        _ = try alternate.gatewayAdmission()
++        #expect(try standard.root.names().isEmpty)
++        #expect(try alternate.root.names().isEmpty)
++    }
++
++    @Test func malformedDiagnosticIdentityCannotProduceAnAdmissionRecord() throws {
++        let payload = Data(#"{"device":"18446744073709551616","inode":"7"}"#.utf8)
++        let identity = try JSONDecoder().decode(FileIdentity.self, from: payload)
++        #expect(throws: FileRefusal.self) { try admissionDocument(path: "/private/logs", identity: identity) }
++    }
++
+     @Test func admitsMissingAndPrivateGatewaySlotsWithoutMutatingThem() throws {
+         let fixture = try DiagnosticFixture()
+         defer { fixture.scratch.remove() }
+diff --git a/apps/macos-launcher/Tests/Engine/InstalledEngineTests.swift b/apps/macos-launcher/Tests/Engine/InstalledEngineTests.swift
+index 0c71e314..5e31fe92 100644
+--- a/apps/macos-launcher/Tests/Engine/InstalledEngineTests.swift
++++ b/apps/macos-launcher/Tests/Engine/InstalledEngineTests.swift
+@@ -215,6 +215,34 @@ struct InstalledEngineTests {
+         try fixture.clean()
+     }
+ 
++    @Test func warmPeerNeedsBothExactShellsEvenAfterIdentityRecovers() async throws {
++        let hosted = try HostedEngineFixture()
++        let peer = try ScriptedLoopbackPeer([
++            .bytes(LoopbackTests.health(phase: "not-a-phase")),
++            .bytes(LoopbackTests.health()),
++            .bytes(LoopbackTests.shell(LoopbackTests.app)),
++            .bytes(LoopbackTests.shell(Data("<html>unrelated</html>".utf8))),
++            .bytes(LoopbackTests.health())
++        ])
++        let fixture = try BoundEngineInstallation(
++            hosted: hosted, port: peer.port, main: "throw new Error('must not run')"
++        )
++        let progress = EngineProgress()
++        let result = HeadlessResult(await fixture.engine().run { progress.append($0) })
++        try #require(result.bytes == Data(#"{"version":1,"code":"assets-unavailable"}"#.utf8) + Data([10]))
++        try #require(result.exitCode == 12)
++        try #require(progress.values == ["checking"])
++        let requests = try peer.requests()
++        #expect(requests.compactMap { $0.split(separator: " ").dropFirst().first.map { String($0) } }
++                == ["/healthz", "/healthz", "/app/", "/goblin/", "/healthz"])
++        try #require(try fixture.root.named("store") == nil)
++        let log = try fixture.logDirectory(create: false)
++        try #require(try log.root.names() == ["launcher.log"])
++        #expect(try readBounded(log.root.openRegular("launcher.log"), maximum: 4_096)
++                == Data("stage=checking outcome=assets-unavailable\n".utf8))
++        try fixture.clean(logRoots: [log.root])
++    }
++
+     @Test func coldCommitBindsDirectChildAndWarmAttemptKeepsItsPID() async throws {
+         let hosted = try HostedEngineFixture()
+         var reservation = try FixturePortReservation()
+diff --git a/apps/macos-launcher/Tests/Engine/LaunchInputsTests.swift b/apps/macos-launcher/Tests/Engine/LaunchInputsTests.swift
+index 0b81b996..cfb6fc7c 100644
+--- a/apps/macos-launcher/Tests/Engine/LaunchInputsTests.swift
++++ b/apps/macos-launcher/Tests/Engine/LaunchInputsTests.swift
+@@ -134,6 +134,78 @@ struct EngineCheckout {
+         }
+     }
+ 
++    @Test func changedPathAliasesCannotChangeSavedLaunchInputs() throws {
++        try fixture { scratch, checkout, config in
++            let aliases = try scratch.root.createDirectory("aliases")
++            try #require(symlinkat(checkout.root.path, aliases.fd, "checkout") == 0)
++            try #require(symlinkat(config.node, aliases.fd, "node") == 0)
++            let store = try scratch.root.createDirectory("store")
++            try #require(symlinkat(store.path, aliases.fd, "store") == 0)
++            let raw = try #require(JSONSerialization.jsonObject(with: config.encode()) as? [String: Any])
++
++            for (field, alias, refusal) in [
++                ("checkout", "checkout", "installation-invalid"),
++                ("dataDirectory", "store", "installation-invalid"),
++                ("node", "node", "runtime-unavailable"),
++                ("codexBinary", "node", "installation-invalid")
++            ] {
++                var record = raw
++                record[field] = aliases.path + "/" + alias
++                let saved = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: record))
++                expectLaunchRefusal(refusal) { _ = try inputs(scratch, saved) }
++            }
++            var positive = raw
++            positive["ollamaEnabled"] = true
++            let saved = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: positive))
++            let verified = try inputs(scratch, saved)
++            #expect(verified.environment["GG_OLLAMA_ENABLED"] == "true")
++            #expect(verified.config.dataDirectory == config.dataDirectory)
++            #expect(try store.names().isEmpty)
++            #expect(try scratch.root.named(URL(fileURLWithPath: config.dataDirectory).lastPathComponent) == nil)
++            #expect(try aliases.names() == ["checkout", "node", "store"])
++        }
++    }
++
++    @Test func savedConfigurationRejectsRelativeInputsAndZeroPort() throws {
++        try fixture { scratch, checkout, config in
++            let original = try config.encode()
++            var object = try #require(JSONSerialization.jsonObject(with: original) as? [String: Any])
++            object["dataDirectory"] = "relative/store"
++            let conflicting = try JSONSerialization.data(withJSONObject: object)
++            #expect(throws: FileRefusal.self) { try LauncherConfiguration(data: conflicting) }
++            #expect(throws: FileRefusal.self) { try canonicalProspectiveDirectory("relative/store") }
++            #expect(throws: FileRefusal.self) {
++                try LauncherConfiguration(
++                    checkout: checkout.root.path, node: config.node, dataDirectory: config.dataDirectory,
++                    port: 0, requireAPIKey: false, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
++                )
++            }
++            object["dataDirectory"] = "/"
++            let root = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: object))
++            #expect(root.database == "/graphgoblin.db")
++            #expect(root.databaseURI == "file:///graphgoblin.db")
++            #expect(try scratch.root.named(URL(fileURLWithPath: config.dataDirectory).lastPathComponent) == nil)
++        }
++    }
++
++    @Test func existingRegularFileCannotBecomeAStoreAncestor() throws {
++        try fixture { scratch, _, config in
++            let inputs = try inputs(scratch, config)
++            let storeName = URL(fileURLWithPath: config.dataDirectory).lastPathComponent
++            let file = try scratch.root.createFile(storeName)
++            let bytes = Data("existing regular file".utf8)
++            try writeAll(file, bytes)
++            let witness = FileIdentity(try file.metadata())
++
++            expectLaunchRefusal("key-source-unavailable") { try inputs.requireLocalKey() }
++            #expect(throws: FileRefusal.self) {
++                try canonicalProspectiveDirectory(config.dataDirectory + "/nested/store")
++            }
++            #expect(try scratch.root.named(storeName).map(FileIdentity.init) == witness)
++            #expect(try readBounded(scratch.root.openRegular(storeName), maximum: 64) == bytes)
++        }
++    }
++
+     @Test func absentEmptyAndKeyedStoresAreReadOnlyWhileKeylessContentIsRefused() throws {
+         try fixture { scratch, _, config in
+             let inputs = try inputs(scratch, config)
+diff --git a/apps/macos-launcher/Tests/Installer/PublisherTests.swift b/apps/macos-launcher/Tests/Installer/PublisherTests.swift
+index a2073047..521c8003 100644
+--- a/apps/macos-launcher/Tests/Installer/PublisherTests.swift
++++ b/apps/macos-launcher/Tests/Installer/PublisherTests.swift
+@@ -71,6 +71,9 @@ import Testing
+             let candidate = try fixture.bundle(in: fixture.stage, marker: "candidate")
+             let result = fixture.withPublisher(previous: nil, candidate: candidate).publish { false }
+             #expect(result == .targetAbsentVerified)
++            let message = InstallerResult.publicationFailed(result)
++            #expect(message.exitCode == 1)
++            #expect(message.output == "Publication failed. The installation destination was verified absent.")
+             #expect(try fixture.witness(fixture.applications) == nil)
+             #expect(try fixture.witness(fixture.stage) == candidate)
+         }
+@@ -93,7 +96,11 @@ import Testing
+             let read = try InstallationReceipt.read(from: fixture.receipts, id: fixture.id)
+             #expect(read.authorizesInstalled(prior))
+             #expect(read.authorizesInstalled(candidate))
+-            #expect(publisher.publish { false } == .previousInstallVerified)
++            let rolledBack = publisher.publish { false }
++            #expect(rolledBack == .previousInstallVerified)
++            let message = InstallerResult.publicationFailed(rolledBack)
++            #expect(message.exitCode == 1)
++            #expect(message.output == "Publication failed. The previous installation was verified.")
+             #expect(try fixture.witness(fixture.applications) == prior)
+             #expect(try fixture.witness(fixture.stage) == candidate)
+             #expect(publisher.publish() == .published)
+@@ -109,7 +116,11 @@ import Testing
+             let foreignBytes = Data("foreign".utf8)
+             try writeAll(foreign, foreignBytes)
+             let before = FileIdentity(try foreign.metadata())
+-            #expect(fixture.withPublisher(previous: nil, candidate: candidate).publish() == .recoveryRequired)
++            let result = fixture.withPublisher(previous: nil, candidate: candidate).publish()
++            #expect(result == .recoveryRequired)
++            let message = InstallerResult.publicationFailed(result)
++            #expect(message.exitCode == 1)
++            #expect(message.output == "Publication could not be verified. Installer recovery is required.")
+             let stillForeign = try fixture.applications.openRegular(fixture.name)
+             #expect(FileIdentity(try stillForeign.metadata()) == before)
+             #expect(try readBounded(stillForeign, maximum: 64) == foreignBytes)
+@@ -150,6 +161,112 @@ import Testing
+         }
+     }
+ 
++    @Test func alternateReceiptSchemasCannotAuthorizeAGenuineBundle() throws {
++        try fixture { fixture in
++            let installed = try fixture.bundle(in: fixture.applications, marker: "installed")
++            let staged = try fixture.bundle(in: fixture.stage, marker: "staged")
++            let stageName = URL(fileURLWithPath: fixture.stage.path).lastPathComponent
++            let stable = InstallationReceipt(
++                id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++                installed: installed, staged: staged, stageName: stageName
++            )
++            let bytes = try stable.encode()
++            let fileName = fixture.id + ".json"
++            try writeAll(fixture.receipts.createFile(fileName), bytes)
++            let verified = try InstallationReceipt.read(from: fixture.receipts, id: fixture.id)
++            #expect(verified.authorizesInstalled(installed) && verified.authorizesInstalled(staged))
++            #expect(throws: FileRefusal.self) { try InstallationReceipt.read(from: fixture.receipts, id: "../escape") }
++            let malformedWitness = BundleWitness(
++                bundle: installed.bundle, executable: "invalid-digest",
++                plist: installed.plist, configuration: installed.configuration
++            )
++            let malformed: [InstallationReceipt] = [
++                InstallationReceipt(
++                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++                    installed: malformedWitness
++                ),
++                InstallationReceipt(
++                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++                    installed: installed, staged: installed, stageName: stageName
++                ),
++                InstallationReceipt(
++                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++                    installed: installed, staged: staged
++                ),
++                InstallationReceipt(
++                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++                    installed: installed, staged: staged, stageName: InstallationFiles.stagePrefix + "bad"
++                )
++            ]
++            let object = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
++            var wrongStage = object
++            wrongStage["stageName"] = 1
++            var wrongIdentity = object
++            wrongIdentity["applications"] = ["inode": "1"]
++            var wrongWitness = object
++            wrongWitness["installed"] = ["bundle": ["device": "1", "inode": "2"]]
++            let malformedObjects = try [wrongStage, wrongIdentity, wrongWitness].map {
++                try JSONSerialization.data(withJSONObject: $0)
++            }
++            let records = try malformed.map { try $0.encode() } + malformedObjects
++            for (index, altered) in records.enumerated() {
++                let alternate = try fixture.root.createDirectory("Receipt\(index)")
++                let file = try alternate.createFile(fileName)
++                try writeAll(file, altered)
++                let identity = FileIdentity(try file.metadata())
++                #expect(throws: FileRefusal.self) { try InstallationReceipt.read(from: alternate, id: fixture.id) }
++                #expect(try alternate.named(fileName).map(FileIdentity.init) == identity)
++                #expect(try readBounded(alternate.openRegular(fileName), maximum: 16_384) == altered)
++            }
++            #expect(try ReceiptStore(directory: fixture.receipts).bytes(fixture.id) == bytes)
++            #expect(try fixture.witness(fixture.applications) == installed)
++            #expect(try fixture.witness(fixture.stage) == staged)
++        }
++    }
++
++    @Test func bundleInspectionRefusesChangedLayoutAndMissingExecutionAuthority() throws {
++        try fixture { fixture in
++            let baseline = try fixture.bundle(in: fixture.applications, marker: "installed")
++            let bundle = try fixture.applications.child(fixture.name)
++            let contents = try bundle.child("Contents")
++            let binaryDirectory = try contents.child("MacOS")
++            let binary = try binaryDirectory.openRegular("GraphGoblin")
++            let binaryIdentity = FileIdentity(try binary.metadata())
++            for parent in [contents, binaryDirectory] {
++                let extra = try parent.createFile("foreign")
++                let bytes = Data("unrelated".utf8)
++                try writeAll(extra, bytes)
++                #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
++                #expect(try parent.named("foreign").map(FileIdentity.init) == FileIdentity(try extra.metadata()))
++                #expect(try readBounded(parent.openRegular("foreign"), maximum: 32) == bytes)
++                try #require(unlinkat(parent.fd, "foreign", 0) == 0)
++                #expect(try InstallationFiles.inspect(bundle).witness == baseline)
++            }
++            try #require(fchmod(binary.fd, 0o600) == 0)
++            #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
++            #expect(try binaryDirectory.named("GraphGoblin").map(FileIdentity.init) == binaryIdentity)
++            #expect(try readBounded(binaryDirectory.openRegular("GraphGoblin"), maximum: 32) == Data("installed".utf8))
++            try #require(fchmod(binary.fd, 0o700) == 0)
++            #expect(try InstallationFiles.inspect(bundle).witness == baseline)
++
++            let witness = try contents.openRegular("Info.plist")
++            let original = try readBounded(witness, maximum: 16_384)
++            let plist = try #require(
++                PropertyListSerialization.propertyList(from: original, options: [], format: nil) as? [String: Any]
++            )
++            var modified = plist
++            modified.removeValue(forKey: "CFBundleIdentifier")
++            let incomplete = try PropertyListSerialization.data(fromPropertyList: modified, format: .xml, options: 0)
++            let writable = try contents.openRegular("Info.plist", write: true)
++            try #require(ftruncate(writable.fd, 0) == 0)
++            try writeAll(writable, incomplete)
++            #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
++            #expect(try readBounded(contents.openRegular("Info.plist"), maximum: 16_384) == incomplete)
++            try contents.match("Info.plist", witness, privateMode: true)
++            #expect(try binaryDirectory.named("GraphGoblin").map(FileIdentity.init) == binaryIdentity)
++        }
++    }
++
+     @Test func closedArgumentsAndNames() throws {
+         let command = try InstallerOptions.parse([
+             "--app-name", "GraphGoblin QA a\u{0301}.app", "--port", "65535",
+diff --git a/tooling/scripts/macos-launcher-coverage-fixture.acceptance.mjs b/tooling/scripts/macos-launcher-coverage-fixture.acceptance.mjs
+index 133587c3..2ada4c36 100644
+--- a/tooling/scripts/macos-launcher-coverage-fixture.acceptance.mjs
++++ b/tooling/scripts/macos-launcher-coverage-fixture.acceptance.mjs
+@@ -7,12 +7,15 @@ import {
+   mkdirSync,
+   readFileSync,
+   readdirSync,
++  readlinkSync,
+   rmdirSync,
++  symlinkSync,
+   unlinkSync,
+   writeFileSync,
+ } from 'node:fs';
+ import { homedir, userInfo } from 'node:os';
+ import { dirname, join } from 'node:path';
++import { pathToFileURL } from 'node:url';
+ 
+ const plistFile = 'Contents/Info.plist';
+ const binaryFile = 'Contents/MacOS/GraphGoblin';
+@@ -84,9 +87,11 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
+   const id = randomUUID();
+   const name = 'GraphGoblin QA ' + id + '.app';
+   const foreignName = 'GraphGoblin QA foreign ' + id + '.app';
++  const freshName = 'GraphGoblin QA fresh ' + id + '.app';
+   const apps = join(home, 'Applications');
+   const application = join(apps, name);
+   const foreign = join(apps, foreignName);
++  const fresh = join(apps, freshName);
+   const receiptRoot = join(
+     home,
+     'Library',
+@@ -127,19 +132,28 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
+     expectClosed(capture(label, binary, args, extraEnv), code, stdout, stderr);
+     outcomes.push({ label, exit: code, stdout, stderr });
+   }
+-  function install(label, checkout, installName, code, stdout, stderr, extraEnv) {
++  function install(
++    label,
++    checkout,
++    installName,
++    code,
++    stdout,
++    stderr,
++    extraEnv,
++    { releasePath = ordinary, nodePath = node, dataPath = data } = {},
++  ) {
+     checked(
+       label,
+       installer,
+       [
+         checkout,
+-        ordinary,
+-        node,
++        releasePath,
++        nodePath,
+         '--',
+         '--app-name',
+         installName,
+         '--data-dir',
+-        data,
++        dataPath,
+         '--port',
+         '56321',
+         '--disable-ollama',
+@@ -151,7 +165,8 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
+     );
+   }
+   const initialStages = stages();
+-  assert.ok(!existsSync(application) && !existsSync(foreign) && !existsSync(data));
++  assert.ok(!existsSync(application) && !existsSync(foreign) && !existsSync(fresh));
++  assert.ok(!existsSync(data));
+   const envelope = (code) => JSON.stringify({ version: 1, code }) + '\n';
+   checked('launcher-usage', launcher, ['--invalid-coverage-option'], 64, envelope('usage'));
+   for (const [label, flag] of [
+@@ -186,11 +201,18 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
+   install('installer-remote-db-refusal', repo, name, 1, '', keyRefusal, {
+     GG_DB_URL: 'https://example.invalid/database',
+   });
++  const databaseURL = (path) => pathToFileURL(path).href.replace('file://', 'file://localhost');
++  install('installer-wrong-local-db-refusal', repo, name, 1, '', keyRefusal, {
++    GG_DB_URL: databaseURL(join(data, 'unrelated.db')),
++  });
+   assert.ok(!existsSync(application) && !existsSync(data));
+   assert.deepEqual(stages(), initialStages);
+ 
+   const installedText = 'GraphGoblin was installed in Applications.\n';
+-  install('installer-first', repo, name, 0, installedText, '', { LC_ALL: 'ggcanary17544768eaef' });
++  install('installer-first', repo, name, 0, installedText, '', {
++    LC_ALL: 'ggcanary17544768eaef',
++    GG_DB_URL: databaseURL(join(data, 'graphgoblin.db')),
++  });
+   const expectedConfig = {
+     version: 1,
+     checkout: repo,
+@@ -244,6 +266,141 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
+   assert.deepEqual(readFileSync(replaced.receipt), receiptBefore);
+   assert.deepEqual(readdirSync(receiptRoot).sort(), receiptsBefore);
+ 
++  function expectFreshAbsent() {
++    assert.equal(lstatSync(fresh, { throwIfNoEntry: false }), undefined);
++    assert.equal(lstatSync(data, { throwIfNoEntry: false }), undefined);
++    assert.deepEqual(readdirSync(receiptRoot).sort(), receiptsBefore);
++    assert.deepEqual(stages(), initialStages);
++  }
++
++  install(
++    'installer-fresh-staged-assets-refusal',
++    badCheckout,
++    freshName,
++    1,
++    '',
++    'Build both apps/web/dist and apps/web/dist-goblin before installing.\n',
++  );
++  expectFreshAbsent();
++
++  const notExecutable = join(scratch, 'non-executable-installer-input');
++  const original = Buffer.from('isolated file must stay unchanged\n');
++  writeFileSync(notExecutable, original, { flag: 'wx', mode: 0o600 });
++  const fileBefore = identity(notExecutable, false);
++  const runtimeRefusal =
++    'Choose a native Apple Silicon Node 22.22.2 or later within major 22 with --node.\n';
++  install(
++    'installer-node-file-refusal',
++    repo,
++    freshName,
++    1,
++    '',
++    runtimeRefusal,
++    {},
++    {
++      nodePath: notExecutable,
++    },
++  );
++  expectFreshAbsent();
++  install(
++    'installer-store-file-refusal',
++    repo,
++    freshName,
++    1,
++    '',
++    'Check the saved checkout and built apps/api/dist entries, then install again.\n',
++    {},
++    { dataPath: notExecutable },
++  );
++  expectFreshAbsent();
++  assert.deepEqual(identity(notExecutable, false), fileBefore);
++  assert.deepEqual(readFileSync(notExecutable), original);
++
++  // Unlike the non-executable input, this executable reaches the staged runtime probe.
++  install(
++    'installer-fresh-staged-runtime-refusal',
++    repo,
++    freshName,
++    1,
++    '',
++    runtimeRefusal,
++    {},
++    {
++      nodePath: '/bin/sh',
++    },
++  );
++  expectFreshAbsent();
++  const goblinShell = 'apps/web/dist-goblin/index.html';
++  mkdirSync(dirname(join(badCheckout, goblinShell)), { recursive: true });
++  copyFileSync(join(repo, goblinShell), join(badCheckout, goblinShell));
++  writeFileSync(
++    join(badCheckout, 'apps/api/dist/instance-identity.js'),
++    "process.stdout.write('invalid fingerprint\\n');\n",
++  );
++  install(
++    'installer-fresh-staged-helper-refusal',
++    badCheckout,
++    freshName,
++    1,
++    '',
++    'The built API identity helper could not be verified. Rebuild the checkout and check the local runtime.\n',
++  );
++  expectFreshAbsent();
++
++  const missing = join(scratch, 'absent-release-input');
++  const alias = join(scratch, 'untrusted-release-alias');
++  const short = join(scratch, 'short-release-input');
++  const wrongMachO = join(scratch, 'wrong-release-file-type');
++  const changedHeader = Buffer.alloc(32);
++  changedHeader.set([0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 0x01]);
++  changedHeader[12] = 0x06; // MH_DYLIB, not the required MH_EXECUTE.
++  symlinkSync(ordinary, alias);
++  const aliasBefore = lstatSync(alias, { bigint: true });
++  writeFileSync(short, 'too short', { flag: 'wx', mode: 0o700 });
++  writeFileSync(wrongMachO, changedHeader, { flag: 'wx', mode: 0o700 });
++  const ordinaryDigest = digest(ordinary);
++  const shortBefore = identity(short, false);
++  const wrongMachOBefore = identity(wrongMachO, false);
++  for (const [label, releasePath] of [
++    ['missing', missing],
++    ['alias', alias],
++    ['short', short],
++    ['wrong-macho-type', wrongMachO],
++  ]) {
++    install(
++      'installer-release-' + label + '-refusal',
++      repo,
++      freshName,
++      1,
++      '',
++      'The candidate bundle could not be staged and verified.\n',
++      {},
++      { releasePath },
++    );
++    // Assembly failures leave the freshly created stage empty. Preserve anything else.
++    const additions = stages().filter((entry) => !initialStages.includes(entry));
++    assert.equal(additions.length, 1);
++    assert.match(additions[0], /^\.graphgoblin-launcher-stage-[a-f0-9]{32}$/u);
++    const stage = join(apps, additions[0]);
++    const witness = identity(stage, true);
++    assert.equal(lstatSync(stage).mode & 0o077, 0);
++    assert.deepEqual(readdirSync(stage), []);
++    assert.deepEqual(identity(stage, true), witness);
++    rmdirSync(stage);
++    expectFreshAbsent();
++  }
++  assert.equal(lstatSync(missing, { throwIfNoEntry: false }), undefined);
++  const aliasAfter = lstatSync(alias, { bigint: true });
++  assert.ok(aliasAfter.isSymbolicLink());
++  assert.equal(aliasAfter.dev, aliasBefore.dev);
++  assert.equal(aliasAfter.ino, aliasBefore.ino);
++  assert.equal(readlinkSync(alias), ordinary);
++  assert.equal(digest(ordinary), ordinaryDigest);
++  assert.deepEqual(identity(short, false), shortBefore);
++  assert.equal(readFileSync(short, 'utf8'), 'too short');
++  assert.deepEqual(identity(wrongMachO, false), wrongMachOBefore);
++  assert.deepEqual(readFileSync(wrongMachO), changedHeader);
++
+   const foreignBytes = 'isolated foreign destination\n';
+   writeFileSync(foreign, foreignBytes, { flag: 'wx', mode: 0o600 });
+   const foreignBefore = identity(foreign, false);
+diff --git a/apps/macos-launcher/Tests/Engine/NativeFilesTests.swift b/apps/macos-launcher/Tests/Engine/NativeFilesTests.swift
+new file mode 100644
+index 00000000..86212d53
+--- /dev/null
++++ b/apps/macos-launcher/Tests/Engine/NativeFilesTests.swift
+@@ -0,0 +1,92 @@
++import Darwin
++import Foundation
++@testable import LauncherEngine
++import Testing
++
++@Suite struct NativeFilesTests {
++    @Test func directoryRefusalsLeaveExistingEntriesIntact() throws {
++        let scratch = try TemporaryEngineDirectory()
++        defer { scratch.remove() }
++        let root = scratch.root
++        let child = try root.createDirectory("owned")
++        #expect(try root.ensureDirectory("owned").identity == child.identity)
++        #expect(try root.named("absent") == nil)
++
++        #expect(throws: FileRefusal.self) { try canonicalPath("relative") }
++        #expect(throws: FileRefusal.self) { try Directory(path: "relative") }
++        #expect(throws: FileRefusal.self) { try Directory(path: root.path + "/./owned") }
++        #expect(throws: FileRefusal.self) { try root.named("../owned") }
++        #expect(throws: FileRefusal.self) { try root.createDirectory("owned/unsafe") }
++        #expect(throws: FileRefusal.self) { try root.createFile("owned/unsafe") }
++        do {
++            _ = try root.createDirectory("owned")
++            Issue.record("An exclusive directory create replaced an existing directory")
++        } catch FileRefusal.system(let code) {
++            #expect(code == EEXIST)
++        }
++
++        try #require(fchmod(child.fd, 0o755) == 0)
++        defer { _ = fchmod(child.fd, 0o700) }
++        try child.requireOwnedDirectory()
++        #expect(throws: FileRefusal.self) { try child.requireOwnedDirectory(privateMode: true) }
++        #expect(try root.child("owned").identity == child.identity)
++        #expect(try root.names() == ["owned"])
++        #expect(try child.names().isEmpty)
++    }
++
++    @Test func namedFileCannotFollowAnInodeReplacement() throws {
++        let scratch = try TemporaryEngineDirectory()
++        defer { scratch.remove() }
++        let root = scratch.root
++        let original = Data("original".utf8)
++        let replacement = Data("replacement".utf8)
++        try writeAll(root.createFile("slot"), original)
++        let open = try root.openRegular("slot", privateMode: true)
++        let openIdentity = FileIdentity(try open.metadata())
++        try root.match("slot", open, privateMode: true)
++        try #require(renameat(root.fd, "slot", root.fd, "retired") == 0)
++        let fresh = try root.createFile("slot")
++        try writeAll(fresh, replacement)
++
++        #expect(FileIdentity(try fresh.metadata()) != openIdentity)
++        #expect(throws: FileRefusal.self) { try root.match("slot", open, privateMode: true) }
++        try root.match("retired", open, privateMode: true)
++        #expect(try readBounded(open, maximum: original.count) == original)
++        #expect(try readBounded(root.openRegular("slot"), maximum: replacement.count) == replacement)
++        #expect(try root.names() == ["slot", "retired"])
++    }
++
++    @Test func boundedIOAndDescriptorPermissionsPreserveBytesAndIdentity() throws {
++        let scratch = try TemporaryEngineDirectory()
++        defer { scratch.remove() }
++        let root = scratch.root
++        let bytes = Data("abc".utf8)
++        let file = try root.createFile("record")
++        try writeAll(file, bytes)
++        let identity = FileIdentity(try file.metadata())
++        let exactHash = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
++        #expect(try readBounded(root.openRegular("record"), maximum: 3) == bytes)
++        #expect(try fileSHA256(root.openRegular("record"), cap: 3) == exactHash)
++        #expect(throws: FileRefusal.self) { try readBounded(root.openRegular("record"), maximum: 2) }
++        #expect(throws: FileRefusal.self) { try fileSHA256(root.openRegular("record"), cap: 2) }
++
++        let writeOnly = try OwnedDescriptor(openat(root.fd, "record", O_WRONLY | O_NOFOLLOW | O_CLOEXEC))
++        let readOnly = try root.openRegular("record")
++        let refused: [() throws -> Void] = [
++            { _ = try readBounded(writeOnly, maximum: 3) },
++            { _ = try fileSHA256(writeOnly, cap: 3) },
++            { try writeAll(readOnly, Data("edit".utf8)) }
++        ]
++        for operation in refused {
++            do {
++                try operation()
++                Issue.record("A descriptor operation accepted the wrong access mode")
++            } catch FileRefusal.system(let code) {
++                #expect(code == EBADF)
++            }
++        }
++        #expect(try root.named("record").map(FileIdentity.init) == identity)
++        #expect(try readBounded(root.openRegular("record"), maximum: 3) == bytes)
++        #expect(try root.names() == ["record"])
++    }
++}
+diff --git a/apps/macos-launcher/Tests/Installer/InstallerRecoveryTests.swift b/apps/macos-launcher/Tests/Installer/InstallerRecoveryTests.swift
+new file mode 100644
+index 00000000..57512b06
+--- /dev/null
++++ b/apps/macos-launcher/Tests/Installer/InstallerRecoveryTests.swift
+@@ -0,0 +1,191 @@
++import Darwin
++import Foundation
++import LauncherEngine
++@testable import LauncherInstaller
++import Testing
++
++private let enabled = ProcessInfo.processInfo.environment["GG_MACOS_COVERAGE_FIXTURE_ROOT"] != nil
++
++private struct HostedInstaller {
++    let scratch: Directory
++    let applications: Directory
++    let receipts: ReceiptStore
++    let checkout: String
++    let launcher: String
++    let node: String
++    let name: String
++    let id: String
++
++    var store: String { scratch.path + "/store" }
++
++    init() throws {
++        let environment = ProcessInfo.processInfo.environment
++        try #require(environment["GITHUB_ACTIONS"] == "true")
++        let runner = try canonicalPath(#require(environment["RUNNER_TEMP"]))
++        let path = try #require(environment["GG_MACOS_COVERAGE_FIXTURE_ROOT"])
++        try #require(try canonicalPath(path) == path)
++        try #require(path.hasPrefix(runner + "/"))
++        let root = try Directory(path: path)
++        try root.requireOwnedDirectory(privateMode: true)
++        let checkout = try #require(environment["GG_MACOS_COVERAGE_REPO"])
++        let launcher = try #require(environment["GG_MACOS_COVERAGE_LAUNCHER"])
++        let node = try #require(environment["GG_MACOS_COVERAGE_NODE"])
++        try #require(try canonicalPath(checkout) == checkout)
++        try #require(try canonicalExecutable(launcher) == launcher)
++        try #require(try canonicalExecutable(node) == node)
++        let id = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
++        let name = "GraphGoblin Installer Coverage \(id).app"
++        let home = try authenticatedHome()
++        let applications = try InstallationFiles.applications(home: home, create: true)
++        let receipts = ReceiptStore(directory: try InstallationFiles.receipts(home: home, create: true))
++        try #require(try applications.named(name) == nil)
++        try #require(try receipts.directory.named(id + ".json") == nil)
++        scratch = try root.createDirectory("installer-" + id)
++        self.checkout = checkout
++        self.launcher = launcher
++        self.node = node
++        self.id = id
++        self.name = name
++        self.applications = applications
++        self.receipts = receipts
++    }
++
++    func invoke(dataDirectory: String) -> InstallerResult {
++        LauncherInstaller.run([
++            checkout, launcher, node, "--", "--app-name", name,
++            "--data-dir", dataDirectory, "--port", "56325", "--disable-ollama"
++        ], environment: [:])
++    }
++
++    func assemble(in parent: Directory, requireAPIKey: Bool) throws -> BundleWitness {
++        let contents = try parent.createDirectory(name).createDirectory("Contents")
++        let bin = try contents.createDirectory("MacOS")
++        let resources = try contents.createDirectory("Resources")
++        let source = try OwnedDescriptor(open(launcher, O_RDONLY | O_CLOEXEC | O_NOFOLLOW))
++        try writeAll(bin.createFile("GraphGoblin", mode: 0o700), readBounded(source, maximum: 64 * 1024 * 1024))
++        let plist = try PropertyListSerialization.data(fromPropertyList: [
++            "CFBundleExecutable": "GraphGoblin", "CFBundleIdentifier": AppName.bundleID(name: name, id: id),
++            InstallationFiles.idKey: id
++        ], format: .xml, options: 0)
++        try writeAll(contents.createFile("Info.plist"), plist)
++        let configuration = try LauncherConfiguration(
++            checkout: checkout, node: node, dataDirectory: store, port: 56325,
++            requireAPIKey: requireAPIKey, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
++        )
++        try writeAll(resources.createFile("launcher.json"), configuration.encode())
++        return try InstallationFiles.inspect(parent.child(name)).witness
++    }
++
++    func removeBundle(from parent: Directory, witness: BundleWitness) throws {
++        try parent.requireAnchored()
++        let bundle = try parent.child(name)
++        try #require(try InstallationFiles.inspect(bundle).witness == witness)
++        try FileManager.default.removeItem(atPath: bundle.path)
++    }
++}
++
++@Suite(.enabled(if: enabled, "Requires a disposable hosted native coverage fixture"), .serialized)
++struct InstallerRecoveryTests {
++    @Test func heldApplicationsLockRefusesInstallWithoutCreatingADestination() throws {
++        let fixture = try HostedInstaller()
++        try #require(flock(fixture.applications.fd, LOCK_EX | LOCK_NB) == 0)
++        defer { _ = flock(fixture.applications.fd, LOCK_UN) }
++
++        let refused = fixture.invoke(dataDirectory: fixture.store)
++        try #require(refused.exitCode == 1)
++        try #require(refused.output == "The Applications destination could not be authorized for this installation.")
++        try #require(try fixture.applications.named(fixture.name) == nil)
++        try #require(try fixture.receipts.directory.named(fixture.id + ".json") == nil)
++        try #require(try fixture.scratch.names().isEmpty)
++        try fixture.scratch.requireAnchored()
++        try FileManager.default.removeItem(atPath: fixture.scratch.path)
++    }
++
++    enum Interruption: String, CaseIterable, Sendable {
++        case beforeExchange, afterExchange, staleStage, staleInstalled
++    }
++
++    @Test(arguments: Interruption.allCases)
++    func interruptionRetryRequiresTheExactRemainingBundle(_ interruption: Interruption) throws {
++        let fixture = try HostedInstaller()
++        let stageName = InstallationFiles.stagePrefix + fixture.id
++        let stage = try fixture.applications.createDirectory(stageName)
++        let prior = try fixture.assemble(in: fixture.applications, requireAPIKey: false)
++        let candidate = try fixture.assemble(in: stage, requireAPIKey: true)
++        func stale(_ witness: BundleWitness) -> BundleWitness {
++            BundleWitness(bundle: witness.bundle, executable: String(repeating: "0", count: 64),
++                          plist: witness.plist, configuration: witness.configuration)
++        }
++        let pending = InstallationReceipt(
++            id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
++            installed: interruption == .staleInstalled ? stale(prior) : prior,
++            staged: interruption == .staleStage ? stale(candidate) : candidate, stageName: stageName
++        )
++        try fixture.receipts.write(pending, replacing: nil)
++        let file = fixture.id + ".json"
++        let receiptFile = try fixture.receipts.directory.openRegular(file, privateMode: true)
++        if interruption == .afterExchange {
++            let publisher = BundlePublisher(applications: fixture.applications, stage: stage, name: fixture.name,
++                                            previous: prior, candidate: candidate)
++            try #require(publisher.publish() == .published)
++        }
++        let beforeAtTarget = interruption == .afterExchange ? candidate : prior
++        let beforeAtStage = interruption == .afterExchange ? prior : candidate
++        let targetPath = fixture.applications.path + "/" + fixture.name
++        let stagedPath = stage.path + "/" + fixture.name
++        if interruption == .afterExchange || interruption == .staleStage {
++            #expect(throws: FileRefusal.self) { try InstallationFiles.verify(bundlePath: stagedPath, staged: true) }
++        } else {
++            let validated = try InstallationFiles.verify(bundlePath: stagedPath, staged: true)
++            #expect(validated.contents.witness == candidate)
++        }
++        if interruption == .staleInstalled {
++            #expect(throws: FileRefusal.self) { try InstallationFiles.verify(bundlePath: targetPath, staged: false) }
++        }
++        func verifyUnchanged() throws {
++            try fixture.receipts.directory.match(file, receiptFile, privateMode: true)
++            try #require(try fixture.receipts.bytes(fixture.id) == pending.encode())
++            try #require(try InstallationFiles.inspect(fixture.applications.child(fixture.name)).witness == beforeAtTarget)
++            try #require(try InstallationFiles.inspect(stage.child(fixture.name)).witness == beforeAtStage)
++            try #require(try fixture.scratch.names().isEmpty)
++        }
++
++        let final: InstallationReceipt
++        if interruption == .staleStage || interruption == .staleInstalled {
++            let stopped = fixture.invoke(dataDirectory: fixture.store)
++            try #require(stopped.exitCode == 1)
++            let expected = interruption == .staleStage
++                ? "Publication could not be verified. Installer recovery is required."
++                : "The Applications destination could not be authorized for this installation."
++            try #require(stopped.output == expected)
++            try verifyUnchanged()
++            final = pending
++        } else {
++            let overlapping = targetPath + "/inside"
++            let stopped = fixture.invoke(dataDirectory: overlapping)
++            try #require(stopped.exitCode == 1)
++            try #require(stopped.output == "The Applications destination could not be authorized for this installation.")
++            try verifyUnchanged()
++
++            let recovered = fixture.invoke(dataDirectory: fixture.store)
++            try #require(recovered.exitCode == 0)
++            try #require(recovered.output == "GraphGoblin was installed in Applications.")
++            final = try InstallationReceipt.read(from: fixture.receipts.directory, id: fixture.id)
++            let installed = try InstallationFiles.verify(bundlePath: targetPath, staged: false)
++            try #require(final.stageName == nil && final.staged == nil)
++            try #require(final.installed.bundle != beforeAtTarget.bundle)
++            try #require(final.installed == installed.contents.witness)
++            try #require(installed.contents.configuration.dataDirectory == fixture.store)
++            try #require(try fixture.scratch.names().isEmpty)
++            #expect(throws: FileRefusal.self) { try InstallationFiles.verify(bundlePath: targetPath, staged: true) }
++        }
++        let expectedAtTarget = final.stageName == nil ? final.installed : beforeAtTarget
++        try fixture.removeBundle(from: fixture.applications, witness: expectedAtTarget)
++        try fixture.removeBundle(from: stage, witness: beforeAtStage)
++        try #require(try fixture.applications.child(stageName).identity == stage.identity)
++        try #require(unlinkat(fixture.applications.fd, stageName, AT_REMOVEDIR) == 0)
++        try fixture.receipts.discard(final)
++        try fixture.scratch.requireAnchored()
++        try FileManager.default.removeItem(atPath: fixture.scratch.path)
++    }
++}

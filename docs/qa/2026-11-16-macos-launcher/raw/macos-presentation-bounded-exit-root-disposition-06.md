@@ -1,0 +1,9 @@
+# Bounded presentation fixture exit correction
+
+Actual Claude Code Opus5.5 xhigh implemented the known test-helper defect in Tests/Presentation/Support/FixtureChild.swift. Root read the complete provider final and exact source diff. The success assertions and four scenario/profile names are unchanged. No shipping source, collector, package or CI configuration changed.
+
+The unbounded post-SIGKILL semaphore wait now has a five-second bound. The subsequent unbounded waitUntilExit is removed. After a completion callback, a bounded check of Foundation's own isRunning state guards access to termination reason/status. Unobserved completion yields exitedNormally=false and status=-1, preserving failure through existing assertions; it cannot manufacture success. The helper retains the Process and any still-active pipe ownership instead of releasing objects beneath callbacks/readers. It runs on the existing dispatch worker, not Swift's cooperative executor.
+
+The five-second post-kill and completion checks replace previously unbounded waits. The primary suite timeout and existing default child/grace limits stay unchanged. Source inspection and whitespace checks establish the bounded control flow; the missed-callback failure path has not been executed natively. The unchanged tracked-child signal path retains its prior check-then-signal race, without a new process operation. This test-only correction is not claimed as the cause or resolution of CI10's backend failures: all four GUI child scenarios passed that run.
+
+Accept this bounded implementation for the next complete native suite alongside the independently corrected backend fixtures. Native compile and positive-path execution remain required. Root's implementation integration does not consume or replace a formal scan; fresh Astra MAX final audit remains pending as scan3of3.

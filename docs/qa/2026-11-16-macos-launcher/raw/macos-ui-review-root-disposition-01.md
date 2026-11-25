@@ -1,0 +1,9 @@
+# UI source review disposition and GUI preflight
+
+Root read the entire independent UI review at frozen8bddb93aaa61ebb1b962385efa97a468a379929d (formal scan1/3). Accept MACUI-01 and02 copy defects and MACUI-03 absolute-deadline race for one Claude correction batch. No architecture change, new public flag or approval required. Actual Claude Code Opus5.5xhigh is preparing proposed files externally in macos-ui-review-correction-preparation-01; provider macos-ui-review-corrector-01, unified24692. No product writes until backend frozen-source review completes. Meaningful race regression must fail under the old resolver ordering; no test pass yet.
+
+Actual Claude QA plan preparation22510 completed; independent execution harness preparation30693 is now active under macos-independent-qa-execution-preparation-01. It resolves public fixture contracts and authors complementary native cases without execution or code review. Root has not approved any GUI automation or final candidate execution from that draft.
+
+Nonprompting GUI preflight01 failed inside JXA because CGPreflightScreenCaptureAccess is unavailable in this bridge; preserve that result, do not interpret as denied screen access. Corrected preflight02 omitted that unavailable binding and actually observed console userjake, AXIsProcessTrusted=false for osascript, default HTTP handler /Applications/Google Chrome.app. Raw stdout420bytes SHA49b31cbe25d02fef6f947abf46f4f03a62a34ca4dcae64cac457bce1241e7fd7; stderr0; SSHexit0. No Apple Events, prompting API, preferences, browser or UI actions occurred. Finder/Dock interaction remains pending and cannot be claimed from SSH launches. Complete concrete tested candidate before requesting any required owner interaction.
+
+API function coverage correction is being prepared externally by existing Solxhigh API implementer, without mutating the source being formally reviewed. No threshold/exclusion or unrelated coverage work authorized.

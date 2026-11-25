@@ -1,0 +1,33 @@
+--- a/operator-owner-acceptance.mjs
++++ b/operator-owner-acceptance.mjs
+@@ -337,15 +337,15 @@
+   return phase === 'swift-release-bin-path' ? Buffer.concat(streams.stdout.chunks, streams.stdout.bytes) : undefined;
+ }
+ 
+-const buildStage = `${parent}/graphgoblin-456-product-build-db37bfdf935746039f9030c4d49b10fb`;
++const buildStage = `${parent}/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2`;
+ const repo = `${buildStage}/repo`;
+ const driverPath = 'tooling/scripts/macos-launcher.acceptance.mjs';
+-const driverDigest = '770b1a7b680da4a16e61da0f7a00c3c7f195d403125b425d84eb3369e59637aa';
++const driverDigest = '8dfc56f694770c65a4b41c6a2b390aca42e6c9c172bd5e506fc1608e9b1ecd93';
+ const installerDigest = 'd37e7f02f14c68f9ae19fa1886fe38b91ad3fbd8b1c9d286da88c442e8f8d7bd';
+-const buildHead = '370a12b5784252356807bfc7676f65f6cb19b5e0';
+-const buildTree = '2207dd91338e0bc3ffdb4f8fc81531eb0ae08b3c';
+-const freezeDigest = 'a56e20ecb2a775f55f299bfe559bcb84f4f797c29b37dfe3ebaaa44fcb76e73d';
+-const buildResultDigest = 'e78ab98e8ce4ecc58e4119f5cd9bbf498b4c47697bd397b476ff10b31bdc1316';
++const buildHead = '4341d1f8882f4b69651bfb0b5988345b7f074339';
++const buildTree = 'a5f8fa3e13fb297cbcdb386ae445cb8159156617';
++const freezeDigest = '31a26763478b6e8c6e31ca3b64275a8eb3573a67b45cf92431341edcd1aa385d';
++const buildResultDigest = '738c56a109a49f4c7b266ff97e6e5db8a7fc8fcb1e1ed0a623269045fb011656';
+ 
+ async function readAcceptanceInput() {
+   const reader = frameReader();
+@@ -397,7 +397,7 @@
+ 
+ function verifyBuild(input, dev) {
+   const found = directoryAcl(buildStage);
+-  check(found.uid === 501 && found.dev === dev && found.ino === '178776825' && found.mode === '700' &&
++  check(found.uid === 501 && found.dev === dev && found.ino === '178893353' && found.mode === '700' &&
+     found.headerMode === 'drwx------' && found.acl === '' && found.fsType === '25', 'Retained successful stage identity drift');
+   privateDir(repo, dev);
+   try { lstatSync(join(repo, '.git')); throw new Error('Unexpected Git metadata in source archive'); }

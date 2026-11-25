@@ -1,0 +1,266 @@
+--- unresolved/.gitattributes
++++ resolved/.gitattributes
+@@ -3,9 +3,8 @@
+ *.ico binary
+ *.woff2 binary
+ 
+-<<<<<<< HEAD
+ docs/qa/2026-11-16-macos-launcher/raw/** -text
+-=======
++
+ # Preserve the sealed raw evidence for the #488 and #496 CI work.
+ docs/qa/2026-11-17-ci-intent-1-implementation/** -text -whitespace
+ docs/qa/2026-11-17-ci-intent-1-implementation/README.md text eol=lf whitespace
+@@ -269,4 +268,3 @@
+ 
+ # Preserve exact replay-fixture correction evidence after its reading note is formatted.
+ docs/qa/2026-11-23-i5-replay-fixture/** -text -whitespace
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+--- unresolved/.prettierignore
++++ resolved/.prettierignore
+@@ -28,9 +28,8 @@
+ docs/qa/2026-11-15-runtime-failure-baseline/functional/attempt-2-evidence/*/inspector-dom.html
+ docs/qa/2026-11-15-runtime-failure-candidate/functional/corrected-attempt-1/*/inspector-dom.html
+ 
+-<<<<<<< HEAD
+ docs/qa/2026-11-16-macos-launcher/raw/**
+-=======
++
+ # Immutable #364 originals keep the bytes checked by their source manifests.
+ docs/qa/2026-11-21-i4-364-claude-start/independent/**
+ docs/qa/2026-11-21-i4-364-claude-start/author/**
+@@ -129,4 +128,3 @@
+ 
+ # Preserve the reviewed replay-fixture evidence and its preformatted reading note.
+ docs/qa/2026-11-23-i5-replay-fixture/**
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+--- unresolved/CHANGELOG.md
++++ resolved/CHANGELOG.md
+@@ -4,7 +4,6 @@
+ 
+ ## Unreleased
+ 
+-<<<<<<< HEAD
+ - Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
+   macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
+   `bash scripts/install-macos-launcher.sh`; it builds `~/Applications/GraphGoblin.app`, starts
+@@ -18,7 +17,7 @@
+   shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
+   at their saved paths or rerun the installer. No format change or migration. Part of #456 and
+   #326; owner acceptance is tracked separately. See ADR-0082.
+-=======
++
+ - The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
+   after its event is published, so a refresh could still be in flight, or return the earlier status
+   at the terminal event's sequence, and the header kept saying running. The header now also follows
+@@ -373,7 +372,6 @@
+   its required observations, with a repeated or contradictory record, or with a checkout that does
+   not match, or cannot be matched to, the event fails the job.
+ 
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
+   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
+   written by the gateway itself so it never waits on logging and keeps working after the launcher
+--- unresolved/README.md
++++ resolved/README.md
+@@ -58,6 +58,16 @@
+ 
+ If the window is already open, a taskbar click focuses it. To start a stopped gateway again, use the Desktop shortcut or the taskbar’s **Open new window** action. [Launcher troubleshooting](docs/guide/07-troubleshooting.md#windows-launcher)
+ 
++### Optional macOS Finder and Dock launcher
++
++On Apple Silicon running macOS 15 or later, use an already built checkout, native Node 22.22.2 or later within major 22, and Swift 6 from Xcode or the Command Line Tools. From that checkout, run:
++
++```bash
++bash scripts/install-macos-launcher.sh --node "$(command -v node)"
++```
++
++The installer creates `~/Applications/GraphGoblin.app`. Open it in Finder or keep it in the Dock. The launcher starts or reuses the matching gateway and opens your default browser. [macOS launcher setup and options](docs/guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
++
+ ### Docker Compose
+ 
+ With Git, Docker Compose and a host Codex login, clone the repository as shown above. From its root, start the service.
+--- unresolved/docs/09-frontend-and-pwa.md
++++ resolved/docs/09-frontend-and-pwa.md
+@@ -34,8 +34,9 @@
+ matching loopback gateway or starts one detached gateway and asks the system default browser to
+ open `http://127.0.0.1:<port>/app/`. It does not select a browser profile or create a
+ browser-specific PWA window. Hiding or quitting the launcher after a start is committed, and
+-closing the browser, do not stop the gateway or its work. Use the management page's existing Stop
+-controls when you intend to stop it.
++closing the browser, do not stop the gateway or its work. Use the existing authenticated API to
++start a shutdown. The browser's Wait and Force choices appear only after an externally initiated
++drain reaches its choice phase. [Gateway shutdown](07-api-and-streaming.md#gateway-shutdown-224)
+ 
+ Each alternate `GraphGoblin <suffix>.app` has a separate installation ID, receipt, and log
+ directory. The launcher takes private per-user coordination locks for the configured data
+--- unresolved/docs/10-testing-and-quality.md
++++ resolved/docs/10-testing-and-quality.md
+@@ -1,6 +1,5 @@
+ # 10 - Testing and quality
+ 
+-<<<<<<< HEAD
+ `pnpm test:macos-launcher` is the additional built-app acceptance entry for the **macOS
+ launcher** CI job on arm64 macOS 15. The job records the exact checkout and toolchain, builds
+ the application, runs the affected API tests, runs the Swift engine/installer/presentation
+@@ -21,7 +20,7 @@
+ linker search paths to its installed `Testing` framework, and runtime dependencies may still
+ prevent test execution. A missing module, runtime-load failure or failed build is not a test
+ pass; a build-only check does not establish test execution.
+-=======
++
+ The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
+ floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
+ exit and bounded work. Generation-specific handshakes retain exact native handles to nested
+@@ -49,7 +48,6 @@
+ deadline cannot create its marker child; a controlled-clock validation reaching equality refuses.
+ These establish deadline decisions and controlled entry behavior, not an OS scheduling race.
+ The ordinary helper, strict protocol, held-store and cleanup controls retain their own scopes.
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ 
+ `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
+ compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
+--- unresolved/docs/11-security-and-distribution.md
++++ resolved/docs/11-security-and-distribution.md
+@@ -93,20 +93,20 @@
+ 
+ ### Install from a checkout (Decided by implementation, WP-F2)
+ 
+-<<<<<<< HEAD
+ The optional [macOS Finder/Dock launcher](decisions/ADR-0082-macos-finder-dock-launcher.md)
+ installs per user from a built checkout, for native Apple Silicon macOS 15 or later. It saves
+ the canonical checkout and Node 22.22.2+ path, local store and typed options. It uses direct
+ detached process creation and opens the default browser after verifying the intended gateway
+-and both web shells. The launcher never stops the gateway; the existing management controls
+-retain that authority. Installation and replacement require private descriptor-verified
++and both web shells. The launcher never stops the gateway. Shutdown begins through the
++existing authenticated API. Browser Wait and Force are available only after an externally
++initiated drain reaches its choice phase. Installation and replacement require private descriptor-verified
+ bundle/receipt state and same-volume publication. Foreign destinations and uncertain ownership
+ refuse. The private APFS log root is independently reserved by the API before loading the
+ application; the same bounded writer serves Windows and Mac adapters. The Mac launch also
+ rechecks its local key source after both writer leases, before SQLite or key creation.
+ The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+ describes alternate app names and log locations. No automatic update or login item is installed.
+-=======
++
+ The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
+ case-insensitively, before the installer writes any configuration, including temporary staging
+ files. Empty values are refused too. The native launcher also refuses these keys in manually
+@@ -115,7 +115,6 @@
+ non-secret overrides remain supported; inherited `GG_*` variables are still cleared rather
+ than copied into launcher configuration or its child environment
+ ([ADR-0085](decisions/ADR-0085-refuse-launcher-secret-overrides.md)).
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ 
+ A gateway started by the Windows launcher keeps its private server log in the launcher folder,
+ which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
+--- unresolved/docs/decisions/README.md
++++ resolved/docs/decisions/README.md
+@@ -100,11 +100,10 @@
+ 
+ [ADR-0081 - Bounded private logs for the Windows launcher's gateway](ADR-0081-bounded-windows-launcher-logs.md) records the in-gateway bounded writer, the guarded entry, one owner per private physical log root, the coordinated cutover and closed launcher outcomes (#438).
+ 
+-<<<<<<< HEAD
+ [ADR-0082 - Per-user macOS Finder and Dock launcher](ADR-0082-macos-finder-dock-launcher.md) records saved native runtime inputs, detached lifetime, conservative admission, AppKit presentation, receipt-bound atomic installation and the shared managed-log writer (#456).
+ 
+-[ADR-0083 - Native Swift coverage for the macOS launcher](ADR-0083-swift-native-coverage.md) sets the 90% line and region policy with explicit branch-outcome tests, preserves the V8 gates, and records that the collector/check is wired while its first hosted verification is pending (#456).
+-=======
++[ADR-0083 - Native Swift coverage for the macOS launcher](ADR-0083-swift-native-coverage.md) sets the 90% line and region policy with explicit branch-outcome tests, preserves the V8 gates, and records the complete historical hosted verification on CI13 (#456).
++
+ [ADR-0084 - Independent CI lanes behind a fail-closed Gates check](ADR-0084-independent-ci-lanes-behind-gates.md) runs repository checks and serial coverage as independent jobs behind the always-evaluated `Gates` aggregate, which passes only when both succeed (#488).
+ 
+ [ADR-0085 - Refuse secret-bearing Windows launcher overrides](ADR-0085-refuse-launcher-secret-overrides.md) rejects explicit master-key and Jev seed-key overrides before configuration persistence or launcher actions, without printing their values (#437).
+@@ -112,4 +111,3 @@
+ [ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
+ 
+ [ADR-0089 - Bound optional Claude start-refusal diagnosis](ADR-0089-bounded-claude-refusal-diagnosis.md) gives post-refusal metadata a private monotonic deadline, retaining timely facts and returning the known refusal with unknown cause when optional diagnosis expires (#364).
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+--- unresolved/docs/delivery/2026-11-17-five-intents-register.md
++++ resolved/docs/delivery/2026-11-17-five-intents-register.md
+@@ -2,13 +2,10 @@
+ 
+ ## Approval and admission
+ 
+-<<<<<<< HEAD
+-=======
+ This section records the November 17, 2026 approval and admission snapshot. The linked issues,
+ PRs and dated [execution checkpoints](2026-11-17-intent-1-execution.md) own subsequent gate,
+ finding and delivery states; this scope register does not replace their exact-head records.
+ 
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ The owner approved the proposed next batch on November 17, 2026:
+ 
+ > I approve this plan. Send it to the main thread to implement the five intents in order after the macOS launcher, preserving all AIDLC gates and using Claude Code for UI and other implementation work that claude is better suited for, QA, and adversarial review.
+@@ -20,14 +17,6 @@
+ external `2026-11-17-five-intents/owner-approval-receipt.json` delivery record. The prior
+ recommendation to overlap intent 2 with intent 1 is superseded by this strict sequence.
+ 
+-<<<<<<< HEAD
+-**Approved, not yet admitted:** finish #456 / PR #501 through interactive engineering QA,
+-required checks, independent review and final audit, then merge it before starting intent 1.
+-At this register's creation PR #501 is draft at `4d72503321e587d7a36341462a49e442f3e51a6f`;
+-its CI13 passed, while remaining Mac QA belongs to the owner's new local Mac session and the
+-final Astra MAX audit remains pending. The [current-batch register](2026-11-13-four-intents-register.md)
+-owns those delivery facts. Recording this approval starts no next-batch implementation.
+-=======
+ **Intent 1 admitted on November 17.** The owner subsequently clarified the sequencing:
+ 
+ > Start the five intents now, in order; keep all technical gates (Recommended)
+@@ -54,7 +43,6 @@
+ and the linked execution checkpoints retain the dated evidence. This changes neither the
+ approved intent sequence nor the review, independent QA, current-head/current-target CI,
+ fresh Astra MAX final audit, merge and owner-acceptance gates.
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ 
+ The owner authorized the named scope and appropriate un-parking/reconciliation at admission.
+ This does not approve an unresolved architecture plan, resolve a refinement gate, release
+@@ -74,11 +62,7 @@
+ 
+ | Order | Intent                                                    | Units in recommended order                                                             | Admission dependency                                               |
+ | ----- | --------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+-<<<<<<< HEAD
+-| 1     | Make every delivery gate dependable and auditable         | U1.1 #495; U1.2 #488; U1.3 #496; U1.4 #407; U1.5 #466                                  | #456 engineering delivery and merge                                |
+-=======
+ | 1     | Make every delivery gate dependable and auditable         | U1.1 #495; U1.2 #488; U1.3 #496; U1.4 #407; U1.5 #466                                  | Owner-approved November 17 sequencing amendment                    |
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ | 2     | Preserve authored data and make identity rules consistent | U2.1 #481; U2.2 #429; U2.3 #473; U2.4 #472                                             | Intent 1 engineering delivery                                      |
+ | 3     | Keep local startup, shutdown and recovery ownership safe  | U3.1 #459; U3.2 #471; U3.3 #437; U3.4 #434; U3.5 #409                                  | Intent 2 engineering delivery; retain #459 plan gate and #460 hold |
+ | 4     | Make model readiness and execution failures actionable    | U4.1 #427; U4.2 #448; U4.3 #362; U4.4 #363; U4.5 #364; U4.6 #365; U4.7 #486; U4.8 #442 | Intent 3 engineering delivery                                      |
+@@ -127,11 +111,6 @@
+ ### Intent 3: local runtime ownership
+ 
+ - **U3.1 / #459:** begin with the owned helper-descendant lifecycle design. Preserve its
+-<<<<<<< HEAD
+-  architecture-plan gate and genuine native process verification.
+-- **U3.2 / #471:** establish the actual Windows contention failure site and cause. Do not
+-  call it a confirmed sharing violation or relax single-writer, record or cleanup assertions.
+-=======
+   architecture decision record and genuine native process verification. The November 20
+   D160 amendment below changes the timing of this issue's human plan review only.
+ - **U3.2 / #471:** complete the bounded Windows contention characterization and defensive
+@@ -141,7 +120,6 @@
+   sharing violation. Preserve every single-writer, record and cleanup assertion; the conservative
+   present-path guard-removal residual is tracked separately in #542. See the
+   [D161 completion amendment](#november-21-amendment-d161-471-bounded-completion).
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129
+ - **U3.3 / #437:** the approved recommendation is to refuse secret-bearing launcher
+   overrides, without another acknowledgement path and without echoing secret values.
+ - **U3.4 / #434:** make reset manifests and completion/failure output accurately account for
+@@ -226,11 +204,6 @@
+ Preserve owner environments, real stores, credentials, ports and unrelated dirty work. Retain
+ the existing scoped permissions for commits, publication and merges without broader authority.
+ No paid overages, personal plugin installation, marketplace publication or new provider access
+-<<<<<<< HEAD
+-is included. Follow [docs/15](../15-issue-workflow.md) at each admission. At creation, all units
+-above are **approved future scope / waiting for #456 engineering merge**, not implemented,
+-unparked, assigned to workers or claimed complete.
+-=======
+ is included. Follow [docs/15](../15-issue-workflow.md) at each admission. Intent 1's five core
+ issues and two bounded diagnostics were unparked and admitted on November 17. Each later
+ intent requires its preceding intent's engineering delivery under the approved sequence.
+@@ -420,4 +393,3 @@
+ Actual Claude owns the production correction; GPT supplies bounded supporting tests/docs. [Exact-source evidence](../qa/2026-11-22-i5-inspector-truthfulness/README.md) records 3,102 passing web tests with 98.65% line and 94.44% branch coverage, 36 distinct independent component outcomes across qualified invocations, and six fresh browser passes. Both prior CHANGES_REQUIRED reviews, budget-stopped author terminals and failed checks/fixtures retain their historical outcomes. This candidate record closes no issue by itself.
+ 
+ Actual Claude targeted review of the final supporting correction, the fresh independent Astra MAX third/final audit, exact-head/current-target ordinary CI/native and signed merge remain required. Preserve the three-scan cap and current owner gates; no fourth general scan, fabricated provider completion or weakened coverage is implied. #416 then #420 follow this pair's engineering delivery. Final owner decision review/rework precedes owner QA; Mac #501, #448/#459 owner obligations, #460 and conditional #379 retain their separate status. Later completion records belong in the linked issue/PR discussions and subsequent register entries.
+->>>>>>> 0f6c325becf3e3e0562ae69dfae2c42bcf1d7129

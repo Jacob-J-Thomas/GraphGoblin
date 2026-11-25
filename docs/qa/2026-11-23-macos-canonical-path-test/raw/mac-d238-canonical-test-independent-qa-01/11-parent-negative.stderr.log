@@ -1,0 +1,28 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.d238-parent.independent.qa.test.ts > built API entry and startup failures > refuses a shared database in one line and leaves its existing owner serving
+AssertionError: expected 'another GraphGoblin process holds G:\…' to contain 'another GraphGoblin process holds G:\…'
+
+- Expected
++ Received
+
+- another GraphGoblin process holds G:\ggq\delivery-evidence\2026-11-17-five-intents\mac-d238-canonical-test-independent-qa-01\scratch\run-9873dfe858824cd38764b9b58f1bcaee\alias\gg-api-process-rsUhiu\shared.db.graphgoblin.lock
++ another GraphGoblin process holds G:\ggq\delivery-evidence\2026-11-17-five-intents\mac-d238-canonical-test-independent-qa-01\scratch\run-9873dfe858824cd38764b9b58f1bcaee\physical\gg-api-process-rsUhiu\shared.db.graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying
++
+
+ ❯ src/main.d238-parent.independent.qa.test.ts:239:32
+    237|       expect(await contender.waitForExit()).toEqual({ code: 1, signal:…
+    238|       expectOwnershipRefusal(contender.stderr);
+    239|       expect(contender.stderr).toContain(`another GraphGoblin process …
+       |                                ^
+    240|       expect(contender.stdout).toBe('');
+    241|       expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-mac-d238-alias-
+  │ qa\GraphGoblin\apps\api
+

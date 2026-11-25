@@ -1,0 +1,136 @@
+{
+  "stageReached": "completed",
+  "failure": null,
+  "closureFailure": null,
+  "afterMatchesRootBinding": true,
+  "rootBindingPath": "G:/ggq/delivery-evidence/2026-11-17-five-intents/mac-post-564-local-admission-01/ROOT-BINDING.json",
+  "rootBindingSha256": "d7528bbeb946d0999e358f3bd31e892dc92505eabcf4696a8bf2a1c9c05565c2",
+  "preparationManifestSha256": "63fb4b872e5abc715d053fccacd7361830423247daa19aa27a6efbdc92ce93ae",
+  "commands": [
+    {
+      "label": "00-node-probe",
+      "fileName": "C:/nvm4w/nodejs/node_modules/pnpm/pnpm.exe",
+      "argv": [
+        "exec",
+        "node",
+        "--eval",
+        "process.stdout.write(JSON.stringify({version:process.version,path:process.execPath}))"
+      ],
+      "cwd": "G:/ggq/gg-macos-current-main/GraphGoblin",
+      "startUtc": "2026-11-23T17:42:13.4995575+00:00",
+      "endUtc": "2026-11-23T17:42:13.6650249+00:00",
+      "exitCode": 0,
+      "startOrCaptureFailure": null,
+      "shell": false,
+      "nodeFirstOnPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "childEnvironmentControl": {
+        "GG_OLLAMA_ENABLED": "false",
+        "LIVE": "0"
+      },
+      "stdout": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\00-node-probe.stdout.log",
+      "stderr": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\00-node-probe.stderr.log",
+      "stdoutSha256": "fbbc913825782d1c9b288c3fe6c7e0a756d5f692be9df9f97185edab0615f61c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "01-build",
+      "fileName": "C:/nvm4w/nodejs/node_modules/pnpm/pnpm.exe",
+      "argv": [
+        "build"
+      ],
+      "cwd": "G:/ggq/gg-macos-current-main/GraphGoblin",
+      "startUtc": "2026-11-23T17:42:14.5722853+00:00",
+      "endUtc": "2026-11-23T17:42:29.8447865+00:00",
+      "exitCode": 0,
+      "startOrCaptureFailure": null,
+      "shell": false,
+      "nodeFirstOnPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "childEnvironmentControl": {
+        "GG_OLLAMA_ENABLED": "false",
+        "LIVE": "0"
+      },
+      "stdout": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\01-build.stdout.log",
+      "stderr": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\01-build.stderr.log",
+      "stdoutSha256": "202b228034cc88dbb8e48e47101f9b008fae331e03e0efb1b909448946b2b3c8",
+      "stderrSha256": "c7ae53061ae01873a9768eadfdff2c192fb4acbd5744d4eb0741e66c8469a052"
+    },
+    {
+      "label": "02-api",
+      "fileName": "C:/nvm4w/nodejs/node_modules/pnpm/pnpm.exe",
+      "argv": [
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/main-entry.test.ts",
+        "src/macos-local-key.test.ts",
+        "src/database-ownership.test.ts",
+        "src/data-dir-lock.test.ts",
+        "src/serve.test.ts",
+        "src/gateway-logger.test.ts",
+        "src/windows-log/guard.test.ts",
+        "src/managed-log/gateway-log-writer.test.ts",
+        "src/macos-log/guard.test.ts",
+        "src/data-dir-lock-failures.test.ts",
+        "src/macos-log/guard-node.test.ts",
+        "--maxWorkers=1",
+        "--retry=0"
+      ],
+      "cwd": "G:/ggq/gg-macos-current-main/GraphGoblin",
+      "startUtc": "2026-11-23T17:42:30.8662544+00:00",
+      "endUtc": "2026-11-23T17:43:00.0668433+00:00",
+      "exitCode": 0,
+      "startOrCaptureFailure": null,
+      "shell": false,
+      "nodeFirstOnPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "childEnvironmentControl": {
+        "GG_OLLAMA_ENABLED": "false",
+        "LIVE": "0"
+      },
+      "stdout": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\02-api.stdout.log",
+      "stderr": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\02-api.stderr.log",
+      "stdoutSha256": "5cc795586279b8f4a2b93e3c0809df6e4db8d3e7d9c0c315f0b99301d644955b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "03-web",
+      "fileName": "C:/nvm4w/nodejs/node_modules/pnpm/pnpm.exe",
+      "argv": [
+        "--filter",
+        "@graphgoblin/web",
+        "exec",
+        "vitest",
+        "run",
+        "src/api/queries.reconnect.test.tsx",
+        "src/runs/inspector-read-provenance.test.ts",
+        "src/runs/RunInspectorPage.offline.test.tsx",
+        "src/runs/HistoryEligibility.test.tsx",
+        "src/runs/inspector/SessionRecoveryControls.test.tsx",
+        "src/runs/ScriptRecovery.test.tsx",
+        "src/runs/recovery-controls.test.tsx",
+        "src/runs/inspector/WaitPanel.test.tsx",
+        "src/runs/inspector/Timeline.test.tsx",
+        "--maxWorkers=1",
+        "--retry=0"
+      ],
+      "cwd": "G:/ggq/gg-macos-current-main/GraphGoblin",
+      "startUtc": "2026-11-23T17:43:00.8905837+00:00",
+      "endUtc": "2026-11-23T17:44:16.7116843+00:00",
+      "exitCode": 0,
+      "startOrCaptureFailure": null,
+      "shell": false,
+      "nodeFirstOnPath": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "childEnvironmentControl": {
+        "GG_OLLAMA_ENABLED": "false",
+        "LIVE": "0"
+      },
+      "stdout": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\03-web.stdout.log",
+      "stderr": "G:\\ggq\\delivery-evidence\\2026-11-17-five-intents\\mac-post-564-local-checks-01\\03-web.stderr.log",
+      "stdoutSha256": "c1380facd99ec75d863320562299fe82d4fbf12f8c4989039297aaea03236ea5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "noRetry": true,
+  "noCorrectiveWrites": true
+}
