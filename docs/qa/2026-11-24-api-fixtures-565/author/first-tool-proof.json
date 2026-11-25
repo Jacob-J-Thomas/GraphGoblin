@@ -1,0 +1,285 @@
+{
+  "providerModel": "claude-opus-5-5",
+  "providerApiKeySource": "none",
+  "permissionMode": "dontAsk",
+  "effectiveTools": [
+    "Bash",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read",
+    "Write"
+  ],
+  "usingOverage": false,
+  "overageStatus": "rejected",
+  "completed": true,
+  "permissionDenials": [
+    {
+      "tool_name": "Bash",
+      "tool_use_id": "toolu_016mWPBDXDrbvZZA1aZ1ya1F",
+      "tool_input": {
+        "command": "export PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"; node --version",
+        "description": "Check Node version with project runtime"
+      }
+    }
+  ],
+  "toolResults": {
+    "Bash:ok": 11,
+    "Read:ok": 31,
+    "Glob:ok": 5,
+    "Bash:error": 3,
+    "Grep:ok": 18,
+    "Write:ok": 1,
+    "Edit:ok": 18
+  },
+  "checkedCommandsAndWrites": [
+    {
+      "tool": "Bash",
+      "command": "git --no-optional-locks status --short",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "export PATH=\"$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH\"; node --version",
+      "file": null,
+      "success": false,
+      "exitCode": null,
+      "permissionRejected": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "node --version",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "v22.23.4"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  40 passed (40)"
+      ]
+    },
+    {
+      "tool": "Write",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\apps\\api\\src\\testing\\provider-isolation.test.ts",
+      "success": true
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm build --filter=@graphgoblin/api",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/api test src/testing/provider-isolation.test.ts",
+      "file": null,
+      "success": false,
+      "exitCode": 1,
+      "permissionRejected": false,
+      "outputSummary": [
+        "\u00d7 makes no discovery request under the fixture default 5393ms",
+        "\u00d7 makes no discovery request under the fixture default 9253ms",
+        "FAIL  src/testing/provider-isolation.test.ts > built API subprocess: Ollama discovery at startup (#565) > makes no discovery request under the fixture default",
+        "FAIL  src/testing/provider-isolation.test.ts > in-process main(): Ollama discovery at startup (#565) > makes no discovery request under the fixture default",
+        "Test Files  1 failed (1)",
+        "Tests  2 failed | 2 passed (4)",
+        "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL",
+        "\u00d7 \"pnpm recursive run\" failed in G:\\ggq\\gg-fu-api-fixtures-"
+      ]
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\apps\\api\\src\\testing\\api-subprocess.ts",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\apps\\api\\src\\testing\\api-subprocess.ts",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\apps\\api\\src\\testing\\api-subprocess.ts",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\apps\\api\\src\\main.test.ts",
+      "success": true
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/api test src/main.test.ts src/testing/provider-isolation.test.ts 2>&1 | grep -v '^{\"level\"'",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  2 passed (2)",
+        "Tests  18 passed | 5 skipped (23)"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/api test src/main.test.ts src/testing/provider-isolation.test.ts",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  2 passed (2)",
+        "Tests  18 passed | 5 skipped (23)"
+      ]
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\.github\\workflows\\ci.yml",
+      "success": true
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs",
+      "file": null,
+      "success": false,
+      "exitCode": 1,
+      "permissionRejected": false,
+      "outputSummary": [
+        "\u00d7 the Windows job runs the exact native command after a successful build whatever evidence preparation does 9ms",
+        "FAIL  scripts/windows-launcher-evidence.test.mjs > the Windows job runs the exact native command after a successful build whatever evidence preparation does",
+        "Test Files  1 failed (1)",
+        "Tests  1 failed | 39 passed (40)",
+        "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL",
+        "\u00d7 \"pnpm recursive run\" failed in G:\\ggq\\gg-fu-api-fixtures-"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/api typecheck",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/api lint",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\docs\\10-testing-and-quality.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\CHANGELOG.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\CHANGELOG.md",
+      "success": true
+    },
+    {
+      "tool": "Edit",
+      "command": null,
+      "file": "G:\\ggq\\gg-fu-api-fixtures-20261124\\GraphGoblin\\CHANGELOG.md",
+      "success": true
+    },
+    {
+      "tool": "Bash",
+      "command": "pnpm exec prettier --check .github/workflows/ci.yml CHANGELOG.md apps/api/src/main.test.ts apps/api/src/testing/api-subprocess.ts apps/api/src/testing/provider-isolation.test.ts docs/10-testing-and-quality.md",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ]
+    },
+    {
+      "tool": "Bash",
+      "command": "git --no-pager diff --check",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    {
+      "tool": "Bash",
+      "command": "git --no-optional-locks status --short",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    }
+  ]
+}

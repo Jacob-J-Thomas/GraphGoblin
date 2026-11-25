@@ -1,0 +1,42 @@
+diff --git a/apps/api/src/main.test.ts b/apps/api/src/main.test.ts
+index 351bf5045..8d55b1797 100644
+--- a/apps/api/src/main.test.ts
++++ b/apps/api/src/main.test.ts
+@@ -1,6 +1,6 @@
+ import { execFile } from 'node:child_process';
+ import { promisify } from 'node:util';
+-import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
++import { access, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+ import { createServer } from 'node:net';
+ import { join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+@@ -171,7 +171,8 @@ describe('built API entry and startup failures', () => {
+       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
+       expect(contender.stderr).toContain('another GraphGoblin process holds');
+       expectOwnershipRefusal(contender.stderr);
+-      expect(contender.stderr).toContain(f.lockPath);
++      // Ownership diagnostics use canonical paths, including Windows short-name temp roots.
++      expect(contender.stderr).toContain(await realpath(f.lockPath));
+       expect(contender.stderr).toContain(
+         'wait for the owning process to finish or stop it before retrying',
+       );
+@@ -206,7 +207,9 @@ describe('built API entry and startup failures', () => {
+       const contender = other.run([], env);
+       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
+       expectOwnershipRefusal(contender.stderr);
+-      expect(contender.stderr).toContain(`another GraphGoblin process holds ${databaseLock}`);
++      expect(contender.stderr).toContain(
++        `another GraphGoblin process holds ${await realpath(databaseLock)}`,
++      );
+       expect(contender.stdout).toBe('');
+       expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
+       expect(await readFile(databaseLock, 'utf8')).toBe(databaseRecord);
+@@ -245,7 +248,7 @@ describe('built API entry and startup failures', () => {
+       expect(child.stderr).toContain(
+         'Store ownership could not be verified (malformed or incomplete owner record)',
+       );
+-      expect(child.stderr).toContain(kind === 'reclamation' ? guard : path);
++      expect(child.stderr).toContain(await realpath(kind === 'reclamation' ? guard : path));
+       expect(child.stderr).toContain('inspect the owner record and running GraphGoblin processes');
+       expect(child.stdout).toBe('');
+       expect(await readFile(path, 'utf8')).toBe(record);

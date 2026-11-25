@@ -1,0 +1,124 @@
+# Targeted correction review: PR #570, formal scan 2 of 3
+
+**Verdict: PASS.** I found no introduced or blocking findings.
+
+## Reviewed identity
+
+| Item | Value |
+|---|---|
+| Head | `8c936ac14955f052e3dd3a578dedee5d8d6aaeb5` |
+| Tree | `27633451e86892767b51011b20566195646b272c` |
+| Parent | `343d1ba9c33f54cfe0634d6760cf0aa77e44c922` |
+| Branch | `codex/gg-fu-api-fixtures-20261124` |
+| Only source path changed | `apps/api/src/main.test.ts`, root-reported SHA-256 `855bf52c…ec2d` |
+| Correction diff | root-reported SHA-256 `6f362c97…0459`, equal to `test-correction.patch` in the manifest |
+
+I did not run tests, use tools or recompute any hash. Hash statements below check consistency between the supplied artifacts only.
+
+**Scope:** the three changed assertion statements and the `realpath` import, the supplied evidence, and integration implications. I did not rescan the broader fixture implementation. Parent QA and formal review remain bound to the parent head.
+
+## Source check: does `realpath` preserve test intent?
+
+**Import (line 4).** `realpath` comes from `node:fs/promises`, which uses Node's native realpath. On Windows, native realpath expands 8.3 short names and resolves junctions. That is consistent with the hosted product output (`RUNNER~1` reported as `runneradmin`, log lines 737–738, 757–758).
+
+**Line 175, competing process.** At assertion time the live owner still holds `f.lockPath`, so the target exists. These assertions are unchanged:
+- exit code `{code:1, signal:null}` (line 171);
+- the `another GraphGoblin process holds` prefix (line 172);
+- `expectOwnershipRefusal` (line 173);
+- the retry text (lines 176–178);
+- empty stdout (line 179);
+- record-byte equality (line 180);
+- `/loops` returning 200 (lines 181–184).
+
+**Lines 210–212, shared database.** `databaseLock` is shown to exist by line 206, which reads it. The full `holds ${path}` prefix binding is kept, so the test is not weakened. These remain unchanged:
+- both record comparisons (lines 214–215);
+- the loser cleanup check `noLock(other.lockPath)` (line 216);
+- the live-owner 200 check (lines 217–220).
+
+**Line 251, uncertain ownership (all three `it.each` kinds).**
+- The reclamation guard is created at line 239. The directory or database lock is written at line 241, before the child starts at line 242.
+- The database itself (`uncertain.db`) is never passed to `realpath`. Only its existing `.graphgoblin.lock` is.
+- These remain unchanged:
+  - the uncertainty text and the inspect text (lines 248–250, 252);
+  - record bytes (line 254);
+  - marker inventory (line 255);
+  - `noLock` (line 256);
+  - the not-listening check (line 257).
+
+**Expected-target mapping.** Each new expected target matches the canonical path the product printed on the hosted run:
+- `graphgoblin.lock`
+- `shared.db.graphgoblin.lock`
+- `uncertain.db.graphgoblin.lock`
+- `graphgoblin.lock.reclaim`
+
+**Fixture input stays raw.** Only the expectations are canonicalized:
+- `api-subprocess.ts:132–154` still passes the raw `mkdtemp(tmpdir())` path into `GG_DATA_DIR` and `GG_DB_URL`.
+- The database overrides at `main.test.ts:196` and `:244` are still built from the raw `dataDir`.
+- Hosted line 702 confirms the raw `RUNNER~1` path reached the built API.
+
+**Platform behaviour.**
+- **Linux:** with an ordinary, non-symlinked temp directory, `realpath` returns the same path, so the assertions are byte-identical to before.
+- **Aliased roots** (Windows 8.3, junction, or macOS `/var` → `/private/var`): the assertion becomes stricter. It now requires the canonical path the product emits.
+- **Failure behaviour:** if the product wrongly deleted a lock, `realpath` would throw ENOENT before the record assertion runs. The test still fails, only with a different message. Not a finding.
+
+**Unchanged elsewhere:**
+- No product file is in `changedPaths`.
+- The 60 000 ms limits, platform skips, the `JEV_API_KEY`/`GG_*` clearing (lines 137–143) and `provider-isolation.test.ts` are untouched.
+
+**Hosted failures are all addressed.**
+- The hosted failure anchors match the parent source: `174:32`, `209:32` and `248:28` correspond to the hunk old-side lines 174, 209 and 248.
+- All five hosted failures come from these three sites, so every observed failure site is corrected.
+
+## Evidence accuracy and integrity (qualified)
+
+1. **Environments are kept separate.** The hosted run (an 8.3 short-name root, parent head) and the local owned junction (a non-suffix alias) are both labelled correctly. Both `RESULT.json` qualifications and the README say the junction is alias evidence, not 8.3 evidence. Neither is evidence about the 8.3 behaviour at the corrected head.
+
+2. **Hash consistency.** Root-reported hashes are consistent with each other; I did not compute them.
+   - Each `RESULT.json` stdout/stderr hash equals the corresponding manifest member hash.
+   - The corrected `sourceBefore` and `sourceAfter` equal the bound `sourceSha256`.
+   - `windows.stderr.log` = `e3b0c442…b855`, which is the SHA-256 of empty input. It is a zero-byte file and carries no evidence.
+
+3. **Unverifiable from the supplied material** (passed to QA):
+   - The baseline `sourceBefore` `24a65e48…` is not tied to parent blob `351bf5045` anywhere in the supplied identity.
+   - Only summary lines of the local logs were supplied. The README's "same five failures" is confirmed by count (5 failed / 9 passed / 5 skipped), not by test name.
+   - The claim that both runs used ports 62000–62099 is not in the receipts.
+   - The excerpt does not show that the hosted log bytes match the `windows.log` hash, or that the hosted run was on the parent head. That attribution comes from the README.
+
+4. **Alias activation in the corrected run is not shown.** The corrected run used a different alias/target pair (`…-corrected`) from the baseline. A run without an active alias would also pass, so the corrected receipt alone does not prove the junction was active. The supplied evidence does not show:
+   - the observed `os.tmpdir()` value;
+   - the alias → target resolution;
+   - the contents of `check-canonical-temp.py`.
+
+   The appendix's queued QA-side `run-check.py`, which is not part of the committed packet, is the right control. This should be closed in QA.
+
+5. **Appendix wording.**
+   - "Four path expectations" is really three changed assertion statements, covering five parameterized cases and four path operands.
+   - The `api-subprocess.ts:127-164` anchor contains the supplied lines 130–166, but lines 127–129 were not supplied.
+   - The `expectOwnershipRefusal` body was not supplied. It is unchanged by the diff.
+
+   None of these is blocking.
+
+## Integration implications
+
+**PR #501** (pinned reference `420594587a26…`):
+- Expect a textual conflict on the line-4 import and near lines 205–212. A doubled `realpath` named import must be deduplicated, or TypeScript will reject it.
+- If #501's `databaseLock` is already built from `await realpath(database)`, the line-211 `realpath(databaseLock)` is idempotent and harmless. Keep one form.
+- Keep the Mac admission cases.
+- The current head contains neither that integration nor its hosted QA.
+
+**#558:** this correction covers the canonical-label criteria for the directory lock, database lock and reclamation guard, with raw fixture input preserved. It does not resolve any absent path. Report it separately from #565.
+
+**#565 provider isolation:** unaffected by this diff.
+
+**#573:** the Coverage classification is not evidenced in the supplied material. Keep it separate; it is not evidence against these assertions.
+
+## Remaining gates (not satisfied by this scan)
+
+- **Independent actual-Claude QA at this head** (`api-fixtures-565-correction-qa-02`). It should:
+  - verify tmpdir alias activation and the resolved target;
+  - rebuild the API entry, since the receipts do not bind the built artifact;
+  - check failing test names and skip identities;
+  - tie the baseline hash to the parent;
+  - recompute the packet hashes.
+- **A fresh hosted CI run at this head**, Windows (8.3 root) and Linux, which is the first observation of the corrected assertions under a real short-name root.
+- **The separately reserved final Astra scan 3.**

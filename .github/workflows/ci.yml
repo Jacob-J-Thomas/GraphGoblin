@@ -135,6 +135,13 @@ jobs:
           path: ${{ steps.finalize.outputs.paths }}
           if-no-files-found: error
           include-hidden-files: false
+      # Windows venue for the built-entry startup and log refusal cases (#565). Last, after a
+      # successful build whatever the native and evidence steps did, so it cannot change their
+      # outcomes; its own failure still fails the job.
+      - name: API built-entry startup on Windows
+        id: api-entry
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm --filter @graphgoblin/api test src/main.test.ts
   repository-checks:
     name: Repository checks
     runs-on: ubuntu-latest
