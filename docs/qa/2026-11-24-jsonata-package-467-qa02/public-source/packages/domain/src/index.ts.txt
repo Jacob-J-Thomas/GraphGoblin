@@ -1,0 +1,39 @@
+/**
+ * @graphgoblin/domain
+ *
+ * Pure logic over the contracts. No I/O, no timers, no randomness without injection.
+ */
+export * from './errors.js';
+export * from './chat.js';
+export * from './pointer.js';
+export * from './patch.js';
+export { checkTemplate, renderTemplate, observeTemplate, type TemplateFact } from './template.js';
+export * from './template-bundle.js';
+export {
+  checkExpression,
+  observeExpression,
+  observePredicate,
+  type ExpressionReason,
+  type ExpressionObservation,
+  evaluateExpression,
+  evaluatePredicate,
+  type ExpressionOptions,
+} from './expression.js';
+export * from './thread-view.js';
+export * from './json-schema.js';
+export * from './mutations.js';
+export * from './graph.js';
+export * from './answers.js';
+export { findAuthoredSources, syntaxIssues } from './syntax.js';
+export { renameLoopNode, type NodeRenameResult } from './node-references.js';
+export * from './state-machine.js';
+export * from './loop-io.js';
+export * from './loop-names.js';
+export * from './replay.js';
+export * from './regex-safety.js';
+export * from './model-resolution.js';
+export * from './readiness.js';
+export * from './poll-items.js';
+export * from './json-value.js';
+export * from './retired-destinations.js';
+export * from './reconcile-thread.js';
