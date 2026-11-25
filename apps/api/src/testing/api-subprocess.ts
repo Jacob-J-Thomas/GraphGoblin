@@ -1,4 +1,18 @@
-/** Disposable built-entry process fixture. No owner environment, listener, or store is reused. */
+/**
+ * Disposable built-entry process fixture. Each fixture creates its own temporary store and starts
+ * children only through run(); dispose force-stops any of them still running, releases the port
+ * reservation and removes the store on a best-effort basis.
+ * Its API port is a cooperative reservation among the fixtures of this Vitest run, taken from the
+ * GG_TEST_PORT_START/GG_TEST_PORT_COUNT range after point-in-time bind checks; it is not an OS
+ * hold, so a process outside the run can still bind it. A listener a test owns for itself binds
+ * port 0 instead and reads back whatever ephemeral port the OS assigned.
+ *
+ * Children get the parent environment without any inherited GG_*, JEV_API_KEY or
+ * NODE_V8_COVERAGE, then fixture values that include GG_OLLAMA_ENABLED=false, so ordinary startup
+ * makes no Ollama discovery request. A test that owns a provider endpoint opts in per child with
+ * run() overrides (GG_OLLAMA_ENABLED=true and its own GG_OLLAMA_URL). This is not network
+ * isolation: children keep the host network and the rest of the inherited environment.
+ */
 import { spawn } from 'node:child_process';
 import { access, mkdtemp, rm } from 'node:fs/promises';
 import { createConnection } from 'node:net';
@@ -145,6 +159,8 @@ export async function createApiProcessFixture(
     GG_SWAGGER_UI: 'false',
     GG_WEB_DIST: '',
     GG_JEV_API_KEY: '',
+    // The product default is on; the filter above drops any inherited choice. Opt in per child.
+    GG_OLLAMA_ENABLED: 'false',
     GG_MASTER_KEY: Buffer.alloc(32, 8).toString('base64'),
   };
   const children: ReturnType<typeof launch>[] = [];

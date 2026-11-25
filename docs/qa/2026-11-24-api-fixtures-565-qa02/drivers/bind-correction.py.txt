@@ -1,0 +1,127 @@
+"""Head, index, source and original-evidence checks for the #565 correction."""
+
+from datetime import datetime, timezone
+from importlib import import_module
+import hashlib
+from pathlib import Path
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+ROOT = Path(__file__).resolve().parent
+EVIDENCE = ROOT.parent
+BASE = EVIDENCE.parent
+sys.path.insert(0, str(BASE / 'scope-preparation-01'))
+shared = import_module('prepare-scope')
+WORKTREE = Path('G:/ggq/gg-fu-api-fixtures-20261124/GraphGoblin').resolve()
+BASH = Path('C:/Program Files/Git/bin/bash.exe')
+NODE = Path(shared.NODE) / 'node.exe'
+HEAD = '8c936ac14955f052e3dd3a578dedee5d8d6aaeb5'
+TREE = '27633451e86892767b51011b20566195646b272c'
+PARENT = '343d1ba9c33f54cfe0634d6760cf0aa77e44c922'
+BRANCH = 'codex/gg-fu-api-fixtures-20261124'
+START = datetime.fromisoformat('2026-11-25T05:10:20+00:00')
+MAIN = 'apps/api/src/main.test.ts'
+PACKET = 'docs/qa/2026-11-24-api-fixtures-565-ci01/'
+COMMANDS = {
+    'build': 'pnpm build --filter=@graphgoblin/api --force',
+    'api': 'pnpm --filter @graphgoblin/api test src/main.test.ts src/testing/provider-isolation.test.ts --reporter=verbose',
+    'junction': 'pnpm --filter @graphgoblin/api test src/main.test.ts --reporter=verbose',
+}
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def environment():
+    env = shared.subscription_environment()
+    env.update(
+        GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0',
+        CLAUDE_CODE_GIT_BASH_PATH=str(BASH),
+    )
+    return env
+
+
+def require_reset():
+    if datetime.now(timezone.utc) < START:
+        raise RuntimeError('MAX_RESET_NOT_REACHED')
+
+
+def git(env, *args):
+    return subprocess.run(
+        ['git', '--no-pager', '--no-optional-locks', '-c', 'diff.autoRefreshIndex=false', *args],
+        cwd=WORKTREE, env=env, check=True, capture_output=True, timeout=30,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    ).stdout
+
+
+def git_text(env, *args):
+    return git(env, *args).decode('utf-8').strip('\r\n')
+
+
+def paths(env, *args):
+    return sorted(filter(None, git_text(env, *args).split('\0')))
+
+
+def execute(command, env):
+    return subprocess.run(
+        [str(BASH), '--noprofile', '--norc', '-c', command],
+        cwd=WORKTREE, env=env, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
+
+def snapshot(env):
+    index = Path(git_text(env, 'rev-parse', '--path-format=absolute', '--git-path', 'index'))
+    index_hash = sha(index.read_bytes())
+    head = git_text(env, 'rev-parse', 'HEAD')
+    tree = git_text(env, 'rev-parse', 'HEAD^{tree}')
+    parent = git_text(env, 'rev-parse', 'HEAD^')
+    branch = git_text(env, 'branch', '--show-current')
+    clean = git(env, 'status', '--porcelain=v1', '-z', '--untracked-files=all') == b''
+    changed = paths(env, 'diff', '--name-only', '-z', '--no-renames', PARENT, HEAD)
+    source = [path for path in changed if not path.startswith(PACKET)]
+    if (head, tree, parent, branch, clean, source) != (HEAD, TREE, PARENT, BRANCH, True, [MAIN]):
+        raise RuntimeError('CORRECTION_HEAD_TREE_OR_WORKTREE_MISMATCH')
+    patch = git(env, 'diff', '--binary', '--no-ext-diff', '--no-textconv', '--no-color', PARENT, HEAD, '--', MAIN)
+    manifest_path = WORKTREE / PACKET / 'MANIFEST.json'
+    manifest = shared.read_json(manifest_path)
+    corrected_bytes = (WORKTREE / MAIN).read_bytes()
+    if sha(corrected_bytes) != manifest['sourceSha256'] or manifest['previousHead'] != PARENT:
+        raise RuntimeError('CORRECTION_SOURCE_HASH_MISMATCH')
+    packet_hashes = {}
+    for item in manifest['members']:
+        path = WORKTREE / PACKET / item['path']
+        if not path.is_file():
+            raise RuntimeError('CORRECTION_PACKET_MEMBER_MISSING')
+        data = path.read_bytes()
+        if len(data) != item['bytes'] or sha(data) != item['sha256']:
+            raise RuntimeError('CORRECTION_PACKET_RAW_BYTES_CHANGED')
+        packet_hashes[item['path']] = item['sha256']
+    if sha(index.read_bytes()) != index_hash:
+        raise RuntimeError('CORRECTION_PREFLIGHT_CHANGED_INDEX')
+    result = {
+        'head': head, 'tree': tree, 'parent': parent, 'branch': branch,
+        'worktree': WORKTREE.as_posix(), 'clean': clean, 'indexSha256': index_hash,
+        'changedPaths': changed, 'sourceOnlyChangedPath': MAIN, 'sourceSha256': sha(corrected_bytes),
+        'correctionDiffSha256': sha(patch), 'packetManifestSha256': sha(manifest_path.read_bytes()),
+        'packetMemberSha256': packet_hashes,
+    }
+    return result, patch
+
+
+def verify(env):
+    snap, patch = snapshot(env)
+    if snap != shared.read_json(ROOT / 'CORRECTION-FREEZE.json'):
+        raise RuntimeError('CORRECTION_FREEZE_MISMATCH')
+    if sha((ROOT / 'CORRECTION-SOURCE.patch').read_bytes()) != snap['correctionDiffSha256']:
+        raise RuntimeError('CORRECTION_REVIEW_PATCH_CHANGED')
+    return snap, patch
+
+
+if __name__ == '__main__':
+    state, patch_bytes = snapshot(environment())
+    shared.save_json(ROOT / 'CORRECTION-FREEZE.json', state)
+    (ROOT / 'CORRECTION-SOURCE.patch').write_bytes(patch_bytes)
+    print(shared.json.dumps(state, indent=2))
+
