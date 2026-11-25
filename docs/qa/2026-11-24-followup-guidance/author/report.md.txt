@@ -1,0 +1,32 @@
+All three corrections are in place in four of the six files: the run-loop skill, guide 05, guide 06 and guide 08, plus the CHANGELOG. docs/09 was not changed. The Prettier check on the six paths and `git diff --check` both passed. Everything is still unstaged and nothing was committed.
+
+**#516 (lookup by loop name)**
+- **Skill, step 1:** back to the old order. A given id is used as is. For a given name, the skill calls `list_loops` and picks the loop whose whole name matches under the shared rule (trim, collapse each whitespace run to one space, lowercase). Part of a name does not match.
+  - `query` is described as optional discovery only. If it misses a name that differs only in spacing, the skill lists again without a query and compares against the name the user gave.
+  - The factual sentence stays: `describe_loop` and `start_run` also accept the full equivalent name, and an exact id of the user's loop wins.
+  - It asks the user only when several loops or none match. The draft sentence is kept word for word ("start it from the draft (`allowDraft: true`) only if they agree."), and so is the `## 1. Find the loop` heading. The Claude generator searches for both.
+  - Removed: describe-first, the `LOOP_NOT_FOUND` fallback, confirming a single candidate, and the `AMBIGUOUS_LOOP_NAME` note.
+- **Skill, step 2:** back to "Call `describe_loop` with the loop id." The "or reuse its result from step 1" part is gone.
+- **Guide 05:** the ID wording now says, in short sentences, that a successful ID lookup wins. If no loop has that ID, the tool falls back to the name, and any other ID lookup error is returned as it is. I removed "A listed loop is a candidate to confirm with the user…". The separate `query` discovery paragraph is unchanged otherwise.
+- **CHANGELOG (Unreleased):** removed the skill workflow clause and the **Upgrade:** rebuild/reinstall instructions. The bullet now ends "…describe this lookup. No store, schema or format change."
+
+**#535 (Jev key and the Windows launcher), guide 06**
+- "Other inherited variables, including `JEV_API_KEY`, reach the gateway unchanged" now reads: "An inherited `JEV_API_KEY` passes to the gateway normally. A cold start with no stored `jev-api-key` then seeds it from a non-empty `JEV_API_KEY`."
+- The **Shut down** control reference now reads: "To stop it first, request a drain through the [gateway shutdown API](../07-api-and-streaming.md#gateway-shutdown-224) and let it exit." I confirmed that heading exists in docs/07.
+- The PowerShell example, the cleared `GG_*` variables and refusal rules, reuse of a running gateway versus a new start, the stored-secret paragraph, and the direct API and Docker text are unchanged.
+
+**#540 (reset), guide 08 and CHANGELOG**
+- In guide 08, "lists the same manifest again" became "lists its own manifest".
+- The dry-run distinction is now two short sentences. The earlier dry run is a separate invocation that the confirmed command does not remember, and the command takes its own preview.
+- I replaced the sentence that promised a particular lock row and no guard row. If a stale entry was cleared before this command's preview, the command makes no attribution for it. A different stale entry can still be in that preview or be reclaimed when the command takes a lock, so the user should read this command's own manifest.
+- In the CHANGELOG's #434 bullet, the colon sentence became: "An earlier standalone dry run is a separate invocation, and the confirmed command does not remember it. An entry cleared before the confirmed command's preview gets no attribution."
+- The reclaim, release and refusal wording is unchanged.
+
+**Commands run:** `node --version` (v22.23.4), `git --no-optional-locks status --short` (the same six files modified), `git --no-pager diff --check` (clean), and the six-path `pnpm exec prettier --check` (all pass).
+
+**Open gaps:**
+- I couldn't view the committed version of SKILL.md, because `git show` and `git diff` aren't in the allowed commands. Step 1 is rebuilt from your brief and the Claude generator's exact search strings, so it may not match the old text byte for byte. A reviewer should compare it with HEAD.
+- I couldn't compute the worktree hash checkpoint because no allowed command produces one. The orchestrator needs to take a new checkpoint.
+- docs/09 line 843 still says lookup resolves "an exact ID … first and otherwise compare[s]" and keeps a semicolon. It doesn't conflict with guide 05, and no correction targeted it.
+- The CHANGELOG lookup bullet also doesn't mention that other ID lookup errors are returned as they are. I kept it short as asked.
+- Neither the product tests nor the Claude plugin build were run, since both are outside this contract. A plugin test only checks the skill's MCP tool names, and the new wording uses only tools that already appear in it.
