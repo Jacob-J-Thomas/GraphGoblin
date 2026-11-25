@@ -1,0 +1,83 @@
+**#534: PASS** · **#539: PASS** (local QA evidence only; limits listed below)
+
+I ran all three permitted commands, one at a time, from `recovery-02`. They used Node v22.23.4. Frozen patch SHA-256: `526d5eea2f8a8e8dd3d809365f9211cf04a774d746a1e84fcdf36b6f8dd6ce47` (supplied; I had no way to hash it myself).
+
+| Check | Vitest exit | Tests passed | Receipt | Log SHA-256 (from the runner) |
+|---|---|---|---|---|
+| `maintained` (`test:coverage`, whole file, coverage limited to the module) | 0 | 43 | `MAINTAINED-RESULT.json` | `MAINTAINED.log` `a5db51199b08ee613465bdbfe8a14d218de98869a73b6850b7a9361fc42d6455` |
+| `cancel` (`-t "#534"`) | 0 | 1 | `CANCEL-RESULT.json` | `CANCEL.log` `b9620b250bdb5af8dc7afeaedcb36634ee3bb40fdb053cfde81d358e766a3675`; `CANCEL-NODE-TAP.log` `c07c477bd6f99f9fb6b52568ed44de436b22244150c59bc3d74a0c1d7ccd4b92`; fixture `b00ae88384cb0faac46970f0d60e0bcdf8c12edf7d3c9ab531f9941e9ee53d1a` |
+| `totals` (`-t "#539"`) | 0 | 1 | `TOTALS-RESULT.json` | `TOTALS.log` `72d47e8dcfae2d86e4c52adbeea8e7634058173bf5b97247e9c2ea7300dc48be` |
+
+**Coverage of `scripts/windows-launcher-evidence.mjs` only:** statements 99.0%, branches 97.43%, functions 100%, lines 99.48%. The frozen diff changes no config file. AGENTS.md sets the threshold at 90% for lines and branches.
+
+The earlier wrapper-failure note in the prompt was not used as evidence. This run's percentages match it. Its log hash (`97d078…`) belongs to a different run.
+
+## #534 observations
+
+The rows below compare two sources. The "node:test" column comes from TAP with evidence turned off, run through `pnpm exec node` (exit 1; tests 12, pass 3, fail 5, cancelled 4). The "recorded" column comes from the readback of the finalized files.
+
+| Scenario | Test | node:test | Recorded end (seq) |
+|---|---|---|---|
+| Ordinary pass | installer:1 / :0 | ok / ok | pass (5) / pass (6) |
+| Ordinary assertion throw | launcher:1 → parent :0 | testCodeFailure → subtestsFailed | fail `assertion` (9) → fail `subtests`, 1 (10) |
+| Timed-out subtest | checkout-alias:1 | testTimeoutFailure | fail `other` (14) |
+| Next sibling | checkout-alias:2 | ok | pass (16) |
+| Its parent | checkout-alias:0 | subtestsFailed | fail `subtests`, 1 (17) |
+| Parent timeout | lock-contention:0 | testTimeoutFailure | fail `other`, failedSubtests 1 (20) |
+| Child left running when its parent timed out (it later throws) | lock-contention:1 | cancelledByParent | fail `other` (21) |
+| Child started after its parent ended | lock-contention:2 | parentAlreadyFinished | fail `other` (27) |
+| Parent returned with a child still running | bounded-logs:0 → :1 | subtestsFailed → cancelledByParent | fail `subtests`, 1 (24) → fail `other` (25) |
+
+- **How the two columns were paired.** The readback lists 9 failure types in TAP order, and I matched them to the 9 failing tests in order. The explicit name-to-type pairing for the evidence-on run comes from the maintained assertion. That assertion also checks that the evidence-on and evidence-off outcome maps are equal.
+- **Order.** A timed-out subtest is ended before its sibling and its parent (14, then 16, then 17). A timed-out parent is ended before the child it cancels (20, then 21). lock-contention:2 ended after the next case (27), and the test allows for this by grouping records per case.
+- **One end per test.** The readback shows 12 starts, 12 ends, 0 rejected and 31 records, and the file is closed. The late `assert.fail` in lock-contention:1 added no second end. Per the assertions, the text "late failure" and the canary string are absent, and exactly 10 stdout markers were printed.
+- **Child failure vs. late cleanup.** checkout-alias:1 has two different kinds of record:
+  - The child record (seq 13: `ensure-gateway`, exit 3, 26 stderr bytes) was written *before* the cancellation end at seq 14. It is counted in the case as `childFailures: 1`.
+  - The end itself is a cancellation (`other`). The unit test asserts it has no code and no exit status.
+  - The cleanup records (seq 28, 29, 30, for checkout-alias:1, lock-contention:1 and bounded-logs:1) came *after* both their own end and their parent's end. They are kept in their own test's scope.
+  - The ordinary pass's cleanup (installer:1, seq 4) came before its end, as expected.
+- **Finalized artifact.**
+  - Status is `native-failed` with native `failure`. Observations are valid and closed with 0 rejected.
+  - The upload set is `manifest.json`, `result.json` and `observations.ndjson`.
+  - Per case: installer pass 1/1/0/0, launcher fail 1/0/1/0, checkout-alias fail 2/1/1/0, lock-contention fail 2/0/2/0, bounded-logs fail 1/0/1/0.
+  - The finalizer's exit code of 0 comes from the passing assertion, not from the readback.
+  - The 16 `missing` entries are expected, because this fixture is not a full passing suite.
+- **Earlier baseline receipt.** It was taken at base `d2df8600…` (40 passed, 1 failed, 41 total, exit 1). Its fixture used different lifecycle control: there, checkout-alias:1 and lock-contention:1 were both `cancelledByParent`, each with a recorded `pass`. So it shows the old recorder writing a pass for parent-cancelled tests. It is not a timeout baseline, and I did not re-run it.
+
+## #539 observations
+
+**Readback from `TOTALS-RESULT.json`.** Totals are shown as [contenders, acquired, refused, other]. Every artifact had 1 totals row and 7 receipts. The receipt-field SHA was the same in all of them: `0b89fa18…5c0a`.
+
+| Variant | Totals | Native success | Native failure |
+|---|---|---|---|
+| Control | 5,1,4,0 | `complete`, missing [], 0 rejected | n/a |
+| contenders | 6,1,5,0 | `incomplete`, [`contention-trials`], 0 rejected | `native-failed`, [`contention-trials`], 0 rejected |
+| acquired | 5,2,3,0 | same | same |
+| refused | 5,1,3,1 | same | same |
+| other | 5,0,4,1 | same | same |
+| Duplicate row | 5,1,4,0 | `incomplete`, [`records-rejected`], 1 rejected, first row kept | n/a |
+
+All artifacts uploaded the same three files. The readback is sorted by totals, so I matched each variant to its label by its values.
+
+- **Why changing one field alone can't be tested.** The recorder requires acquired + refused + other = contenders (1 + 4 + 0 = 5). Changing any one field breaks that sum: 6 vs 5, 6 vs 5, 4 vs 5 and 6 vs 5. The recorder would then reject the row, and the run would stop at `records-rejected` before the per-count checks in `successfulContention` ever ran. That is the same masking #539 reports. The test asserts that `validateRecord` returns false for each single-field change.
+- **Why the variants change two fields.** Each variant moves its named field plus one other so the sum still holds (6=1+5+0, 5=2+3+0, 5=1+3+1, 5=0+4+1). Those rows are accepted (asserted true), and the only remaining refusal is the comparison against the unchanged receipts. The unchanged receipts are confirmed by the matching SHA and by a `deepEqual` assertion.
+- **What each variant proves.**
+  - The contenders variant isolates the receipt-count check (5 results and PIDs vs 6 contenders).
+  - Each of the other three fails two of the checks acquired = 1, refused = contenders − 1 and other = 0.
+  - Under the sum rule, any two of those checks imply the third. So the test shows a refusal for each wrong count, but it can't show that each individual check is needed.
+- **Assertion-only facts** (the readback doesn't show these):
+  - Exit code is 1 for `incomplete` and 0 for `native-failed`.
+  - Observation bytes were byte-identical before and after finalizing.
+  - Running `summarize` over the control plus an appended second row gives contention `[2,3]` and includes `contention-trials` in missing.
+- **Existing assertions kept.** The test-file changes only add code. The existing duplicate-row and failed-artifact retention tests (including "structured cleanup failures remain readable and downloadable…") are unchanged and passed within the 43.
+
+## Limits
+
+- I couldn't open the receipts or hash the worktree, so the receipt and log hashes, and the link to patch `526d5eea…`, are as the runner reported them.
+- This was a local Windows run. Nothing ran against a GraphGoblin service, GUI or the real `windows-launcher` suite, and the `GraphGoblin.exe` launches were stubbed to fail.
+- The fixture uses 50 ms timeouts, not the original 240 s limit, so the original incident was not reproduced.
+- Two cases were not exercised:
+  - A subtest that node:test cancels before its body runs.
+  - A dedicated case where a test fails first and is cancelled afterwards; only the ordinary assertion failure keeps `assertion`.
+- Coverage here is for this one module, not the whole tooling coverage gate. The threshold value comes from AGENTS.md; I didn't read the Vitest config.
+- This is not a formal review, hosted CI, product acceptance or approval to publish. The cause of the #471 incident is still unknown.
