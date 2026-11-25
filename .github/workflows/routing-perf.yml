@@ -147,7 +147,15 @@ jobs:
             echo "signature=$signature"
             if [ -n "$tracked$untracked" ]; then printf '%s\n' "$tracked" "$untracked"; fi
           } | tee "$p/source-after.txt"
-          version() { "$@" 2>/dev/null || echo unavailable; }
+          # Accept only a successful, nonblank, single-line stdout; anything else is one unavailable record.
+          version() {
+            local out
+            if out=$("$@" 2>/dev/null) && [[ $out == *[![:space:]]* && $out != *$'\n'* && $out != *$'\r'* ]]; then
+              printf '%s\n' "$out"
+            else
+              echo unavailable
+            fi
+          }
           # Explicit allowlist only: no environment dump.
           {
             echo "workflow_sha=$GITHUB_WORKFLOW_SHA"
@@ -239,8 +247,24 @@ jobs:
                 fixtures.add(fixture);
                 if (!Array.isArray(p.nodes) || !p.nodes.length ||
                   !Array.isArray(p.samples) || !p.samples.length || !Array.isArray(p.timeDeltas) || p.samples.length !== p.timeDeltas.length ||
-                  !Number.isFinite(p.startTime) || !Number.isFinite(p.endTime) || p.endTime <= p.startTime)
+                  !Number.isFinite(p.startTime) || !Number.isFinite(p.endTime) || p.endTime <= p.startTime ||
+                  !Number.isFinite(p.endTime - p.startTime))
                   throw new Error('invalid CPU profile');
+                const id = (v) => Number.isSafeInteger(v) && v > 0;
+                const ids = new Set();
+                for (const n of p.nodes) {
+                  const f = n?.callFrame;
+                  if (!id(n?.id) || ids.has(n.id)) throw new Error('invalid or duplicate CPU profile node id');
+                  ids.add(n.id);
+                  if (typeof f?.functionName !== 'string' || typeof f.scriptId !== 'string' || typeof f.url !== 'string' ||
+                    !Number.isInteger(f.lineNumber) || f.lineNumber < -1 || !Number.isInteger(f.columnNumber) || f.columnNumber < -1)
+                    throw new Error(`invalid CPU profile callFrame for node ${n.id}`);
+                  if (n.children !== undefined && !Array.isArray(n.children)) throw new Error(`invalid CPU profile children for node ${n.id}`);
+                }
+                for (const n of p.nodes)
+                  if ((n.children ?? []).some((c) => !id(c) || !ids.has(c))) throw new Error(`unresolved CPU profile child of node ${n.id}`);
+                if (p.samples.some((s) => !id(s) || !ids.has(s))) throw new Error('unresolved CPU profile sample node id');
+                if (p.timeDeltas.some((d) => !Number.isFinite(d) || d < 0)) throw new Error('invalid CPU profile timeDelta');
               } catch (error) {
                 failures.push(`${path}: ${why(error)}`);
               }
@@ -273,6 +297,13 @@ jobs:
                 [...row.fullSamples, ...row.dragSamples].some((v) => !Number.isFinite(v) || v < 0)) throw new Error('invalid Node samples or label workload');
               for (const [key, value] of Object.entries(row))
                 if (key.endsWith('Ms') && (!Number.isFinite(value) || value < 0)) throw new Error(`invalid Node ${key}`);
+              for (const key of ['fullP50Ms', 'fullP95Ms', 'steadyDragP50Ms', 'steadyDragP95Ms', 'allDragP95Ms', 'routingOnlyDragP50Ms',
+                'routingOnlyDragP95Ms', 'dragLabelsP50Ms', 'dragLabelsP95Ms', 'settledLabelsMs', 'addMs'])
+                if (!Number.isFinite(row[key]) || row[key] < 0) throw new Error(`${row.name}: missing or invalid Node ${key}`);
+              if (!Number.isSafeInteger(row.reroutedP95) || row.reroutedP95 < 0) throw new Error(`${row.name}: missing or invalid Node reroutedP95 count`);
+              for (const stats of ['fullStatistics', 'addedStatistics'])
+                for (const key of ['rerouted', 'expansions', 'checks'])
+                  if (!Number.isSafeInteger(row[stats]?.[key]) || row[stats][key] < 0) throw new Error(`${row.name}: missing or invalid Node ${stats}.${key} count`);
             }
             nodeVersion = r.node;
             nodeRows = r.rows.map(({ fullSamples, dragSamples, ...row }) => JSON.stringify(row));
