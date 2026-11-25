@@ -4,6 +4,19 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher evidence records a test that node:test cancels as failed at its cancellation,
+  as node:test reports it (#534). Cancellations include the test's own timeout, a parent or the
+  whole run that finished first, and a subtest started after its parent ended. The end record
+  previously waited for the test body, which node:test no longer awaits, so a cancelled body
+  that later returned could be recorded as passing, and one still running at exit as never ended.
+  A later return or throw of the body adds no second end, and an earlier failure keeps its own
+  failure fields. Cleanup and child records the body writes afterwards stay in its test's scope.
+  Subtests still running when their parent ends count among the parent's failed subtests. A
+  regression test also covers one totals row that keeps its own sum but contradicts its
+  contention trial in any count (#539). Such a row never completes the trial, and the valid
+  observations are still uploaded. The acceptance suite's assertions, timeouts and TAP output
+  are unchanged. No stored, export or contract change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
