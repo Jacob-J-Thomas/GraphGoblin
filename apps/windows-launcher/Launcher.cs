@@ -2024,9 +2024,11 @@ namespace GraphGoblin.Desktop
                     if (comma >= 0 && int.TryParse(icon.Substring(comma + 1), out index)) shell.SetIconLocation(icon.Substring(0, comma), index);
                     else shell.SetIconLocation(icon, 0);
                 }
+                // The identity is written in memory before the only Save. Reopening the saved link
+                // for a file-backed Commit failed with 0x80070497 (#536).
+                if (!string.IsNullOrWhiteSpace(id)) { var store = (PropertyStore)link; Write(store, 5, id); Marshal.ThrowExceptionForHR(store.Commit()); }
                 ((System.Runtime.InteropServices.ComTypes.IPersistFile)link).Save(path, true);
             } finally { Marshal.ReleaseComObject(link); }
-            if (!string.IsNullOrWhiteSpace(id)) StampShortcut(path, id);
         }
         [StructLayout(LayoutKind.Sequential, Pack = 4)] public struct PropertyKey { public Guid format; public uint id; public PropertyKey(uint value) { format = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"); id = value; } }
         // x64 PROPVARIANT is 24 bytes, including its pointer-aligned counted-array union.
