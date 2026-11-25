@@ -1,0 +1,49 @@
+# Issue #573 formal review 01
+
+**READY — no actionable introduced root causes found.** This is the independent opposite-family formal review of the final unstaged test correction. It consumes ordinary formal scan 1 of 3. It does not grant overall merge approval.
+
+## Exact candidate and scope
+
+- Worktree: `G:/ggq/gg-565-web-coverage-triage-20261124/GraphGoblin`.
+- HEAD and comparison base: `154e78d54ee485330816d606032280de44d6e891`; branch: `codex/gg-565-chat-coverage-timing-20261124`.
+- File: `apps/web/src/chat/ChatSurface.test.tsx`; current SHA256: `b33811fae78e2420730fa3a22c2c1fdbbc9f0efd0b0494d8636be70138e2c945`.
+- Full binary worktree diff SHA256: `9529cf6890641faf2d9788d7a1591f57fb695c8ca1821991ec7d0748ea6c2df5` (1,828 bytes).
+- Only the body of the existing R2 test at lines 952–981 changed: 14 additions, 4 deletions. Its name, all other tests, imports, production code and configuration remain byte-identical. Independent raw-byte comparisons confirm the author-bound prefix and suffix and every byte outside that body.
+- The change remains unstaged. Cached diff is empty. Candidate stage entry: `100644 6149b8b065c516c749425a07a8eae1a64c65a8aa 0	apps/web/src/chat/ChatSurface.test.tsx`.
+- Full logical index SHA256: `b8051f1b7b53e6274ce49d713b56d27b4363aae0ebcda9dc7bc25e5d5e014522`, computed from `git ls-files --stage -z`. This binds staged entries; physical index bytes were not opened. Head, branch, status, source, full diff and logical stage-entry digest were unchanged at 2026-11-25T05:21:41.440770+00:00 and 2026-11-25T05:22:43.457155+00:00.
+
+## Review conclusion
+
+The default-budget `waitFor` at test lines 961–965 waits for the same public New chat control to be enabled after the reply transcript appears. The production control is disabled for an active turn or unresolved submission, including both controller sending and the surface preparing state. The controller accepts the turn before clearing sending in its finally block; the surface then clears preparing in its own finally block. The retained controlled fixture observes exactly this overlap with the transcript visible, Sending and the polite reply status both mounted, and New chat still disabled. The added wait establishes the intended interaction boundary without changing production semantics or the suite timeout.
+
+At lines 966–969, the exact-default text query is restricted to the status element with `aria-live="polite"`, then checked against the accessible status query. It cannot substitute the Sending banner for the expected reply announcement. The click uses the settled New chat control. The original New chat heading and saved transcript assertions remain. Both clearing checks retain the same reply element reference, require it to remain in the document, and require it to be empty. Removing or replacing the element would fail these assertions. No timeout, retry, skip or ordering weakening was introduced.
+
+No correctness, security, maintainability, testability, architecture or code-quality root cause introduced by this patch meets the review admission policy. There are no requested fixes or newly admitted follow-ups.
+
+## Verification inspected
+
+The actual Claude `claude-opus-5-5` provider receipt reports success. I inspected named Bash tool-use inputs and their matching tool-result blocks in [the retained provider event file](../claude-implementation-01/CLAUDE-EVENTS.private.jsonl), without disclosing hidden reasoning.
+
+| Check | Actual provider result |
+| --- | --- |
+| Full affected ChatSurface file, first run | 57/57 passed, 8.59 seconds |
+| Full affected ChatSurface file, second run | 57/57 passed, 8.86 seconds |
+| Web typecheck | Passed |
+| Web lint | 0 errors; 5 warnings in untouched files |
+| Scoped Prettier | Passed |
+| Diff check | Passed; also independently checked by this reviewer |
+
+Node 22.23.4 was verified. No maintained checks were rerun because inspection revealed no concrete concern requiring another run. The machine report records each tool-use ID and artifact hash.
+
+The [retained controlled fixture](../../api-fixtures-565/hosted-ci-02/web-coverage-triage/diagnostic-control.test.tsx) and [controlled stdout](../../api-fixtures-565/hosted-ci-02/web-coverage-triage/controlled-boundary.stdout.log) match their recorded hashes. Current production surface, controller, client fixture, package and lockfile hashes match the retained source evidence.
+
+## Evidence qualifications
+
+The two maintained test passes are Windows/jsdom evidence using a mocked ChatClient. The controlled diagnostic forces a commit boundary in the real controller/surface; it does not recreate the hosted Ubuntu scheduler. Fresh hosted CI and independent QA are still required. The existing test boundary does not establish the absence of arbitrary later announcements after history renders; this patch preserves that boundary.
+
+The receipt's report hash `699aeca1…` binds the exact UTF-8 provider result string. The raw Markdown report hash is `0c5ae334…`; after CRLF normalization it equals that same provider text plus one terminal newline. There is no content discrepancy, and both hashes are recorded in REVIEW.json.
+
+The provider recorded one denied direct Read of `.git`. I did not repeat or bypass it. Read-only Git CLI queries independently confirmed the candidate identity and logical index. The coordinator is separately adjudicating that incident for QA admission; it is not a source defect.
+
+This scan changed only its evidence outputs. No source, index, commit or GitHub mutation was performed. Independent Claude QA, fresh candidate CI and the reserved fresh final audit remain separate gates.
+

@@ -73,6 +73,7 @@ apps/
   web/                React PWA.
   plugin-codex/       Codex plugin: MCP server registration plus skills.
   plugin-claude/      Claude Code plugin: local stdio MCP registration plus skills.
+  macos-launcher/     Swift package: native launch engine, AppKit presentation and installer.
 tooling/              Shared tsconfig, eslint config, dependency-cruiser rules, licence allowlist.
 ```
 
@@ -128,6 +129,14 @@ opens/focuses its installed Chrome PWA and exits. It adds no resident supervisor
 MCP stdio remains client-owned and HTTP remains an explicitly selected transport. A gateway it
 starts owns a bounded private log in the launcher folder through an in-process writer and a
 named-pipe reservation of that folder ([ADR-0081](decisions/ADR-0081-bounded-windows-launcher-logs.md)).
+
+The optional [macOS launcher](decisions/ADR-0082-macos-finder-dock-launcher.md) is a per-user
+Finder/Dock application with separate Swift engine, AppKit presentation and build-only installer
+targets. Its closed interface carries progress/outcome enums, leaving filesystem, process and
+HTTP work off the main actor. It starts or reuses the verified saved instance and submits one
+default-browser request. The detached gateway outlives both launcher and browser. The API's
+shared managed writer serves platform-specific Windows and Darwin admission adapters; Mac
+admission holds a numeric directory reservation and requires a local key after writer leases.
 
 ### Post-1.0: hosted (Draft)
 
