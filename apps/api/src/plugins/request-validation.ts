@@ -7,7 +7,11 @@ type RequestValidationIssue = FastifySchemaValidationError & {
   [requestValidationIssue]: true;
 };
 
-const pointerSegment = (segment: PropertyKey) =>
+/**
+ * One literal JSON Pointer reference token (RFC 6901). '~' is escaped before '/', so the '~1' a
+ * slash becomes is never escaped again. Apply it to one original segment, never a joined path.
+ */
+export const encodeJsonPointerSegment = (segment: PropertyKey): string =>
   String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
 
 /** Encode original segments once here; a slash-joined provider string is irreversible. */
@@ -19,7 +23,7 @@ export const requestValidatorCompiler: FastifySchemaCompiler<z.ZodType> =
     return {
       error: parsed.error.issues.map(
         ({ code, path, message, ...params }): RequestValidationIssue => {
-          const encoded = path.map(pointerSegment);
+          const encoded = path.map(encodeJsonPointerSegment);
           return {
             [requestValidationIssue]: true,
             keyword: code,
@@ -27,7 +31,7 @@ export const requestValidatorCompiler: FastifySchemaCompiler<z.ZodType> =
             instancePath: '/' + encoded.join('/'),
             schemaPath:
               '#/' +
-              [...encoded, pointerSegment(code)]
+              [...encoded, encodeJsonPointerSegment(code)]
                 .map((segment) => encodeURIComponent(toUSVString(segment)))
                 .join('/'),
             message,

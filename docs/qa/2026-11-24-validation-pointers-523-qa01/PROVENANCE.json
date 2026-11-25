@@ -1,0 +1,82 @@
+{
+  "qualification": "Read-only curation of already executed actualQA and rootFUP048; no new review/test/model/HTTP invocation.",
+  "candidate": {
+    "head": "d2df8600c2c8574bec420947de686b936910b245",
+    "branch": "codex/gg-fu-validation-pointers-20261124",
+    "indexSha256": "dad35a38e59bc5f44afcc143faedc81f9df1eec96d6d6247b218d2887a55a0b9",
+    "files": {
+      "apps/api/src/loop-definition.test.ts": "aa716d8f8e9b57184b2363cc6dcb5735893a5987db27a46d8fc0804b7bc6d443",
+      "apps/api/src/plugins/errors.ts": "4314905e620414dabe90d8bdce949429bf7a175d9c66d375f4ca309727f9451a",
+      "apps/api/src/plugins/request-validation.test.ts": "8547c83b80d01e4d4b02d6677a80a0c93dd2939e5b06da899d267c8cc0c3516e",
+      "apps/api/src/plugins/request-validation.ts": "8b7a02a206ad43c67fb77b82583acd6029e697f4d1c9a7d0dfbbb76f999eaec9",
+      "apps/api/src/routes/ollama.test.ts": "4a0d89fffee7d58b5575f612ad346883b61d2010ddff9fdee25aa232298dc6e9",
+      "apps/api/src/routes/thread-disconnect.test.ts": "f42a461983e38b95d64dd8abcfd15db10b04432a5c04e7f20ff3e3c8ed4b11bf"
+    },
+    "stagedPaths": [],
+    "untrackedPaths": [],
+    "workingTreeDiffSha256": "73510b82fbfb85bbcd779f874965d9d7fb88e8b6bc6e3b60dbd97d22e6b5a842",
+    "recordedCandidatePatchSha256": "5e99ea4ff8b8651f09bdcb8c7996b54d475f656088f1e2537d03563d6beea2ef"
+  },
+  "twoReceiptsFourStreamsVerified": {
+    "FOCUSED-RESULT.json": "c4d0ad00c458d44850f0231db8d0a4048693549e04c0e935259dc57ab57ba7f3",
+    "focused.stdout.log": "36acc19040bab8aa8c815739d4c6f27545ffe7154bffa2d94627689962f5bfbe",
+    "focused.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "HTTP-RESULT.json": "f21dfa876ba8d4e8394abb4f20c3ce4c280400c228e1958de13b904b61cfe9b1",
+    "http.stdout.log": "3dab6755985a1fb21fe139e4f0c4b78eae9e695858ad3964f6aa3649dffba915",
+    "http.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "rawHttpResultSha256": "af9b649287b69840ac21e2307dca95844cf1df086b43aaa4479721e890cf3380",
+  "driverSha256": "ccd80e4d55b5d71c72c26cafd8556e41c9927b750fcb61d2603cb0e10677049f",
+  "wrapperSha256": "9cf5535f91c45b20602ebee23c2bd1a79d901dd077d422d2ee617b2dd991ae0e",
+  "actualActor": {
+    "model": "claude-opus-5-5",
+    "sessionId": "c700e0ae-b06e-4b62-a6ee-f846ca3eacfa",
+    "apiKeySource": "none",
+    "assistantModels": [
+      "claude-opus-5-5"
+    ],
+    "meteredModels": [
+      "claude-opus-5-5"
+    ],
+    "overageObserved": false,
+    "exactToolCalls": [
+      {
+        "name": "Bash",
+        "input": {
+          "command": "C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe run-check.py focused",
+          "description": "Run focused API validation test group via QA wrapper",
+          "timeout": 600000
+        }
+      },
+      {
+        "name": "Bash",
+        "input": {
+          "command": "C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe run-check.py http",
+          "description": "Run loopback HTTP validation driver via QA wrapper",
+          "timeout": 600000
+        }
+      }
+    ],
+    "journalSha256": "9a98d41755598767f31e4437d0bac39a9566db8ab031d5b8adf73a826433b2f6",
+    "journalNotIncluded": true,
+    "reportExactlyMatchesModelResultPlusNewline": true
+  },
+  "rootAdjudicationSha256": "ae21cffeca5553f3ef3a6a58076b9b52c7575690b0b24460fafcf848f0e17660",
+  "malformedBodyReadback": {
+    "recordedObservation": {
+      "label": "malformed JSON",
+      "status": 400,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/malformed-body",
+        "title": "malformed body",
+        "status": 400,
+        "code": "MALFORMED_BODY",
+        "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+      }
+    },
+    "privateTestSentinelAbsent": true
+  },
+  "actorLimits": "Full type/title/detail/content-type values came through driver exact assertions; actor saw limited output and could not read probe. Multi-error order in-process only; serialization rejection on separate controlled app.",
+  "rootConvention": "Existing slash fallback preserved. Slash ambiguously denotes root or empty-named root key; not universally RFC6901 document-root semantics.",
+  "hypotheticalNestedEmptyRoot": "No supported production route witness established. Bounded root reachability inspection is not an exhaustive schema proof. No new product correction admitted."
+}

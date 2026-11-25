@@ -1,0 +1,78 @@
+# Independent QA #523: all tested boundaries PASS, with one pointer ambiguity and some evidence gaps
+
+I ran both allowed commands, one after the other. Both exited 0 with empty stderr. Both reported `sourceUnchanged: true`, and the patch SHA-256 matched the frozen value (`5e99ea4f…beea2ef`).
+
+- **Focused group:** 5 files, 38/38 tests passed: Ollama 14, request-validation 5, loop-definition 6, validation-paths 3, thread-disconnect 10.
+- **HTTP driver:** 24/24 cases passed (`ok:true`). The result file is `PUBLIC-HTTP-CHECK.json`, SHA `af9b6492…`.
+
+## Real HTTP: product routes
+
+These ran on the real app (`buildApp`) at `127.0.0.1` on a random port, with Ollama turned off. All 21 validation cases returned status 400 with `application/problem+json`. Each body matched this exactly: `type …/validation-failed`, `title "validation failed"`, `status 400`, `code VALIDATION_FAILED`, `detail "the request did not match the schema"`, plus a one-item `errors` array:
+
+| Case | Route | path | message |
+|---|---|---|---|
+| ordinary | POST /loops | `/definition/name` | Invalid input: expected string, received number |
+| array index | POST /loops | `/definition/nodes/1/config/prompt/template` | Invalid input: expected string, received number |
+| root fallback (`[]`) | POST /loops | `/` | Invalid input: expected object, received array |
+
+**Record keys** (POST /loops, message "Invalid key in record"):
+
+| Key | path |
+|---|---|
+| `literal/~` | `/definition/variables/literal~1~0` |
+| `~1/~0` | `/definition/variables/~01~1~00` |
+| `""` | `/definition/variables/` |
+| `0` | `/definition/variables/0` |
+| `雪~/😀` | `/definition/variables/雪~0~1😀` |
+| `slash//tilde~~` | `/definition/variables/slash~1~1tilde~0~0` |
+
+**Unknown keys** (message `Unrecognized key "<key>"`). Root keys went to PATCH `/model-catalog/codex/gpt-6-luna`; nested keys went to POST /loops under `/definition/settings/defaults`:
+
+| Key | Root path | Nested path |
+|---|---|---|
+| `root/~` | `/root~1~0` | `…/defaults/root~1~0` |
+| `~1/~0` | `/~01~1~00` | `…/defaults/~01~1~00` |
+| `""` | `/` | `…/defaults/` |
+| `0` | `/0` | `…/defaults/0` |
+| `雪~/😀` | `/雪~0~1😀` | `…/defaults/雪~0~1😀` |
+| `slash//tilde~~` | `/slash~1~1tilde~0~0` | `…/defaults/slash~1~1tilde~0~0` |
+
+Every path follows the JSON Pointer standard (RFC 6901): `~` becomes `~0` first, then `/` becomes `~1`. Text that already looks escaped (`~1/~0`) is escaped again rather than passed through, and Unicode is left as is.
+
+**Other product-route cases:**
+- **Malformed JSON:** 400 `MALFORMED_BODY`, with no `errors` array and no `stack` or `requestValidationIssue` text in the body.
+- **Valid input:** 201. The default `workingDirectory` came back as `{kind:"temp"}`, and the fake harness started 0 times.
+
+## Serializer test app (not a product route)
+
+This is a separate Fastify app built on purpose to return a bad response. It got 500 `application/problem+json` with exactly `{type …/response-invalid, title "response invalid", status 500, code RESPONSE_INVALID, detail "the server produced a response that does not match its schema"}`. The body contained no stack, cause, the private test value, `schemaPath` or `instancePath`.
+
+## Verdict per boundary
+
+| Boundary | Verdict | Basis |
+|---|---|---|
+| Request validator (encodes each path segment, root is `/`) | PASS | 5/5 unit tests, 21 HTTP cases |
+| Error handler: validation mapping and unknown keys | PASS | 12 HTTP unknown-key cases, one key each. Several unknown keys in one request were tested in-process only |
+| Ordered issue arrays | PASS, in-process only | The loop-definition test checks 3 errors in order using in-process requests (`inject`). Every HTTP case had a single issue, so order wasn't tested over HTTP |
+| Product routes over HTTP | PASS | 23 cases |
+| Malformed body is cleaned of internals | PASS, partly checked | See gaps |
+| Valid input parsed with defaults | PASS | 201, `kind: temp` |
+| Bad-response handling | PASS on the test app only | Not a product route |
+| No live providers | PASS | `ollamaEnabled:false`, fake harness, 0 harness starts, local address only. For the focused Ollama/thread tests this rests on their passing, not on separate network checks |
+| Source and Git index unchanged | PASS | Both runs |
+
+## Findings
+
+1. **Observed: `/` means two different things.** The root type error and the unknown empty-named root key both report path `/`; only the message tells them apart. Under RFC 6901, `/` points to the member named `""`, and the whole document is `""`. This is the API's existing, deliberate root convention (`request-validation.ts:30`), and the driver expected it. So it's a design decision for the owner, not a regression from this patch.
+2. **From the source only, not run: the same clash can occur in `errors.ts:133`.** The validator gives `/` for both the root (`[]`) and an empty-named root member (`[""]`), and the handler treats `/` as the root. An unknown key inside a strict object stored under an empty-named root member would therefore come out as `/key` instead of `//key`. That needs a request body schema whose top level allows arbitrary keys and holds strict objects. I didn't check whether any route has one, so it's unconfirmed.
+
+## Evidence gaps
+
+- The wrapper only printed status, code, errors and default per case. The `type`/`title`/`detail` fields and content types are confirmed by the driver's exact-match checks passing, not by my reading them.
+- For malformed JSON, I wasn't shown the `detail` text, and the driver doesn't check that the sent text (`review-private-malformed`) isn't echoed back.
+- I couldn't read `public-http-probe.mts` with the allowed commands. Its 24 cases and labels match the driver you supplied, but I couldn't confirm the file is identical.
+- The serializer test app uses the same validator, serializer and error handler as production because the driver sets it up that way. That the real app uses the same serializer is a claim from the source, not something I ran.
+
+## Not covered
+
+Older call paths that tests can't reach (source evidence only, no guarantee from running), hosted CI, full coverage, typecheck, lint and docs checks, and the reserved final independent audit. I edited and published nothing. The only files written were the wrapper's own logs, outside the repository.
