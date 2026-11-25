@@ -3,7 +3,11 @@ import * as fs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { acquireDataDirLock, dataDirLockState } from './data-dir-lock.js';
+import {
+  acquireDataDirLock,
+  dataDirLockState,
+  StoreOwnershipRefusedError,
+} from './data-dir-lock.js';
 import * as identity from './windows-process-identity.js';
 
 vi.mock('node:fs/promises', async (original) => {
@@ -204,6 +208,40 @@ it('refuses read-only ownership after bounded rechecks of repeatedly disappearin
   expect(vi.mocked(fs.rename).mock.calls).toEqual([]);
   expect(await fs.readdir(guard)).toHaveLength(1);
 });
+
+it.each([8, 7])(
+  'reports the final acquisition outcome after %i marker read losses',
+  async (markerLosses) => {
+    let marker = await seed();
+    let reads = 0;
+    vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+      if (args[0] === path) return actual.readFile(...args);
+      expect(args[0]).toBe(marker);
+      await actual.unlink(marker);
+      await actual.rmdir(guard);
+      if (++reads < markerLosses) marker = await seed();
+      return actual.readFile(...args);
+    });
+    if (markerLosses === 7) vi.mocked(fs.rename).mockRejectedValueOnce(denied());
+
+    const acquisition = acquireDataDirLock(directory);
+    await expect(acquisition).rejects.toBeInstanceOf(StoreOwnershipRefusedError);
+    expect(reads).toBe(markerLosses);
+    expect(vi.mocked(fs.rename)).toHaveBeenCalledTimes(8 - markerLosses);
+    expect(await fs.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+
+    if (markerLosses === 8) {
+      await expect(acquisition).rejects.toThrow(
+        `Store ownership could not be verified (reclamation guard marker disappeared before verification at the acquisition attempt limit): ${guard}`,
+      );
+      await expect(acquisition).rejects.not.toThrow('another GraphGoblin process holds');
+      await expect(acquisition).rejects.not.toThrow('stop it before retrying');
+    } else {
+      await expect(acquisition).rejects.toThrow(`another GraphGoblin process holds ${guard}`);
+    }
+  },
+);
 
 it('preserves a refused read when the recovery marker still exists', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' });

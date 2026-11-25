@@ -147,10 +147,11 @@ See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
 
 When an enumerated recovery marker disappears during a read, acquisition and read-only ownership
 checks re-observe the guard within their attempt limits. This distinguishes a surviving empty
-directory, a successor and a guard already removed by another contender. If the read reports
-`EPERM` on Windows, a separate `lstat` must establish that the exact UUID path is absent before
-re-observing. An unreadable marker that still exists keeps its original error. Reads of the main
-owner record keep their errors.
+directory, a successor and a guard already removed by another contender. A marker that disappears
+on the final acquisition attempt leaves ownership unverified. If the read reports `EPERM` on
+Windows, a separate `lstat` must establish that the exact UUID path is absent before re-observing.
+An unreadable marker that still exists keeps its original error. Reads of the main owner record
+keep their errors.
 
 Concurrent Windows deletion can report `EPERM` after another contender has removed the same
 stale UUID marker or empty guard directory. A separate `lstat` can establish that the exact path

@@ -389,7 +389,16 @@ async function acquireRecovery(
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
     for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
       const observed = await observeRecovery(path);
-      if (observed.state === 'marker-absent') continue;
+      if (observed.state === 'marker-absent') {
+        if (attempt + 1 === recoveryAttempts)
+          throw held(
+            path,
+            unknown(
+              'reclamation guard marker disappeared before verification at the acquisition attempt limit',
+            ).detail,
+          );
+        continue;
+      }
       if (observed.state === 'held') throw held(path, observed.detail);
       if (observed.state === 'stale') {
         if (observed.marker) {
