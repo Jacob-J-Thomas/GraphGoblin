@@ -1083,6 +1083,325 @@ test('logs', evidence.observeTest('bounded-logs', async () => {
   assert.doesNotMatch(local.stdout, /"state":"(?:recording|refused)"/);
 });
 
+/** Each node:test test's TAP outcome by name: `pass`, or the failure type node:test reported. */
+function runnerOutcomes(stdout) {
+  const outcomes = {};
+  let name;
+  for (const line of stdout.split(/\r?\n/)) {
+    const result = /^\s*(ok|not ok) \d+ - (.+)$/.exec(line);
+    const failure = /^\s*failureType: '(\w+)'$/.exec(line);
+    if (result) {
+      name = result[2];
+      outcomes[name] = result[1] === 'ok' ? 'pass' : 'fail';
+    } else if (failure && name !== undefined) outcomes[name] = failure[1];
+  }
+  return outcomes;
+}
+
+test('a node:test test that is cancelled ends failed once, whenever its body later returns (#534)', () => {
+  const setup = initialized();
+  const suite = join(temporary(), 'evidence-cancellation.acceptance.mjs');
+  // Explicit lifecycle control. A held body keeps a live handle, as the suite's children and
+  // servers do, until node:test cancels its test: node:test's own timeout timer does not keep the
+  // process alive, and without a handle the run would end and cancel every pending test. Once all
+  // three held tests are cancelled, after each of their parents has ended, every held body records
+  // its cleanup and returns, or fails late. No held body can settle before its cancellation.
+  writeFileSync(
+    suite,
+    `import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { openWindowsLauncherEvidence } from ${JSON.stringify(pathToFileURL(helper).href)};
+const evidence = openWindowsLauncherEvidence();
+const launch = evidence.observeExecFile(() =>
+  Promise.reject(Object.assign(new Error(${JSON.stringify(CANARY)}), { code: 3, stdout: '', stderr: ${JSON.stringify(CANARY)} })),
+);
+let release;
+const released = new Promise((resolve) => (release = resolve));
+let holding = 3;
+const held = (action, result, late = () => undefined) => async (t) => {
+  const alive = setInterval(() => undefined, 1_000);
+  await new Promise((resolve) => t.signal.addEventListener('abort', resolve, { once: true }));
+  clearInterval(alive);
+  if (--holding === 0) release();
+  await released;
+  evidence.record('cleanup', { action, result, count: null });
+  late();
+};
+test('ordinary pass', evidence.observeTest('installer', async (t) => {
+  await t.test('passes', async () => {
+    evidence.record('cleanup', { action: 'gateway-drain', result: 'not-running', count: null });
+  });
+}));
+test('ordinary failure', evidence.observeTest('launcher', async (t) => {
+  await t.test('fails', async () => assert.equal(1, 2));
+}));
+test('subtest timeout', evidence.observeTest('checkout-alias', async (t) => {
+  await t.test('times out', { timeout: 50 }, async (s) => {
+    await launch('GraphGoblin.exe', ['--ensure-gateway']).catch(() => undefined);
+    await held('gateway-drain', 'drained')(s);
+  });
+  await t.test('runs after the cancelled subtest', async () => undefined);
+}));
+test('parent timeout', { timeout: 50 }, evidence.observeTest('lock-contention', async (t) => {
+  await t.test(
+    'outstanding when its parent times out',
+    { timeout: 60_000 },
+    held('contenders', 'closed', () => assert.fail('a late failure')),
+  );
+  await t.test('starts after its parent ended', async () => undefined);
+}));
+test('parent returns first', evidence.observeTest('bounded-logs', async (t) => {
+  t.test('outstanding when its parent returns', held('window-fixture', 'closed'));
+}));
+`,
+  );
+  const run = (extra) =>
+    spawnSync(process.execPath, ['--test', suite], {
+      encoding: 'utf8',
+      timeout: 60_000,
+      windowsHide: true,
+      env: { ...process.env, ...extra },
+    });
+  const recorded = run({ RUNNER_TEMP: setup.runnerTemp, [DIRECTORY_VARIABLE]: setup.directory });
+  const runner = runnerOutcomes(recorded.stdout);
+  const path = join(setup.directory, FILES.observations);
+  const records = lines(path);
+  const names = {
+    'installer:0': 'ordinary pass',
+    'installer:1': 'passes',
+    'launcher:0': 'ordinary failure',
+    'launcher:1': 'fails',
+    'checkout-alias:0': 'subtest timeout',
+    'checkout-alias:1': 'times out',
+    'checkout-alias:2': 'runs after the cancelled subtest',
+    'lock-contention:0': 'parent timeout',
+    'lock-contention:1': 'outstanding when its parent times out',
+    'lock-contention:2': 'starts after its parent ended',
+    'bounded-logs:0': 'parent returns first',
+    'bounded-logs:1': 'outstanding when its parent returns',
+  };
+  const key = (record) => `${record.case}:${record.subtest}`;
+  // Cases run one after another; only a late body of one can interleave with the next case.
+  const byCase = (list) => CASES.flatMap((name) => list.filter((record) => record.case === name));
+  const ends = records.filter((record) => record.type === 'case-end');
+  // In record order within each case: node:test's own outcome beside the recorded end of the same
+  // test. A timed-out subtest ends when node:test cancels it, before its parent goes on; a
+  // timed-out parent ends before the outstanding subtest it cancels; a parent that returns first
+  // ends failed because node:test cancels its outstanding subtest. A subtest the cancelled parent
+  // starts later fails at once. A late body changes nothing, not even by failing late
+  // (lock-contention 1).
+  assert.deepEqual(
+    byCase(ends).map((record) => [
+      record.case,
+      record.subtest,
+      runner[names[key(record)]],
+      record.result,
+      record.failureKind,
+      record.failedSubtests,
+    ]),
+    [
+      ['installer', 1, 'pass', 'pass', null, 0],
+      ['installer', 0, 'pass', 'pass', null, 0],
+      ['launcher', 1, 'testCodeFailure', 'fail', 'assertion', 0],
+      ['launcher', 0, 'subtestsFailed', 'fail', 'subtests', 1],
+      ['checkout-alias', 1, 'testTimeoutFailure', 'fail', 'other', 0],
+      ['checkout-alias', 2, 'pass', 'pass', null, 0],
+      ['checkout-alias', 0, 'subtestsFailed', 'fail', 'subtests', 1],
+      ['lock-contention', 0, 'testTimeoutFailure', 'fail', 'other', 1],
+      ['lock-contention', 1, 'cancelledByParent', 'fail', 'other', 0],
+      ['lock-contention', 2, 'parentAlreadyFinished', 'fail', 'other', 0],
+      ['bounded-logs', 0, 'subtestsFailed', 'fail', 'subtests', 1],
+      ['bounded-logs', 1, 'cancelledByParent', 'fail', 'other', 0],
+    ],
+  );
+  assert.equal(recorded.status, 1, recorded.stderr);
+  assert.deepEqual(Object.keys(runner).sort(), Object.values(names).sort());
+  for (const [label, count] of [
+    ['tests', 12],
+    ['pass', 3],
+    ['fail', 5],
+    ['cancelled', 4],
+  ])
+    assert.match(recorded.stdout, new RegExp(`^# ${label} ${count}$`, 'm'), label);
+
+  // One end for every start, and nothing rejected: the late bodies wrote no second end.
+  const endKeys = ends.map(key);
+  assert.equal(new Set(endKeys).size, endKeys.length);
+  assert.deepEqual(
+    [...endKeys].sort(),
+    records
+      .filter((record) => record.type === 'case-start')
+      .map(key)
+      .sort(),
+  );
+  assert.equal(records.filter((record) => record.type === 'rejected').length, 0);
+  // The cancelled subtest's child and the cleanup each held body recorded after its own end and its
+  // parent's end stay in that body's scope; no output, message or stderr text is kept.
+  assert.deepEqual(
+    records
+      .filter((record) => record.type === 'child')
+      .map((record) => [key(record), record.mode, record.exitCode, record.stderrBytes]),
+    [['checkout-alias:1', 'ensure-gateway', 3, CANARY.length]],
+  );
+  const endOf = (record, subtest = record.subtest) =>
+    ends.find((end) => end.case === record.case && end.subtest === subtest).seq;
+  assert.deepEqual(
+    records
+      .filter((record) => record.type === 'cleanup')
+      .map((record) => [
+        key(record),
+        record.action,
+        record.result,
+        record.seq > endOf(record) && record.seq > endOf(record, 0),
+      ]),
+    [
+      ['installer:1', 'gateway-drain', 'not-running', false],
+      ['checkout-alias:1', 'gateway-drain', 'drained', true],
+      ['lock-contention:1', 'contenders', 'closed', true],
+      ['bounded-logs:1', 'window-fixture', 'closed', true],
+    ],
+  );
+  assert.equal(records.at(-1).type, 'recorder-closed', 'the exit handler closed the file');
+  assert.doesNotMatch(readFileSync(path, 'utf8'), /CANARY|late failure/);
+  // Each failing end is printed as it is recorded, the cancelled subtest's with its last child.
+  const markers = [
+    ...recorded.stdout.matchAll(/\{"evidence":"windows-launcher-observation".*\}/g),
+  ].map(([line]) => JSON.parse(line));
+  assert.deepEqual(
+    byCase(markers).map((marker) => [marker.type, key(marker)]),
+    [
+      ['case-end', 'launcher:1'],
+      ['case-end', 'launcher:0'],
+      ['case-end', 'checkout-alias:1'],
+      ['child', 'checkout-alias:1'],
+      ['case-end', 'checkout-alias:0'],
+      ['case-end', 'lock-contention:0'],
+      ['case-end', 'lock-contention:1'],
+      ['case-end', 'lock-contention:2'],
+      ['case-end', 'bounded-logs:0'],
+      ['case-end', 'bounded-logs:1'],
+    ],
+  );
+  assert.equal(markers.length, 10);
+
+  // The failed run's artifact: valid, closed observations uploaded beside the manifest and a
+  // result whose per-case outcomes agree with node:test.
+  const outcome = finalizeEvidence({ env: finalizeEnv(setup, 'failure') });
+  const { observations } = outcome.result;
+  assert.deepEqual(
+    [
+      outcome.status,
+      outcome.exitCode,
+      observations.state,
+      observations.closed,
+      observations.rejected,
+    ],
+    ['native-failed', 0, 'valid', true, 0],
+  );
+  assert.deepEqual(
+    outcome.upload,
+    [FILES.manifest, FILES.result, FILES.observations].map((name) => join(setup.directory, name)),
+  );
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(setup.directory, FILES.result), 'utf8')),
+    outcome.result,
+  );
+  assert.equal(parseObservations(readFileSync(path), setup.evidenceId).state, 'valid');
+  assert.deepEqual(
+    Object.entries(outcome.result.cases).map(([name, entry]) => [
+      name,
+      entry.result,
+      entry.subtestsStarted,
+      entry.subtestsPassed,
+      entry.subtestsFailed,
+      entry.subtestsUnpaired,
+    ]),
+    [
+      ['installer', 'pass', 1, 1, 0, 0],
+      ['launcher', 'fail', 1, 0, 1, 0],
+      ['checkout-alias', 'fail', 2, 1, 1, 0],
+      ['lock-contention', 'fail', 2, 0, 2, 0],
+      ['bounded-logs', 'fail', 1, 0, 1, 0],
+    ],
+  );
+
+  // Without the evidence directory node:test reports the same outcomes and exit.
+  const local = run({});
+  assert.equal(local.status, 1, local.stderr);
+  assert.deepEqual(runnerOutcomes(local.stdout), runner);
+});
+
+test('a cancelled test ends at its cancellation and its body keeps recording in its scope', async () => {
+  const setup = initialized();
+  const { recorder, log, close } = recorderFor(setup);
+  const run = recorder.observeExecFile(() => Promise.resolve({ stdout: '', stderr: '' }));
+  const cleanup = { action: 'gateway-drain', result: 'drained', count: null };
+  // Already cancelled when its body starts (node:test can cancel a test during its hooks); a
+  // subtest that body starts afterwards fails at once, as node:test fails it.
+  await recorder.observeTest('installer', async (t) => {
+    await run('C:\\a\\GraphGoblin.exe', ['--validate-install']);
+    await t.test('started after its parent ended', async () => recorder.record('cleanup', cleanup));
+  })({ ...context(), signal: AbortSignal.abort() });
+  // Cancelled while running: the end is recorded then, and the later failure is not.
+  const signal = AbortSignal.timeout(1);
+  const late = Object.assign(new Error(CANARY), { code: 'EPERM' });
+  await assert.rejects(
+    recorder.observeTest('launcher', async () => {
+      await run('C:\\a\\GraphGoblin.exe', ['--ensure-gateway']);
+      await new Promise((resolve) => signal.addEventListener('abort', resolve, { once: true }));
+      throw late;
+    })({ ...context(), signal }),
+    (error) => error === late,
+  );
+  // Only a real AbortSignal is followed.
+  const lookalike = { ...context(), signal: { aborted: true } };
+  await recorder.observeTest('bounded-logs', async () => undefined)(lookalike);
+  close();
+  const records = lines(join(setup.directory, FILES.observations));
+  const key = (record) => `${record.case}:${record.subtest}`;
+  assert.deepEqual(
+    records
+      .filter((record) => ['case-start', 'case-end', 'child', 'cleanup'].includes(record.type))
+      .map((record) => [record.type, key(record), record.result, record.failureKind]),
+    [
+      ['case-start', 'installer:0', undefined, undefined],
+      ['case-end', 'installer:0', 'fail', 'other'],
+      ['child', 'installer:0', undefined, undefined],
+      ['case-start', 'installer:1', undefined, undefined],
+      ['case-end', 'installer:1', 'fail', 'other'],
+      ['cleanup', 'installer:1', 'drained', undefined],
+      ['case-start', 'launcher:0', undefined, undefined],
+      ['child', 'launcher:0', undefined, undefined],
+      ['case-end', 'launcher:0', 'fail', 'other'],
+      ['case-start', 'bounded-logs:0', undefined, undefined],
+      ['case-end', 'bounded-logs:0', 'pass', null],
+    ],
+  );
+  assert.ok(
+    records
+      .filter((record) => record.type === 'case-end' && record.result === 'fail')
+      .every((record) => [record.failureCode, record.failureExit].every((value) => value === null)),
+    'a cancellation never carries a code or exit status',
+  );
+  assert.equal(records.filter((record) => record.type === 'rejected').length, 0);
+  assert.deepEqual(
+    log
+      .filter((line) => line.includes('windows-launcher-observation'))
+      .map((line) => JSON.parse(line))
+      .map((marker) => [marker.type, key(marker)]),
+    [
+      ['case-end', 'installer:0'],
+      ['case-end', 'installer:1'],
+      ['case-end', 'launcher:0'],
+      ['child', 'launcher:0'],
+    ],
+  );
+  assert.doesNotMatch(
+    log.join('\n') + readFileSync(join(setup.directory, FILES.observations)),
+    /CANARY/,
+  );
+});
+
 test('finalize distinguishes complete, incomplete, failed and not-run evidence', async () => {
   const complete = initialized();
   const { recorder, close } = recorderFor(complete);
@@ -1186,6 +1505,91 @@ test('complete contention evidence needs every contender, live owner match and f
     );
     assert.equal(outcome.upload.length, 3, name);
   }
+});
+
+test('one valid-shaped totals row that contradicts its trial never completes it (#539)', async () => {
+  const files = [FILES.manifest, FILES.result, FILES.observations];
+  const strip = ({ seq: _seq, at: _at, ...fields }) => fields;
+  /** A passing recording whose trial 1 has `totals` over its one totals row, then `extra` rows. */
+  async function recorded(totals, native = 'success', extra = []) {
+    const setup = initialized();
+    const { recorder, close } = recorderFor(setup);
+    await passingSuite(recorder, temporary(), {
+      receipts: (trial) =>
+        trial === 1
+          ? [
+              ...passingContention(trial).map((row) =>
+                row.type === 'contention' ? { ...row, ...totals } : row,
+              ),
+              ...extra,
+            ]
+          : passingContention(trial),
+    });
+    close();
+    const path = join(setup.directory, FILES.observations);
+    const bytes = readFileSync(path);
+    const records = lines(path);
+    const outcome = finalizeEvidence({ env: finalizeEnv(setup, native) });
+    return {
+      records,
+      totals: records.filter((record) => record.type === 'contention' && record.trial === 1),
+      receipts: records
+        .filter((record) => record.trial === 1 && record.type !== 'contention')
+        .map(strip),
+      outcome: [
+        outcome.status,
+        outcome.exitCode,
+        outcome.result.observations.state,
+        outcome.result.missing,
+        outcome.upload.map((file) => basename(file)),
+      ],
+      retained: readFileSync(path).equals(bytes),
+    };
+  }
+
+  const control = await recorded({});
+  assert.equal(control.totals.length, 1);
+  assert.deepEqual(control.outcome, ['complete', 0, 'valid', [], files]);
+  const [row] = control.totals;
+  // Changing one field alone breaks the row's own sum, so the recorder would reject the row. Each
+  // change below moves its field and one other so that acquired + refused + other = contenders
+  // still holds: the row is accepted and only disagrees with the trial's unchanged receipts.
+  for (const [field, change] of [
+    ['contenders', { contenders: 6, refused: 5 }],
+    ['acquired', { acquired: 2, refused: 3 }],
+    ['refused', { refused: 3, other: 1 }],
+    ['other', { other: 1, acquired: 0 }],
+  ]) {
+    assert.equal(validateRecord({ ...row, [field]: change[field] }), false, field);
+    for (const [native, status, exitCode] of [
+      ['success', 'incomplete', 1],
+      ['failure', 'native-failed', 0],
+    ]) {
+      const changed = await recorded(change, native);
+      const label = `${field} ${native}`;
+      assert.equal(changed.totals.length, 1, label);
+      assert.deepEqual(strip(changed.totals[0]), { ...strip(row), ...change }, label);
+      assert.notEqual(changed.totals[0][field], row[field], label);
+      assert.equal(validateRecord(changed.totals[0]), true, label);
+      assert.deepEqual(changed.receipts, control.receipts, label);
+      // The exact existing response, with the valid observations still uploaded unchanged.
+      assert.deepEqual(
+        changed.outcome,
+        [status, exitCode, 'valid', ['contention-trials'], files],
+        label,
+      );
+      assert.ok(changed.retained, label);
+    }
+  }
+
+  // A repeated totals row is refused by the recorder and leaves the first one standing; two rows
+  // for one trial, however they reach the summary, never complete it.
+  const repeated = await recorded({}, 'success', [strip(row)]);
+  assert.equal(repeated.totals.length, 1);
+  assert.deepEqual(repeated.outcome, ['incomplete', 1, 'valid', ['records-rejected'], files]);
+  const twice = summarize([...control.records, { ...row, seq: control.records.length + 1 }]);
+  assert.deepEqual(twice.contention, [2, 3]);
+  assert.ok(missingRequirements(twice).includes('contention-trials'));
 });
 
 test('structured cleanup failures remain readable and downloadable with the native failure', async () => {
@@ -1567,8 +1971,22 @@ test('the Windows job runs the exact native command after a successful build wha
   );
   const apiEntry = 'pnpm --filter @graphgoblin/api test src/main.test.ts';
   assert.deepEqual(
-    [commands.install, commands.build, commands.native, commands['api-entry']],
-    ['pnpm install --frozen-lockfile', 'pnpm build', 'pnpm test:windows-launcher', apiEntry],
+    [
+      commands.install,
+      commands.build,
+      commands.sqlite_paths,
+      commands.database_config,
+      commands.native,
+      commands['api-entry'],
+    ],
+    [
+      'pnpm install --frozen-lockfile',
+      'pnpm build',
+      'pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/db.test.ts --maxWorkers=1',
+      'pnpm --filter @graphgoblin/api exec vitest run src/config.test.ts --maxWorkers=1',
+      'pnpm test:windows-launcher',
+      apiEntry,
+    ],
   );
   // The #565 API built-entry step is last and needs only a successful build in an uncancelled run.
   assert.equal(steps.at(-1).id, 'api-entry');
@@ -1596,6 +2014,8 @@ test('the Windows job runs the exact native command after a successful build wha
   assert.deepEqual(ran(passing).slice(3), [
     'install',
     'build',
+    'sqlite_paths',
+    'database_config',
     'evidence',
     'native',
     'finalize',
@@ -1611,7 +2031,15 @@ test('the Windows job runs the exact native command after a successful build wha
   for (const native of ['success', 'failure']) {
     const failedPrepare = prepared();
     const result = schedule(steps, { ...failedPrepare, end: { evidence: 'failure', native } });
-    assert.deepEqual(ran(result).slice(3), ['install', 'build', 'evidence', 'native', 'api-entry']);
+    assert.deepEqual(ran(result).slice(3), [
+      'install',
+      'build',
+      'sqlite_paths',
+      'database_config',
+      'evidence',
+      'native',
+      'api-entry',
+    ]);
     assert.equal(result.ran.native.run, 'pnpm test:windows-launcher');
     assert.equal(result.ran['api-entry'].run, apiEntry);
     assert.equal(result.outcomes.evidence, 'failure');
@@ -1626,7 +2054,15 @@ test('the Windows job runs the exact native command after a successful build wha
   for (const setupStep of ['#0', 'node']) {
     const result = schedule(steps, { ...prepared(), end: { [setupStep]: 'failure' } });
     assert.ok(
-      !['evidence', 'native', 'finalize', 'upload', 'api-entry'].some((id) => id in result.ran),
+      ![
+        'sqlite_paths',
+        'database_config',
+        'evidence',
+        'native',
+        'finalize',
+        'upload',
+        'api-entry',
+      ].some((id) => id in result.ran),
     );
     assert.equal(result.outcomes['api-entry'], 'skipped');
   }
@@ -1638,12 +2074,14 @@ test('the Windows job runs the exact native command after a successful build wha
     const result = schedule(steps, { outputs, end: { [failing]: 'failure' } });
     assert.deepEqual(
       [
+        result.outcomes.sqlite_paths,
+        result.outcomes.database_config,
         result.outcomes.native,
         result.outcomes['api-entry'],
         'finalize' in result.ran,
         'upload' in result.ran,
       ],
-      ['skipped', 'skipped', true, true],
+      ['skipped', 'skipped', 'skipped', 'skipped', true, true],
     );
     const outcome = finalizeFrom(result, setup);
     assert.equal(outcome.status, 'not-run');
@@ -1652,6 +2090,46 @@ test('the Windows job runs the exact native command after a successful build wha
       outcome.upload.map((path) => basename(path)),
       [FILES.manifest, FILES.result],
     );
+  }
+
+  // The focused native checks run after a successful build, the second under GitHub's implicit
+  // success(), so it is skipped once the first fails. A failed check fails the job yet still
+  // prepares evidence and runs the exact native command with its folder, then finalizes and
+  // uploads. The API entry also runs after a failure. Cancellation skips evidence, native work
+  // and the API entry.
+  for (const [check, focused] of [
+    ['sqlite_paths', ['sqlite_paths']],
+    ['database_config', ['sqlite_paths', 'database_config']],
+  ]) {
+    const { setup, outputs } = prepared();
+    const failed = schedule(steps, { outputs, end: { [check]: 'failure' } });
+    assert.deepEqual(ran(failed).slice(3), [
+      'install',
+      'build',
+      ...focused,
+      'evidence',
+      'native',
+      'finalize',
+      'upload',
+      'api-entry',
+    ]);
+    assert.deepEqual(
+      [failed.outcomes.sqlite_paths, failed.outcomes.database_config],
+      check === 'sqlite_paths' ? ['failure', 'skipped'] : ['success', 'failure'],
+    );
+    assert.equal(failed.ran.native.run, 'pnpm test:windows-launcher');
+    assert.equal(failed.ran.native.env[DIRECTORY_VARIABLE], setup.directory);
+    assert.equal(failed.outcomes.native, 'success');
+    assert.equal(failed.outcomes['api-entry'], 'success');
+    assert.equal(failed.conclusion, 'failure');
+
+    const cancelled = schedule(steps, { outputs, end: { [check]: 'cancelled' } });
+    assert.deepEqual(ran(cancelled).slice(3), ['install', 'build', ...focused]);
+    assert.deepEqual(
+      ['evidence', 'native', 'finalize', 'upload', 'api-entry'].map((id) => cancelled.outcomes[id]),
+      ['skipped', 'skipped', 'skipped', 'skipped', 'skipped'],
+    );
+    assert.equal(cancelled.conclusion, 'cancelled');
   }
 
   // A failed or cancelled native step is finalized and uploaded; its outcome sets the status. The

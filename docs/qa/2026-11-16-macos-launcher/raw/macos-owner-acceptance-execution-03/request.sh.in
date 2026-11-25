@@ -1,0 +1,16 @@
+set -eu
+umask 077
+cd /
+node_dir='/opt/homebrew/Cellar/node@22/22.22.2_2/bin'
+node="$node_dir/node"
+if [ "$(cd -P "$node_dir" && pwd -P)" != "$node_dir" ] || [ -L "$node" ] || [ ! -f "$node" ] || [ ! -x "$node" ] ||
+   [ "$(/usr/bin/stat -f '%u %z' "$node")" != '501 84640' ]; then
+    printf '%s\n' 'owner acceptance preflight: canonical executable path mismatch' >&2
+    exit 2
+fi
+node_hash=$(/usr/bin/shasum -a 256 "$node")
+if [ "${node_hash%% *}" != 'e67e9c664f5b3d6d9fc0050ac895d8f30d213ce340c84439750edc9cc449d010' ]; then
+    printf '%s\n' 'owner acceptance preflight: Node SHA-256 mismatch' >&2
+    exit 2
+fi
+exec "$node" --input-type=module --eval __GG456_BUILD_EXECUTOR__ -- '__GG456_BUILD_TOKEN__' '__GG456_MANIFEST_SHA256__'

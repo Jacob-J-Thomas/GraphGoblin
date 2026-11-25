@@ -1,0 +1,51 @@
+2026-11-25T02:17:32.5453428Z HEAD is now at dd4774e0 Merge 8c936ac14955f052e3dd3a578dedee5d8d6aaeb5 into d2df8600c2c8574bec420947de686b936910b245
+2026-11-25T02:17:32.5640012Z ##[endgroup]
+2026-11-25T02:17:32.5690745Z [command]/usr/bin/git log -1 --format=%H
+2026-11-25T02:17:32.5713848Z dd4774e091ae589654eb06f48292b9c24d5d39d4
+2026-11-25T02:34:15.7359176Z [41m[1m FAIL [22m[49m src/chat/ChatSurface.test.tsx[2m > [22mroot browser review regressions[2m > [22mR2 clears the previous reply live announcement on intentional New chat and conversation selection
+2026-11-25T02:34:15.7360023Z [31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the role "status"
+2026-11-25T02:34:15.7360296Z 
+2026-11-25T02:34:15.7360423Z Here are the matching elements:
+2026-11-25T02:34:15.7360563Z 
+2026-11-25T02:34:15.7360688Z Ignored nodes: comments, script, style
+2026-11-25T02:34:15.7360949Z [36m<div[39m
+2026-11-25T02:34:15.7361220Z   [33mclass[39m=[32m"mb-2 text-sm text-muted"[39m
+2026-11-25T02:34:15.7361531Z   [33mid[39m=[32m"chat-send-reason"[39m
+2026-11-25T02:34:15.7361914Z   [33mrole[39m=[32m"status"[39m
+2026-11-25T02:34:15.7362144Z [36m>[39m
+2026-11-25T02:34:15.7362338Z   [0mSending…[0m
+2026-11-25T02:34:15.7362549Z [36m</div>[39m
+2026-11-25T02:34:15.7362651Z 
+2026-11-25T02:34:15.7362782Z Ignored nodes: comments, script, style
+2026-11-25T02:34:15.7363020Z [36m<p[39m
+2026-11-25T02:34:15.7363248Z   [33maria-live[39m=[32m"polite"[39m
+2026-11-25T02:34:15.7363528Z   [33mclass[39m=[32m"sr-only"[39m
+2026-11-25T02:34:15.7363791Z   [33mrole[39m=[32m"status"[39m
+2026-11-25T02:34:15.7364011Z [36m>[39m
+2026-11-25T02:34:15.7364234Z   [0mReply: The exact loop result.[0m
+2026-11-25T02:34:15.7364472Z [36m</p>[39m
+2026-11-25T02:34:15.7364575Z 
+2026-11-25T02:34:15.7364968Z (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+2026-11-25T02:34:15.7365323Z 
+2026-11-25T02:34:15.7365450Z Ignored nodes: comments, script, style
+2026-11-25T02:34:15.7365696Z [36m<body>[39m
+2026-11-25T02:34:15.7365884Z   [36m<div>[39m
+2026-11-25T02:34:15.7366090Z     [36m<section[39m
+2026-11-25T02:34:15.7366441Z       [33maria-label[39m=[32m"Chat"[39m
+2026-11-25T02:34:15.7455422Z [90m [2m❯[22m getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+2026-11-25T02:34:15.7456460Z [90m [2m❯[22m getMultipleElementsFoundError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+2026-11-25T02:34:15.7457398Z [90m [2m❯[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+2026-11-25T02:34:15.7458249Z [90m [2m❯[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+2026-11-25T02:34:15.7458850Z [36m [2m❯[22m src/chat/ChatSurface.test.tsx:[2m961:19[22m[39m
+2026-11-25T02:34:15.7459319Z     [90m959|[39m     fireEvent.click(screen.getByRole('button', { name: 'Send message' …
+2026-11-25T02:34:15.7459839Z     [90m960|[39m     expect(await screen.findByText(turn.response!.reply)).toBeVisible(…
+2026-11-25T02:34:15.7460353Z     [90m961|[39m     expect(screen.getByRole('status')).toHaveTextContent(`Reply: ${tur…
+2026-11-25T02:34:15.7460730Z     [90m   |[39m                   [31m^[39m
+2026-11-25T02:34:15.7461150Z     [90m962|[39m     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+2026-11-25T02:34:15.7461723Z     [90m963|[39m     expect(await screen.findByRole('heading', { name: 'What’s the move…
+2026-11-25T02:34:15.7461977Z 
+2026-11-25T02:34:15.7462166Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+2026-11-25T02:34:15.7462330Z 
+2026-11-25T02:34:15.7462335Z 
+2026-11-25T02:34:15.7462679Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m235 passed[39m[22m[90m (236)[39m
+2026-11-25T02:34:15.7463467Z [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3189 passed[39m[22m[90m (3190)[39m

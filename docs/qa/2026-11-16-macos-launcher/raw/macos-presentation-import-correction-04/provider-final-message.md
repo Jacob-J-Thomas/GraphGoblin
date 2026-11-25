@@ -1,0 +1,15 @@
+I added `import Testing` to `LiveAppKit.swift`. It's a reasonable minimal fix, but it hasn't been compiled: there's no AppKit Swift compiler on Windows, and I didn't run anything on the Mac. Whether it fixes the CI08 failure still has to be shown by native CI.
+
+**Changed path:** `apps/macos-launcher/Tests/Presentation/Support/LiveAppKit.swift`, one line added. It sits between `import LaunchContract` and `@testable import LauncherPresentation`, the same order `LiveAppKitTests.swift` uses. `git diff --check` passed (exit 0) and the worktree shows only this file modified. Nothing was committed or pushed.
+
+**Why the import is justified**
+- **The finding checks out.** `LiveHarness` calls `waitUntil` three times without a `sourceLocation`, so each call uses the default `#_sourceLocation`. That macro comes from `Testing`, which `Harness.swift` imports.
+- **It's the only caller missing the import.** `waitUntil` is called from 8 files and `LiveAppKit.swift` is the only one without `import Testing`. Everything else it uses resolves through its existing imports or from this test module itself (`WindowServerSession` is defined in `AppKitWindowTests.swift`).
+- **The language rule points the same way.** Since Swift 6.0 (SE-0422), a macro used as a default argument is expanded where the function is called, so the calling file needs to see the macro's module. I'm stating this from my knowledge of the rule; I didn't check the exact `#_sourceLocation` expansion in the 6.1.2 toolchain.
+- **It fits where the failure happened.** The last compiler call (`swift-tests-diagnostic-build.stdout`, line 21) had `LiveAppKit.swift` as its only file, writing `LiveAppKit.swift.o`. The earlier whole-module step ran with `-experimental-skip-non-inlinable-function-bodies`, so it would not have checked these calls; only this per-file step would.
+- **The file never compiled in any other form.** Git history shows one commit (`8bf4e555`) for it, already with 3 calls and no import.
+
+**What's still unproven**
+- A missing import would normally print an error (something like "cannot find 'Testing' in scope"). CI08 printed none: stderr has only SwiftPM debug lines, and no crash reports were found. So the import doesn't explain why the failure was silent, and linking the two is inference, not proof.
+- In `swift-tests-diagnostic-build-files.json`, `LiveAppKit.swift.o` and the five Support objects after it are missing. `ManualClock.swift.o` exists even though it sorts after `LiveAppKit`. It was probably left by the original build, which shared the same build folder; I didn't verify that.
+- Native CI needs to show that `LiveAppKit.swift.o` and the remaining Support objects are now produced and the Swift tests actually run. The coverage gate stays failed until then. If the step still exits 1 with no error, this import wasn't the cause.

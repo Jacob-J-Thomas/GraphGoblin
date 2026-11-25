@@ -1,0 +1,317 @@
+{
+  "id": "S1-install-a-odd-checkout",
+  "cases": [
+    "O1",
+    "O2"
+  ],
+  "startedAt": "2026-11-16T21:03:45.778Z",
+  "checks": [
+    {
+      "id": "installer-exit-zero",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "ms": 28144
+        },
+        "timedOut": false
+      }
+    },
+    {
+      "id": "installer-output",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "a:bundle-physical",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "kind": "dir"
+      }
+    },
+    {
+      "id": "a:bundle-inventory",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        ".": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Contents"
+          ]
+        },
+        "Contents": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Info.plist",
+            "MacOS",
+            "Resources"
+          ]
+        },
+        "Contents/MacOS": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "GraphGoblin"
+          ]
+        },
+        "Contents/Resources": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "launcher.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "a:files-owned-single-link",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "Contents/Info.plist": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 960,
+          "sha256": "8105dce97e1ae1177ea3cf0236b69925d118c7157ba3c4cdf928c2334826caf4"
+        },
+        "Contents/MacOS/GraphGoblin": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "700",
+          "nlink": 1,
+          "size": 725576,
+          "sha256": "56766e122f6fda499390064c0a947e4b342c6f4ffb81213d557d1ea332fb6ffe"
+        },
+        "Contents/Resources/launcher.json": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 332,
+          "sha256": "53809519874a46057fa45107c9379bfa23bb628204fe1b5b25baca8c8367701e"
+        }
+      }
+    },
+    {
+      "id": "a:arm64-executable",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "a:no-quarantine",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "xattr": []
+      }
+    },
+    {
+      "id": "a:installation-id",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "id": "c908e6ef553d4cb4871644a9674a5c7b",
+        "expected": null
+      }
+    },
+    {
+      "id": "a:bundle-identifier",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "bundleIdentifier": "com.graphgoblin.launcher.instance.c908e6ef553d4cb4871644a9674a5c7b"
+      }
+    },
+    {
+      "id": "a:regular-app-plist",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "CFBundleDevelopmentRegion",
+          "CFBundleExecutable",
+          "CFBundleIdentifier",
+          "CFBundleInfoDictionaryVersion",
+          "CFBundleName",
+          "CFBundlePackageType",
+          "CFBundleShortVersionString",
+          "CFBundleVersion",
+          "GraphGoblinInstallationID",
+          "LSMinimumSystemVersion",
+          "NSHighResolutionCapable",
+          "NSPrincipalClass"
+        ]
+      }
+    },
+    {
+      "id": "a:config-closed-keys",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "checkout",
+          "dataDirectory",
+          "node",
+          "ollamaEnabled",
+          "port",
+          "requireAPIKey",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "a:config-values",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "checkout": "/Users/jake/Library/Caches/graphgoblin-456-product-build-db37bfdf935746039f9030c4d49b10fb/repo",
+        "node": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node",
+        "port": 62241,
+        "dataDirectoryHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d35346138323564312f646174612f514120646174612075cc8820253431202331"
+      }
+    },
+    {
+      "id": "a:config-options",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "a:no-canary-in-config",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "a:receipt-private",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "mode": "600"
+      }
+    },
+    {
+      "id": "a:receipt-binding",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "receipt": {
+          "applications": {
+            "device": "16777232",
+            "inode": "1116841"
+          },
+          "id": "c908e6ef553d4cb4871644a9674a5c7b",
+          "installed": {
+            "bundle": {
+              "device": "16777232",
+              "inode": "178892200"
+            },
+            "configuration": "53809519874a46057fa45107c9379bfa23bb628204fe1b5b25baca8c8367701e",
+            "executable": "56766e122f6fda499390064c0a947e4b342c6f4ffb81213d557d1ea332fb6ffe",
+            "plist": "8105dce97e1ae1177ea3cf0236b69925d118c7157ba3c4cdf928c2334826caf4"
+          },
+          "name": "GraphGoblin QA ü-54a825d1.app",
+          "version": 1
+        },
+        "observedBundle": {
+          "device": "16777232",
+          "inode": "178892200"
+        }
+      }
+    },
+    {
+      "id": "a:receipt-settled",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "keys": [
+          "applications",
+          "id",
+          "installed",
+          "name",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "link-spelling-not-saved",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "single-a-entry",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "no-new-stage-residue",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "applications-only-a",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "added": [
+          "4772617068476f626c696e20514120c3bc2d35346138323564312e617070"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "receipts-only-a",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "added": [
+          "63393038653665663535336434636234383731363434613936373461356337622e6a736f6e"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "default-resources-not-created",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "checkout-listing-unchanged-by-installer",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "launcher-source-unchanged-by-installer",
+      "ok": true,
+      "hard": false
+    }
+  ],
+  "notes": {
+    "dataDirectoryBytesEqualInput": false
+  },
+  "status": "criteria-met",
+  "elapsedMs": 28193,
+  "finishedAt": "2026-11-16T21:04:13.971Z"
+}
