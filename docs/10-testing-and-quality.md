@@ -303,6 +303,16 @@ Browser exclusions and conditional modes, also written to the job summary on eve
 
 The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
 
+A separate step in the same job (#467) checks that the image's installed jsonata carries `patches/jsonata@2.2.2.patch`, whose responsibilities and upgrade obligations are in the [licence ledger](research/licenses.md#jsonata-patch). It runs the image with the same switches as the template step (no network, read-only root filesystem, all capabilities dropped, no new privileges) and a working directory of `/app/apps/api`, where `node --input-type=module` imports the compiled `@graphgoblin/domain` entry the API resolves, never source or host `node_modules`. It runs whenever the image built, even after a template failure. Each probe calls the public `observeExpression` with a finite expression:
+
+- `a + b` over `{ "a": 1, "b": 2 }` at the default limits returns 3.
+- A JSON literal holding a 250-item array and a 250-member object, wider than the default depth of 200, returns itself at the default limits. Only sequential siblings accept it.
+- `1` with `maxDepth: 0` is refused with reason `depth` and the `ExpressionError` message `expression exceeded max depth 0`.
+- `1` with `timeoutMs: -1`, a deadline already spent at the first evaluator entry, is refused with reason `time` and the message `expression exceeded -1ms`.
+- `1` again at the default limits, the same cached source, then returns 1, so neither refusal carried over into a later evaluation.
+
+Without the patch the symbol-keyed hooks are never bound, so both refusal probes succeed and fail their assertions at once instead of hanging. These restrictive options exist only in the probe; the evaluator's 200-level and 2,000 ms defaults are unchanged. The step prints one JSON line (`"check":"installed-jsonata-patch"`) that the job log retains. The per-evaluation timestamp has no image probe: only `packages/domain/src/expression.test.ts` covers it. The source regressions do not prove the distributed image, and this step does not replace them.
+
 Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
 
 `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
