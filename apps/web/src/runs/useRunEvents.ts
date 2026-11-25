@@ -13,6 +13,7 @@ import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
 import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
+import { markInspectorTransportLoss } from './inspector-read-provenance.js';
 import { useRunHeaderRegistry } from './run-header-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
@@ -67,6 +68,8 @@ export function useRunEvents(
     // This run's header evidence under the credentials the stream opened with (#386). Constant:
     // another generation runs this effect again with its own.
     const lease = headers?.lease(runId);
+    // Where the run's own reads keep their receipts (`useRun` chooses the same owner).
+    const receipts = headers?.source.client === client ? headers : undefined;
     // Whether the credentials this stream opened with are still the accepted ones, checked live:
     // a rejection or replacement retires its callbacks before React runs this effect's cleanup.
     const authorized = () => {
@@ -169,14 +172,26 @@ export function useRunEvents(
           }
           if (openedAt !== undefined && Date.now() - openedAt >= STREAM_HEARTBEAT_MS)
             reportedOutage = false;
+          // Taken before clearing: a refused retry never opened, so it cannot drop again.
+          const opened = openedAt !== undefined;
           openedAt = undefined;
           inTransportBackoff =
             err instanceof TypeError || (err instanceof GraphGoblinApiError && err.status === 0);
           // Clean EOF and HTTP errors keep the SSE helper's existing backoff.
           if (!inTransportBackoff) return;
           setStatus('connecting');
-          if (reportedOutage) return;
+          if (reportedOutage) {
+            // A stream that opened again and then dropped is a distinct later loss (#575), even
+            // within this outage's one reread: a run read since recovered cannot leave the view
+            // current. Refused retries record nothing, so they never overtake a recovery read.
+            if (opened) markInspectorTransportLoss(receipts, keys.run(runId));
+            return;
+          }
           reportedOutage = true;
+          // First, with the run's read receipts (#575): a write queued before React renders again
+          // already finds the view lost, and a run read begun before now, even one the read below
+          // joins, cannot end the outage.
+          markInspectorTransportLoss(receipts, keys.run(runId));
           markApiUnreachable();
           // A loaded inspector otherwise has no failed query to drive the shared probe.
           // Try its active run read once per stream outage; a stuck stream must not churn reads.

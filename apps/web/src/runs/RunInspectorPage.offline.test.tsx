@@ -17,6 +17,7 @@ import { createAppClient } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { App } from '../app/App.js';
 import { Providers } from '../app/bootstrap.js';
+import { useReachability } from '../lib/reachability.js';
 import { errorMessage } from '../lib/utils.js';
 import { NOT_SENT } from './inspector/RunControls.js';
 
@@ -333,6 +334,113 @@ describe('run inspector through an outage (#416)', () => {
         input: { note: 'kept draft and more' },
       });
     } finally {
+      view.unmount();
+    }
+  });
+
+  it('keeps a waiting run last observed from its stream’s transport loss, through a run read begun before it, and sends nothing (#575)', async () => {
+    const api = new FakeApi();
+    const run = waitingRun(api);
+    const reads = heldRunReads(api);
+    const view = renderApp('/runs/' + run.id, api);
+    const user = userEvent.setup();
+    const runGets = () => api.callsTo('GET', `/runs/${run.id}`).length;
+    const runState = () => view.queryClient.getQueryState(keys.run(run.id));
+    const inputs = () => api.callsTo('POST', `/runs/${run.id}/input`);
+    const timeline = (name: RegExp) => screen.findByRole('heading', { name });
+    const writers = [
+      'Submit input',
+      /Pause/,
+      /Cancel run/,
+      'Replay...',
+      'Review delete-ready history',
+      'Withdraw delete-ready mark',
+    ];
+    let stopWatching = () => {};
+    try {
+      await openRun(run.id);
+      // The stream is open with its first batch shown, and the live refresh it requested has read
+      // the run once after it and settled.
+      expect(await timeline(/^Timeline \(3 events, live\)/)).toBeInTheDocument();
+      await waitFor(() => expect(runGets()).toBe(2));
+      await waitFor(() => expect(runState()?.fetchStatus).toBe('idle'));
+      const mutations = heldMutations(view);
+      // Render again so the form takes the client's delayed mutation options.
+      await runRead(view, run.id);
+
+      // An answer is queued before its API call; its gate is checked when it is sent.
+      await user.type(await screen.findByLabelText('note'), 'kept draft');
+      await user.click(button('Submit input'));
+      await waitFor(() => expect(mutations.state.queued).toBe(true));
+      // A run read starts while the API answers, and is still in flight when the stream loses it.
+      reads.state.blocking = true;
+      void view.queryClient.refetchQueries({ queryKey: keys.run(run.id), exact: true });
+      await waitFor(() => expect(reads.state.held).toBe(1));
+      // The queued answer is released the moment the loss is reported, before the view need have
+      // rendered it.
+      expect(useReachability.getState().apiReachable).toBe(true);
+      stopWatching = useReachability.subscribe(({ apiReachable }) => {
+        if (!apiReachable) mutations.release();
+      });
+
+      // The stream's connection drops and the API refuses to reconnect it. Every other request,
+      // writes included, is still answered.
+      api.override('GET /runs/:id/events', (call) => {
+        if (call.headers.get('accept') === 'text/event-stream')
+          throw new TypeError('Failed to fetch');
+        return api.builtIn(call);
+      });
+      act(() => api.dropStreams(run.id));
+      expect(await timeline(/^Timeline \(3 events, connecting…\)/)).toBeInTheDocument();
+      expect(await screen.findByText(STALE)).toBeVisible();
+      // The read in flight was joined, not replaced, and the queued answer was not sent.
+      expect(reads.state.held).toBe(1);
+      expect(runState()?.fetchStatus).toBe('fetching');
+      expect(await screen.findByText(NOT_SENT)).toBeVisible();
+      expect(inputs()).toHaveLength(0);
+      const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+      expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
+      expect(screen.getByText(/Reconnecting: reading this run again\./)).toBeVisible();
+      expect(screen.getByLabelText('note')).toHaveValue('kept draft');
+      for (const name of writers) expect(button(name)).toBeDisabled();
+      // Editing stays local; an implicit submission sends nothing.
+      await user.type(screen.getByLabelText('note'), ' and more');
+      const form = screen.getByRole<HTMLFormElement>('form', { name: 'Submit input' });
+      act(() => form.requestSubmit());
+      expect(posts(api)).toHaveLength(0);
+
+      // The read begun before the loss now answers successfully. That cannot make the run current:
+      // once it settles the view reads the run again, and the API refuses that read.
+      api.override('GET /runs/:id', () => {
+        throw new TypeError('Failed to fetch');
+      });
+      const before = runGets();
+      reads.release();
+      await waitFor(() => expect(runGets()).toBe(before + 1));
+      expect(
+        await screen.findByText(/The GraphGoblin API cannot be reached; reconnecting\./),
+      ).toBeVisible();
+      expect(screen.getByText(STALE)).toBeVisible();
+      for (const name of writers) expect(button(name)).toBeDisabled();
+      expect(posts(api)).toHaveLength(0);
+
+      // The API answers again. A run read started after the loss makes the run current, with the
+      // draft kept, and a deliberate answer sends once.
+      api.override('GET /runs/:id/events', (call) => api.builtIn(call));
+      api.override('GET /runs/:id', (call) => api.builtIn(call));
+      await runRead(view, run.id);
+      await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+      expect(screen.getByLabelText('note')).toHaveValue('kept draft and more');
+      await user.click(button('Submit input'));
+      await waitFor(() => expect(inputs()).toHaveLength(1));
+      expect(inputs()[0]!.body).toEqual({
+        waitId: 'wait-1',
+        input: { note: 'kept draft and more' },
+      });
+      expect(posts(api)).toHaveLength(1);
+    } finally {
+      stopWatching();
+      reads.release();
       view.unmount();
     }
   });

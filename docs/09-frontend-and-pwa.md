@@ -144,8 +144,9 @@ their own value, not the final array's last element (#385).
 
 ### Run inspector during an outage (#416)
 
-When the run read fails to reach the API, pauses because the browser is offline, or the browser
-reports a disconnect, the inspector's run section keeps the last run this view read, under a
+When the run read or its event stream fails to reach the API, the read pauses because the
+browser is offline, or the browser reports a disconnect, the inspector's run section keeps the
+last run this view read, under a
 warning titled **Last observed, may be out of date** that says whether the browser is offline,
 the API cannot be reached, or the run is being read again. The retained section shows the
 record's status, failure, result, wait (with its form) and delivery and finalization state as last
@@ -186,7 +187,14 @@ does not mean an outage is current. The run is current again only when its recei
 the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
 receipt by itself only permits the last-observed display. Being online again, a successful health
 probe or an open event stream may start the existing rereads but never unlock the view, and a read
-that started before the loss cannot either. The boundary the view remembers for a run, kept even
+that started before the loss cannot either. A stream transport failure records the run's loss
+synchronously, before requesting a reread, so an already queued write is refused before the
+next render. If that reread joins a request started before the loss, its eventual success keeps
+the run stale and the inspector requests a later read when the earlier one settles. A distinct
+stream loss during an unanswered recovery read advances the boundary beyond that read. A stream
+that actually reopened and then dropped records that loss even when it was open for less than
+a heartbeat interval and delivered no new event. Refused retries that never reopened do not
+create further losses or stream-triggered rereads. The boundary the view remembers for a run, kept even
 when a credential or provider change empties the receipt's own loss, belongs to that run: another
 run opened in the same view starts from its own receipts, so an outage of one run's read never
 marks another run last observed. A browser disconnect applies to every run until each is read

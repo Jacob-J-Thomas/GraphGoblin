@@ -1,0 +1,34 @@
+node:net:1918
+      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                    ^
+
+Error: listen EPERM: operation not permitted 127.0.0.1
+    at Server.setupListenHandle [as _listen2] (node:net:1918:21)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '127.0.0.1'
+}
+
+Node.js v22.22.2
+Error: the E2E server exited early with code 1
+
+   at global-setup.ts:41
+
+  39 |     child.once('exit', (code) => {
+  40 |       clearTimeout(timer);
+> 41 |       reject(new Error(`the E2E server exited early with code ${String(code)}`));
+     |              ^
+  42 |     });
+  43 |   });
+  44 |   process.env['GG_E2E_BASE_URL'] = url;
+    at ChildProcess.<anonymous> (/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/e2e/global-setup.ts:41:14)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/jake/Documents/Codex/2026-11-23/
+  │ files-pasted-by-the-user-prompt/work/inspector-repair/apps/web
+
