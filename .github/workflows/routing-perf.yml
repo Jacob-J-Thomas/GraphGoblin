@@ -1,5 +1,7 @@
 name: Routing performance
 
+# Diagnostic-only branch for #585 (never merged): manual dispatch only, because every run
+# checks out the pinned source below rather than this workflow's own revision.
 on:
   workflow_dispatch:
     inputs:
@@ -7,10 +9,6 @@ on:
         description: Enforce the strict bounds (median routing p95 <4 ms, frame p95 <17 ms). The shared runner's own spread straddles 4 ms.
         type: boolean
         default: false
-  pull_request:
-    paths:
-      - 'apps/web/src/editor/**'
-      - 'apps/web/e2e/routing.spec.ts'
 
 permissions:
   contents: read
@@ -21,7 +19,10 @@ jobs:
     timeout-minutes: 15
     env:
       GG_E2E_BROWSER_CHANNEL: msedge
-      GG_ROUTING_REPORT_DIR: ${{ github.workspace }}/routing-performance
+      # Pinned signed source under diagnosis (checked out below; also verified before setup
+      # and after the runs). This workflow's own revision is recorded separately.
+      GG_SOURCE_SHA: 14ea69842025c627f704b436727385d78e08768c
+      GG_SOURCE_TREE: d1911ca20030a835645037a5eac26169448c9e8c
       # Every run enforces median of three routing p95s <8 ms and each drag's routing
       # p95 <16 ms: the shared two-core runner measured 0.8-5.2 ms for the same code.
       # A manual dispatch with Strict set enforces the issue's bounds instead: median
@@ -32,7 +33,40 @@ jobs:
       # Added frame time is reported, without a bound, because idle cadence can differ.
       GG_ROUTING_STRICT_PERF: ${{ inputs.strict && '1' || '' }}
     steps:
+      - name: Prepare fresh evidence directories
+        shell: bash
+        run: |
+          # mkdir without -p fails on any existing path: every run starts empty and isolated.
+          root="$RUNNER_TEMP/gg-routing"
+          mkdir "$root" "$root/provenance"
+          for run in ordinary profiled node; do
+            mkdir "$root/$run"
+            echo not-run > "$root/$run/exit-status"
+          done
       - uses: actions/checkout@v4
+        with:
+          ref: 14ea69842025c627f704b436727385d78e08768c
+          persist-credentials: false
+      - name: Verify pinned source before setup
+        shell: bash
+        run: |
+          tracked=$(git status --porcelain=v1 --untracked-files=no)
+          untracked=$(git ls-files --others --exclude-standard)
+          signature=absent
+          if git cat-file commit HEAD | grep -q '^gpgsig'; then signature=present; fi
+          {
+            echo "head=$(git rev-parse HEAD)"
+            echo "tree=$(git rev-parse 'HEAD^{tree}')"
+            echo "tracked=$([ -z "$tracked" ] && echo clean || echo dirty)"
+            echo "untracked=$([ -z "$untracked" ] && echo clean || echo dirty)"
+            echo "signature=$signature"
+            if [ -n "$tracked$untracked" ]; then printf '%s\n' "$tracked" "$untracked"; fi
+          } | tee "$RUNNER_TEMP/gg-routing/provenance/source-before.txt"
+          if [ "$(git rev-parse HEAD)" != "$GG_SOURCE_SHA" ] || [ "$(git rev-parse 'HEAD^{tree}')" != "$GG_SOURCE_TREE" ] ||
+            [ "$signature" != present ] || [ -n "$tracked$untracked" ]; then
+            echo '::error::Checked-out source is not the clean, signed pin; nothing will be measured.'
+            exit 1
+          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -43,28 +77,278 @@ jobs:
       - name: Install Edge
         run: pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
       - name: Build
+        id: build
         run: pnpm build
-      - name: Measure three drags at 100 and 300 nodes
-        run: pnpm --filter @graphgoblin/web exec playwright test e2e/routing.spec.ts --grep 'performance:' --retries=0
-      - name: Write job summary
+      # The three commands below run on this worker and built tree whenever setup succeeded,
+      # even if an earlier one failed. Each records its numeric exit (or not-run / started)
+      # and full log; any failure still fails its own step and therefore the job.
+      - name: Ordinary control (profiler off), three drags at 100 and 300 nodes
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        env:
+          GG_ROUTING_PROFILE: '0'
+          GG_ROUTING_REPORT_DIR: ${{ runner.temp }}/gg-routing/ordinary/reports
+          PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ runner.temp }}/gg-routing/ordinary/html
+        run: |
+          run="$RUNNER_TEMP/gg-routing/ordinary"
+          echo started > "$run/exit-status"
+          set +e
+          pnpm --filter @graphgoblin/web exec playwright test e2e/routing.spec.ts --grep 'performance:' --retries=0 --workers=1 --output "$run/playwright" 2>&1 | tee "$run/command.log"
+          codes=("${PIPESTATUS[@]}")
+          set -e
+          printf 'command=%s\nlog=%s\n' "${codes[0]}" "${codes[1]}" > "$run/exit-status"
+          [ "${codes[0]}" = 0 ] || exit "${codes[0]}"
+          exit "${codes[1]}"
+      - name: Profiled diagnostic (GG_ROUTING_PROFILE=1), same command and workload
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        env:
+          GG_ROUTING_PROFILE: '1'
+          GG_ROUTING_REPORT_DIR: ${{ runner.temp }}/gg-routing/profiled/reports
+          PLAYWRIGHT_HTML_OUTPUT_DIR: ${{ runner.temp }}/gg-routing/profiled/html
+        run: |
+          run="$RUNNER_TEMP/gg-routing/profiled"
+          echo started > "$run/exit-status"
+          set +e
+          pnpm --filter @graphgoblin/web exec playwright test e2e/routing.spec.ts --grep 'performance:' --retries=0 --workers=1 --output "$run/playwright" 2>&1 | tee "$run/command.log"
+          codes=("${PIPESTATUS[@]}")
+          set -e
+          printf 'command=%s\nlog=%s\n' "${codes[0]}" "${codes[1]}" > "$run/exit-status"
+          [ "${codes[0]}" = 0 ] || exit "${codes[0]}"
+          exit "${codes[1]}"
+      - name: Node CPU diagnostic (default, no baseline)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: |
+          run="$RUNNER_TEMP/gg-routing/node"
+          echo started > "$run/exit-status"
+          set +e
+          pnpm --filter @graphgoblin/web exec tsx --conditions=development e2e/routing-benchmark.ts "$run/routing-benchmark.json" 2>&1 | tee "$run/command.log"
+          codes=("${PIPESTATUS[@]}")
+          set -e
+          printf 'command=%s\nlog=%s\n' "${codes[0]}" "${codes[1]}" > "$run/exit-status"
+          [ "${codes[0]}" = 0 ] || exit "${codes[0]}"
+          exit "${codes[1]}"
+      - name: Record provenance after runs
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          p="$RUNNER_TEMP/gg-routing/provenance"
+          tracked=$(git status --porcelain=v1 --untracked-files=no 2>&1)
+          untracked=$(git ls-files --others --exclude-standard 2>&1)
+          signature=absent
+          if git cat-file commit HEAD | grep -q '^gpgsig'; then signature=present; fi
+          {
+            echo "head=$(git rev-parse HEAD)"
+            echo "tree=$(git rev-parse 'HEAD^{tree}')"
+            echo "tracked=$([ -z "$tracked" ] && echo clean || echo dirty)"
+            echo "untracked=$([ -z "$untracked" ] && echo clean || echo dirty)"
+            echo "signature=$signature"
+            if [ -n "$tracked$untracked" ]; then printf '%s\n' "$tracked" "$untracked"; fi
+          } | tee "$p/source-after.txt"
+          version() { "$@" 2>/dev/null || echo unavailable; }
+          # Explicit allowlist only: no environment dump.
+          {
+            echo "workflow_sha=$GITHUB_WORKFLOW_SHA"
+            echo "workflow_ref=$GITHUB_WORKFLOW_REF"
+            echo "run_id=$GITHUB_RUN_ID"
+            echo "run_attempt=$GITHUB_RUN_ATTEMPT"
+            echo "image_os=$ImageOS"
+            echo "image_version=$ImageVersion"
+            echo "runner=$RUNNER_OS $RUNNER_ARCH"
+            echo "node=$(version node --version)"
+            echo "pnpm=$(version pnpm --version)"
+            echo "playwright=$(version pnpm --filter @graphgoblin/web exec playwright --version)"
+            echo "edge_installed=$(version dpkg-query -W -f='${Version}' microsoft-edge-stable)"
+          } | tee "$p/run.txt"
+      - name: Check evidence and write job summary
         if: always()
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import { readdir, readFile, appendFile } from 'node:fs/promises';
-          const folder = process.env.GG_ROUTING_REPORT_DIR;
-          const files = await readdir(folder).catch(() => []);
-          const rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: median of three routing p95s <8 ms; strict manual dispatch: <4 ms and frame p95 <17 ms (the 60 Hz budget; timestamps land 0.1 ms past one vsync). Every drag: routing p95 <16 ms.', '', '| Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
-          for (const file of files.filter(f => f.endsWith('.json')).sort()) {
-            const report = JSON.parse(await readFile(folder + '/' + file, 'utf8'));
-            for (const run of report.repetitions) rows.push(`| ${report.nodes} | ${report.channel} ${report.browser} | ${run.repetition} | ${run.routingP95Ms.toFixed(3)} ms | ${report.medianRoutingP95Ms.toFixed(3)} ms | ${report.idle.frameP95Ms.toFixed(3)} ms | ${run.frameP95Ms.toFixed(3)} ms | ${run.addedFrameP95Ms.toFixed(3)} ms |`);
+          import { appendFile, readdir, readFile, writeFile } from 'node:fs/promises';
+          const root = `${process.env.RUNNER_TEMP}/gg-routing`;
+          const failures = [];
+          const text = (path) => readFile(`${root}/${path}`, 'utf8');
+          const why = (error) => (error.code === 'ENOENT' ? 'missing' : `malformed: ${error.message}`);
+          const fields = async (path) =>
+            Object.fromEntries(
+              (await text(path).catch(() => ''))
+                .split('\n')
+                .map((line) => /^(\w+)=(.*)$/.exec(line))
+                .filter(Boolean)
+                .map(([, key, value]) => [key, value]),
+            );
+          const exit = async (run) => {
+            if (!(await text(`${run}/command.log`).catch(() => '')).trim()) failures.push(`${run}: command log missing or empty`);
+            const raw = (await text(`${run}/exit-status`).catch(() => 'missing')).trim();
+            const codes = /^command=(\d+)\nlog=(\d+)$/.exec(raw);
+            const shown = codes
+              ? `exit ${codes[1]}` + (codes[2] === '0' ? '' : `, log tee exit ${codes[2]}`)
+              : raw === 'not-run'
+                ? 'not run'
+                : raw === 'started'
+                  ? 'started, no exit recorded (interrupted)'
+                  : 'exit record missing or unreadable';
+            if (!codes || codes[1] !== '0' || codes[2] !== '0') failures.push(`${run} command: ${shown}`);
+            return shown;
+          };
+          const ms = (value) => {
+            if (!Number.isFinite(value)) throw new Error('non-numeric timing');
+            return `${value.toFixed(3)} ms`;
+          };
+          const browsers = new Set();
+          const edge = async (run) => {
+            const rows = [];
+            for (const nodes of [100, 300]) {
+              const path = `${run}/reports/performance-review-${nodes}-repeat-1.json`;
+              try {
+                const r = JSON.parse(await text(path));
+                if (r.nodes !== nodes || r.edges !== nodes * 2 || r.repeat !== 1 || r.channel !== 'msedge' ||
+                  typeof r.browser !== 'string' || !r.browser.trim() ||
+                  r.viewport?.width !== 1440 || r.viewport?.height !== 900 ||
+                  r.targets?.medianRoutingP95Ms !== (process.env.GG_ROUTING_STRICT_PERF === '1' ? 4 : 8) ||
+                  r.targets?.perDragRoutingP95Ms !== 16 || r.targets?.frameP95Ms !== 17 ||
+                  !Array.isArray(r.repetitions) || r.repetitions.length !== 3 ||
+                  r.repetitions.some((d, i) => d.repetition !== i + 1)) throw new Error('unexpected fixture, browser, limits or repetitions');
+                browsers.add(r.browser);
+                for (const d of r.repetitions) {
+                  for (const key of ['routingP95Ms', 'frameP95Ms', 'durationMs', 'routingSamples', 'frameSamples', 'reroutedEdgesP95'])
+                    if (!Number.isFinite(d[key]) || d[key] < 0) throw new Error(`invalid ${key}`);
+                }
+                rows.push(...r.repetitions.map((d) => `| ${run} | ${nodes} | ${r.channel} ${r.browser} | ${d.repetition} | ${ms(d.routingP95Ms)} | ${ms(r.medianRoutingP95Ms)} | ${ms(r.idle.frameP95Ms)} | ${ms(d.frameP95Ms)} | ${ms(d.addedFrameP95Ms)} |`));
+              } catch (error) {
+                failures.push(`${path}: ${why(error)}`);
+              }
+            }
+            return rows;
+          };
+          const profiles = async (run, expected) => {
+            let found = 0;
+            const fixtures = new Set();
+            for (const dir of await readdir(`${root}/${run}/playwright`).catch(() => [])) {
+              const path = `${run}/playwright/${dir}/drag.cpuprofile`;
+              const raw = await text(path).catch(() => null);
+              if (raw === null) continue;
+              found += 1;
+              try {
+                const p = JSON.parse(raw);
+                const fixture = /^routing-performance-(100|300)-/.exec(dir)?.[1];
+                if (!fixture || fixtures.has(fixture)) throw new Error('unexpected or duplicate fixture profile');
+                fixtures.add(fixture);
+                if (!Array.isArray(p.nodes) || !p.nodes.length ||
+                  !Array.isArray(p.samples) || !p.samples.length || !Array.isArray(p.timeDeltas) || p.samples.length !== p.timeDeltas.length ||
+                  !Number.isFinite(p.startTime) || !Number.isFinite(p.endTime) || p.endTime <= p.startTime)
+                  throw new Error('invalid CPU profile');
+              } catch (error) {
+                failures.push(`${path}: ${why(error)}`);
+              }
+            }
+            if (found !== expected) failures.push(`${run}: ${found} drag.cpuprofile files, expected ${expected}`);
+            return `${found} of ${expected} expected`;
+          };
+
+          const commands = [
+            ['Ordinary control: Edge, GG_ROUTING_PROFILE=0', await exit('ordinary')],
+            ['Profiled diagnostic: same Edge command, GG_ROUTING_PROFILE=1', await exit('profiled')],
+            ['Node CPU diagnostic: routing-benchmark.ts, default, no baseline', await exit('node')],
+          ];
+          const edgeRows = [...(await edge('ordinary')), ...(await edge('profiled'))];
+          if (browsers.size !== 1) failures.push('Edge reports do not identify one common browser version');
+          const profiledProfiles = await profiles('profiled', 2);
+          const ordinaryProfiles = await profiles('ordinary', 0);
+          let nodeVersion = 'missing';
+          let nodeRows = [];
+          try {
+            const r = JSON.parse(await text('node/routing-benchmark.json'));
+            const names = ['column-40', 'column-100', 'column-150', 'grid-300'];
+            if (r.baseline !== null || typeof r.node !== 'string' || !r.node.startsWith('v22.') ||
+              r.fullWarmup !== 5 || r.fullSamples !== 20 || r.dragWarmup !== 10 || r.dragSamples !== 80 ||
+              !Array.isArray(r.rows) || r.rows.length !== 4 || r.rows.some((row, i) => row.name !== names[i]))
+              throw new Error('unexpected baseline, runtime, workload or rows');
+            for (const row of r.rows) {
+              if (row.labelPreparations !== 1 || !Array.isArray(row.fullSamples) || row.fullSamples.length !== 20 ||
+                !Array.isArray(row.dragSamples) || row.dragSamples.length !== 80 ||
+                [...row.fullSamples, ...row.dragSamples].some((v) => !Number.isFinite(v) || v < 0)) throw new Error('invalid Node samples or label workload');
+              for (const [key, value] of Object.entries(row))
+                if (key.endsWith('Ms') && (!Number.isFinite(value) || value < 0)) throw new Error(`invalid Node ${key}`);
+            }
+            nodeVersion = r.node;
+            nodeRows = r.rows.map(({ fullSamples, dragSamples, ...row }) => JSON.stringify(row));
+          } catch (error) {
+            failures.push(`node/routing-benchmark.json: ${why(error)}`);
           }
-          if (!files.length) rows.push('', 'No measurement report was produced; inspect the failed setup/test step.');
-          await appendFile(process.env.GITHUB_STEP_SUMMARY, rows.join('\n') + '\n');
+          const source = [];
+          for (const phase of ['before', 'after']) {
+            const f = await fields(`provenance/source-${phase}.txt`);
+            source.push(`| ${phase} | ${f.head ?? 'missing'} | ${f.tree ?? 'missing'} | ${f.tracked ?? 'missing'} | ${f.untracked ?? 'missing'} | ${f.signature ?? 'missing'} |`);
+            if (f.head !== process.env.GG_SOURCE_SHA || f.tree !== process.env.GG_SOURCE_TREE || f.tracked !== 'clean' || f.untracked !== 'clean' || f.signature !== 'present')
+              failures.push(`source ${phase}: record missing, not the signed pin, or not clean`);
+          }
+          const meta = await fields('provenance/run.txt');
+          const keys = ['workflow_sha', 'workflow_ref', 'run_id', 'run_attempt', 'image_os', 'image_version', 'runner', 'node', 'pnpm', 'playwright', 'edge_installed'];
+          for (const key of keys) if (!meta[key]?.trim() || meta[key] === 'unavailable') failures.push(`provenance ${key}: missing`);
+
+          const lines = [
+            '# Routing performance diagnostic (#585)',
+            '',
+            ...(failures.length
+              ? ['**Job fails.** Required command or evidence problems:', '', ...failures.map((failure) => `- ${failure}`)]
+              : ['**All required commands exited 0 and all expected evidence is present and well formed.**']),
+            '',
+            '| Command | Exit |',
+            '| --- | --- |',
+            ...commands.map(([name, shown]) => `| ${name} | ${shown} |`),
+            '',
+            '## Edge measurements',
+            '',
+            `Strict bounds ${process.env.GG_ROUTING_STRICT_PERF === '1' ? 'on' : 'off'} for both runs. Limits: median of three routing p95s <8 ms (strict: <4 ms and frame p95 <17 ms); every drag routing p95 <16 ms. The ordinary run is the untouched control. Profiled timings include CPU-profiler overhead: they are diagnostic only and say nothing about whether the ordinary run meets or misses its bounds.`,
+            '',
+            '| Run | Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |',
+            '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+            ...edgeRows,
+            '',
+            `drag.cpuprofile files: profiled ${profiledProfiles}; ordinary ${ordinaryProfiles}.`,
+            '',
+            '## Node CPU diagnostic',
+            '',
+            `Node ${nodeVersion}. Rows without raw samples (full JSON and log in the artifact):`,
+            '',
+            '```',
+            ...nodeRows,
+            '```',
+            '',
+            '## Provenance',
+            '',
+            `Pinned source ${process.env.GG_SOURCE_SHA}, tree ${process.env.GG_SOURCE_TREE}. The signature column records the commit's signature header; it is not cryptographically verified on the runner.`,
+            '',
+            '| Source | HEAD | Tree | Tracked | Untracked | Signature header |',
+            '| --- | --- | --- | --- | --- | --- |',
+            ...source,
+            '',
+            ...keys.map((key) => `- ${key}: ${meta[key] ?? 'missing'}`),
+          ];
+          const summary = lines.join('\n') + '\n';
+          await writeFile(`${root}/summary.md`, summary);
+          await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
+          process.exitCode = failures.length ? 1 : 0;
           NODE
+      # Allowlist of exact evidence files only. From Playwright's scratch output only the
+      # profiled drag.cpuprofile files are taken; traces, HTML and attachments stay behind.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: routing-performance
-          path: routing-performance/*.json
-          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/gg-routing/summary.md
+            ${{ runner.temp }}/gg-routing/provenance/source-before.txt
+            ${{ runner.temp }}/gg-routing/provenance/source-after.txt
+            ${{ runner.temp }}/gg-routing/provenance/run.txt
+            ${{ runner.temp }}/gg-routing/*/exit-status
+            ${{ runner.temp }}/gg-routing/*/command.log
+            ${{ runner.temp }}/gg-routing/*/reports/performance-review-100-repeat-1.json
+            ${{ runner.temp }}/gg-routing/*/reports/performance-review-300-repeat-1.json
+            ${{ runner.temp }}/gg-routing/profiled/playwright/*/drag.cpuprofile
+            ${{ runner.temp }}/gg-routing/node/routing-benchmark.json
+          if-no-files-found: error
