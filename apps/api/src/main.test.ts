@@ -1,10 +1,11 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { access, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import { access, link, mkdir, readFile, readdir, realpath, unlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { canonicalPath } from './canonical-path.js';
 import { main } from './main.js';
 import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
 
@@ -402,6 +403,152 @@ describe('built API entry and startup failures', () => {
       expect(child.stdout).not.toContain('GraphGoblin API listening');
       await noLock(f.lockPath);
       expect(await listening(f.port)).toBe(false);
+    },
+    60_000,
+  );
+});
+
+type ProcessFixture = Awaited<ReturnType<typeof createApiProcessFixture>>;
+
+const hardLinkAction =
+  'has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership';
+
+/** No provider runs in these children: Ollama is off and both harness executables are absent. */
+function providerFreeStore(f: ProcessFixture, database: string): NodeJS.ProcessEnv {
+  return {
+    GG_DB_URL: `file:${database.replaceAll('\\', '/')}`,
+    GG_OLLAMA_ENABLED: 'false',
+    GG_CODEX_BINARY: join(f.dataDir, 'absent-codex'),
+    GG_CLAUDE_BINARY: join(f.dataDir, 'absent-claude'),
+  };
+}
+
+/** A real SQLite store holding one key, with a second hard link beside its first name. */
+async function hardLinkedStore(f: ProcessFixture) {
+  const database = join(f.dataDir, 'linked.db');
+  const alias = join(f.dataDir, 'linked-alias.db');
+  const key = f.run(['--create-api-key', 'hard-linked owner'], providerFreeStore(f, database));
+  expect(await key.waitForExit()).toEqual({ code: 0, signal: null });
+  const token = /^\s+(gg_[A-Za-z0-9_-]+)\s*$/m.exec(key.stdout)?.[1] ?? '';
+  expect(token).toMatch(/^gg_/);
+  await link(database, alias);
+  return { database, alias, token, bytes: await readFile(database) };
+}
+
+/** A managed log folder only the current user, SYSTEM and Administrators can use. */
+async function privateLogDirectory(path: string): Promise<string> {
+  const execute = promisify(execFile);
+  await mkdir(path);
+  const sid = /"(S-1-[0-9-]+)"/.exec(
+    (await execute(whoami, ['/user', '/fo', 'csv', '/nh'], { windowsHide: true })).stdout,
+  )?.[1];
+  if (sid === undefined) throw new Error('whoami did not report the current user SID');
+  await execute(
+    icacls,
+    [
+      path,
+      '/inheritance:r',
+      '/grant:r',
+      `*${sid}:(OI)(CI)F`,
+      '*S-1-5-18:(OI)(CI)F',
+      '*S-1-5-32-544:(OI)(CI)F',
+    ],
+    { windowsHide: true },
+  );
+  return path;
+}
+
+describe('hard-linked database startup refusal (#533)', () => {
+  it('refuses both hard-linked spellings in one stack-free line, then the ordinary file serves', async () => {
+    const f = await fixture();
+    const { database, alias, token, bytes } = await hardLinkedStore(f);
+    for (const spelling of [database, alias]) {
+      const canonical = canonicalPath(spelling);
+      const child = f.run([], providerFreeStore(f, spelling));
+      expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+      expect(child.stderr).toBe(`database ${canonical} ${hardLinkAction}\n`);
+      expect(child.stdout).toBe('');
+      expect(await readFile(database)).toEqual(bytes);
+      expect(await readFile(alias)).toEqual(bytes);
+      await noLock(f.lockPath);
+      await noLock(`${canonical}.graphgoblin.lock`);
+      await noLock(`${canonical}.graphgoblin.lock.reclaim`);
+      expect(await listening(f.port)).toBe(false);
+    }
+    // The stated remedy: the same store as one ordinary SQLite file starts and serves.
+    await unlink(alias);
+    const child = f.run([], providerFreeStore(f, database));
+    try {
+      await f.ready(child, token);
+      expect(child.stderr).not.toContain('multiple hard links');
+    } finally {
+      await child.dispose();
+    }
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it('keeps the stack for an unexpected database filesystem failure (not hard-linked)', async () => {
+    const f = await fixture();
+    const blocker = join(f.dataDir, 'not-a-directory');
+    await writeFile(blocker, 'keep');
+    const child = f.run([], providerFreeStore(f, join(blocker, 'store.db')));
+    expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+    expect(child.stderr).toMatch(/EEXIST|ENOTDIR|ENOENT/);
+    expect(child.stderr).toMatch(/^\s+at /m);
+    expect(child.stderr).not.toContain('multiple hard links');
+    expect(child.stdout).not.toContain('GraphGoblin API listening');
+    expect(await readFile(blocker, 'utf8')).toBe('keep');
+    await noLock(f.lockPath);
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it.runIf(process.platform === 'win32')(
+    'records a hard-linked database for the managed launcher only as store/store-unavailable (74)',
+    async () => {
+      const f = await fixture();
+      const { database, alias, bytes } = await hardLinkedStore(f);
+      for (const [index, spelling] of [database, alias].entries()) {
+        const logs = await privateLogDirectory(join(f.dataDir, `managed-logs-${index}`));
+        const child = f.run([], {
+          ...providerFreeStore(f, spelling),
+          GG_WINDOWS_LAUNCHER_LOG_DIR: logs,
+        });
+        expect(await child.waitForExit()).toEqual({ code: 74, signal: null });
+        expect([child.stdout, child.stderr]).toEqual(['', '']);
+        expect(await readdir(logs)).toEqual(['gateway.log']);
+        const log = await readFile(join(logs, 'gateway.log'), 'utf8');
+        const records = log
+          .split('\n')
+          .filter((line) => line !== '')
+          .map((line) => JSON.parse(line) as Record<string, unknown>);
+        expect(records).toHaveLength(1);
+        expect(Object.keys(records[0]!)).toEqual([
+          'level',
+          'time',
+          'pid',
+          'msg',
+          'stage',
+          'cause',
+          'detail',
+          'guidance',
+        ]);
+        expect(records[0]).toMatchObject({
+          level: 50,
+          msg: 'GraphGoblin startup failed',
+          stage: 'store',
+          cause: 'store-unavailable',
+          detail: 'The store could not be opened.',
+          guidance:
+            'Check the configured store and any other GraphGoblin process, then launch again.',
+        });
+        expect(log).not.toContain('hard links');
+        expect(log).not.toContain('linked');
+        expect(await readFile(database)).toEqual(bytes);
+        expect(await readFile(alias)).toEqual(bytes);
+        await noLock(f.lockPath);
+        await noLock(`${canonicalPath(spelling)}.graphgoblin.lock`);
+        expect(await listening(f.port)).toBe(false);
+      }
     },
     60_000,
   );

@@ -685,6 +685,25 @@ export async function acquireDataDirLock(
   }
 }
 
+/**
+ * The deliberate refusal of a SQLite file with several hard links: a complete operator explanation
+ * naming the canonical database. File-name locks cannot establish one owner across hard-link
+ * aliases. It is neither a held nor an unverifiable owner: the refusal comes before the database
+ * lock or its guard is inspected or created.
+ */
+export class HardLinkedDatabaseRefusedError extends Error {
+  override readonly name = 'HardLinkedDatabaseRefusedError';
+  /** The canonical database path that was refused. */
+  readonly database: string;
+
+  constructor(database: string) {
+    super(
+      `database ${database} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
+    );
+    this.database = database;
+  }
+}
+
 /** A shared external SQLite file has one owner even when data directories differ. */
 export function acquireDatabaseLock(
   databaseFile: string,
@@ -700,10 +719,7 @@ export async function acquireDatabaseLock(
     if (hasCode(error, 'ENOENT')) return undefined;
     throw error;
   });
-  if (info && info.nlink > 1)
-    throw new Error(
-      `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
-    );
+  if (info && info.nlink > 1) throw new HardLinkedDatabaseRefusedError(file);
   const name = databaseLockFileName(basename(file));
   return attestation
     ? acquireDataDirLock(dirname(file), name, attestation)
