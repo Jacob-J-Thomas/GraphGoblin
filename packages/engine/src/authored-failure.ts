@@ -97,11 +97,6 @@ function causeFor(reason: Reason) {
         code: 'MUTATION_ERROR' as const,
         message: 'The regular expression is invalid or unsafe. Check the pattern and flags.',
       };
-    case 'schema':
-      return {
-        code: 'MUTATION_ERROR' as const,
-        message: 'The schema could not be applied. Check the schema and its input.',
-      };
     case 'timestamp':
       return {
         code: 'TEMPLATE_ERROR' as const,
