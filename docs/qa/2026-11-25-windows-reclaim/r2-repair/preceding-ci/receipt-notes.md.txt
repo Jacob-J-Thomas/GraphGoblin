@@ -1,0 +1,52 @@
+# CI receipt: run 45571609471 (attempt 1)
+
+**Qualification: failed.** This is the original PR 582 run on head `3f80820ff2982614a750cd6bd8dce488714a3752`; the Browser lane failed. It is retained as a failed historical receipt and does not qualify the corrected candidate.
+
+## Exact run binding
+
+- Provider run: [45571609471](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/45571609471), PR 582, attempt 1, event `pull_request`.
+- Head `3f80820ff2982614a750cd6bd8dce488714a3752`, tree `af7e9fcbb88126fed9651e18f308c122010f23da`; base `da01ebc7575b9b05f87d4b89993e6c46b8de194b`.
+- Provider synthetic merge `8af4a224f8688529e75643be9fda00d196b28feb`, tree `af7e9fcbb88126fed9651e18f308c122010f23da`, parents in order `[da01ebc7575b9b05f87d4b89993e6c46b8de194b, 3f80820ff2982614a750cd6bd8dce488714a3752]`. GitHub signature verification: `verified=true`, reason `valid`, verified at `2026-11-25T07:52:58Z`. The complete provider payload/signature and per-job step states are in `all-jobs-result.json`.
+
+## Seven lanes
+
+| Lane | Job ID | Result | Evidence |
+| --- | ---: | --- | --- |
+| macOS launcher | 139059364212 | success | `macos-job-139059364212.log`; native artifact below |
+| Windows launcher | 139059364434 | success | `windows-job-139059364434.log`; native artifact below |
+| Template image | 139059364498 | success | `template-job-139059364498.log` |
+| Coverage | 139059364535 | success | `coverage-job-139059364535.log`; coverage archive below |
+| Browser | 139059364536 | **failure** | `browser-job-139059364536.log`; failure archive below |
+| Repository checks | 139059364648 | success | `repository-job-139059364648.log` |
+| Gates | 139067818353 | success | `gates-job-139067818353.log`; requires Repository checks + Coverage only |
+
+The overall Actions conclusion is `failure`, due to Browser. Gates passed because their explicit dependencies, Repository checks and Coverage, both passed. They do not incorporate the separate Browser lane.
+
+## Failure and timeout accounting
+
+Browser ran Edge with one worker and `--retries=0`; actual functional run: **493 passed, 1 failed, 1 skipped**, 29.2 minutes, 0 retries. The 1 skip was the live-provider Codex inference test (live mode disabled; provider login unavailable in CI). The failure was `apps/web/e2e/pwa.spec.ts:536:1`, “another tab’s unresolved voice upload vetoes update activation until that tab closes”. Its test-level 60,000 ms timeout expired; teardown then reported `apps/web/e2e/fixtures.ts:112` `apiRequestContext.post: Target page, context or browser has been closed`, called from `apps/web/e2e/pwa.spec.ts:626`. This was a test timeout, not the job timeout. Workflow budgets from the exact synthetic-merge workflow snapshot: Browser job 75 min, functional test step 60 min; Coverage job 30 min / test step 25 min; macOS 40 min; Windows 20 min; Template 20 min; Repository checks 30 min; Gates 2 min. Coverage’s thresholded run took 17m8.191s, under its step budget.
+
+## Counts and evidence qualification
+
+- macOS API integration: 211 passed, 8 skipped; Swift native tests: 191 passed, 0 skipped. Native acceptance: 9 cases, 30 process records, no timeout or truncation. Artifact manifest binds to synthetic merge/tree.
+- Windows SQLite DB tests: 21 passed; default config tests: 5 passed, 2 skipped; built API entry startup test: 15 passed, 6 skipped. Native acceptance: all five case groups passed, 27/27, 0 skipped; completed, 338 observations, 0 rejected, 0 omitted records/bytes, no missing evidence. Contention generated 3 observations. Native artifact manifest binds to synthetic merge/tree. The separate Windows built-entry API test appears as a successful job step after native acceptance.
+- Repository checks: build 12/12; typecheck 21/21; lint 13/13; seven acceptance scripts passed.
+- Template image: 9 tasks successful.
+- Coverage: 22/22 Turbo tasks; all 13 expected coverage summary files are present in `coverage-extracted/**/coverage-summary.json`. Aggregate test count in the uploaded job summary: 10,731 passed, 64 skipped. Skip breakdown from the job report: adapter-jev 5, infrastructure 19, adapter-codex 5, API 32, tooling 2, plugin-codex live 1. The lowest observed package percentage is API branch coverage 3,774/4,147 = 91.00%; API statements 5,277/5,616 = 93.96%; functions 954/1,042 = 91.55%; lines 4,814/5,046 = 95.40%. Per-package summary values are retained in the extracted artifact.
+
+Passing native, repository and coverage evidence is recorded as lane evidence only; it does not make the overall failed run a pass or establish issue acceptance.
+
+## Archives and integrity
+
+Original provider archives were downloaded and their SHA-256 values matched the API digests. `artifact-members.json` inventories each ZIP member with byte size, CRC32 and SHA-256 (8 entries total). No browser failure archive members were extracted; the raw browser trace remains private in the original ZIP.
+
+| Artifact | ID | Size | Provider SHA-256 | Local file |
+| --- | ---: | ---: | --- | --- |
+| browser-failure | 15004585716 | 50,935,474 | `81d7d26cb11a3f30cf42fe9267bad6d283548980c8bc8ee483de1bef976092eb` | `browser-failure.zip` |
+| macos-launcher | 15003295816 | 384,658 | `86728ff1db04d6ae66bdec10e0961d01ee17758fdbc83e81d4335be603b3b090` | `macos-launcher.zip` |
+| coverage | 15003127469 | 22,754 | `62d05e249ab86a19aca92b519fbabe6e4070d4414a6a749e070f624765c78009` | `coverage.zip` |
+| windows-launcher-1 | 15002946460 | 9,212 | `3ca47f7dcba623234193b529995d6c861dd3c0bb372cf8173aa2bb0747bcffcc` | `windows-launcher.zip` |
+
+## Files in this receipt directory
+
+`all-jobs-result.json` is the terminal provider snapshot including run, PR and synthetic-merge signature; `workflow-ci-at-synthetic-merge.yml` is the workflow snapshot used for timeout accounting; raw job logs are named by lane and ID; archives are retained under their artifact names; Mac/Windows/coverage extracts are separately named; `artifact-members.json` is the archive member inventory. Browser archive deliberately remains unextracted.

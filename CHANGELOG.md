@@ -4,20 +4,65 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Preflight checks `GG_DEFAULTS` against the model catalog start uses (#545, #546). A Codex
-  effort its model does not offer now fails with `EFFORT_UNSUPPORTED`, as start refuses it; an
-  omitted Codex effort is a warning, because start accepts it but a run then needs a supported
-  effort from its loop or Settings defaults. The Codex `ok` detail names the effort. A current
-  store with pending migrations is checked against its stored rows, read as startup reads them
-  before migrating, plus the shipped models it lacks, so stored disabled rows, stored-only models
-  and stored effort lists count as they do at startup. Missing and empty stores still use the
-  shipped catalog. An unsupported or unreadable store still fails its database check; its Codex
-  and Claude default checks now warn that they were not checked instead of reporting a result
-  from the shipped catalog. `GET /system/preflight` applies the same Codex effort rule. Check IDs,
-  the report shape, the Jev and Ollama deferrals and startup policy are unchanged, and preflight
-  still changes no database or existing write-ahead log bytes.
-  **Upgrade:** rebuild the API. Preflight output parsers must allow the new Codex warning and
-  detail text. No schema, stored format or reset change.
+- `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
+  delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
+  that ref to the working tree, including staged, unstaged and untracked files, and checks their
+  Markdown with the repository Prettier configuration even where an archive ignore rule hides it
+  from `pnpm format:check`. Opaque originals are listed with their SHA-256 and left untouched, a
+  newly added Markdown file named as an original is refused, and selected paths a sparse checkout
+  lacks fail as not checked. The check is read-only and local: `pnpm format:check` and CI remain
+  the full gates. Immutable Markdown originals are stored as `*.md.txt`, with their hashes in the
+  packet manifest. Historical QA artifacts, the hosted formatter and coverage thresholds are
+  unchanged.
+
+- The Template image CI job also checks that the built image's installed jsonata carries
+  `patches/jsonata@2.2.2.patch` (#467). A separate step runs the image under the template
+  step's isolation (no network, read-only, no capabilities or new privileges) from
+  `/app/apps/api` and calls the compiled `@graphgoblin/domain` there with finite expressions: an
+  ordinary expression and a flat literal wider than the 200-level depth limit evaluate at the
+  default limits; `1` with `maxDepth: 0` and with `timeoutMs: -1` is refused with reason `depth`
+  or `time` and its exact message; and the same cached source then evaluates normally. It prints
+  one JSON line to the job log. The licence ledger now records what the patch does and what a
+  jsonata upgrade must show before the patch is reapplied, rebased or removed. The template
+  checks, the job's budget, the patch and lockfile, the evaluator's defaults and the product's
+  behaviour are unchanged; no dependency or licence changes.
+
+- API process tests no longer start Ollama model discovery by default (#565). The disposable
+  built-entry fixture drops inherited `GG_*`, `JEV_API_KEY` and `NODE_V8_COVERAGE` and now sets
+  `GG_OLLAMA_ENABLED=false` itself, so its children no longer fall back to the product default
+  (on), which sent discovery to `http://127.0.0.1:11434`. The in-process `main()`
+  case adopts the same values through reversible environment stubs and also clears an inherited
+  `JEV_API_KEY`. A test that owns a provider endpoint still opts in per child. A new regression
+  test starts both the built entry and in-process `main()` against a stand-in Ollama listener it
+  owns: no request with the fixture default, exactly one model-list request with an explicit
+  opt-in. Only discovery is fixed; children keep the host network. Each fixture owns its own
+  temporary store and the children it starts. Its API port is a reservation shared only by
+  cooperating fixtures in the same Vitest run, after point-in-time bind checks, while
+  test-owned listeners bind port 0 and use whatever ephemeral port the OS assigns. The Windows
+  launcher CI job now also runs `main.test.ts` as its last step after a successful build, giving
+  the Windows-only startup and log-folder refusal cases a maintained Windows venue without
+  changing the native or evidence steps' outcomes. Production configuration and defaults are
+  unchanged; existing tests keep their time limits, assertions and retries, and coverage
+  thresholds are unchanged.
+
+- A Windows API startup racing stale lock recovery now reports ordinary store contention when
+  a denied guard-directory removal reveals a verified live successor (#581). Acquisition skips
+  shared removal when the guard is absent and checks it again if another process removed the
+  observed stale marker during a read or deletion. If the empty guard survives and this caller
+  removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
+  its filesystem diagnostic.
+
+- The run inspector treats its event stream's transport failure as an outage of the run it shows
+  from that moment (#575). Previously a run read already in flight when the API listener
+  stopped could answer successfully afterwards and leave the run current: no **Last observed,
+  may be out of date** warning, and Pause, Cancel, Replay and Submit input still available. Now
+  the run stays on screen as last observed with its typed answer kept, every write, including
+  one already queued or submitted from the keyboard, is refused at once, and only a run read
+  started after the loss makes the run current again. Refused stream reconnection attempts
+  trigger no further rereads. A stream that opens again records a new loss when it drops, or when
+  its reconnection is refused after it ended otherwise, such as the graceful close the API sends
+  when it shuts down. HTTP refusals, graceful closes and other stream errors are not losses
+  themselves. No stored, export or contract change.
 
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
@@ -77,6 +122,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   user guide, docs/09 and the shared run-loop skill used by the Codex and Claude plugins now
   describe this lookup. No store, schema or format change.
 
+- Authored-failure cleanup (#554). Run behaviour for supported definitions is unchanged. The
+  engine's `HandlerServices` no longer offers `render`, which no handler called; authored
+  fields keep rendering through the helpers that report their boundary. Context-mutation
+  operations no longer declare a `schema` authored fact that no supported path produced: a
+  `coerce` schema that does not compile was and remains a validation error that goes through
+  the repair policy. An exception thrown while validating reaches only the operation's ordinary
+  error mapper, so inference transforms let it propagate instead of reporting it as an authored
+  schema failure; only synthetic non-JSON values in direct domain calls have been shown to reach
+  this path. A `coerce` source that is not an RFC 6901 pointer remains refused by the contract.
+  The [execution engine](docs/05-execution-engine.md#authored-boundary-identifiers) document
+  now lists the closed `failure.details.boundary` identifiers for API and MCP clients. No stored
+  data, contract or API change.
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
@@ -1036,6 +1093,22 @@ The current format-3 workflow supersedes the older pre-release upgrade notes bel
 - Before upgrading, follow [Back up and restore](docs/guide/06-settings-and-secrets.md#back-up-and-restore). To roll back, stop the API and restore the pre-upgrade data-directory backup before running the previous release; there is no partial rollback.
 
 ### Fixed
+
+- Preflight checks `GG_DEFAULTS` against the model catalog start uses (#545, #546). A Codex
+  effort its model does not offer now fails with `EFFORT_UNSUPPORTED`, as start refuses it; an
+  omitted Codex effort is a warning, because start accepts it but a run then needs a supported
+  effort from its loop or Settings defaults. The Codex `ok` detail names the effort. A current
+  store with pending migrations is checked against its stored rows, read as startup reads them
+  before migrating, plus the shipped models it lacks, so stored disabled rows, stored-only models
+  and stored effort lists count as they do at startup. Missing and empty stores still use the
+  shipped catalog. An unsupported or unreadable store still fails its database check; its Codex
+  and Claude default checks now warn that they were not checked instead of reporting a result
+  from the shipped catalog. `GET /system/preflight` applies the same Codex effort rule. Check IDs,
+  the report shape, the Jev and Ollama deferrals and startup policy are unchanged, and preflight
+  still changes no database or existing write-ahead log bytes.
+  **Upgrade:** rebuild the API. Preflight output parsers must allow the new Codex warning and
+  detail text. No schema, stored format or reset change.
+
 
 - The offline upgrade now converts historical decisions without recorded skip lists and statusless Codex command progress. Missing facts stay unrecorded; historical error progress and tool-call diagnostics are redacted to current safe summaries. Original events remain in the audit archive. Runtime event validation remains strict. (#174)
 

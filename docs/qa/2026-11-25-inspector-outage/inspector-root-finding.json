@@ -1,0 +1,15 @@
+{
+  "id": "F575-1",
+  "author": "root architecture review",
+  "status": "FIX-IN-PR implemented and focused regression passing",
+  "generalIndependentReviewRound": false,
+  "cause": "reportedOutage suppresses an actual reopened stream's quick second transport loss after a run GET recovered; the write gate can remain open",
+  "requiredCorrection": "Record synchronous provenance on first transport loss or actual opened-and-dropped stream; preserve suppression for refused retries that never opened and preserve existing direct-refetch budget",
+  "ownerDecisionNeeded": false,
+  "implementationWorker": "inspector-quick-reconnect-repair",
+  "workerStartLimitation": "First default-sandbox invocation failed during existing auth-status read before starting model; identical scoped command then authorized with escalation",
+  "originalCandidateLineage501": "closed at 3/3; this is a root finding on new leaf575 before its first independent general review",
+  "recordedAt": "2026-11-25T07:06:20.750975+00:00",
+  "validation": "focused04:89 passed; typecheck02 and lint02 exit0; final browser and hosted qualification pending",
+  "remainingRetrySemantics": "An ongoing stream gap whose refused retries never opened is not a distinct later loss. A successful run GET proves run freshness independently of an unavailable stream; unchanged reportedOutage refetch policy suppresses churn. Actual opened-and-dropped connections now record a fresh loss."
+}

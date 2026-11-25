@@ -135,6 +135,13 @@ jobs:
           path: ${{ steps.finalize.outputs.paths }}
           if-no-files-found: error
           include-hidden-files: false
+      # Windows venue for the built-entry startup and log refusal cases (#565). Last, after a
+      # successful build whatever the native and evidence steps did, so it cannot change their
+      # outcomes; its own failure still fails the job.
+      - name: API built-entry startup on Windows
+        id: api-entry
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm --filter @graphgoblin/api test src/main.test.ts
   repository-checks:
     name: Repository checks
     runs-on: ubuntu-latest
@@ -382,6 +389,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build the distributed image
+        id: image
         run: docker build --tag graphgoblin-template-check .
 
       - name: Load installed templates without network or writable storage
@@ -421,4 +429,41 @@ jobs:
             console.log(JSON.stringify({ template: manifest.id, version: manifest.version,
               draftNodes: draft.nodes.length }));
           }
+          JS
+
+      # Expression evaluation needs patches/jsonata@2.2.2.patch (docs/research/licenses.md). Check
+      # the image's own installed copy through the compiled @graphgoblin/domain entry the API
+      # resolves, never source or host node_modules. Every expression is finite. The restrictive
+      # limits refuse at the first evaluator entry; without the patch the symbol-keyed hooks are
+      # never bound, so those probes would succeed and fail their assertions instead of hanging.
+      - name: Evaluate expressions with the installed JSONata patch
+        if: ${{ !cancelled() && steps.image.outcome == 'success' }}
+        run: |
+          docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --workdir /app/apps/api --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { ExpressionError, observeExpression } from '@graphgoblin/domain';
+          const ordinary = await observeExpression('a + b', { a: 1, b: 2 });
+          assert.deepEqual(ordinary, { ok: true, value: 3 });
+          // Wider than the default depth of 200: accepted only when siblings are evaluated in turn.
+          const width = Array.from({ length: 250 }, (_, n) => n);
+          const wide = JSON.stringify({ array: width,
+            object: Object.fromEntries(width.map((n) => [`k${n}`, n])) });
+          const siblings = await observeExpression(wide, {});
+          assert.ok(siblings.ok, `wide literal refused (${siblings.reason}): ${siblings.error?.message}`);
+          assert.equal(JSON.stringify(siblings.value), wide);
+          const refused = async (options, reason, message) => {
+            const result = await observeExpression('1', {}, options);
+            assert.equal(result.ok, false, `${reason} probe was not refused`);
+            assert.equal(result.reason, reason);
+            assert.ok(result.error instanceof ExpressionError);
+            assert.equal(result.error.message, message);
+            return { reason, message };
+          };
+          const depth = await refused({ maxDepth: 0 }, 'depth', 'expression exceeded max depth 0');
+          const time = await refused({ timeoutMs: -1 }, 'time', 'expression exceeded -1ms');
+          // The same cached source at the default limits: neither refusal may carry over.
+          const fresh = await observeExpression('1', {});
+          assert.deepEqual(fresh, { ok: true, value: 1 });
+          console.log(JSON.stringify({ check: 'installed-jsonata-patch', ordinary: ordinary.value,
+            wideSiblings: width.length, depth, time, fresh: fresh.value }));
           JS

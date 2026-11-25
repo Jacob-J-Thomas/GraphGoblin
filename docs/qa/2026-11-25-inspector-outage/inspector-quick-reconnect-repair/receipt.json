@@ -1,0 +1,163 @@
+{
+  "job": "inspector-quick-reconnect-repair",
+  "startedAt": "2026-11-25T07:05:48.100194+00:00",
+  "configuredModel": "claude-opus-5-5",
+  "configuredEffort": "xhigh",
+  "authReadback": {
+    "loggedIn": true,
+    "authMethod": "claude.ai",
+    "apiProvider": "firstParty",
+    "subscriptionType": "max"
+  },
+  "promptSha256": "63113f4e0f444ef8159780dac22fef130a0e9419db18b7727a48829d57265364",
+  "repository": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair",
+  "args": [
+    "/Users/jake/.local/bin/claude",
+    "--safe-mode",
+    "--restricted",
+    "--no-session-persistence",
+    "--model",
+    "claude-opus-5-5",
+    "--effort",
+    "xhigh",
+    "--tools",
+    "Read,Edit,Write,Glob,Grep",
+    "--allowedTools",
+    "Read,Edit,Write,Glob,Grep",
+    "--permission-mode",
+    "acceptEdits",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--print"
+  ],
+  "tools": [
+    {
+      "tool": "Glob",
+      "path": null
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.ts"
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/AGENTS.md"
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/inspector-read-provenance.ts"
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.test.tsx"
+    },
+    {
+      "tool": "Grep",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/CHANGELOG.md"
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/CHANGELOG.md"
+    },
+    {
+      "tool": "Edit",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.ts"
+    },
+    {
+      "tool": "Edit",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.test.tsx"
+    },
+    {
+      "tool": "Glob",
+      "path": null
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/.prettierrc"
+    },
+    {
+      "tool": "Edit",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.test.tsx"
+    },
+    {
+      "tool": "Edit",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/CHANGELOG.md"
+    },
+    {
+      "tool": "Read",
+      "path": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair/apps/web/src/runs/useRunEvents.ts"
+    }
+  ],
+  "init": {
+    "model": "claude-opus-5-5",
+    "claude_code_version": "2.1.319",
+    "permissionMode": "acceptEdits"
+  },
+  "response": {
+    "subtype": "success",
+    "is_error": false,
+    "result": "I've made the fix in the three files I own, but I haven't run anything: no tests, typecheck, lint, prettier or browser gates. You'll need to run the focused suites and browser gates.\n\n**`apps/web/src/runs/useRunEvents.ts`:** fixes F575-1.\n- The hook now notes whether the connection actually opened, just before it clears `openedAt`.\n- If the outage has already been reported and a connection that opened then drops by transport failure, it now calls `markInspectorTransportLoss` synchronously. The existing provenance logic then sets a new boundary if the run had recovered, or moves the boundary past a recovery read that hasn't answered yet.\n- That later drop doesn't call `markApiUnreachable` or request a reread. The 15s/cursor-progress re-arm and the one-reread-per-outage limit are unchanged, and serving the new boundary is left to the inspector's existing post-loss effect.\n- Retries that never opened record nothing and request nothing.\n- The HTTP, protocol, clean-close, attempt-0 and `current()`/auth checks all run before the new code, and the slow-consumer/replay-failed path is untouched.\n\n**`apps/web/src/runs/useRunEvents.test.tsx`:** I added one test under the #575 describe and left all existing tests unchanged. It runs:\n1. First loss, then a run read that qualifies.\n2. Recovery reopens the stream (`options(1).onOpen`), and a run read starts while it's open.\n3. The stream drops immediately, with no events and under 15s.\n4. It checks the new boundary is visible straight away, is newer than the pending read, and that the read count is still 1.\n5. The read started before that drop answers afterwards and does not make the run current again.\n6. A recovery read starts after the loss. Refused retries (`network('refused')` and `TypeError`, with no open) leave the boundary and read count unchanged. If code wrongly recorded a loss on every retry, the boundary would move past this pending read and the test would fail.\n7. The recovery read then qualifies.\n\nI also checked the existing rapid-drop and cursor re-arm tests. They don't create a run query, so the new call does nothing there and their read, reachability and subscribe counts should be unaffected.\n\n**`CHANGELOG.md`:** replaced \"Repeated stream failures keep one outage and one reread\" with: refused stream reconnection attempts trigger no further rereads, while a stream that opens again and then drops records a new loss.\n\nOne gap remains because it follows from the semantics you specified. If a run read recovers the run and the next reconnection is refused before it ever opens, while the outage is still marked as reported, no new loss is recorded.",
+    "duration_ms": 168542,
+    "num_turns": 15,
+    "modelUsage": {
+      "claude-opus-5-5": {
+        "inputTokens": 26,
+        "outputTokens": 19544,
+        "cacheReadInputTokens": 441408,
+        "cacheCreationInputTokens": 48219,
+        "webSearchRequests": 0,
+        "costUSD": 0.8650176,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "thinkingTokens": 14720,
+        "cacheCreationEphemeral5mInputTokens": 0,
+        "cacheCreationEphemeral1hInputTokens": 48219,
+        "canonicalModel": "claude-opus-5-5",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    "usage": {
+      "input_tokens": 26,
+      "cache_creation_input_tokens": 48219,
+      "cache_read_input_tokens": 441408,
+      "output_tokens": 19544,
+      "output_tokens_details": {
+        "thinking_tokens": 14720
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 48219,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "global",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1023,
+          "cache_read_input_tokens": 51132,
+          "cache_creation_input_tokens": 1837,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 1837
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard",
+      "fallback_credit": null
+    },
+    "permission_denials": []
+  },
+  "exitCode": 0,
+  "finishedAt": "2026-11-25T07:08:37.084918+00:00",
+  "stderr": ""
+}

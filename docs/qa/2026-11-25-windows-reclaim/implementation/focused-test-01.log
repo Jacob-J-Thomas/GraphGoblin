@@ -1,0 +1,45 @@
+$ vitest run src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts
+
+ RUN  v5.0.3 /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+
+ ❯ src/data-dir-lock-failures.test.ts (29 tests | 1 failed) 104ms
+   × reports an ordinary held refusal when Windows directory EPERM exposes a verified live successor 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > reports an ordinary held refusal when Windows directory EPERM exposes a verified live successor
+AssertionError: expected StoreOwnershipRefusedError: another Graph… to match object { …(4) }
+
+- Expected
++ Received
+
+- {
+-   "code": undefined,
+-   "message": StringContaining "another GraphGoblin process holds /private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-CcnTKC/graphgoblin.lock.reclaim",
++ StoreOwnershipRefusedError {
+    "name": "StoreOwnershipRefusedError",
+-   "operation": undefined,
+  }
+
+ ❯ src/data-dir-lock-failures.test.ts:216:46
+    214|     await actual.rename(successor.staging, guard);
+    215|   });
+    216|   await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+       |                                              ^
+    217|     name: 'StoreOwnershipRefusedError',
+    218|     message: expect.stringContaining(`another GraphGoblin process hold…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 77 passed (78)
+   Start at  01:38:44
+   Duration  859ms (tests 77%, transform 15%, import 4%, setup 3%, worker 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/jake/Documents/Codex/2026-11-23/
+  │ files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+

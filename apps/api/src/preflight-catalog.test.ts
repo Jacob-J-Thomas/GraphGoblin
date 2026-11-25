@@ -1,4 +1,14 @@
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  constants,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -59,16 +69,29 @@ async function cli(environment: Record<string, string>) {
   return { code, out };
 }
 
+/**
+ * Seeds a checkpointed store at an unused staging path, then copies only its main DB to the fresh
+ * `dbFile`. A closed writer's native cleanup may still remove its WAL/SHM after `close()` returns,
+ * so the writer never opens the inspected path and none of its sidecars are shared with it.
+ */
 async function fixture(dbFile: string, rows = DEFAULT_MODEL_CATALOG) {
   await mkdir(dirname(dbFile), { recursive: true });
-  const handle = openDatabase({ url: pathToFileURL(dbFile).href });
+  const staged = join(await mkdtemp(join(dir, 'fixture-writer-')), basename(dbFile));
+  const handle = openDatabase({ url: pathToFileURL(staged).href });
   try {
     await handle.migrate();
     await new SqliteModelCatalog(handle.db).seed(rows);
-    await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+    const [checkpoint] = (await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)')).rows;
+    // A busy or partial checkpoint (or a non-WAL store, which reports -1) fails before copying.
+    expect({
+      busy: checkpoint?.['busy'],
+      log: checkpoint?.['log'],
+      checkpointed: checkpoint?.['checkpointed'],
+    }).toEqual({ busy: 0, log: 0, checkpointed: 0 });
   } finally {
     handle.close();
   }
+  await copyFile(staged, dbFile, constants.COPYFILE_EXCL);
 }
 
 /** SQLite readers update -shm read marks; only DB/WAL contain the stored data. */

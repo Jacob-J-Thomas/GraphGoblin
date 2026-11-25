@@ -1,0 +1,382 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 045744fb1c8ed1819e05d4366542706615ec72f3..0524a2b7f71f14ba19340e9e779bba04edc0bd9f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Authored-failure cleanup (#554). Run behaviour for supported definitions is unchanged. The
++  engine's `HandlerServices` no longer offers `render`, which no handler called; authored
++  fields keep rendering through the helpers that report their boundary. Context-mutation
++  operations no longer declare a `schema` authored fact that no supported path produced: a
++  `coerce` schema that does not compile was and remains a validation error that goes through
++  the repair policy. An exception thrown while validating reaches only the operation's ordinary
++  error mapper, so inference transforms let it propagate instead of reporting it as an authored
++  schema failure; only synthetic non-JSON values in direct domain calls have been shown to reach
++  this path. A `coerce` source that is not an RFC 6901 pointer remains refused by the contract.
++  The [execution engine](docs/05-execution-engine.md#authored-boundary-identifiers) document
++  now lists the closed `failure.details.boundary` identifiers for API and MCP clients. No stored
++  data, contract or API change.
+ - The run inspector keeps the last run it read through an API or browser outage (#416). The run
+   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
+   the record's status, failure, result, wait form and delivery or finalization state under
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index 9275ca7d6768576871679582f5bb8ee6f976cf51..289d61f25280f98955284ffac4a4489bd4fca46f 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -28,7 +28,7 @@ type NodeContext<K> = {
+   previousWait?: WaitSpec; // what this node recorded when it parked
+   signal: AbortSignal; // cancellation
+   ports: EnginePorts;
+-  services: HandlerServices; // render, record events, resolve model, start child, read events, working directory, ids, clock
++  services: HandlerServices; // record events, resolve model, start child, read events, working directory, ids, clock
+ };
+ 
+ type NodeResult =
+@@ -479,7 +479,7 @@ Resiliency is built into the engine. Users do not model it. The executor disting
+ | Authored field           | Liquid templates, JSONata fields, selectors, inference transforms and parent subloop mappings                                                                           | The run records a bounded field, cause and correction. Resume is unavailable for these pinned fields. At these newly typed JSONata sites the evaluator's message is neither published nor logged.                                                                              |
+ | Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with the safe `INTERNAL_ERROR` message, node when known, and existing resumability. Raw diagnostics go to server logs correlated by run and node when available; historical rows and events retain their earlier content. Fix the defect in GraphGoblin. |
+ 
+-For a newly recognized authored failure, the failure message identifies the field and the one-based position when a particular item failed. Details carry the fixed `boundary`, zero-based indices and a `cause` with a code and corrective message. A map or header ordinal follows the order of its own enumerable string keys. Liquid can identify a line and column. JSONata reports syntax or regex safety for a failure compiling the pinned source, or a limit that the current evaluation reached. Other evaluation rejections, including a failed dynamic `$eval`, give a fixed direction for checking the input and mapping. These projections use the existing `TEMPLATE_ERROR`, `EXPRESSION_ERROR` and `MUTATION_ERROR` codes. [ADR-0088](decisions/ADR-0088-authored-execution-failures.md)
++For a newly recognized authored failure, the failure message identifies the field and the one-based position when a particular item failed. Details carry the fixed `boundary`, zero-based indices and a `cause` with a code and corrective message. A map or header ordinal follows the order of its own enumerable string keys. Liquid can identify a line and column. JSONata reports syntax or regex safety for a failure compiling the pinned source, or a limit that the current evaluation reached. Other evaluation rejections, including a failed dynamic `$eval`, give a fixed direction for checking the input and mapping. These projections use the existing `TEMPLATE_ERROR`, `EXPRESSION_ERROR` and `MUTATION_ERROR` codes. The identifiers are listed under [Authored boundary identifiers](#authored-boundary-identifiers). [ADR-0088](decisions/ADR-0088-authored-execution-failures.md)
+ 
+ A parent subloop evaluates its seed before child creation and maps its output after observing the child's terminal sequence. A failed parent mapping keeps that completion in the event log. The parent owns the error and the child retains its actual status. When a child itself fails, the existing child link leads to its authoritative failure and any inference submission evidence.
+ 
+@@ -489,6 +489,36 @@ Provider exceptions from decision evaluation use a shared fixed summary instead
+ 
+ Resuming a failed run re-executes the failed node using the crash-recovery rules above. A failure that came from a subloop child carries the child's class and resumability; resuming the parent resumes that child in place (see "Child failures follow the inline rules").
+ 
++### Authored boundary identifiers
++
++API and MCP clients read an authored failure's field from `failure.details.boundary` on the run record and its `run.failed` event. A parent failing because its child failed nests the child's details, boundary included, under `details.childDetails`. The contract types `failure.details` as JSON, so this list is the reference; its source is the `fields` map in `packages/engine/src/authored-failure.ts`. Each identifier names a pinned field, never its source text or value.
++
++| `details.boundary`                                                | Node                           | Location fields beside it                                                            |
++| ----------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
++| `script.args`                                                     | Script                         | `argumentIndex`                                                                      |
++| `heartbeat.probe.headers`                                         | Heartbeat                      | `headerIndex`                                                                        |
++| `heartbeat.probe.url`, `heartbeat.probe.body`                     | Heartbeat                      | none                                                                                 |
++| `heartbeat.probe.args`                                            | Heartbeat                      | `argumentIndex`                                                                      |
++| `heartbeat.until`, `heartbeat.deadline`                           | Heartbeat                      | `beat`                                                                               |
++| `subloop.input.messages.where`, `subloop.input.artifacts.where`   | Subloop                        | `itemIndex`                                                                          |
++| `subloop.input.vars`, `subloop.output.vars`                       | Subloop                        | `mapIndex`                                                                           |
++| `subloop.input.inject.content`                                    | Subloop                        | `messageIndex`                                                                       |
++| `subloop.input.trigger.payload`, `subloop.output.custom.patch`    | Subloop                        | none                                                                                 |
++| `subloop.output.messages.where`, `subloop.output.artifacts.where` | Subloop                        | `itemIndex`                                                                          |
++| `inference.input`                                                 | Inference                      | `operationIndex`, `operationKind`, `itemIndex` when an item failed                   |
++| `inference.contextFiles.template`                                 | Inference                      | `fileIndex`                                                                          |
++| `inference.prompt.template`                                       | Inference                      | none                                                                                 |
++| `inference.output.schema.repair.prompt`                           | Inference                      | `attempt`, `phase: "after-result"`                                                   |
++| `inference.output.transforms`                                     | Inference                      | `operationIndex`, `operationKind`, `itemIndex` when an item failed, `phase` as above |
++| `decision.instructions`, `decision.question`                      | Decision                       | none                                                                                 |
++| `decision.context.messages.where`                                 | Decision                       | `itemIndex`                                                                          |
++| `wait.prompt`, `wait.timestamp`                                   | Wait                           | none                                                                                 |
++| `settings.workingDirectory.template`                              | Script, heartbeat or inference | none                                                                                 |
++
++The boundary says which field failed; the other fields say where in it. The indices are zero-based. `itemIndex` counts the items a selector tested, or the messages of an `inject` operation. `beat` is the heartbeat's one-based beat and `attempt` the one-based schema-repair attempt. `cause` holds only a code and the corrective message chosen for that failure, with a Liquid line and column when known. These details never carry the evaluator's own message, the source text or a runtime value.
++
++Other failures carry no `boundary`. A Context mutation node reports `operationIndex`, `operationKind` and `cause` itself ([node catalog](04-node-catalog.md)). A `coerce` schema that does not compile is reported as a validation error and goes through the operation's repair policy. No value can satisfy it, so `fail-run` ends with `OUTPUT_SCHEMA_MISMATCH` and `continue-raw` writes the unvalidated value. A terminal file return whose working directory template fails records only the message in its `return.failed` event.
++
+ ### Deliberate script recovery (#321)
+ 
+ The inspector follows the resumed run through its next outcome without a reload, retaining the earlier failed attempt in the timeline. Its saved event cursor advances across resumed outcomes; a historical failure does not permanently close observation of that run.
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 30ea0be370344dba26ad4cd53c1cba63221e20fb..1523093784f04a3a9a68c083c1aa606f4c188fb9 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -98,6 +98,12 @@ and effort) in `failure.details.provenance`. Late results cannot change the fail
+ or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
+ clients must accept this nullable pin and the new `RunErrorCode` value.
+ 
++A run that fails in an authored field names that field in `failure.details.boundary`.
++`GET /runs/{id}` and the MCP `get_run` tool return the whole failure; MCP run summaries, as in
++`list_runs`, omit `details`. The closed identifiers, the location fields
++beside them and the failures that carry none are listed under
++[Authored boundary identifiers](05-execution-engine.md#authored-boundary-identifiers).
++
+ ## Artifact downloads
+ 
+ `GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
+diff --git a/packages/domain/src/mutations.test.ts b/packages/domain/src/mutations.test.ts
+index 2a75ed234d09c4083d47047311036efe1148891d..27999ca0379308c1e0e31b1b7c3684f2ef662968 100644
+--- a/packages/domain/src/mutations.test.ts
++++ b/packages/domain/src/mutations.test.ts
+@@ -241,6 +241,92 @@ describe('coerce and repair', () => {
+       run(sampleThread(), [{ op: 'coerce', source: '/vars/x', jsonSchema: {}, target: '/run/id' }]),
+     ).rejects.toBeInstanceOf(MutationError);
+   });
++
++  it.each([{ type: 'not-a-type' }, { type: 'string', pattern: '(' }])(
++    'sends authored schema %j, which does not compile, to repair without either mapper',
++    async (jsonSchema) => {
++      const failure = vi.fn();
++      const fact = vi.fn();
++      const ops = [op({ op: 'coerce', source: '/vars/topic', jsonSchema, target: '/vars/r' })];
++      const result = await applyMutations(sampleThread(), ops, ctx(), 0, failure, fact);
++      expect(result.appliedThrough).toBe(0);
++      expect(result.pending).toMatchObject({ opIndex: 0, jsonSchema, value: 'hello' });
++      expect(result.pending?.errors).toEqual([expect.stringMatching(/^invalid schema: /)]);
++      expect(failure).not.toHaveBeenCalled();
++      expect(fact).not.toHaveBeenCalled();
++      expect(() => completeRepair(result.thread, result.pending!, 'hello')).toThrow(
++        /still fails schema: invalid schema: /,
++      );
++    },
++  );
++
++  it('gives an exception thrown during validation to the ordinary mapper and never a fact', async () => {
++    const thread = sampleThread();
++    // A synthetic JavaScript value exercises the public domain API outside stored run data.
++    const external = new MutationError('getter from caller');
++    thread.vars['value'] = Object.defineProperty({}, 'ok', {
++      enumerable: true,
++      get() {
++        throw external;
++      },
++    });
++    const operation = op({
++      op: 'coerce',
++      source: '/vars/value',
++      jsonSchema: schema,
++      target: '/vars/r',
++    });
++    const legacy = vi.fn((e: unknown) => e);
++    const observed = vi.fn();
++    // With both mappers an authored fact would reach `observed`; this exception reaches `legacy`.
++    await expect(planMutation(thread, operation, ctx(), 3, legacy, observed)).rejects.toBe(
++      external,
++    );
++    expect(legacy.mock.calls).toEqual([[external, 3, 'coerce']]);
++    expect(observed).not.toHaveBeenCalled();
++    // The inference transforms pass only the fact mapper; the original exception propagates.
++    await expect(planMutation(thread, operation, ctx(), 3, undefined, observed)).rejects.toBe(
++      external,
++    );
++    expect(observed).not.toHaveBeenCalled();
++  });
++});
++
++describe('coerce source pointers', () => {
++  const coerce = (source: string) => ({
++    op: 'coerce',
++    source,
++    jsonSchema: { type: 'string' },
++    target: '/vars/r',
++  });
++
++  it.each(['vars/topic', 'topic', '#/vars/topic', '/vars/~2'])(
++    'refuses %j at the contract before the domain reads it',
++    (source) => {
++      const parsed = MutationOperationSchema.safeParse(coerce(source));
++      expect(parsed.error?.issues.map((issue) => issue.path)).toEqual([['source']]);
++    },
++  );
++
++  it('copies or repairs every contract-valid source without either mapper', async () => {
++    const failure = vi.fn();
++    const fact = vi.fn();
++    const sources = {
++      '/vars/topic': 'patch',
++      '/messages/0/content': 'patch',
++      '': 'repair',
++      '/vars/missing': 'repair',
++      '/vars/topic/deeper': 'repair',
++      '/messages/x': 'repair',
++      '/messages/9': 'repair',
++    } as const;
++    for (const [source, kind] of Object.entries(sources)) {
++      const plan = await planMutation(sampleThread(), op(coerce(source)), ctx(), 0, failure, fact);
++      expect(plan.kind, source).toBe(kind);
++    }
++    expect(failure).not.toHaveBeenCalled();
++    expect(fact).not.toHaveBeenCalled();
++  });
+ });
+ 
+ it('delivers facts to the inference mapper at the immediate operation while the legacy mapper keeps three arguments', async () => {
+diff --git a/packages/domain/src/mutations.ts b/packages/domain/src/mutations.ts
+index 423e95b2ed0575bb671da5f4fcb720487ce75322..8b55ac3a74411c71d17d91a4308e46fc1769d990 100644
+--- a/packages/domain/src/mutations.ts
++++ b/packages/domain/src/mutations.ts
+@@ -16,7 +16,7 @@ import {
+   type ExpressionObservation,
+   type ExpressionReason,
+ } from './expression.js';
+-import { validateJson } from './json-schema.js';
++import { validateJson, type SchemaValidation } from './json-schema.js';
+ import { applyPatch, assertMutablePath } from './patch.js';
+ import { getAtPointer } from './pointer.js';
+ import { unsafeRegexReason } from './regex-safety.js';
+@@ -56,7 +56,7 @@ export type MutationFailureMapper = (
+ export type MutationFact =
+   | { kind: 'expression'; reason: ExpressionReason; itemIndex?: number }
+   | { kind: 'template'; fact: TemplateFact; itemIndex?: number }
+-  | { kind: 'regex' | 'target' | 'patch' | 'schema' };
++  | { kind: 'regex' | 'target' | 'patch' };
+ 
+ export type MutationFactMapper = (
+   fact: MutationFact,
+@@ -66,7 +66,7 @@ export type MutationFactMapper = (
+ 
+ type Rethrow = (error: unknown, fact?: MutationFact) => never;
+ 
+-function authored<T>(operation: () => T, rethrow: Rethrow, kind: 'target' | 'regex' | 'schema'): T {
++function authored<T>(operation: () => T, rethrow: Rethrow, kind: 'target' | 'regex'): T {
+   try {
+     return operation();
+   } catch (error) {
+@@ -336,7 +336,14 @@ export async function planMutation(
+       authored(() => assertMutablePath(op.target), rethrow, 'target');
+       const source = authored(() => getAtPointer(thread, op.source), rethrow, 'target');
+       const value = source.found ? source.value : undefined;
+-      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow, 'schema');
++      // An authored schema that does not compile returns as validation errors and enters repair.
++      // Anything validation throws carries no authored fact; only the ordinary mapper sees it.
++      let validation: SchemaValidation;
++      try {
++        validation = validateJson(op.jsonSchema, value);
++      } catch (error) {
++        return rethrow(error);
++      }
+       if (validation.ok) {
+         const exists = authored(() => getAtPointer(thread, op.target), rethrow, 'target').found;
+         return {
+diff --git a/packages/engine/src/authored-failure.ts b/packages/engine/src/authored-failure.ts
+index 109c851a5b8567f4f8a5db2a8b0840bde79c79d8..427c04d1f16e058e69fe5b5a8c3c20d1deb85bcc 100644
+--- a/packages/engine/src/authored-failure.ts
++++ b/packages/engine/src/authored-failure.ts
+@@ -97,11 +97,6 @@ function causeFor(reason: Reason) {
+         code: 'MUTATION_ERROR' as const,
+         message: 'The regular expression is invalid or unsafe. Check the pattern and flags.',
+       };
+-    case 'schema':
+-      return {
+-        code: 'MUTATION_ERROR' as const,
+-        message: 'The schema could not be applied. Check the schema and its input.',
+-      };
+     case 'timestamp':
+       return {
+         code: 'TEMPLATE_ERROR' as const,
+diff --git a/packages/engine/src/handler.ts b/packages/engine/src/handler.ts
+index 6c9a5dd806670622430b68cbc253031687d92362..6dcddc26809e8298d989364fbc66b03e260fbbe2 100644
+--- a/packages/engine/src/handler.ts
++++ b/packages/engine/src/handler.ts
+@@ -54,8 +54,6 @@ export type WorkingDirectoryResult =
+ 
+ /** Services the executor hands to handlers. Everything that touches the outside world goes through here. */
+ export interface HandlerServices {
+-  /** Render a Liquid template against the thread view plus extras. */
+-  render(template: string, extras?: Record<string, unknown>): Promise<string>;
+   /** Append events to the run log right away (progress and usage). Decision completion is appended atomically by the executor. */
+   record(draft: EventDraft): Promise<void>;
+   /** Resolve the model and effort for an inferencing or decision step. */
+diff --git a/packages/engine/src/handlers/flow.test.ts b/packages/engine/src/handlers/flow.test.ts
+index bffd48c1bef59c2fbdf6f3a49ea772a30e5c9eaf..95b5b3ea493f5c0aaaa225004b56c8dda8b89132 100644
+--- a/packages/engine/src/handlers/flow.test.ts
++++ b/packages/engine/src/handlers/flow.test.ts
+@@ -917,7 +917,6 @@ describe('authored leaf preparation failures (#486)', () => {
+       ports: e.ports,
+       settings: e.settings,
+       services: {
+-        render: unused,
+         record: unused,
+         resolveModel: unused,
+         startChild: unused,
+@@ -1132,7 +1131,6 @@ describe('authored leaf preparation failures (#486)', () => {
+         ports: e.ports,
+         settings: e.settings,
+         services: {
+-          render: unused,
+           record: unused,
+           resolveModel: unused,
+           startChild: unused,
+diff --git a/packages/engine/src/handlers/heartbeat-visit.test.ts b/packages/engine/src/handlers/heartbeat-visit.test.ts
+index 5c5c4af0b80d53436dc53f86c8f07e445a24d359..0624f02f8fec7e1aada708bdb9e7d3294e6fdf60 100644
+--- a/packages/engine/src/handlers/heartbeat-visit.test.ts
++++ b/packages/engine/src/handlers/heartbeat-visit.test.ts
+@@ -52,7 +52,6 @@ describe('heartbeat public handler visit evidence', () => {
+       ports: e.ports,
+       settings: e.settings,
+       services: {
+-        render: unused,
+         record: async (draft) => {
+           await e.ports.events.append(run.id, [draft]);
+         },
+diff --git a/packages/engine/src/handlers/mutation-failures.test.ts b/packages/engine/src/handlers/mutation-failures.test.ts
+index 2abffccdc68680a320588a44688f62223fa9cded..ac13bcc77712079926f104b38bc4bf9e05e2b721 100644
+--- a/packages/engine/src/handlers/mutation-failures.test.ts
++++ b/packages/engine/src/handlers/mutation-failures.test.ts
+@@ -149,6 +149,49 @@ describe('authored mutation failure boundaries', () => {
+     },
+   );
+ 
++  it.each(['mutate', 'inference'] as const)(
++    'repairs a %s coerce whose authored schema does not compile, without an authored boundary',
++    async (kind) => {
++      const engine = await createTestEngine();
++      const invalid = { ...coerce, source: '/vars/prior', jsonSchema: { type: 'not-a-type' } };
++      const operations = [prior, invalid, later];
++      const config =
++        kind === 'mutate'
++          ? { operations }
++          : { prompt: { template: 'never sent' }, input: operations };
++      const run = await engine.runToIdle(
++        engine.publish(singleNodeLoop('Invalid schema', { id: 'mut', kind, label: 'M', config }))
++          .loopId,
++      );
++      expectAtomicFailure(engine, run);
++      expect(run.failure).toMatchObject({
++        code: 'OUTPUT_SCHEMA_MISMATCH',
++        nodeId: 'mut',
++        resumable: true,
++        details: { errors: [expect.stringMatching(/^invalid schema: /)], value: 1 },
++      });
++      expect(run.failure?.details).not.toHaveProperty('boundary');
++      expect(engine.ports.structuredFake.requests).toEqual([
++        { prompt: expect.stringContaining('invalid schema: '), schema: invalid.jsonSchema },
++      ]);
++      expect(engine.ports.harness.started).toHaveLength(0);
++    },
++  );
++
++  it('continues raw after an authored schema that does not compile when the policy allows', async () => {
++    const engine = await createTestEngine();
++    const invalid = {
++      ...coerce,
++      source: '/vars/prior',
++      jsonSchema: { type: 'not-a-type' },
++      repair: { ...coerce.repair, onFailure: 'continue-raw' as const },
++    };
++    const run = await engine.runToIdle(publish(engine, [prior, invalid]).loopId);
++    expect(run.status).toBe('succeeded');
++    expect((await engine.manager.getThread(run.id))?.vars).toEqual({ prior: 1, repaired: 1 });
++    expect(engine.ports.structuredFake.requests).toHaveLength(1);
++  });
++
+   it.each([
+     { source: 'completion', ErrorType: Error },
+     { source: 'completion', ErrorType: TemplateError },
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index 4ad5fd9ad6c844ac54d52a8ed9c46660be598a18..e77096ad8247485f6a2bf6ef21f173d437c73a46 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -55,7 +55,6 @@ import {
+   nodesOfKind,
+   outcomeStatus,
+   outgoingEdge,
+-  renderTemplate,
+   reconcileThread,
+   replayThread,
+   replayStateAt,
+@@ -2428,11 +2427,6 @@ export class RunManager {
+     let previousWait = run.waiting;
+ 
+     const services: HandlerServices = {
+-      render: (template, extras = {}) =>
+-        renderTemplate(template, {
+-          ...(threadView(thread) as unknown as Record<string, unknown>),
+-          ...extras,
+-        }),
+       record: async (draft) => {
+         await append(draft);
+         if (

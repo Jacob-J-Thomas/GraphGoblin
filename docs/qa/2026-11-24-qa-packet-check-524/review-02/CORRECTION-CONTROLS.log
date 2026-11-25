@@ -1,0 +1,39 @@
+hint: The sparse index is expanding to a full index, a slow operation.
+hint: Your working directory likely has contents that are outside of
+hint: your sparse-checkout patterns. Use 'git sparse-checkout list' to
+hint: see your sparse-checkout definition and compare it to your working
+hint: directory contents. Running 'git clean' may assist in this cleanup.
+hint: Disable this message with "git config set advice.sparseIndexExpanded false"
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.prettierignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.prettierrc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/qa/hidden/retired.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/qa/visible/alternate-stage.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/qa/visible/clean.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/qa/visible/real-change.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/qa/visible/report-original.md', LF will be replaced by CRLF the next time Git touches it
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: autocrlf: content selection
++ actual - expected
+
+  [
++   'docs/qa/visible/clean.md',
+    'docs/qa/visible/real-change.md'
+  ]
+
+    at file:///G:/ggq/delivery-evidence/2026-11-24-followups/qa-packet-524/review-02/correction-controls.mjs:78:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ 'docs/qa/visible/clean.md', 'docs/qa/visible/real-change.md' ],
+  expected: [ 'docs/qa/visible/real-change.md' ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.4
