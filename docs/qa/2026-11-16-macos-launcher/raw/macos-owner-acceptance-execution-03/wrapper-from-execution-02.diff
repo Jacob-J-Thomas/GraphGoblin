@@ -1,0 +1,62 @@
+--- a/Invoke-OwnerMacAcceptance.ps1
++++ b/Invoke-OwnerMacAcceptance.ps1
+@@ -26,12 +26,12 @@
+ $qaPhaseStreamMax = 4MB
+ $qaManifestMax = 1MB
+ $qaFrameMetaMax = 128KB
+-$qaBuildToken = 'db37bfdf935746039f9030c4d49b10fb'
++$qaBuildToken = 'd75d293f66da44ffb60198a07d8fa2e2'
+ $qaBuildStage = "/Users/jake/Library/Caches/graphgoblin-456-product-build-$qaBuildToken"
+-$qaBuildHead = '370a12b5784252356807bfc7676f65f6cb19b5e0'
+-$qaBuildTree = '2207dd91338e0bc3ffdb4f8fc81531eb0ae08b3c'
+-$qaFreezeSha = 'a56e20ecb2a775f55f299bfe559bcb84f4f797c29b37dfe3ebaaa44fcb76e73d'
+-$qaBuildResultSha = 'e78ab98e8ce4ecc58e4119f5cd9bbf498b4c47697bd397b476ff10b31bdc1316'
++$qaBuildHead = '4341d1f8882f4b69651bfb0b5988345b7f074339'
++$qaBuildTree = 'a5f8fa3e13fb297cbcdb386ae445cb8159156617'
++$qaFreezeSha = '31a26763478b6e8c6e31ca3b64275a8eb3573a67b45cf92431341edcd1aa385d'
++$qaBuildResultSha = '738c56a109a49f4c7b266ff97e6e5db8a7fc8fcb1e1ed0a623269045fb011656'
+ 
+ function Get-Sha([string]$Path) {
+     (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+@@ -360,10 +360,10 @@
+ $build = Join-Path $buildPacket "receipts/product-build-$qaBuildToken"
+ $pins = [ordered]@{
+     'result.json' = $qaBuildResultSha
+-    'validation.json' = '998d04b1094079aaf597d4b451db809b9a7e21f9933e07e7dac1d428508f6f85'
+-    'pipe-close.json' = '36f5180bff2beb1b64e7296c12292d2ade34c675fac6d2834dad3e91872cd310'
+-    'exit.json' = '688f6d6513df1ce858c64dbe7e23048920a5ff39c78878ff9df5101246e8ff4b'
+-    'stdout.raw' = 'bf40b831c1b88591e09b20a5fb24058bc4e98ea5071757b7223bdd0f9dff2642'
++    'validation.json' = '746502860ff36cafb49c838a8e39efeffa77817c27c73f0dd4fe8149a476903e'
++    'pipe-close.json' = 'a214d059fbf3de399c06d8fb299c850a64e517a95802024508ced585d416e231'
++    'exit.json' = '0f87ff6f3fb8d25447e946cc5b5a0a30d5f5df97f3ceed9bf4f59b31372d3eaf'
++    'stdout.raw' = '0643aebcf04fa3e11275149a8bcccf47e621cc535e4623faf02bbb608e592a88'
+     'stderr.raw' = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+ }
+ foreach ($name in $pins.Keys) {
+@@ -374,7 +374,7 @@
+ $pipe = Read-Json (Join-Path $build 'pipe-close.json')
+ if ($result.status -cne 'product-build-exit-zero' -or $validation.exitCode -ne 0 -or !$pipe.stdout.eof -or !$pipe.stderr.eof -or
+     $result.source.head -cne $qaBuildHead -or $result.source.tree -cne $qaBuildTree -or !$result.source.postBuildVerified -or
+-    $result.stage.path -cne $qaBuildStage -or $result.stage.ino -cne '178776825' -or $result.release.artifacts.Count -ne 10) {
++    $result.stage.path -cne $qaBuildStage -or $result.stage.ino -cne '178893353' -or $result.release.artifacts.Count -ne 10) {
+     throw 'The selected receipt does not establish the complete successful candidate build'
+ }
+ $source = Read-BoundedFile (Join-Path $build 'source-freeze.json') $qaManifestMax 383408
+@@ -418,7 +418,7 @@
+ if ($argvChars -gt 30000) { throw 'Rendered SSH Windows argv limit exceeded' }
+ $binding = [ordered]@{
+     schema='gg456-macos-owner-acceptance-admission/v1'; state='root-admitted-macos-owner-acceptance'; token=$Token;
+-    stagePath=$qaStage; buildStage=$qaBuildStage; buildStageInode='178776825'; head=$qaBuildHead; tree=$qaBuildTree;
++    stagePath=$qaStage; buildStage=$qaBuildStage; buildStageInode='178893353'; head=$qaBuildHead; tree=$qaBuildTree;
+     sourceFreezeSha256=$qaFreezeSha; buildResultSha256=$qaBuildResultSha; buildStdoutSha256=$pins['stdout.raw'];
+     transportManifestSha256=$manifestSha; transportManifestBytes=$manifest.Length; transportSealSha256=Get-BytesSha $seal;
+     fixedExecutorSha256=$programSha; remoteCommandSha256=Get-BytesSha ($qaUTF8.GetBytes($command));
+@@ -462,7 +462,7 @@
+         if ($capture.Code -eq 0 -and $frames.Result.status -ceq 'owner-acceptance-exit-zero' -and $phase.code -eq 0 -and
+             $phase.exitObserved -and $phase.stdout.eof -and $phase.stderr.eof -and !$phase.stdout.overflow -and !$phase.stderr.overflow -and
+             $frames.Result.case.outcome -ceq 'passed' -and $frames.Result.case.cases.Count -eq 9 -and
+-            $frames.Result.postCaseBuild.ino -ceq '178776825' -and $frames.Result.postCasePnpm.files -eq 437 -and
++            $frames.Result.postCaseBuild.ino -ceq '178893353' -and $frames.Result.postCasePnpm.files -eq 437 -and
+             (Test-Path -LiteralPath (Join-Path $receipt 'cases/manifest.json') -PathType Leaf) -and
+             (Test-Path -LiteralPath (Join-Path $receipt 'cases/held-store.launcher.log') -PathType Leaf)) {
+             $summary.state = 'owner-acceptance-exit-zero'

@@ -1,0 +1,729 @@
+{
+  "id": "S4-wait-run-graceful-drain-and-retention",
+  "cases": [
+    "O7",
+    "G5-native-part"
+  ],
+  "startedAt": "2026-11-16T22:56:34.259Z",
+  "checks": [
+    {
+      "id": "loop-created",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 201,
+        "code": null,
+        "issues": []
+      }
+    },
+    {
+      "id": "draft-bound-to-loop",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "loopId": "01M7K975EQM2WR3Q6NE7SR3WC3",
+        "loopDraftVersionId": "01M7K975EQM2WR3Q6NE7SR3WC4",
+        "draftId": "01M7K975EQM2WR3Q6NE7SR3WC4",
+        "draftLoopId": "01M7K975EQM2WR3Q6NE7SR3WC3",
+        "draftStatus": "draft",
+        "draftVersion": 1
+      }
+    },
+    {
+      "id": "run-admitted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "code": null
+      }
+    },
+    {
+      "id": "run-pins-new-draft-snapshot",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pin": {
+          "runId": "01M7K975EWB4KHDH0DQX0N7XGR",
+          "loopId": "01M7K975EQM2WR3Q6NE7SR3WC3",
+          "versionId": "01M7K975EWB4KHDH0DQX0N7XGT",
+          "source": "draft",
+          "version": 1
+        },
+        "draftVersionId": "01M7K975EQM2WR3Q6NE7SR3WC4"
+      }
+    },
+    {
+      "id": "run-active-waiting",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "final": "waiting",
+        "series": [
+          {
+            "ms": 7,
+            "status": "running",
+            "waitingKind": null
+          },
+          {
+            "ms": 1025,
+            "status": "waiting",
+            "waitingKind": "timer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-provider-process",
+      "ok": true,
+      "hard": true,
+      "detail": []
+    },
+    {
+      "id": "drain-with-waiting-run-pre:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51267
+      }
+    },
+    {
+      "id": "drain-with-waiting-run-pre:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+        "expected": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10"
+      }
+    },
+    {
+      "id": "drain-with-waiting-run-pre:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51267,
+          "ppid": 1,
+          "pgid": 51267,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:55:29 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "drain-with-waiting-run-pre:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51267,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-with-waiting-run-pre:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51267,
+            "sha256": "f6ed7f6896aba0d0ab13dd379598633202f2d17b3a8ebd5117080059d77f44b8",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179129078"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51267,
+            "sha256": "048b4bb15a749368f320d81fcbcc4e87458ad5d39f69aa381a885d7bca5b63af",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179129081"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "drain-with-waiting-run-pre:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51267,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:registered-owner",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "fresh": {
+          "port": 62241,
+          "pid": 51267,
+          "birth": "Mon Nov 16 16:55:29 2026",
+          "instance": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 51267,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "f6ed7f6896aba0d0ab13dd379598633202f2d17b3a8ebd5117080059d77f44b8",
+            "graphgoblin.db.graphgoblin.lock": "048b4bb15a749368f320d81fcbcc4e87458ad5d39f69aa381a885d7bca5b63af"
+          }
+        },
+        "owner": {
+          "port": 62241,
+          "pid": 51267,
+          "birth": "Mon Nov 16 16:55:29 2026",
+          "instance": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 51267,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "f6ed7f6896aba0d0ab13dd379598633202f2d17b3a8ebd5117080059d77f44b8",
+            "graphgoblin.db.graphgoblin.lock": "048b4bb15a749368f320d81fcbcc4e87458ad5d39f69aa381a885d7bca5b63af"
+          }
+        }
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:shutdown-state",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:same-incarnation",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "drain-with-waiting-run:drain-accepted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:never-forcing",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "forcing": null
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:released",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "series": [
+          {
+            "ms": 1,
+            "state": "error",
+            "code": "ECONNRESET"
+          },
+          {
+            "ms": 254,
+            "state": "refused",
+            "code": "ECONNREFUSED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-with-waiting-run:store-free",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "text": "{\"state\":\"free\"}\n"
+      }
+    },
+    {
+      "id": "waiting-run-not-unconfirmed",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "accepted": {
+          "phase": "draining",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "shapes": {
+            "activeRunIds": "array",
+            "unconfirmedRunIds": "array"
+          },
+          "choices": [
+            "wait",
+            "force"
+          ],
+          "graceMs": 300000
+        },
+        "runId": "01M7K975EWB4KHDH0DQX0N7XGR"
+      }
+    },
+    {
+      "id": "relaunch-envelope",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "ok": true,
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "ms": 1653
+        },
+        "stdout": "{\"version\":1,\"code\":\"open-management-running\",\"port\":62241}\n",
+        "stderrBytes": 0,
+        "elapsedMs": 1653,
+        "timedOut": false
+      }
+    },
+    {
+      "id": "relaunch:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51530
+      }
+    },
+    {
+      "id": "relaunch:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+        "expected": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10"
+      }
+    },
+    {
+      "id": "relaunch:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51530,
+          "ppid": 1,
+          "pgid": 51530,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:56:37 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "relaunch:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51530,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "relaunch:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51530,
+            "sha256": "57f8f0d491949ad01a33326b3edfa182e4674d8b8fbbd2922e802cea452e373f",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179131177"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51530,
+            "sha256": "92ea5d895e6bec6c24a89b5ed4e99af81bff55a387650ab00505ab20c78b2deb",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179131180"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "relaunch:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51530,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "new-gateway-incarnation",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "previous": 51267,
+        "current": 51530
+      }
+    },
+    {
+      "id": "run-retained-across-restart",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "runStatus": "waiting"
+      }
+    },
+    {
+      "id": "run-pin-retained-across-restart",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "admitted": {
+          "runId": "01M7K975EWB4KHDH0DQX0N7XGR",
+          "loopId": "01M7K975EQM2WR3Q6NE7SR3WC3",
+          "versionId": "01M7K975EWB4KHDH0DQX0N7XGT",
+          "source": "draft",
+          "version": 1
+        },
+        "retained": {
+          "runId": "01M7K975EWB4KHDH0DQX0N7XGR",
+          "loopId": "01M7K975EQM2WR3Q6NE7SR3WC3",
+          "versionId": "01M7K975EWB4KHDH0DQX0N7XGT",
+          "source": "draft",
+          "version": 1
+        }
+      }
+    },
+    {
+      "id": "run-completed-after-restart",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "final": "succeeded",
+        "series": [
+          {
+            "ms": 3,
+            "status": "waiting",
+            "waitingKind": "timer"
+          },
+          {
+            "ms": 42632,
+            "status": "succeeded",
+            "waitingKind": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "loop-retained",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "no-provider-process-after-restart",
+      "ok": true,
+      "hard": true,
+      "detail": []
+    },
+    {
+      "id": "drain-idle-pre:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51530
+      }
+    },
+    {
+      "id": "drain-idle-pre:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+        "expected": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10"
+      }
+    },
+    {
+      "id": "drain-idle-pre:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51530,
+          "ppid": 1,
+          "pgid": 51530,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:56:37 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "drain-idle-pre:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51530,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-idle-pre:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51530,
+            "sha256": "57f8f0d491949ad01a33326b3edfa182e4674d8b8fbbd2922e802cea452e373f",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179131177"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51530,
+            "sha256": "92ea5d895e6bec6c24a89b5ed4e99af81bff55a387650ab00505ab20c78b2deb",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179131180"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "drain-idle-pre:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51530,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-idle:registered-owner",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "fresh": {
+          "port": 62241,
+          "pid": 51530,
+          "birth": "Mon Nov 16 16:56:37 2026",
+          "instance": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 51530,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "57f8f0d491949ad01a33326b3edfa182e4674d8b8fbbd2922e802cea452e373f",
+            "graphgoblin.db.graphgoblin.lock": "92ea5d895e6bec6c24a89b5ed4e99af81bff55a387650ab00505ab20c78b2deb"
+          }
+        },
+        "owner": {
+          "port": 62241,
+          "pid": 51530,
+          "birth": "Mon Nov 16 16:56:37 2026",
+          "instance": "38797520d0408da14831a7b101981b343721af0676027587188855a4b36e1b10",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 51530,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "57f8f0d491949ad01a33326b3edfa182e4674d8b8fbbd2922e802cea452e373f",
+            "graphgoblin.db.graphgoblin.lock": "92ea5d895e6bec6c24a89b5ed4e99af81bff55a387650ab00505ab20c78b2deb"
+          }
+        }
+      }
+    },
+    {
+      "id": "drain-idle:shutdown-state",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-idle:same-incarnation",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "drain-idle:drain-accepted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "drain-idle:never-forcing",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "forcing": null
+      }
+    },
+    {
+      "id": "drain-idle:released",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "series": [
+          {
+            "ms": 1,
+            "state": "error",
+            "code": "ECONNRESET"
+          },
+          {
+            "ms": 254,
+            "state": "refused",
+            "code": "ECONNREFUSED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-idle:store-free",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "text": "{\"state\":\"free\"}\n"
+      }
+    }
+  ],
+  "notes": {
+    "gatewayChildrenBeforeDrain": [],
+    "drain": {
+      "shutdown": {
+        "phase": "running",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "graceMs": 300000
+      },
+      "accepted": {
+        "phase": "draining",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "shapes": {
+          "activeRunIds": "array",
+          "unconfirmedRunIds": "array"
+        },
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "graceMs": 300000
+      },
+      "series": [
+        {
+          "ms": 1,
+          "state": "error",
+          "code": "ECONNRESET"
+        },
+        {
+          "ms": 254,
+          "state": "refused",
+          "code": "ECONNREFUSED"
+        }
+      ],
+      "elapsedMs": 622
+    },
+    "intermediatePhasesObserved": [],
+    "idleDrain": {
+      "shutdown": {
+        "phase": "running",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "graceMs": 300000
+      },
+      "accepted": {
+        "phase": "draining",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "shapes": {
+          "activeRunIds": "array",
+          "unconfirmedRunIds": "array"
+        },
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "graceMs": 300000
+      },
+      "series": [
+        {
+          "ms": 1,
+          "state": "error",
+          "code": "ECONNRESET"
+        },
+        {
+          "ms": 254,
+          "state": "refused",
+          "code": "ECONNREFUSED"
+        }
+      ],
+      "elapsedMs": 606
+    }
+  },
+  "status": "criteria-met",
+  "elapsedMs": 46741,
+  "finishedAt": "2026-11-16T22:57:21.000Z"
+}

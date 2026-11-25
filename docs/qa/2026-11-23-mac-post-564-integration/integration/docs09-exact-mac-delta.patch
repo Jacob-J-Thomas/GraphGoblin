@@ -1,0 +1,34 @@
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index b13e570c1..7dc7eef2c 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -22,6 +22,29 @@ validated against the configured IPv4 loopback origin and current `/app/` manife
+ closure only stops observation; matching gateways in a drain or failure phase remain available
+ for existing shutdown controls. See [ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
+ 
++## macOS Finder and Dock entry point
++
++The optional [macOS Finder and Dock launcher](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
++installs a per-user `GraphGoblin.app` under `~/Applications` for Apple Silicon running macOS 15
++or later. It requires a built checkout, native Node 22.22.2 or later within major 22, and Swift 6
++when installing or updating. The installer saves the checkout and Node paths, local data directory,
++port, and supported non-secret options; rerun it if the saved checkout or Node path moves.
++
++A Finder or Dock launch validates the saved installation and built pages, then either observes the
++matching loopback gateway or starts one detached gateway and asks the system default browser to
++open `http://127.0.0.1:<port>/app/`. It does not select a browser profile or create a
++browser-specific PWA window. Hiding or quitting the launcher after a start is committed, and
++closing the browser, do not stop the gateway or its work. Use the existing authenticated API to
++start a shutdown. The browser's Wait and Force choices appear only after an externally initiated
++drain reaches its choice phase. [Gateway shutdown](07-api-and-streaming.md#gateway-shutdown-224)
++
++Each alternate `GraphGoblin <suffix>.app` has a separate installation ID, receipt, and log
++directory. The launcher takes private per-user coordination locks for the configured data
++directory, database, and port; the API's writer leases remain authoritative, so an alternate app
++does not bypass an occupied store or conflicting listener. See the [install guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher),
++[troubleshooting guide](guide/07-troubleshooting.md#macos-finder-and-dock-launcher), and
++[ADR-0082](decisions/ADR-0082-macos-finder-dock-launcher.md) for setup and recovery details.
++
+ ## Shape (Decided)
+ 
+ A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. The management application lives at `/app/`; the separate Goblin PWA lives at `/goblin/`. Management resources use the generated typed client, and the run inspector follows native run events through SSE. Both Chat surfaces use the same scoped `/chat` API and poll turn state. Validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.

@@ -1,5 +1,26 @@
 # 10 - Testing and quality
 
+`pnpm test:macos-launcher` is the additional built-app acceptance entry for the **macOS
+launcher** CI job on arm64 macOS 15. The job records the exact checkout and toolchain, builds
+the application, runs the affected API tests, runs the Swift engine/installer/presentation
+suites under full Xcode and exercises the public installer and real gateway with an alternate
+bundle, disposable stores and non-owner ports. It covers malformed inherited locales during
+public installation and concurrent cold launch. Native test output and failure evidence are
+retained for seven days. Swift coverage follows the separate accepted policy in ADR-0083. The
+`pnpm test:macos-coverage` collector/check is wired as a 10-minute step in the macOS CI job,
+before native installer and gateway acceptance. Hosted execution verifies the complete source
+inventory and enforces both native thresholds. The existing TypeScript/JavaScript V8 thresholds
+remain unchanged.
+
+The presentation tests use an injected clock, engine, opener and surface. Five offscreen
+window tests require an available Quartz session; report their actual skips separately.
+They do not establish Finder/Dock routing, real keyboard focus, VoiceOver or default-browser
+activation. These remain native acceptance observations, with post-merge owner acceptance
+tracked on #456 and #326. A Command Line Tools installation may require explicit compiler and
+linker search paths to its installed `Testing` framework, and runtime dependencies may still
+prevent test execution. A missing module, runtime-load failure or failed build is not a test
+pass; a build-only check does not establish test execution.
+
 The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
 floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
 exit and bounded work. Generation-specific handshakes retain exact native handles to nested
@@ -79,11 +100,41 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
 
-## Coverage policy (Decided)
+## TypeScript/JavaScript V8 coverage policy (Decided)
 
 - Every package, including `apps/web` and `tooling`, inherits the V8 coverage gate from `tooling/vitest.shared.mjs`: lines, branches, functions and statements each have a numerical threshold of 90. Vitest accepts exactly 90%; results below 90 fail. Package configs extend the shared configuration without lowering these four thresholds.
 - The shared denominator includes `src/**/*.ts` and `src/**/*.tsx`, including `src/testing` helpers. It excludes tests, type declarations, `src/**/__fixtures__/**` and `src/**/generated/**`. The generated OpenAPI declarations are excluded; handwritten API-client code is measured. SQL migrations are outside the TypeScript include and have migration/startup acceptance checks. No maintained source is excluded to raise its score.
 - Coverage uses Vitest's V8 provider. Each package writes its own text summary, `coverage-summary.json` and LCOV; the root Turbo gate runs these package gates. There is no aggregate repository percentage or merged cross-package report. CI uploads the package summaries, including tooling's.
+
+## Native Swift coverage policy (#456, accepted)
+
+The owner approved at least 90% line coverage and 90% region coverage for the macOS launcher's
+complete production source, plus explicit behavior tests of branch outcomes. Swift's current LLVM
+export has no branch denominator, so the policy uses tests for branch outcomes rather than a
+numeric branch percentage. This native policy is separate from, and does not change, the V8 policy above.
+See [ADR-0083](decisions/ADR-0083-swift-native-coverage.md) and the
+[CI #03 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-03/README.md).
+
+The coverage inventory includes all 25 production source files across six targets. The collector
+must verify each source-to-object mapping and executable entry, combine the verified counters
+across targets, and stop if any production source or entry is missing or unmapped.
+Declaration-only sources with no executable regions remain inventoried with that status
+established from the complete object mapping. No production source may be excluded to raise
+coverage.
+
+CI #03 predates the collector/check step and maps only 21 of the 25 production files:
+2,177/3,588 lines (60.67%) and 1,015/2,040 regions (49.75%), with no branch denominator. The
+declaration and entry mapping gap makes these partial measurements; they do not establish a
+passing 90% result. The `pnpm test:macos-coverage` package command is now wired into the macOS
+CI job before `pnpm test:macos-launcher`. CI12 at `53f41045` accounted for all 25 sources and
+passed 154 Swift tests, then correctly failed the region threshold: 3,439/3,627 lines (94.82%)
+and 1,775/2,056 regions (86.33%). That result establishes complete measurement, not a passing
+native gate. CI13 at `4d725033` passed 168 Swift tests and the complete native gate with
+3,492/3,627 lines (96.28%) and 1,868/2,056 regions (90.86%). All five CI jobs passed; this does
+not establish the separate interactive Finder/Dock criteria or owner acceptance. See the
+[CI13 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-13/README.md) and
+[current QA record](qa/2026-11-16-macos-launcher/README.md).
+The native evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
 
 ## Maintained scripts and executable evidence (#264)
 
@@ -164,7 +215,7 @@ The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's man
 
 ## CI gates (Decided)
 
-`.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
+`.github/workflows/ci.yml` runs seven jobs on pushes to `main` and pull requests. The jobs are macOS launcher, Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs use separate runners. Gates waits only for Repository checks and Coverage. The macOS launcher reports separately from that aggregate, so Gates can pass while the macOS job fails. The steps below describe the execution order within each job.
 
 The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
 
@@ -192,7 +243,7 @@ The `coverage` job (**Coverage**, 30-minute job budget) runs:
 1. Install with a frozen lockfile.
 2. Build every package and app (`pnpm build`), the same full build as Repository checks, so every suite sees the original built inputs.
 3. Install Chromium for the tooling browser measurements (`pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium`).
-4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`). The step has a 25-minute cap inside the job budget.
+4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1 --log-order=stream --log-prefix=task`). Output streams with task prefixes so a timeout retains the active suite's available output. The step has a 25-minute cap inside the job budget.
 5. Upload the package `coverage-summary.json` files as the `coverage` artifact after every outcome (a warning when none exist), and write the coverage step's outcome and the number of retained summaries to the job summary. Summaries from a failed, cancelled or timed-out step are partial and never establish a passing gate.
 
 The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.

@@ -94,7 +94,8 @@ describe('native Claude start refusals (#364)', () => {
     const turns: ClaudeProcessRequest[] = [];
     const { events, result, error } = await turn(harness(undefined, turns), workingDirectory);
     expect(error).toBeUndefined();
-    expect(result?.finalText).toBe(workingDirectory);
+    // The child reports its physical cwd (for example, macOS resolves /var to /private/var).
+    expect(result?.finalText).toBe(await realpath(workingDirectory));
     expect(events.map((event) => event.type)).toEqual([
       'session',
       'item',
