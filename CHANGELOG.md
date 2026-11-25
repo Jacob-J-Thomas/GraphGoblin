@@ -52,6 +52,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
   its filesystem diagnostic.
 
+- The run inspector treats its event stream's transport failure as an outage of the run it shows
+  from that moment (#575). Previously a run read already in flight when the API listener
+  stopped could answer successfully afterwards and leave the run current: no **Last observed,
+  may be out of date** warning, and Pause, Cancel, Replay and Submit input still available. Now
+  the run stays on screen as last observed with its typed answer kept, every write, including
+  one already queued or submitted from the keyboard, is refused at once, and only a run read
+  started after the loss makes the run current again. Refused stream reconnection attempts
+  trigger no further rereads. A stream that opens again records a new loss when it drops, or when
+  its reconnection is refused after it ended otherwise, such as the graceful close the API sends
+  when it shuts down. HTTP refusals, graceful closes and other stream errors are not losses
+  themselves. No stored, export or contract change.
+
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
   database. Default database configuration also encodes the data directory as a file URL.

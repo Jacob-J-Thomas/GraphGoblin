@@ -1,0 +1,163 @@
+{
+  "at": "2026-11-25T07:39:23.665465+00:00",
+  "base": "600f36fa51cc154a4e9ce6914411652431a087f0",
+  "reviewedHead": "32a7b68e02d695096b1d73df20f1e2696b364fa7",
+  "finding": "R1-575-1",
+  "disposition": "FIX-IN-PR; awaiting independent review round2",
+  "cause": "Ordinary EOF cleared the previous openedAt fact, suppressing the next real connection loss after a confirmed reopen.",
+  "repair": "Per-effect confirmed-open fact survives ordinary EOF/retryable errors and is consumed only when recording a transport loss, separately from per-connection timing and direct-refetch budget.",
+  "implementation": {
+    "worker": "actual Claude Code Opus5.5/xhigh viaMaxsubscription",
+    "completed": false,
+    "reason": "Edits saved; five-hour subscription limit interrupted final report; no tests claimed by worker.",
+    "receipt": "../inspector-graceful-reconnect-repair/receipt.json"
+  },
+  "rootValidation": {
+    "unchangedReviewerDiagnostic": {
+      "sha256": "8f945585eeea53f97804bcc76272d08cdce8d38788e24acbf08cb6009c1a3214",
+      "baseline": "one failed; controls enabled; implicit POST1",
+      "corrected": "one passed; stale and disabled at second refusal and after old success; implicit POST0"
+    },
+    "focused": {
+      "passed": 93,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 5
+    },
+    "webBuild": "passed",
+    "independentBrowser": {
+      "externalProbe": "passed unchanged",
+      "permanentSpec": {
+        "passed": 5,
+        "failed": 0,
+        "retries": 0
+      },
+      "scope": "actual listener hard failure; second graceful EOF/refusal ordering separately proved through full-app diagnostic and permanent component regression"
+    }
+  },
+  "sourceSha256": {
+    "apps/web/src/runs/useRunEvents.ts": "a8e6ab1e36a872cc357a11f715427160385837be2f3dfb5f92f4b5ecf09f8977",
+    "apps/web/src/runs/useRunEvents.test.tsx": "0f428337e52311872d790298c4ebc50bef2028715a0f26d8201bfdf256728af5",
+    "apps/web/src/runs/RunInspectorPage.offline.test.tsx": "b11f8acb9f3bb8b53dbd8adae35f408656ca73979795f20fc943c38524dd13fc",
+    "apps/web/src/runs/inspector-read-provenance.ts": "a7905377d30436f328a18ab8039cd8118248edd9bc4e594151188dd395ede728",
+    "apps/web/e2e/inspector-availability.spec.ts": "83e10daa5bbec12ec0059180ce500c890dfe4d1bdab9811009fe3ad02d3180e9",
+    "docs/09-frontend-and-pwa.md": "d168fe9b306eec759d3ce10ad9a6a580d016bba0c50024a5337c57a039d58d1a",
+    "CHANGELOG.md": "d770b865725352d4cb96b61bc2de235d9694510c4d1dfb1813e8fcb22855afdf"
+  },
+  "copiedEvidence": [
+    {
+      "source": "aidlc/inspector-graceful-reconnect-repair/receipt.json",
+      "destination": "inspector-graceful-reconnect-repair/receipt.json",
+      "sha256": "0aff056b2546d98f71be72b29edd2cde3571ac18b651f95f8c46a230e0f26999",
+      "publishedFileSha256": "0aff056b2546d98f71be72b29edd2cde3571ac18b651f95f8c46a230e0f26999",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-graceful-reconnect-repair/result.md",
+      "destination": "inspector-graceful-reconnect-repair/result.md",
+      "sha256": "a78ad99a393139bdb79f7e54c3a00585cefc98976be46ce1d9bae13656e8f7f7",
+      "publishedFileSha256": "a78ad99a393139bdb79f7e54c3a00585cefc98976be46ce1d9bae13656e8f7f7",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-review-r1/routing-correction.json",
+      "destination": "reviews/r1/routing-correction.json",
+      "sha256": "8eebf406cf407a82f822ee6eef131d37dde78aea0760acedf2afac781077125d",
+      "publishedFileSha256": "8eebf406cf407a82f822ee6eef131d37dde78aea0760acedf2afac781077125d",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-graceful-diagnostic-corrected01.log",
+      "destination": "r1-repair/inspector-graceful-diagnostic-corrected01.log",
+      "sha256": "0dd43fea64560569d4d90ddd5707746a9e7d8dcfaf53855e23e88a76caed3a5d",
+      "publishedFileSha256": "0dd43fea64560569d4d90ddd5707746a9e7d8dcfaf53855e23e88a76caed3a5d",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-focused05.log",
+      "destination": "r1-repair/inspector-focused05.log",
+      "sha256": "d7a538ff1bd7ebfb5002bf7b984425244f23543744f382151dbf050b67832d61",
+      "publishedFileSha256": "d7a538ff1bd7ebfb5002bf7b984425244f23543744f382151dbf050b67832d61",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-typecheck03.log",
+      "destination": "r1-repair/inspector-typecheck03.log",
+      "sha256": "38ac890c60e7f38d59ddfb410325cdfb5fca83c9411765c5481754e01c021630",
+      "publishedFileSha256": "38ac890c60e7f38d59ddfb410325cdfb5fca83c9411765c5481754e01c021630",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-lint03.log",
+      "destination": "r1-repair/inspector-lint03.log",
+      "sha256": "193fd1f264415285c562c8e7a767ef05fc4a54de8f35987083339f75cc23936a",
+      "publishedFileSha256": "193fd1f264415285c562c8e7a767ef05fc4a54de8f35987083339f75cc23936a",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-webbuild03.log",
+      "destination": "r1-repair/inspector-webbuild03.log",
+      "sha256": "d8e1de0fcecc1e7666321f25eacecd4e06093980a34ee0702ff77e8ebcac87be",
+      "publishedFileSha256": "d8e1de0fcecc1e7666321f25eacecd4e06093980a34ee0702ff77e8ebcac87be",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-independent-qa/graceful-final/QA-REPORT.md",
+      "destination": "r1-repair/browser/QA-REPORT.md",
+      "sha256": "2a8cddc4888bed2a6012c177e6754ea84093fdf5cdb37c80aa23b7a3bb420d14",
+      "publishedFileSha256": "3cbd4f1196e763283c8b01f28eb66fb059f5b1e5ec5fdbdd4eef82b367f910c0",
+      "byteIdenticalCopy": false
+    },
+    {
+      "source": "aidlc/inspector-independent-qa/graceful-final/qa-receipt.sanitized.json",
+      "destination": "r1-repair/browser/qa-receipt.sanitized.json",
+      "sha256": "44ed326549c97f98261c30fd798a9cafee3d1be02c7fb6d93eeebd1336f0b608",
+      "publishedFileSha256": "44ed326549c97f98261c30fd798a9cafee3d1be02c7fb6d93eeebd1336f0b608",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-independent-qa/graceful-final/full-spec.log",
+      "destination": "r1-repair/browser/full-spec.log",
+      "sha256": "e99c007916bc9c91f1da7a0b5565c0bbe49f5069df3b5e6d024dd7b97bb15e7c",
+      "publishedFileSha256": "e99c007916bc9c91f1da7a0b5565c0bbe49f5069df3b5e6d024dd7b97bb15e7c",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/inspector-independent-qa/graceful-final-dist.sha256",
+      "destination": "r1-repair/browser/graceful-final-dist.sha256",
+      "sha256": "9dfd54784c692c69334b218bcf20e6818df1910a602a282b3b913446d662eacf",
+      "publishedFileSha256": "9dfd54784c692c69334b218bcf20e6818df1910a602a282b3b913446d662eacf",
+      "byteIdenticalCopy": true
+    }
+  ],
+  "otherFailure": {
+    "issue": 581,
+    "ciRun": 45566702222,
+    "scope": "separate API Windowsreclaimdefect; no CIrerun substituted"
+  },
+  "remaining": [
+    "native581 delivery",
+    "rebase and fresh fullgates",
+    "round2 exact-headreview",
+    "bound integratedMac A\u2013E",
+    "actualClaude completed-evidenceassessment",
+    "guardedmerge andpostmergegates"
+  ],
+  "ownerAcceptance": "open",
+  "sourceBindingCorrection": "browser/source-binding-correction.json",
+  "commands": {
+    "focused": "pnpm exec vitest run src/runs/inspector-read-provenance.test.ts src/runs/useRunEvents.test.tsx src/runs/RunInspectorPage.offline.test.tsx (apps/web)",
+    "typecheck": "pnpm typecheck (apps/web)",
+    "lint": "pnpm lint (apps/web)",
+    "webBuild": "pnpm build (apps/web)",
+    "diagnostic": "pnpm exec vitest run --config /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-review-r1/diagnostic/vitest.config.mjs --root /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-review-r1/diagnostic --reporter=verbose (apps/web)"
+  },
+  "runtime": {
+    "node": "22.22.2 native arm64",
+    "pnpm": "12.8.1 via Corepack",
+    "macOS": "26.6.2 build25G83"
+  }
+}

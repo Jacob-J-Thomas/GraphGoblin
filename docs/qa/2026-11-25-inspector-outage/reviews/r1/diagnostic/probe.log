@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-review-r1/diagnostic
+
+stdout | graceful-second-loss.test.ts > treats a refused reconnection after a recovered and gracefully closed stream as a second loss
+{"chronology":["SSE response 1","refused during outage 1","held successful GET 1","first refused reconnect blocked writes","SSE response 2","run recovered, second stream live with unchanged cursor","held successful GET 2","refused during outage 2","post-second-loss run GET refused"],"atSecondFailure":{"stale":false,"submitDisabled":false,"writes":0},"afterOldSuccess":{"stale":false,"submitDisabled":false},"writesAfterImplicitSubmit":1}
+
+ × graceful-second-loss.test.ts > treats a refused reconnection after a recovered and gracefully closed stream as a second loss 1466ms
+   → expected { atSecondFailure: { …(3) }, …(2) } to deeply equal { atSecondFailure: { …(3) }, …(2) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  graceful-second-loss.test.ts > treats a refused reconnection after a recovered and gracefully closed stream as a second loss
+AssertionError: expected { atSecondFailure: { …(3) }, …(2) } to deeply equal { atSecondFailure: { …(3) }, …(2) }
+
+- Expected
++ Received
+
+  {
+    "afterOldSuccess": {
+-     "stale": true,
+-     "submitDisabled": true,
++     "stale": false,
++     "submitDisabled": false,
+    },
+    "atSecondFailure": {
+-     "stale": true,
+-     "submitDisabled": true,
++     "stale": false,
++     "submitDisabled": false,
+      "writes": 0,
+    },
+-   "sent": 0,
++   "sent": 1,
+  }
+
+ ❯ graceful-second-loss.test.ts:92:56
+     90|     const sent = writes();
+     91|     console.log(JSON.stringify({ chronology, atSecondFailure, afterOld…
+     92|     expect({ atSecondFailure, afterOldSuccess, sent }).toEqual({
+       |                                                        ^
+     93|       atSecondFailure: { stale: true, submitDisabled: true, writes: 0 …
+     94|       afterOldSuccess: { stale: true, submitDisabled: true },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:20:05
+   Duration  3.30s (tests 46%, transform 26%, import 12%, environment 10%, setup 6%)
+
