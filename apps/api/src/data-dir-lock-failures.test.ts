@@ -8,6 +8,7 @@ import {
   dataDirLockState,
   StoreOwnershipRefusedError,
 } from './data-dir-lock.js';
+import { shellFailureOutput, startupFailureCause } from './serve.js';
 import * as identity from './windows-process-identity.js';
 
 vi.mock('node:fs/promises', async (original) => {
@@ -242,6 +243,46 @@ it.each([8, 7])(
     }
   },
 );
+
+it('reports uncertainty after seven marker read losses and a final lost stale-marker unlink', async () => {
+  let marker = await seed();
+  let reads = 0;
+  vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+    if (args[0] === path) return actual.readFile(...args);
+    expect(args[0]).toBe(marker);
+    if (++reads === 8) return actual.readFile(...args);
+    await actual.unlink(marker);
+    await actual.rmdir(guard);
+    marker = await seed();
+    return actual.readFile(...args);
+  });
+  vi.mocked(fs.unlink).mockImplementation(async (target) => {
+    if (target === marker) {
+      await actual.unlink(marker);
+      await actual.rmdir(guard);
+    }
+    await actual.unlink(target);
+  });
+
+  const refusal = await acquireDataDirLock(directory).catch((error: unknown) => error);
+  expect(refusal).toBeInstanceOf(StoreOwnershipRefusedError);
+  expect(reads).toBe(8);
+  expect(vi.mocked(fs.unlink).mock.calls.filter(([target]) => target === marker)).toEqual([
+    [marker],
+  ]);
+  expect(vi.mocked(fs.rmdir)).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/\.tmp$/));
+  expect(vi.mocked(fs.rename)).not.toHaveBeenCalled();
+  expect(await fs.readdir(directory)).toEqual([]);
+  await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+
+  const output = shellFailureOutput(refusal);
+  expect(output).toContain(
+    `Store ownership could not be verified (reclamation guard marker disappeared during removal at the acquisition attempt limit): ${guard}`,
+  );
+  expect(output).not.toContain('another GraphGoblin process holds');
+  expect(output).not.toContain('stop it before retrying');
+  expect(startupFailureCause('store', refusal)).toBe('store-ownership-unverified');
+});
 
 it('preserves a refused read when the recovery marker still exists', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' });

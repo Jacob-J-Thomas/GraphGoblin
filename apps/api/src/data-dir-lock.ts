@@ -404,7 +404,16 @@ async function acquireRecovery(
         if (observed.marker) {
           // The immutable UUID belongs only to the observed acquisition. If another contender
           // removed it first, re-observe the guard before making any further changes to it.
-          if (!(await removeMarker(join(path, observed.marker), 'stale-marker-unlink'))) continue;
+          if (!(await removeMarker(join(path, observed.marker), 'stale-marker-unlink'))) {
+            if (attempt + 1 === recoveryAttempts)
+              throw held(
+                path,
+                unknown(
+                  'reclamation guard marker disappeared during removal at the acquisition attempt limit',
+                ).detail,
+              );
+            continue;
+          }
           reclaimed = true;
         }
         if (await removeEmptyRecovery(path, { stale: observed, token })) reclaimed = true;
