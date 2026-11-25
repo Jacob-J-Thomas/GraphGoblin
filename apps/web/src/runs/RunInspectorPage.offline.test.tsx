@@ -445,6 +445,141 @@ describe('run inspector through an outage (#416)', () => {
     }
   });
 
+  it('keeps a recovered waiting run last observed when its reopened stream closes gracefully and the API refuses to reconnect it, through a run read begun before, and sends nothing (#575)', async () => {
+    const api = new FakeApi();
+    const run = waitingRun(api);
+    const reads = heldRunReads(api);
+    // The API ends event streams gracefully (`res.end()`) when it shuts down. While `refusing`, it
+    // refuses their reconnection as a stopped listener would; each accepted one is counted.
+    const stream = { refusing: false, opened: 0, refused: 0 };
+    api.override('GET /runs/:id/events', (call) => {
+      if (call.headers.get('accept') === 'text/event-stream') {
+        if (stream.refusing) {
+          stream.refused += 1;
+          throw new TypeError('Failed to fetch');
+        }
+        stream.opened += 1;
+      }
+      return api.builtIn(call);
+    });
+    const view = renderApp('/runs/' + run.id, api);
+    const user = userEvent.setup();
+    const runGets = () => api.callsTo('GET', `/runs/${run.id}`).length;
+    const runState = () => view.queryClient.getQueryState(keys.run(run.id));
+    const inputs = () => api.callsTo('POST', `/runs/${run.id}/input`);
+    const timeline = (name: RegExp) => screen.findByRole('heading', { name });
+    const submitForm = () => {
+      const form = screen.getByRole<HTMLFormElement>('form', { name: 'Submit input' });
+      act(() => form.requestSubmit());
+    };
+    const writers = [
+      'Submit input',
+      /Pause/,
+      /Cancel run/,
+      'Replay...',
+      'Review delete-ready history',
+      'Withdraw delete-ready mark',
+    ];
+    try {
+      await openRun(run.id);
+      expect(await timeline(/^Timeline \(3 events, live\)/)).toBeInTheDocument();
+      await waitFor(() => expect(runGets()).toBe(2));
+      await waitFor(() => expect(runState()?.fetchStatus).toBe('idle'));
+      const mutations = heldMutations(view);
+      // Render again so the form takes the client's delayed mutation options.
+      await runRead(view, run.id);
+      await user.type(await screen.findByLabelText('note'), 'kept draft');
+
+      // A first outage: the stream closes, the API refuses to reconnect it, and the run read that
+      // loss requests is held. That read, started after the loss, recovers the run once answered,
+      // and the stream opens again at the same cursor.
+      reads.state.blocking = true;
+      stream.refusing = true;
+      act(() => api.dropStreams(run.id));
+      expect(await screen.findByText(STALE)).toBeVisible();
+      await waitFor(() => expect(reads.state.held).toBe(1));
+      expect(button('Submit input')).toBeDisabled();
+      stream.refusing = false;
+      reads.release();
+      await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+      await waitFor(() => expect(stream.opened).toBeGreaterThanOrEqual(2));
+      expect(await timeline(/^Timeline \(3 events, live\)/)).toBeInTheDocument();
+      await waitFor(() => expect(button('Submit input')).toBeEnabled());
+      await waitFor(() => expect(runState()?.fetchStatus).toBe('idle'));
+
+      // An answer is queued while the run is current and its stream live; its gate is checked
+      // when it is sent.
+      await user.click(button('Submit input'));
+      await waitFor(() => expect(mutations.state.queued).toBe(true));
+      // A run read starts, and is still in flight when the stream ends.
+      reads.state.blocking = true;
+      void view.queryClient.refetchQueries({ queryKey: keys.run(run.id), exact: true });
+      await waitFor(() => expect(reads.state.held).toBe(2));
+      const gets = runGets();
+
+      // The API shuts down: it ends the reopened stream gracefully, then refuses its reconnection
+      // and every later run read. That refusal is a new loss, though no event arrived since the
+      // first and the first outage's reread is spent.
+      api.override('GET /runs/:id', () => {
+        throw new TypeError('Failed to fetch');
+      });
+      const refused = stream.refused;
+      stream.refusing = true;
+      act(() => api.dropStreams(run.id));
+      await waitFor(() => expect(stream.refused).toBeGreaterThan(refused));
+      expect(await timeline(/^Timeline \(3 events, connecting…\)/)).toBeInTheDocument();
+      expect(screen.getByText(STALE)).toBeVisible();
+      // Released now, the queued answer is not sent.
+      mutations.release();
+      expect(await screen.findByText(NOT_SENT)).toBeVisible();
+      expect(inputs()).toHaveLength(0);
+      // The read in flight is neither replaced nor joined by another.
+      expect(reads.state.held).toBe(2);
+      expect(runGets()).toBe(gets);
+      expect(runState()?.fetchStatus).toBe('fetching');
+      const header = screen.getByRole('heading', { name: 'Run ' + run.id }).closest('header')!;
+      expect(header.querySelector('[data-status]')).toHaveAttribute('data-status', 'waiting');
+      expect(screen.getByText(/Reconnecting: reading this run again\./)).toBeVisible();
+      expect(screen.getByLabelText('note')).toHaveValue('kept draft');
+      for (const name of writers) expect(button(name)).toBeDisabled();
+      // Editing stays local; an implicit submission sends nothing.
+      await user.type(screen.getByLabelText('note'), ' and more');
+      submitForm();
+      expect(posts(api)).toHaveLength(0);
+
+      // The read begun before the loss now answers successfully. That cannot make the run current:
+      // once it settles the view reads the run again, and the API refuses that read.
+      reads.release();
+      await waitFor(() => expect(runGets()).toBe(gets + 1));
+      expect(
+        await screen.findByText(/The GraphGoblin API cannot be reached; reconnecting\./),
+      ).toBeVisible();
+      expect(screen.getByText(STALE)).toBeVisible();
+      for (const name of writers) expect(button(name)).toBeDisabled();
+      submitForm();
+      await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+      expect(posts(api)).toHaveLength(0);
+
+      // The API answers again. A run read started after the loss makes the run current, with the
+      // draft kept, and a deliberate answer sends once.
+      stream.refusing = false;
+      api.override('GET /runs/:id', (call) => api.builtIn(call));
+      await runRead(view, run.id);
+      await waitFor(() => expect(screen.queryByText(STALE)).not.toBeInTheDocument());
+      expect(screen.getByLabelText('note')).toHaveValue('kept draft and more');
+      await user.click(button('Submit input'));
+      await waitFor(() => expect(inputs()).toHaveLength(1));
+      expect(inputs()[0]!.body).toEqual({
+        waitId: 'wait-1',
+        input: { note: 'kept draft and more' },
+      });
+      expect(posts(api)).toHaveLength(1);
+    } finally {
+      reads.release();
+      view.unmount();
+    }
+  });
+
   it.each(['failed', 'succeeded'] as const)(
     'keeps a %s run record as last observed without claiming anything more',
     async (status) => {

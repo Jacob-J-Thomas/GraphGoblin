@@ -99,6 +99,11 @@ export function useRunEvents(
     let connection = 0;
     let inTransportBackoff = false;
     let reportedOutage = false;
+    // Whether a stream was confirmed open since the last transport loss recorded here (#575).
+    // Unlike one connection's `openedAt`, which times that open for the heartbeat and the reread
+    // budget, a graceful close or another ordinary error keeps it, and so does a restart: the next
+    // transport failure is then a new loss. Only recording a loss consumes it.
+    let reopened = false;
     let lastSeq = known?.lastSeq ?? 0;
     let stopHistory: (() => void) | undefined;
     const followAttempts = () => {
@@ -150,6 +155,7 @@ export function useRunEvents(
         onOpen: () => {
           if (!current()) return;
           openedAt = Date.now();
+          reopened = true;
           inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
@@ -172,26 +178,25 @@ export function useRunEvents(
           }
           if (openedAt !== undefined && Date.now() - openedAt >= STREAM_HEARTBEAT_MS)
             reportedOutage = false;
-          // Taken before clearing: a refused retry never opened, so it cannot drop again.
-          const opened = openedAt !== undefined;
           openedAt = undefined;
           inTransportBackoff =
             err instanceof TypeError || (err instanceof GraphGoblinApiError && err.status === 0);
-          // Clean EOF and HTTP errors keep the SSE helper's existing backoff.
+          // Clean EOF and HTTP errors keep the SSE helper's existing backoff, and record no loss.
           if (!inTransportBackoff) return;
           setStatus('connecting');
-          if (reportedOutage) {
-            // A stream that opened again and then dropped is a distinct later loss (#575), even
-            // within this outage's one reread: a run read since recovered cannot leave the view
-            // current. Refused retries record nothing, so they never overtake a recovery read.
-            if (opened) markInspectorTransportLoss(receipts, keys.run(runId));
-            return;
-          }
-          reportedOutage = true;
-          // First, with the run's read receipts (#575): a write queued before React renders again
+          // A retry refused again with no stream confirmed open since the recorded loss records
+          // nothing, so it never overtakes a recovery read, and requests none.
+          if (reportedOutage && !reopened) return;
+          // The first loss, or a later one after a stream opened again (#575) however that stream
+          // then ended, a graceful close included: a run read since recovered cannot leave the view
+          // current. First, with the run's read receipts: a write queued before React renders again
           // already finds the view lost, and a run read begun before now, even one the read below
           // joins, cannot end the outage.
+          reopened = false;
           markInspectorTransportLoss(receipts, keys.run(runId));
+          // A later loss within this outage's one reread requests no other read.
+          if (reportedOutage) return;
+          reportedOutage = true;
           markApiUnreachable();
           // A loaded inspector otherwise has no failed query to drive the shared probe.
           // Try its active run read once per stream outage; a stuck stream must not churn reads.

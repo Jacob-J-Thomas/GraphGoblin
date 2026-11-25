@@ -59,8 +59,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   the run stays on screen as last observed with its typed answer kept, every write, including
   one already queued or submitted from the keyboard, is refused at once, and only a run read
   started after the loss makes the run current again. Refused stream reconnection attempts
-  trigger no further rereads, while a stream that opens again and then drops records a new loss.
-  HTTP refusals and other stream errors are unchanged. No stored, export or contract change.
+  trigger no further rereads. A stream that opens again records a new loss when it drops, or when
+  its reconnection is refused after it ended otherwise, such as the graceful close the API sends
+  when it shuts down. HTTP refusals, graceful closes and other stream errors are not losses
+  themselves. No stored, export or contract change.
 
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different

@@ -556,6 +556,110 @@ describe('run stream transport outages in the run read receipts (#575)', () => {
     });
   });
 
+  // The API ends its event streams gracefully (`res.end()`) when it shuts down, and refuses the
+  // reconnection once its listener has stopped.
+  it.each([
+    {
+      ending: 'closes gracefully',
+      error: new Error('the event stream closed before the run finished'),
+    },
+    {
+      ending: 'ends with a retryable HTTP error',
+      error: new GraphGoblinApiError({ status: 503, code: 'UNAVAILABLE' }),
+    },
+    {
+      ending: 'falls behind as a slow consumer',
+      error: new GraphGoblinApiError({ status: 503, code: 'SSE_SLOW_CONSUMER' }),
+    },
+  ])(
+    'records a refused reconnection after a reopened stream $ending as a new loss without another reread',
+    async ({ error }) => {
+      vi.useFakeTimers();
+      const { registry } = mountStream();
+      await readRun(registry);
+      const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
+      act(() => options().onError?.(new TypeError('network error'), 1));
+      const first = getInspectorRead(registry, key).loss;
+      expect(reads).toHaveBeenCalledOnce();
+
+      // A run read started after the loss recovers the run, and the stream reopens at once.
+      await readRun(registry);
+      const recovered = getInspectorRead(registry, key).committed;
+      expect(recovered).toBeGreaterThan(first);
+      await act(async () => {
+        markApiReachable();
+        await Promise.resolve();
+      });
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      act(() => options(1).onOpen?.());
+
+      // A read begun while the stream is open is still unanswered when the stream ends, without
+      // cursor progress and not by a transport failure: that ending alone is no loss.
+      let answer!: (value: typeof row) => void;
+      const answered = new Promise<typeof row>((resolve) => {
+        answer = resolve;
+      });
+      const joined = readRun(registry, () => answered);
+      const start = getInspectorRead(registry, key).pending;
+      expect(start).toBeGreaterThan(recovered);
+      act(() => options(1).onError?.(error, 1));
+      expect(getInspectorRead(registry, key)).toEqual({
+        committed: recovered,
+        pending: start,
+        loss: first,
+      });
+
+      // The API then refuses the reconnection: a new loss, already found before React renders.
+      let lost!: InspectorRead;
+      act(() => {
+        options(1).onError?.(new TypeError('Failed to fetch'), 2);
+        lost = getInspectorRead(registry, key);
+      });
+      expect(lost).toMatchObject({ committed: recovered, pending: start });
+      expect(lost.loss).toBeGreaterThan(start);
+      // The first outage's reread budget stands: the stream requests no other read.
+      expect(reads).toHaveBeenCalledOnce();
+      expect(useReachability.getState().apiReachable).toBe(true);
+
+      // The read begun before this loss answers after it: last observed, never current.
+      await act(async () => {
+        answer(row);
+        await joined;
+      });
+      expect(getInspectorRead(registry, key)).toEqual({
+        committed: start,
+        pending: 0,
+        loss: lost.loss,
+      });
+
+      // Retries refused again with no stream open since record nothing: they neither overtake a
+      // recovery read nor request or restart anything. That read makes the run current.
+      let respond!: (value: typeof row) => void;
+      const responded = new Promise<typeof row>((resolve) => {
+        respond = resolve;
+      });
+      const recovery = readRun(registry, () => responded);
+      const retrying = getInspectorRead(registry, key);
+      expect(retrying.pending).toBeGreaterThan(lost.loss);
+      act(() => {
+        options(1).onError?.(GraphGoblinApiError.network('refused'), 3);
+        options(1).onError?.(new TypeError('Failed to fetch'), 4);
+      });
+      expect(getInspectorRead(registry, key)).toEqual(retrying);
+      expect(reads).toHaveBeenCalledOnce();
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        respond(row);
+        await recovery;
+      });
+      expect(getInspectorRead(registry, key)).toEqual({
+        committed: retrying.pending,
+        pending: 0,
+        loss: lost.loss,
+      });
+    },
+  );
+
   it('records nothing for HTTP, protocol, clean-close or frame failures, or for a retired stream', async () => {
     useApiKeyStore.getState().save('same-key');
     const view = mountStream();

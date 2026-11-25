@@ -192,8 +192,11 @@ synchronously, before requesting a reread, so an already queued write is refused
 next render. If that reread joins a request started before the loss, its eventual success keeps
 the run stale and the inspector requests a later read when the earlier one settles. A distinct
 stream loss during an unanswered recovery read advances the boundary beyond that read. A stream
-that actually reopened and then dropped records that loss even when it was open for less than
-a heartbeat interval and delivered no new event. Refused retries that never reopened do not
+that actually reopened records a new loss when it drops or its next reconnection is refused,
+including after the API ended it gracefully. The confirmed reopen survives ordinary EOF and
+retryable nontransport errors; those endings alone record no loss. This holds even when the
+stream was open for less than a heartbeat interval and delivered no new event. Refused retries
+with no confirmed open since the recorded loss do not
 create further losses or stream-triggered rereads. The boundary the view remembers for a run, kept even
 when a credential or provider change empties the receipt's own loss, belongs to that run: another
 run opened in the same view starts from its own receipts, so an outage of one run's read never
