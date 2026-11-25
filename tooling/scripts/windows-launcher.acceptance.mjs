@@ -259,7 +259,7 @@ function logRecords(contents) {
 test(
   'Windows PowerShell 5.1 installer validates before replacing native launcher files',
   { skip: process.platform !== 'win32', timeout: 120_000 },
-  ciEvidence.observeTest('installer', async () => {
+  ciEvidence.observeTest('installer', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
     ciEvidence.fixture('installer', base);
@@ -660,6 +660,577 @@ test(
       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
       /Node.+22\.22\.2.+-NodePath/is,
     );
+
+    // Public reinstall, publication rollback, compiler staging and default discovery (#498, #532,
+    // #520). Every control runs before this case's only gateway start, so the owned store stays
+    // empty, and none of them starts a gateway or browser or touches an owner folder or pin.
+    const outputState = (paths) =>
+      Promise.all(
+        paths.map(async (path) => {
+          const { dev, ino } = await stat(path, { bigint: true });
+          return { path, dev, ino, bytes: await readFile(path) };
+        }),
+      );
+    const sourceState = () => outputState([source, alias]);
+    const sourceStateBefore = await sourceState();
+    assert.equal(sourceStateBefore[1].ino, sourceStateBefore[0].ino, 'The alias is a hard link.');
+    const refused = (attempt, message) =>
+      attempt.then(
+        () => assert.fail(message),
+        (error) => error,
+      );
+    // An -EncodedCommand child serializes its error stream as CLIXML (progress records included),
+    // and the error view may wrap long lines: decode its error lines, then compare refusals
+    // without whitespace.
+    const xmlEntities = { lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' };
+    function errorText(stderr) {
+      if (!stderr.startsWith('#< CLIXML')) return stderr;
+      return [...stderr.matchAll(/<S S="Error">([^<]*)<\/S>/g)]
+        .map(([, line]) =>
+          line
+            .replace(/&(lt|gt|quot|apos|amp);/g, (_, name) => xmlEntities[name])
+            .replace(/_x([0-9A-Fa-f]{4})_/g, (_, hex) =>
+              String.fromCharCode(Number.parseInt(hex, 16)),
+            ),
+        )
+        .join('');
+    }
+    const compact = (text) => text.replace(/\s+/g, '');
+    function assertRefusal(error, ...messages) {
+      assert.equal(error.code, 1);
+      const text = compact(errorText(error.stderr));
+      assert.ok(
+        messages.some((message) => text.includes(compact(message))),
+        `Unexpected installer refusal: ${error.stderr}`,
+      );
+    }
+    async function assertNoStages(directories) {
+      for (const directory of directories) {
+        const names = await readdir(directory);
+        assert.deepEqual(
+          names.filter((name) => name.startsWith('gg-launcher-stage-')),
+          [],
+          'No installer-owned stage may remain beside an output.',
+        );
+      }
+    }
+    async function assertLauncherLinks(links, launcher, installed) {
+      const canonical = await realpath(launcher);
+      for (const link of links) {
+        const shortcut = JSON.parse(
+          (await execute(fixture, ['--inspect-shortcut', link], { windowsHide: true })).stdout,
+        );
+        assert.equal(await realpath(shortcut.TargetPath), canonical);
+        assert.equal(shortcut.Arguments, `--config "${canonical}.json"`);
+        assert.equal(shortcut.IconLocation, installed.IconLocation);
+        const id = await execute(fixture, ['--read-shortcut-id', link], { windowsHide: true });
+        assert.equal(id.stdout.trim(), installed.LauncherAppUserModelId);
+      }
+    }
+    /** A separate process holds `path` with read access and FILE_SHARE_READ only. */
+    function holdWithReadSharing(path) {
+      const holding = execute(
+        powerShell,
+        [
+          '-NoLogo',
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          "$held = [IO.File]::Open($env:GG_TEST_HELD, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read); try { [Console]::Out.WriteLine('held'); [Console]::Out.Flush(); [void][Console]::In.ReadToEnd() } finally { $held.Dispose() }",
+        ],
+        { env: { ...env, GG_TEST_HELD: path }, cwd: base, windowsHide: true, timeout: 60_000 },
+      );
+      // The outcome is the observed child record; a closed pipe must not escape as an event.
+      holding.child.stdin.on('error', () => {});
+      const settled = holding.then(
+        (result) => ({ result }),
+        (error) => ({ error }),
+      );
+      const ready = new Promise((resolve, reject) => {
+        holding.child.stdout.on('data', (chunk) => {
+          if (String(chunk).includes('held')) resolve();
+        });
+        settled.then(() => reject(new Error('The read-sharing holder exited before holding.')));
+      });
+      return {
+        ready,
+        release() {
+          holding.child.stdin.end();
+          return settled;
+        },
+      };
+    }
+
+    // Disposable Shell Links: a previous direct Chrome pin, and a PWA source for the default port
+    // 4747, whose app ID is derived without connecting to or starting anything on that port.
+    const seeds = join(base, 'seeds');
+    await mkdir(seeds);
+    const pinnedSeed = join(seeds, 'previous direct pin.lnk');
+    const defaultSource = join(seeds, 'default port source.lnk');
+    const defaultChromeId = (
+      await execute(fixture, ['--expected-app-id', '4747'], { windowsHide: true })
+    ).stdout.trim();
+    await runPowerShell(
+      `$ErrorActionPreference = 'Stop'
+      $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
+      $shell = New-Object -ComObject WScript.Shell
+      foreach ($link in $request.links) {
+        $shortcut = $shell.CreateShortcut($link.path)
+        $shortcut.TargetPath = $request.proxy
+        $shortcut.Arguments = $link.arguments
+        $shortcut.Description = $link.description
+        $shortcut.Save()
+      }`,
+      {
+        proxy,
+        links: [
+          {
+            path: pinnedSeed,
+            arguments: `--profile-directory="Default" --app-id=${chromeId}`,
+            description: 'Previous direct Chrome pin fixture',
+          },
+          {
+            path: defaultSource,
+            arguments: `--profile-directory="Default" --app-id=${defaultChromeId}`,
+            description: 'Default port Chrome PWA fixture',
+          },
+        ],
+      },
+    );
+    await execute(
+      fixture,
+      ['--ensure-gateway', '--config', fixtureConfig, '--stamp-shortcut', defaultSource],
+      { windowsHide: true },
+    );
+
+    const reinstallRoot = join(base, 'reinstall');
+    const reinstallDir = join(reinstallRoot, 'installed launcher');
+    const reinstallExe = join(reinstallDir, 'GraphGoblin.exe');
+    const reinstallLinks = ['Desktop', 'Programs', 'Pinned'].map((folder) =>
+      join(reinstallRoot, folder, 'GraphGoblin.lnk'),
+    );
+    const [reinstallDesktop, reinstallPrograms, reinstallPinned] = reinstallLinks;
+    for (const link of reinstallLinks) await mkdir(dirname(link), { recursive: true });
+    await copyFile(pinnedSeed, reinstallPinned);
+    const reinstallOutputs = [reinstallExe, reinstallExe + '.json', ...reinstallLinks];
+    const reinstallFolders = [reinstallRoot, ...reinstallLinks.map((link) => dirname(link))];
+    const reinstallOptions = (level) => ({
+      InstallDir: reinstallDir,
+      DesktopShortcut: reinstallDesktop,
+      StartMenuShortcut: reinstallPrograms,
+      PinnedShortcut: reinstallPinned,
+      Environment: { ...safeOverrides, GG_LOG_LEVEL: level },
+    });
+
+    // Also the short fresh and same-path reinstall success controls for #532. Rewriting a disposable
+    // pinned file is not evidence of Explorer's taskbar behaviour.
+    await t.test(
+      'public first install and same-path reinstall persist changed settings and every shortcut',
+      async () => {
+        const seededPin = await readFile(reinstallPinned);
+        const installed = [];
+        for (const level of ['warn', 'debug']) {
+          const result = await invoke(reinstallOptions(level));
+          assert.equal(errorText(result.stderr), '');
+          assert.match(result.stdout, /Launcher configured\./);
+          const persisted = JSON.parse(await readFile(reinstallExe + '.json', 'utf8'));
+          assert.deepEqual(persisted.Environment, { ...safeOverrides, GG_LOG_LEVEL: level });
+          assert.equal(persisted.Port, port);
+          assert.equal(persisted.DataDir, store);
+          assert.match(persisted.LauncherAppUserModelId, /^GraphGoblin\.[a-f0-9]{24}$/);
+          await assertLauncherLinks(reinstallLinks, reinstallExe, persisted);
+          installed.push(persisted);
+          assert.deepEqual(await sourceState(), sourceStateBefore);
+          assert.deepEqual(await readdir(store), []);
+          await assertNoStages([...reinstallFolders, reinstallDir]);
+        }
+        // Only the explicitly changed setting differs; the launcher identity is stable.
+        assert.equal(installed[1].LauncherAppUserModelId, installed[0].LauncherAppUserModelId);
+        assert.deepEqual(
+          { ...installed[1], Environment: null },
+          { ...installed[0], Environment: null },
+        );
+        assert.notDeepEqual(await readFile(reinstallPinned), seededPin);
+      },
+    );
+
+    await t.test(
+      'a later output held with read-only sharing restores every previous file',
+      async () => {
+        const outputsBefore = await outputState(reinstallOutputs);
+        // Identity and hash reads still succeed; replacing or deleting the Programs link does not.
+        const holder = holdWithReadSharing(reinstallPrograms);
+        let refusal;
+        let released;
+        let stages;
+        try {
+          await holder.ready;
+          stages = await observeStages(async () => {
+            refusal = await refused(
+              invoke(reinstallOptions('info')),
+              'A denied replacement must refuse the installation.',
+            );
+          });
+        } finally {
+          released = await holder.release();
+        }
+        assert.ok(released.result, 'The read-sharing holder must exit normally after release.');
+        assert.equal(released.result.stdout.trim(), 'held');
+        assertRefusal(refusal, 'Launcher publication failed. The previous files were restored.');
+        assert.ok(stages.length > 0, 'The restored installation must exercise its stages.');
+        assert.deepEqual(await outputState(reinstallOutputs), outputsBefore);
+        assert.deepEqual(await sourceState(), sourceStateBefore);
+        assert.deepEqual(await readdir(store), []);
+        await assertNoStages([...reinstallFolders, reinstallDir]);
+      },
+    );
+
+    const resourceRefusals = ['CS1567', 'CS1619'].map(
+      (code) =>
+        `Launcher compilation failed while the .NET Framework C# compiler prepared the launcher's Win32 resources (compiler error ${code}). The installer compiles in a temporary gg-launcher-stage folder inside the install folder, or its nearest existing parent, and that staging path may be too long for this compiler. Choose a shorter writable local folder with -InstallDir, then run the installer again.`,
+    );
+    await t.test(
+      'long staging paths refuse compilation with InstallDir guidance and keep installed files',
+      async () => {
+        // Fixture geometry, not a product rule: an existing 174-character InstallDir gives a
+        // 241-character staged executable, which the .NET Framework compiler was observed to
+        // refuse during resource preparation. The installer itself has no path-length limit.
+        const geometry = 174;
+        const canonicalBase = await realpath(base);
+        const longName = (parent) => {
+          const length = geometry - join(canonicalBase, parent).length - 1;
+          assert.ok(length >= 16 && length <= 200, 'The checkout leaves no room for the fixture.');
+          return `long install ${'x'.repeat(length)}`.slice(0, length);
+        };
+        // Watcher names are relative to the fixture root: the folder that received each stage.
+        const stagedIn = (stages) =>
+          new Set(
+            stages
+              .map((name) => dirname(name))
+              .filter((folder) => !folder.includes('gg-launcher-stage-')),
+          );
+
+        // A fresh install into the existing long folder stages there and is refused.
+        const freshName = longName('long fresh');
+        const longFresh = join(canonicalBase, 'long fresh', freshName);
+        await mkdir(longFresh, { recursive: true });
+        assert.equal((await realpath(longFresh)).length, geometry);
+        const freshFolders = ['Desktop', 'Programs'].map((folder) =>
+          join(base, 'long fresh links', folder),
+        );
+        for (const folder of freshFolders) await mkdir(folder, { recursive: true });
+        let freshRefusal;
+        const freshStages = await observeStages(async () => {
+          freshRefusal = await refused(
+            invoke({
+              InstallDir: longFresh,
+              DesktopShortcut: join(freshFolders[0], 'GraphGoblin.lnk'),
+              StartMenuShortcut: join(freshFolders[1], 'GraphGoblin.lnk'),
+              Environment: safeOverrides,
+            }),
+            'A long fresh staging path must be refused.',
+          );
+        });
+        assertRefusal(freshRefusal, ...resourceRefusals);
+        assert.deepEqual([...stagedIn(freshStages)], [join('long fresh', freshName)]);
+        for (const folder of [longFresh, ...freshFolders])
+          assert.deepEqual(await readdir(folder), []);
+
+        // While the same long folder is absent, staging uses its shorter existing parent.
+        const lowerAnchor = join(canonicalBase, 'long reinstall');
+        await mkdir(lowerAnchor);
+        const installName = longName('long reinstall');
+        const longInstall = join(lowerAnchor, installName);
+        const longExe = join(longInstall, 'GraphGoblin.exe');
+        const longLinks = ['Desktop', 'Programs', 'Pinned'].map((folder) =>
+          join(base, 'long reinstall links', folder, 'GraphGoblin.lnk'),
+        );
+        for (const link of longLinks) await mkdir(dirname(link), { recursive: true });
+        await copyFile(pinnedSeed, longLinks[2]);
+        const longOptions = (level) => ({
+          InstallDir: longInstall,
+          DesktopShortcut: longLinks[0],
+          StartMenuShortcut: longLinks[1],
+          PinnedShortcut: longLinks[2],
+          Environment: { ...safeOverrides, GG_LOG_LEVEL: level },
+        });
+        let first;
+        const firstStages = stagedIn(
+          await observeStages(async () => {
+            first = await invoke(longOptions('warn'));
+          }),
+        );
+        assert.equal(errorText(first.stderr), '');
+        assert.ok(firstStages.has('long reinstall'), 'The first install stages in the parent.');
+        assert.ok(!firstStages.has(join('long reinstall', installName)));
+        assert.equal((await realpath(longInstall)).length, geometry);
+        const longOutputs = [longExe, longExe + '.json', ...longLinks];
+        const installed = await outputState(longOutputs);
+        assert.equal(JSON.parse(installed[1].bytes).Environment.GG_LOG_LEVEL, 'warn');
+
+        // Once it exists, the same-path reinstall stages inside it and is refused safely.
+        let reinstallRefusal;
+        const reinstallStages = await observeStages(async () => {
+          reinstallRefusal = await refused(
+            invoke(longOptions('debug')),
+            'A long same-path reinstall must be refused.',
+          );
+        });
+        assertRefusal(reinstallRefusal, ...resourceRefusals);
+        assert.deepEqual([...stagedIn(reinstallStages)], [join('long reinstall', installName)]);
+        assert.deepEqual(await outputState(longOutputs), installed);
+        assert.deepEqual((await readdir(longInstall)).sort(), [
+          'GraphGoblin.exe',
+          'GraphGoblin.exe.json',
+        ]);
+        await assertNoStages([lowerAnchor, ...longLinks.map((link) => dirname(link))]);
+        assert.deepEqual(await sourceState(), sourceStateBefore);
+        assert.deepEqual(await readdir(store), []);
+      },
+    );
+
+    await t.test('a non-resource compiler failure keeps the generic redacted refusal', async () => {
+      // Every compiler line names this path, which carries the private canary and partial codes
+      // that are not diagnostics. The first source's diagnostic quotes the decoy type name
+      // 'CS1619'. The second fails with an actual CS1029 whose #error message contains a later
+      // 'error CS1619:', which is not the line's diagnostic field.
+      const compileRepo = join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY CS15670 CS1619 repo');
+      for (const file of [
+        'apps/api/dist/main.js',
+        'apps/api/dist/instance-identity.js',
+        'apps/api/dist/windows-log/guard.js',
+        'apps/web/dist/index.html',
+      ]) {
+        await mkdir(dirname(join(compileRepo, file)), { recursive: true });
+        await writeFile(join(compileRepo, file), '// compiler failure control only\n');
+      }
+      await mkdir(join(compileRepo, 'apps/windows-launcher'));
+      for (const program of [
+        'class CompilerControl { CS1619 field; }\n',
+        '#error error CS1619: unrelated compiler failure\n',
+      ]) {
+        await writeFile(join(compileRepo, 'apps/windows-launcher/Launcher.cs'), program);
+        const refusal = await refused(
+          invoke({ RepoPath: compileRepo }),
+          'A compiler failure must refuse the installation.',
+        );
+        assert.equal(refusal.code, 1);
+        const text = errorText(refusal.stderr);
+        assert.match(text, /^Launcher compilation failed\.\r?$/m);
+        assert.doesNotMatch(text, /Win32 resources|-InstallDir|CS1567|CS1619/);
+        for (const output of [refusal.stdout, refusal.stderr, text]) {
+          assert.doesNotMatch(output, /GG_INSTALLER_PRIVATE_PATH_CANARY/);
+          assert.ok(!output.includes(secretCanary));
+        }
+        assert.deepEqual(await snapshot(), before);
+        assert.deepEqual(await readdir(store), []);
+        await assertNoStages([install, dirname(desktop), dirname(programs)]);
+      }
+    });
+
+    // #520: the shipped script binds its own zero-argument defaults in a hidden, no-profile child.
+    // Checkout, project Node PATH, APPDATA/LOCALAPPDATA, GG_DATA_DIR and TEMP/TMP are fixture
+    // values, and a test-only, process-local TypeAccelerators entry answers the script's two
+    // [Environment]::GetFolderPath lookups with fixture Desktop and Programs folders. This proves
+    // default binding and source selection with an isolated resolver, not how Windows resolves
+    // any account's redirected folders. The fixture refuses before the installer on any doubt.
+    const confinedDefaults = `$ErrorActionPreference = 'Stop'
+      Set-StrictMode -Version Latest
+      class GraphGoblinFixtureFolders {
+        static [string] $Desktop
+        static [string] $Programs
+        static [string] GetFolderPath([string] $Folder) {
+          if ($Folder -ceq 'Desktop') { return [GraphGoblinFixtureFolders]::Desktop }
+          if ($Folder -ceq 'Programs') { return [GraphGoblinFixtureFolders]::Programs }
+          throw [NotSupportedException]::new('The fixture folder resolver supports only Desktop and Programs.')
+        }
+      }
+      function Stop-Fixture([string] $Reason) { throw "Fixture refused before the installer ran: $Reason." }
+      # Registered before anything parses the installer: parsing resolves its type names, and the
+      # process then keeps a resolved [Environment] for every later script block.
+      $accelerators = [psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators', $true)
+      if ($accelerators::Get.ContainsKey('Environment')) { Stop-Fixture 'an Environment accelerator already exists' }
+      $accelerators::Add('Environment', [GraphGoblinFixtureFolders])
+      $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
+      [GraphGoblinFixtureFolders]::Desktop = $request.Desktop
+      [GraphGoblinFixtureFolders]::Programs = $request.Programs
+      $env:PATH = $request.path
+      $env:APPDATA = $request.appData
+      $env:LOCALAPPDATA = $request.localAppData
+      $env:GG_DATA_DIR = $request.dataDir
+      $env:TEMP = $request.temp
+      $env:TMP = $request.temp
+      $text = [IO.File]::ReadAllText($request.installer)
+      if ([regex]::Matches($text, 'GetFolderPath|SpecialFolder|System\\.Environment|TypeAccelerators', 'IgnoreCase').Count -ne 2) {
+        Stop-Fixture 'the installer folder lookups changed'
+      }
+      $tokens = $null
+      $parseErrors = $null
+      $ast = [Management.Automation.Language.Parser]::ParseFile($request.installer, [ref] $tokens, [ref] $parseErrors)
+      if ($parseErrors.Count -ne 0) { Stop-Fixture 'the installer did not parse' }
+      $typed = @($ast.FindAll({
+        param($node)
+        ($node -is [Management.Automation.Language.TypeExpressionAst] -or
+          $node -is [Management.Automation.Language.TypeConstraintAst] -or
+          $node -is [Management.Automation.Language.AttributeAst]) -and
+        $node.TypeName.FullName -match '(?:^|\\W)Environment(?:$|\\W)'
+      }, $true))
+      $lookups = @(foreach ($node in $typed) {
+        $call = $node.Parent
+        if ($node -isnot [Management.Automation.Language.TypeExpressionAst] -or
+          $node.TypeName.FullName -cne 'Environment' -or
+          $call -isnot [Management.Automation.Language.InvokeMemberExpressionAst] -or
+          !$call.Static -or ![object]::ReferenceEquals($call.Expression, $node) -or
+          $call.Member -isnot [Management.Automation.Language.StringConstantExpressionAst] -or
+          $call.Member.Value -cne 'GetFolderPath' -or $null -eq $call.Arguments -or
+          $call.Arguments.Count -ne 1 -or
+          $call.Arguments[0] -isnot [Management.Automation.Language.StringConstantExpressionAst]) {
+          Stop-Fixture 'the installer has an unsupported Environment use'
+        }
+        $call.Arguments[0].Value
+      })
+      if (($lookups -join ',') -cne 'Desktop,Programs') { Stop-Fixture 'the installer folder lookups changed' }
+      if ((& ([scriptblock]::Create('[Environment]'))) -ne [GraphGoblinFixtureFolders]) {
+        Stop-Fixture 'Environment does not resolve to the fixture folder resolver'
+      }
+      foreach ($folder in 'Desktop', 'Programs') {
+        if ((& ([scriptblock]::Create("[Environment]::GetFolderPath('$folder')"))) -cne $request.$folder) {
+          Stop-Fixture "the $folder lookup does not resolve to its fixture folder"
+        }
+      }
+      $unsupported = $false
+      try {
+        [void](& ([scriptblock]::Create("[Environment]::GetFolderPath('ApplicationData')")))
+        $unsupported = $true
+      } catch { }
+      if ($unsupported) { Stop-Fixture 'the resolver answered an unsupported folder' }
+      & $request.installer`;
+    async function defaultsFixture(name) {
+      const folder = join(base, name);
+      const appData = join(folder, 'AppData', 'Roaming');
+      const folders = {
+        Desktop: join(folder, 'Desktop'),
+        Programs: join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+        appData,
+        localAppData: join(folder, 'AppData', 'Local'),
+        dataDir: join(folder, 'store'),
+        temp: join(folder, 'Temp'),
+      };
+      for (const path of Object.values(folders)) await mkdir(path, { recursive: true });
+      return folders;
+    }
+    const invokeDefaults = (folders) =>
+      runPowerShell(
+        confinedDefaults,
+        { installer, path: nodeAvailablePath, ...folders },
+        {
+          APPDATA: folders.appData,
+          LOCALAPPDATA: folders.localAppData,
+          GG_DATA_DIR: folders.dataDir,
+          TEMP: folders.temp,
+          TMP: folders.temp,
+        },
+      );
+    const launcherFolders = (folders) => {
+      const installDir = join(folders.localAppData, 'GraphGoblin', 'Launcher');
+      return { installDir, launcher: join(installDir, 'GraphGoblin.exe') };
+    };
+
+    await t.test(
+      'zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links',
+      async () => {
+        const folders = await defaultsFixture('defaults chrome apps');
+        const chromeApps = join(folders.Programs, 'Chrome Apps');
+        await mkdir(chromeApps);
+        const pwa = join(chromeApps, 'GraphGoblin.lnk');
+        await copyFile(defaultSource, pwa);
+        const pwaBefore = await outputState([pwa]);
+        const result = await invokeDefaults(folders);
+        assert.equal(errorText(result.stderr), '');
+        assert.match(result.stdout, /Launcher configured\./);
+        assert.match(result.stdout, /Gateway: http:\/\/127\.0\.0\.1:4747\/app\//);
+        const { installDir, launcher } = launcherFolders(folders);
+        const persisted = JSON.parse(await readFile(launcher + '.json', 'utf8'));
+        assert.equal(persisted.Repo, dirname(dirname(installer)));
+        assert.equal(persisted.Node, await realpath(process.execPath));
+        assert.equal(persisted.DataDir, folders.dataDir);
+        assert.equal(persisted.Port, 4747);
+        assert.equal(persisted.ChromeAppId, defaultChromeId);
+        assert.equal(persisted.PwaAppUserModelId, 'Chrome.PwaFixture');
+        assert.deepEqual(persisted.Environment, {});
+        const links = [
+          join(folders.Desktop, 'GraphGoblin.lnk'),
+          join(folders.Programs, 'GraphGoblin.lnk'),
+        ];
+        await assertLauncherLinks(links, launcher, persisted);
+        const [desktopLink, programsLink] = await outputState(links);
+        assert.ok(
+          desktopLink.dev !== programsLink.dev || desktopLink.ino !== programsLink.ino,
+          'Desktop and Programs links must be separate files.',
+        );
+        assert.deepEqual(await outputState([pwa]), pwaBefore);
+        assert.deepEqual(await readdir(folders.dataDir), []);
+        await assertNoStages([
+          folders.localAppData,
+          dirname(installDir),
+          installDir,
+          folders.Desktop,
+          folders.Programs,
+          chromeApps,
+        ]);
+      },
+    );
+
+    await t.test(
+      'a Desktop-only default source collides with the Desktop output and keeps sentinels',
+      async () => {
+        const folders = await defaultsFixture('defaults desktop source');
+        const pwa = join(folders.Desktop, 'GraphGoblin.lnk');
+        await copyFile(defaultSource, pwa);
+        const { installDir, launcher } = launcherFolders(folders);
+        await mkdir(installDir, { recursive: true });
+        const sentinels = [launcher, launcher + '.json', join(folders.Programs, 'GraphGoblin.lnk')];
+        for (const sentinel of sentinels) await writeFile(sentinel, `sentinel ${randomUUID()}\n`);
+        const watched = [pwa, ...sentinels];
+        const before = await outputState(watched);
+        const refusal = await refused(
+          invokeDefaults(folders),
+          'A Desktop-only source must collide with the Desktop output.',
+        );
+        assertRefusal(
+          refusal,
+          'The PWA source and launcher outputs must use distinct files and paths. Choose a separate shortcut destination.',
+        );
+        assert.deepEqual(await outputState(watched), before);
+        assert.deepEqual(await readdir(folders.Desktop), ['GraphGoblin.lnk']);
+        assert.deepEqual(await readdir(folders.Programs), ['GraphGoblin.lnk']);
+        assert.deepEqual((await readdir(installDir)).sort(), [
+          'GraphGoblin.exe',
+          'GraphGoblin.exe.json',
+        ]);
+        assert.deepEqual(await readdir(folders.dataDir), []);
+        await assertNoStages([folders.localAppData, dirname(installDir)]);
+      },
+    );
+
+    await t.test('without a default source no destination or stage is published', async () => {
+      const folders = await defaultsFixture('defaults missing source');
+      await mkdir(join(folders.Programs, 'Chrome Apps'));
+      const refusal = await refused(
+        invokeDefaults(folders),
+        'A missing default source must be refused.',
+      );
+      assertRefusal(
+        refusal,
+        'Install the Chrome PWA, then supply -PwaShortcut with its .lnk path.',
+      );
+      assert.deepEqual(await readdir(folders.Desktop), []);
+      assert.deepEqual(await readdir(folders.Programs), ['Chrome Apps']);
+      assert.deepEqual(await readdir(join(folders.Programs, 'Chrome Apps')), []);
+      assert.deepEqual(await readdir(folders.localAppData), []);
+      assert.deepEqual(await readdir(folders.dataDir), []);
+    });
+
     try {
       const started = await execute(exe, ['--ensure-gateway', '--config', configPath], {
         env: {

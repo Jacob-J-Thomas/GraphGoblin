@@ -52,6 +52,20 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
   no record is assumed. Run it from a terminal as above.
 - **Built gateway does not match this launcher:** the checkout was built before this launcher
   version. Stop the running gateway, rebuild and reinstall the launcher together.
+- **Installer: compilation failed while the C# compiler prepared Win32 resources (CS1567 or
+  CS1619):** `install-windows-launcher.ps1` compiles the launcher in a temporary
+  `gg-launcher-stage-…` folder inside the install folder, or inside its nearest existing parent
+  while the install folder does not exist yet. The Windows .NET Framework C# compiler can fail to
+  prepare the executable's resources when that staging path is long; the limit belongs to this
+  compiler, and the installer applies no length rule of its own. A first install into a new, long
+  folder can therefore succeed while a later reinstall into the same, now existing folder fails.
+  Run the installer again with a shorter writable local folder passed as `-InstallDir`, such as
+  the default `%LOCALAPPDATA%\GraphGoblin\Launcher` or another short folder in your own profile;
+  it also holds the launcher logs, so it must stay private (see **Log folder unsafe or
+  unavailable** above). The refusal leaves the installed launcher, its configuration and
+  shortcuts unchanged and removes its stage; a successful install into the new folder points the
+  shortcuts there, and you can then remove the old folder. Any other compiler failure reports
+  only `Launcher compilation failed.`: check the checkout and the .NET Framework compiler.
 
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from

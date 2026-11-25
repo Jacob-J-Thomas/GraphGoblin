@@ -71,6 +71,34 @@ multi-record write, and its rollback after a short write, keep no encoded copy b
 status and closes them, records only the outcome, status and parser code (no canary in any string
 or decoded byte array) and then serves an ordinary request; ordinary construction keeps Fastify's
 default handler as the control.
+The installer case runs the shipped script in hidden, no-profile Windows PowerShell 5.1 on its
+disposable fixture, as named subtests before the case's only gateway start (#498, #532, #520). A
+public first install and same-path reinstall with an explicit disposable pinned `.lnk` change a
+persisted nonsecret override (`GG_LOG_LEVEL` `warn` to `debug`) and read back the stable launcher
+AppUserModelID, target, adjacent `--config` argument and icon of the Desktop, Programs and pinned
+links. The PWA source and its hard link keep their bytes and file identity, the store stays empty
+and no `gg-launcher-stage-*` folder remains at any output or nearest existing ancestor. Rewriting
+a disposable pin is not evidence of Explorer's taskbar behavior. Another process then holds the
+existing Programs link with read access and read-only sharing: the pre-publication identity and
+hash reads succeed, its replacement is denied after the launcher and configuration were
+published, the installer reports that the previous files were restored, and every output keeps
+its bytes and identity. The compiler controls use fixture geometry, not a product rule: an
+existing 174-character InstallDir gives a 241-character staged executable, which the .NET
+Framework compiler refuses during resource preparation (CS1567/CS1619). A fresh install there,
+and the same-path reinstall after a successful first install that staged in the shorter existing
+parent while the folder was absent, are refused with `-InstallDir` guidance, keep the installed
+executable, configuration and shortcuts, and leave no stage; a non-resource compiler failure
+keeps the generic message without paths or compiler output. A zero-argument run binds the
+script's own defaults: checkout, project Node `PATH`, `APPDATA`/`LOCALAPPDATA`, `GG_DATA_DIR` and
+`TEMP`/`TMP` are fixture values, and a test-only, process-local type accelerator registered
+before the script is parsed answers its two `[Environment]::GetFolderPath` lookups with fixture
+Desktop and Programs folders. The child refuses before the installer runs unless those are the
+script's only folder lookups and the alias resolves in a newly parsed script block. Port 4747's
+app ID is derived without contacting the port. A Chrome Apps source yields separate Desktop and
+Programs links, a Desktop-only source collides with the Desktop output and preserves existing
+outputs, and a missing source publishes nothing. This proves default parameter binding and source
+selection with an isolated resolver, not Windows folder redirection for any account; no owner
+folder, registry value, Chrome install or real pin is used.
 They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
 tracked separately with native shell evidence. No live provider turn or owner service/store is
 used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
