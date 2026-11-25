@@ -49,7 +49,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 
 | Tool              | Use it to                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------- |
-| `list_loops`      | Find loops by optional name/description query and see their publish state.                      |
+| `list_loops`      | Find candidate loops by an optional name/description substring and see their publish state.     |
 | `describe_loop`   | Inspect triggers, input schemas, input waits, and exit mappings before a start.                 |
 | `start_run`       | Start a manual trigger and return its run ID immediately.                                       |
 | `wait_for_run`    | Wait for completion, or return early for input or a pause.                                      |
@@ -63,7 +63,11 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `provide_input`   | Supply the observed `waiting.waitId` and schema-valid input to an input wait.                   |
 | `send_signal`     | Send the observed `waiting.waitId` and a named signal with an optional payload; inspect `woke`. |
 
-`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for a loop with no published version; a draft run keeps a snapshot of the draft as it was at start. `allowDraft` cannot select a newer draft of a published loop. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
+`describe_loop` and `start_run` take `loopId` as a loop ID or a loop's full name. The tool first looks it up as an exact ID of one of your loops. A successful ID lookup wins. If no loop has that ID, the tool falls back to the name. Any other ID lookup error, such as a missing scope, is returned as it is. The fallback compares the whole name with each of your loops' names after both are trimmed, each whitespace run is collapsed to one space, and both are lowercased. The comparison applies no Unicode normalization or locale-dependent case folding: `straße` finds `Straße` but not `STRASSE`, and a precomposed `é` does not match an `e` followed by a combining accent. Part of a name does not match and returns `LOOP_NOT_FOUND`. Results show each loop's name with its stored spelling. If more than one loop matches, which the API's name rule normally prevents, the tool returns `AMBIGUOUS_LOOP_NAME` with their IDs; pass an ID instead.
+
+The `list_loops` `query` is a separate discovery filter: it is trimmed and matched as a case-insensitive substring of names and descriptions, without collapsing whitespace inside it. It can therefore miss a full name that differs only in spacing, which `describe_loop` still resolves.
+
+`start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for a loop with no published version; a draft run keeps a snapshot of the draft as it was at start. `allowDraft` cannot select a newer draft of a published loop. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
