@@ -149,6 +149,49 @@ describe('authored mutation failure boundaries', () => {
     },
   );
 
+  it.each(['mutate', 'inference'] as const)(
+    'repairs a %s coerce whose authored schema does not compile, without an authored boundary',
+    async (kind) => {
+      const engine = await createTestEngine();
+      const invalid = { ...coerce, source: '/vars/prior', jsonSchema: { type: 'not-a-type' } };
+      const operations = [prior, invalid, later];
+      const config =
+        kind === 'mutate'
+          ? { operations }
+          : { prompt: { template: 'never sent' }, input: operations };
+      const run = await engine.runToIdle(
+        engine.publish(singleNodeLoop('Invalid schema', { id: 'mut', kind, label: 'M', config }))
+          .loopId,
+      );
+      expectAtomicFailure(engine, run);
+      expect(run.failure).toMatchObject({
+        code: 'OUTPUT_SCHEMA_MISMATCH',
+        nodeId: 'mut',
+        resumable: true,
+        details: { errors: [expect.stringMatching(/^invalid schema: /)], value: 1 },
+      });
+      expect(run.failure?.details).not.toHaveProperty('boundary');
+      expect(engine.ports.structuredFake.requests).toEqual([
+        { prompt: expect.stringContaining('invalid schema: '), schema: invalid.jsonSchema },
+      ]);
+      expect(engine.ports.harness.started).toHaveLength(0);
+    },
+  );
+
+  it('continues raw after an authored schema that does not compile when the policy allows', async () => {
+    const engine = await createTestEngine();
+    const invalid = {
+      ...coerce,
+      source: '/vars/prior',
+      jsonSchema: { type: 'not-a-type' },
+      repair: { ...coerce.repair, onFailure: 'continue-raw' as const },
+    };
+    const run = await engine.runToIdle(publish(engine, [prior, invalid]).loopId);
+    expect(run.status).toBe('succeeded');
+    expect((await engine.manager.getThread(run.id))?.vars).toEqual({ prior: 1, repaired: 1 });
+    expect(engine.ports.structuredFake.requests).toHaveLength(1);
+  });
+
   it.each([
     { source: 'completion', ErrorType: Error },
     { source: 'completion', ErrorType: TemplateError },

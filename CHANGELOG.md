@@ -80,6 +80,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   user guide, docs/09 and the shared run-loop skill used by the Codex and Claude plugins now
   describe this lookup. No store, schema or format change.
 
+- Authored-failure cleanup (#554). Run behaviour for supported definitions is unchanged. The
+  engine's `HandlerServices` no longer offers `render`, which no handler called; authored
+  fields keep rendering through the helpers that report their boundary. Context-mutation
+  operations no longer declare a `schema` authored fact that no supported path produced: a
+  `coerce` schema that does not compile was and remains a validation error that goes through
+  the repair policy. An exception thrown while validating reaches only the operation's ordinary
+  error mapper, so inference transforms let it propagate instead of reporting it as an authored
+  schema failure; only synthetic non-JSON values in direct domain calls have been shown to reach
+  this path. A `coerce` source that is not an RFC 6901 pointer remains refused by the contract.
+  The [execution engine](docs/05-execution-engine.md#authored-boundary-identifiers) document
+  now lists the closed `failure.details.boundary` identifiers for API and MCP clients. No stored
+  data, contract or API change.
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
