@@ -1,0 +1,41 @@
+# Independent formal review 1 — #554
+
+**READY. No actionable findings; no FIX-IN-PR or FOLLOW-UP item is required by this review.** This verdict applies to the frozen unstaged candidate on base `d2df8600c2c8574bec420947de686b936910b245`, branch `codex/gg-fu-authored-cleanup-20261124`. It permits progression to the remaining delivery gates, not publication or merge.
+
+The review read repository AGENTS.md, docs/README, docs/12 and docs/15; live issue #554 and its admission comment `7150002570`; the implementation brief/contract; the actual patch, source, contracts and author execution evidence. The admission comment supersedes the issue body's old parking wording. The observed candidate contains exactly 11 changed files and no staged content. All 11 SHA-256 values match the actual Claude author exit receipt. `FROZEN-CANDIDATE.json`, `candidate.patch` and `SOURCE-HASHES.json` bind the result to the reviewed bytes. The final invariants confirm unchanged head, branch, patch, index, status and reviewed sources.
+
+Patch SHA-256: `4F40CEB69211A9F8FAB0D7D18E6B21894ECC4136BCBF25548D98094C93885E9A`.
+
+The production deletion is sound. A repository-wide caller inventory finds no use of `services.render`. The removed declaration, run-manager closure/import and three typed fixture stubs are the complete old path. Other `renderTemplate` callers, particularly canonical prompt rendering in inference-context.ts, are independent and remain present. The fixtures retain their types and assertions. The exported HandlerServices shape changes as explicitly authorized; this pre-release cleanup needs no compatibility wrapper.
+
+The mutation change preserves the actual error routes. `json-schema.ts:71` catches compilation failures and returns an invalid SchemaValidation; the generated validator invocation at line 79 can still throw. `mutations.ts:223` sends a supplied fact to the fact mapper, otherwise preserves the ordinary mapper or thrown value. The new catch at lines 341–346 calls that route without a fact. Thus an invalid authored schema still enters repair, while an exception thrown by validation cannot acquire false authored schema provenance. The context mutation handler retains its ordinary mapping; inference transforms supply only the fact mapper and preserve the original throw. The engine's existing repair policy, output mismatch classification and resumability remain in force. No catch has been widened around repair/provider work.
+
+The malformed source-pointer hypothesis is correctly left outside supported run behavior. `contracts/src/mutations.ts:100` requires JsonPointerSchema; `common.ts:37` accepts only RFC 6901 syntax. The read helper's pointer syntax throw requires a nonempty pointer lacking a slash (`pointer.ts:5`), already refused by the contract. Missing paths, non-container traversal and invalid array tokens return not-found and enter validation/repair instead. Keeping the existing source-read wrapper avoids inventing a supported runtime fix from a malformed direct helper call.
+
+The new documentation matches the source. An independent exact-set control finds all 27 fields-map identifiers once in the table, with no additions or omissions. Call sites in script, heartbeat, subloop, inference, decision, wait and workspace preparation agree with the documented location fields. Source inspection confirms selector/inject item ordinals, one-based beats and attempts, and after-result phase ownership. `authored-failure.ts:124` constructs bounded corrective causes with non-resumable authored failure details, without raw evaluator diagnostics. Existing tests exercise private diagnostic separation and same-class external failures. Parent failures nest child details; terminal file-return failures record a message rather than a boundary. MCP get_run returns the full API snapshot (`tools.ts:253`, api-client/resources.ts:145), while summaries omit details (`describe.ts:142`). No new public schema or enum was introduced.
+
+Independent checks used Node v22.23.4 and pnpm.cmd:
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Domain mutations focused suite | 26 passed | domain-focused.log |
+| Engine authored-failure, mutation-failures, heartbeat-visit and flow suites | 140 passed | engine-focused.log |
+| Additional evidence-only controls against live source | 10 passed | independent-controls.test.mjs, independent-controls.log |
+| git diff --check | passed | executed read-only during review |
+| Candidate/source/index immutability | passed | FINAL-INVARIANTS.json |
+
+The ten independent controls include Error, MutationError, PatchError, TemplateError, ExpressionError, null and a number thrown from validation. Each preserves identity for fact-only callers and reaches the ordinary mapper when provided; none calls the fact mapper. A supported invalid mutable target still reaches the fact mapper, ruling out blanket bypass. Valid JSON positive and negative validation paths and the exact documented boundary set also pass. Getter-based throw cases are explicitly synthetic direct domain inputs, not supported stored JSON run evidence. These controls live only in this evidence directory.
+
+The actual author transcript, rather than only its narrative report, confirms domain coverage at 492 tests, 98.78% lines / 95.38% branches, and engine coverage at 2014 tests, 97.04% lines / 91.65% branches. Both exceed the unchanged 90/90 gate. It also confirms domain/engine typechecks and lint, formatting checks, and a mutation control whose reverted attribution path failed exactly the intended test (1 failed / 25 passed), followed by restored source and passing full coverage. `author-check-receipts.private.json` retains the raw relevant tool receipts. Those full coverage runs were inspected, not repeated by this reviewer.
+
+Two actual author permission denials remain in the original CLAUDE-EXIT.json and in the extracted receipts: one filtered targeted-test pipeline and one final source diff command. The unfiltered permitted targeted test subsequently passed. Neither denied action is presented as successful evidence; this reviewer independently read the patch and executed its own authorized focused checks.
+
+Disposition of investigated concerns:
+
+| Concern | Disposition | Severity | Reason |
+| --- | --- | --- | --- |
+| Supported malformed coerce source defect | REJECT | none | Contract rejects the only syntax-throw shape; no supported failure established. |
+| Schema compilation should remain an authored MutationFact | REJECT | none | Compilation returns validation errors and repair; external throws must not gain provenance. |
+| Removed render service needs a compatibility path | REJECT | none | No repository caller; clean removal is the admitted pre-release scope. |
+
+No source edits, index actions, commits, publication, provider calls, owner-store access or app launches occurred. Ports 4747, 4748, 7443 and Ollama 11434 were not contacted. No browser/native acceptance or full monorepo gate is claimed. New main `154e78d54ee485330816d606032280de44d6e891` was inspected as a documentation/plugin-guidance/evidence change; this verdict remains on the original frozen base and does not claim integration verification. Fresh Claude QA, integration checks, CI and the reserved fresh exact-head Astra audit remain separate gates.

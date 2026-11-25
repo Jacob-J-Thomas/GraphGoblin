@@ -98,6 +98,12 @@ and effort) in `failure.details.provenance`. Late results cannot change the fail
 or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
 clients must accept this nullable pin and the new `RunErrorCode` value.
 
+A run that fails in an authored field names that field in `failure.details.boundary`.
+`GET /runs/{id}` and the MCP `get_run` tool return the whole failure; MCP run summaries, as in
+`list_runs`, omit `details`. The closed identifiers, the location fields
+beside them and the failures that carry none are listed under
+[Authored boundary identifiers](05-execution-engine.md#authored-boundary-identifiers).
+
 ## Artifact downloads
 
 `GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).

@@ -917,7 +917,6 @@ describe('authored leaf preparation failures (#486)', () => {
       ports: e.ports,
       settings: e.settings,
       services: {
-        render: unused,
         record: unused,
         resolveModel: unused,
         startChild: unused,
@@ -1132,7 +1131,6 @@ describe('authored leaf preparation failures (#486)', () => {
         ports: e.ports,
         settings: e.settings,
         services: {
-          render: unused,
           record: unused,
           resolveModel: unused,
           startChild: unused,
