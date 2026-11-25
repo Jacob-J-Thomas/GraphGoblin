@@ -1,0 +1,259 @@
+diff --git a/apps/api/src/loop-definition.test.ts b/apps/api/src/loop-definition.test.ts
+index d0e4ff4a220a85861d447064a32c862099df92a1..f9655b480b326052fc8f0530cde64e5a7467e74d 100644
+--- a/apps/api/src/loop-definition.test.ts
++++ b/apps/api/src/loop-definition.test.ts
+@@ -41,6 +41,63 @@ describe('canonical loop definition inputs', () => {
+     },
+   );
+ 
++  it('returns ordered literal pointers in the validation problem and accepts valid input', async () => {
++    const source = minimalLoop();
++    const invalid = {
++      ...source,
++      name: '',
++      variables: { 'literal/~': { type: 'string' } },
++      nodes: [
++        source.nodes[0],
++        { id: 'infer', kind: 'inference', label: 'Infer', config: { prompt: { template: 1 } } },
++        source.nodes[1],
++      ],
++    };
++    for (const [payload, errors] of [
++      [
++        { definition: invalid },
++        [
++          {
++            path: '/definition/name',
++            message: 'Too small: expected string to have >=1 characters',
++          },
++          { path: '/definition/variables/literal~1~0', message: 'Invalid key in record' },
++          {
++            path: '/definition/nodes/1/config/prompt/template',
++            message: 'Invalid input: expected string, received number',
++          },
++        ],
++      ],
++      [[], [{ path: '/', message: 'Invalid input: expected object, received array' }]],
++    ] as const) {
++      const response = await t.app.inject({ method: 'POST', url: '/loops', payload });
++      expect(response.statusCode, response.body).toBe(400);
++      expect(response.headers['content-type']).toMatch(/^application\/problem\+json\b/);
++      expect(response.json()).toEqual({
++        type: 'https://graphgoblin.dev/problems/validation-failed',
++        title: 'validation failed',
++        status: 400,
++        code: 'VALIDATION_FAILED',
++        detail: 'the request did not match the schema',
++        errors,
++      });
++    }
++    const created = await t.app.inject({
++      method: 'POST',
++      url: '/loops',
++      payload: { definition: { ...source, variables: { literal: { type: 'string' } } } },
++    });
++    expect(created.statusCode, created.body).toBe(201);
++    expect(created.json()).toMatchObject({
++      draft: {
++        definition: {
++          variables: { literal: { type: 'string' } },
++          settings: { workingDirectory: { kind: 'temp' } },
++        },
++      },
++    });
++  });
++
+   it('rejects an unsupported inference harness with its node path', async () => {
+     const loopId = await t.publishLoop(minimalLoop());
+     const source = minimalLoop();
+diff --git a/apps/api/src/plugins/errors.ts b/apps/api/src/plugins/errors.ts
+index 34f939b8ee2991782d5eb321656124348bd563ce..5fe3c2eb67f6af4a38c071a6c63ff409524e83d3 100644
+--- a/apps/api/src/plugins/errors.ts
++++ b/apps/api/src/plugins/errors.ts
+@@ -18,14 +18,11 @@ import {
+   LoopUpgradeRequiredError,
+   UnreadableRunHistoryError,
+ } from '@graphgoblin/engine';
++import { isResponseSerializationError } from 'fastify-type-provider-zod';
+ import {
+-  hasZodFastifySchemaValidationErrors,
+-  isResponseSerializationError,
+-} from 'fastify-type-provider-zod';
+-import { hasRequestSchemaValidationErrors } from './request-validation.js';
+-
+-const pointerSegment = (segment: PropertyKey) =>
+-  String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
++  encodeJsonPointerSegment,
++  hasRequestSchemaValidationErrors,
++} from './request-validation.js';
+ 
+ /** RFC 9457 Problem Details with a stable machine-readable `code`. */
+ export interface ProblemDetails {
+@@ -123,7 +120,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
+           error.code,
+           error.message,
+         );
+-      if (hasRequestSchemaValidationErrors(error) || hasZodFastifySchemaValidationErrors(error)) {
++      if (hasRequestSchemaValidationErrors(error)) {
+         return problem(
+           reply,
+           400,
+@@ -132,11 +129,12 @@ export function registerErrorHandler(app: FastifyInstance): void {
+           error.validation.flatMap((v) => {
+             const keys = v.params['keys'];
+             if (v.keyword === 'unrecognized_keys' && Array.isArray(keys)) {
++              // The base is already an encoded pointer; encode only the appended member.
+               const base = v.instancePath === '/' ? '' : v.instancePath;
+               return keys
+                 .filter((key): key is string => typeof key === 'string')
+                 .map((key) => ({
+-                  path: `${base}/${pointerSegment(key)}`,
++                  path: `${base}/${encodeJsonPointerSegment(key)}`,
+                   message: `Unrecognized key ${JSON.stringify(key)}`,
+                 }));
+             }
+diff --git a/apps/api/src/plugins/request-validation.test.ts b/apps/api/src/plugins/request-validation.test.ts
+index 5b2b532f8ad719f1919669a676a3a9c9a6a43241..7c8d0500219100a6bfa2153b046d1ed944a7278b 100644
+--- a/apps/api/src/plugins/request-validation.test.ts
++++ b/apps/api/src/plugins/request-validation.test.ts
+@@ -1,5 +1,5 @@
+ import Fastify from 'fastify';
+-import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
++import { serializerCompiler } from 'fastify-type-provider-zod';
+ import { expect, it } from 'vitest';
+ import { z } from 'zod';
+ import { registerErrorHandler } from './errors.js';
+@@ -8,9 +8,9 @@ import {
+   requestValidatorCompiler,
+ } from './request-validation.js';
+ 
+-async function fixture(schema: z.ZodType, legacy = false) {
++async function fixture(schema: z.ZodType) {
+   const app = Fastify({ logger: false });
+-  app.setValidatorCompiler(legacy ? validatorCompiler : requestValidatorCompiler);
++  app.setValidatorCompiler(requestValidatorCompiler);
+   registerErrorHandler(app);
+   app.post('/fixture', { schema: { body: schema } }, (request) => request.body);
+   await app.ready();
+@@ -90,26 +90,6 @@ it('keeps ordinary and root diagnostics and the parsed success value without dup
+   }
+ });
+ 
+-it('preserves diagnostics from the existing provider compiler without reinterpreting its strings', async () => {
+-  const app = await fixture(z.strictObject({ count: z.number() }), true);
+-  try {
+-    const response = await app.inject({
+-      method: 'POST',
+-      url: '/fixture',
+-      payload: { count: 'bad', 'extra/~': true },
+-    });
+-    expect(response.json()).toMatchObject({
+-      code: 'VALIDATION_FAILED',
+-      errors: [
+-        { path: '/count', message: 'Invalid input: expected number, received string' },
+-        { path: '/extra~1~0', message: 'Unrecognized key "extra/~"' },
+-      ],
+-    });
+-  } finally {
+-    await app.close();
+-  }
+-});
+-
+ it('does not classify unrelated or empty errors as owned request-schema errors', () => {
+   for (const value of [null, undefined, 0, 'failure', {}, { validation: [] }, { validation: [{}] }])
+     expect(hasRequestSchemaValidationErrors(value)).toBe(false);
+diff --git a/apps/api/src/plugins/request-validation.ts b/apps/api/src/plugins/request-validation.ts
+index 8960af46ec2e31d476ed2df5a252057377f973fa..2b2d6fda45bb3ff7b11b7ff3e858c2d9dcb8d5b3 100644
+--- a/apps/api/src/plugins/request-validation.ts
++++ b/apps/api/src/plugins/request-validation.ts
+@@ -7,7 +7,11 @@ type RequestValidationIssue = FastifySchemaValidationError & {
+   [requestValidationIssue]: true;
+ };
+ 
+-const pointerSegment = (segment: PropertyKey) =>
++/**
++ * One literal JSON Pointer reference token (RFC 6901). '~' is escaped before '/', so the '~1' a
++ * slash becomes is never escaped again. Apply it to one original segment, never a joined path.
++ */
++export const encodeJsonPointerSegment = (segment: PropertyKey): string =>
+   String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
+ 
+ /** Encode original segments once here; a slash-joined provider string is irreversible. */
+@@ -19,7 +23,7 @@ export const requestValidatorCompiler: FastifySchemaCompiler<z.ZodType> =
+     return {
+       error: parsed.error.issues.map(
+         ({ code, path, message, ...params }): RequestValidationIssue => {
+-          const encoded = path.map(pointerSegment);
++          const encoded = path.map(encodeJsonPointerSegment);
+           return {
+             [requestValidationIssue]: true,
+             keyword: code,
+@@ -27,7 +31,7 @@ export const requestValidatorCompiler: FastifySchemaCompiler<z.ZodType> =
+             instancePath: '/' + encoded.join('/'),
+             schemaPath:
+               '#/' +
+-              [...encoded, pointerSegment(code)]
++              [...encoded, encodeJsonPointerSegment(code)]
+                 .map((segment) => encodeURIComponent(toUSVString(segment)))
+                 .join('/'),
+             message,
+diff --git a/apps/api/src/routes/ollama.test.ts b/apps/api/src/routes/ollama.test.ts
+index f3b56f163d65b5457bc825d5a95c4d1ed0a0686e..732c9d2925de4cfae9d654dcd11143f32dfab802 100644
+--- a/apps/api/src/routes/ollama.test.ts
++++ b/apps/api/src/routes/ollama.test.ts
+@@ -1,11 +1,8 @@
+ import Fastify from 'fastify';
+-import {
+-  serializerCompiler,
+-  validatorCompiler,
+-  type ZodTypeProvider,
+-} from 'fastify-type-provider-zod';
++import { serializerCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+ import type { OllamaConnectionView } from '@graphgoblin/contracts';
++import { requestValidatorCompiler } from '../plugins/request-validation.js';
+ import { registerOllamaRoutes } from './ollama.js';
+ import type { ApiInstance } from '../types.js';
+ 
+@@ -21,7 +18,7 @@ afterEach(async () => {
+ function setup() {
+   const app = Fastify().withTypeProvider<ZodTypeProvider>();
+   apps.push(app);
+-  app.setValidatorCompiler(validatorCompiler);
++  app.setValidatorCompiler(requestValidatorCompiler);
+   app.setSerializerCompiler(serializerCompiler);
+   const ollama = {
+     view: vi.fn().mockResolvedValue(view),
+diff --git a/apps/api/src/routes/thread-disconnect.test.ts b/apps/api/src/routes/thread-disconnect.test.ts
+index c1fa13210c49f03df57e43a1ced3d742d1a6933c..50ab0ec0ee697355c8234ffa5f8c8dc20c1c1c8b 100644
+--- a/apps/api/src/routes/thread-disconnect.test.ts
++++ b/apps/api/src/routes/thread-disconnect.test.ts
+@@ -3,17 +3,14 @@ import { Agent, get } from 'node:http';
+ import type { Socket } from 'node:net';
+ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+ import Fastify from 'fastify';
+-import {
+-  serializerCompiler,
+-  validatorCompiler,
+-  type ZodTypeProvider,
+-} from 'fastify-type-provider-zod';
++import { serializerCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
+ import { ContextThreadSchema, type RunRecord } from '@graphgoblin/contracts';
+ import { minimalLoop } from '@graphgoblin/contracts/testing';
+ import { reconcileThread } from '@graphgoblin/domain';
+ import type { EventDraft } from '@graphgoblin/engine';
+ import { registerAuth } from '../plugins/auth.js';
+ import { registerErrorHandler } from '../plugins/errors.js';
++import { requestValidatorCompiler } from '../plugins/request-validation.js';
+ import { createTestApp } from '../testing/test-app.js';
+ import { registerRunRoutes } from './runs.js';
+ import { registerSystemRoutes } from './system.js';
+@@ -123,7 +120,7 @@ describe('historical thread response lifetime', () => {
+     expectedBody = JSON.stringify(ContextThreadSchema.parse(expected));
+     currentBody = (await test.app.inject({ url: currentPath, headers })).body;
+ 
+-    app.setValidatorCompiler(validatorCompiler);
++    app.setValidatorCompiler(requestValidatorCompiler);
+     app.setSerializerCompiler(serializerCompiler);
+     registerErrorHandler(app);
+     registerAuth(app, test.container);
