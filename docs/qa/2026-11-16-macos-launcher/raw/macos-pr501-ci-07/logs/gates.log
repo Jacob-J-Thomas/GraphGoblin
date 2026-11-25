@@ -1,0 +1,1626 @@
+﻿2026-11-17T03:20:21.9935994Z Current runner version: '2.338.2'
+2026-11-17T03:20:21.9963304Z ##[group]Runner Image Provisioner
+2026-11-17T03:20:21.9964231Z Hosted Compute Agent
+2026-11-17T03:20:21.9964950Z Version: 20261103.629
+2026-11-17T03:20:21.9965803Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-17T03:20:21.9966616Z Build Date: 2026-11-03T17:26:59Z
+2026-11-17T03:20:21.9967445Z Worker ID: {669afb93-f57b-4cb8-9269-59d4b667c01c}
+2026-11-17T03:20:21.9968314Z Region: centralus
+2026-11-17T03:20:21.9968975Z Cloud: Azure
+2026-11-17T03:20:21.9969576Z ##[endgroup]
+2026-11-17T03:20:21.9971074Z ##[group]Operating System
+2026-11-17T03:20:21.9971832Z Ubuntu
+2026-11-17T03:20:21.9972450Z 26.04.1
+2026-11-17T03:20:21.9973013Z LTS
+2026-11-17T03:20:21.9973607Z ##[endgroup]
+2026-11-17T03:20:21.9974260Z ##[group]Runner Image
+2026-11-17T03:20:21.9975112Z Image: ubuntu-26.04
+2026-11-17T03:20:21.9976045Z Version: 20261111.196.1
+2026-11-17T03:20:21.9977604Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-17T03:20:21.9979621Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-17T03:20:21.9980877Z ##[endgroup]
+2026-11-17T03:20:21.9982353Z ##[group]GITHUB_TOKEN Permissions
+2026-11-17T03:20:21.9984657Z Contents: read
+2026-11-17T03:20:21.9985514Z Metadata: read
+2026-11-17T03:20:21.9986255Z Packages: read
+2026-11-17T03:20:21.9986973Z ##[endgroup]
+2026-11-17T03:20:21.9989155Z Secret source: Actions
+2026-11-17T03:20:21.9990382Z Cache mode: write
+2026-11-17T03:20:21.9991417Z Prepare workflow directory
+2026-11-17T03:20:22.0260581Z Prepare all required actions
+2026-11-17T03:20:22.0301097Z Getting action download info
+2026-11-17T03:20:22.2343873Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-17T03:20:22.3737159Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-17T03:20:22.8419963Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-17T03:20:22.9464818Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-17T03:20:23.1517556Z Complete job name: Gates
+2026-11-17T03:20:23.2558943Z ##[group]Run actions/checkout@v4
+2026-11-17T03:20:23.2560057Z with:
+2026-11-17T03:20:23.2560711Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:20:23.2568202Z   token: ***
+2026-11-17T03:20:23.2568826Z   ssh-strict: true
+2026-11-17T03:20:23.2569462Z   ssh-user: git
+2026-11-17T03:20:23.2570110Z   persist-credentials: true
+2026-11-17T03:20:23.2570853Z   clean: true
+2026-11-17T03:20:23.2571496Z   sparse-checkout-cone-mode: true
+2026-11-17T03:20:23.2572258Z   fetch-depth: 1
+2026-11-17T03:20:23.2572885Z   fetch-tags: false
+2026-11-17T03:20:23.2573523Z   show-progress: true
+2026-11-17T03:20:23.2574185Z   lfs: false
+2026-11-17T03:20:23.2574782Z   submodules: false
+2026-11-17T03:20:23.2575530Z   set-safe-directory: true
+2026-11-17T03:20:23.2576295Z   allow-unsafe-pr-checkout: false
+2026-11-17T03:20:23.2577280Z ##[endgroup]
+2026-11-17T03:20:23.4456290Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:20:23.4459181Z ##[group]Getting Git version info
+2026-11-17T03:20:23.4460692Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T03:20:23.4462768Z [command]/usr/bin/git version
+2026-11-17T03:20:23.4463674Z git version 2.56.1
+2026-11-17T03:20:23.4477909Z ##[endgroup]
+2026-11-17T03:20:23.4490566Z Temporarily overriding HOME='/home/runner/work/_temp/9ccf82a3-2579-4eac-8bd1-493e85129256' before making global git config changes
+2026-11-17T03:20:23.4494060Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T03:20:23.4497032Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:20:23.4548589Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T03:20:23.4551403Z ##[group]Initializing the repository
+2026-11-17T03:20:23.4554480Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:20:23.4656016Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-17T03:20:23.4658320Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-17T03:20:23.4660409Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-17T03:20:23.4662050Z hint: call:
+2026-11-17T03:20:23.4663145Z hint:
+2026-11-17T03:20:23.4664205Z hint: 	git config --global init.defaultBranch <name>
+2026-11-17T03:20:23.4665740Z hint:
+2026-11-17T03:20:23.4666981Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-17T03:20:23.4669032Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-17T03:20:23.4670741Z hint:
+2026-11-17T03:20:23.4671593Z hint: 	git branch -m <name>
+2026-11-17T03:20:23.4672579Z hint:
+2026-11-17T03:20:23.4673933Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-17T03:20:23.4683580Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-17T03:20:23.4699434Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:20:23.4757644Z ##[endgroup]
+2026-11-17T03:20:23.4758793Z ##[group]Disabling automatic garbage collection
+2026-11-17T03:20:23.4760461Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-17T03:20:23.4791175Z ##[endgroup]
+2026-11-17T03:20:23.4792435Z ##[group]Setting up auth
+2026-11-17T03:20:23.4797945Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T03:20:23.4831657Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T03:20:23.5192283Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T03:20:23.5225702Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T03:20:23.5454444Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T03:20:23.5484494Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T03:20:23.5712289Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-17T03:20:23.5745508Z ##[endgroup]
+2026-11-17T03:20:23.5752226Z ##[group]Fetching the repository
+2026-11-17T03:20:23.5754433Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +7331464e54bd1907e1dab82d2d7b9bc225bda03b:refs/remotes/pull/501/merge
+2026-11-17T03:20:35.4778654Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:20:35.4779506Z  * [new ref]           7331464e54bd1907e1dab82d2d7b9bc225bda03b -> pull/501/merge
+2026-11-17T03:20:35.4787311Z ##[endgroup]
+2026-11-17T03:20:35.4787777Z ##[group]Determining the checkout info
+2026-11-17T03:20:35.4788330Z ##[endgroup]
+2026-11-17T03:20:35.4792533Z [command]/usr/bin/git sparse-checkout disable
+2026-11-17T03:20:35.4852485Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-17T03:20:35.4877604Z ##[group]Checking out the ref
+2026-11-17T03:20:35.4880366Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-17T03:20:36.5146939Z Updating files:  21% (6947/31729)
+2026-11-17T03:20:36.5366501Z Updating files:  22% (6981/31729)
+2026-11-17T03:20:36.5486712Z Updating files:  23% (7298/31729)
+2026-11-17T03:20:36.5902862Z Updating files:  24% (7615/31729)
+2026-11-17T03:20:36.6080879Z Updating files:  25% (7933/31729)
+2026-11-17T03:20:36.6283652Z Updating files:  26% (8250/31729)
+2026-11-17T03:20:36.6598632Z Updating files:  27% (8567/31729)
+2026-11-17T03:20:36.6871943Z Updating files:  28% (8885/31729)
+2026-11-17T03:20:36.7053952Z Updating files:  29% (9202/31729)
+2026-11-17T03:20:36.7359671Z Updating files:  30% (9519/31729)
+2026-11-17T03:20:36.8162807Z Updating files:  31% (9836/31729)
+2026-11-17T03:20:36.8549626Z Updating files:  32% (10154/31729)
+2026-11-17T03:20:36.8951108Z Updating files:  33% (10471/31729)
+2026-11-17T03:20:36.9130716Z Updating files:  34% (10788/31729)
+2026-11-17T03:20:36.9361568Z Updating files:  35% (11106/31729)
+2026-11-17T03:20:36.9800947Z Updating files:  36% (11423/31729)
+2026-11-17T03:20:37.0127849Z Updating files:  37% (11740/31729)
+2026-11-17T03:20:37.0457893Z Updating files:  38% (12058/31729)
+2026-11-17T03:20:37.0729260Z Updating files:  39% (12375/31729)
+2026-11-17T03:20:37.1260810Z Updating files:  40% (12692/31729)
+2026-11-17T03:20:37.1695508Z Updating files:  41% (13009/31729)
+2026-11-17T03:20:37.1874851Z Updating files:  42% (13327/31729)
+2026-11-17T03:20:37.2022833Z Updating files:  43% (13644/31729)
+2026-11-17T03:20:37.2259929Z Updating files:  44% (13961/31729)
+2026-11-17T03:20:37.2549268Z Updating files:  45% (14279/31729)
+2026-11-17T03:20:37.2832188Z Updating files:  46% (14596/31729)
+2026-11-17T03:20:37.2992633Z Updating files:  47% (14913/31729)
+2026-11-17T03:20:37.3180418Z Updating files:  48% (15230/31729)
+2026-11-17T03:20:37.3684877Z Updating files:  49% (15548/31729)
+2026-11-17T03:20:37.3980484Z Updating files:  50% (15865/31729)
+2026-11-17T03:20:37.4296455Z Updating files:  51% (16182/31729)
+2026-11-17T03:20:37.4620722Z Updating files:  52% (16500/31729)
+2026-11-17T03:20:37.4841199Z Updating files:  53% (16817/31729)
+2026-11-17T03:20:37.5110278Z Updating files:  54% (17134/31729)
+2026-11-17T03:20:37.5140474Z Updating files:  54% (17400/31729)
+2026-11-17T03:20:37.5331523Z Updating files:  55% (17451/31729)
+2026-11-17T03:20:37.5797029Z Updating files:  56% (17769/31729)
+2026-11-17T03:20:37.6320567Z Updating files:  57% (18086/31729)
+2026-11-17T03:20:37.6689701Z Updating files:  58% (18403/31729)
+2026-11-17T03:20:37.6947829Z Updating files:  59% (18721/31729)
+2026-11-17T03:20:37.7570428Z Updating files:  60% (19038/31729)
+2026-11-17T03:20:37.7793155Z Updating files:  61% (19355/31729)
+2026-11-17T03:20:37.8137917Z Updating files:  62% (19672/31729)
+2026-11-17T03:20:37.8520427Z Updating files:  63% (19990/31729)
+2026-11-17T03:20:37.8747440Z Updating files:  64% (20307/31729)
+2026-11-17T03:20:37.9094391Z Updating files:  65% (20624/31729)
+2026-11-17T03:20:37.9229028Z Updating files:  66% (20942/31729)
+2026-11-17T03:20:37.9498071Z Updating files:  67% (21259/31729)
+2026-11-17T03:20:37.9900699Z Updating files:  68% (21576/31729)
+2026-11-17T03:20:38.0339284Z Updating files:  69% (21894/31729)
+2026-11-17T03:20:38.0672160Z Updating files:  70% (22211/31729)
+2026-11-17T03:20:38.1193190Z Updating files:  71% (22528/31729)
+2026-11-17T03:20:38.1504691Z Updating files:  72% (22845/31729)
+2026-11-17T03:20:38.1969104Z Updating files:  73% (23163/31729)
+2026-11-17T03:20:38.2238923Z Updating files:  74% (23480/31729)
+2026-11-17T03:20:38.2549484Z Updating files:  75% (23797/31729)
+2026-11-17T03:20:38.2800304Z Updating files:  76% (24115/31729)
+2026-11-17T03:20:38.3010496Z Updating files:  77% (24432/31729)
+2026-11-17T03:20:38.3315087Z Updating files:  78% (24749/31729)
+2026-11-17T03:20:38.3684876Z Updating files:  79% (25066/31729)
+2026-11-17T03:20:38.3950007Z Updating files:  80% (25384/31729)
+2026-11-17T03:20:38.4213469Z Updating files:  81% (25701/31729)
+2026-11-17T03:20:38.4424700Z Updating files:  82% (26018/31729)
+2026-11-17T03:20:38.4570988Z Updating files:  83% (26336/31729)
+2026-11-17T03:20:38.4733556Z Updating files:  84% (26653/31729)
+2026-11-17T03:20:38.4882714Z Updating files:  85% (26970/31729)
+2026-11-17T03:20:38.5098813Z Updating files:  86% (27287/31729)
+2026-11-17T03:20:38.5109383Z Updating files:  87% (27605/31729)
+2026-11-17T03:20:38.5509353Z Updating files:  87% (27620/31729)
+2026-11-17T03:20:38.5696637Z Updating files:  88% (27922/31729)
+2026-11-17T03:20:38.5911063Z Updating files:  89% (28239/31729)
+2026-11-17T03:20:38.6202331Z Updating files:  90% (28557/31729)
+2026-11-17T03:20:38.6541721Z Updating files:  91% (28874/31729)
+2026-11-17T03:20:38.6676828Z Updating files:  92% (29191/31729)
+2026-11-17T03:20:38.6844852Z Updating files:  93% (29508/31729)
+2026-11-17T03:20:38.6947744Z Updating files:  94% (29826/31729)
+2026-11-17T03:20:38.7119604Z Updating files:  95% (30143/31729)
+2026-11-17T03:20:38.7340669Z Updating files:  96% (30460/31729)
+2026-11-17T03:20:38.7504704Z Updating files:  97% (30778/31729)
+2026-11-17T03:20:38.7671108Z Updating files:  98% (31095/31729)
+2026-11-17T03:20:38.7835008Z Updating files:  99% (31412/31729)
+2026-11-17T03:20:38.7835626Z Updating files: 100% (31729/31729)
+2026-11-17T03:20:38.7835958Z Updating files: 100% (31729/31729), done.
+2026-11-17T03:20:38.8078042Z Note: switching to 'refs/remotes/pull/501/merge'.
+2026-11-17T03:20:38.8078337Z 
+2026-11-17T03:20:38.8078584Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-17T03:20:38.8079104Z changes and commit them, and you can discard any commits you make in this
+2026-11-17T03:20:38.8079464Z state without impacting any branches by switching back to a branch.
+2026-11-17T03:20:38.8079673Z 
+2026-11-17T03:20:38.8079836Z If you want to create a new branch to retain commits you create, you may
+2026-11-17T03:20:38.8080213Z do so (now or later) by using -c with the switch command. Example:
+2026-11-17T03:20:38.8080407Z 
+2026-11-17T03:20:38.8080500Z   git switch -c <new-branch-name>
+2026-11-17T03:20:38.8080640Z 
+2026-11-17T03:20:38.8080728Z Or undo this operation with:
+2026-11-17T03:20:38.8080849Z 
+2026-11-17T03:20:38.8080925Z   git switch -
+2026-11-17T03:20:38.8081022Z 
+2026-11-17T03:20:38.8081183Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-17T03:20:38.8081415Z 
+2026-11-17T03:20:38.8081674Z HEAD is now at 7331464e Merge 8282861940f52d059e926e41a34bdf3894e52468 into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-17T03:20:38.8202578Z ##[endgroup]
+2026-11-17T03:20:38.8246616Z [command]/usr/bin/git log -1 --format=%H
+2026-11-17T03:20:38.8269862Z 7331464e54bd1907e1dab82d2d7b9bc225bda03b
+2026-11-17T03:20:38.8469609Z ##[group]Run pnpm/action-setup@v4
+2026-11-17T03:20:38.8469831Z with:
+2026-11-17T03:20:38.8469999Z   dest: ~/setup-pnpm
+2026-11-17T03:20:38.8470174Z   run_install: null
+2026-11-17T03:20:38.8470342Z   cache: false
+2026-11-17T03:20:38.8470520Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-17T03:20:38.8470750Z   package_json_file: package.json
+2026-11-17T03:20:38.8470954Z   standalone: false
+2026-11-17T03:20:38.8471122Z ##[endgroup]
+2026-11-17T03:20:38.9601368Z ##[group]Running self-installer...
+2026-11-17T03:20:39.2774346Z (node:2226) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:20:39.2775618Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:20:39.4871774Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-17T03:20:39.6243535Z Packages: +3
+2026-11-17T03:20:39.6244086Z +++
+2026-11-17T03:20:40.3678461Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-11-17T03:20:40.3812269Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-17T03:20:40.8212036Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-17T03:20:40.8216300Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-17T03:20:40.8653410Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-17T03:20:41.9139326Z 
+2026-11-17T03:20:41.9139820Z dependencies:
+2026-11-17T03:20:41.9140137Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-17T03:20:41.9140370Z 
+2026-11-17T03:20:41.9157119Z Done in 2.8s
+2026-11-17T03:20:41.9713802Z ##[endgroup]
+2026-11-17T03:20:41.9714193Z Installation Completed!
+2026-11-17T03:20:41.9882640Z ##[group]Run actions/setup-node@v4
+2026-11-17T03:20:41.9882861Z with:
+2026-11-17T03:20:41.9883165Z   node-version-file: .nvmrc
+2026-11-17T03:20:41.9883353Z   cache: pnpm
+2026-11-17T03:20:41.9883514Z   always-auth: false
+2026-11-17T03:20:41.9883698Z   check-latest: false
+2026-11-17T03:20:41.9885897Z   token: ***
+2026-11-17T03:20:41.9886066Z env:
+2026-11-17T03:20:41.9886285Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:20:41.9886533Z ##[endgroup]
+2026-11-17T03:20:42.0999363Z Resolved .nvmrc as 22
+2026-11-17T03:20:42.1048944Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-17T03:20:42.1052609Z (node:2257) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T03:20:42.1053439Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:20:42.1088170Z ##[group]Environment details
+2026-11-17T03:20:42.4006677Z node: v22.23.4
+2026-11-17T03:20:42.4007093Z npm: 10.9.9
+2026-11-17T03:20:42.4007334Z yarn: 1.22.22
+2026-11-17T03:20:42.4008000Z ##[endgroup]
+2026-11-17T03:20:42.4023709Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-17T03:20:42.4188435Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T03:20:42.5535177Z Cache hit for: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T03:20:42.5611364Z (node:2257) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:20:43.7366508Z Received 113246208 of 258558667 (43.8%), 107.9 MBs/sec
+2026-11-17T03:20:44.7358943Z Received 167772160 of 258558667 (64.9%), 79.9 MBs/sec
+2026-11-17T03:20:45.5944238Z Received 258558667 of 258558667 (100.0%), 86.2 MBs/sec
+2026-11-17T03:20:45.5945507Z Cache Size: ~247 MB (258558667 B)
+2026-11-17T03:20:45.6001658Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d5993510-a5d4-4e1a-a11b-193957078e8f/cache.tzst -P -C /home/runner/work/GraphGoblin/GraphGoblin --use-compress-program unzstd
+2026-11-17T03:20:47.2682685Z Cache restored successfully
+2026-11-17T03:20:47.2783882Z Cache restored from key: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T03:20:47.3046369Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-17T03:20:47.3046713Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-17T03:20:47.3100814Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:20:47.3101034Z env:
+2026-11-17T03:20:47.3101258Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:20:47.3101514Z ##[endgroup]
+2026-11-17T03:20:47.3416670Z Scope: all 14 workspace projects
+2026-11-17T03:20:47.3860644Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-17T03:20:47.5060995Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-17T03:20:47.5075130Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T03:20:47.5076048Z   Virtual store is at:             node_modules/.pnpm
+2026-11-17T03:20:51.4549186Z ✓ Lockfile passes supply-chain policies (931 entries in 4.1s)
+2026-11-17T03:20:51.4549821Z Lockfile is up to date, resolution step is skipped
+2026-11-17T03:20:51.4666811Z Packages: +801
+2026-11-17T03:20:51.4667331Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-17T03:20:51.6309791Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-17T03:20:51.8866611Z 
+2026-11-17T03:20:51.8867225Z devDependencies:
+2026-11-17T03:20:51.8867882Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-17T03:20:51.8868244Z + @eslint/js 10.0.1
+2026-11-17T03:20:51.8868544Z + @vitest/coverage-v8 5.0.3
+2026-11-17T03:20:51.8868777Z + dependency-cruiser 18.5.0
+2026-11-17T03:20:51.8868980Z + eslint 10.11.0
+2026-11-17T03:20:51.8869302Z + eslint-config-prettier 10.1.8
+2026-11-17T03:20:51.8869639Z + eslint-plugin-react-hooks 7.1.1
+2026-11-17T03:20:51.8869943Z + prettier 3.9.9
+2026-11-17T03:20:51.8870481Z + turbo 2.11.6
+2026-11-17T03:20:51.8870736Z + typescript 6.0.3
+2026-11-17T03:20:51.8871039Z + typescript-eslint 8.71.0
+2026-11-17T03:20:51.8871323Z + vitest 5.0.3
+2026-11-17T03:20:51.8871458Z 
+2026-11-17T03:20:51.8871636Z Done in 4.5s using pnpm v12.8.1
+2026-11-17T03:20:51.9716133Z ##[group]Run pnpm build
+2026-11-17T03:20:51.9716382Z [36;1mpnpm build[0m
+2026-11-17T03:20:51.9760435Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:20:51.9760642Z env:
+2026-11-17T03:20:51.9760855Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:20:51.9761111Z ##[endgroup]
+2026-11-17T03:20:52.0062587Z $ turbo run build
+2026-11-17T03:20:52.0371603Z 
+2026-11-17T03:20:52.0372137Z Attention:
+2026-11-17T03:20:52.0372654Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-17T03:20:52.0373325Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-17T03:20:52.0374212Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-17T03:20:52.0375209Z https://turborepo.dev/docs/telemetry
+2026-11-17T03:20:52.0375689Z 
+2026-11-17T03:20:52.0907801Z 
+2026-11-17T03:20:52.0936170Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T03:20:52.0966086Z    • Running build in 13 packages
+2026-11-17T03:20:52.0971900Z    • Remote caching disabled
+2026-11-17T03:20:52.0972324Z 
+2026-11-17T03:20:54.0487474Z ##[group]@graphgoblin/contracts:build
+2026-11-17T03:20:54.0487931Z cache miss, executing 398fa0418041b745
+2026-11-17T03:20:54.0488211Z $ tsc -b tsconfig.build.json
+2026-11-17T03:20:54.0488583Z ##[endgroup]
+2026-11-17T03:20:56.0852106Z ##[group]@graphgoblin/domain:build
+2026-11-17T03:20:56.0852576Z cache miss, executing 7a74068a18fc3cf0
+2026-11-17T03:20:56.0852841Z $ tsc -b tsconfig.build.json
+2026-11-17T03:20:56.0853202Z ##[endgroup]
+2026-11-17T03:20:59.3046208Z ##[group]@graphgoblin/engine:build
+2026-11-17T03:20:59.3047031Z cache miss, executing 61913e96a30219e4
+2026-11-17T03:20:59.3047762Z $ tsc -b tsconfig.build.json
+2026-11-17T03:20:59.3048283Z ##[endgroup]
+2026-11-17T03:21:01.4467127Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T03:21:01.4467828Z cache miss, executing 1e624a662b5e23d9
+2026-11-17T03:21:01.4468338Z $ tsc -b tsconfig.build.json
+2026-11-17T03:21:01.4468876Z ##[endgroup]
+2026-11-17T03:21:01.8661203Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T03:21:01.8686100Z cache miss, executing c8ae205bdb5cdd5a
+2026-11-17T03:21:01.8725915Z $ tsc -b tsconfig.build.json
+2026-11-17T03:21:01.8756118Z ##[endgroup]
+2026-11-17T03:21:05.8311012Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T03:21:05.8311668Z cache miss, executing 421c4b0ab5f971f1
+2026-11-17T03:21:05.8312081Z $ tsc -b tsconfig.build.json
+2026-11-17T03:21:05.8312697Z ##[endgroup]
+2026-11-17T03:21:11.0768133Z ##[group]@graphgoblin/api:build
+2026-11-17T03:21:11.0768559Z cache miss, executing 786e8a5dfeea5d7e
+2026-11-17T03:21:11.0768978Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T03:21:11.0769414Z ##[endgroup]
+2026-11-17T03:21:13.2584771Z ##[group]@graphgoblin/api-client:build
+2026-11-17T03:21:13.2585259Z cache miss, executing ee14e0d94ca569cc
+2026-11-17T03:21:13.2585735Z $ tsc -b tsconfig.build.json
+2026-11-17T03:21:13.2586092Z ##[endgroup]
+2026-11-17T03:21:15.9055447Z ##[group]@graphgoblin/mcp:build
+2026-11-17T03:21:15.9059469Z cache miss, executing b9726180666aa3ae
+2026-11-17T03:21:15.9075981Z $ tsc -b tsconfig.build.json
+2026-11-17T03:21:15.9076911Z ##[endgroup]
+2026-11-17T03:21:17.2816079Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-17T03:21:17.2816868Z cache bypass, force executing ab129cb2e1258105
+2026-11-17T03:21:17.2817688Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T03:21:17.2824234Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-17T03:21:17.2825934Z ##[endgroup]
+2026-11-17T03:21:17.5199325Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-17T03:21:17.5199993Z cache bypass, force executing 5df9db08f48b4165
+2026-11-17T03:21:17.5200505Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T03:21:17.5201260Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-17T03:21:17.5202389Z Install: codex plugin marketplace add "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-17T03:21:17.5203199Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-17T03:21:17.5203808Z ##[endgroup]
+2026-11-17T03:21:19.5181327Z ##[group]@graphgoblin/web:build
+2026-11-17T03:21:19.5181828Z cache miss, executing 8c08980bf7b02132
+2026-11-17T03:21:19.5182389Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-17T03:21:19.5183333Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T03:21:19.5183915Z transforming...
+2026-11-17T03:21:19.5184169Z ✓ 779 modules transformed.
+2026-11-17T03:21:19.5184417Z rendering chunks...
+2026-11-17T03:21:19.5184617Z computing gzip size...
+2026-11-17T03:21:19.5184860Z dist/manifest.webmanifest           0.47 kB
+2026-11-17T03:21:19.5185242Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-17T03:21:19.5185850Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-17T03:21:19.5186329Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-17T03:21:19.5186573Z 
+2026-11-17T03:21:19.5186750Z [32m✓ built in 1.92s[39m
+2026-11-17T03:21:19.5186885Z 
+2026-11-17T03:21:19.5186993Z [36mPWA v1.3.0[39m
+2026-11-17T03:21:19.5187235Z mode      [35mgenerateSW[39m
+2026-11-17T03:21:19.5187638Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-17T03:21:19.5188021Z files generated
+2026-11-17T03:21:19.5188297Z   [2mdist/sw.js.map[22m
+2026-11-17T03:21:19.5188588Z   [2mdist/sw.js[22m
+2026-11-17T03:21:19.5188843Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-17T03:21:19.5189119Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-17T03:21:19.5189524Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T03:21:19.5189839Z transforming...
+2026-11-17T03:21:19.5190055Z ✓ 284 modules transformed.
+2026-11-17T03:21:19.5190271Z rendering chunks...
+2026-11-17T03:21:19.5190461Z computing gzip size...
+2026-11-17T03:21:19.5190731Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-17T03:21:19.5191141Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-17T03:21:19.5191576Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-17T03:21:19.5192087Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-17T03:21:19.5192341Z 
+2026-11-17T03:21:19.5192477Z [32m✓ built in 329ms[39m
+2026-11-17T03:21:19.5192603Z 
+2026-11-17T03:21:19.5192701Z [36mPWA v1.3.0[39m
+2026-11-17T03:21:19.5192946Z mode      [35mgenerateSW[39m
+2026-11-17T03:21:19.5193253Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-17T03:21:19.5193501Z files generated
+2026-11-17T03:21:19.5193733Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-17T03:21:19.5193992Z   [2m../dist-goblin/sw.js[22m
+2026-11-17T03:21:19.5194268Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-17T03:21:19.5194587Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-17T03:21:19.5194966Z ##[endgroup]
+2026-11-17T03:21:19.5206758Z 
+2026-11-17T03:21:19.5207080Z  Tasks:    12 successful, 12 total
+2026-11-17T03:21:19.5207564Z Cached:    0 cached, 12 total
+2026-11-17T03:21:19.5208009Z   Time:    27.479s 
+2026-11-17T03:21:19.5208280Z 
+2026-11-17T03:21:19.6024365Z ##[group]Run pnpm test:reset
+2026-11-17T03:21:19.6024612Z [36;1mpnpm test:reset[0m
+2026-11-17T03:21:19.6069579Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:21:19.6069957Z env:
+2026-11-17T03:21:19.6070184Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:21:19.6070446Z ##[endgroup]
+2026-11-17T03:21:19.6335820Z $ node --test tooling/scripts/reset.acceptance.mjs
+2026-11-17T03:21:19.6666792Z TAP version 13
+2026-11-17T03:21:23.0939145Z # --- dry run output ---
+2026-11-17T03:21:23.0939700Z # GraphGoblin reset (dry run: nothing is removed)
+2026-11-17T03:21:23.0940190Z # Data directory: /tmp/gg-wp-b3-rid-acceptance-Em2tba/data
+2026-11-17T03:21:23.0941685Z # Database:       /tmp/gg-wp-b3-rid-acceptance-Em2tba/data/graphgoblin.db (format 3; this build requires format 4)
+2026-11-17T03:21:23.0942339Z # Removes:
+2026-11-17T03:21:23.0943300Z #   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+2026-11-17T03:21:23.0944254Z #   artifacts                              artifacts                1 file, 2 directories, 13 B
+2026-11-17T03:21:23.0945021Z #   chat-audio                             private chat audio       3 files, 1 directory, 1 link, 16 B
+2026-11-17T03:21:23.0945753Z #   graphgoblin.db                         database                 1 file, 4.0 KB
+2026-11-17T03:21:23.0946572Z #   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 519.1 KB
+2026-11-17T03:21:23.0947362Z #   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+2026-11-17T03:21:23.0948126Z #   graphgoblin.lock                       the reset's own lock     removed last, on release
+2026-11-17T03:21:23.0948627Z # Keeps:
+2026-11-17T03:21:23.0949300Z #   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+2026-11-17T03:21:23.0950058Z #   workspaces/my-notes                    not a stored run ID
+2026-11-17T03:21:23.0950732Z #   Browser device drafts stay in each browser; discard them from the loop editor.
+2026-11-17T03:21:23.0951195Z # Total removed: 8 files, 5 directories, 2 links, 555.1 KB in 6 items.
+2026-11-17T03:21:23.0951718Z # Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+2026-11-17T03:21:23.0952310Z #   node apps/api/dist/main.js --reset --yes --data-dir "/tmp/gg-wp-b3-rid-acceptance-Em2tba/data"
+2026-11-17T03:21:23.0952666Z # --- end ---
+2026-11-17T03:21:26.7647130Z # --- confirmed output ---
+2026-11-17T03:21:26.7650595Z # GraphGoblin reset
+2026-11-17T03:21:26.7651088Z # Data directory: /tmp/gg-wp-b3-rid-acceptance-Em2tba/data
+2026-11-17T03:21:26.7651986Z # Database:       /tmp/gg-wp-b3-rid-acceptance-Em2tba/data/graphgoblin.db (format 3; this build requires format 4)
+2026-11-17T03:21:26.7652608Z # Removes:
+2026-11-17T03:21:26.7653255Z #   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+2026-11-17T03:21:26.7654131Z #   artifacts                              artifacts                1 file, 2 directories, 13 B
+2026-11-17T03:21:26.7654875Z #   chat-audio                             private chat audio       3 files, 1 directory, 1 link, 16 B
+2026-11-17T03:21:26.7655751Z #   graphgoblin.db                         database                 1 file, 4.0 KB
+2026-11-17T03:21:26.7656453Z #   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 519.1 KB
+2026-11-17T03:21:26.7657155Z #   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+2026-11-17T03:21:26.7657892Z #   graphgoblin.lock                       the reset's own lock     removed last, on release
+2026-11-17T03:21:26.7658387Z # Keeps:
+2026-11-17T03:21:26.7658831Z #   graphgoblin.db.graphgoblin.lock        not part of the store
+2026-11-17T03:21:26.7659666Z #   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+2026-11-17T03:21:26.7660736Z #   workspaces/my-notes                    not a stored run ID
+2026-11-17T03:21:26.7661486Z #   Browser device drafts stay in each browser; discard them from the loop editor.
+2026-11-17T03:21:26.7662182Z # Total removed: 8 files, 5 directories, 2 links, 555.1 KB in 6 items.
+2026-11-17T03:21:26.7662830Z # Removing:
+2026-11-17T03:21:26.7663422Z #   removed workspaces/01JRESETACCEPTANCEAAAAAAAA (1 file, 2 directories, 1 link, 10 B)
+2026-11-17T03:21:26.7664107Z #   removed artifacts (1 file, 2 directories, 13 B)
+2026-11-17T03:21:26.7676153Z #   removed chat-audio (3 files, 1 directory, 1 link, 16 B)
+2026-11-17T03:21:26.7676817Z #   removed graphgoblin.db (1 file, 4.0 KB)
+2026-11-17T03:21:26.7677729Z #   removed graphgoblin.db-wal (1 file, 519.1 KB)
+2026-11-17T03:21:26.7678395Z #   removed graphgoblin.db-shm (1 file, 32.0 KB)
+2026-11-17T03:21:26.7679094Z #   removed graphgoblin.lock
+2026-11-17T03:21:26.7680134Z # Reset complete. The next start creates a new, empty format-4 store in /tmp/gg-wp-b3-rid-acceptance-Em2tba/data.
+2026-11-17T03:21:26.7681042Z # --- end ---
+2026-11-17T03:21:27.8107469Z # Subtest: the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+2026-11-17T03:21:27.8113101Z ok 1 - the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+2026-11-17T03:21:27.8113707Z   ---
+2026-11-17T03:21:27.8113957Z   duration_ms: 8112.304725
+2026-11-17T03:21:27.8114170Z   type: 'test'
+2026-11-17T03:21:27.8114346Z   ...
+2026-11-17T03:21:27.8303703Z 1..1
+2026-11-17T03:21:27.8304163Z # tests 1
+2026-11-17T03:21:27.8304667Z # suites 0
+2026-11-17T03:21:27.8305156Z # pass 1
+2026-11-17T03:21:27.8305596Z # fail 0
+2026-11-17T03:21:27.8306118Z # cancelled 0
+2026-11-17T03:21:27.8306464Z # skipped 0
+2026-11-17T03:21:27.8306820Z # todo 0
+2026-11-17T03:21:27.8307193Z # duration_ms 8172.60791
+2026-11-17T03:21:27.8395170Z ##[group]Run pnpm test:recovery-process
+2026-11-17T03:21:27.8395783Z [36;1mpnpm test:recovery-process[0m
+2026-11-17T03:21:27.8441657Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:21:27.8441965Z env:
+2026-11-17T03:21:27.8442294Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:21:27.8442707Z ##[endgroup]
+2026-11-17T03:21:27.8726999Z $ node --test apps/api/scripts/recovery-process.integration.mjs
+2026-11-17T03:21:27.9067211Z TAP version 13
+2026-11-17T03:21:29.7092893Z # healthy: waiting; run.waiting readable; damaged: 2 HISTORY_UNREADABLE; port 5600
+2026-11-17T03:21:30.7872959Z # manual column repair: both formerly damaged runs recover; diagnostics empty
+2026-11-17T03:21:30.8137995Z # disposable fixture removed
+2026-11-17T03:21:30.8161967Z # Subtest: built API recovers healthy work beside damaged event and run rows
+2026-11-17T03:21:30.8166074Z ok 1 - built API recovers healthy work beside damaged event and run rows
+2026-11-17T03:21:30.8166604Z   ---
+2026-11-17T03:21:30.8166957Z   duration_ms: 2312.061214
+2026-11-17T03:21:30.8167261Z   type: 'test'
+2026-11-17T03:21:30.8167512Z   ...
+2026-11-17T03:21:30.8376948Z 1..1
+2026-11-17T03:21:30.8377643Z # tests 1
+2026-11-17T03:21:30.8378310Z # suites 0
+2026-11-17T03:21:30.8378724Z # pass 1
+2026-11-17T03:21:30.8379633Z # fail 0
+2026-11-17T03:21:30.8380049Z # cancelled 0
+2026-11-17T03:21:30.8380481Z # skipped 0
+2026-11-17T03:21:30.8380877Z # todo 0
+2026-11-17T03:21:30.8381251Z # duration_ms 2940.602462
+2026-11-17T03:21:30.8493326Z ##[group]Run pnpm test:chat-restart
+2026-11-17T03:21:30.8493735Z [36;1mpnpm test:chat-restart[0m
+2026-11-17T03:21:30.8541554Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:21:30.8541771Z env:
+2026-11-17T03:21:30.8541985Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:21:30.8542263Z ##[endgroup]
+2026-11-17T03:21:30.8819234Z $ node --test apps/api/scripts/chat-restart.acceptance.mjs
+2026-11-17T03:21:30.9161115Z TAP version 13
+2026-11-17T03:21:34.9841152Z # {"acceptance":"chat-restart","admittedOnce":true,"lostAcknowledgement":true,"recovered":"same run; Script uncertainty held without replay","authenticated":"owner and paired device","audio":"canonical WAV private bytes retained beyond unused expiry; interrupted and expired unused files removed","uploadIdentity":"ready acknowledgement survived restart; scoped recovery, conflict and terminal no-recreation verified","malformedNormalizer":"rejected before external effect","explicitNewTurn":"exact native fixture reply"}
+2026-11-17T03:21:35.0118652Z # Subtest: native Chat admission, uncertain effects and private audio survive a real process restart without replay
+2026-11-17T03:21:35.0124318Z ok 1 - native Chat admission, uncertain effects and private audio survive a real process restart without replay
+2026-11-17T03:21:35.0125210Z   ---
+2026-11-17T03:21:35.0125583Z   duration_ms: 3879.921094
+2026-11-17T03:21:35.0125875Z   type: 'test'
+2026-11-17T03:21:35.0126124Z   ...
+2026-11-17T03:21:35.0281302Z 1..1
+2026-11-17T03:21:35.0281591Z # tests 1
+2026-11-17T03:21:35.0281930Z # suites 0
+2026-11-17T03:21:35.0283021Z # pass 1
+2026-11-17T03:21:35.0283497Z # fail 0
+2026-11-17T03:21:35.0283934Z # cancelled 0
+2026-11-17T03:21:35.0284688Z # skipped 0
+2026-11-17T03:21:35.0285043Z # todo 0
+2026-11-17T03:21:35.0285595Z # duration_ms 4121.571646
+2026-11-17T03:21:35.0373958Z ##[group]Run pnpm test:wait-restart
+2026-11-17T03:21:35.0374230Z [36;1mpnpm test:wait-restart[0m
+2026-11-17T03:21:35.0418439Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:21:35.0418652Z env:
+2026-11-17T03:21:35.0418870Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:21:35.0419132Z ##[endgroup]
+2026-11-17T03:21:35.0688211Z $ node apps/api/scripts/wait-restart.acceptance.mjs
+2026-11-17T03:21:35.1014490Z {"phase":"boot","poll":50,"port":5600,"dataDir":"/tmp/gg-c2-native-apPPLG","at":"2026-11-17T03:21:35.100Z"}
+2026-11-17T03:21:36.0567398Z {"phase":"ready","poll":50,"pid":3412,"elapsedMs":955.0595480000001}
+2026-11-17T03:22:11.3993066Z {"phase":"boot","poll":50,"port":5600,"dataDir":"/tmp/gg-c2-native-apPPLG","at":"2026-11-17T03:22:11.399Z"}
+2026-11-17T03:22:12.6464772Z {"phase":"ready","poll":50,"pid":3436,"elapsedMs":1247.0267590000003}
+2026-11-17T03:22:12.6465807Z {"phase":"restarted","poll":50,"at":"2026-11-17T03:22:12.646Z"}
+2026-11-17T03:22:17.6929738Z {"poll":50,"dataDir":"/tmp/gg-c2-native-apPPLG","inputIdentity":true,"timerWakes":1,"pausedWakes":1,"heartbeatCount":2}
+2026-11-17T03:22:17.7080782Z {"phase":"boot","poll":1000,"port":5600,"dataDir":"/tmp/gg-c2-native-orHMMP","at":"2026-11-17T03:22:17.707Z"}
+2026-11-17T03:22:18.6342540Z {"phase":"ready","poll":1000,"pid":3453,"elapsedMs":926.0979480000024}
+2026-11-17T03:22:54.6966002Z {"phase":"boot","poll":1000,"port":5600,"dataDir":"/tmp/gg-c2-native-orHMMP","at":"2026-11-17T03:22:54.696Z"}
+2026-11-17T03:22:55.8747223Z {"phase":"ready","poll":1000,"pid":3477,"elapsedMs":1178.0222070000018}
+2026-11-17T03:22:55.8747696Z {"phase":"restarted","poll":1000,"at":"2026-11-17T03:22:55.874Z"}
+2026-11-17T03:23:02.7585230Z {"poll":1000,"dataDir":"/tmp/gg-c2-native-orHMMP","inputIdentity":true,"timerWakes":1,"pausedWakes":1,"heartbeatCount":2}
+2026-11-17T03:23:02.7833531Z ##[group]Run pnpm test:prompt-restart
+2026-11-17T03:23:02.7833813Z [36;1mpnpm test:prompt-restart[0m
+2026-11-17T03:23:02.7878161Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:23:02.7878378Z env:
+2026-11-17T03:23:02.7878607Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:23:02.7878887Z ##[endgroup]
+2026-11-17T03:23:02.8149486Z $ node --test apps/api/scripts/prompt-restart.integration.mjs
+2026-11-17T03:23:02.8500283Z TAP version 13
+2026-11-17T03:23:05.1442754Z # {"dataDir":"/tmp/gg-wp-f4-restart-gWoPLA","port":5660,"runId":"01M7KRF4GECEA2E0R55R58P8FX","visitId":"01M7KRF4GECEA2E0R55R58P8FX:5","recovered":"same session, continuation only"}
+2026-11-17T03:23:05.1601651Z # Subtest: a real kill of the built API continues accepted work from durable visit evidence
+2026-11-17T03:23:05.1616307Z ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+2026-11-17T03:23:05.1616838Z   ---
+2026-11-17T03:23:05.1617088Z   duration_ms: 2077.893113
+2026-11-17T03:23:05.1617474Z   type: 'test'
+2026-11-17T03:23:05.1617703Z   ...
+2026-11-17T03:23:07.1757447Z # {"dataDir":"/tmp/gg-wp-f4-restart-hnRy3t","port":5660,"runId":"01M7KRF6F4JCKECZVCQHD6PE9B","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+2026-11-17T03:23:07.1901946Z # Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+2026-11-17T03:23:07.1903020Z ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+2026-11-17T03:23:07.1903639Z   ---
+2026-11-17T03:23:07.1904011Z   duration_ms: 2030.949449
+2026-11-17T03:23:07.1904376Z   type: 'test'
+2026-11-17T03:23:07.1904646Z   ...
+2026-11-17T03:23:09.2053750Z # {"dataDir":"/tmp/gg-wp-f4-restart-ZmVCxP","port":5660,"runId":"01M7KRF8ESAZ7NBXRSQYQEHE5M","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+2026-11-17T03:23:09.2209347Z # Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+2026-11-17T03:23:09.2210437Z ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+2026-11-17T03:23:09.2210988Z   ---
+2026-11-17T03:23:09.2211237Z   duration_ms: 2028.891201
+2026-11-17T03:23:09.2211577Z   type: 'test'
+2026-11-17T03:23:09.2211907Z   ...
+2026-11-17T03:23:11.7401936Z # {"dataDir":"/tmp/gg-wp-f4-restart-Ot2pB9","port":5660,"runId":"01M7KRFAGQHEY6B3F1JHA76PMB","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+2026-11-17T03:23:11.7585442Z # Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+2026-11-17T03:23:11.7586435Z ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+2026-11-17T03:23:11.7587008Z   ---
+2026-11-17T03:23:11.7587332Z   duration_ms: 2539.376166
+2026-11-17T03:23:11.7587648Z   type: 'test'
+2026-11-17T03:23:11.7587906Z   ...
+2026-11-17T03:23:14.2858911Z # {"dataDir":"/tmp/gg-wp-f4-restart-lDntYw","port":5660,"runId":"01M7KRFD0KECCSM1TGC7WZR91R","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+2026-11-17T03:23:14.3058587Z # Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+2026-11-17T03:23:14.3059564Z ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+2026-11-17T03:23:14.3060066Z   ---
+2026-11-17T03:23:14.3060336Z   duration_ms: 2547.085287
+2026-11-17T03:23:14.3060625Z   type: 'test'
+2026-11-17T03:23:14.3061210Z   ...
+2026-11-17T03:23:16.5416457Z # {"runId":"01M7KRFFD9CNKMWSENBKS9W9N4","recovered":"own worker/reviewer handles, new process, authored feedback preserved"}
+2026-11-17T03:23:16.5548729Z # Subtest: a real restart preserves separate own handles across completed visits
+2026-11-17T03:23:16.5549629Z ok 6 - a real restart preserves separate own handles across completed visits
+2026-11-17T03:23:16.5550277Z   ---
+2026-11-17T03:23:16.5550629Z   duration_ms: 2249.180083
+2026-11-17T03:23:16.5551015Z   type: 'test'
+2026-11-17T03:23:16.5551325Z   ...
+2026-11-17T03:23:16.5666035Z 1..6
+2026-11-17T03:23:16.5666637Z # tests 6
+2026-11-17T03:23:16.5666901Z # suites 0
+2026-11-17T03:23:16.5667129Z # pass 6
+2026-11-17T03:23:16.5667354Z # fail 0
+2026-11-17T03:23:16.5667693Z # cancelled 0
+2026-11-17T03:23:16.5668011Z # skipped 0
+2026-11-17T03:23:16.5668342Z # todo 0
+2026-11-17T03:23:16.5668722Z # duration_ms 13726.308416
+2026-11-17T03:23:16.5755689Z ##[group]Run pnpm test:webhook-retry
+2026-11-17T03:23:16.5755979Z [36;1mpnpm test:webhook-retry[0m
+2026-11-17T03:23:16.5800295Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:23:16.5800511Z env:
+2026-11-17T03:23:16.5800729Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:23:16.5800988Z ##[endgroup]
+2026-11-17T03:23:16.6064544Z $ node apps/api/scripts/webhook-retry.acceptance.mjs
+2026-11-17T03:24:38.8765667Z {"failureRequests":5,"crashRequests":2,"matrix":[{"path":"/success","attempts":1,"delivery":{"id":"01M7KRH3BS9DZEAP2CNE0C5SY3","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/success"},"status":"delivered","attempts":1,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":false}},{"path":"/retry","attempts":2,"delivery":{"id":"01M7KRH3CS2QWYSR5NH81VWVHG","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/retry"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}},{"path":"/permanent","attempts":1,"delivery":{"id":"01M7KRH3EDGF8VFX9GF6P7Z250","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/permanent"},"status":"failed","attempts":1,"maxAttempts":5,"inFlight":false,"acknowledgement":"rejected","effectMayHaveHappened":false,"acknowledgementUncertain":false,"lastError":{"code":"http","message":"Webhook returned HTTP 400.","retryable":false,"acknowledgement":"rejected","httpStatus":400}}},{"path":"/late","attempts":2,"delivery":{"id":"01M7KRH3FPCVN7T9FMFNJ4ZSEE","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/late"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"timeout","message":"Webhook acknowledgement timed out; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}},{"path":"/drop","attempts":2,"delivery":{"id":"01M7KRH3GP1S81MGHJHTJDQMYP","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/drop"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"transport","message":"Webhook acknowledgement lost; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}}],"drain":[{"phase":"backoff","elapsedMs":16,"requestsDuringDrain":0,"resumed":{"id":"01M7KRHJ8BJQCN4MSGWSFJ0SHY","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/drain-backoff"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}},{"phase":"attempt","elapsedMs":9997,"requestsDuringDrain":0,"resumed":{"id":"01M7KRHN91NR9PZBN3T6N7H88N","channel":{"kind":"webhook","url":"http://127.0.0.1:35607/drain-attempt"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"timeout","message":"Webhook acknowledgement timed out; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}}]}
+2026-11-17T03:24:38.9051922Z ##[group]Run pnpm test:upgrade
+2026-11-17T03:24:38.9052329Z [36;1mpnpm test:upgrade[0m
+2026-11-17T03:24:38.9096356Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:24:38.9109754Z env:
+2026-11-17T03:24:38.9110013Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:24:38.9110287Z ##[endgroup]
+2026-11-17T03:24:38.9378335Z $ node --test tooling/scripts/upgrade.acceptance.mjs
+2026-11-17T03:24:38.9714575Z TAP version 13
+2026-11-17T03:24:43.4195936Z # Subtest: fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+2026-11-17T03:24:43.4200479Z ok 1 - fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+2026-11-17T03:24:43.4206246Z   ---
+2026-11-17T03:24:43.4206666Z   duration_ms: 4418.826149
+2026-11-17T03:24:43.4207056Z   type: 'test'
+2026-11-17T03:24:43.4207359Z   ...
+2026-11-17T03:24:46.1631527Z # Subtest: format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+2026-11-17T03:24:46.1633095Z ok 2 - format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+2026-11-17T03:24:46.1633752Z   ---
+2026-11-17T03:24:46.1634045Z   duration_ms: 2743.923117
+2026-11-17T03:24:46.1634454Z   type: 'test'
+2026-11-17T03:24:46.1634740Z   ...
+2026-11-17T03:24:46.1733080Z 1..2
+2026-11-17T03:24:46.1733713Z # tests 2
+2026-11-17T03:24:46.1734291Z # suites 0
+2026-11-17T03:24:46.1734725Z # pass 2
+2026-11-17T03:24:46.1735150Z # fail 0
+2026-11-17T03:24:46.1736522Z # cancelled 0
+2026-11-17T03:24:46.1736976Z # skipped 0
+2026-11-17T03:24:46.1737357Z # todo 0
+2026-11-17T03:24:46.1737815Z # duration_ms 7210.824118
+2026-11-17T03:24:46.1829610Z ##[group]Run pnpm typecheck
+2026-11-17T03:24:46.1829992Z [36;1mpnpm typecheck[0m
+2026-11-17T03:24:46.1884895Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:24:46.1885118Z env:
+2026-11-17T03:24:46.1885504Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:24:46.1885797Z ##[endgroup]
+2026-11-17T03:24:46.2151277Z $ turbo run typecheck
+2026-11-17T03:24:46.3033523Z 
+2026-11-17T03:24:46.3036234Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T03:24:46.3038087Z    • Running typecheck in 13 packages
+2026-11-17T03:24:46.3038496Z    • Remote caching disabled
+2026-11-17T03:24:46.3038698Z 
+2026-11-17T03:24:46.3296366Z ##[group]@graphgoblin/contracts:build
+2026-11-17T03:24:46.3305506Z cache hit, replaying logs 398fa0418041b745
+2026-11-17T03:24:46.3312702Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3313521Z ##[endgroup]
+2026-11-17T03:24:46.3314332Z ##[group]@graphgoblin/domain:build
+2026-11-17T03:24:46.3314779Z cache hit, replaying logs 7a74068a18fc3cf0
+2026-11-17T03:24:46.3315206Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3315800Z ##[endgroup]
+2026-11-17T03:24:46.3318867Z ##[group]@graphgoblin/engine:build
+2026-11-17T03:24:46.3342116Z cache hit, replaying logs 61913e96a30219e4
+2026-11-17T03:24:46.3356211Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3356887Z ##[endgroup]
+2026-11-17T03:24:46.3357490Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T03:24:46.3358038Z cache hit, replaying logs c8ae205bdb5cdd5a
+2026-11-17T03:24:46.3358541Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3359119Z ##[endgroup]
+2026-11-17T03:24:46.3359686Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T03:24:46.3360266Z cache hit, replaying logs 1e624a662b5e23d9
+2026-11-17T03:24:46.3360796Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3361387Z ##[endgroup]
+2026-11-17T03:24:46.3361934Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T03:24:46.3362496Z cache hit, replaying logs 421c4b0ab5f971f1
+2026-11-17T03:24:46.3362992Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3363738Z ##[endgroup]
+2026-11-17T03:24:46.3364328Z ##[group]@graphgoblin/api:build
+2026-11-17T03:24:46.3365036Z cache hit, replaying logs 786e8a5dfeea5d7e
+2026-11-17T03:24:46.3365888Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T03:24:46.3462956Z ##[endgroup]
+2026-11-17T03:24:46.3525261Z ##[group]@graphgoblin/api-client:build
+2026-11-17T03:24:46.3546910Z cache hit, replaying logs ee14e0d94ca569cc
+2026-11-17T03:24:46.3572347Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3573800Z ##[endgroup]
+2026-11-17T03:24:46.3574465Z ##[group]@graphgoblin/mcp:build
+2026-11-17T03:24:46.3575072Z cache hit, replaying logs b9726180666aa3ae
+2026-11-17T03:24:46.3575847Z $ tsc -b tsconfig.build.json
+2026-11-17T03:24:46.3576486Z ##[endgroup]
+2026-11-17T03:25:06.7866166Z ##[group]@graphgoblin/contracts:typecheck
+2026-11-17T03:25:06.8006582Z cache miss, executing 28ca48c2ee23b67a
+2026-11-17T03:25:06.8113645Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:06.8287534Z ##[endgroup]
+2026-11-17T03:25:10.1540612Z ##[group]@graphgoblin/domain:typecheck
+2026-11-17T03:25:10.1646668Z cache miss, executing f0a5d2abf601d823
+2026-11-17T03:25:10.1726335Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:10.1846498Z ##[endgroup]
+2026-11-17T03:25:12.0812117Z ##[group]@graphgoblin/adapter-jev:typecheck
+2026-11-17T03:25:12.0986412Z cache miss, executing 0c9797496e3603ee
+2026-11-17T03:25:12.1115739Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:12.1196421Z ##[endgroup]
+2026-11-17T03:25:14.3426783Z ##[group]@graphgoblin/adapter-codex:typecheck
+2026-11-17T03:25:14.3456258Z cache miss, executing 665b66df8547b95a
+2026-11-17T03:25:14.3637025Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:14.3726610Z ##[endgroup]
+2026-11-17T03:25:20.0976964Z ##[group]@graphgoblin/plugin-claude:typecheck
+2026-11-17T03:25:20.0983839Z cache miss, executing ec08253e69e0e070
+2026-11-17T03:25:20.1106398Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:20.1216447Z ##[endgroup]
+2026-11-17T03:25:21.2976873Z ##[group]@graphgoblin/engine:typecheck
+2026-11-17T03:25:21.3095809Z cache miss, executing 06caa67a3049014e
+2026-11-17T03:25:21.3142287Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:21.3166155Z ##[endgroup]
+2026-11-17T03:25:31.2018730Z ##[group]@graphgoblin/infrastructure:typecheck
+2026-11-17T03:25:31.2046008Z cache miss, executing f676d36acfa2d720
+2026-11-17T03:25:31.2076140Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:31.2096360Z ##[endgroup]
+2026-11-17T03:25:34.6922172Z ##[group]@graphgoblin/mcp:typecheck
+2026-11-17T03:25:34.6932627Z cache miss, executing b08c092a647602fa
+2026-11-17T03:25:34.6933424Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:34.6934322Z ##[endgroup]
+2026-11-17T03:25:34.9956857Z ##[group]@graphgoblin/api-client:typecheck
+2026-11-17T03:25:35.0001674Z cache miss, executing 90293fefe497364d
+2026-11-17T03:25:35.0046644Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:35.0093915Z ##[endgroup]
+2026-11-17T03:25:36.1034544Z ##[group]@graphgoblin/plugin-codex:typecheck
+2026-11-17T03:25:36.1043098Z cache miss, executing 0a315ea2739d341f
+2026-11-17T03:25:36.1043716Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:36.1044386Z ##[endgroup]
+2026-11-17T03:25:37.7665260Z ##[group]@graphgoblin/api:typecheck
+2026-11-17T03:25:37.7666609Z cache miss, executing 09f0f30ab8556d78
+2026-11-17T03:25:37.7667348Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-17T03:25:37.7668094Z ##[endgroup]
+2026-11-17T03:25:46.6062605Z ##[group]@graphgoblin/web:typecheck
+2026-11-17T03:25:46.6063135Z cache miss, executing 9181457eef85ee4a
+2026-11-17T03:25:46.6063582Z $ tsc -p tsconfig.json --noEmit
+2026-11-17T03:25:46.6064064Z ##[endgroup]
+2026-11-17T03:25:46.6064223Z 
+2026-11-17T03:25:46.6065997Z  Tasks:    21 successful, 21 total
+2026-11-17T03:25:46.6066451Z Cached:    9 cached, 21 total
+2026-11-17T03:25:46.6066819Z   Time:    1m0.36s 
+2026-11-17T03:25:46.6067093Z 
+2026-11-17T03:25:46.6206058Z ##[group]Run pnpm lint
+2026-11-17T03:25:46.6206394Z [36;1mpnpm lint[0m
+2026-11-17T03:25:46.6250011Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:25:46.6250221Z env:
+2026-11-17T03:25:46.6250431Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:25:46.6250683Z ##[endgroup]
+2026-11-17T03:25:46.6517150Z $ turbo run lint
+2026-11-17T03:25:46.7386364Z 
+2026-11-17T03:25:46.7407165Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T03:25:46.7409272Z    • Running lint in 13 packages
+2026-11-17T03:25:46.7411014Z    • Remote caching disabled
+2026-11-17T03:25:46.7411348Z 
+2026-11-17T03:26:03.1726872Z ##[group]@graphgoblin/tooling:lint
+2026-11-17T03:26:03.1796541Z cache miss, executing 9858dabf3e8d8d1b
+2026-11-17T03:26:03.1886289Z $ eslint scripts/*.mjs perf/*.mjs *.mjs
+2026-11-17T03:26:03.1966828Z ##[endgroup]
+2026-11-17T03:26:13.3667021Z ##[group]@graphgoblin/adapter-jev:lint
+2026-11-17T03:26:13.3976637Z cache miss, executing c56fac5ea1bd6cf9
+2026-11-17T03:26:13.4116424Z $ eslint .
+2026-11-17T03:26:13.4328670Z ##[endgroup]
+2026-11-17T03:26:19.9713090Z ##[group]@graphgoblin/contracts:lint
+2026-11-17T03:26:19.9796513Z cache miss, executing 7a06a688ae7beb7c
+2026-11-17T03:26:19.9856082Z $ eslint .
+2026-11-17T03:26:19.9896386Z ##[endgroup]
+2026-11-17T03:26:20.1921100Z ##[group]@graphgoblin/adapter-codex:lint
+2026-11-17T03:26:20.1976159Z cache miss, executing 8521952967c7b6e6
+2026-11-17T03:26:20.2006228Z $ eslint .
+2026-11-17T03:26:20.2007047Z ##[endgroup]
+2026-11-17T03:26:29.3448335Z ##[group]@graphgoblin/api-client:lint
+2026-11-17T03:26:29.3466377Z cache miss, executing f90c7e3e1efbd026
+2026-11-17T03:26:29.3491147Z $ eslint .
+2026-11-17T03:26:29.3657954Z ##[endgroup]
+2026-11-17T03:26:30.3087345Z ##[group]@graphgoblin/domain:lint
+2026-11-17T03:26:30.3152331Z cache miss, executing d9bc3d413d5b70f6
+2026-11-17T03:26:30.3216141Z $ eslint .
+2026-11-17T03:26:30.3306483Z ##[endgroup]
+2026-11-17T03:26:30.4706778Z ##[group]@graphgoblin/plugin-claude:lint
+2026-11-17T03:26:30.4756550Z cache miss, executing e227e34db8bb7705
+2026-11-17T03:26:30.4796083Z $ eslint .
+2026-11-17T03:26:30.4806591Z ##[endgroup]
+2026-11-17T03:26:35.6456799Z ##[group]@graphgoblin/mcp:lint
+2026-11-17T03:26:35.6457392Z cache miss, executing 02476e6e50c06ed5
+2026-11-17T03:26:35.6486061Z $ eslint .
+2026-11-17T03:26:35.6516429Z ##[endgroup]
+2026-11-17T03:26:38.2321948Z ##[group]@graphgoblin/plugin-codex:lint
+2026-11-17T03:26:38.2322814Z cache miss, executing 44adff56ef38e169
+2026-11-17T03:26:38.2366158Z $ eslint .
+2026-11-17T03:26:38.2367258Z ##[endgroup]
+2026-11-17T03:26:43.6983385Z ##[group]@graphgoblin/engine:lint
+2026-11-17T03:26:43.7016405Z cache miss, executing a27db218bfec1a9e
+2026-11-17T03:26:43.7016959Z $ eslint .
+2026-11-17T03:26:43.7017613Z ##[endgroup]
+2026-11-17T03:26:48.9141389Z ##[group]@graphgoblin/infrastructure:lint
+2026-11-17T03:26:48.9152828Z cache miss, executing a33d467d8666d1ec
+2026-11-17T03:26:48.9153330Z $ eslint .
+2026-11-17T03:26:48.9153923Z ##[endgroup]
+2026-11-17T03:26:54.7107449Z ##[group]@graphgoblin/api:lint
+2026-11-17T03:26:54.7108314Z cache miss, executing 1cdb68c2f84810a7
+2026-11-17T03:26:54.7108703Z $ eslint .
+2026-11-17T03:26:54.7109177Z ##[endgroup]
+2026-11-17T03:27:16.8864966Z ##[group]@graphgoblin/web:lint
+2026-11-17T03:27:16.8865643Z cache miss, executing 19cb815cbdea0799
+2026-11-17T03:27:16.8865957Z $ eslint .
+2026-11-17T03:27:16.8866355Z ##[endgroup]
+2026-11-17T03:27:16.8866740Z 
+2026-11-17T03:27:16.8866908Z  Tasks:    13 successful, 13 total
+2026-11-17T03:27:16.8867312Z Cached:    0 cached, 13 total
+2026-11-17T03:27:16.8867622Z   Time:    1m30.203s 
+2026-11-17T03:27:16.8868801Z 
+2026-11-17T03:27:16.8992440Z ##[group]Run pnpm format:check
+2026-11-17T03:27:16.8992702Z [36;1mpnpm format:check[0m
+2026-11-17T03:27:16.9037001Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:27:16.9037217Z env:
+2026-11-17T03:27:16.9037434Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:27:16.9037689Z ##[endgroup]
+2026-11-17T03:27:16.9305960Z $ prettier --check .
+2026-11-17T03:27:17.0001095Z Checking formatting...
+2026-11-17T03:28:20.0133755Z All matched files use Prettier code style!
+2026-11-17T03:28:20.0672849Z ##[group]Run pnpm check:layers
+2026-11-17T03:28:20.0673118Z [36;1mpnpm check:layers[0m
+2026-11-17T03:28:20.0717792Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:20.0718022Z env:
+2026-11-17T03:28:20.0718245Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:20.0718511Z ##[endgroup]
+2026-11-17T03:28:20.0987653Z $ node tooling/scripts/check-layers.mjs
+2026-11-17T03:28:20.1231571Z Layer rules: OK
+2026-11-17T03:28:20.1307519Z ##[group]Run pnpm check:migrations
+2026-11-17T03:28:20.1307797Z [36;1mpnpm check:migrations[0m
+2026-11-17T03:28:20.1351657Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:20.1352034Z env:
+2026-11-17T03:28:20.1352260Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:20.1352517Z ##[endgroup]
+2026-11-17T03:28:20.1628845Z $ node tooling/scripts/check-migrations.mjs
+2026-11-17T03:28:20.7227270Z Drizzle generation is a no-op.
+2026-11-17T03:28:20.7357597Z ##[group]Run pnpm check:tokens
+2026-11-17T03:28:20.7357961Z [36;1mpnpm check:tokens[0m
+2026-11-17T03:28:20.7404233Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:20.7404464Z env:
+2026-11-17T03:28:20.7404681Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:20.7404939Z ##[endgroup]
+2026-11-17T03:28:20.7674164Z $ node tooling/scripts/check-design-tokens.mjs
+2026-11-17T03:28:21.8754018Z Design tokens: OK (238 files checked)
+2026-11-17T03:28:21.8844126Z ##[group]Run pnpm check:deps
+2026-11-17T03:28:21.8844367Z [36;1mpnpm check:deps[0m
+2026-11-17T03:28:21.8888852Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:21.8889115Z env:
+2026-11-17T03:28:21.8889363Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:21.8889639Z ##[endgroup]
+2026-11-17T03:28:21.9157502Z $ depcruise packages apps --config .dependency-cruiser.cjs
+2026-11-17T03:28:25.3597643Z 
+2026-11-17T03:28:25.3598346Z   warn no-orphans: packages/infrastructure/drizzle.config.ts
+2026-11-17T03:28:25.3598802Z   warn no-orphans: apps/web/public/chat-update-worker.js
+2026-11-17T03:28:25.3599153Z   warn no-orphans: apps/web/e2e/shutdown.config.ts
+2026-11-17T03:28:25.3599483Z   warn no-orphans: apps/api/scripts/check-templates.d.mts
+2026-11-17T03:28:25.3599675Z 
+2026-11-17T03:28:25.3599956Z x 4 dependency violations (0 errors, 4 warnings). 1318 modules, 5711 dependencies cruised.
+2026-11-17T03:28:25.3600227Z 
+2026-11-17T03:28:25.4179040Z ##[group]Run pnpm check:templates
+2026-11-17T03:28:25.4179323Z [36;1mpnpm check:templates[0m
+2026-11-17T03:28:25.4223015Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:25.4223227Z env:
+2026-11-17T03:28:25.4223446Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:25.4223711Z ##[endgroup]
+2026-11-17T03:28:25.4490771Z $ pnpm --filter @graphgoblin/api exec tsx --conditions=development scripts/check-templates.mjs
+2026-11-17T03:28:26.1067351Z Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+2026-11-17T03:28:26.1327077Z ##[group]Run pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+2026-11-17T03:28:26.1327881Z [36;1mpnpm --filter @graphgoblin/web exec playwright install --with-deps chromium[0m
+2026-11-17T03:28:26.1380134Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:26.1380476Z env:
+2026-11-17T03:28:26.1380796Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:26.1381194Z ##[endgroup]
+2026-11-17T03:28:26.5527616Z Installing dependencies...
+2026-11-17T03:28:26.5610513Z Switching to root user to install dependencies...
+2026-11-17T03:28:26.6318618Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-11-17T03:28:26.6531032Z Get:6 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease [3964 B]
+2026-11-17T03:28:26.6648960Z Hit:2 http://azure.archive.ubuntu.com/ubuntu resolute InRelease
+2026-11-17T03:28:26.6665828Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+2026-11-17T03:28:26.6692199Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute-backports InRelease [137 kB]
+2026-11-17T03:28:26.6713851Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+2026-11-17T03:28:26.6817668Z Get:7 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main amd64 Packages [160 kB]
+2026-11-17T03:28:26.6983649Z Get:8 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main arm64 Packages [146 kB]
+2026-11-17T03:28:26.7087868Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main amd64v3 Packages [873 kB]
+2026-11-17T03:28:26.7128612Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [195 kB]
+2026-11-17T03:28:26.7173193Z Get:11 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe amd64v3 Packages [386 kB]
+2026-11-17T03:28:26.7174532Z Get:12 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [122 kB]
+2026-11-17T03:28:26.7375494Z Get:13 http://azure.archive.ubuntu.com/ubuntu resolute-security/main amd64v3 Packages [719 kB]
+2026-11-17T03:28:26.7413620Z Get:14 http://azure.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [157 kB]
+2026-11-17T03:28:26.7419440Z Get:15 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe amd64v3 Packages [221 kB]
+2026-11-17T03:28:26.7436033Z Get:16 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [72.6 kB]
+2026-11-17T03:28:26.7449223Z Get:17 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted amd64v3 Packages [590 kB]
+2026-11-17T03:28:26.7496978Z Get:18 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [122 kB]
+2026-11-17T03:28:28.9439802Z Fetched 4178 kB in 0s (14.1 MB/s)
+2026-11-17T03:28:29.4640830Z Reading package lists...
+2026-11-17T03:28:29.4860475Z Reading package lists...
+2026-11-17T03:28:29.6092516Z Building dependency tree...
+2026-11-17T03:28:29.6098425Z Reading state information...
+2026-11-17T03:28:29.6374035Z libasound2t64 is already the newest version (1.2.15.3-1ubuntu1.1).
+2026-11-17T03:28:29.6374635Z libasound2t64 set to manually installed.
+2026-11-17T03:28:29.6375232Z libatk-bridge2.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+2026-11-17T03:28:29.6375895Z libatk-bridge2.0-0t64 set to manually installed.
+2026-11-17T03:28:29.6376402Z libatk1.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+2026-11-17T03:28:29.6376928Z libatk1.0-0t64 set to manually installed.
+2026-11-17T03:28:29.6377456Z libatspi2.0-0t64 is already the newest version (2.60.4-0ubuntu0.1).
+2026-11-17T03:28:29.6377970Z libatspi2.0-0t64 set to manually installed.
+2026-11-17T03:28:29.6378444Z libcairo2 is already the newest version (1.18.4-3).
+2026-11-17T03:28:29.6378893Z libcairo2 set to manually installed.
+2026-11-17T03:28:29.6379422Z libcups2t64 is already the newest version (2.4.16-1ubuntu1.3).
+2026-11-17T03:28:29.6379908Z libcups2t64 set to manually installed.
+2026-11-17T03:28:29.6380421Z libdbus-1-3 is already the newest version (1.16.2-2ubuntu4).
+2026-11-17T03:28:29.6381390Z libdbus-1-3 set to manually installed.
+2026-11-17T03:28:29.6381841Z libdrm2 is already the newest version (2.4.131-1).
+2026-11-17T03:28:29.6382269Z libdrm2 set to manually installed.
+2026-11-17T03:28:29.6382741Z libgbm1 is already the newest version (26.0.8-1ubuntu0.3).
+2026-11-17T03:28:29.6383197Z libgbm1 set to manually installed.
+2026-11-17T03:28:29.6383706Z libglib2.0-0t64 is already the newest version (2.88.0-1ubuntu0.1).
+2026-11-17T03:28:29.6384222Z libglib2.0-0t64 set to manually installed.
+2026-11-17T03:28:29.6384743Z libnspr4 is already the newest version (2:4.38.2-1ubuntu1).
+2026-11-17T03:28:29.6385218Z libnspr4 set to manually installed.
+2026-11-17T03:28:29.6385857Z libnss3 is already the newest version (2:3.120-1ubuntu2.2).
+2026-11-17T03:28:29.6386157Z libnss3 set to manually installed.
+2026-11-17T03:28:29.6386449Z libpango-1.0-0 is already the newest version (1.57.0-1).
+2026-11-17T03:28:29.6386756Z libpango-1.0-0 set to manually installed.
+2026-11-17T03:28:29.6387081Z libx11-6 is already the newest version (2:1.8.13-1ubuntu0.1).
+2026-11-17T03:28:29.6387378Z libx11-6 set to manually installed.
+2026-11-17T03:28:29.6387673Z libxcb1 is already the newest version (1.17.0-2ubuntu1).
+2026-11-17T03:28:29.6387951Z libxcb1 set to manually installed.
+2026-11-17T03:28:29.6388269Z libxcomposite1 is already the newest version (1:0.4.6-1build1).
+2026-11-17T03:28:29.6388592Z libxcomposite1 set to manually installed.
+2026-11-17T03:28:29.6388900Z libxdamage1 is already the newest version (1:1.1.7-1).
+2026-11-17T03:28:29.6389189Z libxdamage1 set to manually installed.
+2026-11-17T03:28:29.6389493Z libxext6 is already the newest version (2:1.3.4-1build3).
+2026-11-17T03:28:29.6389795Z libxext6 set to manually installed.
+2026-11-17T03:28:29.6390264Z libxfixes3 is already the newest version (1:6.0.0-2build2).
+2026-11-17T03:28:29.6390566Z libxfixes3 set to manually installed.
+2026-11-17T03:28:29.6390870Z libxkbcommon0 is already the newest version (1.13.1-1).
+2026-11-17T03:28:29.6391176Z libxkbcommon0 set to manually installed.
+2026-11-17T03:28:29.6391494Z libxrandr2 is already the newest version (2:1.5.4-1build1).
+2026-11-17T03:28:29.6391808Z libxrandr2 set to manually installed.
+2026-11-17T03:28:29.6392116Z xvfb is already the newest version (2:21.1.22-1ubuntu1.3).
+2026-11-17T03:28:29.6392504Z fonts-noto-color-emoji is already the newest version (2.051-1build1).
+2026-11-17T03:28:29.6392915Z libfontconfig1 is already the newest version (2.17.1-3ubuntu1).
+2026-11-17T03:28:29.6393243Z libfontconfig1 set to manually installed.
+2026-11-17T03:28:29.6393592Z libfreetype6 is already the newest version (2.14.2+dfsg-1ubuntu0.2).
+2026-11-17T03:28:29.6393922Z libfreetype6 set to manually installed.
+2026-11-17T03:28:29.6394272Z fonts-liberation is already the newest version (1:2.1.5-3build1).
+2026-11-17T03:28:29.6394614Z fonts-liberation set to manually installed.
+2026-11-17T03:28:29.6829860Z Solving dependencies...
+2026-11-17T03:28:29.7580380Z The following additional packages will be installed:
+2026-11-17T03:28:29.7580992Z   xfonts-encodings xfonts-utils
+2026-11-17T03:28:29.7584608Z Recommended packages:
+2026-11-17T03:28:29.7584964Z   fonts-ipafont-mincho fonts-tlwg-loma
+2026-11-17T03:28:29.7750641Z The following NEW packages will be installed:
+2026-11-17T03:28:29.7751351Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+2026-11-17T03:28:29.7754975Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+2026-11-17T03:28:29.7755438Z   xfonts-utils
+2026-11-17T03:28:29.7931029Z 0 upgraded, 9 newly installed, 0 to remove and 25 not upgraded.
+2026-11-17T03:28:29.7931519Z Need to get 21.9 MB of archives.
+2026-11-17T03:28:29.7931877Z After this operation, 80.2 MB of additional disk space will be used.
+2026-11-17T03:28:29.7932304Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-11-17T03:28:29.8394322Z Get:2 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-ipafont-gothic all 00303-23ubuntu1 [3703 kB]
+2026-11-17T03:28:29.8980423Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 fonts-freefont-ttf all 20211204+svn4273-4build1 [5656 kB]
+2026-11-17T03:28:29.9809772Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-tlwg-loma-otf all 1:0.7.3-1build1 [106 kB]
+2026-11-17T03:28:30.0088889Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-unifont all 1:16.0.04-1build1 [3169 kB]
+2026-11-17T03:28:30.0663991Z Get:6 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-wqy-zenhei all 0.9.45-8build1 [7863 kB]
+2026-11-17T03:28:30.1601590Z Get:7 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-encodings all 1:1.0.5-0ubuntu3 [576 kB]
+2026-11-17T03:28:30.1902320Z Get:8 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-utils amd64 1:7.7+7build1 [97.3 kB]
+2026-11-17T03:28:30.2182275Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-cyrillic all 1:1.0.5+nmu1build1 [384 kB]
+2026-11-17T03:28:30.2477808Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-scalable all 1:1.0.3-1.3build1 [304 kB]
+2026-11-17T03:28:30.4994072Z Fetched 21.9 MB in 0s (46.8 MB/s)
+2026-11-17T03:28:30.5204257Z Selecting previously unselected package fonts-ipafont-gothic.
+2026-11-17T03:28:30.5408681Z (Reading database ... 
+2026-11-17T03:28:30.5409025Z (Reading database ... 5%
+2026-11-17T03:28:30.5409246Z (Reading database ... 10%
+2026-11-17T03:28:30.5409460Z (Reading database ... 15%
+2026-11-17T03:28:30.5409920Z (Reading database ... 20%
+2026-11-17T03:28:30.5410125Z (Reading database ... 25%
+2026-11-17T03:28:30.5410329Z (Reading database ... 30%
+2026-11-17T03:28:30.5410651Z (Reading database ... 35%
+2026-11-17T03:28:30.5410944Z (Reading database ... 40%
+2026-11-17T03:28:30.5411390Z (Reading database ... 45%
+2026-11-17T03:28:30.5411589Z (Reading database ... 50%
+2026-11-17T03:28:30.6332041Z (Reading database ... 55%
+2026-11-17T03:28:30.7908627Z (Reading database ... 60%
+2026-11-17T03:28:30.9341905Z (Reading database ... 65%
+2026-11-17T03:28:31.1327961Z (Reading database ... 70%
+2026-11-17T03:28:31.2785851Z (Reading database ... 75%
+2026-11-17T03:28:31.4397242Z (Reading database ... 80%
+2026-11-17T03:28:31.6301340Z (Reading database ... 85%
+2026-11-17T03:28:31.8353789Z (Reading database ... 90%
+2026-11-17T03:28:31.9867513Z (Reading database ... 95%
+2026-11-17T03:28:31.9867884Z (Reading database ... 100%
+2026-11-17T03:28:31.9868372Z (Reading database ... 213946 files and directories currently installed.)
+2026-11-17T03:28:31.9909363Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-23ubuntu1_all.deb ...
+2026-11-17T03:28:32.0037795Z Unpacking fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-17T03:28:32.0990241Z Selecting previously unselected package fonts-freefont-ttf.
+2026-11-17T03:28:32.1111369Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-4build1_all.deb ...
+2026-11-17T03:28:32.1117032Z Unpacking fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-17T03:28:32.2005936Z Selecting previously unselected package fonts-tlwg-loma-otf.
+2026-11-17T03:28:32.2128146Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1build1_all.deb ...
+2026-11-17T03:28:32.2133909Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-17T03:28:32.2318902Z Selecting previously unselected package fonts-unifont.
+2026-11-17T03:28:32.2432909Z Preparing to unpack .../3-fonts-unifont_1%3a16.0.04-1build1_all.deb ...
+2026-11-17T03:28:32.2438434Z Unpacking fonts-unifont (1:16.0.04-1build1) ...
+2026-11-17T03:28:32.4226117Z Selecting previously unselected package fonts-wqy-zenhei.
+2026-11-17T03:28:32.4347512Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8build1_all.deb ...
+2026-11-17T03:28:32.4468098Z Unpacking fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-17T03:28:32.5911330Z Selecting previously unselected package xfonts-encodings.
+2026-11-17T03:28:32.6041276Z Preparing to unpack .../5-xfonts-encodings_1%3a1.0.5-0ubuntu3_all.deb ...
+2026-11-17T03:28:32.6048495Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-17T03:28:32.6307022Z Selecting previously unselected package xfonts-utils.
+2026-11-17T03:28:32.6422597Z Preparing to unpack .../6-xfonts-utils_1%3a7.7+7build1_amd64v3.deb ...
+2026-11-17T03:28:32.6428155Z Unpacking xfonts-utils (1:7.7+7build1) ...
+2026-11-17T03:28:32.6695450Z Selecting previously unselected package xfonts-cyrillic.
+2026-11-17T03:28:32.6810080Z Preparing to unpack .../7-xfonts-cyrillic_1%3a1.0.5+nmu1build1_all.deb ...
+2026-11-17T03:28:32.6816143Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-17T03:28:32.7068913Z Selecting previously unselected package xfonts-scalable.
+2026-11-17T03:28:32.7187824Z Preparing to unpack .../8-xfonts-scalable_1%3a1.0.3-1.3build1_all.deb ...
+2026-11-17T03:28:32.7193011Z Unpacking xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-17T03:28:32.7614828Z Setting up fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-17T03:28:32.7739070Z Setting up fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-17T03:28:32.7752998Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-17T03:28:32.7767252Z Setting up xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-17T03:28:32.7781053Z Setting up fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-17T03:28:32.7832076Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+2026-11-17T03:28:32.7843780Z Setting up fonts-unifont (1:16.0.04-1build1) ...
+2026-11-17T03:28:32.7857983Z Setting up xfonts-utils (1:7.7+7build1) ...
+2026-11-17T03:28:32.7901265Z Setting up xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-17T03:28:32.8267653Z Setting up xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-17T03:28:32.8610143Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-17T03:28:32.8627880Z Not building database; man-db/auto-update is not 'true'.
+2026-11-17T03:28:32.8638271Z Processing triggers for fontconfig (2.17.1-3ubuntu1) ...
+2026-11-17T03:28:33.4415062Z 
+2026-11-17T03:28:33.4415768Z Running kernel seems to be up-to-date.
+2026-11-17T03:28:33.4416033Z 
+2026-11-17T03:28:33.4416138Z Restarting services...
+2026-11-17T03:28:33.4498151Z 
+2026-11-17T03:28:33.4498439Z Service restarts being deferred:
+2026-11-17T03:28:33.4501135Z  systemctl restart hosted-compute-agent.service
+2026-11-17T03:28:33.4501427Z 
+2026-11-17T03:28:33.4502001Z No containers need to be restarted.
+2026-11-17T03:28:33.4502239Z 
+2026-11-17T03:28:33.4502472Z No user sessions are running outdated binaries.
+2026-11-17T03:28:33.4502745Z 
+2026-11-17T03:28:33.4503092Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-11-17T03:28:34.1833992Z Downloading Chrome for Testing 153.0.8010.12 (playwright chromium v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-linux64.zip
+2026-11-17T03:28:34.5584686Z |                                                                                |   0% of 186.8 MiB
+2026-11-17T03:28:34.7872078Z |■■■■■■■■                                                                        |  10% of 186.8 MiB
+2026-11-17T03:28:34.9415050Z |■■■■■■■■■■■■■■■■                                                                |  20% of 186.8 MiB
+2026-11-17T03:28:35.0683613Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 186.8 MiB
+2026-11-17T03:28:35.1877344Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 186.8 MiB
+2026-11-17T03:28:35.2993516Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 186.8 MiB
+2026-11-17T03:28:35.4147970Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 186.8 MiB
+2026-11-17T03:28:35.5410066Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 186.8 MiB
+2026-11-17T03:28:35.6899616Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 186.8 MiB
+2026-11-17T03:28:35.8366645Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 186.8 MiB
+2026-11-17T03:28:36.0222291Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 186.8 MiB
+2026-11-17T03:28:37.8800444Z Chrome for Testing 153.0.8010.12 (playwright chromium v1243) downloaded to /home/runner/.cache/ms-playwright/chromium-1243
+2026-11-17T03:28:37.8802903Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+2026-11-17T03:28:38.1792528Z |                                                                                |   0% of 2.3 MiB
+2026-11-17T03:28:38.1981178Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+2026-11-17T03:28:38.2059056Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+2026-11-17T03:28:38.2112246Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+2026-11-17T03:28:38.2139824Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+2026-11-17T03:28:38.2157217Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+2026-11-17T03:28:38.2194941Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+2026-11-17T03:28:38.2207082Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+2026-11-17T03:28:38.2221131Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+2026-11-17T03:28:38.2231576Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+2026-11-17T03:28:38.2241632Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+2026-11-17T03:28:38.2681365Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+2026-11-17T03:28:38.2684084Z Downloading Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-headless-shell-linux64.zip
+2026-11-17T03:28:38.6686286Z |                                                                                |   0% of 114.3 MiB
+2026-11-17T03:28:38.8378234Z |■■■■■■■■                                                                        |  10% of 114.3 MiB
+2026-11-17T03:28:38.9071521Z |■■■■■■■■■■■■■■■■                                                                |  20% of 114.3 MiB
+2026-11-17T03:28:39.0001008Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 114.3 MiB
+2026-11-17T03:28:39.0769277Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 114.3 MiB
+2026-11-17T03:28:39.1424874Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 114.3 MiB
+2026-11-17T03:28:39.2045753Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 114.3 MiB
+2026-11-17T03:28:39.2987647Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 114.3 MiB
+2026-11-17T03:28:39.3914224Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 114.3 MiB
+2026-11-17T03:28:39.4824919Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 114.3 MiB
+2026-11-17T03:28:39.5487692Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 114.3 MiB
+2026-11-17T03:28:40.8982537Z Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1243
+2026-11-17T03:28:40.9189148Z ##[group]Run pnpm exec turbo run test:coverage --concurrency=1
+2026-11-17T03:28:40.9189509Z [36;1mpnpm exec turbo run test:coverage --concurrency=1[0m
+2026-11-17T03:28:40.9233672Z shell: /usr/bin/bash -e {0}
+2026-11-17T03:28:40.9233891Z env:
+2026-11-17T03:28:40.9234107Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:28:40.9234367Z ##[endgroup]
+2026-11-17T03:28:41.0254484Z 
+2026-11-17T03:28:41.0257753Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T03:28:41.0259938Z    • Running test:coverage in 13 packages
+2026-11-17T03:28:41.0260615Z    • Remote caching disabled
+2026-11-17T03:28:41.0260981Z 
+2026-11-17T03:28:41.0666060Z ##[group]@graphgoblin/contracts:build
+2026-11-17T03:28:41.0666974Z cache hit, replaying logs 398fa0418041b745
+2026-11-17T03:28:41.0667624Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:41.0668475Z ##[endgroup]
+2026-11-17T03:28:41.0670901Z ##[group]@graphgoblin/domain:build
+2026-11-17T03:28:41.0671832Z cache hit, replaying logs 7a74068a18fc3cf0
+2026-11-17T03:28:41.0672500Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:41.0673174Z ##[endgroup]
+2026-11-17T03:28:44.7051559Z ##[group]@graphgoblin/contracts:test:coverage
+2026-11-17T03:28:44.7052157Z cache miss, executing 21e8cd3be7c43467
+2026-11-17T03:28:44.7052547Z $ vitest run --coverage
+2026-11-17T03:28:44.7052738Z 
+2026-11-17T03:28:44.7053705Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/contracts[39m
+2026-11-17T03:28:44.7054525Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:28:44.7054793Z 
+2026-11-17T03:28:44.7055263Z  [32m✓[39m src/meta.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+2026-11-17T03:28:44.7056361Z  [32m✓[39m src/chat.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+2026-11-17T03:28:44.7057189Z  [32m✓[39m src/schemas.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 113[2mms[22m[39m
+2026-11-17T03:28:44.7058138Z  [32m✓[39m src/primitive-evaluation.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+2026-11-17T03:28:44.7059238Z  [32m✓[39m src/evaluation.test.ts [2m([22m[2m44 tests[22m[2m)[22m[32m 57[2mms[22m[39m
+2026-11-17T03:28:44.7060088Z  [32m✓[39m src/gates.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+2026-11-17T03:28:44.7060956Z  [32m✓[39m src/trigger-integrations.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+2026-11-17T03:28:44.7061875Z  [32m✓[39m src/classifiers.test.ts [2m([22m[2m49 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+2026-11-17T03:28:44.7062720Z  [32m✓[39m src/claude.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+2026-11-17T03:28:44.7063568Z  [32m✓[39m src/template.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-11-17T03:28:44.7064443Z  [32m✓[39m src/parse-identity.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+2026-11-17T03:28:44.7065542Z  [32m✓[39m src/script-provenance.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+2026-11-17T03:28:44.7066411Z  [32m✓[39m src/ollama.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+2026-11-17T03:28:44.7067188Z  [32m✓[39m src/inference-context.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-11-17T03:28:44.7068006Z  [32m✓[39m src/text-capture.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-11-17T03:28:44.7068775Z  [32m✓[39m src/api-keys.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+2026-11-17T03:28:44.7069559Z  [32m✓[39m src/deletion.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-11-17T03:28:44.7070921Z  [32m✓[39m src/session-policy.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+2026-11-17T03:28:44.7071771Z  [32m✓[39m src/unlimited.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-11-17T03:28:44.7072554Z  [32m✓[39m src/cron.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-11-17T03:28:44.7073284Z  [32m✓[39m src/catalog.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-11-17T03:28:44.7074049Z  [32m✓[39m src/exit-events.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-11-17T03:28:44.7074805Z  [32m✓[39m src/storage.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-11-17T03:28:44.7075661Z  [32m✓[39m src/issues.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 21[2mms[22m[39m
+2026-11-17T03:28:44.7076433Z  [32m✓[39m src/delivery.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-11-17T03:28:44.7077201Z  [32m✓[39m src/format.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-11-17T03:28:44.7077983Z  [32m✓[39m src/index.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-11-17T03:28:44.7078338Z 
+2026-11-17T03:28:44.7078695Z [2m Test Files [22m [1m[32m27 passed[39m[22m[90m (27)[39m
+2026-11-17T03:28:44.7079314Z [2m      Tests [22m [1m[32m304 passed[39m[22m[90m (304)[39m
+2026-11-17T03:28:44.7079796Z [2m   Start at [22m 03:28:41
+2026-11-17T03:28:44.7080446Z [2m   Duration [22m 3.19s[2m (import 63%, transform 16%, tests 14%, worker 8%)[22m
+2026-11-17T03:28:44.7080833Z 
+2026-11-17T03:28:44.7081508Z [2m    Isolate [22m [33m27 workers spawned[39m[2m · ~102ms startup each (spawn + environment, per file)[22m
+2026-11-17T03:28:44.7082867Z [2m            [22m [2mat least ~815ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+2026-11-17T03:28:44.7083452Z 
+2026-11-17T03:28:44.7083773Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:28:44.7084069Z 
+2026-11-17T03:28:44.7084379Z =============================== Coverage summary ===============================
+2026-11-17T03:28:44.7084865Z Statements   : 99.23% ( 516/520 )
+2026-11-17T03:28:44.7085211Z Branches     : 94.73% ( 216/228 )
+2026-11-17T03:28:44.7086505Z Functions    : 96.92% ( 63/65 )
+2026-11-17T03:28:44.7086864Z Lines        : 99.4% ( 499/502 )
+2026-11-17T03:28:44.7087306Z ================================================================================
+2026-11-17T03:28:44.7087904Z ##[endgroup]
+2026-11-17T03:28:44.7088376Z ##[group]@graphgoblin/engine:build
+2026-11-17T03:28:44.7088819Z cache hit, replaying logs 61913e96a30219e4
+2026-11-17T03:28:44.7089223Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:44.7089724Z ##[endgroup]
+2026-11-17T03:28:50.9525052Z ##[group]@graphgoblin/domain:test:coverage
+2026-11-17T03:28:50.9525772Z cache miss, executing 55b8db9728a10437
+2026-11-17T03:28:50.9526151Z $ vitest run --coverage
+2026-11-17T03:28:50.9526386Z 
+2026-11-17T03:28:50.9527289Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/domain[39m
+2026-11-17T03:28:50.9528045Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:28:50.9528271Z 
+2026-11-17T03:28:50.9528639Z  [32m✓[39m src/node-references.test.ts [2m([22m[2m75 tests[22m[2m)[22m[32m 157[2mms[22m[39m
+2026-11-17T03:28:50.9529184Z  [32m✓[39m src/chat.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 470[2mms[22m[39m
+2026-11-17T03:28:50.9531280Z  [32m✓[39m src/model-resolution.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-11-17T03:28:50.9532124Z  [32m✓[39m src/mutations.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+2026-11-17T03:28:50.9532837Z  [32m✓[39m src/replay.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-11-17T03:28:50.9533547Z  [32m✓[39m src/gates.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+2026-11-17T03:28:50.9536929Z  [32m✓[39m src/json-schema.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 192[2mms[22m[39m
+2026-11-17T03:28:50.9537843Z  [32m✓[39m src/source-analysis.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 208[2mms[22m[39m
+2026-11-17T03:28:50.9538625Z  [32m✓[39m src/syntax.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+2026-11-17T03:28:50.9539358Z  [32m✓[39m src/loop-io.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+2026-11-17T03:28:50.9540087Z  [32m✓[39m src/patch.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+2026-11-17T03:28:50.9540823Z  [32m✓[39m src/expression.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 283[2mms[22m[39m
+2026-11-17T03:28:50.9541565Z  [32m✓[39m src/answers.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-11-17T03:28:50.9542239Z  [32m✓[39m src/ollama.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-11-17T03:28:50.9543066Z  [32m✓[39m src/poll-items.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+2026-11-17T03:28:50.9543896Z  [32m✓[39m src/graph.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+2026-11-17T03:28:50.9544767Z  [32m✓[39m src/reconcile-thread.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+2026-11-17T03:28:50.9545835Z  [32m✓[39m src/pointer.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-11-17T03:28:50.9546687Z  [32m✓[39m src/readiness.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-11-17T03:28:50.9547614Z  [32m✓[39m src/retired-destinations.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+2026-11-17T03:28:50.9548567Z  [32m✓[39m src/template-bundle.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+2026-11-17T03:28:50.9549287Z  [32m✓[39m src/state-machine.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-11-17T03:28:50.9549840Z  [32m✓[39m src/adversarial.test.ts [2m([22m[2m41 tests[22m[2m)[22m[33m 4562[2mms[22m[39m
+2026-11-17T03:28:50.9550289Z    [32m✓[39m adversarial domain invariants [2m(41)[22m
+2026-11-17T03:28:50.9550956Z      [33m[2m✓[22m[39m ADV-007: JSONata native regex is bounded by its expression timeout[33m 731[2mms[22m[39m
+2026-11-17T03:28:50.9551780Z      [33m[2m✓[22m[39m ADV-007 review: 10 nested failing $evals stay small in a 128 MB process[33m 805[2mms[22m[39m
+2026-11-17T03:28:50.9552414Z      [33m[2m✓[22m[39m ADV-007 review: 20 nested failing $evals stay small in a 128 MB process[33m 729[2mms[22m[39m
+2026-11-17T03:28:50.9553080Z      [33m[2m✓[22m[39m ADV-007 review: 30 nested failing $evals stay small in a 128 MB process[33m 733[2mms[22m[39m
+2026-11-17T03:28:50.9553734Z      [33m[2m✓[22m[39m ADV-007 review: nested-alternative is rejected in an isolated process[33m 740[2mms[22m[39m
+2026-11-17T03:28:50.9554366Z      [33m[2m✓[22m[39m ADV-007 review: runtime-eval is rejected in an isolated process[33m 692[2mms[22m[39m
+2026-11-17T03:28:50.9555010Z  [32m✓[39m src/inherited-harness-defaults.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-11-17T03:28:50.9556048Z  [32m✓[39m src/parse-identity.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+2026-11-17T03:28:50.9556600Z  [32m✓[39m src/regex-safety.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-11-17T03:28:50.9557319Z  [32m✓[39m src/template.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-11-17T03:28:50.9557978Z  [32m✓[39m src/json-value.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-11-17T03:28:50.9558616Z  [32m✓[39m src/thread-view.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-11-17T03:28:50.9558971Z 
+2026-11-17T03:28:50.9559332Z [2m Test Files [22m [1m[32m29 passed[39m[22m[90m (29)[39m
+2026-11-17T03:28:50.9560214Z [2m      Tests [22m [1m[32m460 passed[39m[22m[90m (460)[39m
+2026-11-17T03:28:50.9560907Z [2m   Start at [22m 03:28:45
+2026-11-17T03:28:50.9561542Z [2m   Duration [22m 5.83s[2m (tests 50%, import 38%, transform 8%, worker 4%)[22m
+2026-11-17T03:28:50.9561904Z 
+2026-11-17T03:28:50.9562519Z [2m    Isolate [22m [33m29 workers spawned[39m[2m · ~102ms startup each (spawn + environment, per file)[22m
+2026-11-17T03:28:50.9563694Z [2m            [22m [2mat least ~887ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+2026-11-17T03:28:50.9564234Z 
+2026-11-17T03:28:50.9564530Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:28:50.9564794Z 
+2026-11-17T03:28:50.9565088Z =============================== Coverage summary ===============================
+2026-11-17T03:28:50.9565973Z Statements   : 97.87% ( 1844/1884 )
+2026-11-17T03:28:50.9566280Z Branches     : 95.98% ( 1650/1719 )
+2026-11-17T03:28:50.9566507Z Functions    : 98.3% ( 347/353 )
+2026-11-17T03:28:50.9566759Z Lines        : 98.74% ( 1571/1591 )
+2026-11-17T03:28:50.9567199Z ================================================================================
+2026-11-17T03:28:50.9567806Z ##[endgroup]
+2026-11-17T03:28:50.9568265Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T03:28:50.9568686Z cache hit, replaying logs c8ae205bdb5cdd5a
+2026-11-17T03:28:50.9569048Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:50.9569514Z ##[endgroup]
+2026-11-17T03:28:50.9569925Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T03:28:50.9570343Z cache hit, replaying logs 1e624a662b5e23d9
+2026-11-17T03:28:50.9570718Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:50.9571085Z ##[endgroup]
+2026-11-17T03:28:50.9571361Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T03:28:50.9571638Z cache hit, replaying logs 421c4b0ab5f971f1
+2026-11-17T03:28:50.9571975Z $ tsc -b tsconfig.build.json
+2026-11-17T03:28:50.9572289Z ##[endgroup]
+2026-11-17T03:29:13.6772868Z ##[group]@graphgoblin/engine:test:coverage
+2026-11-17T03:29:13.6773465Z cache miss, executing d0e7767ebd16f3ee
+2026-11-17T03:29:13.6773809Z $ vitest run --coverage
+2026-11-17T03:29:13.6773982Z 
+2026-11-17T03:29:13.6774864Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/engine[39m
+2026-11-17T03:29:13.6775741Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:29:13.6776003Z 
+2026-11-17T03:29:13.6776512Z  [32m✓[39m src/handlers/flow.test.ts [2m([22m[2m55 tests[22m[2m)[22m[33m 414[2mms[22m[39m
+2026-11-17T03:29:13.6777150Z  [32m✓[39m src/awaited-children.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 1256[2mms[22m[39m
+2026-11-17T03:29:13.6777693Z  [32m✓[39m src/run-manager.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 635[2mms[22m[39m
+2026-11-17T03:29:13.6778230Z  [32m✓[39m src/edge-cases.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 278[2mms[22m[39m
+2026-11-17T03:29:13.6778748Z  [32m✓[39m src/adversarial.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 812[2mms[22m[39m
+2026-11-17T03:29:13.6779327Z  [32m✓[39m src/recovery.test.ts [2m([22m[2m69 tests[22m[2m)[22m[33m 3226[2mms[22m[39m
+2026-11-17T03:29:13.6779803Z    [32m✓[39m thread checkpoints (review finding 9) [2m(5)[22m
+2026-11-17T03:29:13.6780330Z      [33m[2m✓[22m[39m a long log resumes from its checkpoint (10,000 completions)[33m 891[2mms[22m[39m
+2026-11-17T03:29:13.6780936Z  [32m✓[39m src/definition-pin.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 585[2mms[22m[39m
+2026-11-17T03:29:13.6781420Z    [32m✓[39m draft runs pin a snapshot of the draft [2m(4)[22m
+2026-11-17T03:29:13.6781973Z      [33m[2m✓[22m[39m keeps the snapshot when the draft is edited while a node is running[33m 316[2mms[22m[39m
+2026-11-17T03:29:13.6782567Z  [32m✓[39m src/handlers/waiting.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 326[2mms[22m[39m
+2026-11-17T03:29:13.6783157Z  [32m✓[39m src/child-failure-parity.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 405[2mms[22m[39m
+2026-11-17T03:29:13.6784117Z  [32m✓[39m src/webhook-admission.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 136[2mms[22m[39m
+2026-11-17T03:29:13.6784990Z  [32m✓[39m src/handlers/claude.test.ts [2m([22m[2m38 tests[22m[2m)[22m[33m 1349[2mms[22m[39m
+2026-11-17T03:29:13.6785851Z    [32m✓[39m unconfirmed native cancellation [2m(18)[22m
+2026-11-17T03:29:13.6786702Z      [33m[2m✓[22m[39m retains actionable failure over timeout cancellation[33m 1005[2mms[22m[39m
+2026-11-17T03:29:13.6787594Z  [32m✓[39m src/finalization.test.ts [2m([22m[2m44 tests[22m[2m)[22m[33m 3096[2mms[22m[39m
+2026-11-17T03:29:13.6788785Z    [33m[2m✓[22m[39m terminal append survives crash before status: inference-timeout[33m 1007[2mms[22m[39m
+2026-11-17T03:29:13.6789457Z  [32m✓[39m src/own-session.test.ts [2m([22m[2m26 tests[22m[2m)[22m[33m 758[2mms[22m[39m
+2026-11-17T03:29:13.6790017Z  [32m✓[39m src/handlers/inference.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 1209[2mms[22m[39m
+2026-11-17T03:29:13.6790453Z    [32m✓[39m inference node [2m(18)[22m
+2026-11-17T03:29:13.6790890Z      [33m[2m✓[22m[39m times out a slow session with INFERENCE_TIMEOUT[33m 1015[2mms[22m[39m
+2026-11-17T03:29:13.6791432Z  [32m✓[39m src/webhook-returns.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1542[2mms[22m[39m
+2026-11-17T03:29:13.6791978Z  [32m✓[39m src/handlers/gates.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 691[2mms[22m[39m
+2026-11-17T03:29:13.6792521Z  [32m✓[39m src/parent-recovery.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 440[2mms[22m[39m
+2026-11-17T03:29:13.6793072Z  [32m✓[39m src/prompt-provenance.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 232[2mms[22m[39m
+2026-11-17T03:29:13.6793628Z  [32m✓[39m src/drain-regressions.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 666[2mms[22m[39m
+2026-11-17T03:29:13.6794168Z  [32m✓[39m src/event-admission.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+2026-11-17T03:29:13.6794707Z  [32m✓[39m src/unlimited.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1533[2mms[22m[39m
+2026-11-17T03:29:13.6795132Z    [32m✓[39m execution guardrails (#243) [2m(21)[22m
+2026-11-17T03:29:13.6795930Z      [33m[2m✓[22m[39m keeps the configured deadline while draining after stop[33m 1009[2mms[22m[39m
+2026-11-17T03:29:13.6796630Z  [32m✓[39m src/run-recovery.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 272[2mms[22m[39m
+2026-11-17T03:29:13.6797174Z  [32m✓[39m src/prompt-recovery.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 170[2mms[22m[39m
+2026-11-17T03:29:13.6797732Z  [32m✓[39m src/structured-deadline.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 1508[2mms[22m[39m
+2026-11-17T03:29:13.6798422Z    [33m[2m✓[22m[39m releases stalled structured work at the visible run deadline and admits the queued run[33m 1042[2mms[22m[39m
+2026-11-17T03:29:13.6799034Z  [32m✓[39m src/replay.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 187[2mms[22m[39m
+2026-11-17T03:29:13.6799580Z  [32m✓[39m src/hot-paths.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 228[2mms[22m[39m
+2026-11-17T03:29:13.6800099Z  [32m✓[39m src/child-creation.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 341[2mms[22m[39m
+2026-11-17T03:29:13.6800643Z  [32m✓[39m src/missing-session.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 428[2mms[22m[39m
+2026-11-17T03:29:13.6801173Z  [32m✓[39m src/chat-admission.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 80[2mms[22m[39m
+2026-11-17T03:29:13.6801699Z  [32m✓[39m src/handlers/script.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 112[2mms[22m[39m
+2026-11-17T03:29:13.6802294Z  [32m✓[39m src/handlers/inference-boundaries.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 215[2mms[22m[39m
+2026-11-17T03:29:13.6802873Z  [32m✓[39m src/script-recovery.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 144[2mms[22m[39m
+2026-11-17T03:29:13.6803699Z  [32m✓[39m src/parked-resume.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 88[2mms[22m[39m
+2026-11-17T03:29:13.6804668Z  [32m✓[39m src/recovery-projection.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 564[2mms[22m[39m
+2026-11-17T03:29:13.6805729Z  [32m✓[39m src/primitive-evaluator.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+2026-11-17T03:29:13.6806720Z  [32m✓[39m src/handlers/mutation-failures.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 155[2mms[22m[39m
+2026-11-17T03:29:13.6807806Z  [32m✓[39m src/handlers/inference-evidence-matrix.test.ts [2m([22m[2m874 tests[22m[2m)[22m[33m 5421[2mms[22m[39m
+2026-11-17T03:29:13.6808793Z  [32m✓[39m src/stored-definition.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+2026-11-17T03:29:13.6809742Z  [32m✓[39m src/handlers/inference-refusal.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 188[2mms[22m[39m
+2026-11-17T03:29:13.6810679Z  [32m✓[39m src/handlers/classifiers.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 138[2mms[22m[39m
+2026-11-17T03:29:13.6811305Z  [32m✓[39m src/handlers/inference-context.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+2026-11-17T03:29:13.6811880Z  [32m✓[39m src/drain.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 204[2mms[22m[39m
+2026-11-17T03:29:13.6812376Z  [32m✓[39m src/thread-read.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+2026-11-17T03:29:13.6812923Z  [32m✓[39m src/handlers/primitives.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 163[2mms[22m[39m
+2026-11-17T03:29:13.6813473Z  [32m✓[39m src/drain-admission.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 115[2mms[22m[39m
+2026-11-17T03:29:13.6816008Z {"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+2026-11-17T03:29:13.6817814Z  [32m✓[39m src/observed-waits.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+2026-11-17T03:29:13.6818737Z  [32m✓[39m src/handlers/chat-text.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 1160[2mms[22m[39m
+2026-11-17T03:29:13.6819380Z    [32m✓[39m conversational seed text envelope [2m(8)[22m
+2026-11-17T03:29:13.6819959Z      [33m[2m✓[22m[39m applies the editable inference deadline while context admission is pending[33m 1010[2mms[22m[39m
+2026-11-17T03:29:13.6820792Z {"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+2026-11-17T03:29:13.6823146Z {"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+2026-11-17T03:29:13.6825176Z  [32m✓[39m src/repair-deadline.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 424[2mms[22m[39m
+2026-11-17T03:29:13.6826285Z  [32m✓[39m src/handlers/script-dispatch.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+2026-11-17T03:29:13.6827221Z  [32m✓[39m src/handlers/heartbeat-visit.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 53[2mms[22m[39m
+2026-11-17T03:29:13.6828107Z  [32m✓[39m src/event-validation.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-11-17T03:29:13.6828918Z  [32m✓[39m src/start-admission.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+2026-11-17T03:29:13.6829776Z  [32m✓[39m src/handlers/exit.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 105[2mms[22m[39m
+2026-11-17T03:29:13.6830875Z  [32m✓[39m src/handlers/inference-failure.test.ts [2m([22m[2m54 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-11-17T03:29:13.6831949Z  [32m✓[39m src/artifact-failure.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 73[2mms[22m[39m
+2026-11-17T03:29:13.6832848Z  [32m✓[39m src/checkpoint-state.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+2026-11-17T03:29:13.6833574Z  [32m✓[39m src/handlers/probe-output.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 84[2mms[22m[39m
+2026-11-17T03:29:13.6834243Z  [32m✓[39m src/turn-resume.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 95[2mms[22m[39m
+2026-11-17T03:29:13.6835057Z  [32m✓[39m src/edge-routes.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 99[2mms[22m[39m
+2026-11-17T03:29:13.6836383Z  [32m✓[39m src/claude-effort.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+2026-11-17T03:29:13.6837347Z  [32m✓[39m src/crash-bookkeeping.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 49[2mms[22m[39m
+2026-11-17T03:29:13.6838300Z  [32m✓[39m src/decider-errors.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-11-17T03:29:13.6839168Z  [32m✓[39m src/structured-cancel.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 57[2mms[22m[39m
+2026-11-17T03:29:13.6840055Z  [32m✓[39m src/completion-deadline.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-11-17T03:29:13.6840914Z  [32m✓[39m src/script-stop.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 93[2mms[22m[39m
+2026-11-17T03:29:13.6841816Z  [32m✓[39m src/admission-contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+2026-11-17T03:29:13.6842257Z 
+2026-11-17T03:29:13.6842597Z [2m Test Files [22m [1m[32m66 passed[39m[22m[90m (66)[39m
+2026-11-17T03:29:13.6843235Z [2m      Tests [22m [1m[32m1814 passed[39m[22m[90m (1814)[39m
+2026-11-17T03:29:13.6843739Z [2m   Start at [22m 03:28:51
+2026-11-17T03:29:13.6844362Z [2m   Duration [22m 22.29s[2m (tests 60%, import 35%, transform 3%, worker 2%)[22m
+2026-11-17T03:29:13.6844750Z 
+2026-11-17T03:29:13.6845514Z [2m     Import [22m [33m170 modules were evaluated 463 times[39m[2m · 19.49s total, 35% of tracked time[22m
+2026-11-17T03:29:13.6846834Z [2m            [22m [2m~1.32s faster with [22m[33misolate: false[39m[2m — shared modules are evaluated once per worker instead of once per file[22m
+2026-11-17T03:29:13.6848014Z [2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-isolation[22m
+2026-11-17T03:29:13.6848466Z 
+2026-11-17T03:29:13.6848771Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:29:13.6849033Z 
+2026-11-17T03:29:13.6849327Z =============================== Coverage summary ===============================
+2026-11-17T03:29:13.6849796Z Statements   : 95.62% ( 3762/3934 )
+2026-11-17T03:29:13.6850171Z Branches     : 91.22% ( 3213/3522 )
+2026-11-17T03:29:13.6850529Z Functions    : 97.7% ( 681/697 )
+2026-11-17T03:29:13.6850889Z Lines        : 96.94% ( 3432/3540 )
+2026-11-17T03:29:13.6851392Z ================================================================================
+2026-11-17T03:29:13.6852024Z ##[endgroup]
+2026-11-17T03:29:13.6852453Z ##[group]@graphgoblin/api:build
+2026-11-17T03:29:13.6852844Z cache hit, replaying logs 786e8a5dfeea5d7e
+2026-11-17T03:29:13.6853400Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T03:29:13.6853999Z ##[endgroup]
+2026-11-17T03:29:54.8295823Z ##[group]@graphgoblin/infrastructure:test:coverage
+2026-11-17T03:29:54.8296451Z cache miss, executing ba5acad3d770300c
+2026-11-17T03:29:54.8296825Z $ vitest run --coverage
+2026-11-17T03:29:54.8296994Z 
+2026-11-17T03:29:54.8298048Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/infrastructure[39m
+2026-11-17T03:29:54.8298929Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:29:54.8299187Z 
+2026-11-17T03:29:54.8299999Z  [32m✓[39m src/claude/protocol.test.ts [2m([22m[2m84 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+2026-11-17T03:29:54.8301105Z  [32m✓[39m src/claude/harness.test.ts [2m([22m[2m57 tests[22m[2m)[22m[32m 267[2mms[22m[39m
+2026-11-17T03:29:54.8301950Z  [32m✓[39m src/sqlite/chat.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 1606[2mms[22m[39m
+2026-11-17T03:29:54.8302796Z  [32m✓[39m src/sqlite/storage.test.ts [2m([22m[2m44 tests[22m[2m)[22m[33m 3137[2mms[22m[39m
+2026-11-17T03:29:54.8303468Z  [32m✓[39m src/process/voice.test.ts [2m([22m[2m135 tests[22m[2m)[22m[33m 1132[2mms[22m[39m
+2026-11-17T03:29:54.8304054Z  [32m✓[39m src/sqlite/definition-pins.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 1123[2mms[22m[39m
+2026-11-17T03:29:54.8304484Z    [32m✓[39m draft snapshots [2m(11)[22m
+2026-11-17T03:29:54.8305059Z      [33m[2m✓[22m[39m materializes omitted deadline fields in every stored copy, preserving authored null[33m 310[2mms[22m[39m
+2026-11-17T03:29:54.8307039Z {"retainedRuns":[0,1000],"stagingStatements":[7,7],"referencePlans":["SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path=?)","SEARCH workspace_references USING COVERING INDEX workspace_references_physical_idx (physical_path>? AND physical_path<?)"],"maxRefreshParameters":129}
+2026-11-17T03:29:54.8308569Z  [32m✓[39m src/sqlite/history-cleanup.test.ts [2m([22m[2m37 tests[22m[2m)[22m[33m 6758[2mms[22m[39m
+2026-11-17T03:29:54.8309395Z    [33m[2m✓[22m[39m preserves an entire workspace containing a hard link and bounds oversized inventories before removing files[33m 350[2mms[22m[39m
+2026-11-17T03:29:54.8310212Z    [33m[2m✓[22m[39m defers workspaces until a bounded 2048-reference refresh completes, then reclaims them[33m 751[2mms[22m[39m
+2026-11-17T03:29:54.8310720Z    [32m✓[39m large retained stores [2m(2)[22m
+2026-11-17T03:29:54.8311324Z      [33m[2m✓[22m[39m does not let 61 budget-protected artifact jobs hide removable workspaces in a later window[33m 1079[2mms[22m[39m
+2026-11-17T03:29:54.8312111Z      [33m[2m✓[22m[39m reclaims unshared approved workspaces among 1000 retained fixed/template runs with aliases[33m 1123[2mms[22m[39m
+2026-11-17T03:29:54.8312791Z  [32m✓[39m src/sqlite/admission.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1212[2mms[22m[39m
+2026-11-17T03:29:54.8313633Z  [32m✓[39m src/adversarial.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1771[2mms[22m[39m
+2026-11-17T03:29:54.8314244Z  [32m✓[39m src/sqlite/catalog.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 826[2mms[22m[39m
+2026-11-17T03:29:54.8314776Z  [32m✓[39m src/ollama/harness.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 107[2mms[22m[39m
+2026-11-17T03:29:54.8316342Z  [32m✓[39m src/fs/chat-audio.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+2026-11-17T03:29:54.8317415Z  [32m✓[39m src/process/scripts.test.ts [2m([22m[2m46 tests[22m[2m | [22m[33m3 skipped[39m[2m)[22m[33m 2418[2mms[22m[39m
+2026-11-17T03:29:54.8318065Z    [32m✓[39m ProcessScripts [2m(39)[22m
+2026-11-17T03:29:54.8318826Z      [33m[2m✓[22m[39m kills the process tree on timeout[33m 308[2mms[22m[39m
+2026-11-17T03:29:54.8319621Z  [32m✓[39m src/ollama/services.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 996[2mms[22m[39m
+2026-11-17T03:29:54.8337144Z  [32m✓[39m src/sqlite/triggers.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 927[2mms[22m[39m
+2026-11-17T03:29:54.8338230Z  [32m✓[39m src/sqlite/delivery-runs.test.ts [2m([22m[2m32 tests[22m[2m)[22m[33m 2237[2mms[22m[39m
+2026-11-17T03:29:54.8339254Z  [32m✓[39m src/sqlite/fresh-initialization.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 1328[2mms[22m[39m
+2026-11-17T03:29:54.8340408Z  [32m✓[39m src/sqlite/child-admission-recovery.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1920[2mms[22m[39m
+2026-11-17T03:29:54.8341245Z    [32m✓[39m child creation across a process death (#320) [2m(6)[22m
+2026-11-17T03:29:54.8342692Z      [33m[2m✓[22m[39m a death before child admission leaves neither child nor link and recovery admits one[33m 445[2mms[22m[39m
+2026-11-17T03:29:54.8343842Z      [33m[2m✓[22m[39m a failure to record the link leaves no child, and the resumed visit admits exactly one[33m 325[2mms[22m[39m
+2026-11-17T03:29:54.8344961Z      [33m[2m✓[22m[39m a death before the atomic child and parent finish stores neither and recovers once[33m 317[2mms[22m[39m
+2026-11-17T03:29:54.8346168Z  [32m✓[39m src/http/classifier.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 210[2mms[22m[39m
+2026-11-17T03:29:54.8347038Z  [32m✓[39m src/ollama/discovery.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 129[2mms[22m[39m
+2026-11-17T03:29:54.8347940Z  [32m✓[39m src/scheduler/cron-scheduler.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1066[2mms[22m[39m
+2026-11-17T03:29:54.8348959Z  [32m✓[39m src/sqlite/history-summaries.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 1224[2mms[22m[39m
+2026-11-17T03:29:54.8349689Z    [32m✓[39m SQLite history queries [2m(16)[22m
+2026-11-17T03:29:54.8350332Z      [33m[2m✓[22m[39m summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls[33m 378[2mms[22m[39m
+2026-11-17T03:29:54.8351270Z  [32m✓[39m src/sqlite/template-retirement.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 168[2mms[22m[39m
+2026-11-17T03:29:54.8352198Z  [32m✓[39m src/sqlite/loop-deletion.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 710[2mms[22m[39m
+2026-11-17T03:29:54.8353023Z  [32m✓[39m src/sqlite/readiness.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 895[2mms[22m[39m
+2026-11-17T03:29:54.8353944Z  [32m✓[39m src/sqlite/event-admission.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 569[2mms[22m[39m
+2026-11-17T03:29:54.8354950Z  [32m✓[39m src/sqlite/db.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 327[2mms[22m[39m
+2026-11-17T03:29:54.8356139Z  [32m✓[39m src/sqlite/deletion-eligibility.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 810[2mms[22m[39m
+2026-11-17T03:29:54.8357137Z  [32m✓[39m src/sqlite/durable-events.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1442[2mms[22m[39m
+2026-11-17T03:29:54.8358089Z  [32m✓[39m src/scheduler/timer-service.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 117[2mms[22m[39m
+2026-11-17T03:29:54.8359098Z  [32m✓[39m src/fs/fs.test.ts [2m([22m[2m11 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 160[2mms[22m[39m
+2026-11-17T03:29:54.8360018Z  [32m✓[39m src/sqlite/ollama.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 269[2mms[22m[39m
+2026-11-17T03:29:54.8360991Z  [32m✓[39m src/claude/process.test.ts [2m([22m[2m6 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 409[2mms[22m[39m
+2026-11-17T03:29:54.8361969Z  [32m✓[39m src/sqlite/classifiers.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 513[2mms[22m[39m
+2026-11-17T03:29:54.8362889Z  [32m✓[39m src/http/probes-security.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 57[2mms[22m[39m
+2026-11-17T03:29:54.8364045Z  [32m✓[39m src/ollama/context-harness.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+2026-11-17T03:29:54.8365089Z  [32m✓[39m src/sqlite/webhook-receipt-upgrade.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 2104[2mms[22m[39m
+2026-11-17T03:29:54.8366273Z  [32m✓[39m src/sqlite/json-values.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 1228[2mms[22m[39m
+2026-11-17T03:29:54.8367228Z  [32m✓[39m src/sqlite/event-validation.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 439[2mms[22m[39m
+2026-11-17T03:29:54.8368185Z  [32m✓[39m src/sqlite/checkpoint-state.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 238[2mms[22m[39m
+2026-11-17T03:29:54.8369043Z  [32m✓[39m src/http/http.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 163[2mms[22m[39m
+2026-11-17T03:29:54.8369893Z  [32m✓[39m src/claude/process-failure.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+2026-11-17T03:29:54.8371028Z  [32m✓[39m src/sqlite/loop-names.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 343[2mms[22m[39m
+2026-11-17T03:29:54.8371893Z  [32m✓[39m src/http/probes-bounds.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 4250[2mms[22m[39m
+2026-11-17T03:29:54.8372632Z    [32m✓[39m HTTP probe body bounds over real sockets [2m(23)[22m
+2026-11-17T03:29:54.8373518Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 1, including at the cap[33m 461[2mms[22m[39m
+2026-11-17T03:29:54.8374459Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 2, including at the cap[33m 375[2mms[22m[39m
+2026-11-17T03:29:54.8375703Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 3, including at the cap[33m 360[2mms[22m[39m
+2026-11-17T03:29:54.8376716Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 4, including at the cap[33m 370[2mms[22m[39m
+2026-11-17T03:29:54.8377660Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 5, including at the cap[33m 383[2mms[22m[39m
+2026-11-17T03:29:54.8378642Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 6, including at the cap[33m 392[2mms[22m[39m
+2026-11-17T03:29:54.8379673Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 7, including at the cap[33m 400[2mms[22m[39m
+2026-11-17T03:29:54.8380672Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 8, including at the cap[33m 351[2mms[22m[39m
+2026-11-17T03:29:54.8381669Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 9, including at the cap[33m 376[2mms[22m[39m
+2026-11-17T03:29:54.8382431Z      [33m[2m✓[22m[39m preserves split UTF-8 JSON at byte offset 10, including at the cap[33m 381[2mms[22m[39m
+2026-11-17T03:29:54.8383178Z  [32m✓[39m src/http/delivery-retry.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 171[2mms[22m[39m
+2026-11-17T03:29:54.8384098Z  [32m✓[39m src/sqlite/store-format.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 513[2mms[22m[39m
+2026-11-17T03:29:54.8384931Z  [32m✓[39m src/sqlite/evidence-index.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 257[2mms[22m[39m
+2026-11-17T03:29:54.8386007Z  [32m✓[39m src/claude/result-acceptance.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 179[2mms[22m[39m
+2026-11-17T03:29:54.8387212Z  [32m✓[39m src/claude/readiness.test.ts [2m([22m[2m21 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 2987[2mms[22m[39m
+2026-11-17T03:29:54.8388013Z    [32m✓[39m Claude no-turn executable boundary [2m(9)[22m
+2026-11-17T03:29:54.8388762Z      [33m[2m✓[22m[39m hang reports unknown without exposing CLI bodies[33m 1082[2mms[22m[39m
+2026-11-17T03:29:54.8389760Z  [32m✓[39m src/sqlite/retired-destinations-guard.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 476[2mms[22m[39m
+2026-11-17T03:29:54.8390747Z  [32m✓[39m src/sqlite/recovery-facts.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 902[2mms[22m[39m
+2026-11-17T03:29:54.8392020Z    [33m[2m✓[22m[39m bounds recovery evidence and SQL rows independently of old history[33m 823[2mms[22m[39m
+2026-11-17T03:29:54.8392945Z  [32m✓[39m src/claude/policy.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+2026-11-17T03:29:54.8393799Z  [32m✓[39m src/sqlite/run-paging.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 803[2mms[22m[39m
+2026-11-17T03:29:54.8394520Z    [32m✓[39m SqliteRunRepository ordinary paging [2m(6)[22m
+2026-11-17T03:29:54.8395477Z      [33m[2m✓[22m[39m permits a 501-row lookahead while list remains capped at 500[33m 486[2mms[22m[39m
+2026-11-17T03:29:54.8396416Z  [32m✓[39m src/http/body-signature.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-11-17T03:29:54.8397327Z  [32m✓[39m src/claude/submission.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1124[2mms[22m[39m
+2026-11-17T03:29:54.8398413Z  [32m✓[39m src/sqlite/voice-settings.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 466[2mms[22m[39m
+2026-11-17T03:29:54.8399510Z  [32m✓[39m src/process/script-recovery.test.ts [2m([22m[2m2 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 101[2mms[22m[39m
+2026-11-17T03:29:54.8400537Z  [32m✓[39m src/sqlite/session-family.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 118[2mms[22m[39m
+2026-11-17T03:29:54.8401843Z [90mstderr[2m | src/sqlite/event-read-benchmark.test.ts[2m > [22m[2mround-trips large mixed evaluation pages and measures read validation overhead
+2026-11-17T03:29:54.8403534Z [22m[39m{"eventReadBenchmark":{"rows":1000,"samples":10,"baselineMedianMs":8.90273400000001,"validatedMedianMs":19.5374690000001,"addedMedianMs":10.634735000000092}}
+2026-11-17T03:29:54.8404225Z 
+2026-11-17T03:29:54.8404755Z  [32m✓[39m src/sqlite/lifecycle-tail.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 346[2mms[22m[39m
+2026-11-17T03:29:54.8405896Z  [32m✓[39m src/process/output-capture.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-11-17T03:29:54.8406846Z  [32m✓[39m src/ollama/context.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-11-17T03:29:54.8407679Z  [32m✓[39m src/claude/models.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-11-17T03:29:54.8408642Z  [32m✓[39m src/ollama/predispatch-timeout.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 2082[2mms[22m[39m
+2026-11-17T03:29:54.8409439Z    [32m✓[39m Ollama deadline submission evidence [2m(2)[22m
+2026-11-17T03:29:54.8410323Z      [33m[2m✓[22m[39m records truthful submission when the deadline interrupts metadata[33m 1071[2mms[22m[39m
+2026-11-17T03:29:54.8411417Z      [33m[2m✓[22m[39m records truthful submission when the deadline interrupts inference[33m 1008[2mms[22m[39m
+2026-11-17T03:29:54.8412259Z  [32m✓[39m src/sqlite/decision-migration.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 153[2mms[22m[39m
+2026-11-17T03:29:54.8413143Z  [32m✓[39m src/process/shutdown.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+2026-11-17T03:29:54.8413991Z  [32m✓[39m src/claude/environment.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-11-17T03:29:54.8415024Z  [32m✓[39m src/process/template-support.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-11-17T03:29:54.8416206Z  [32m✓[39m src/sqlite/admission-contract.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 1019[2mms[22m[39m
+2026-11-17T03:29:54.8417155Z  [32m✓[39m src/fs/artifact-references.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 11[2mms[22m[39m
+2026-11-17T03:29:54.8418036Z  [32m✓[39m src/claude/errors.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-11-17T03:29:54.8418956Z  [32m✓[39m src/sqlite/append-validation.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 158[2mms[22m[39m
+2026-11-17T03:29:54.8419837Z  [32m✓[39m src/claude/queue.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-11-17T03:29:54.8420824Z  [32m✓[39m src/sqlite/testing/shipped-migrations.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-11-17T03:29:54.8422422Z [90mstderr[2m | src/sqlite/event-read-benchmark.test.ts[2m > [22m[2mround-trips large mixed evaluation pages and measures read validation overhead
+2026-11-17T03:29:54.8424066Z [22m[39m{"eventReadBenchmark":{"rows":10000,"samples":10,"baselineMedianMs":132.71448200000032,"validatedMedianMs":229.58628999999974,"addedMedianMs":96.87180799999942}}
+2026-11-17T03:29:54.8424784Z 
+2026-11-17T03:29:54.8425464Z  [32m✓[39m src/sqlite/event-read-benchmark.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 5726[2mms[22m[39m
+2026-11-17T03:29:54.8426580Z    [33m[2m✓[22m[39m round-trips large mixed evaluation pages and measures read validation overhead[33m 5725[2mms[22m[39m
+2026-11-17T03:29:54.8427124Z 
+2026-11-17T03:29:54.8427487Z [2m Test Files [22m [1m[32m74 passed[39m[22m[90m (74)[39m
+2026-11-17T03:29:54.8428460Z [2m      Tests [22m [1m[32m1149 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (1157)[39m
+2026-11-17T03:29:54.8428983Z [2m   Start at [22m 03:29:14
+2026-11-17T03:29:54.8429406Z [2m   Duration [22m 40.69s[2m (tests 60%, import 37%, transform 2%, worker 1%)[22m
+2026-11-17T03:29:54.8429634Z 
+2026-11-17T03:29:54.8430023Z [2m    Isolate [22m [33m74 workers spawned[39m[2m · ~118ms startup each (spawn + environment, per file)[22m
+2026-11-17T03:29:54.8430803Z [2m            [22m [2mat least ~2.80s faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+2026-11-17T03:29:54.8431174Z 
+2026-11-17T03:29:54.8431374Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:29:54.8431552Z 
+2026-11-17T03:29:54.8431729Z =============================== Coverage summary ===============================
+2026-11-17T03:29:54.8432034Z Statements   : 96.35% ( 4286/4448 )
+2026-11-17T03:29:54.8432276Z Branches     : 93.18% ( 3267/3506 )
+2026-11-17T03:29:54.8432558Z Functions    : 98.11% ( 833/849 )
+2026-11-17T03:29:54.8432814Z Lines        : 97.8% ( 3836/3922 )
+2026-11-17T03:29:54.8433103Z ================================================================================
+2026-11-17T03:29:54.8433568Z ##[endgroup]
+2026-11-17T03:30:01.8261511Z ##[group]@graphgoblin/adapter-codex:test:coverage
+2026-11-17T03:30:01.8262034Z cache miss, executing dc61158fb3c6e8fb
+2026-11-17T03:30:01.8262296Z $ vitest run --coverage
+2026-11-17T03:30:01.8262416Z 
+2026-11-17T03:30:01.8263075Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/adapter-codex[39m
+2026-11-17T03:30:01.8263590Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:30:01.8263759Z 
+2026-11-17T03:30:01.8264087Z  [32m✓[39m src/events.test.ts [2m([22m[2m54 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+2026-11-17T03:30:01.8264629Z  [32m✓[39m src/harness.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+2026-11-17T03:30:01.8265172Z  [32m✓[39m src/isolation.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 800[2mms[22m[39m
+2026-11-17T03:30:01.8266024Z  [32m✓[39m src/structured.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+2026-11-17T03:30:01.8266533Z  [32m✓[39m src/refusal.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 1050[2mms[22m[39m
+2026-11-17T03:30:01.8267072Z  [32m✓[39m src/probe-directory.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 247[2mms[22m[39m
+2026-11-17T03:30:01.8267625Z  [2m[90m↓[39m[22m src/live.test.ts [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+2026-11-17T03:30:01.8268175Z  [32m✓[39m src/stderr-evidence.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1074[2mms[22m[39m
+2026-11-17T03:30:01.8268737Z  [32m✓[39m src/decider.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-11-17T03:30:01.8269262Z  [32m✓[39m src/turn-recovery.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 129[2mms[22m[39m
+2026-11-17T03:30:01.8269863Z  [32m✓[39m src/cli.test.ts [2m([22m[2m28 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 3273[2mms[22m[39m
+2026-11-17T03:30:01.8270715Z    [32m✓[39m Codex no-turn executable boundaries [2m(12)[22m
+2026-11-17T03:30:01.8271195Z      [33m[2m✓[22m[39m hang reports unknown[33m 1108[2mms[22m[39m
+2026-11-17T03:30:01.8271828Z  [32m✓[39m src/termination.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 648[2mms[22m[39m
+2026-11-17T03:30:01.8272942Z    [33m[2m✓[22m[39m reports unconfirmed termination within the acknowledgement when a CLI descendant keeps its output open after abort[33m 554[2mms[22m[39m
+2026-11-17T03:30:01.8273783Z  [32m✓[39m src/failure-evidence.test.ts [2m([22m[2m384 tests[22m[2m)[22m[32m 162[2mms[22m[39m
+2026-11-17T03:30:01.8274337Z  [32m✓[39m src/submission.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 206[2mms[22m[39m
+2026-11-17T03:30:01.8274875Z  [32m✓[39m src/effort-names.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-11-17T03:30:01.8275797Z  [32m✓[39m src/retention.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 35[2mms[22m[39m
+2026-11-17T03:30:01.8276622Z  [32m✓[39m src/effort.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1085[2mms[22m[39m
+2026-11-17T03:30:01.8276879Z 
+2026-11-17T03:30:01.8277195Z [2m Test Files [22m [1m[32m16 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (17)[39m
+2026-11-17T03:30:01.8277746Z [2m      Tests [22m [1m[32m641 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (646)[39m
+2026-11-17T03:30:01.8278122Z [2m   Start at [22m 03:29:55
+2026-11-17T03:30:01.8278531Z [2m   Duration [22m 6.60s[2m (tests 56%, import 33%, transform 9%, worker 2%)[22m
+2026-11-17T03:30:01.8278761Z 
+2026-11-17T03:30:01.8279150Z [2m    Isolate [22m [33m17 workers spawned[39m[2m · ~110ms startup each (spawn + environment, per file)[22m
+2026-11-17T03:30:01.8279907Z [2m            [22m [2mat least ~514ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+2026-11-17T03:30:01.8280281Z 
+2026-11-17T03:30:01.8280467Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:30:01.8280643Z 
+2026-11-17T03:30:01.8280832Z =============================== Coverage summary ===============================
+2026-11-17T03:30:01.8281126Z Statements   : 98.13% ( 578/589 )
+2026-11-17T03:30:01.8281477Z Branches     : 95.41% ( 479/502 )
+2026-11-17T03:30:01.8281837Z Functions    : 99.32% ( 148/149 )
+2026-11-17T03:30:01.8282184Z Lines        : 99.23% ( 520/524 )
+2026-11-17T03:30:01.8282646Z ================================================================================
+2026-11-17T03:30:01.8283141Z ##[endgroup]
+2026-11-17T03:30:03.2120496Z ##[group]@graphgoblin/adapter-jev:test:coverage
+2026-11-17T03:30:03.2120949Z cache miss, executing 6926fb6b01318488
+2026-11-17T03:30:03.2121216Z $ vitest run --coverage
+2026-11-17T03:30:03.2121340Z 
+2026-11-17T03:30:03.2122064Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/packages/adapter-jev[39m
+2026-11-17T03:30:03.2122590Z       [2mCoverage enabled with [22m[33mv8[39m
+2026-11-17T03:30:03.2122753Z 
+2026-11-17T03:30:03.2123100Z  [2m[90m↓[39m[22m src/live.test.ts [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+2026-11-17T03:30:03.2123739Z  [2m[90m↓[39m[22m src/primitive-live.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+2026-11-17T03:30:03.2124356Z  [32m✓[39m src/decider.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+2026-11-17T03:30:03.2124612Z 
+2026-11-17T03:30:03.2124926Z [2m Test Files [22m [1m[32m1 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (3)[39m
+2026-11-17T03:30:03.2125627Z [2m      Tests [22m [1m[32m34 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (39)[39m
+2026-11-17T03:30:03.2126022Z [2m   Start at [22m 03:30:02
+2026-11-17T03:30:03.2126438Z [2m   Duration [22m 1.02s[2m (transform 51%, import 44%, tests 3%, worker 2%)[22m
+2026-11-17T03:30:03.2126919Z 
+2026-11-17T03:30:03.2127113Z [34m % [39m[2mCoverage report from [22m[33mv8[39m
+2026-11-17T03:30:03.2127293Z 
+2026-11-17T03:30:03.2127477Z =============================== Coverage summary ===============================
+2026-11-17T03:30:03.2127773Z Statements   : 97.75% ( 87/89 )
+2026-11-17T03:30:03.2128016Z Branches     : 96.77% ( 60/62 )
+2026-11-17T03:30:03.2128251Z Functions    : 100% ( 19/19 )
+2026-11-17T03:30:03.2128493Z Lines        : 98.8% ( 83/84 )
+2026-11-17T03:30:03.2128774Z ================================================================================
+2026-11-17T03:30:03.2129173Z ##[endgroup]
+2026-11-17T03:30:03.2134381Z ##[group]@graphgoblin/api-client:build
+2026-11-17T03:30:03.2134866Z cache hit, replaying logs ee14e0d94ca569cc
+2026-11-17T03:30:03.2135262Z $ tsc -b tsconfig.build.json
+2026-11-17T03:30:03.2136376Z ##[endgroup]
+2026-11-17T03:32:32.5358724Z ##[error]The operation was canceled.
+2026-11-17T03:32:32.5447657Z ##[group]Run actions/upload-artifact@v4
+2026-11-17T03:32:32.5448024Z with:
+2026-11-17T03:32:32.5448258Z   name: coverage
+2026-11-17T03:32:32.5448901Z   path: packages/*/coverage/coverage-summary.json
+apps/*/coverage/coverage-summary.json
+tooling/coverage/coverage-summary.json
+
+2026-11-17T03:32:32.5449620Z   if-no-files-found: ignore
+2026-11-17T03:32:32.5449924Z   compression-level: 6
+2026-11-17T03:32:32.5450200Z   overwrite: false
+2026-11-17T03:32:32.5450466Z   include-hidden-files: false
+2026-11-17T03:32:32.5450779Z env:
+2026-11-17T03:32:32.5451075Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:32:32.5451453Z ##[endgroup]
+2026-11-17T03:32:32.7814905Z (node:15442) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T03:32:32.7846359Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:32:32.8442252Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-17T03:32:32.8516426Z The least common ancestor is /home/runner/work/GraphGoblin/GraphGoblin. This will be the root directory of the artifact
+2026-11-17T03:32:32.8536041Z With the provided path, there will be 6 files uploaded
+2026-11-17T03:32:32.8585942Z Artifact name is valid!
+2026-11-17T03:32:32.8606003Z Root directory input is valid!
+2026-11-17T03:32:33.1406088Z Beginning upload of artifact content to blob storage
+2026-11-17T03:32:33.1586259Z (node:15442) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:32:33.3066645Z Uploaded bytes 8071
+2026-11-17T03:32:33.3626596Z Finished uploading artifact content to blob storage!
+2026-11-17T03:32:33.3656564Z SHA256 digest of uploaded artifact zip is d8c764ff6141d9ded2805734304d563fc1e657b70d66bf337900cb35ba592ec9
+2026-11-17T03:32:33.3657291Z Finalizing artifact upload
+2026-11-17T03:32:33.7032834Z Artifact coverage.zip successfully finalized. Artifact ID 14296168130
+2026-11-17T03:32:33.7034025Z Artifact coverage has been successfully uploaded! Final size is 8071 bytes. Artifact ID is 14296168130
+2026-11-17T03:32:33.7039886Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44009443183/artifacts/14296168130
+2026-11-17T03:32:33.7483481Z Post job cleanup.
+2026-11-17T03:32:33.9481000Z Pruning is unnecessary.
+2026-11-17T03:32:33.9974764Z Post job cleanup.
+2026-11-17T03:32:34.1956121Z [command]/usr/bin/git version
+2026-11-17T03:32:34.2096211Z git version 2.56.1
+2026-11-17T03:32:34.2256535Z Temporarily overriding HOME='/home/runner/work/_temp/7aff6538-06f3-4273-ba15-af3c50e16bf1' before making global git config changes
+2026-11-17T03:32:34.2266208Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T03:32:34.2272178Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:32:34.2351645Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T03:32:34.2476760Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T03:32:34.3216526Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T03:32:34.3232274Z http.https://github.com/.extraheader
+2026-11-17T03:32:34.3306424Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-17T03:32:34.3361775Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T03:32:34.4066310Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T03:32:34.4146434Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T03:32:34.5179351Z Cleaning up orphan processes
+2026-11-17T03:32:34.5540850Z Terminate orphan process: pid (6395) (pnpm)
+2026-11-17T03:32:34.5567358Z Terminate orphan process: pid (6401) (pnpm)
+2026-11-17T03:32:34.5649219Z Terminate orphan process: pid (6417) (node)
+2026-11-17T03:32:34.5715178Z Terminate orphan process: pid (11901) (pnpm)
+2026-11-17T03:32:34.5748693Z Terminate orphan process: pid (11907) (pnpm)
+2026-11-17T03:32:34.5773167Z Terminate orphan process: pid (11923) (sh)
+2026-11-17T03:32:34.5788052Z Terminate orphan process: pid (11924) (sh)
+2026-11-17T03:32:34.5883924Z Terminate orphan process: pid (15502) (node)
+2026-11-17T03:32:34.5938098Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

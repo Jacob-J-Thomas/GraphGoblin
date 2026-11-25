@@ -1,0 +1,27 @@
+# Chat reply announcement settlement
+
+Issue #573 corrects one existing ChatSurface test. The patch waits for New chat to be enabled, selects the exact polite reply announcement, and checks that the same mounted element is empty after New chat and after selecting the saved conversation. Independent formal review 01 found no actionable introduced issue. Fresh independent local QA passed all three checks on the identical unstaged candidate. Hosted candidate CI and the fresh final audit are pending. [Issue #573](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/573) · [Candidate patch](raw/source/candidate.patch.txt) · [Review 01](raw/review/REVIEW.md.txt) · [Independent QA](raw/qa/QA-REPORT.claude.md.txt)
+
+## Observed failure
+
+The historical Ubuntu Coverage job in PR #570 recorded 3,189 passing tests and one failure at the original R2 query, which expected exactly one element with role `status`. The failure output shows the Sending status and the polite reply announcement present together. The same run's Windows built-entry job passed. [Historical Coverage job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/45531793322/job/138928766302) · [Historical Windows job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/45531793322/job/138928766206) · [Original failure excerpt](raw/historical/CI-FAILURE-EXCERPT.log.txt)
+
+The unmodified Windows component file passed 57 tests, and a focused run passed R2 with the other 56 deselected. The local controlled diagnostic forced an overlap through the real controller and surface using a test client. With the reply visible, Sending and the polite live region coexisted and New chat remained disabled. The original single-status query threw. After settlement and the subsequent transitions, the live region was empty. The forced schedule establishes a local mechanism consistent with the hosted symptom. The precise hosted scheduler sequence remains unobserved. [Original component output](raw/historical/original-file.stdout.log.txt) · [Original R2 output](raw/historical/unmodified-focus.stdout.log.txt) · [Controlled fixture](raw/historical/diagnostic-control.test.tsx.txt) · [Controlled output](raw/historical/controlled-boundary.stdout.log.txt)
+
+## Candidate and checks
+
+The candidate was reviewed and tested against HEAD `154e78d54ee485330816d606032280de44d6e891`. The 1,828-byte binary diff has SHA-256 `9529cf6890641faf2d9788d7a1591f57fb695c8ca1821991ec7d0748ea6c2df5`. It changes only the body of R2 in `apps/web/src/chat/ChatSurface.test.tsx`. The test name, original heading and saved transcript assertions, default wait budget, production code and configuration are preserved. [Exact binding](BINDING-PROOF.json) · [Scope verification](raw/source/AUTHOR-SCOPE-VERIFICATION.json.txt)
+
+- The Claude author ran two component passes of 57/57 tests. Typecheck, scoped format and diff checks passed. Lint reported zero errors and five warnings in untouched files. [Author report](raw/author/IMPLEMENTATION-REPORT.claude.md.txt)
+- GPT formal review marked scan 1 of 3 READY after verifying the exact R2 scope, transition assertions and actual author tool results. [Formal review](raw/review/REVIEW.md.txt)
+- Claude QA inspection matched the exact patch and protected inputs. The physical index and source bytes were unchanged. [Inspection receipt](raw/qa/INSPECT-RESULT.json.txt)
+- The independent component check passed one file and all 57 tests in 8.65 seconds. The QA actor saw the receipt and stream hash. Packet preparation matched that hash to the stdout, which contains the R2 result. [Component receipt](raw/qa/COMPONENT-RESULT.json.txt) · [Component stdout](raw/qa/component.stdout.log.txt)
+- The independent boundary check passed one controlled test. It reproduced the two statuses and original query error, then observed an empty region. The mirror used a fake client. Packet preparation verified both copied TypeScript configs against the lineage record. [Boundary receipt](raw/qa/BOUNDARY-RESULT.json.txt) · [Boundary stdout](raw/qa/boundary.stdout.log.txt) · [Mirror lineage](raw/qa/MIRROR-LINEAGE.json.txt)
+
+The coordinator verified all 505 mirror copies, the three check receipts, the command streams and the unchanged candidate. The QA report reflects the actor's limited view of the formal review. The separate formal review 01 had already reached READY. [Coordinator QA adjudication](raw/qa/ROOT-QA-ADJUDICATION.json.txt)
+
+## QA admission record
+
+The original QA binder refused admission because the author had attempted a direct read of the worktree's `.git` marker. The permission check denied the read. Coordinator decision FUP-035 bound the admission to that exact denied call, raw author receipt and independently verified branch, HEAD, index and one-test patch. The original denial and failed binding receipt remain in the record. The QA fixture additionally bound the web TypeScript configuration to the copied root configuration in the external mirror. [Original binder refusal](raw/admission/initial-binder-refusal.json.txt) · [Adjudication and fixture provenance](BINDING-PROOF.json)
+
+Raw archives preserve their original bytes under `raw/`. The manifest records exact file hashes. The provider-text hashes are recorded separately because the author file uses CRLF and the adapter adds a terminal newline. Private provider prompts and event streams remain outside this packet. [Byte manifest](MANIFEST.json) · [Receipt provenance](BINDING-PROOF.json)

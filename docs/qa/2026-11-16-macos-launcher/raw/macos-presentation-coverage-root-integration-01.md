@@ -1,0 +1,15 @@
+# Presentation test integration decision
+
+Root read the complete actual Claude Opus5.5 xhigh proposal and authored tests on November17UTC (November16 locally). This is implementation integration, not a third formal scan.
+
+Proposal A is accepted: the test-only PresentationFixture executable runs the real public presentation composition in a directly tracked child. Package.swift declares the exact Tests/PresentationFixture source and two production-library dependencies. It is not an explicit shipping product and no production target or test bundle depends on it. The installer selects its existing two production products and never copies this fixture.
+
+SwiftPM6.1.2 source supports the build expectation: [PackageBuilder](https://raw.githubusercontent.com/swiftlang/swift-package-manager/swift-6.1.2-RELEASE/Sources/PackageLoading/PackageBuilder.swift) lines1401-1449 synthesize root executable products; [SwiftTestCommand](https://raw.githubusercontent.com/swiftlang/swift-package-manager/swift-6.1.2-RELEASE/Sources/Commands/SwiftTestCommand.swift) lines1393-1411 build allIncludingTests without a selected test product. Native existence and actual child execution must still pass.
+
+Collector integration uses a fresh private GG_MACOS_COVERAGE_PRESENTATION_PROFILES directory and four separate normal-exit profiles, named cancelled.profraw, progress-menu-quit.profraw, panel-quit-grace.profraw and failure-ok.profraw. Root adds the narrow environment override after Claude finishes authoring its child runner. The collector explicitly validates the test-only target and all production targets, witnesses the fixture executable, requires all four regular profiles, exports child-only production mapping/hits, and merges them once with SwiftPM and executable-entry profiles. No production source is excluded.
+
+Root also corrected the child capture's EOF claim: reader completion alone previously treated a read error as EOF. The runner now carries an explicit read-zero witness for each stream, fails incomplete/error/over-cap streams, and caps retained stdout and stderr at1MiB each. This changes only test capture and preserves all behavioral assertions and the existing child deadline.
+
+Proposal B is not admitted in this batch yet. The dependency seam could make WorkspaceBrowserOpener directly unit-testable, but no measured native result has established it is needed. Existing callback/controller tests and the independent actual browser launch exercise its surrounding behavior. Preserve current production source and run the complete new gate first; do not reshape source just to improve counters. Its uncovered lines remain counted. This decision does not waive 90% lines/regions or explicit outcome checks.
+
+All Swift compilation, AppKit behavior, profile completeness and numeric thresholds remain unverified until the hosted native job. Existing opposite-family production reviews, independent GUI QA, exact-candidate CI and fresh Astra MAX final audit remain required. Formal scans remain2/3.

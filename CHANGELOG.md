@@ -4,6 +4,64 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
+  keeps read-only SQLite mode intact, and refuses missing files without creating a different
+  database. Default database configuration also encodes the data directory as a file URL.
+  No store format change or stored-content rewrite is required.
+  **Upgrade:** with `GG_DB_URL` unset, a data directory path containing a percent escape now
+  selects a different database file: `GG_DATA_DIR='/example/active %41'` used to open
+  `/example/active A/graphgoblin.db` and now opens `/example/active %41/graphgoblin.db`. If that
+  file is absent, startup creates an empty store, so existing data seems missing and new writes go to it. The earlier
+  database is not changed or removed, and `master.key` and artifacts stay in the data directory.
+  Before the first start, identify the earlier database from evidence, stop its gateway and back
+  it up with its `-wal`/`-shm` files, `master.key` and artifacts. A shell start can then keep
+  `GG_DATA_DIR` and set an escaped `GG_DB_URL` for that file; the macOS launcher accepts no
+  external database, so restore the stopped store into an empty data directory instead. This is not
+  a format change: do not reset. See
+  [Same-format upgrade: default database location](docs/guide/08-offline-upgrade.md#same-format-upgrade-default-database-location).
+
+- Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
+  macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
+  `bash scripts/install-macos-launcher.sh`; it builds `~/Applications/GraphGoblin.app`, starts
+  or reuses the verified local instance and opens the default browser. Hide keeps the launch
+  going; Quit never stops an already started gateway, and closing the browser leaves work
+  running. Managed replacement preserves the installation identity; alternate app names keep
+  independent identities and logs. Private gateway logs share the existing bounded writer,
+  with a Darwin directory reservation and a local-key check after both writer leases.
+  Installation and cold launch tolerate malformed inherited locale values.
+  Managed replacement applies the same file permission rules to admission and cleanup, checks
+  every managed bundle object for unexpected ACL entries, and refuses case-alias overlaps
+  between the app and its inputs before publication.
+  Graphical and headless launches now deliver a conservative outcome when a system call remains
+  blocked past the attempt budget, and refuse a successful handoff that arrives after the budget
+  or Quit. This does not grant folder permissions or stop a gateway whose start was committed.
+  **Setup:** an existing store needs its owned local `master.key`; external database paths and
+  shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
+  at their saved paths or rerun the installer. No format change or migration. Part of #456 and
+  #326; owner acceptance is tracked separately. See ADR-0082.
+
+- Windows launcher evidence records a test that node:test cancels as failed at its cancellation,
+  as node:test reports it (#534). Cancellations include the test's own timeout, a parent or the
+  whole run that finished first, and a subtest started after its parent ended. The end record
+  previously waited for the test body, which node:test no longer awaits, so a cancelled body
+  that later returned could be recorded as passing, and one still running at exit as never ended.
+  A later return or throw of the body adds no second end, and an earlier failure keeps its own
+  failure fields. Cleanup and child records the body writes afterwards stay in its test's scope.
+  Subtests still running when their parent ends count among the parent's failed subtests. A
+  regression test also covers one totals row that keeps its own sum but contradicts its
+  contention trial in any count (#539). Such a row never completes the trial, and the valid
+  observations are still uploaded. The acceptance suite's assertions, timeouts and TAP output
+  are unchanged. No stored, export or contract change.
+
+- MCP `describe_loop` and `start_run` resolve `loopId` as an exact ID of one of the caller's
+  loops first, then as a full loop name under the API's name rule: trimmed, whitespace runs
+  collapsed to one space and lowercased, without Unicode normalization or locale-dependent case
+  folding (#473, #516). Part of a name returns `LOOP_NOT_FOUND`, and equivalent names from an
+  inconsistent upstream return `AMBIGUOUS_LOOP_NAME`. Display names keep their stored spelling.
+  The `list_loops` `query` remains a separate trimmed, case-insensitive substring filter. The
+  user guide, docs/09 and the shared run-loop skill used by the Codex and Claude plugins now
+  describe this lookup. No store, schema or format change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
@@ -181,13 +239,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   longer also listed under Keeps. A reset refuses when the directory lists several hard links
   that could be a lock or guard and the filesystem does not say which one the lock module opens.
   The confirmed manifest says a stale lock file or guard was reclaimed only when the reset's own
-  acquisition removed it, as the lock module now reports; one the preview found that another
-  process removed first is listed as `already gone when the reset took` that lock instead of as
-  reclaimed by the reset. Completion and failure output names each lock and what releasing
+  acquisition removed it, as the lock module now reports; one that the confirmed command's own
+  read-only preview found, and that another process removed before the command took that lock,
+  is listed as `already gone when the reset took` that lock instead of as reclaimed by the reset.
+  An earlier standalone dry run is a separate invocation, and the confirmed command does not
+  remember it. An entry cleared before the confirmed command's preview gets no attribution.
+  Completion and failure output names each lock and what releasing
   it did (removed, already gone, or kept because another process's record replaced it) instead
   of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
   lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
-  its locks names any stale lock file or guard they reclaimed, and any the preview found that
+  its locks names any stale lock file or guard they reclaimed, and any its own preview found that
   was already gone when the reset took its lock (without saying who removed it), instead of
   saying nothing changed. A failed attempt to take either lock is no longer reported as
   `Nothing in the data directory was changed.`: taking a lock can itself create or reclaim that
@@ -202,7 +263,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   that parse reset output must expect the new lock rows and release lines in place of
   `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
   `Released graphgoblin.lock.`, the `could not take the <lock>:` refusal prefix, and the
-  `already gone when the reset took` wording for stale entries another process removed first.
+  `already gone when the reset took` wording for stale entries the confirmed command's own
+  preview found and another process removed before it took that lock.
 
 - The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
   overrides, including case variants and empty values, before writing staged or installed JSON

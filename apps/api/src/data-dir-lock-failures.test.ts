@@ -177,19 +177,37 @@ it('preserves non-Windows EPERM even when a stale marker disappeared', async () 
   });
 });
 
-it('rolls back a newly acquired main lock if its recovery marker cannot be released', async () => {
-  vi.mocked(fs.unlink).mockImplementation(async (target) => {
-    if (String(target).includes('.reclaim') && !String(target).includes('.tmp')) throw denied();
-    await actual.unlink(target);
-  });
-  await expect(acquireDataDirLock(directory)).rejects.toThrow('rolled back');
-  await expect(fs.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
-  expect(await dataDirLockState(directory)).toMatchObject({
-    state: 'held',
-    path: `${path}.reclaim`,
-  });
-  await expect(acquireDataDirLock(directory)).rejects.toThrow('another GraphGoblin process holds');
-});
+it.each(['ordinary', 'attested'] as const)(
+  'rolls back a newly acquired %s main lock if its recovery marker cannot be released',
+  async (kind) => {
+    let matchingOwnerAtFailure = false;
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (String(target).includes('.reclaim') && !String(target).includes('.tmp')) {
+        matchingOwnerAtFailure =
+          (await actual.readFile(path, 'utf8')) === (await actual.readFile(target, 'utf8'));
+        throw denied();
+      }
+      await actual.unlink(target);
+    });
+    const acquisition =
+      kind === 'attested'
+        ? acquireDataDirLock(directory, undefined, { attestLocalArtifact: true })
+        : acquireDataDirLock(directory);
+    await expect(acquisition).rejects.toMatchObject({
+      message: expect.stringContaining('rolled back'),
+      cause: { operation: 'recovery-marker-unlink', code: 'EPERM' },
+    });
+    expect(matchingOwnerAtFailure).toBe(true);
+    await expect(fs.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await dataDirLockState(directory)).toMatchObject({
+      state: 'held',
+      path: `${path}.reclaim`,
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toThrow(
+      'another GraphGoblin process holds',
+    );
+  },
+);
 
 it('explicitly reports retained ownership if both recovery release and main rollback fail', async () => {
   vi.mocked(fs.unlink).mockRejectedValue(denied());

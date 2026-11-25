@@ -1,0 +1,146 @@
+
+ RUN  v5.0.3 G:/ggq/gg-macos-current-main/GraphGoblin/apps/api
+
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in graphgoblin.lock without touching the unrelated process 63ms
+ ✓ src/data-dir-lock-failures.test.ts > recognizes a Windows recovery marker that disappeared before its owner could be read 39ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a refused read when the recovery marker still exists 25ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a refused main owner record read even when its path is absent 5ms
+ ✓ src/data-dir-lock-failures.test.ts > accepts Windows EPERM only after the exact stale UUID marker is independently absent 24ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in graphgoblin.lock.reclaim without touching the unrelated process 49ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in external.db.graphgoblin.lock without touching the unrelated process 48ms
+ ✓ src/data-dir-lock-failures.test.ts > never retries a refused stale-marker deletion or touches a successor marker 27ms
+ ✓ src/data-dir-lock-failures.test.ts > accepts Windows rmdir EPERM only after the guard directory is independently absent 26ms
+ ✓ src/data-dir-lock-failures.test.ts > retains a genuine guard-directory removal failure and rolls back its main lock 25ms
+ ✓ src/data-dir-lock-failures.test.ts > never removes a successor published before an absent-marker EPERM recheck 29ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > preserves a matching or uncheckable Windows identity (134388256826197750) 45ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > preserves a matching or uncheckable Windows identity (undefined) 39ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity undefined 30ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves non-Windows EPERM even when a stale marker disappeared 20ms
+ ✓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired ordinary main lock if its recovery marker cannot be released 25ms
+ ✓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired attested main lock if its recovery marker cannot be released 27ms
+ ✓ src/data-dir-lock-failures.test.ts > explicitly reports retained ownership if both recovery release and main rollback fail 19ms
+ ✓ src/data-dir-lock-failures.test.ts > retains the original ownership refusal alongside recovery cleanup failures 26ms
+ ✓ src/data-dir-lock-failures.test.ts > retains an acquisition refusal when unpublished staging cleanup also fails 18ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity null 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity 123 31ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity "" 30ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity "invalid" 24ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > stores the OS identity and refuses acquisition when it cannot establish its own identity 53ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > creates an exclusive lock with this PID and start time and releases it 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: false) 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: true) 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims its own PID from a previous process without an in-process hold 31ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses another live PID without replacing its lock 40ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > replaces a stale lock from a process that exited 127ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EPERM 35ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EACCES 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with UNKNOWN 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "" 42ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{" 30ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "null" 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "1" 36ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{}" 36ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":\"1\"}" 58ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":0}" 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":-1}" 30ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":1.5}" 64ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > does not let a delayed repeated release remove a new acquisition 53ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > leaves a lock with a different ownership token intact on release 50ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > accepts a missing file during release 31ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a fresh lock 28ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale lock 102ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a own-pid lock 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale-reclaim lock 30ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: false) 111ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: true) 116ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: false) 103ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: true) 99ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reports nothing reclaimed when another acquisition reclaimed the stale entries first 41ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > takes the lock without claiming a reclamation when its holder releases it before it is read 27ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses a reclamation guard owned by another live PID 28ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses an existing reclamation guard without deleting either file 23ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > cannot delete a successor guard after a delayed stale-owner probe 39ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims an empty guard, but refuses malformed or mismatched marker directories 52ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > propagates filesystem errors instead of assuming a stale lock 16ms
+ ✓ src/data-dir-lock.test.ts > reading the lock state without acquiring it > reports a free directory, a stale lock and a malformed reclamation guard without touching them 101ms
+ ✓ src/data-dir-lock.test.ts > reading the lock state without acquiring it > reports a live owner, and this process while it holds or acquires the lock 734ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > lists the locks a dry run would take as the reset’s own and changes nothing 108ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > lists stale locks and guards a dry run found as reclaimed, never as kept, and changes nothing 136ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the data-directory lock fails after changing its metadata (stale metadata: false) 871ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with 1 995ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the data-directory lock fails after changing its metadata (stale metadata: true) 111ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the database lock fails after changing its metadata (stale metadata: false) 103ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > confirmed: lists its own locks, removes exactly the store and its locks, and keeps every unrelated byte 903ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the database lock fails after changing its metadata (stale metadata: true) 114ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader timed out 223ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > confirmed: names the stale locks and guards it reclaimed and removes no other metadata 148ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > says when the guard left behind cannot be inspected, without claiming its state 96ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > keeps a database lock guard published while the reset holds the locks and says only that it is present 126ms
+ ✓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > passes every removal through when no fault is injected: a confirmed reset still completes 147ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses before removal when only the locked read fails: store reader exited with SIGKILL 248ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > keeps a data-directory lock guard published while the reset holds the locks and says only that it is present 118ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the stage when another owner takes the data-directory lock first, and leaves that owner’s record 90ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses when two readable plans would keep a previously identified run workspace 134ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the stage when another owner takes the database lock first, and leaves that owner’s record 120ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > classifies the locks of a database in a subdirectory where the lock module keeps them 143ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > still resets when the preview is unreadable (locked readable=false) 140ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > gives one actionable refusal when the data-directory lock becomes unverifiable after preview 100ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > gives one actionable refusal when the database lock becomes unverifiable after preview 146ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > never takes a hard link of a stale lock for the lock, and keeps it 215ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > still resets when the preview is unreadable (locked readable=true) 180ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the database stage when the lock module refuses a database with another hard link 94ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > a dry run refused read-only while the database lock is held still says nothing changed 77ms
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > a confirmed reset refused read-only while the database lock is held still says nothing changed 76ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > lists a stale lock under the spelling the directory shows on a volume that folds case 173ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > lists aliased locks and guards of both writers once, as listed, and keeps a hard link and a look-alike 150ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > refuses, changing nothing, when the filesystem does not say which hard link a lock spelling opens 147ms
+ ✓ src/reset/reset-ownership.test.ts > reset manifests classify both locks and both reclamation guards > lists the lock as its own when the stale lock is removed after its identity was read 31ms
+ ✓ src/reset/reset-ownership.test.ts > a confirmed reset claims only the stale entries its own acquisition reclaimed > says which stale entries were already gone when it took a lock and which it reclaimed 139ms
+ ✓ src/reset/reset-ownership.test.ts > a confirmed reset claims only the stale entries its own acquisition reclaimed > a refusal after taking the locks never claims entries that were already gone 126ms
+ ✓ src/reset/reset-ownership.test.ts > reset output says what releasing each lock did > keeps a lock file that holds another record and says so 97ms
+ ✓ src/reset/reset-ownership.test.ts > reset output says what releasing each lock did > says when a lock file was already gone 109ms
+ ✓ src/reset/reset-ownership.test.ts > reset output says what releasing each lock did > names the lock whose release failed (graphgoblin.lock) and still releases the other 151ms
+ ✓ src/reset/reset-ownership.test.ts > reset output says what releasing each lock did > names the lock whose release failed (graphgoblin.db.graphgoblin.lock) and still releases the other 157ms
+ ✓ src/reset/reset-ownership.test.ts > a refusal after taking the locks says what changed > names the stale locks and guards it reclaimed and keeps every store byte 126ms
+ ✓ src/reset/reset-ownership.test.ts > a refusal after taking the locks says what changed > reports only the data-directory metadata, as found, when that lock cannot be taken 96ms
+ ✓ src/reset/reset-ownership.test.ts > a refusal after taking the locks says what changed > releases the data-directory lock when the database lock cannot be taken (stale metadata: true) 108ms
+ ✓ src/reset/reset-ownership.test.ts > a refusal after taking the locks says what changed > releases the data-directory lock when the database lock cannot be taken (stale metadata: false) 88ms
+ ✓ src/reset/reset-ownership.test.ts > lock paths a reset cannot classify > refuses when graphgoblin.db.graphgoblin.lock is a directory, changing nothing 38ms
+ ✓ src/reset/reset-ownership.test.ts > lock paths a reset cannot classify > refuses when graphgoblin.db.graphgoblin.lock.reclaim is a file, changing nothing 46ms
+ ✓ src/reset/reset-ownership.test.ts > lock paths a reset cannot classify > refuses a link where the data-directory lock belongs 13ms
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > proves the exact live acquisition and makes proof unavailable as soon as release starts
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > cannot use an exact token-bearing copy at a different inode
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > refuses changed record on the original locked inode
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > refuses changed link on the original locked inode
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > refuses changed mode on the original locked inode
+ ↓ src/macos-local-key.test.ts > attested writer artifacts > does not attach a proof to ordinary leases
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > creates a local key only after actual fresh lease admission
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > allows admissible key metadata and leaves key decoding to the normal loader
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses database before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses wal before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses reclaim before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses other before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses key-directory before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses key-symlink before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses override before any SQLite connection or key generation
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > requires proof from both exact leases and refuses a second filename-only exemption
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > refuses external or option-bearing SQLite URLs without touching another store
+ ↓ src/macos-local-key.test.ts > Mac-managed store startup > does not follow a local database name that points at a different store
+ ✓ src/macos-local-key.test.ts > reports key refusal as a fixed closed startup cause 2ms
+ ✓ src/database-ownership.test.ts > refuses fresh process defaults not-in-catalog/low before creating an external database parent 708ms
+ ✓ src/database-ownership.test.ts > refuses fresh process defaults gpt-5.5/none before creating an external database parent 15ms
+ ✓ src/database-ownership.test.ts > rechecks catalog created by a writer before database ownership is acquired 2639ms
+ ✓ src/database-ownership.test.ts > rechecks format created by a writer before database ownership is acquired 87ms
+ ✓ src/database-ownership.test.ts > refuses multiply hard-linked databases before acquiring a writer lock 7ms
+ ✓ src/database-ownership.test.ts > locks the same external SQLite file across data directories and refuses an offline key writer 2913ms
+ ✓ src/database-ownership.test.ts > canonicalizes directory aliases, future database paths and the health identity without writing 36ms
+ ✓ src/database-ownership.test.ts > refuses reset before store reads while a writer owns the database (file exists: false) 38ms
+ ✓ src/database-ownership.test.ts > refuses reset before store reads while a writer owns the database (file exists: true) 33ms
+ ✓ src/reset/reset-locked-plan.test.ts > confirmed reset retains the run IDs until their workspaces can be removed > refuses after a real built copy owner is killed during the locked read 10366ms
+ ✓ src/reset/reset-locked-plan.test.ts > names a busy stale copy, gives recovery steps and limits the unchanged claim to the data directory 604ms
+
+ Test Files  7 passed (7)
+      Tests  119 passed | 18 skipped (137)
+   Start at  20:19:28
+   Duration  21.32s (import 52%, tests 36%, transform 12%, setup 1%)
+
