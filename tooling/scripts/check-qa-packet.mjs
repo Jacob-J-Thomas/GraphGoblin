@@ -8,7 +8,9 @@
  * hides it from `pnpm format:check`; other files Prettier would check are checked as it would; the
  * rest are opaque archived originals, retained and reported with their SHA-256. A newly added
  * Markdown file named as an original is refused: immutable Markdown originals are stored as
- * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail.
+ * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail. A
+ * path on which Prettier stops with an error (a parse error in malformed HTML, for example) fails
+ * with Prettier's own message under its path, and the remaining paths are still checked.
  *
  * Read-only: Git runs without optional locks or automatic index refresh, and formatting is checked
  * in memory. An unstaged modification is selected only when Git's patch for it is not empty, so
@@ -20,7 +22,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
-import { parseArgs } from 'node:util';
+import { parseArgs, stripVTControlCharacters } from 'node:util';
 import * as prettier from 'prettier';
 
 export const QA_ROOT = 'docs/qa';
@@ -39,21 +41,31 @@ export const ORIGINAL_MARKDOWN_NAME = /(?:^|[ ._-])original$/i;
 const LABELS = {
   formatted: 'formatted',
   unformatted: 'UNFORMATTED',
+  error: 'CHECK-ERROR',
   original: 'MD-ORIGINAL',
   retained: 'retained',
   deleted: 'deleted',
   unavailable: 'UNAVAILABLE',
 };
-const PROBLEMS = new Set(['unformatted', 'original', 'unavailable']);
+const PROBLEMS = new Set(['unformatted', 'error', 'original', 'unavailable']);
 const NOT_CHECKED_OUT = 'not in this working tree (sparse checkout or skip-worktree); not checked';
 const REMOVED =
   'removed from the working tree although its addition is committed or staged; not checked';
+const PRETTIER_STOPPED = 'Prettier stopped with an error; not checked, see its detail below';
+/** Line breaks in a Prettier message, as its code frame splits source lines. */
+const LINE_BREAK = /\r\n|[\n\r\p{Zl}\p{Zp}]/u;
 const FIXES = {
   unformatted:
     'UNFORMATTED: format reader-facing pages before sealing their hashes with ' +
     'pnpm exec prettier --write "<path>" (add --ignore-path .gitignore when an archive ignore ' +
     'rule hides the path). Never format an immutable original: store a new one byte-for-byte ' +
     'as <name>.md.txt, or restore a historical one to its recorded bytes.',
+  error:
+    'CHECK-ERROR: Prettier stopped with an error on a selected path, so its formatting was not ' +
+    'checked; its message is shown above under the path. Correct the cause it reports at the ' +
+    'line and column given, then run check:qa again. Never edit an immutable original to ' +
+    'satisfy Prettier: keep its recorded bytes as the QA packet file conventions in ' +
+    'docs/15-issue-workflow.md describe.',
   original:
     'MD-ORIGINAL: store an immutable Markdown original byte-for-byte as <name>.md.txt, keep the ' +
     'SHA-256 shown here in the packet manifest and link a formatted .md summary for readers.',
@@ -176,10 +188,19 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
       entries.push({ path, kind: 'original', note: `sha256=${sha256(bytes)}` });
     } else if (markdown || (inferredParser && !ignored)) {
       const options = await prettier.resolveConfig(absolute, { editorconfig: true });
-      const formatted = await prettier.check(bytes.toString('utf8'), {
-        ...options,
-        filepath: absolute,
-      });
+      let formatted;
+      try {
+        formatted = await prettier.check(bytes.toString('utf8'), {
+          ...options,
+          filepath: absolute,
+        });
+      } catch (error) {
+        // Prettier gave no format verdict for this path, whatever its reason. That fails this path
+        // with Prettier's message as its CLI prints it, never as a run that could not start, and
+        // the remaining paths are still checked.
+        entries.push({ path, kind: 'error', note: PRETTIER_STOPPED, detail: String(error) });
+        continue;
+      }
       entries.push({
         path,
         kind: formatted ? 'formatted' : 'unformatted',
@@ -193,11 +214,16 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
   return { base, commit, mergeBase, entries };
 }
 
-/** Renders the report; the result fails when any selected path has a problem. */
+/**
+ * Renders the report; the result fails when any selected path has a problem. The counts partition
+ * the selected paths: a Prettier error is neither a completed check nor an unavailable path, and
+ * its term appears only when one occurred, leaving every other report unchanged.
+ */
 export function formatReport({ base, commit, mergeBase, entries }) {
   const count = (kind) => entries.filter((entry) => entry.kind === kind).length;
   const checked = count('formatted') + count('unformatted');
   const markdown = entries.filter((entry) => entry.markdown).length;
+  const errors = entries.filter((entry) => entry.kind === 'error');
   const problems = entries.filter((entry) => PROBLEMS.has(entry.kind));
   const lines = [
     'check:qa: local QA packet pre-publication check; pnpm format:check and CI remain the full gates.',
@@ -205,19 +231,27 @@ export function formatReport({ base, commit, mergeBase, entries }) {
     `Selection: ${QA_ROOT} paths changed from merge base ${mergeBase} to the working tree ` +
       '(committed, staged, unstaged and untracked; Git-ignored files excluded), deduplicated.',
     `Selected ${QA_ROOT} paths: ${entries.length} = checked with Prettier ${checked} ` +
-      `(Markdown ${markdown}) + refused Markdown originals ${count('original')} + retained ` +
-      `archived originals ${count('retained')} + deleted ${count('deleted')} + unavailable ` +
-      `${count('unavailable')}`,
+      `(Markdown ${markdown})${errors.length ? ` + Prettier errors ${errors.length}` : ''} + ` +
+      `refused Markdown originals ${count('original')} + retained archived originals ` +
+      `${count('retained')} + deleted ${count('deleted')} + unavailable ${count('unavailable')}`,
     ...entries.map(
       (entry) =>
         `  ${LABELS[entry.kind].padEnd(12)} ${entry.path}${entry.note ? `  [${entry.note}]` : ''}`,
     ),
+    // Prettier's message and code frame, without terminal colour, under a line naming the path.
+    // Every detail line starts with an indented bar, so no frame line can read as a path row.
+    ...errors.flatMap((entry) => [
+      `CHECK-ERROR detail for ${entry.path}:`,
+      ...stripVTControlCharacters(entry.detail)
+        .split(LINE_BREAK)
+        .map((line) => `    | ${line}`),
+    ]),
   ];
   if (!entries.length) lines.push(`No ${QA_ROOT} path changed; nothing to check.`);
   for (const kind of new Set(problems.map((entry) => entry.kind))) lines.push(FIXES[kind]);
   lines.push(
     problems.length
-      ? `Result: FAILED (${problems.length} problems; ${count('unavailable')} of ` +
+      ? `Result: FAILED (${problems.length} problems; ${count('unavailable') + errors.length} of ` +
           `${entries.length} selected paths not checked).`
       : 'Result: passed (every selected path was checked, retained or deleted).',
   );

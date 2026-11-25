@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { afterAll, test } from 'vitest';
 
 const cli = fileURLToPath(new URL('./check-qa-packet.mjs', import.meta.url));
@@ -49,6 +50,7 @@ const HIDDEN = 'an ignore rule hides it from format:check; checked here';
 const NOT_CHECKED_OUT = 'not in this working tree (sparse checkout or skip-worktree); not checked';
 const REMOVED =
   'removed from the working tree although its addition is committed or staged; not checked';
+const PRETTIER_STOPPED = 'Prettier stopped with an error; not checked, see its detail below';
 
 const git = (cwd, ...args) =>
   execFileSync('git', args, { cwd, env, encoding: 'utf8', windowsHide: true });
@@ -73,6 +75,17 @@ const listed = (stdout) =>
     path,
     note ?? '',
   ]);
+/** Each CHECK-ERROR detail as [path, lines without their delimiting bar], in report order. */
+const details = (stdout) =>
+  [...stdout.matchAll(/^CHECK-ERROR detail for (.+):\n((?: {4}\| .*\n)*)/gm)].map(
+    ([, path, block]) => [
+      path,
+      block
+        .split('\n')
+        .slice(0, -1)
+        .map((line) => line.slice('    | '.length)),
+    ],
+  );
 
 let repositories = 0;
 /**
@@ -256,6 +269,132 @@ test('a sparse checkout fails on selected paths it lacks while deletions stay de
     result.stdout,
     /^Result: FAILED \(1 problems; 1 of 3 selected paths not checked\)\.$/m,
   );
+});
+
+test('a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported', () => {
+  const root = repository();
+  const hidden = 'docs/qa/hidden/README.md';
+  const bad = 'docs/qa/visible/bad.html';
+  const good = 'docs/qa/visible/good.html';
+  write(root, hidden, FORMATTED);
+  write(root, bad, '<main><section>Hello</main>\n');
+  write(root, good, '<p>Evidence</p>\n');
+  git(root, 'add', '-A');
+  git(root, 'commit', '--quiet', '-m', 'packet with a malformed page');
+  // Control: the full formatter itself stops on the malformed page with its parser's message,
+  // position and code frame, which this check must carry verbatim under the page's path.
+  const hosted = spawnSync(process.execPath, [prettierBin, '--check', bad], {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  assert.equal(hosted.status, 2, hosted.stdout + hosted.stderr);
+  const [located, ...frame] = stripVTControlCharacters(hosted.stderr)
+    .trimEnd()
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\[error\] /, ''));
+  const parserCause = /^\S+bad\.html: (SyntaxError: Unexpected closing tag "main"\. .* \(1:21\))$/;
+  assert.match(located, parserCause);
+  const [, cause] = parserCause.exec(located);
+  assert.ok(frame.includes('> 1 | <main><section>Hello</main>'), frame.join('\n'));
+  // Unmarked, a frame continuation such as the following source line would read as a path row.
+  assert.ok(
+    frame.some((line) => /^ {2}\S/.test(line)),
+    frame.join('\n'),
+  );
+  const prettierError = [[bad, [cause, ...frame]]];
+  const snapshot = (...paths) => ['.git/index', ...paths].map((path) => read(root, path));
+  const partition = (checked, markdown, errors, unavailable) =>
+    new RegExp(
+      `^Selected docs/qa paths: 3 = checked with Prettier ${checked} \\(Markdown ${markdown}\\)` +
+        (errors ? ` \\+ Prettier errors ${errors}` : '') +
+        ' \\+ refused Markdown originals 0 \\+ retained archived originals 0 \\+ deleted 0' +
+        ` \\+ unavailable ${unavailable}$`,
+      'm',
+    );
+
+  // Full checkout: the page Prettier stops on fails, and the page after it is still checked.
+  let before = snapshot(hidden, bad, good);
+  let result = check(root, '--base', 'main');
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.equal(result.stderr, '');
+  assert.deepEqual(listed(result.stdout), [
+    ['formatted', hidden, ''],
+    ['CHECK-ERROR', bad, PRETTIER_STOPPED],
+    ['formatted', good, ''],
+  ]);
+  assert.deepEqual(details(result.stdout), prettierError);
+  assert.match(result.stdout, partition(2, 1, 1, 0));
+  assert.match(result.stdout, /^CHECK-ERROR: Prettier stopped .*line and column given/m);
+  assert.match(
+    result.stdout,
+    /^Result: FAILED \(1 problems; 1 of 3 selected paths not checked\)\.$/m,
+  );
+  assert.deepEqual(snapshot(hidden, bad, good), before);
+
+  // Sparse checkout: the README leaves the cone as a skip-worktree entry, not a deletion.
+  git(root, 'sparse-checkout', 'set', '--cone', 'docs/qa/visible');
+  assert.throws(() => read(root, hidden), { code: 'ENOENT' });
+  assert.equal(git(root, 'ls-files', '-t', '--', hidden), `S ${hidden}\n`);
+  assert.equal(git(root, 'status', '--porcelain', '--', 'docs/qa'), '');
+  before = snapshot(bad, good);
+
+  result = check(root, '--base', 'main');
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.equal(result.stderr, '');
+  assert.deepEqual(listed(result.stdout), [
+    ['UNAVAILABLE', hidden, NOT_CHECKED_OUT],
+    ['CHECK-ERROR', bad, PRETTIER_STOPPED],
+    ['formatted', good, ''],
+  ]);
+  assert.deepEqual(details(result.stdout), prettierError);
+  assert.match(result.stdout, partition(1, 0, 1, 1));
+  assert.match(result.stdout, /^CHECK-ERROR: Prettier stopped /m);
+  assert.match(result.stdout, /^UNAVAILABLE: .*git sparse-checkout add docs\/qa.*full checkout/m);
+  assert.match(
+    result.stdout,
+    /^Result: FAILED \(2 problems; 2 of 3 selected paths not checked\)\.$/m,
+  );
+  assert.deepEqual(snapshot(bad, good), before);
+
+  // Repairing only the page leaves the sparse omission as the one failure, in the old wording.
+  write(root, bad, '<main><section>Hello</section></main>\n');
+  before = snapshot(bad, good);
+
+  result = check(root, '--base', 'main');
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.deepEqual(listed(result.stdout), [
+    ['UNAVAILABLE', hidden, NOT_CHECKED_OUT],
+    ['formatted', bad, ''],
+    ['formatted', good, ''],
+  ]);
+  assert.doesNotMatch(result.stdout, /CHECK-ERROR|Prettier errors/);
+  assert.match(result.stdout, partition(2, 0, 0, 1));
+  assert.match(
+    result.stdout,
+    /^Result: FAILED \(1 problems; 1 of 3 selected paths not checked\)\.$/m,
+  );
+  assert.deepEqual(snapshot(bad, good), before);
+
+  // Restoring the full checkout restores the scope, and the repaired packet passes.
+  git(root, 'sparse-checkout', 'disable');
+  before = snapshot(hidden, bad, good);
+
+  result = check(root, '--base', 'main');
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(listed(result.stdout), [
+    ['formatted', hidden, ''],
+    ['formatted', bad, ''],
+    ['formatted', good, ''],
+  ]);
+  assert.match(result.stdout, partition(3, 1, 0, 0));
+  assert.match(result.stdout, /^Result: passed /m);
+  assert.deepEqual(snapshot(hidden, bad, good), before);
 });
 
 test('ordinary deletions pass, but a committed addition missing from the working tree fails', () => {
