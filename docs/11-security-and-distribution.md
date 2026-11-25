@@ -93,6 +93,27 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+The optional [macOS Finder/Dock launcher](decisions/ADR-0082-macos-finder-dock-launcher.md)
+installs per user from a built checkout, for native Apple Silicon macOS 15 or later. It saves
+the canonical checkout and Node 22.22.2+ path, local store and typed options. It uses direct
+detached process creation and opens the default browser after verifying the intended gateway
+and both web shells. The launcher never stops the gateway. Shutdown begins through the
+existing authenticated API. Browser Wait and Force are available only after an externally
+initiated drain reaches its choice phase. Installation and replacement require private descriptor-verified
+bundle/receipt state and same-volume publication. Foreign destinations and uncertain ownership
+refuse. The private APFS log root is independently reserved by the API before loading the
+application; the same bounded writer serves Windows and Mac adapters. The Mac launch also
+rechecks its local key source after both writer leases, before SQLite or key creation.
+The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+describes alternate app names and log locations. No automatic update or login item is installed.
+
+Read-only store inspection escapes the physical path for both libsql's URL parser and SQLite's
+URI parser. Literal percent signs, query or fragment characters cannot select another file or
+override `mode=ro`. A missing database is refused rather than created. An existing WAL database
+is read with its live WAL contents; SQLite may still create or update its normal WAL sidecars.
+The default database URL independently encodes the data-directory path. No Unicode normalization
+or stored-content conversion is applied by these path encoders.
+
 The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
 case-insensitively, before the installer writes any configuration, including temporary staging
 files. Empty values are refused too. The native launcher also refuses these keys in manually

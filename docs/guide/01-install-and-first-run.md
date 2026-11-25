@@ -135,6 +135,67 @@ the existing shutdown controls; it never cancels or forces that drain. See
 [launcher troubleshooting](07-troubleshooting.md#windows-launcher) and
 [ADR-0064](../decisions/ADR-0064-windows-desktop-launcher.md).
 
+## Optional macOS Finder and Dock launcher
+
+On an Apple Silicon Mac running macOS 15 or later, build this checkout with Node 22.22.2 or
+later within major 22. Install Apple's Command Line Tools or Xcode with Swift 6, then run:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+bash scripts/install-macos-launcher.sh --node "$(command -v node)"
+```
+
+The installer creates `~/Applications/GraphGoblin.app`. Open it in Finder and keep it in the
+Dock if desired. It starts or reuses the matching GraphGoblin and opens your default browser.
+The saved checkout and Node executable must stay in place; rerun the installer after moving
+either. The installer builds the launcher, so it also requires the Swift compiler when updating.
+
+Choose a stable checkout location. If it is in a macOS-protected folder such as Documents,
+Desktop or Downloads, macOS may ask whether the app can read that folder. A rebuilt launcher
+can prompt again. Review that system request yourself; the installer does not grant access or
+change privacy settings. A checkout in a dedicated development folder, such as `~/src`, avoids
+requiring access to those personal folders.
+
+Optional flags are `--data-dir ABS_PATH`, `--port N`, `--require-api-key`, `--disable-ollama`,
+`--codex-binary ABS_PATH` and `--claude-binary ABS_PATH`. Use separate flag/value tokens, with
+each flag at most once. `--help` lists the options. Provider installation and login remain
+separate prerequisites; this launcher does not add harness support on a new platform.
+
+An independent installation can use `--app-name 'GraphGoblin QA.app'` with its own
+`--data-dir` and `--port`. Alternate names start with `GraphGoblin ` and end in `.app`.
+Each receives its own identity and log directory. The installer refuses a foreign destination
+and validates a complete replacement before publishing it. If it says installer recovery is
+required, preserve the app, receipt, and any stage; do not delete, rename, or edit them to force an
+install. Follow the [macOS launcher recovery inspection](07-troubleshooting.md#macos-finder-and-dock-launcher).
+
+**Hide** and the progress window's close button hide the launch progress while it continues.
+Reopening from the Dock shows the current state. **Quit** prevents a start if it has not
+already been committed and never stops an already started GraphGoblin. Closing the browser
+also leaves work running. Stop the gateway through the existing authenticated shutdown API.
+The browser's Wait and Force choices are available only after an externally initiated drain
+reaches its choice phase; they do not start a drain. See [Gateway shutdown](../07-api-and-streaming.md#gateway-shutdown-224).
+
+The launcher needs a local `master.key` beside existing data; shell-only key overrides and
+external database paths are unsupported here. Preserve the existing key and data together.
+For a new store, the selected data directory must be empty: even Finder metadata such as
+`.DS_Store` prevents first-key creation. Do not remove unrecognized entries to force a fresh store;
+inspect and preserve them, or choose another verified empty directory. The API creates the key only
+after taking both writer leases.
+
+Logs are in `~/Library/Logs/GraphGoblin/Launcher`, or
+`~/Library/Logs/GraphGoblin/LauncherInstances/<installation-id>` for an alternate app.
+`gateway.log` and `gateway.log.1` are capped at 4 MiB each; `launcher.log` and
+`launcher.log.1` at 256 KiB each. A launch error offers **Show Log in Finder** only when the
+destination can be safely verified. Browser errors offer **Copy Address**. There is no
+automatic retry, login item, updater or dedicated PWA window.
+
+For a held store, unexpected bundle contents, missing local key, gateway startup failure, or
+installer recovery message, use the [macOS launcher troubleshooting guide](07-troubleshooting.md#macos-finder-and-dock-launcher).
+
+See [ADR-0082](../decisions/ADR-0082-macos-finder-dock-launcher.md) for the installation and
+process ownership rules.
+
 ## Run the container image
 
 The image holds the API, the web app, and the Codex CLI, for one user on a trusted network. Build and start it with Docker Compose from the repository root:
@@ -215,7 +276,7 @@ node apps/api/dist/main.js
 | `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                                                                       |
 | `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                                                                               |
 | `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                                                                       |
-| `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                                                  |
+| `GG_DB_URL`              | An encoded `file:` URL for `<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                            |
 | `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
 | `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |

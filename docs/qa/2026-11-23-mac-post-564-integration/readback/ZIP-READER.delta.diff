@@ -1,0 +1,47 @@
+--- resolve-and-copy.attempt01.py
++++ resolve-and-copy.py
+@@ -1,12 +1,25 @@
+ import csv,hashlib,json,re
+ from pathlib import Path
+ from datetime import datetime,timezone
++from zipfile import ZipFile
+ ROOT=Path('G:/ggq/gg-macos-current-main/GraphGoblin')
+ E=Path('G:/ggq/delivery-evidence/2026-11-17-five-intents')
+ OUT=E/'mac-post-564-integration-01'
+ PACK=E/'i5-d242-core-delivery-supplement-01'
+ NAMESPACE='docs/qa/2026-11-23-inspector-core-delivery'
+ def sha(b):return hashlib.sha256(b).hexdigest()
++def source_bytes(value):
++    source,mark,member=value.partition('!')
++    src=Path(source).resolve()
++    assert src.is_relative_to(E.resolve()) or src.is_relative_to(Path('C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents').resolve())
++    if not mark:return src.read_bytes()
++    member=member.replace('\\','/').lstrip('/')
++    assert member and '..' not in member.split('/') and ':' not in member
++    assert src==Path('C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i5-564-head847f-target0f6c-ci-01/coverage.zip').resolve()
++    assert sha(src.read_bytes())=='aeb23ba1e3487e582c64f641d0aa17d34ff35b266fade45929ead905e0c16e1d'
++    with ZipFile(src) as z:
++        info=z.getinfo(member);assert not info.is_dir() and info.file_size<2000000
++        return z.read(member)
+ def save(name,value):
+     with (OUT/name).open('x',encoding='utf-8') as f:json.dump(value,f,indent=2);f.write('\n')
+ seal=PACK/'SUPPLEMENT-SEAL.json'
+@@ -21,8 +34,7 @@
+     dest=(ROOT/r['repository_relative_destination']).resolve()
+     assert dest.is_relative_to((ROOT/NAMESPACE).resolve()) and str(dest).casefold() not in seen
+     seen.add(str(dest).casefold());assert len(str(dest))<260
+-    src=Path(r['source']).resolve();assert src.is_relative_to(E.resolve()) or src.is_relative_to(Path('C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents').resolve())
+-    raw=src.read_bytes();assert len(raw)==int(r['bytes']) and sha(raw)==r['sha256']
++    raw=source_bytes(r['source']);assert len(raw)==int(r['bytes']) and sha(raw)==r['sha256']
+ assert sum(int(r['bytes']) for r in rows)==1306597
+ resolved=[]
+ pattern=rb'^<<<<<<< HEAD\r?\n(.*?)^=======\r?\n(.*?)^>>>>>>> d2df8600c2c8574bec420947de686b936910b245\r?\n'
+@@ -38,7 +50,7 @@
+     resolved.append({'path':rel,'conflictedSha256':sha(raw),'unionSha256':sha(result),'leftBytesPreserved':True,'rightBytesPreserved':True,'resolution':'Retain both independent additions with a blank separator; remove only conflict markers.'})
+ for r in rows:
+     dest=ROOT/r['repository_relative_destination'];dest.parent.mkdir(parents=True,exist_ok=True)
+-    with dest.open('xb') as f:f.write(Path(r['source']).read_bytes())
++    with dest.open('xb') as f:f.write(source_bytes(r['source']))
+     assert sha(dest.read_bytes())==r['sha256']
+ for rel,name in [('.gitattributes','gitattributes.additions.txt'),('.prettierignore','prettierignore.additions.txt')]:
+     with (ROOT/rel).open('ab') as f:f.write(b'\n'+(PACK/name).read_bytes().rstrip()+b'\n')

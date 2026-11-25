@@ -1,0 +1,27 @@
+I changed the body of the `R2 clears the previous reply live announcement…` test so it waits for the send to finish before clicking New chat. The full ChatSurface file passes (57 of 57, run twice), along with typecheck, lint, Prettier and the diff check. I didn't reproduce the Ubuntu timing locally, so these passes don't prove the CI failure is fixed.
+
+**What changed** (only `apps/web/src/chat/ChatSurface.test.tsx`, unstaged; test name and all other tests untouched):
+- **Wait for New chat:** after the reply text is visible, the test waits for the New chat button to be enabled and keeps that button. The wait uses the suite's default timeout (5000 ms, set in `src/__fixtures__/setup.ts`); no timeout, retries or skips were added. New chat is disabled while a send is still in progress, so once it is enabled the send has finished.
+- **Identify the reply announcement:** the test finds `Reply: The exact loop result.` by exact text, but only on an element that has both `role="status"` and `aria-live="polite"`. That matches only the screen-reader reply announcement. The `Sending…` message and the recording status have `role="status"` but no `aria-live`, so neither can match. It also checks that this element is one of the page's status elements.
+- **Clearing checks on that same element:** the test clicks New chat, keeps the existing heading check (`What’s the move?`), then requires the element to still be in the page and empty. After selecting the saved conversation, it keeps the existing check that the saved reply is visible, then requires the same element to still be in the page and empty. The in-page check matters because a removed element would also count as empty.
+
+**Check results:**
+
+| Check | Result |
+|---|---|
+| `node --version` | v22.23.4 |
+| `pnpm --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx` | 1 file, 57 of 57 passed, twice (8.59 s and 8.86 s) |
+| `pnpm --filter @graphgoblin/web typecheck` | passed, no output |
+| `pnpm --filter @graphgoblin/web lint` | 0 errors; 5 warnings already present in `RunInspectorPage.tsx` and `SessionRecoveryControls.tsx`, which I didn't touch |
+| `pnpm exec prettier --check …ChatSurface.test.tsx` | passed; `--write` not needed |
+| `git --no-pager diff --check` | clean |
+| `git --no-optional-locks status --short` | clean before the edit; afterwards only ` M apps/web/src/chat/ChatSurface.test.tsx` |
+
+**Limits of this evidence:**
+- **Ubuntu timing not reproduced:** I didn't force the late send-finish timing here, as the contract says not to add a diagnostic fixture. The fix relies on your existing evidence that New chat stays disabled until the send finishes and that the reply announcement then clears correctly.
+- **No before/after comparison:** I ran the file only after the edit.
+- **Late announcements not covered:** the test checks that the announcement is empty right after the saved reply appears. Like the original, it wouldn't catch an announcement that arrived later.
+
+**Please check: worktree identity.** The worktree folder is named `gg-565-web-coverage-triage-20261124`, and the contract says the #565 PR and worktree are out of scope. None of the permitted commands show the branch, and reading `.git` was denied, so I couldn't confirm this is the #573 worktree. The working tree was clean before my edit. Please confirm the branch before review.
+
+Nothing was staged, committed, pushed or changed on GitHub. Independent GPT review, Claude QA, fresh CI and final review are still to do.

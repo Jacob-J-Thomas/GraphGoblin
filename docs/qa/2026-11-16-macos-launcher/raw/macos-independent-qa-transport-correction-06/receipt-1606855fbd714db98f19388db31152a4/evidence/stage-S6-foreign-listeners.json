@@ -1,0 +1,187 @@
+{
+  "id": "S6-foreign-listeners",
+  "cases": [
+    "O11"
+  ],
+  "startedAt": "2026-11-16T22:57:57.589Z",
+  "checks": [
+    {
+      "id": "precondition-port-refused",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "impostor-differs-from-fixture",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "plain-health:envelope-port-in-use",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "ok": true,
+        "exit": {
+          "code": 20,
+          "signal": null,
+          "ms": 411
+        },
+        "stdout": "{\"version\":1,\"code\":\"port-in-use\",\"port\":62241}\n",
+        "stderrBytes": 0,
+        "elapsedMs": 411,
+        "timedOut": false
+      }
+    },
+    {
+      "id": "plain-health:prompt-refusal",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "elapsedMs": 411
+      }
+    },
+    {
+      "id": "plain-health:launcher-probed-listener",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "probes": 1
+      }
+    },
+    {
+      "id": "plain-health:qa-listener-untouched",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51140,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "plain-health:store-untouched",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "plain-health:no-gateway",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "plain-health:launcher-record",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "rotated": false,
+        "lines": [
+          "stage=checking outcome=port-in-use"
+        ]
+      }
+    },
+    {
+      "id": "plain-health:no-canary-in-record",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "foreign-identity:envelope-port-in-use",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "ok": true,
+        "exit": {
+          "code": 20,
+          "signal": null,
+          "ms": 410
+        },
+        "stdout": "{\"version\":1,\"code\":\"port-in-use\",\"port\":62241}\n",
+        "stderrBytes": 0,
+        "elapsedMs": 410,
+        "timedOut": false
+      }
+    },
+    {
+      "id": "foreign-identity:prompt-refusal",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "elapsedMs": 410
+      }
+    },
+    {
+      "id": "foreign-identity:launcher-probed-listener",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "probes": 1
+      }
+    },
+    {
+      "id": "foreign-identity:qa-listener-untouched",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51140,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign-identity:store-untouched",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "foreign-identity:no-gateway",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "foreign-identity:launcher-record",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "rotated": false,
+        "lines": [
+          "stage=checking outcome=port-in-use"
+        ]
+      }
+    },
+    {
+      "id": "foreign-identity:no-canary-in-record",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "qa-listener-closed",
+      "ok": true,
+      "hard": true
+    }
+  ],
+  "notes": {
+    "plain-health:launcherRecord": {
+      "rotated": false,
+      "lines": [
+        "stage=checking outcome=port-in-use"
+      ]
+    },
+    "foreign-identity:launcherRecord": {
+      "rotated": false,
+      "lines": [
+        "stage=checking outcome=port-in-use"
+      ]
+    }
+  },
+  "status": "criteria-met",
+  "elapsedMs": 899,
+  "finishedAt": "2026-11-16T22:57:58.487Z"
+}

@@ -10,17 +10,22 @@ import {
   openGatewayLog,
   type GatewayLogWriter,
   type LogFileSystem,
-} from './gateway-log-writer.js';
+} from '../managed-log/gateway-log-writer.js';
 import {
   ManagedExit,
   STARTUP_CAUSES,
   importFailureCause,
-  productionDependencies,
-  runManagedGateway,
+  productionDependencies as gatewayDependencies,
+  runManagedGateway as runGuardedGateway,
   startupFailureRecord,
-  takeLauncherLogDirectory,
   type ManagedApplication,
-  type ManagedGatewayDependencies,
+  type ManagedGatewayDependencies as GatewayDependencies,
+} from '../managed-log/guard.js';
+import {
+  admitWindowsLog,
+  takeLauncherLogDirectory,
+  windowsLogOperations,
+  type WindowsLogOperations,
 } from './guard.js';
 import {
   LogRootRefusedError,
@@ -28,6 +33,18 @@ import {
   reserveLogRoot,
   type LogRootReservation,
 } from './managed-root.js';
+
+type ManagedGatewayDependencies = GatewayDependencies & WindowsLogOperations;
+
+function runManagedGateway(requested: string, deps: ManagedGatewayDependencies) {
+  return runGuardedGateway(() => admitWindowsLog(requested, deps), deps);
+}
+
+function productionDependencies(
+  loadApplication: GatewayDependencies['loadApplication'],
+): ManagedGatewayDependencies {
+  return { ...gatewayDependencies(loadApplication), ...windowsLogOperations };
+}
 
 const CANARY = 'GG_RAW_ERROR_CANARY C:\\private\\path GG_MASTER_KEY=secret';
 /** Windows system tools by full path; Git Bash and other PATH entries can shadow them. */

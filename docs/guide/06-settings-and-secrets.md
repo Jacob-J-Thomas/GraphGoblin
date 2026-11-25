@@ -157,6 +157,18 @@ Once seeded, the key stays available across restarts even if the environment var
 
 For Docker Compose, uncomment the `GG_JEV_API_KEY` line in `docker-compose.yml` to forward the host environment variable, including the `JEV_API_KEY` fallback, into the API container. The key value stays in the environment rather than the compose file.
 
+The [Windows launcher](01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher) passes these variables differently. It removes every inherited `GG_*` variable before starting the gateway, so a `GG_JEV_API_KEY` in your environment, empty or not, never reaches it, and the explicitly empty `GG_JEV_API_KEY` switch above applies only when you start the API directly. Its configuration also refuses `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides, including empty values and case variants. An inherited `JEV_API_KEY` passes to the gateway normally. A cold start with no stored `jev-api-key` then seeds it from a non-empty `JEV_API_KEY`. To start without that seed, remove `JEV_API_KEY` in a PowerShell window and start the installed launcher executable from that same window:
+
+```powershell
+# In a new PowerShell window used only for this start:
+if (Test-Path Env:JEV_API_KEY) { Remove-Item Env:JEV_API_KEY }
+& "$env:LOCALAPPDATA\GraphGoblin\Launcher\GraphGoblin.exe"
+```
+
+This changes only that PowerShell process and the programs it starts; your user and machine environment variables are unchanged. If you installed with `-InstallDir`, start `GraphGoblin.exe` from that folder instead. Desktop, Start-menu and taskbar shortcuts start the launcher from Explorer, whose environment this does not change, so use the executable from that window rather than a shortcut for this start. The window's environment matters only when this start launches the gateway: when a matching gateway is already running, the launcher reuses it, restarting nothing and seeding nothing. To stop it first, request a drain through the [gateway shutdown API](../07-api-and-streaming.md#gateway-shutdown-224) and let it exit. A later cold start from a shortcut seeds the key if the secret is still absent and Explorer's environment has a non-empty `JEV_API_KEY`.
+
+Preventing the startup seed does not delete a stored key: an existing `jev-api-key` secret stays in the encrypted store and Jev keeps using it. Removing a stored key is a separate action: delete `jev-api-key` in **Secrets** (its effects are described below).
+
 You can also store your Jev API key manually with this exact name:
 
 ```text

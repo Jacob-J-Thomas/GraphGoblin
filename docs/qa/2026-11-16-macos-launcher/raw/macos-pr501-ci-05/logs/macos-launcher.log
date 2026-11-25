@@ -1,0 +1,697 @@
+﻿2026-11-17T02:48:06.3913530Z Current runner version: '2.338.2'
+2026-11-17T02:48:06.3927550Z ##[group]Runner Image Provisioner
+2026-11-17T02:48:06.3928110Z Hosted Compute Agent
+2026-11-17T02:48:06.3928620Z Version: 20261103.629
+2026-11-17T02:48:06.3929190Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-17T02:48:06.3929750Z Build Date: 2026-11-03T17:26:59Z
+2026-11-17T02:48:06.3930230Z Worker ID: {a05d3a06-fe89-43da-bb8d-3a2ccc3fb4e2}
+2026-11-17T02:48:06.3930670Z Region: westus
+2026-11-17T02:48:06.3931130Z Cloud: MacCloud
+2026-11-17T02:48:06.3931480Z ##[endgroup]
+2026-11-17T02:48:06.3932390Z ##[group]Operating System
+2026-11-17T02:48:06.3932790Z macOS
+2026-11-17T02:48:06.3933150Z 15.8.2
+2026-11-17T02:48:06.3933630Z 24H232
+2026-11-17T02:48:06.3933950Z ##[endgroup]
+2026-11-17T02:48:06.3934360Z ##[group]Runner Image
+2026-11-17T02:48:06.3934840Z Image: macos-15-arm64
+2026-11-17T02:48:06.3935260Z Version: 20261104.0514.1
+2026-11-17T02:48:06.3936090Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20261104.0514/images/macos/macos-15-arm64-Readme.md
+2026-11-17T02:48:06.3937180Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20261104.0514
+2026-11-17T02:48:06.3937880Z ##[endgroup]
+2026-11-17T02:48:06.3938790Z ##[group]GITHUB_TOKEN Permissions
+2026-11-17T02:48:06.3940040Z Contents: read
+2026-11-17T02:48:06.3940410Z Metadata: read
+2026-11-17T02:48:06.3940850Z Packages: read
+2026-11-17T02:48:06.3941250Z ##[endgroup]
+2026-11-17T02:48:06.3942610Z Secret source: Actions
+2026-11-17T02:48:06.3943220Z Cache mode: write
+2026-11-17T02:48:06.3943740Z Prepare workflow directory
+2026-11-17T02:48:06.4360200Z Prepare all required actions
+2026-11-17T02:48:06.4399530Z Getting action download info
+2026-11-17T02:48:06.7616590Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-17T02:48:06.9345070Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-17T02:48:07.3930010Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-17T02:48:07.4764290Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-17T02:48:07.6591500Z Complete job name: macOS launcher
+2026-11-17T02:48:07.7275460Z ##[group]Run actions/checkout@v4
+2026-11-17T02:48:07.7276030Z with:
+2026-11-17T02:48:07.7276360Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T02:48:07.7279410Z   token: ***
+2026-11-17T02:48:07.7279720Z   ssh-strict: true
+2026-11-17T02:48:07.7280030Z   ssh-user: git
+2026-11-17T02:48:07.7280340Z   persist-credentials: true
+2026-11-17T02:48:07.7280690Z   clean: true
+2026-11-17T02:48:07.7281000Z   sparse-checkout-cone-mode: true
+2026-11-17T02:48:07.7281360Z   fetch-depth: 1
+2026-11-17T02:48:07.7281660Z   fetch-tags: false
+2026-11-17T02:48:07.7281970Z   show-progress: true
+2026-11-17T02:48:07.7282290Z   lfs: false
+2026-11-17T02:48:07.7282590Z   submodules: false
+2026-11-17T02:48:07.7282910Z   set-safe-directory: true
+2026-11-17T02:48:07.7283280Z   allow-unsafe-pr-checkout: false
+2026-11-17T02:48:07.7283750Z env:
+2026-11-17T02:48:07.7284050Z   LIVE: 0
+2026-11-17T02:48:07.7284630Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:48:07.7285260Z ##[endgroup]
+2026-11-17T02:48:08.1441640Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T02:48:08.1443210Z ##[group]Getting Git version info
+2026-11-17T02:48:08.1443820Z Working directory is '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T02:48:08.1444850Z [command]/opt/homebrew/bin/git version
+2026-11-17T02:48:08.1674270Z git version 2.56.0
+2026-11-17T02:48:08.1711480Z ##[endgroup]
+2026-11-17T02:48:08.1716340Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/5e4867bb-3f2f-45f0-8618-9dd913ca3350/.gitconfig'
+2026-11-17T02:48:08.1717530Z Temporarily overriding HOME='/Users/runner/work/_temp/5e4867bb-3f2f-45f0-8618-9dd913ca3350' before making global git config changes
+2026-11-17T02:48:08.1719220Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T02:48:08.1720140Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T02:48:08.1796440Z Deleting the contents of '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T02:48:08.1799140Z ##[group]Initializing the repository
+2026-11-17T02:48:08.1802360Z [command]/opt/homebrew/bin/git init /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T02:48:08.1988500Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-17T02:48:08.1990610Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-17T02:48:08.1993340Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-17T02:48:08.1994690Z hint: call:
+2026-11-17T02:48:08.1995270Z hint:
+2026-11-17T02:48:08.1997100Z hint: 	git config --global init.defaultBranch <name>
+2026-11-17T02:48:08.1997780Z hint:
+2026-11-17T02:48:08.1998550Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-17T02:48:08.1999580Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-17T02:48:08.2001780Z hint:
+2026-11-17T02:48:08.2002650Z hint: 	git branch -m <name>
+2026-11-17T02:48:08.2003390Z hint:
+2026-11-17T02:48:08.2004290Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-17T02:48:08.2005620Z Initialized empty Git repository in /Users/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-17T02:48:08.2008690Z [command]/opt/homebrew/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T02:48:08.2065920Z ##[endgroup]
+2026-11-17T02:48:08.2066680Z ##[group]Disabling automatic garbage collection
+2026-11-17T02:48:08.2068510Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-17T02:48:08.2118960Z ##[endgroup]
+2026-11-17T02:48:08.2119550Z ##[group]Setting up auth
+2026-11-17T02:48:08.2122760Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T02:48:08.2172260Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T02:48:08.2861750Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T02:48:08.2908960Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T02:48:08.3552060Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T02:48:08.3598520Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T02:48:08.4207550Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-17T02:48:08.4270350Z ##[endgroup]
+2026-11-17T02:48:08.4271180Z ##[group]Fetching the repository
+2026-11-17T02:48:08.4280380Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3508d2d8feaeea16f2d813aa478215883d6ddf24:refs/remotes/pull/501/merge
+2026-11-17T02:48:19.5452700Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T02:48:19.5453700Z  * [new ref]           3508d2d8feaeea16f2d813aa478215883d6ddf24 -> pull/501/merge
+2026-11-17T02:48:19.5562530Z ##[endgroup]
+2026-11-17T02:48:19.5563180Z ##[group]Determining the checkout info
+2026-11-17T02:48:19.5566580Z ##[endgroup]
+2026-11-17T02:48:19.5576450Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-17T02:48:19.5710190Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-17T02:48:19.5774180Z ##[group]Checking out the ref
+2026-11-17T02:48:19.5782600Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-17T02:48:20.7134780Z Updating files:   8% (2642/31729)
+2026-11-17T02:48:20.7603210Z Updating files:   9% (2856/31729)
+2026-11-17T02:48:20.8116450Z Updating files:  10% (3173/31729)
+2026-11-17T02:48:20.8820100Z Updating files:  11% (3491/31729)
+2026-11-17T02:48:20.9968690Z Updating files:  12% (3808/31729)
+2026-11-17T02:48:21.0479890Z Updating files:  13% (4125/31729)
+2026-11-17T02:48:21.1473310Z Updating files:  14% (4443/31729)
+2026-11-17T02:48:21.2364270Z Updating files:  15% (4760/31729)
+2026-11-17T02:48:21.3226370Z Updating files:  16% (5077/31729)
+2026-11-17T02:48:21.3906050Z Updating files:  17% (5394/31729)
+2026-11-17T02:48:21.4332690Z Updating files:  18% (5712/31729)
+2026-11-17T02:48:21.4671170Z Updating files:  19% (6029/31729)
+2026-11-17T02:48:21.5235820Z Updating files:  20% (6346/31729)
+2026-11-17T02:48:21.5791460Z Updating files:  21% (6664/31729)
+2026-11-17T02:48:21.6153830Z Updating files:  22% (6981/31729)
+2026-11-17T02:48:21.6228000Z Updating files:  22% (7220/31729)
+2026-11-17T02:48:21.6562630Z Updating files:  23% (7298/31729)
+2026-11-17T02:48:21.7244320Z Updating files:  24% (7615/31729)
+2026-11-17T02:48:21.7649500Z Updating files:  25% (7933/31729)
+2026-11-17T02:48:21.8075580Z Updating files:  26% (8250/31729)
+2026-11-17T02:48:21.8779930Z Updating files:  27% (8567/31729)
+2026-11-17T02:48:21.9359590Z Updating files:  28% (8885/31729)
+2026-11-17T02:48:21.9815080Z Updating files:  29% (9202/31729)
+2026-11-17T02:48:22.0373750Z Updating files:  30% (9519/31729)
+2026-11-17T02:48:22.1846370Z Updating files:  31% (9836/31729)
+2026-11-17T02:48:22.3072480Z Updating files:  32% (10154/31729)
+2026-11-17T02:48:22.3807930Z Updating files:  33% (10471/31729)
+2026-11-17T02:48:22.4252740Z Updating files:  34% (10788/31729)
+2026-11-17T02:48:22.4768030Z Updating files:  35% (11106/31729)
+2026-11-17T02:48:22.5569310Z Updating files:  36% (11423/31729)
+2026-11-17T02:48:22.6144390Z Updating files:  37% (11740/31729)
+2026-11-17T02:48:22.6187040Z Updating files:  37% (12032/31729)
+2026-11-17T02:48:22.7074970Z Updating files:  38% (12058/31729)
+2026-11-17T02:48:22.7596590Z Updating files:  39% (12375/31729)
+2026-11-17T02:48:22.8846660Z Updating files:  40% (12692/31729)
+2026-11-17T02:48:22.9791760Z Updating files:  41% (13009/31729)
+2026-11-17T02:48:23.0193040Z Updating files:  42% (13327/31729)
+2026-11-17T02:48:23.0759120Z Updating files:  43% (13644/31729)
+2026-11-17T02:48:23.1549610Z Updating files:  44% (13961/31729)
+2026-11-17T02:48:23.2213660Z Updating files:  45% (14279/31729)
+2026-11-17T02:48:23.2794350Z Updating files:  46% (14596/31729)
+2026-11-17T02:48:23.3215730Z Updating files:  47% (14913/31729)
+2026-11-17T02:48:23.3685930Z Updating files:  48% (15230/31729)
+2026-11-17T02:48:23.4740730Z Updating files:  49% (15548/31729)
+2026-11-17T02:48:23.5497970Z Updating files:  50% (15865/31729)
+2026-11-17T02:48:23.6163100Z Updating files:  51% (16182/31729)
+2026-11-17T02:48:23.6163990Z Updating files:  51% (16499/31729)
+2026-11-17T02:48:23.6797150Z Updating files:  52% (16500/31729)
+2026-11-17T02:48:23.7374070Z Updating files:  53% (16817/31729)
+2026-11-17T02:48:23.8161830Z Updating files:  54% (17134/31729)
+2026-11-17T02:48:23.8710790Z Updating files:  55% (17451/31729)
+2026-11-17T02:48:24.0359530Z Updating files:  56% (17769/31729)
+2026-11-17T02:48:24.1551270Z Updating files:  57% (18086/31729)
+2026-11-17T02:48:24.3053570Z Updating files:  58% (18403/31729)
+2026-11-17T02:48:24.4001570Z Updating files:  59% (18721/31729)
+2026-11-17T02:48:24.6234070Z Updating files:  60% (19038/31729)
+2026-11-17T02:48:24.6315850Z Updating files:  60% (19345/31729)
+2026-11-17T02:48:24.6924660Z Updating files:  61% (19355/31729)
+2026-11-17T02:48:24.7938730Z Updating files:  62% (19672/31729)
+2026-11-17T02:48:24.9105540Z Updating files:  63% (19990/31729)
+2026-11-17T02:48:25.0288650Z Updating files:  64% (20307/31729)
+2026-11-17T02:48:25.1817560Z Updating files:  65% (20624/31729)
+2026-11-17T02:48:25.2414980Z Updating files:  66% (20942/31729)
+2026-11-17T02:48:25.4695160Z Updating files:  67% (21259/31729)
+2026-11-17T02:48:25.6077430Z Updating files:  68% (21576/31729)
+2026-11-17T02:48:25.6166930Z Updating files:  69% (21894/31729)
+2026-11-17T02:48:25.7131580Z Updating files:  69% (21929/31729)
+2026-11-17T02:48:25.8385630Z Updating files:  70% (22211/31729)
+2026-11-17T02:48:26.0199780Z Updating files:  71% (22528/31729)
+2026-11-17T02:48:26.2533050Z Updating files:  72% (22845/31729)
+2026-11-17T02:48:26.3890660Z Updating files:  73% (23163/31729)
+2026-11-17T02:48:26.5737270Z Updating files:  74% (23480/31729)
+2026-11-17T02:48:26.6153700Z Updating files:  75% (23797/31729)
+2026-11-17T02:48:26.7152600Z Updating files:  75% (23989/31729)
+2026-11-17T02:48:26.8323910Z Updating files:  76% (24115/31729)
+2026-11-17T02:48:26.9533530Z Updating files:  77% (24432/31729)
+2026-11-17T02:48:27.0923720Z Updating files:  78% (24749/31729)
+2026-11-17T02:48:27.2403110Z Updating files:  79% (25066/31729)
+2026-11-17T02:48:27.3221760Z Updating files:  80% (25384/31729)
+2026-11-17T02:48:27.4126980Z Updating files:  81% (25701/31729)
+2026-11-17T02:48:27.4999590Z Updating files:  82% (26018/31729)
+2026-11-17T02:48:27.5961610Z Updating files:  83% (26336/31729)
+2026-11-17T02:48:27.6246150Z Updating files:  84% (26653/31729)
+2026-11-17T02:48:27.7087110Z Updating files:  84% (26704/31729)
+2026-11-17T02:48:27.7545270Z Updating files:  85% (26970/31729)
+2026-11-17T02:48:27.8128040Z Updating files:  86% (27287/31729)
+2026-11-17T02:48:27.9781840Z Updating files:  87% (27605/31729)
+2026-11-17T02:48:28.0460260Z Updating files:  88% (27922/31729)
+2026-11-17T02:48:28.0941830Z Updating files:  89% (28239/31729)
+2026-11-17T02:48:28.2086850Z Updating files:  90% (28557/31729)
+2026-11-17T02:48:28.3179370Z Updating files:  91% (28874/31729)
+2026-11-17T02:48:28.4165700Z Updating files:  92% (29191/31729)
+2026-11-17T02:48:28.4568490Z Updating files:  93% (29508/31729)
+2026-11-17T02:48:28.4898140Z Updating files:  94% (29826/31729)
+2026-11-17T02:48:28.5579660Z Updating files:  95% (30143/31729)
+2026-11-17T02:48:28.6162110Z Updating files:  96% (30460/31729)
+2026-11-17T02:48:28.6673720Z Updating files:  96% (30589/31729)
+2026-11-17T02:48:28.7510550Z Updating files:  97% (30778/31729)
+2026-11-17T02:48:28.8252330Z Updating files:  98% (31095/31729)
+2026-11-17T02:48:28.9028650Z Updating files:  99% (31412/31729)
+2026-11-17T02:48:28.9029400Z Updating files: 100% (31729/31729)
+2026-11-17T02:48:28.9029920Z Updating files: 100% (31729/31729), done.
+2026-11-17T02:48:28.9373310Z HEAD is now at 3508d2d8 Merge 448168ab73727516bb8c4c824545cf4278cf84db into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-17T02:48:28.9503400Z ##[endgroup]
+2026-11-17T02:48:28.9660560Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-17T02:48:28.9747450Z 3508d2d8feaeea16f2d813aa478215883d6ddf24
+2026-11-17T02:48:29.0153930Z ##[group]Run pnpm/action-setup@v4
+2026-11-17T02:48:29.0154320Z with:
+2026-11-17T02:48:29.0154540Z   dest: ~/setup-pnpm
+2026-11-17T02:48:29.0154890Z   run_install: null
+2026-11-17T02:48:29.0155140Z   cache: false
+2026-11-17T02:48:29.0155460Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-17T02:48:29.0155790Z   package_json_file: package.json
+2026-11-17T02:48:29.0156140Z   standalone: false
+2026-11-17T02:48:29.0156360Z env:
+2026-11-17T02:48:29.0156660Z   LIVE: 0
+2026-11-17T02:48:29.0157180Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:48:29.0157650Z ##[endgroup]
+2026-11-17T02:48:29.2412430Z ##[group]Running self-installer...
+2026-11-17T02:48:29.5975200Z (node:2924) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T02:48:29.5976430Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T02:48:29.7913590Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-17T02:48:29.9290580Z Packages: +2
+2026-11-17T02:48:29.9298780Z ++
+2026-11-17T02:48:30.5382540Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-17T02:48:30.5525710Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-17T02:48:30.9928290Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-17T02:48:30.9931480Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-17T02:48:31.0843520Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-17T02:48:32.3561290Z 
+2026-11-17T02:48:32.3582870Z dependencies:
+2026-11-17T02:48:32.3583590Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-17T02:48:32.3583840Z 
+2026-11-17T02:48:32.3700030Z Done in 2.9s
+2026-11-17T02:48:32.4618950Z ##[endgroup]
+2026-11-17T02:48:32.4717720Z Installation Completed!
+2026-11-17T02:48:32.5008260Z ##[group]Run actions/setup-node@v4
+2026-11-17T02:48:32.5009200Z with:
+2026-11-17T02:48:32.5009410Z   node-version-file: .nvmrc
+2026-11-17T02:48:32.5009640Z   cache: pnpm
+2026-11-17T02:48:32.5010020Z   always-auth: false
+2026-11-17T02:48:32.5010240Z   check-latest: false
+2026-11-17T02:48:32.5012620Z   token: ***
+2026-11-17T02:48:32.5013120Z env:
+2026-11-17T02:48:32.5013250Z   LIVE: 0
+2026-11-17T02:48:32.5013700Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:48:32.5014250Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:48:32.5014580Z ##[endgroup]
+2026-11-17T02:48:32.6904530Z Resolved .nvmrc as 22
+2026-11-17T02:48:32.6949740Z Found in cache @ /Users/runner/hostedtoolcache/node/22.23.4/arm64
+2026-11-17T02:48:32.6951640Z (node:2984) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T02:48:32.6960110Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T02:48:32.6961050Z ##[group]Environment details
+2026-11-17T02:48:33.1933570Z node: v22.23.4
+2026-11-17T02:48:33.1939660Z npm: 10.9.9
+2026-11-17T02:48:33.1940120Z yarn: 1.22.22
+2026-11-17T02:48:33.1941190Z ##[endgroup]
+2026-11-17T02:48:33.1965860Z [command]/Users/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-17T02:48:33.2319490Z /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T02:48:33.4121790Z Cache hit for: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T02:48:33.4248810Z (node:2984) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T02:48:34.5935960Z Received 46137344 of 433669274 (10.6%), 43.7 MBs/sec
+2026-11-17T02:48:35.5899820Z Received 134217728 of 433669274 (30.9%), 63.7 MBs/sec
+2026-11-17T02:48:36.5964410Z Received 264241152 of 433669274 (60.9%), 83.7 MBs/sec
+2026-11-17T02:48:37.5943340Z Received 327155712 of 433669274 (75.4%), 77.8 MBs/sec
+2026-11-17T02:48:38.6045180Z Received 404309146 of 433669274 (93.2%), 76.9 MBs/sec
+2026-11-17T02:48:38.8132430Z Received 433669274 of 433669274 (100.0%), 79.1 MBs/sec
+2026-11-17T02:48:38.8162880Z Cache Size: ~414 MB (433669274 B)
+2026-11-17T02:48:38.8295070Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/0ed1e580-2859-4824-90f7-096703d2f5b8/cache.tzst -P -C /Users/runner/work/GraphGoblin/GraphGoblin --delay-directory-restore --use-compress-program unzstd
+2026-11-17T02:48:51.7920330Z Cache restored successfully
+2026-11-17T02:48:51.8025750Z Cache restored from key: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T02:48:51.8400620Z ##[group]Run mkdir -p .tmp/macos-launcher-toolchain
+2026-11-17T02:48:51.8401160Z [36;1mmkdir -p .tmp/macos-launcher-toolchain[0m
+2026-11-17T02:48:51.8401450Z [36;1m{[0m
+2026-11-17T02:48:51.8401800Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-11-17T02:48:51.8402100Z [36;1m  sw_vers[0m
+2026-11-17T02:48:51.8402410Z [36;1m  uname -m[0m
+2026-11-17T02:48:51.8403280Z [36;1m  xcode-select -p[0m
+2026-11-17T02:48:51.8403580Z [36;1m  xcrun --sdk macosx --show-sdk-version[0m
+2026-11-17T02:48:51.8403970Z [36;1m  xcrun --sdk macosx swift --version[0m
+2026-11-17T02:48:51.8404230Z [36;1m  node --version[0m
+2026-11-17T02:48:51.8404560Z [36;1m  pnpm --version[0m
+2026-11-17T02:48:51.8404980Z [36;1m} > .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T02:48:51.8405350Z [36;1mcat .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T02:48:51.8405740Z [36;1mtest "$(uname -m)" = arm64[0m
+2026-11-17T02:48:51.9743230Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-17T02:48:51.9743560Z env:
+2026-11-17T02:48:51.9743880Z   LIVE: 0
+2026-11-17T02:48:51.9744320Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:48:51.9744920Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:48:51.9745320Z ##[endgroup]
+2026-11-17T02:48:56.3857370Z 3508d2d8feaeea16f2d813aa478215883d6ddf24
+2026-11-17T02:48:56.3859070Z swift-driver version: 1.120.5 
+2026-11-17T02:48:56.3859720Z 3625c6c5af27fbbcd5c2af3e385a1a0d908827b1
+2026-11-17T02:48:56.3860110Z ProductName:		macOS
+2026-11-17T02:48:56.3860430Z ProductVersion:		15.8.2
+2026-11-17T02:48:56.3860730Z BuildVersion:		24H232
+2026-11-17T02:48:56.3861000Z arm64
+2026-11-17T02:48:56.3861310Z /Applications/Xcode_16.4.app/Contents/Developer
+2026-11-17T02:48:56.3861740Z 15.5
+2026-11-17T02:48:56.3862160Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T02:48:56.3862570Z Target: arm64-apple-macosx15.0
+2026-11-17T02:48:56.3863000Z v22.23.4
+2026-11-17T02:48:56.3863300Z 12.8.1
+2026-11-17T02:48:56.3926150Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-17T02:48:56.3926510Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-17T02:48:56.3975370Z shell: /bin/bash -e {0}
+2026-11-17T02:48:56.3975630Z env:
+2026-11-17T02:48:56.3975910Z   LIVE: 0
+2026-11-17T02:48:56.3976430Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:48:56.3976970Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:48:56.3977390Z ##[endgroup]
+2026-11-17T02:48:56.4888840Z Scope: all 14 workspace projects
+2026-11-17T02:48:56.5682660Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-17T02:48:57.1410700Z Packages are cloned from the content-addressable store to the virtual store.
+2026-11-17T02:48:57.1419870Z   Content-addressable store is at: /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T02:48:57.1422930Z   Virtual store is at:             node_modules/.pnpm
+2026-11-17T02:49:00.3912280Z ✓ Lockfile passes supply-chain policies (931 entries in 3.8s)
+2026-11-17T02:49:00.3912940Z Lockfile is up to date, resolution step is skipped
+2026-11-17T02:49:00.4004660Z Packages: +801
+2026-11-17T02:49:00.4005350Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-17T02:49:00.5034660Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-17T02:49:00.7108290Z 
+2026-11-17T02:49:00.7162610Z devDependencies:
+2026-11-17T02:49:00.7165250Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-17T02:49:00.7165770Z + @eslint/js 10.0.1
+2026-11-17T02:49:00.7173600Z + @vitest/coverage-v8 5.0.3
+2026-11-17T02:49:00.7189600Z + dependency-cruiser 18.5.0
+2026-11-17T02:49:00.7190140Z + eslint 10.11.0
+2026-11-17T02:49:00.7190540Z + eslint-config-prettier 10.1.8
+2026-11-17T02:49:00.7191040Z + eslint-plugin-react-hooks 7.1.1
+2026-11-17T02:49:00.7191490Z + prettier 3.9.9
+2026-11-17T02:49:00.7191800Z + turbo 2.11.6
+2026-11-17T02:49:00.7192230Z + typescript 6.0.3
+2026-11-17T02:49:00.7192770Z + typescript-eslint 8.71.0
+2026-11-17T02:49:00.7193150Z + vitest 5.0.3
+2026-11-17T02:49:00.7193420Z 
+2026-11-17T02:49:00.7193860Z Done in 4.2s using pnpm v12.8.1
+2026-11-17T02:49:00.7287920Z ##[group]Run pnpm build
+2026-11-17T02:49:00.7288230Z [36;1mpnpm build[0m
+2026-11-17T02:49:00.7333350Z shell: /bin/bash -e {0}
+2026-11-17T02:49:00.7334130Z env:
+2026-11-17T02:49:00.7334360Z   LIVE: 0
+2026-11-17T02:49:00.7334840Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:49:00.7335410Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:49:00.7335750Z ##[endgroup]
+2026-11-17T02:49:00.8328480Z $ turbo run build
+2026-11-17T02:49:00.9873090Z 
+2026-11-17T02:49:00.9873620Z Attention:
+2026-11-17T02:49:00.9874220Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-17T02:49:00.9874860Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-17T02:49:00.9875650Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-17T02:49:00.9876350Z https://turborepo.dev/docs/telemetry
+2026-11-17T02:49:00.9876520Z 
+2026-11-17T02:49:01.9129360Z 
+2026-11-17T02:49:01.9147550Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T02:49:01.9150960Z    • Running build in 13 packages
+2026-11-17T02:49:01.9151550Z    • Remote caching disabled
+2026-11-17T02:49:01.9151690Z 
+2026-11-17T02:49:03.7839680Z ##[group]@graphgoblin/contracts:build
+2026-11-17T02:49:03.7840380Z cache miss, executing 4609d8cba358ceb2
+2026-11-17T02:49:03.7840690Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:03.7841250Z ##[endgroup]
+2026-11-17T02:49:05.7269650Z ##[group]@graphgoblin/domain:build
+2026-11-17T02:49:05.7270220Z cache miss, executing d509af920bb1282b
+2026-11-17T02:49:05.7270540Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:05.7271100Z ##[endgroup]
+2026-11-17T02:49:08.8130890Z ##[group]@graphgoblin/engine:build
+2026-11-17T02:49:08.8131710Z cache miss, executing ab127b6725f9749f
+2026-11-17T02:49:08.8132200Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:08.8132940Z ##[endgroup]
+2026-11-17T02:49:10.8292570Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T02:49:10.8392210Z cache miss, executing cfd4ea89e26e5ee1
+2026-11-17T02:49:10.8493600Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:10.8594510Z ##[endgroup]
+2026-11-17T02:49:11.3670330Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T02:49:11.3671090Z cache miss, executing 21d41ab408ff7307
+2026-11-17T02:49:11.3671610Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:11.3672390Z ##[endgroup]
+2026-11-17T02:49:14.4048760Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T02:49:14.4049530Z cache miss, executing c8360f93eeec5699
+2026-11-17T02:49:14.4050200Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:14.4053640Z ##[endgroup]
+2026-11-17T02:49:19.0796140Z ##[group]@graphgoblin/api:build
+2026-11-17T02:49:19.0798080Z cache miss, executing 4eed7aa0293a555d
+2026-11-17T02:49:19.0798680Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T02:49:19.0799560Z ##[endgroup]
+2026-11-17T02:49:20.8032370Z ##[group]@graphgoblin/api-client:build
+2026-11-17T02:49:20.8032900Z cache miss, executing 7ceda2c4809aca79
+2026-11-17T02:49:20.8033370Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:20.8033780Z ##[endgroup]
+2026-11-17T02:49:23.5310410Z ##[group]@graphgoblin/mcp:build
+2026-11-17T02:49:23.5311070Z cache miss, executing 456140c512b93f06
+2026-11-17T02:49:23.5311480Z $ tsc -b tsconfig.build.json
+2026-11-17T02:49:23.5311950Z ##[endgroup]
+2026-11-17T02:49:24.5908970Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-17T02:49:24.5940250Z cache bypass, force executing ce3196b7201305a7
+2026-11-17T02:49:24.5940950Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T02:49:24.5942750Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-17T02:49:24.5943980Z ##[endgroup]
+2026-11-17T02:49:24.8288630Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-17T02:49:24.8296750Z cache bypass, force executing c580501555f266ef
+2026-11-17T02:49:24.8297230Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T02:49:24.8297940Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-17T02:49:24.8298860Z Install: codex plugin marketplace add "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-17T02:49:24.8299440Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-17T02:49:24.8300040Z ##[endgroup]
+2026-11-17T02:49:27.0799870Z ##[group]@graphgoblin/web:build
+2026-11-17T02:49:27.0800510Z cache miss, executing fe274ae71a28621e
+2026-11-17T02:49:27.0801200Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-17T02:49:27.0802820Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T02:49:27.0803390Z transforming...
+2026-11-17T02:49:27.0803990Z ✓ 779 modules transformed.
+2026-11-17T02:49:27.0804270Z rendering chunks...
+2026-11-17T02:49:27.0804710Z computing gzip size...
+2026-11-17T02:49:27.0805110Z dist/manifest.webmanifest           0.47 kB
+2026-11-17T02:49:27.0805740Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-17T02:49:27.0806540Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-17T02:49:27.0807340Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-17T02:49:27.0807620Z 
+2026-11-17T02:49:27.0808070Z [32m✓ built in 1.93s[39m
+2026-11-17T02:49:27.0808270Z 
+2026-11-17T02:49:27.0808420Z [36mPWA v1.3.0[39m
+2026-11-17T02:49:27.0808830Z mode      [35mgenerateSW[39m
+2026-11-17T02:49:27.0809290Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-17T02:49:27.0809670Z files generated
+2026-11-17T02:49:27.0809970Z   [2mdist/sw.js.map[22m
+2026-11-17T02:49:27.0810370Z   [2mdist/sw.js[22m
+2026-11-17T02:49:27.0810830Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-17T02:49:27.0811180Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-17T02:49:27.0811800Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T02:49:27.0812190Z transforming...
+2026-11-17T02:49:27.0812510Z ✓ 284 modules transformed.
+2026-11-17T02:49:27.0812860Z rendering chunks...
+2026-11-17T02:49:27.0813200Z computing gzip size...
+2026-11-17T02:49:27.0813500Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-17T02:49:27.0814150Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-17T02:49:27.0814820Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-17T02:49:27.0815510Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-17T02:49:27.0815860Z 
+2026-11-17T02:49:27.0816130Z [32m✓ built in 288ms[39m
+2026-11-17T02:49:27.0816340Z 
+2026-11-17T02:49:27.0816560Z [36mPWA v1.3.0[39m
+2026-11-17T02:49:27.0816940Z mode      [35mgenerateSW[39m
+2026-11-17T02:49:27.0817370Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-17T02:49:27.0817810Z files generated
+2026-11-17T02:49:27.0818100Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-17T02:49:27.0818500Z   [2m../dist-goblin/sw.js[22m
+2026-11-17T02:49:27.0818900Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-17T02:49:27.0819260Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-17T02:49:27.0819800Z ##[endgroup]
+2026-11-17T02:49:27.0831290Z 
+2026-11-17T02:49:27.0841190Z  Tasks:    12 successful, 12 total
+2026-11-17T02:49:27.0841930Z Cached:    0 cached, 12 total
+2026-11-17T02:49:27.0842310Z   Time:    26.088s 
+2026-11-17T02:49:27.0842480Z 
+2026-11-17T02:49:27.1751360Z ##[group]Run pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts
+2026-11-17T02:49:27.1754020Z [36;1mpnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts[0m
+2026-11-17T02:49:27.1807650Z shell: /bin/bash -e {0}
+2026-11-17T02:49:27.1808060Z env:
+2026-11-17T02:49:27.1808430Z   LIVE: 0
+2026-11-17T02:49:27.1808870Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:49:27.1809570Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:49:27.1809950Z ##[endgroup]
+2026-11-17T02:49:27.5220440Z 
+2026-11-17T02:49:27.5222500Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-17T02:49:27.5222960Z 
+2026-11-17T02:49:28.3256330Z  [32m✓[39m src/windows-log/guard.test.ts [2m([22m[2m16 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 565[2mms[22m[39m
+2026-11-17T02:49:28.4301260Z  [32m✓[39m src/managed-log/gateway-log-writer.test.ts [2m([22m[2m27 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 697[2mms[22m[39m
+2026-11-17T02:49:28.4321860Z    [32m✓[39m gateway log queue, faults and acknowledgment [2m(13)[22m
+2026-11-17T02:49:28.4323060Z      [33m[2m✓[22m[39m acknowledges only the specific completed record and bounds the exit wait at 250 ms[33m 510[2mms[22m[39m
+2026-11-17T02:49:28.9051260Z  [32m✓[39m src/data-dir-lock.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 447[2mms[22m[39m
+2026-11-17T02:49:32.2636810Z {"level":30,"time":1794883772262,"pid":4583,"hostname":"sat12-bq158-329511f0-e909-4375-aa64-13eed103c333-BAA0968652D1.local","msg":"Server listening at http://127.0.0.1:5671"}
+2026-11-17T02:49:32.2739470Z {"level":30,"time":1794883772262,"pid":4583,"hostname":"sat12-bq158-329511f0-e909-4375-aa64-13eed103c333-BAA0968652D1.local","host":"127.0.0.1","port":5671,"dataDir":"/var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/gg-api-process-3iKQDd","requireApiKey":true,"msg":"GraphGoblin API listening"}
+2026-11-17T02:49:32.2849340Z {"level":30,"time":1794883772284,"pid":4583,"hostname":"sat12-bq158-329511f0-e909-4375-aa64-13eed103c333-BAA0968652D1.local","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+2026-11-17T02:49:32.2920560Z {"level":30,"time":1794883772289,"pid":4583,"hostname":"sat12-bq158-329511f0-e909-4375-aa64-13eed103c333-BAA0968652D1.local","reqId":"req-1","res":{"statusCode":200},"responseTime":4.621874999999818,"msg":"request completed"}
+2026-11-17T02:49:32.3729660Z  [32m✓[39m src/serve.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1359[2mms[22m[39m
+2026-11-17T02:49:32.3832550Z    [32m✓[39m serve with the managed destination [2m(5)[22m
+2026-11-17T02:49:32.3841000Z      [33m[2m✓[22m[39m keeps serving while every log write is stalled, within the pending-byte bound[33m 539[2mms[22m[39m
+2026-11-17T02:49:32.6062670Z  [32m✓[39m src/macos-log/guard.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+2026-11-17T02:49:34.1012030Z  [32m✓[39m src/gateway-logger.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 263[2mms[22m[39m
+2026-11-17T02:49:35.0279070Z  [32m✓[39m src/macos-local-key.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 110[2mms[22m[39m
+2026-11-17T02:49:36.9793810Z  [32m✓[39m src/database-ownership.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1145[2mms[22m[39m
+2026-11-17T02:49:36.9796450Z    [33m[2m✓[22m[39m rechecks catalog created by a writer before database ownership is acquired[33m 895[2mms[22m[39m
+2026-11-17T02:49:37.6364010Z  [32m✓[39m src/main-entry.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-11-17T02:49:41.6189950Z  [32m✓[39m src/main.test.ts [2m([22m[2m15 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 13044[2mms[22m[39m
+2026-11-17T02:49:41.6190950Z    [32m✓[39m built entry and the reserved Windows launcher variable (#438) [2m(4)[22m
+2026-11-17T02:49:41.6192660Z      [33m[2m✓[22m[39m consumes the variable for CLI commands, which keep their ordinary output[33m 793[2mms[22m[39m
+2026-11-17T02:49:41.6193810Z      [33m[2m✓[22m[39m ignores the Windows-only variable elsewhere and keeps shell logging[33m 1771[2mms[22m[39m
+2026-11-17T02:49:41.6194600Z    [32m✓[39m built API entry and startup failures [2m(6)[22m
+2026-11-17T02:49:41.6195530Z      [33m[2m✓[22m[39m holds ownership while listening and releases it on supported HTTP close[33m 1115[2mms[22m[39m
+2026-11-17T02:49:41.6196710Z      [33m[2m✓[22m[39m serves authenticated requests using a binary-created key and refuses a competing process[33m 2812[2mms[22m[39m
+2026-11-17T02:49:41.6199390Z      [33m[2m✓[22m[39m dispatches the API-key and preflight CLIs with their real exit codes[33m 2451[2mms[22m[39m
+2026-11-17T02:49:41.6200610Z      [33m[2m✓[22m[39m releases ownership on a real corrupt-database startup fault before HTTP setup[33m 1243[2mms[22m[39m
+2026-11-17T02:49:41.6201880Z      [33m[2m✓[22m[39m releases ownership after a real occupied-port listen failure[33m 1395[2mms[22m[39m
+2026-11-17T02:49:41.6203040Z      [33m[2m✓[22m[39m releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)[33m 1400[2mms[22m[39m
+2026-11-17T02:49:41.6299490Z 
+2026-11-17T02:49:41.6305220Z [2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+2026-11-17T02:49:41.6306490Z [2m      Tests [22m [1m[32m203 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (211)[39m
+2026-11-17T02:49:41.6307160Z [2m   Start at [22m 02:49:27
+2026-11-17T02:49:41.6309610Z [2m   Duration [22m 14.09s[2m (tests 77%, import 17%, transform 6%)[22m
+2026-11-17T02:49:41.6321680Z 
+2026-11-17T02:49:41.6844710Z ##[group]Run pnpm test:macos-coverage
+2026-11-17T02:49:41.6845100Z [36;1mpnpm test:macos-coverage[0m
+2026-11-17T02:49:41.6893230Z shell: /bin/bash -e {0}
+2026-11-17T02:49:41.6893590Z env:
+2026-11-17T02:49:41.6893880Z   LIVE: 0
+2026-11-17T02:49:41.6894380Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:49:41.6894980Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:49:41.6895390Z ##[endgroup]
+2026-11-17T02:49:41.8151120Z $ node tooling/scripts/macos-launcher-coverage.acceptance.mjs .tmp/macos-launcher-coverage
+2026-11-17T02:50:24.1949540Z Building for debugging...
+2026-11-17T02:50:24.1962840Z [0/27] /Users/runner/work/_temp/graphgoblin-coverage-Q2rqjd/swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.derived/runner.swift
+2026-11-17T02:50:24.1969500Z [0/27] Write sources
+2026-11-17T02:50:24.1970880Z [0/27] Write PresentationFixture-entitlement.plist
+2026-11-17T02:50:24.1983340Z [0/27] Write sources
+2026-11-17T02:50:24.1985460Z [11/27] Write GraphGoblinLauncherInstaller-entitlement.plist
+2026-11-17T02:50:24.1986960Z [11/27] Write GraphGoblin-entitlement.plist
+2026-11-17T02:50:24.1988700Z [15/27] Write swift-version--79AA4F9932D1E87A.txt
+2026-11-17T02:50:24.1989920Z [17/29] Compiling LaunchContract LaunchContract.swift
+2026-11-17T02:50:24.1991080Z [18/29] Emitting module LaunchContract
+2026-11-17T02:50:24.1992270Z [19/45] Emitting module LauncherEngine
+2026-11-17T02:50:24.1993650Z [20/45] Compiling LauncherPresentation LaunchPresentationController.swift
+2026-11-17T02:50:24.1995450Z [21/45] Compiling LauncherPresentation LauncherAppDelegate.swift
+2026-11-17T02:50:24.1997070Z [22/45] Compiling LauncherPresentation LauncherPresentationEntry.swift
+2026-11-17T02:50:24.1998630Z [23/45] Compiling LauncherPresentation PresentationCopy.swift
+2026-11-17T02:50:24.2000230Z [24/45] Compiling LauncherPresentation AppKitSupport.swift
+2026-11-17T02:50:24.2001840Z [25/45] Compiling LauncherPresentation AppKitSurface.swift
+2026-11-17T02:50:24.2002790Z [26/47] Compiling LauncherEngine NativeFiles.swift
+2026-11-17T02:50:24.2003370Z [27/47] Compiling LauncherEngine NativeLaunchEngine.swift
+2026-11-17T02:50:24.2011730Z [28/56] Compiling LauncherInstaller InstallerOptions.swift
+2026-11-17T02:50:24.2012170Z [29/57] Emitting module LauncherInstaller
+2026-11-17T02:50:24.2012680Z [30/57] Compiling LauncherInstaller BundlePublisher.swift
+2026-11-17T02:50:24.2013250Z [31/57] Compiling LauncherEngineTests ACLTests.swift
+2026-11-17T02:50:24.2013730Z [32/57] Compiling LauncherEngineTests ChildTests.swift
+2026-11-17T02:50:24.2014300Z [33/57] Compiling LauncherEngineTests DiagnosticsTests.swift
+2026-11-17T02:50:24.2014950Z [34/57] Compiling LauncherEngineTests EngineContractsTests.swift
+2026-11-17T02:50:24.2015450Z [35/60] Emitting module LauncherPresentation
+2026-11-17T02:50:24.2016100Z [36/60] Compiling LauncherEngineTests InstalledEngineTests.swift
+2026-11-17T02:50:24.2016670Z [40/60] Compiling LauncherInstaller LauncherInstaller.swift
+2026-11-17T02:50:24.2017280Z [41/60] Compiling LauncherPresentation PresentationSeams.swift
+2026-11-17T02:50:24.2017910Z [42/60] Compiling LauncherPresentation ProgressPanel.swift
+2026-11-17T02:50:24.2018500Z [43/60] Compiling LauncherPresentation WorkspaceBrowserOpener.swift
+2026-11-17T02:50:24.2019220Z [44/64] Compiling InstallerEntry Entry.swift
+2026-11-17T02:50:24.2019710Z [45/64] Emitting module InstallerEntry
+2026-11-17T02:50:24.2020320Z [46/66] Compiling PresentationFixture PresentationFixture.swift
+2026-11-17T02:50:24.2020780Z [47/66] Emitting module PresentationFixture
+2026-11-17T02:50:24.2021320Z [48/81] Emitting module LauncherInstallerTests
+2026-11-17T02:50:24.2021910Z [49/81] Compiling LauncherInstallerTests PublisherTests.swift
+2026-11-17T02:50:24.2022660Z [50/83] Emitting module LauncherEntry
+2026-11-17T02:50:24.2023160Z [51/83] Compiling LauncherEntry Entry.swift
+2026-11-17T02:50:24.2023560Z [51/83] Write Objects.LinkFileList
+2026-11-17T02:50:24.2026620Z [54/83] Emitting module LauncherEngineTests
+2026-11-17T02:50:24.2028240Z [54/85] Linking PresentationFixture
+2026-11-17T02:50:24.2029340Z [55/85] Linking GraphGoblinLauncherInstaller
+2026-11-17T02:50:24.2030560Z [56/85] Applying PresentationFixture
+2026-11-17T02:50:24.2031670Z [57/85] Applying GraphGoblinLauncherInstaller
+2026-11-17T02:50:24.2032460Z [57/85] Write Objects.LinkFileList
+2026-11-17T02:50:24.2032900Z [59/85] Linking GraphGoblin
+2026-11-17T02:50:24.2033250Z [60/85] Applying GraphGoblin
+2026-11-17T02:50:24.2033790Z [62/85] Compiling LauncherEngineTests LaunchInputsTests.swift
+2026-11-17T02:50:24.2034380Z [63/85] Compiling LauncherEngineTests LoopbackTests.swift
+2026-11-17T02:50:24.2034880Z [64/85] Compiling LauncherPresentationTests ShowLogTests.swift
+2026-11-17T02:50:24.2035530Z [65/85] Compiling LauncherPresentationTests FixtureChild.swift
+2026-11-17T02:50:24.2036230Z [66/85] Compiling LauncherPresentationTests LiveCompositionTests.swift
+2026-11-17T02:50:24.2036850Z [67/85] Compiling LauncherPresentationTests OutcomeCopyTests.swift
+2026-11-17T02:50:24.2037510Z [68/85] Compiling LauncherPresentationTests QuitTests.swift
+2026-11-17T02:50:24.2038160Z [69/85] Compiling LauncherPresentationTests AppKitControlTests.swift
+2026-11-17T02:50:24.2038900Z [70/85] Compiling LauncherPresentationTests AppKitWindowTests.swift
+2026-11-17T02:50:24.2053990Z [71/85] Compiling LauncherPresentationTests AttemptLifecycleTests.swift
+2026-11-17T02:50:24.2056270Z [72/85] Compiling LauncherPresentationTests BrowserHandoffTests.swift
+2026-11-17T02:50:24.2058110Z [73/85] Compiling LauncherPresentationTests ChildCompositionTests.swift
+2026-11-17T02:50:24.2060950Z [74/85] Compiling LauncherPresentationTests HandoffArbiterTests.swift
+2026-11-17T02:50:24.2101620Z [75/85] Compiling LauncherPresentationTests LiveAppKitTests.swift
+2026-11-17T02:50:24.2102160Z [76/85] Emitting module LauncherPresentationTests
+2026-11-17T02:50:24.2102750Z [84/91] Compiling LauncherPresentationTests ManualClock.swift
+2026-11-17T02:50:24.2104330Z [85/91] Compiling LauncherPresentationTests Probes.swift
+2026-11-17T02:50:24.2105330Z [86/91] Compiling LauncherPresentationTests ScriptedBrowserOpener.swift
+2026-11-17T02:50:24.2106040Z [87/91] Compiling LauncherPresentationTests ScriptedLaunchEngine.swift
+2026-11-17T02:50:24.2107050Z [88/91] Compiling LauncherPresentationTests ScriptedResolver.swift
+2026-11-17T02:50:24.2107610Z [89/91] Compiling LauncherPresentationTests ScriptedSurface.swift
+2026-11-17T02:50:24.2107990Z error: fatalError
+2026-11-17T02:50:24.2108090Z 
+2026-11-17T02:50:24.2108700Z file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:78
+2026-11-17T02:50:24.2109490Z       throw new Error(label + ' did not complete with its expected result. See recorded streams.');
+2026-11-17T02:50:24.2110000Z             ^
+2026-11-17T02:50:24.2110160Z 
+2026-11-17T02:50:24.2110460Z Error: swift-tests did not complete with its expected result. See recorded streams.
+2026-11-17T02:50:24.2111340Z     at run (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:78:13)
+2026-11-17T02:50:24.2112320Z     at Object.xcrun (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:87:5)
+2026-11-17T02:50:24.2113250Z     at main (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:285:23)
+2026-11-17T02:50:24.2114140Z     at file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:374:1
+2026-11-17T02:50:24.2114830Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-11-17T02:50:24.2117620Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+2026-11-17T02:50:24.2118480Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2026-11-17T02:50:24.2119160Z 
+2026-11-17T02:50:24.2119350Z Node.js v22.23.4
+2026-11-17T02:50:24.2120200Z [ELIFECYCLE] Command failed with exit code 1.
+2026-11-17T02:50:24.2146200Z ##[error]Process completed with exit code 1.
+2026-11-17T02:50:24.2249230Z ##[group]Run pnpm test:macos-launcher
+2026-11-17T02:50:24.2249590Z [36;1mpnpm test:macos-launcher[0m
+2026-11-17T02:50:24.2348840Z shell: /bin/bash -e {0}
+2026-11-17T02:50:24.2349350Z env:
+2026-11-17T02:50:24.2349670Z   LIVE: 0
+2026-11-17T02:50:24.2351690Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:50:24.2352260Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:50:24.2352750Z ##[endgroup]
+2026-11-17T02:50:24.3944380Z $ node --test tooling/scripts/macos-launcher.acceptance.mjs
+2026-11-17T02:50:24.4401500Z TAP version 13
+2026-11-17T02:50:24.5159930Z # Subtest: a reset does not prove that the listener released
+2026-11-17T02:50:24.5261680Z ok 1 - a reset does not prove that the listener released
+2026-11-17T02:50:24.5363100Z   ---
+2026-11-17T02:50:24.5433310Z   duration_ms: 17.333542
+2026-11-17T02:50:24.5433860Z   type: 'test'
+2026-11-17T02:50:24.5434250Z   ...
+2026-11-17T02:52:13.6736950Z # Subtest: macOS public launcher, native headless process and actual gateway
+2026-11-17T02:52:13.6738800Z ok 2 - macOS public launcher, native headless process and actual gateway
+2026-11-17T02:52:13.6739690Z   ---
+2026-11-17T02:52:13.6740180Z   duration_ms: 109157.988
+2026-11-17T02:52:13.6740480Z   type: 'test'
+2026-11-17T02:52:13.6740860Z   ...
+2026-11-17T02:52:13.6741590Z # Public install with a malformed inherited locale validated and published a receipt-bound alternate app.
+2026-11-17T02:52:13.6742340Z # A foreign listener survived the launcher refusal and no store was initialized.
+2026-11-17T02:52:13.6743040Z # An occupied store without its key refused before spawn and preserved its contents.
+2026-11-17T02:52:13.6744150Z # Concurrent cold attempts with malformed locales completed and a single verified gateway served both built shells after both launchers exited.
+2026-11-17T02:52:13.6745040Z # Warm launch kept the serving PID and private managed logs excluded the request query.
+2026-11-17T02:52:13.6745940Z # A second built API entry contended on the actual physical log reservation before touching its store.
+2026-11-17T02:52:13.6757920Z # The actual managed API refused a missing local key at the store stage, preserving database bytes.
+2026-11-17T02:52:13.6758720Z # Same-path replacement kept the alternate identity and logged the held-store deadline refusal.
+2026-11-17T02:52:13.6759590Z # Supported drain released both leases, the verified process birth and the loopback listener.
+2026-11-17T02:52:13.6760510Z # Evidence: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:52:13.6798660Z 1..2
+2026-11-17T02:52:13.6799000Z # tests 2
+2026-11-17T02:52:13.6799340Z # suites 0
+2026-11-17T02:52:13.6799600Z # pass 2
+2026-11-17T02:52:13.6799850Z # fail 0
+2026-11-17T02:52:13.6800120Z # cancelled 0
+2026-11-17T02:52:13.6800340Z # skipped 0
+2026-11-17T02:52:13.6800640Z # todo 0
+2026-11-17T02:52:13.6800920Z # duration_ms 109246.771209
+2026-11-17T02:52:13.7102960Z ##[group]Run actions/upload-artifact@v4
+2026-11-17T02:52:13.7103200Z with:
+2026-11-17T02:52:13.7103460Z   name: macos-launcher
+2026-11-17T02:52:13.7103800Z   include-hidden-files: true
+2026-11-17T02:52:13.7104180Z   path: .tmp/macos-launcher-*/
+.tmp/macos-swift-test/**/codecov/**
+
+2026-11-17T02:52:13.7104620Z   if-no-files-found: error
+2026-11-17T02:52:13.7104880Z   retention-days: 7
+2026-11-17T02:52:13.7105200Z   compression-level: 6
+2026-11-17T02:52:13.7105500Z   overwrite: false
+2026-11-17T02:52:13.7105790Z env:
+2026-11-17T02:52:13.7106050Z   LIVE: 0
+2026-11-17T02:52:13.7106540Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T02:52:13.7107100Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T02:52:13.7107400Z ##[endgroup]
+2026-11-17T02:52:14.1162110Z (node:8328) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T02:52:14.1165200Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T02:52:14.1353510Z With the provided path, there will be 127 files uploaded
+2026-11-17T02:52:14.1355670Z Artifact name is valid!
+2026-11-17T02:52:14.1356010Z Root directory input is valid!
+2026-11-17T02:52:14.5028840Z Beginning upload of artifact content to blob storage
+2026-11-17T02:52:14.5865570Z (node:8328) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T02:52:14.7772180Z Uploaded bytes 47547
+2026-11-17T02:52:14.8163190Z Finished uploading artifact content to blob storage!
+2026-11-17T02:52:14.8177430Z SHA256 digest of uploaded artifact zip is 563975f84c97a8b884eb6a1c4d0ae2022d0ee2a1d3db7c65a4677ea482640d9e
+2026-11-17T02:52:14.8178050Z Finalizing artifact upload
+2026-11-17T02:52:15.1998350Z Artifact macos-launcher.zip successfully finalized. Artifact ID 14294103600
+2026-11-17T02:52:15.1999270Z Artifact macos-launcher has been successfully uploaded! Final size is 47547 bytes. Artifact ID is 14294103600
+2026-11-17T02:52:15.2000410Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44005567835/artifacts/14294103600
+2026-11-17T02:52:15.2097220Z Post job cleanup.
+2026-11-17T02:52:15.3533550Z Pruning is unnecessary.
+2026-11-17T02:52:15.3634240Z Post job cleanup.
+2026-11-17T02:52:15.4683330Z [command]/opt/homebrew/bin/git version
+2026-11-17T02:52:15.4902850Z git version 2.56.0
+2026-11-17T02:52:15.4927460Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/2ed7425b-8fb7-4ea6-8405-55c9177d5696/.gitconfig'
+2026-11-17T02:52:15.4929190Z Temporarily overriding HOME='/Users/runner/work/_temp/2ed7425b-8fb7-4ea6-8405-55c9177d5696' before making global git config changes
+2026-11-17T02:52:15.4930090Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T02:52:15.4931650Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T02:52:15.5036250Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T02:52:15.5097210Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T02:52:15.6413500Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T02:52:15.6472230Z http.https://github.com/.extraheader
+2026-11-17T02:52:15.6480430Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-17T02:52:15.6551430Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T02:52:15.7359740Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T02:52:15.7423400Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T02:52:15.8696140Z Cleaning up orphan processes
+2026-11-17T02:52:17.4733550Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

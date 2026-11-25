@@ -1,0 +1,114 @@
+{
+  "schema": "gg456-prep04-portless-draft-start/1",
+  "controlled": true,
+  "nativeAcceptance": false,
+  "node": "v22.23.4",
+  "driverSha256": "bafe95338dc22402a29b5805f0f0ec4862d8d3c6155220f03ca005946be4729e",
+  "extracted": [
+    "ULID",
+    "WAIT_SECONDS",
+    "waitLoop",
+    "ulidOrNull",
+    "draftStart",
+    "draftRunPin",
+    "acceptedDrainFields"
+  ],
+  "fixture": {
+    "name": "QA wait 7c5ae3c2",
+    "waitSeconds": 45,
+    "definitionSha256": "8080d9aff6052089e3d020f0cfaf28b6cfe50ee205d932e2a85dfaa6714a6e5b"
+  },
+  "create": {
+    "status": 201,
+    "issues": [],
+    "loopHasCurrentVersionId": false,
+    "draftStatus": "draft",
+    "draftVersion": 1,
+    "draftStartOk": true,
+    "loopDraftVersionIdIsDraft": true,
+    "draftLoopIdIsLoop": true
+  },
+  "omittedVersion": {
+    "status": 404,
+    "code": "LOOP_NOT_FOUND",
+    "detail": "loop <loop> has no published version"
+  },
+  "draftWithoutAllowDraft": {
+    "status": 409,
+    "code": "VERSION_NOT_PUBLISHED"
+  },
+  "explicitDraft": {
+    "status": 202,
+    "responseKeys": [
+      "run"
+    ],
+    "runStatus": "queued",
+    "pinOk": true,
+    "versionIdDiffersFromDraft": true,
+    "pinned": {
+      "source": "draft",
+      "version": 1,
+      "label": "QA wait 7c5ae3c2 draft v1"
+    }
+  },
+  "snapshot": {
+    "status": 200,
+    "versionStatus": "snapshot",
+    "loopId": true,
+    "definitionEqualsDraft": true,
+    "loopDraftUnchanged": true,
+    "listedInVersionHistory": false,
+    "startSnapshotDirectly": {
+      "status": 409,
+      "code": "VERSION_NOT_PUBLISHED"
+    }
+  },
+  "flatRun": {
+    "status": 200,
+    "runStatus": "waiting",
+    "flat": true,
+    "hasRecovery": true,
+    "waitingKind": "timer",
+    "hasUntil": true,
+    "samePin": true
+  },
+  "list": {
+    "status": 200,
+    "driverPredicate": true,
+    "runCount": 1,
+    "latestRunIsRun": true,
+    "latestRunStatus": "waiting"
+  },
+  "drain": {
+    "getStatus": 200,
+    "getPhase": "running",
+    "getUnconfirmedIsArray": true,
+    "postStatus": 202,
+    "postKeys": [
+      "activeRunIds",
+      "choiceAt",
+      "choices",
+      "controlToken",
+      "graceMs",
+      "phase",
+      "startedAt",
+      "unconfirmedRunIds"
+    ],
+    "accepted": {
+      "phase": "draining",
+      "activeRunIds": [],
+      "unconfirmedRunIds": [],
+      "shapes": {
+        "activeRunIds": "array",
+        "unconfirmedRunIds": "array"
+      },
+      "choices": [
+        "wait",
+        "force"
+      ],
+      "graceMs": 300000
+    },
+    "timerRunNotUnconfirmed": true,
+    "tokenRecorded": false
+  }
+}

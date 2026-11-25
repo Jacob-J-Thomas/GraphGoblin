@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   HarnessDefaultsSchema,
   OllamaBaseUrlSchema,
@@ -143,7 +143,10 @@ export function loadConfig(
     host: e.GG_HOST,
     port: e.GG_PORT,
     dataDir,
-    dbUrl: e.GG_DB_URL ?? `file:${resolve(dataDir, 'graphgoblin.db').replace(/\\/g, '/')}`,
+    // libsql percent-decodes a URL path and ends it at `?` or `#`, so the default store is the
+    // platform's file URL for the data directory's file, which escapes `%`, `?`, `#`, spaces,
+    // Unicode and, outside Windows, a backslash in a name. An explicit GG_DB_URL is used verbatim.
+    dbUrl: e.GG_DB_URL ?? pathToFileURL(join(dataDir, 'graphgoblin.db')).href,
     requireApiKey: e.GG_REQUIRE_API_KEY,
     ...(e.GG_MASTER_KEY ? { masterKey: e.GG_MASTER_KEY } : {}),
     logLevel: e.GG_LOG_LEVEL,

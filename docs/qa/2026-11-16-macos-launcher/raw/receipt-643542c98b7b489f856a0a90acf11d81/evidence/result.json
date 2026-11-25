@@ -1,0 +1,68 @@
+{
+  "schema": "gg456-independent-native-qa/1",
+  "status": "stopped",
+  "notAPass": true,
+  "runId": "91191432",
+  "candidate": {
+    "head": "4341d1f8882f4b69651bfb0b5988345b7f074339",
+    "tree": "a5f8fa3e13fb297cbcdb386ae445cb8159156617",
+    "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1"
+  },
+  "scope": "/Users/jake/Library/Caches/graphgoblin-456-qa-91191432",
+  "evidence": "/Users/jake/Library/Caches/graphgoblin-456-qa-91191432/evidence",
+  "failure": "Error: response exceeded the QA cap\n    at IncomingMessage.<anonymous> (file:///Users/jake/Library/Caches/graphgoblin-456-qa-transport-643542c98b7b489f856a0a90acf11d81/driver.mjs:236:38)\n    at IncomingMessage.emit (node:events:519:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at HTTPParser.parserOnBody (node:_http_common:137:24)\n    at Socket.socketOnData (node:_http_client:615:22)\n    at Socket.emit (node:events:519:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)",
+  "unmet": [],
+  "recovery": [
+    {
+      "port": 62241,
+      "pid": 47364,
+      "drained": true
+    }
+  ],
+  "onStop": "drain",
+  "contender": null,
+  "registeredGatewayAtStop": {
+    "port": 62241,
+    "pid": 47364,
+    "birth": "Mon Nov 16 15:37:54 2026"
+  },
+  "stages": [
+    {
+      "id": "S0-scope-and-owner-snapshot",
+      "cases": [
+        "O0"
+      ],
+      "status": "criteria-met",
+      "elapsedMs": 35
+    },
+    {
+      "id": "S1-install-a-odd-checkout",
+      "cases": [
+        "O1",
+        "O2"
+      ],
+      "status": "criteria-met",
+      "elapsedMs": 28921
+    },
+    {
+      "id": "S2-cold-env-canary-launch",
+      "cases": [
+        "O3",
+        "O6"
+      ],
+      "status": "stopped",
+      "elapsedMs": 1967
+    },
+    {
+      "id": "R-recovery-drain-62241",
+      "cases": [
+        "recovery"
+      ],
+      "status": "criteria-met",
+      "elapsedMs": 377
+    }
+  ],
+  "fixtureManifest": null,
+  "evidenceBytes": 65101,
+  "finishedAt": "2026-11-16T21:37:55.320Z"
+}
