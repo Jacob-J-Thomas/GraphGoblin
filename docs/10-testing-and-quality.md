@@ -230,7 +230,7 @@ The `coverage` job (**Coverage**, 30-minute job budget) runs:
 1. Install with a frozen lockfile.
 2. Build every package and app (`pnpm build`), the same full build as Repository checks, so every suite sees the original built inputs.
 3. Install Chromium for the tooling browser measurements (`pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium`).
-4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`). The step has a 25-minute cap inside the job budget.
+4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1 --log-order=stream --log-prefix=task`). Output streams with task prefixes so a timeout retains the active suite's available output. The step has a 25-minute cap inside the job budget.
 5. Upload the package `coverage-summary.json` files as the `coverage` artifact after every outcome (a warning when none exist), and write the coverage step's outcome and the number of retained summaries to the job summary. Summaries from a failed, cancelled or timed-out step are partial and never establish a passing gate.
 
 The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.

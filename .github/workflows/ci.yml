@@ -240,7 +240,8 @@ jobs:
         # The step cap leaves job time to retain the reports of a failed or timed-out run.
         timeout-minutes: 25
         # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
-        run: pnpm exec turbo run test:coverage --concurrency=1
+        # Retain available output from an unfinished task if the step times out.
+        run: pnpm exec turbo run test:coverage --concurrency=1 --log-order=stream --log-prefix=task
 
       - name: Upload coverage reports
         if: always()
