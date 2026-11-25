@@ -1,0 +1,38 @@
+# Coordinator adjudication appendix: #525 encoding asymmetry
+
+This is bounded cause and duplicate classification after formal review1. It is **not another formal review**, does not consume another scan, and does not change the original REVIEW.md, finding history, frozen patch or verdict.
+
+## Coordinator decision (FUP020)
+
+The root coordinator accepted this disposition: preserve the NodeSchema encoding asymmetry and supported-write-negative evidence as a **qualified #525 read-policy limitation**. Do not open a new bug issue or broaden NodeSchema/serializer behavior without a supported-origin or accepted-invariant witness. Existing invalid-draft repair detail/export 200 behavior is intentional. The alternatives not chosen are a broad NodeSchema change and a separate new issue. The original formal review's FOLLOW-UP wording is narrowed by this adjudication; its evidence remains intact.
+
+## Cause and reachable behavior
+
+The existing NodeSchema safeEncode path accepts the invalid override-key fixture while NodeSchema forward parse and inference-config parse/encode refuse it. The prior immutable `review-01/SCHEMA-ENCODE-PROBE.json` preserves this exact observation. #525's explicit version handler now forward-parses and answers the required sanitized 500. This is separate from the valid omitted-harness shape that #525 fixes with a current-schema 200 view.
+
+No supported public input path was found that originates the invalid override-key record from an otherwise valid admitted store:
+
+- Create and draft-save bodies use `LoopDefinitionSchema` through the product request compiler; bare and envelope imports forward-parse current contracts in `packages/domain/src/loop-io.ts`.
+- The focused `PUBLIC-WRITE-PROBE.json` confirms valid creation succeeds, then invalid create, draft save, validation, bare import and envelope import all return 400. The exact version rows stay unchanged, the store guard remains current, and no provider turn starts.
+- Installed templates are parsed with `LoopExportSchema` in `apps/api/src/templates/catalog.ts` before storage. The seeded system Chat definition is built through `LoopDefinitionSchema.parse` in `packages/domain/src/chat.ts`.
+- Startup `guardCurrentStore` checks every retained loop version with forward parsing (`packages/infrastructure/src/sqlite/store-format.ts:258-274`), rejecting this invalid-key store before normal service. Documented correction occurs while stopped; fresh-store import still validates corrected content.
+
+The fixture can be produced through direct SQL or a direct internal repository call with a mutated nominally typed definition. Those bypass the public validation boundary; they are used deliberately in repository tests to model retained invalid data. Public operations that clone an existing stored definition could preserve already-corrupted data, but they do not provide a new origin from a valid admitted store. No claim of exhaustive fault injection or every possible in-memory corruption path is made.
+
+The accepted public invariants remain established: invalid incoming keys are refused before persistence, invalid retained drafts cannot publish, valid current-format data remains readable, and immutable snapshot bytes are not rewritten. The bounded discrepancy is the encoder's behavior on already invalid retained/live-corrupted input. It is not evidence of an accepted public write escaping validation or of provider submission.
+
+Existing `apps/api/src/codex-config-overrides.test.ts` explicitly expects retained invalid draft export 200 (`exports a retained draft for correction and import into a separate fresh store`) and loop detail 200 while publish returns 422 (`refuses publication of a retained invalid-key draft while keeping its readable authored data`). These passed in formal review1's focused set. Automatically converting all other reads to 500 would change an existing repair behavior and exceed #525's endpoint-only contract.
+
+## Duplicate and tracking disposition
+
+Live all-state issue searches covered serialization, NodeSchema, encode/safeEncode, Zod, invalid snapshot and RESPONSE_INVALID. `ISSUE-READBACK.json` records queries and returned issue numbers, plus the relevant live issue metadata/excerpts.
+
+- **#525 (open)** is the best existing catalogue location for this qualified explicit-read policy limitation and its delivery evidence. Its admission comment explicitly keeps other read paths and storage policy separate.
+- **#429 (closed, completed)** is the related key-admission/recovery history. Its supported write/publication contract is preserved; no supported-origin regression was found to justify reopening it.
+- No dedicated NodeSchema/safeEncode issue was found. Search absence alone is not the reason to skip a ticket: the coordinator chose to retain the evidence without dispatch because supported-origin/invariant impact is not demonstrated.
+
+No issue was created, modified or published. No source or index action occurred. No additional model session or formal scan ran.
+
+## Separate #565 fixture visibility limit
+
+`definition-pins.test.ts:90-110` has its own container startup configuration without an explicit Ollama disable. This remains a qualified fixture isolation limit related to existing open #565 (ordinary startup fixtures should be provider-free). It was excluded from review1. Neither this appendix nor #565's title is proof that its current patch fixes every custom container fixture; no new issue or broader local test run is proposed here.

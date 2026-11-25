@@ -1,0 +1,49 @@
+## Verdict: QA not passed (browser half blocked, no visual QA)
+
+The native HTTP checks passed. The browser wrapper failed and produced none of the four images. That leaves the browser and visual criteria unproven, and a product failure is possible.
+
+**Identity and scope:** I'm Claude Opus 5.5 (`claude-opus-5-5`), a separate QA session that didn't author this candidate. From inside the session I can't confirm the effort setting or the billing route; the wrapper sets the subscription environment. The candidate is `d2df8600…` on `codex/gg-fu-snapshot-validation-20261124`. Only the wrapper's own `binding.verify()` checked it. I didn't recompute the patch, index or file hashes, or the hashes of `run-check.py`, `fixture.mjs` and `browser-driver.py`; that was outside the allowed tools.
+
+## What ran (each wrapper once, in order)
+
+1. **build: exit 0.** Output was `success: true, sourceAndIndexUnchanged: true` → `BUILD-RESULT.json`.
+2. **native: exit 1, but its receipt was saved first.** Output was `success: true, sourceAndIndexUnchanged: true` → `NATIVE-RESULT.json`.
+   - **The exit 1 is a wrapper bug, not a product failure.** It happened at `run-check.py` line 44 while printing the vitest log tail: `UnicodeEncodeError: 'charmap' codec can't encode character '\u2713'` (the Windows console can't print `✓`).
+   - **Both native commands still passed.** `run()` raises on any non-zero exit. The receipt also needs `native/FINAL.json`, which the fixture writes only after every assertion passes. So the vitest files and the native fixture both exited 0. I never saw the vitest output itself.
+3. **browser: exit 1.** The error was `RuntimeError: Command failed 1; preserve browser.stdout.log and browser.stderr.log`.
+   - `run-check.py` saved no `BROWSER-RESULT.json`, and its after-run `binding.verify()` never ran.
+   - All four PNG reads returned "File does not exist."
+
+**Why the browser failed is unknown.** It stopped before the first screenshot. In driver order, the possible points are:
+- creating the `browser/` folder (this fails if the folder already exists)
+- waiting for the fixture to be ready (40 s limit)
+- opening, resizing or tracing the Edge session
+- the API-key sign-in
+- the first inspector-page assertion (pinned label, version ID, `Pinned 525 Work`, no "Pinned definition unavailable")
+
+The last one would be a product failure, so I can't rule that out. Opening the logs was outside the allowed tools.
+
+## Criteria
+
+The HTTP "PASS" results come from the fixture's assertions in the supplied source, which must all pass for the wrapper to exit 0. I didn't read the response bodies myself.
+
+| # | Criterion | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Omitted-harness snapshot returns 200 with the full materialized body | **PASS** (HTTP) | Store guard `current`; schema accepts the omitted form; GET 200 body equals id/loop/version/`snapshot`/materialized definition/createdAt |
+| 2 | Materialized control is equivalent; browser loads and renders the pinned version | Native **PASS**; browser **BLOCKED** | No rendering, request correlation or PNGs |
+| 3 | Wrong loop 404, foreign owner 404, no key 401, invalid snapshot 500 | **PASS** (HTTP) | `VERSION_NOT_FOUND` 404; `LOOP_NOT_FOUND` 404; anonymous 401; exact sanitized `RESPONSE_INVALID` 500 without `recovery.bad key` |
+| 4 | Settings and process defaults don't fill model/effort | **PASS** (HTTP); browser DOM check **BLOCKED** | Settings PUT 200 (`gpt-6-sol`/high) vs process defaults (`gpt-6-luna`/low); response unchanged; harness `codex`; no model/effort |
+| 5 | Stored bytes and history rows unchanged; snapshot UPDATE refused | **PASS** across HTTP reads; across browser reads **BLOCKED** | Rows before = after; stored definition bytes match; `LOOP_VERSION_SNAPSHOT_IMMUTABLE` |
+| 6 | No provider starts, Ollama off, clean shutdown, candidate still bound | Native **PASS**; browser **BLOCKED** | Provider starts 0 and Ollama false asserted; source/index unchanged after native. Browser shutdown and after-browser binding not checked |
+
+On criterion 4, the fixture doesn't separately prove that the default harness comes from the current schema. The support is that the response matches the definition materialized at creation and doesn't change when Settings change.
+
+**Visual QA:** not done, because no images exist.
+
+## Things to check and remaining gates
+
+- **Possible leftovers:** I couldn't confirm the browser run cleaned up. If it failed partway, its cleanup should have closed Edge and stopped the fixture; if it failed at folder creation, nothing started. Root should check for leftover node/Edge processes from that session and re-check the source/index binding.
+- **Nothing changed:** all logs and receipts are as the wrappers left them. I edited nothing and wrote nothing to source, index, issues or publication. Nothing was re-run.
+- **A re-run needs a fresh QA folder:** the wrappers refuse to overwrite existing logs or the `browser/` folder.
+- **Before this can pass:** someone needs to find the browser failure's cause from the preserved logs, then do a new browser run with image inspection. The native print bug needs fixing or explicit acceptance.
+- **Still open beyond that:** CI, formal final review and owner gates. This session didn't publish, merge, close issues, waive gates or use a formal review scan.
