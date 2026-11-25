@@ -18,14 +18,11 @@ import {
   LoopUpgradeRequiredError,
   UnreadableRunHistoryError,
 } from '@graphgoblin/engine';
+import { isResponseSerializationError } from 'fastify-type-provider-zod';
 import {
-  hasZodFastifySchemaValidationErrors,
-  isResponseSerializationError,
-} from 'fastify-type-provider-zod';
-import { hasRequestSchemaValidationErrors } from './request-validation.js';
-
-const pointerSegment = (segment: PropertyKey) =>
-  String(segment).replaceAll('~', '~0').replaceAll('/', '~1');
+  encodeJsonPointerSegment,
+  hasRequestSchemaValidationErrors,
+} from './request-validation.js';
 
 /** RFC 9457 Problem Details with a stable machine-readable `code`. */
 export interface ProblemDetails {
@@ -123,7 +120,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.code,
           error.message,
         );
-      if (hasRequestSchemaValidationErrors(error) || hasZodFastifySchemaValidationErrors(error)) {
+      if (hasRequestSchemaValidationErrors(error)) {
         return problem(
           reply,
           400,
@@ -132,11 +129,12 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.validation.flatMap((v) => {
             const keys = v.params['keys'];
             if (v.keyword === 'unrecognized_keys' && Array.isArray(keys)) {
+              // The base is already an encoded pointer; encode only the appended member.
               const base = v.instancePath === '/' ? '' : v.instancePath;
               return keys
                 .filter((key): key is string => typeof key === 'string')
                 .map((key) => ({
-                  path: `${base}/${pointerSegment(key)}`,
+                  path: `${base}/${encodeJsonPointerSegment(key)}`,
                   message: `Unrecognized key ${JSON.stringify(key)}`,
                 }));
             }
