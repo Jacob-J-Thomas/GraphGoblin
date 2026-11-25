@@ -1,0 +1,140 @@
+"""Reconcile the exact #524 denied read and reported read-only command after root approval."""
+
+from pathlib import PureWindowsPath
+import common as qa
+
+PACKET = qa.ROOT / 'admission-adjudication-01'
+PROPOSAL = PACKET / 'AUTHOR-ADJUDICATION.proposed.json'
+APPROVAL = PACKET / 'AUTHOR-ADJUDICATION.json'
+PROOF = PACKET / 'AUTHOR-PROVENANCE-PROOF.json'
+DENIED = {
+    'tool_name': 'Read', 'tool_use_id': 'toolu_016Cux9q2k8Pi8MXvTMQcXLg',
+    'tool_input': {'file_path': r'G:\ggq\gg-fu-qa-packets-20261124\GraphGoblin\.git'},
+}
+DENIED_MESSAGE = '<tool_use_error>File is in a directory that is denied by your permission settings.</tool_use_error>'
+DEVIATION_ID = 'toolu_011P12JdEQkeD3YjQkNp83NC'
+DEVIATION_CMD = r"""wc -l eslint.config.js && grep -n "rules\|'error'\|\"error\"" eslint.config.js | head -40"""
+MISSING_GREP = 'toolu_01VUP7CgfgCCZLkwdPkDt6VL'
+FIRST_FAILED_TEST = 'toolu_014FFZHXXDe32T42wE4Yypkk'
+NEGATIVE_CONTROL = 'toolu_01UGdn5AqiM2Q24PLW6aG5by'
+FILES = ('CLAUDE-EXIT.json', 'CLAUDE-LAUNCH.json', 'CLAUDE-EVENTS.private.jsonl',
+         'CLAUDE-STDERR.private.log', 'CLAUDE-BRIEF.private.txt', 'IMPLEMENTATION-REPORT.claude.md')
+
+
+def raw_calls():
+    calls, results, terminal = {}, {}, []
+    path = qa.AUTHOR_OUT / 'CLAUDE-EVENTS.private.jsonl'
+    with path.open(encoding='utf-8') as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            event = qa.json.loads(line)
+            if event.get('type') == 'result':
+                terminal.append(event)
+            message = event.get('message')
+            if not isinstance(message, dict):
+                continue
+            for row in message.get('content', []):
+                if not isinstance(row, dict):
+                    continue
+                if row.get('type') == 'tool_use':
+                    qa.need(row['id'] not in calls, 'DUPLICATE_524_TOOL_USE')
+                    calls[row['id']] = row
+                elif row.get('type') == 'tool_result':
+                    call_id = row['tool_use_id']
+                    qa.need(call_id in calls and call_id not in results, 'UNMATCHED_524_TOOL_RESULT')
+                    results[call_id] = row
+    qa.need(len(terminal) == 1 and calls.keys() == results.keys(), 'INCOMPLETE_524_AUTHOR_TRANSCRIPT')
+    return calls, results, terminal[0]
+
+
+def checkout_path(value):
+    venue = PureWindowsPath(qa.WORKTREE)
+    path = PureWindowsPath(value or '')
+    protected = ('.git', '.claude', '.mcp.json', '..')
+    qa.need(path.is_absolute() and path.is_relative_to(venue), 'TOOL_READ_OR_EDIT_OUTSIDE_524_WORKTREE')
+    relative = path.relative_to(venue)
+    qa.need(all(part.casefold() not in protected and not part.casefold().startswith('.env')
+                for part in relative.parts), 'UNEXPECTED_PROTECTED_TARGET_524')
+    return relative.as_posix()
+
+
+def observe(receipt, source):
+    launch = qa.load(qa.AUTHOR_OUT / 'CLAUDE-LAUNCH.json')
+    calls, results, terminal = raw_calls()
+    qa.need(receipt.get('permissionDenials') == [DENIED] and terminal.get('permission_denials') == [DENIED],
+            '524_UNAPPROVED_DENIAL_SET')
+    denied_id = DENIED['tool_use_id']
+    denied_call, denied_result = calls.get(denied_id, {}), results.get(denied_id, {})
+    qa.need(denied_call.get('name') == 'Read' and denied_call.get('input') == DENIED['tool_input']
+            and denied_result.get('is_error') is True and denied_result.get('content') == DENIED_MESSAGE,
+            '524_DENIAL_RESULT_NOT_EXACT_REFUSAL')
+    qa.need(receipt['worktreeChanges'] == source['changedFileSha256'], '524_RECEIPT_RAW_SOURCE_MISMATCH')
+    config = 'eslint.config.js'
+    qa.need(qa.git_text('ls-files', '--error-unmatch', '--', config) == config,
+            '524_DEVIATION_PATH_NOT_TRACKED_CONFIGURATION')
+    edits, path_checks, commands, failures, extra = [], [], [], {}, []
+    hash_result = lambda row: qa.sha(qa.json.dumps(row['content'], ensure_ascii=False).encode())
+    allowed_globs = ('AGENTS.md', 'node_modules/prettier/package.json',
+                     'node_modules/.pnpm/prettier@*/node_modules/prettier/package.json',
+                     'tooling/eslint.config.*', 'tooling/vitest.config.*')
+    for call_id, call in calls.items():
+        result = results[call_id]
+        name, args = call['name'], call['input']
+        if call_id == denied_id:
+            continue
+        if name == 'Bash':
+            command = args.get('command')
+            qa.need(not args.get('run_in_background'), 'UNAPPROVED_BACKGROUND_524_AUTHOR_CALL')
+            if command not in launch['bashCommands']:
+                qa.need(call_id == DEVIATION_ID and command == DEVIATION_CMD and result.get('is_error') is False
+                        and result['content'].startswith('176 eslint.config.js\n'),
+                        '524_UNAPPROVED_AUTHOR_COMMAND')
+                extra.append({'toolUseId': call_id, 'command': command, 'resultSha256': hash_result(result),
+                              'configurationSha256': qa.digest(qa.WORKTREE / config),
+                              'operation': 'Read-only line count and grep of eslint.config.js'})
+            commands.append({'toolUseId': call_id, 'command': command, 'resultSha256': hash_result(result),
+                             'failed': bool(result.get('is_error')), 'allowlisted': command in launch['bashCommands']})
+        elif name == 'Glob':
+            qa.need(args.get('pattern') in allowed_globs and 'path' not in args, '524_UNAPPROVED_AUTHOR_GLOB')
+            path_checks.append({'toolUseId': call_id, 'tool': name, 'path': args['pattern']})
+        else:
+            qa.need(name in ('Read', 'Grep', 'Edit'), '524_UNAPPROVED_AUTHOR_TOOL')
+            relative = checkout_path(args.get('path') if name == 'Grep' else args.get('file_path'))
+            if name == 'Edit':
+                qa.need(relative in qa.ALLOWED and not result.get('is_error'), '524_EDIT_OUTSIDE_ADMITTED_SCOPE')
+                edits.append(relative)
+            path_checks.append({'toolUseId': call_id, 'tool': name, 'path': relative})
+        if result.get('is_error'):
+            failures[call_id] = {'tool': name, 'resultSha256': hash_result(result)}
+    qa.need(len(extra) == 1 and sorted(set(edits)) == qa.ALLOWED, '524_EXPECTED_EDIT_SCOPE_OR_DEVIATION_MISSING')
+    qa.need(set(failures) == {MISSING_GREP, FIRST_FAILED_TEST, NEGATIVE_CONTROL}
+            and results[MISSING_GREP]['content'].startswith('Path does not exist:')
+            and 'Tests  12 failed' in results[FIRST_FAILED_TEST]['content']
+            and 'Tests  1 failed | 11 passed' in results[NEGATIVE_CONTROL]['content'],
+            '524_ORIGINAL_FAILURE_HISTORY_CHANGED')
+    proof = {
+        'issue': 524, 'source': source, 'denial': DENIED, 'deniedToolResult': denied_result,
+        'readOnlyDeviation': extra[0], 'successfulAlternateProtectedReadObserved': False,
+        'authorFilesSha256': {name: qa.digest(qa.AUTHOR_OUT / name) for name in FILES},
+        'authorLaunchWritePaths': launch['writePaths'], 'editPaths': sorted(set(edits)),
+        'pathCalls': path_checks, 'bashHistory': commands, 'preservedOtherToolFailures': failures,
+    }
+    return proof
+
+
+def validate(receipt):
+    qa.need(APPROVAL.is_file(), '524_EXACT_AUTHOR_ADJUDICATION_REQUIRED')
+    proposal = qa.load(PROPOSAL)
+    qa.need(proposal.get('issue') == 524 and proposal.get('authorized') is False
+            and qa.load(APPROVAL) == {**proposal, 'authorized': True}
+            and qa.digest(PROOF) == proposal.get('provenanceProofSha256'),
+            '524_AUTHOR_ADJUDICATION_NOT_EXACTLY_AUTHORIZED')
+    source = qa.snapshot(candidate=True)
+    qa.verify_baseline(source, qa.prep())
+    proof = observe(receipt, source)
+    qa.need(proof == qa.load(PROOF) and source == proposal['source']
+            and proof['denial'] == proposal['denial'] and proof['readOnlyDeviation'] == proposal['readOnlyDeviation'],
+            '524_AUTHOR_ADJUDICATION_SOURCE_OR_TRANSCRIPT_DRIFT')
+    return {'approvalSha256': qa.digest(APPROVAL), 'provenanceProofSha256': qa.digest(PROOF),
+            'preservedDenial': proof['denial'], 'readOnlyDeviation': proof['readOnlyDeviation']}

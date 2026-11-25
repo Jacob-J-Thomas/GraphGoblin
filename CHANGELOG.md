@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
+  delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
+  that ref to the working tree, including staged, unstaged and untracked files, and checks their
+  Markdown with the repository Prettier configuration even where an archive ignore rule hides it
+  from `pnpm format:check`. Opaque originals are listed with their SHA-256 and left untouched, a
+  newly added Markdown file named as an original is refused, and selected paths a sparse checkout
+  lacks fail as not checked. The check is read-only and local: `pnpm format:check` and CI remain
+  the full gates. Immutable Markdown originals are stored as `*.md.txt`, with their hashes in the
+  packet manifest. Historical QA artifacts, the hosted formatter and coverage thresholds are
+  unchanged.
+
 - The Template image CI job also checks that the built image's installed jsonata carries
   `patches/jsonata@2.2.2.patch` (#467). A separate step runs the image under the template
   step's isolation (no network, read-only, no capabilities or new privileges) from
