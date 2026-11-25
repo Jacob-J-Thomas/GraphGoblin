@@ -15,6 +15,19 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   packet manifest. Historical QA artifacts, the hosted formatter and coverage thresholds are
   unchanged.
 
+- Windows launcher evidence records a test that node:test cancels as failed at its cancellation,
+  as node:test reports it (#534). Cancellations include the test's own timeout, a parent or the
+  whole run that finished first, and a subtest started after its parent ended. The end record
+  previously waited for the test body, which node:test no longer awaits, so a cancelled body
+  that later returned could be recorded as passing, and one still running at exit as never ended.
+  A later return or throw of the body adds no second end, and an earlier failure keeps its own
+  failure fields. Cleanup and child records the body writes afterwards stay in its test's scope.
+  Subtests still running when their parent ends count among the parent's failed subtests. A
+  regression test also covers one totals row that keeps its own sum but contradicts its
+  contention trial in any count (#539). Such a row never completes the trial, and the valid
+  observations are still uploaded. The acceptance suite's assertions, timeouts and TAP output
+  are unchanged. No stored, export or contract change.
+
 - MCP `describe_loop` and `start_run` resolve `loopId` as an exact ID of one of the caller's
   loops first, then as a full loop name under the API's name rule: trimmed, whitespace runs
   collapsed to one space and lowercased, without Unicode normalization or locale-dependent case
