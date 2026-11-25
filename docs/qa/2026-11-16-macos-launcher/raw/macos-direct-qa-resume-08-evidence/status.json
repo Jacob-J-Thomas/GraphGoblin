@@ -1,0 +1,166 @@
+{
+  "schema": "gg456-direct-native-qa-resume/1",
+  "state": "blocked",
+  "stage": "permitted-work-complete-gui-blocked",
+  "updatedAt": "2026-11-17T05:01:17.423160+00:00",
+  "source": "18089bba4b1c5f4fad19627d4c118b48b656a247",
+  "app": "/Users/jake/Applications/GraphGoblin QA \u00fc-fde14a78.app",
+  "port": 62241,
+  "takeover": {
+    "state": "resolved-by-owner-confirmation",
+    "oldThread": "01a1d803-215e-7d51-ab49-f5ac3dc08afe",
+    "ownerStatement": "The old turn is stopped",
+    "continuationSent": false
+  },
+  "stages": {
+    "warm-finder": {
+      "result": "prior-pass",
+      "evidence": "/Users/jake/Library/Caches/graphgoblin-456-gui-agent-20261116/session-20261117T033413Z-6e44deec/status.json",
+      "observedAt": "2026-11-17T03:35:47.998613+00:00",
+      "pid": 58208,
+      "newlyReproduced": false
+    },
+    "alias": {
+      "state": "blocked",
+      "path": "/Users/jake/Desktop/GraphGoblin QA u\u0308-fde14a78 GUI alias 6e44deec",
+      "denial": "Computer Use was not approved to use Finder"
+    },
+    "baseline-native": {
+      "state": "pass",
+      "evidence": "01-baseline-native/observation.json",
+      "pid": 58208,
+      "birth": "Mon Nov 16 19:59:30 2026"
+    },
+    "chrome-current": {
+      "state": "pass",
+      "url": "http://127.0.0.1:62241/app/chat"
+    },
+    "browser-close-survival": {
+      "state": "blocked",
+      "completed": [
+        "provider-free-loop-created",
+        "draft-started",
+        "immutable-snapshot-pinned",
+        "timer-wait-observed"
+      ],
+      "missing": [
+        "dedicated-window-confirmed",
+        "native-window-close",
+        "post-close-native-observation",
+        "retained-Dock-reopen"
+      ],
+      "errors": [
+        "CUA Chrome super+n action returned native pipe startup failure",
+        "Outcome AX check returned Sky Computer Use native pipe startup failed"
+      ]
+    },
+    "warm-dock": {
+      "state": "blocked",
+      "reason": "Finder access denied and no documented desktop-wide Dock route"
+    },
+    "cancel-test-run": {
+      "state": "pass",
+      "runId": "01M7KXQ12PJHKR58P8V5CG47DT",
+      "final": "cancelled",
+      "snapshotId": "01M7KXQ12PJHKR58P8V5CG47DW"
+    },
+    "ordinary-drain": {
+      "state": "pass",
+      "evidence": "06-verified-drain/stage-D-verified-fixture-drain.json"
+    },
+    "cold-dock": {
+      "state": "blocked",
+      "reason": "Finder denied; no documented desktop-wide Dock control route in current CUA documentation; native host then failed"
+    },
+    "same-path-replacement": {
+      "state": "partial",
+      "fileChecks": "pass",
+      "guiChecks": "blocked-native-host-and-Finder-access",
+      "evidence": "07-replacement-after.json",
+      "installationId": "8d57594d45c347c5b23853ade14c4635",
+      "receiptSha256": "8d7f6303f91913b8a1d23e73d8cfa6db2213dacb00ac412a1d1b2ed8b4aafea0",
+      "sequenceNote": "Scoped replacement performed after verified drain while cold Dock remained blocked"
+    },
+    "final-native": {
+      "state": "pass",
+      "at": "2026-11-17T04:58:39.021Z",
+      "pid": "none",
+      "listeners": {
+        "p": [],
+        "p2": []
+      },
+      "leases": {
+        "graphgoblin.lock": null,
+        "graphgoblin.lock.reclaim": null,
+        "graphgoblin.db.graphgoblin.lock": null,
+        "graphgoblin.db.graphgoblin.lock.reclaim": null
+      },
+      "evidence": "08-final-native/observation.json"
+    }
+  },
+  "parentPacket": "..",
+  "pending": [
+    "existing-alias-native-open-and-resolution",
+    "warm-Dock-pin-and-click",
+    "actual-browser-close-survival-and-Dock-reopen",
+    "cold-retained-Dock",
+    "post-replacement-alias-and-Dock-resolution",
+    "retained-history-and-snapshot-through-restarted-public-API"
+  ],
+  "limitations": [
+    {
+      "operation": "cua.getApp('com.apple.finder')",
+      "result": "Computer Use was not approved to use Finder",
+      "dependent": [
+        "alias-open",
+        "Finder-based-Dock-pin"
+      ]
+    },
+    {
+      "operation": "Chrome dedicated test-window action and later outcome checks",
+      "result": "Sky Computer Use native pipe startup failed",
+      "dependent": [
+        "browser-close-survival",
+        "post-close-reopen",
+        "post-replacement-GUI-observation"
+      ]
+    }
+  ],
+  "testOwned": {
+    "loopId": "01M7KXQ11YSTSGQZZJHYRAANB4",
+    "draftId": "01M7KXQ11YSTSGQZZJHYRAANB5",
+    "name": "QA browser close resume08 20261117T0452 fde14a78",
+    "seconds": 1800,
+    "runId": "01M7KXQ12PJHKR58P8V5CG47DT",
+    "snapshotId": "01M7KXQ12PJHKR58P8V5CG47DW",
+    "pinned": {
+      "source": "draft",
+      "version": 1,
+      "name": "QA browser close resume08 20261117T0452 fde14a78",
+      "label": "QA browser close resume08 20261117T0452 fde14a78 draft v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    }
+  },
+  "notAPass": true,
+  "report": "report.md",
+  "evidenceManifest": "evidence-manifest.json",
+  "finalFixtureState": "stopped-verified-after-managed-replacement"
+}

@@ -1,0 +1,7 @@
+# Copy preflight qualification — ZIP member source
+
+The first resolve-and-copy invocation treated a COPY-PLAN source of the form `coverage.zip!/member` as an ordinary filesystem pathname. It stopped in source preflight, before that invocation's conflict-resolution or copy writes. This does not erase the earlier normal merge's already captured metadata conflict state. Root retained resolve-and-copy.attempt01.py and the first refusal; no product/test failure is inferred.
+
+The corrected source_bytes helper partitions the literal archive/member address, requires the one exact allowed coverage ZIP and its SHA-256 aeb23ba1e3487e582c64f641d0aa17d34ff35b266fade45929ead905e0c16e1d, rejects parent traversal/colon/empty members and directories, bounds member size, and reads with ZipFile in memory without extracting a temporary tree. Every row's expected size/SHA is verified before resolution/copy and again at its final destination. The exact 65 rows total 1,306,597 bytes; 13 rows are byte-exact members from that coverage ZIP.
+
+The corrected helper then retained both independent additions in .gitattributes, .prettierignore and CHANGELOG, removing conflict markers with a separator. The staged proof also binds the exact Mac docs09 delta and register-prefix preservation. All nonmanual objects equal their expected parents; no runtime conflict or manual runtime edit occurred. Original/changed helpers, conflict bytes and raw receipts are proposed archive inputs. This note executes none of them and approves no pending Mac gate.

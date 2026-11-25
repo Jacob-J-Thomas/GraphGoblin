@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { constants, type BigIntStats } from 'node:fs';
 import {
   lstat,
   mkdir,
@@ -48,6 +49,20 @@ export interface DataDirLock extends Hold {
    * (`guard`). An entry another process removed first is never counted.
    */
   readonly reclaimed: { readonly file: boolean; readonly guard: boolean };
+}
+
+export interface OwnedWriterArtifact {
+  path: string;
+  dev: bigint;
+  ino: bigint;
+}
+
+export interface AttestedDataDirLock extends DataDirLock {
+  verifyOwnedArtifact(): Promise<OwnedWriterArtifact | undefined>;
+}
+
+interface AttestLocalArtifact {
+  attestLocalArtifact: true;
 }
 
 function hasCode(error: unknown, code: string): boolean {
@@ -340,8 +355,54 @@ export async function dataDirLockState(
   return { state: 'free' };
 }
 
-/** `reclaimed` says whether this call removed a stale lock file before creating its own. */
-async function acquireFile(path: string, record: string): Promise<Hold & { reclaimed: boolean }> {
+async function verifyWriterArtifact(
+  acquired: OwnedWriterArtifact,
+  record: Buffer,
+): Promise<OwnedWriterArtifact | undefined> {
+  const uid = process.geteuid?.();
+  if (uid === undefined) return undefined;
+  const { path, dev, ino } = acquired;
+  const matches = (stat: BigIntStats) =>
+    stat.isFile() &&
+    stat.dev === dev &&
+    stat.ino === ino &&
+    stat.uid === BigInt(uid) &&
+    (stat.mode & 0o077n) === 0n &&
+    stat.nlink === 1n;
+  try {
+    if (!matches(await lstat(path, { bigint: true }))) return undefined;
+    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      if (!matches(await file.stat({ bigint: true }))) return undefined;
+      const buffer = Buffer.alloc(record.length + 1);
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+      if (bytesRead !== record.length || !buffer.subarray(0, bytesRead).equals(record))
+        return undefined;
+      if (
+        !matches(await file.stat({ bigint: true })) ||
+        !matches(await lstat(path, { bigint: true }))
+      )
+        return undefined;
+      return { path, dev, ino };
+    } finally {
+      await file.close();
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+interface FileHold extends Hold {
+  /** Whether this acquisition removed a stale primary file before creating its own. */
+  readonly reclaimed: boolean;
+  readonly verifyOwnedArtifact?: AttestedDataDirLock['verifyOwnedArtifact'];
+}
+
+async function acquireFile(
+  path: string,
+  record: string,
+  attestation?: AttestLocalArtifact,
+): Promise<FileHold> {
   let reclaimed = false;
   const file = await open(path, 'wx', 0o600).catch(async (error: unknown) => {
     if (!hasCode(error, 'EEXIST')) throw error;
@@ -352,8 +413,13 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
     });
   });
   heldPaths.add(path);
+  let acquired: OwnedWriterArtifact | undefined;
   try {
     await file.writeFile(record, 'utf8');
+    if (attestation) {
+      const { dev, ino } = await file.stat({ bigint: true });
+      acquired = { path, dev, ino };
+    }
   } catch (error) {
     heldPaths.delete(path);
     await file.close();
@@ -363,9 +429,11 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
     await file.close();
   }
   let releasing: Promise<ReleaseOutcome> | undefined;
-  return {
+  let releaseStarted = false;
+  const lease: FileHold = {
     reclaimed,
     release() {
+      releaseStarted = true;
       releasing ??= (async (): Promise<ReleaseOutcome> => {
         let outcome: ReleaseOutcome;
         try {
@@ -384,6 +452,17 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
       return releasing;
     },
   };
+  if (!acquired) return lease;
+  const bound = acquired;
+  const expected = Buffer.from(record, 'utf8');
+  return {
+    ...lease,
+    async verifyOwnedArtifact() {
+      if (releaseStarted) return undefined;
+      const verified = await verifyWriterArtifact(bound, expected);
+      return releaseStarted ? undefined : verified;
+    },
+  };
 }
 
 /**
@@ -392,9 +471,16 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
  * or have a different, verified Windows creation identity.
  * The short-lived recovery guard follows the same rule after interrupted reclamation.
  */
+export function acquireDataDirLock(
+  dataDir: string,
+  filename: string | undefined,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDataDirLock(dataDir: string, filename?: string): Promise<DataDirLock>;
 export async function acquireDataDirLock(
   dataDir: string,
   filename = DATA_DIR_LOCK_FILE,
+  attestation?: AttestLocalArtifact,
 ): Promise<DataDirLock> {
   const path = resolve(canonicalPath(dataDir), filename);
   // Reserve pending acquisitions too, before any asynchronous filesystem operation.
@@ -411,7 +497,7 @@ export async function acquireDataDirLock(
     });
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
-    const file = await acquireFile(path, record).catch(async (error: unknown) => {
+    const file = await acquireFile(path, record, attestation).catch(async (error: unknown) => {
       try {
         await recovery.release();
       } catch (cleanup) {
@@ -435,17 +521,31 @@ export async function acquireDataDirLock(
         cause: cleanup,
       });
     }
-    return {
+    const lock: DataDirLock = {
       reclaimed: { file: file.reclaimed, guard: recovery.reclaimed },
       release: () => file.release(),
     };
+    if (!file.verifyOwnedArtifact) return lock;
+    const attested: AttestedDataDirLock = {
+      ...lock,
+      verifyOwnedArtifact: file.verifyOwnedArtifact,
+    };
+    return attested;
   } finally {
     acquiringPaths.delete(path);
   }
 }
 
 /** A shared external SQLite file has one owner even when data directories differ. */
-export async function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock> {
+export function acquireDatabaseLock(
+  databaseFile: string,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock>;
+export async function acquireDatabaseLock(
+  databaseFile: string,
+  attestation?: AttestLocalArtifact,
+): Promise<DataDirLock> {
   const file = canonicalPath(databaseFile);
   const info = await stat(file).catch((error: unknown) => {
     if (hasCode(error, 'ENOENT')) return undefined;
@@ -455,7 +555,10 @@ export async function acquireDatabaseLock(databaseFile: string): Promise<DataDir
     throw new Error(
       `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
     );
-  return acquireDataDirLock(dirname(file), databaseLockFileName(basename(file)));
+  const name = databaseLockFileName(basename(file));
+  return attestation
+    ? acquireDataDirLock(dirname(file), name, attestation)
+    : acquireDataDirLock(dirname(file), name);
 }
 
 export function databaseLockState(databaseFile: string): ReturnType<typeof dataDirLockState> {

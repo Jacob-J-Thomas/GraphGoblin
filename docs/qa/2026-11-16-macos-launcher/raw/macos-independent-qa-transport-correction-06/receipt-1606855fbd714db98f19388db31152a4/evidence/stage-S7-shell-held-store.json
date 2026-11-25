@@ -1,0 +1,550 @@
+{
+  "id": "S7-shell-held-store",
+  "cases": [
+    "O8"
+  ],
+  "startedAt": "2026-11-16T22:57:58.488Z",
+  "checks": [
+    {
+      "id": "precondition-ports-refused",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "precondition-store-free",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "contender:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51733
+      }
+    },
+    {
+      "id": "contender:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51733,
+          "ppid": 51140,
+          "pgid": 51130,
+          "uid": 501,
+          "stat": "S",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:57:58 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "contender:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51733,
+            "command": "node",
+            "address": "127.0.0.1:62242"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contender:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "976eede8f289a38fef9a03d5aa5e85919ca41a8f62f2d18a1592be1ee121a58e",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132360"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "586eb14413202859a6583a0c42487577116a1b71c2cd595a21b25edab7b70def",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132363"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "contender:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51733,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "contender-is-registered-child",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "child": 51733,
+        "served": 51733
+      }
+    },
+    {
+      "id": "store-held-by-writer-lease",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "state": "held",
+        "pathHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d66646531346137382f646174612f514120646174612075cc88202534312023312f6772617068676f626c696e2e6c6f636b"
+      }
+    },
+    {
+      "id": "envelope-store-blocked",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "ok": true,
+        "exit": {
+          "code": 21,
+          "signal": null,
+          "ms": 60011
+        },
+        "stdout": "{\"version\":1,\"code\":\"store-blocked\"}\n",
+        "stderrBytes": 0,
+        "elapsedMs": 60011,
+        "timedOut": false
+      }
+    },
+    {
+      "id": "elapsed-60-to-63s",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "elapsedMs": 60011
+      }
+    },
+    {
+      "id": "elapsed-at-most-65s",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "elapsedMs": 60011
+      }
+    },
+    {
+      "id": "watcher-healthy",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "watchError": null
+      }
+    },
+    {
+      "id": "never-served-on-p",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "no-launcher-spawned-gateway",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "contender-after:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51733
+      }
+    },
+    {
+      "id": "contender-after:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec",
+        "expected": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec"
+      }
+    },
+    {
+      "id": "contender-after:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51733,
+          "ppid": 51140,
+          "pgid": 51130,
+          "uid": 501,
+          "stat": "S",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:57:58 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "contender-after:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51733,
+            "command": "node",
+            "address": "127.0.0.1:62242"
+          }
+        ]
+      }
+    },
+    {
+      "id": "contender-after:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "976eede8f289a38fef9a03d5aa5e85919ca41a8f62f2d18a1592be1ee121a58e",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132360"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "586eb14413202859a6583a0c42487577116a1b71c2cd595a21b25edab7b70def",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132363"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "contender-after:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51733,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "contender-unchanged",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "shell-output-separate-from-managed-logs",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "launcher-record-no-spawn-failed-or-canary",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "rotated": false,
+        "lines": [
+          "stage=waiting-for-store outcome=store-blocked"
+        ]
+      }
+    },
+    {
+      "id": "launcher-record-store-blocked",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "rotated": false,
+        "lines": [
+          "stage=waiting-for-store outcome=store-blocked"
+        ]
+      }
+    },
+    {
+      "id": "no-canary-in-shell-output",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "drain-contender-pre:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 51733
+      }
+    },
+    {
+      "id": "drain-contender-pre:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec",
+        "expected": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec"
+      }
+    },
+    {
+      "id": "drain-contender-pre:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 51733,
+          "ppid": 51140,
+          "pgid": 51130,
+          "uid": 501,
+          "stat": "S",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:57:58 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "drain-contender-pre:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 51733,
+            "command": "node",
+            "address": "127.0.0.1:62242"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-contender-pre:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "976eede8f289a38fef9a03d5aa5e85919ca41a8f62f2d18a1592be1ee121a58e",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132360"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 51733,
+            "sha256": "586eb14413202859a6583a0c42487577116a1b71c2cd595a21b25edab7b70def",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179132363"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "drain-contender-pre:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 51733,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-contender:registered-owner",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "fresh": {
+          "port": 62242,
+          "pid": 51733,
+          "birth": "Mon Nov 16 16:57:58 2026",
+          "instance": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec",
+          "phase": "running",
+          "ppid": 51140,
+          "pgid": 51130,
+          "stat": "S",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "976eede8f289a38fef9a03d5aa5e85919ca41a8f62f2d18a1592be1ee121a58e",
+            "graphgoblin.db.graphgoblin.lock": "586eb14413202859a6583a0c42487577116a1b71c2cd595a21b25edab7b70def"
+          }
+        },
+        "owner": {
+          "port": 62242,
+          "pid": 51733,
+          "birth": "Mon Nov 16 16:57:58 2026",
+          "instance": "813193c6c2444958b4f49320b3b96bc560dbaf0051e35ca5976733a6358e93ec",
+          "phase": "running",
+          "ppid": 51140,
+          "pgid": 51130,
+          "stat": "S",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "976eede8f289a38fef9a03d5aa5e85919ca41a8f62f2d18a1592be1ee121a58e",
+            "graphgoblin.db.graphgoblin.lock": "586eb14413202859a6583a0c42487577116a1b71c2cd595a21b25edab7b70def"
+          }
+        }
+      }
+    },
+    {
+      "id": "drain-contender:shutdown-state",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "drain-contender:same-incarnation",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "drain-contender:drain-accepted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "drain-contender:never-forcing",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "forcing": null
+      }
+    },
+    {
+      "id": "drain-contender:released",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "series": [
+          {
+            "ms": 0,
+            "state": "error",
+            "code": "ECONNRESET"
+          },
+          {
+            "ms": 254,
+            "state": "refused",
+            "code": "ECONNREFUSED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain-contender:store-free",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "text": "{\"state\":\"free\"}\n"
+      }
+    },
+    {
+      "id": "contender-exit-zero",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "at": "2026-11-16T22:58:59.927Z"
+        }
+      }
+    }
+  ],
+  "notes": {
+    "launcherRecord": {
+      "rotated": false,
+      "lines": [
+        "stage=waiting-for-store outcome=store-blocked"
+      ]
+    },
+    "contenderOutputs": [
+      {
+        "name": "stdout.log",
+        "size": 2462,
+        "sha256": "2cc8404cad7153180a098b01e23373339136e2f2e167d2848aed8b6c87a100af",
+        "tokenHits": 0
+      },
+      {
+        "name": "stderr.log",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tokenHits": 0
+      }
+    ],
+    "drain": {
+      "shutdown": {
+        "phase": "running",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "choices": [],
+        "graceMs": 300000
+      },
+      "accepted": {
+        "phase": "draining",
+        "activeRunIds": [],
+        "unconfirmedRunIds": [],
+        "shapes": {
+          "activeRunIds": "array",
+          "unconfirmedRunIds": "array"
+        },
+        "choices": [
+          "wait",
+          "force"
+        ],
+        "graceMs": 300000
+      },
+      "series": [
+        {
+          "ms": 0,
+          "state": "error",
+          "code": "ECONNRESET"
+        },
+        {
+          "ms": 254,
+          "state": "refused",
+          "code": "ECONNREFUSED"
+        }
+      ],
+      "elapsedMs": 611
+    }
+  },
+  "status": "criteria-met",
+  "elapsedMs": 62042,
+  "finishedAt": "2026-11-16T22:59:00.530Z"
+}
