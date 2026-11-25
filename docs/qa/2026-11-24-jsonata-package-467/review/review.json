@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "jsonata-package-467/review-01",
+  "reviewMode": "full-frozen-four-path-source-review",
+  "formalPass": 1,
+  "maxFormalScans": 3,
+  "reviewer": "Independent Codex OpenAI-family reviewer",
+  "implementationFamily": "Claude",
+  "completedAtUtc": "2026-11-25T01:57:41.8273813Z",
+  "base": "d2df8600c2c8574bec420947de686b936910b245",
+  "head": "d2df8600c2c8574bec420947de686b936910b245",
+  "branch": "codex/gg-fu-jsonata-package-20261124",
+  "patchSha256": "c06d20a14541506b8ac6862a29ea27362ce5bd707e87890326d958e751814c3f",
+  "outcome": "PASS_WITH_P3_DOCUMENTATION_FIX",
+  "introducedBlockers": 0,
+  "findings": [
+    {
+      "signature": "jsonata-patch-docs/isParallelCall-reader-wording",
+      "severity": "P3",
+      "disposition": "FIX-IN-PR",
+      "path": "docs/research/licenses.md",
+      "line": 71,
+      "title": "Describe the remaining marker propagation precisely",
+      "evidence": "Installed jsonata.js:5341 copies enclosingEnvironment.isParallelCall into a child frame; no evaluation branch consumes it.",
+      "requestedOutcome": "Say createFrame copies the flag but evaluation logic does not consume it.",
+      "mergeBlocking": false,
+      "parentAgreed": true
+    }
+  ],
+  "reviewerChecks": [
+    "Node v22.23.4 selected and confirmed",
+    "Exact workflow JavaScript against compiled host public package passed",
+    "git diff --check passed",
+    "Four source hashes and index hash unchanged"
+  ],
+  "evidenceLimits": [
+    "Host compiled package execution is not Docker artifact proof",
+    "No Docker operation performed",
+    "Timestamp has existing source unit coverage only",
+    "Author build reported cache hits for all seven tasks"
+  ],
+  "remainingGates": [
+    "Narrow P3 documentation correction",
+    "Independent fresh Claude QA",
+    "Hosted actual production image probe",
+    "Ordinary required CI/gates",
+    "Final exact-head review"
+  ],
+  "sourceUnchanged": true,
+  "indexUnchanged": true,
+  "snapshotReleased": true,
+  "authority": "No staging, commit, publication, merge, issue changes or owner service operations",
+  "reportSha256": "e2f93b5156a5ff6ac46b0f8d09c91b6d7b6be0a4b34b4ef7e8cfa87ee2535bad"
+}

@@ -4,6 +4,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Template image CI job also checks that the built image's installed jsonata carries
+  `patches/jsonata@2.2.2.patch` (#467). A separate step runs the image under the template
+  step's isolation (no network, read-only, no capabilities or new privileges) from
+  `/app/apps/api` and calls the compiled `@graphgoblin/domain` there with finite expressions: an
+  ordinary expression and a flat literal wider than the 200-level depth limit evaluate at the
+  default limits; `1` with `maxDepth: 0` and with `timeoutMs: -1` is refused with reason `depth`
+  or `time` and its exact message; and the same cached source then evaluates normally. It prints
+  one JSON line to the job log. The licence ledger now records what the patch does and what a
+  jsonata upgrade must show before the patch is reapplied, rebased or removed. The template
+  checks, the job's budget, the patch and lockfile, the evaluator's defaults and the product's
+  behaviour are unchanged; no dependency or licence changes.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
